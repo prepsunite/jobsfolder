@@ -1069,11 +1069,6 @@ class DataStoreManager {
     };
   }
 
-  // --- TOPIC PRACTICE QUESTIONS (Full CRUD for Admin) ---
-  getQuestions(): TopicQuestionItem[] {
-    return this.getTopicQuestions();
-  }
-
   getResources(): any[] {
     return this.getStorage<any[]>('prepunite_resources', []);
   }
