@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ===== Elite Lifestyle & Motion Palette ===== */
+  --color-bg-main: #fff8f5;
+  --color-surface-dim: #e2d8d2;
+  --color-surface-bright: #fff8f5;
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #fcf2eb;
+  --color-surface-container: #f6ece6;
+  --color-surface-high: #f0e6e0;
+  --color-surface-highest: #eae1da;
+  
+  --color-on-surface: #1f1b17;
+  --color-on-surface-variant: #444748;
+  --color-inverse-surface: #342f2b;
+  --color-inverse-on-surface: #f9efe8;
+
+  --color-outline: #747878;
+  --color-outline-variant: #c4c7c7;
+
+  /* Primary Deep Charcoal */
+  --color-primary: #000000;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #1c1b1b;
+  --color-on-primary-container: #858383;
+
+  /* Secondary Emerald Green Accent */
+  --color-secondary: #006c49;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #6cf8bb;
+  --color-on-secondary-container: #00714d;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+
+  /* Tertiary */
+  --color-tertiary: #000000;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #1a1c1c;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+
+  /* Legacy primary mappings for compatibility */
+  --color-primary-50: #fcf2eb;
+  --color-primary-100: #f6ece6;
+  --color-primary-200: #eae1da;
+  --color-primary-300: #6cf8bb;
+  --color-primary-400: #00714d;
+  --color-primary-500: #006c49;
+  --color-primary-600: #1c1b1b;
+  --color-primary-700: #191818;
+  --color-primary-800: #141313;
+  --color-primary-900: #0f0e0e;
+  --color-primary-950: #000000;
+
+  --color-surface-50: #ffffff;
+  --color-surface-100: #fff8f5;
+  --color-surface-200: #fcf2eb;
+  --color-surface-300: #f6ece6;
+  --color-surface-400: #444748;
+  --color-surface-500: #747878;
+  --color-surface-600: #444748;
+  --color-surface-700: #342f2b;
+  --color-surface-800: #eae1da;
+  --color-surface-900: #f6ece6;
+  --color-surface-950: #fff8f5;
+
+  /* ===== Typography ===== */
+  --font-sans: "Manrope", sans-serif;
+  --font-display: "Epilogue", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* ===== Border Radius ===== */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+/* ===== Base Styles ===== */
+body {
+  font-family: var(--font-sans);
+  @apply bg-[#fff8f5] dark:bg-[#141517] text-[#1f1b17] dark:text-[#e3e3e3];
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+/* ===== Anti-Print & Anti-Copy Protection ===== */
+@media print {
+  html, body {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+.no-copy-shield {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
