@@ -82,15 +82,17 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/prepunite_test
           SPRING_DATASOURCE_USERNAME: prepunite
           SPRING_DATASOURCE_PASSWORD: test_password
+          SPRING_JPA_HIBERNATE_DDL_AUTO: update
+          SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
 
   # ============================================
-  # Deploy (only on main branch push)
+  # Deploy (only on main branch push when secrets exist)
   # ============================================
   deploy-frontend:
     name: Deploy Frontend
     needs: [frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -108,7 +110,7 @@ jobs:
     name: Deploy Backend
     needs: [backend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.RAILWAY_TOKEN != ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
