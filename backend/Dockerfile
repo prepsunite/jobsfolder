@@ -1,15 +1,12 @@
-# Build stage
-FROM eclipse-temurin:21-jdk-alpine AS build
+# Build stage using official Maven with Java 21
+FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
 
 WORKDIR /app
 
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw mvnw
-COPY mvnw.cmd mvnw.cmd
 COPY src src
 
-RUN chmod +x mvnw && ./mvnw clean package -DskipTests -B
+RUN mvn clean package -DskipTests -B
 
 # Run stage
 FROM eclipse-temurin:21-jre-alpine

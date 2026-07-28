@@ -20,3 +20,10 @@ logs
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files & secrets
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
