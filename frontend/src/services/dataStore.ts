@@ -54,6 +54,8 @@ export interface ExamItem {
   content: string; // The full markdown text containing syllabus, pattern (About Exam)
   oldPapers?: string; // Markdown text for Old Papers tab
   paperTabs?: DocTabNode[]; // Sub-tabs tree for Old Papers (Aptitude, Coding, Interview, etc.)
+  googleDocEmbedUrl?: string;
+  googleDocEditUrl?: string;
   upvotes: number;
 }
 
@@ -102,7 +104,7 @@ export interface StructuredExplanation {
 }
 
 export interface QuestionOption {
-  id: string; // "A", "B", "C", "D", "E"
+  id?: string; // "A", "B", "C", "D", "E"
   key?: string; // Backward compatibility
   text: string;
 }
@@ -116,7 +118,7 @@ export type QuestionStatus = 'draft' | 'reviewed' | 'published' | 'archived';
 
 export interface TopicQuestionItem {
   id: string; // UUID
-  version: number; // 1
+  version?: number; // 1
   topicId: string;
   questionNumber: number;
   statement: string;
@@ -125,15 +127,15 @@ export interface TopicQuestionItem {
   explanation?: string; // Plain text fallback
   structuredExplanation?: StructuredExplanation; // SOURCE OF TRUTH
   formulasUsed?: string[];
-  difficultyLevel: 1 | 2 | 3; // 1 = Easy, 2 = Medium, 3 = Hard
+  difficultyLevel?: 1 | 2 | 3; // 1 = Easy, 2 = Medium, 3 = Hard
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD'; // Backward compatibility
-  status: QuestionStatus;
+  status?: QuestionStatus;
   isHidden?: boolean;
   aiMetadata?: AiMetadata;
   templateId?: string;
   variables?: Record<string, any>;
-  fingerprint: string; // SHA-256 Fixed Hash
-  createdAt: string;
+  fingerprint?: string; // SHA-256 Fixed Hash
+  createdAt?: string;
 }
 
 export interface ImportErrorReport {
@@ -1376,7 +1378,7 @@ class DataStoreManager {
           report.errors.push({
             itemIndex: idx + 1,
             question: item.question || item.statement || `Item #${idx + 1}`,
-            reason: validation.reason,
+            reason: validation.reason || 'Invalid format',
           });
           return;
         }

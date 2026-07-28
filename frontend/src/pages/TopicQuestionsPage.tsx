@@ -125,7 +125,7 @@ export default function TopicQuestionsPage() {
     setFormOptionD(q.options.find(o => o.key === 'D')?.text || '');
     setFormOptionE(q.options.find(o => o.key === 'E')?.text || '');
     setFormCorrect(q.correctAnswer);
-    setFormExplanation(q.explanation);
+    setFormExplanation(q.explanation || '');
     setFormFormulas(q.formulasUsed ? q.formulasUsed.join('\n') : '');
     setFormDifficulty(q.difficulty || 'MEDIUM');
     setFormIsHidden(!!q.isHidden);

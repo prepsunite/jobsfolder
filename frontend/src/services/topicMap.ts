@@ -131,14 +131,16 @@ export const TOPIC_SLUG_MAP: Readonly<Record<string, string>> = Object.freeze({
   'embedded images': 'embedded-images',
 });
 
-export function resolveTopicSlug(topicName: string): string {
-  if (!topicName) return 'numbers';
+export function resolveTopicSlug(topicName?: string, defaultTopicId: string = 'numbers'): string {
+  if (!topicName || !topicName.trim()) return defaultTopicId;
   const sanitized = topicName.trim().toLowerCase();
   if (TOPIC_SLUG_MAP[sanitized]) return TOPIC_SLUG_MAP[sanitized];
 
   // Slugify fallback
-  return sanitized
+  const slugified = sanitized
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
+    
+  return slugified || defaultTopicId;
 }

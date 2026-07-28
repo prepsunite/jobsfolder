@@ -1,0 +1,10 @@
+{
+  "name": "jobsfolder-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "ci:check": "npm run ci:frontend && npm run ci:backend",
+    "ci:frontend": "cd frontend && npm run lint && npx tsc --noEmit && npm run build",
+    "ci:backend": "cd backend && mvn test-compile"
+  }
+}

@@ -592,6 +592,8 @@ export default function ProfilePage() {
                     frequency: 3,
                     tags: [question.category, question.companyName],
                     year: question.year,
+                    isVerified: true,
+                    createdAt: new Date().toISOString(),
                   }}
                   onDelete={() => handleRemoveQuestionBookmark(question.id)}
                 />

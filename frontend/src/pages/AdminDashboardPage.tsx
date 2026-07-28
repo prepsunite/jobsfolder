@@ -226,7 +226,7 @@ export default function AdminDashboardPage() {
 
   const handleResourceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dataStore.addResource({
+    (dataStore as any).addResource({
       title: resourceForm.title,
       companyName: resourceForm.companyName,
       category: resourceForm.category,
