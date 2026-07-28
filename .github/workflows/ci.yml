@@ -77,7 +77,7 @@ jobs:
           cache: 'maven'
 
       - name: Build and Test
-        run: ./mvnw clean verify -B
+        run: mvn clean verify -B
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/prepunite_test
           SPRING_DATASOURCE_USERNAME: prepunite
