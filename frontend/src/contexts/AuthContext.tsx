@@ -72,7 +72,11 @@ const GUEST_USER: UserProfile = {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole>(() => {
+    const savedEmail = localStorage.getItem('prepunite_user_email') || '';
     const savedRole = localStorage.getItem('prepunite_role') as UserRole;
+    if (savedEmail && isAllowedAdminEmail(savedEmail)) {
+      return 'ADMIN';
+    }
     return savedRole || 'GUEST';
   });
 
@@ -82,9 +86,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedName = localStorage.getItem('prepunite_user_name') || (savedEmail ? savedEmail.split('@')[0] : 'User');
     const savedAvatar = localStorage.getItem('prepunite_user_avatar') || undefined;
 
-    if (savedRole && savedRole !== 'GUEST') {
-      const isAdmin = isAllowedAdminEmail(savedEmail);
-      const activeRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+    const isAdmin = isAllowedAdminEmail(savedEmail);
+    const activeRole: UserRole = isAdmin ? 'ADMIN' : (savedRole && savedRole !== 'GUEST' ? savedRole : 'GUEST');
+
+    if (activeRole !== 'GUEST' || isAdmin) {
       return {
         id: savedEmail || 'user-id',
         name: savedName,
