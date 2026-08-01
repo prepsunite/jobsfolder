@@ -100,8 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Helper to persist profile state
-  const applyUserProfile = (email: string, nameInput: string, avatarUrl?: string, metaRole?: string) => {
-    const isAdmin = isAllowedAdminEmail(email) || metaRole === 'ADMIN';
+  const applyUserProfile = (email: string, nameInput: string, avatarUrl?: string, metaRole?: string, appRole?: string) => {
+    const isAdmin = isAllowedAdminEmail(email) || metaRole === 'ADMIN' || appRole === 'ADMIN';
     const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
@@ -135,13 +135,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted && session?.user) {
           const su = session.user;
           const userMeta = su.user_metadata || {};
+          const appMeta = su.app_metadata || {};
           const email = su.email || userMeta.email || '';
           const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
           const avatarUrl = userMeta.avatar_url || userMeta.picture;
           const metaRole = userMeta.role;
+          const appRole = appMeta.role;
 
           if (email) {
-            applyUserProfile(email, name, avatarUrl, metaRole);
+            applyUserProfile(email, name, avatarUrl, metaRole, appRole);
           }
 
           if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
@@ -162,13 +164,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         const su = session.user;
         const userMeta = su.user_metadata || {};
+        const appMeta = su.app_metadata || {};
         const email = su.email || userMeta.email || '';
         const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
         const avatarUrl = userMeta.avatar_url || userMeta.picture;
         const metaRole = userMeta.role;
+        const appRole = appMeta.role;
 
         if (email) {
-          applyUserProfile(email, name, avatarUrl, metaRole);
+          applyUserProfile(email, name, avatarUrl, metaRole, appRole);
         }
 
         if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
