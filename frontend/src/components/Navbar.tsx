@@ -6,8 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { user, isAuthenticated } = useAuth();
-
+  const { user, role, isAuthenticated } = useAuth();
+  
   const navLinks = [
     { name: 'Companies', href: '/companies', icon: Building2 },
     { name: 'OA Questions', href: '/questions', icon: BookOpen },
@@ -61,13 +61,15 @@ export default function Navbar() {
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <Link
-              to="/admin"
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#f6ece6] dark:bg-[#1e1f22] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#eae1da] dark:hover:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] transition-colors"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#006c49] dark:text-[#6cf8bb]" />
-              Admin Panel
-            </Link>
+            {role === 'ADMIN' && (
+              <Link
+                to="/admin"
+                className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-purple-900 text-white hover:bg-purple-800 border border-purple-700 transition-colors"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+                Admin Panel
+              </Link>
+            )}
             {isAuthenticated && user ? (
               <Link
                 to="/login"

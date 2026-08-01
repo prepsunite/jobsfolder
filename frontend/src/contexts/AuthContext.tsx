@@ -14,7 +14,6 @@ export const ADMIN_EMAILS: string[] = [
 export function isAllowedAdminEmail(email: string): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase().trim();
-  if (normalized.endsWith('@prepunite.com') && normalized.includes('admin')) return true;
   return ADMIN_EMAILS.some(a => a.toLowerCase().trim() === normalized);
 }
 
@@ -84,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedAvatar = localStorage.getItem('prepunite_user_avatar') || undefined;
 
     if (savedRole && savedRole !== 'GUEST') {
-      const isAdmin = isAllowedAdminEmail(savedEmail) || savedRole === 'ADMIN';
+      const isAdmin = isAllowedAdminEmail(savedEmail);
       const activeRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
       return {
         id: savedEmail || 'user-id',
@@ -144,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             applyUserProfile(email, name, avatarUrl);
           }
 
-          if (window.location.hash && window.location.hash.includes('access_token')) {
+          if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
             window.history.replaceState(null, '', window.location.pathname);
           }
         }
@@ -170,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           applyUserProfile(email, name, avatarUrl);
         }
 
-        if (window.location.hash && window.location.hash.includes('access_token')) {
+        if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
           window.history.replaceState(null, '', window.location.pathname);
         }
       } else if (event === 'SIGNED_OUT') {
