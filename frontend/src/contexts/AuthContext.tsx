@@ -18,6 +18,25 @@ export function isAllowedAdminEmail(email: string): boolean {
   return ADMIN_EMAILS.some(a => a.toLowerCase().trim() === normalized);
 }
 
+export function formatDisplayNameFromEmail(email: string, rawName?: string): string {
+  if (rawName && rawName.trim() && !['User', 'Demo Student', 'Student', 'GUEST'].includes(rawName.trim())) {
+    return rawName.trim();
+  }
+  if (!email) return 'Student Explorer';
+  const prefix = email.split('@')[0];
+  if (!prefix) return 'Student Explorer';
+
+  const cleaned = prefix.replace(/[._-]/g, ' ').replace(/\d+/g, ' ').trim();
+  if (cleaned.length > 1) {
+    return cleaned
+      .split(' ')
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -82,9 +101,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Helper to persist profile state
-  const applyUserProfile = (email: string, name: string, avatarUrl?: string) => {
+  const applyUserProfile = (email: string, nameInput: string, avatarUrl?: string) => {
     const isAdmin = isAllowedAdminEmail(email);
     const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+    const name = formatDisplayNameFromEmail(email, nameInput);
 
     const newProfile: UserProfile = {
       id: email,
