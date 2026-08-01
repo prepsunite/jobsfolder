@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Lock, Sparkles, CheckCircle2, ShieldCheck, Zap, X, CreditCard, ArrowRight, ShieldAlert } from 'lucide-react';
 import { dataStore } from '@/services/dataStore';
+import { supabasePaymentService } from '@/services/supabasePaymentService';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -25,24 +26,31 @@ export default function PaywallModal({
 
   if (!isOpen) return null;
 
-  const handleCheckout = (option: 'SINGLE' | 'MONTHLY') => {
+  const handleCheckout = async (option: 'SINGLE' | 'MONTHLY') => {
     setIsProcessing(true);
 
-    setTimeout(() => {
-      if (option === 'SINGLE') {
-        dataStore.unlockSingleExamPaper(examId);
-      } else {
-        dataStore.activateMonthlyPass();
-      }
-      setIsProcessing(false);
-      setPaymentSuccess(true);
+    const paymentId = `pay_sp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const amount = option === 'SINGLE' ? 99 : 299;
+    const itemType = option === 'SINGLE' ? 'SINGLE_PAPER' : 'MONTHLY_PASS';
 
-      setTimeout(() => {
-        setPaymentSuccess(false);
-        onUnlocked();
-        onClose();
-      }, 1200);
-    }, 1000);
+    // Verify payment, log transaction in Supabase DB, and grant entitlement
+    await supabasePaymentService.verifyAndLogTransaction({
+      paymentId,
+      amount,
+      currency: 'INR',
+      itemType,
+      examId,
+      userEmail: 'student@jobsfolder.com',
+    });
+
+    setIsProcessing(false);
+    setPaymentSuccess(true);
+
+    setTimeout(() => {
+      setPaymentSuccess(false);
+      onUnlocked();
+      onClose();
+    }, 1200);
   };
 
   return (

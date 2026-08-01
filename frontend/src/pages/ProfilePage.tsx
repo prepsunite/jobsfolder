@@ -7,6 +7,7 @@ import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import ContentRenderer from '@/components/ContentRenderer';
 import {
   User,
   BookmarkCheck,
@@ -680,11 +681,10 @@ export default function ProfilePage() {
                               {rd.roundTitle}
                             </span>
                           )}
-                          <div className="prose prose-xs max-w-none dark:prose-invert text-xs font-sans whitespace-pre-line leading-relaxed text-[#444748] dark:text-[#a6adbb]">
-                            <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                              {rd.details}
-                            </ReactMarkdown>
-                          </div>
+                          <ContentRenderer
+                            content={rd.details}
+                            className="text-xs font-sans"
+                          />
                         </div>
                       ))}
                     </div>

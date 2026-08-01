@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import RichTextEditor from '@/components/RichTextEditor';
+import ContentRenderer from '@/components/ContentRenderer';
 import { useTheme } from '@/contexts/ThemeContext';
 import PaywallModal from '@/components/PaywallModal';
 import DocumentExplorer from '@/components/DocumentExplorer';
@@ -209,13 +211,23 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     }
   }, [isDirectOldPapersUrl]);
 
-  // Security Protection: Ban Ctrl+C (Copy), Ctrl+X (Cut), Ctrl+V (Paste), Ctrl+P (Print), Ctrl+S (Save), Ctrl+U (Source)
+  // Security Protection for Non-Admins: Protect content from copy/cut/print while allowing text editing
   useEffect(() => {
+    // If current user is Admin, never block copy/paste/cut anywhere
+    if (isAdmin) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const isInputOrTextarea = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+      const isEditable = target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        !!target.closest('[contenteditable="true"]') ||
+        !!target.closest('.tiptap-wrapper')
+      );
 
-      if (!isAdmin || !isInputOrTextarea) {
+      // Only block if target is NOT an editable element
+      if (!isEditable) {
         const isCtrl = e.ctrlKey || e.metaKey;
         const key = e.key.toLowerCase();
 
@@ -229,87 +241,6 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isAdmin]);
-
-  // --- LIVE GOOGLE DOC LINKING & EMBEDDING HANDLER ---
-  const handleLinkGoogleDoc = async () => {
-    if (!currentExam) return;
-    const rawUrl = prompt(
-      "Paste your Google Doc URL / Published Link:\n(e.g. https://docs.google.com/document/d/1ABC.../edit or https://docs.google.com/document/d/e/.../pub?embedded=true)",
-      currentExam.googleDocEmbedUrl || ""
-    );
-
-    if (rawUrl === null) return;
-    if (!rawUrl.trim()) {
-      dataStore.updateExam(currentExam.id, { googleDocEmbedUrl: '', googleDocEditUrl: '' });
-      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
-      alert("Live Google Doc unlinked. Reverted to built-in document editor.");
-      return;
-    }
-
-    const trimmed = rawUrl.trim();
-    let embedUrl = trimmed;
-    let editUrl = trimmed;
-
-    // Convert standard Google Doc edit/share URL to clean embed preview URL (/preview)
-    if (trimmed.includes('docs.google.com/document/d/')) {
-      const docIdMatch = trimmed.match(/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/);
-      if (docIdMatch && docIdMatch[1]) {
-        const docId = docIdMatch[1];
-        embedUrl = `https://docs.google.com/document/d/${docId}/edit`;
-        editUrl = `https://docs.google.com/document/d/${docId}/edit`;
-      }
-    }
-
-    // SIMULATED GOOGLE DOC PARSE
-    setIsSyncingDoc(true);
-    alert(`Syncing Document from Google Docs...\nPlease wait while we fetch and parse your document structure.`);
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
-
-    // Mock parsed output based on typical "Heading 1" and "Heading 2" formatting
-    const mockParsedPaperTabs = [
-      {
-        id: "tab_auto_1",
-        title: "Quantitative Aptitude",
-        content: "### Quantitative Aptitude\nThis section contains automatically imported notes from your Google Doc covering numerical ability.",
-        children: [
-          {
-            id: "tab_auto_1_1",
-            title: "Time, Speed, and Distance",
-            content: "### Time, Speed, and Distance\n\n**Key Formulas:**\n- Speed = Distance / Time\n- 1 km/hr = 5/18 m/s\n\n*This content was synced from your Google Doc.*",
-          },
-          {
-            id: "tab_auto_1_2",
-            title: "Percentages",
-            content: "### Percentages\n\n**Quick Tips:**\n- `x% of y = y% of x`\n- Practice calculating 10%, 5%, and 1% mentally.\n\n*This content was synced from your Google Doc.*",
-          }
-        ]
-      },
-      {
-        id: "tab_auto_2",
-        title: "Logical Reasoning",
-        content: "### Logical Reasoning\n\nThis folder was created automatically from your Google Doc's 'Heading 1' for Logical Reasoning.",
-        children: [
-          {
-            id: "tab_auto_2_1",
-            title: "Syllogisms",
-            content: "### Syllogisms\n\n**Rules:**\n1. All A are B.\n2. Some B are C.\n\n*This content was synced from your Google Doc.*",
-          }
-        ]
-      }
-    ];
-
-    dataStore.updateExam(currentExam.id, { 
-      googleDocEmbedUrl: embedUrl, 
-      googleDocEditUrl: editUrl,
-      paperTabs: mockParsedPaperTabs 
-    });
-    
-    setIsSyncingDoc(false);
-    queryClient.invalidateQueries({ queryKey: ['live-exams'] });
-    alert("Live Google Doc successfully parsed and synced!\n\n(Note: This is a frontend simulation. In production, our Spring Boot backend will fetch your exact text.)");
-  };
 
 
   const forceRefreshData = () => {
@@ -362,14 +293,16 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   };
 
   const handleOpenEdit = () => {
+    // For oldPapers tab, admin editing is handled inside DocumentExplorer itself.
+    // Only open the markdown editor for aboutCompany and aboutExam tabs.
     if (activeTab === 'aboutCompany') {
       setAboutCompanyForm(currentCompanyStoreItem.aboutCompany || '');
+      setIsEditing(true);
     } else if (activeTab === 'aboutExam' && currentExam) {
       setExamForm(currentExam);
-    } else if (activeTab === 'oldPapers' && currentExam) {
-      setExamForm(currentExam);
+      setIsEditing(true);
     }
-    setIsEditing(true);
+    // oldPapers: do nothing here — DocumentExplorer has its own "Manage" toggle
   };
 
   const handleSaveContent = () => {
@@ -600,13 +533,13 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     </button>
                   )}
 
-                  {isAdmin && !isEditing && (
+                  {isAdmin && !isEditing && activeTab !== 'oldPapers' && (
                     <button
                       onClick={handleOpenEdit}
                       className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all shrink-0"
                     >
                       <Edit3 className="w-4 h-4 text-purple-300" />
-                      <span>Edit {activeTab === 'aboutCompany' ? 'Company Details' : activeTab === 'aboutExam' ? 'Exam Details' : 'Old Papers'}</span>
+                      <span>Edit {activeTab === 'aboutCompany' ? 'Company Details' : 'Exam Details'}</span>
                     </button>
                   )}
                 </div>
@@ -704,52 +637,42 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     </div>
                   )}
 
-                  <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-6 text-center space-y-4">
-                    <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <LinkIcon className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-[#1f1b17] dark:text-[#e3e3e3] mb-1">Google Doc & Drive Sync</h4>
-                      <p className="text-xs text-[#747878] dark:text-[#a6adbb] max-w-md mx-auto">
-                        We have removed the manual text editor as per your preference. All content is now managed exclusively via Google Docs/Drive sync.
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleLinkGoogleDoc}
-                      disabled={isSyncingDoc}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all disabled:opacity-50"
-                    >
-                      {isSyncingDoc ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Syncing Document...</span>
-                        </>
-                      ) : (
-                        <>
-                          <LinkIcon className="w-4 h-4" />
-                          <span>Link & Sync Google Doc</span>
-                        </>
-                      )}
-                    </button>
-                    {currentExam?.googleDocEmbedUrl && (
-                      <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-                        ✓ Currently linked to: {currentExam.googleDocEmbedUrl.substring(0, 40)}...
-                      </p>
-                    )}
-                  </div>
+                  {/* Rich Text Editor for Content Editing */}
+                  {activeTab === 'aboutCompany' ? (
+                    <RichTextEditor
+                      title={`Edit About ${companyName}`}
+                      value={aboutCompanyForm}
+                      onChange={setAboutCompanyForm}
+                      placeholder="Write company overview, hiring process, and culture in Markdown..."
+                    />
+                  ) : activeTab === 'aboutExam' ? (
+                    <RichTextEditor
+                      title={`Edit ${examForm.name || 'Exam'} Syllabus & Pattern`}
+                      value={examForm.content || ''}
+                      onChange={(val) => setExamForm({ ...examForm, content: val })}
+                      placeholder="Write exam syllabus, round breakdown, and selection criteria in Markdown..."
+                    />
+                  ) : (
+                    <RichTextEditor
+                      title={`Edit Old Papers & Memory Questions`}
+                      value={examForm.oldPapers || ''}
+                      onChange={(val) => setExamForm({ ...examForm, oldPapers: val })}
+                      placeholder="Write old questions, previous year papers, and solutions in Markdown..."
+                    />
+                  )}
                   
                   <div className="flex justify-end gap-3 pt-2">
                     <button
                       onClick={() => setIsEditing(false)}
                       className="px-5 py-2.5 text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] text-xs font-bold uppercase tracking-wider"
                     >
-                      Close Settings
+                      Close Editor
                     </button>
                     <button
                       onClick={handleSaveContent}
                       className="px-6 py-2.5 bg-purple-900 hover:bg-purple-800 text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
                     >
-                      Save Exam Settings
+                      Save Changes
                     </button>
                   </div>
                 </div>
@@ -765,18 +688,21 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   onUpdateTabs={(updatedTabs) => {
                     if (currentExam) {
                       dataStore.updateExam(currentExam.id, { paperTabs: updatedTabs });
-                      queryClient.invalidateQueries({ queryKey: ['companyExams', slug] });
+                      // Use the correct query key that matches the useQuery on line 106
+                      queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                     }
                   }}
                 />
               ) : (
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb] prose-a:text-[#0284c7] dark:prose-a:text-[#38bdf8] prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl text-[#1f1b17] dark:text-[#e3e3e3]">
-                  <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                    {activeTab === 'aboutCompany' 
-                      ? (currentCompanyStoreItem.aboutCompany || '*No company details added yet.*')
-                      : (currentExam.content || '*No exam details added yet.*')}
-                  </ReactMarkdown>
-                </div>
+                <ContentRenderer
+                  content={
+                    activeTab === 'aboutCompany'
+                      ? (currentCompanyStoreItem.aboutCompany || '')
+                      : (currentExam.content || '')
+                  }
+                  emptyText="No details added yet."
+                  className="prose-headings:font-display prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb]"
+                />
               )}
             </div>
           ) : (
@@ -929,29 +855,14 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <>
-                  <button
-                    onClick={handleLinkGoogleDoc}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#00714d] hover:bg-[#006c49] text-white font-semibold text-xs transition-colors shadow-sm"
-                    title="Attach or update the official paper document"
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>{currentExam?.googleDocEmbedUrl ? 'Change Document Link' : 'Attach Official Document'}</span>
-                  </button>
-
-                  {currentExam?.googleDocEditUrl && (
-                    <a
-                      href={currentExam.googleDocEditUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-700 hover:bg-purple-800 text-white font-semibold text-xs transition-colors shadow-sm"
-                      title="Open live document editor"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Edit Official Document</span>
-                    </a>
-                  )}
-                </>
+                <button
+                  onClick={handleOpenEdit}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-900 hover:bg-purple-800 text-white font-semibold text-xs transition-colors shadow-sm"
+                  title="Open Admin Rich Text Editor"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit Content (Rich Text)</span>
+                </button>
               )}
 
               <button
@@ -982,7 +893,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               onUpdateTabs={(updatedTabs) => {
                 if (currentExam) {
                   dataStore.updateExam(currentExam.id, { paperTabs: updatedTabs });
-                  queryClient.invalidateQueries({ queryKey: ['companyExams', slug] });
+                  queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                 }
               }}
             />

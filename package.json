@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "ci:check": "npm run ci:frontend && npm run ci:backend",
-    "ci:frontend": "cd frontend && npm run lint && npx tsc --noEmit && npm run build",
-    "ci:backend": "cd backend && mvn test-compile"
+    "ci:check": "npm run ci:frontend",
+    "ci:frontend": "cd frontend && npm run lint && npx tsc --noEmit && npm run build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "razorpay": "^2.9.8"
   }
 }

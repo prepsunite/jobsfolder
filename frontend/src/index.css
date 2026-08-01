@@ -111,3 +111,150 @@ h1, h2, h3, h4, h5, h6 {
   -ms-user-select: none;
   user-select: none;
 }
+
+/* ═══════════════════════════════════════════════════
+   TipTap / ProseMirror Editor Styles
+══════════════════════════════════════════════════════ */
+.tiptap-wrapper .ProseMirror {
+  padding: 12px 16px;
+  min-height: 100%;
+  outline: none;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: #1f1b17;
+}
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror { color: #e3e3e3; }
+
+/* Placeholder */
+.tiptap-wrapper .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+/* Headings */
+.tiptap-wrapper .ProseMirror h1 { font-size: 1.75rem; font-weight: 900; margin: 1rem 0 0.5rem; line-height: 1.2; }
+.tiptap-wrapper .ProseMirror h2 { font-size: 1.375rem; font-weight: 700; margin: 0.875rem 0 0.4rem; }
+.tiptap-wrapper .ProseMirror h3 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.3rem; color: #006c49; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror h3 { color: #6cf8bb; }
+
+/* Paragraphs & Lists */
+.tiptap-wrapper .ProseMirror p { margin: 0.4rem 0; }
+.tiptap-wrapper .ProseMirror ul { list-style-type: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+.tiptap-wrapper .ProseMirror ol { list-style-type: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+.tiptap-wrapper .ProseMirror li { margin: 0.2rem 0; }
+
+/* Task list */
+.tiptap-wrapper .ProseMirror ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.tiptap-wrapper .ProseMirror ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.tiptap-wrapper .ProseMirror ul[data-type="taskList"] li > label { margin-top: 0.2rem; cursor: pointer; flex-shrink: 0; }
+.tiptap-wrapper .ProseMirror ul[data-type="taskList"] li > div { flex: 1; }
+.tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div { text-decoration: line-through; opacity: 0.6; }
+
+/* Blockquote */
+.tiptap-wrapper .ProseMirror blockquote {
+  border-left: 3px solid #006c49;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #747878;
+  font-style: italic;
+}
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror blockquote { border-left-color: #6cf8bb; color: #a6adbb; }
+
+/* Inline code */
+.tiptap-wrapper .ProseMirror code {
+  background: #f6ece6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+  font-size: 0.8em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #006c49;
+}
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror code { background: #2b2d31; color: #6cf8bb; }
+
+/* Code block */
+.tiptap-wrapper .ProseMirror pre {
+  background: #1e1f22;
+  color: #e3e3e3;
+  padding: 1rem;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+.tiptap-wrapper .ProseMirror pre code { background: none; padding: 0; color: inherit; font-size: 0.82rem; }
+
+/* Horizontal rule */
+.tiptap-wrapper .ProseMirror hr { border: none; border-top: 2px solid #eae1da; margin: 1.25rem 0; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror hr { border-top-color: #2b2d31; }
+
+/* Links */
+.tiptap-wrapper .ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.1s;
+}
+.tiptap-wrapper .ProseMirror a:hover { color: #1d4ed8; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror a { color: #93c5fd; }
+
+/* Tables */
+.tiptap-wrapper .ProseMirror table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; table-layout: fixed; }
+.tiptap-wrapper .ProseMirror table th,
+.tiptap-wrapper .ProseMirror table td { border: 1px solid #e2d8d2; padding: 0.45rem 0.65rem; vertical-align: top; position: relative; min-width: 60px; }
+.tiptap-wrapper .ProseMirror table th {
+  background: #f6ece6;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #444748;
+}
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror table th { background: #2b2d31; border-color: #383a40; color: #a6adbb; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror table td { border-color: #383a40; }
+.tiptap-wrapper .ProseMirror .selectedCell::after {
+  z-index: 2; position: absolute; content: '';
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 108, 73, 0.15);
+  pointer-events: none;
+}
+
+/* Images */
+.tiptap-wrapper .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0.5rem 0; }
+.tiptap-wrapper .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #006c49; outline-offset: 2px; }
+
+/* Marks */
+.tiptap-wrapper .ProseMirror mark { border-radius: 3px; padding: 0 2px; }
+
+/* Fill parent */
+.tiptap-wrapper { height: 100%; }
+.tiptap-wrapper > div { height: 100%; }
+
+/* Dark mode inline style overrides for pasted Google Docs content */
+:where(.dark, .dark *) [style*="color: #000000"],
+:where(.dark, .dark *) [style*="color: #000"],
+:where(.dark, .dark *) [style*="color: rgb(0, 0, 0)"],
+:where(.dark, .dark *) [style*="color: black"],
+:where(.dark, .dark *) [style*="color:#000000"],
+:where(.dark, .dark *) [style*="color:#000"],
+:where(.dark, .dark *) [style*="color:rgb(0,0,0)"] {
+  color: #e3e3e3 !important;
+}
+
+:where(.dark, .dark *) [style*="background-color: #ffffff"],
+:where(.dark, .dark *) [style*="background-color: #fff"],
+:where(.dark, .dark *) [style*="background-color: rgb(255, 255, 255)"],
+:where(.dark, .dark *) [style*="background-color: white"],
+:where(.dark, .dark *) [style*="background-color:#ffffff"],
+:where(.dark, .dark *) [style*="background-color:rgb(255,255,255)"] {
+  background-color: transparent !important;
+}
+
+:where(.dark, .dark *) table,
+:where(.dark, .dark *) td,
+:where(.dark, .dark *) th {
+  border-color: #383a40 !important;
+}

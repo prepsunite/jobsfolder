@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router';
 import { Building2, BookOpen, Layers, Bookmark, ShieldCheck, Sparkles, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated } = useAuth();
 
   const navLinks = [
     { name: 'Companies', href: '/companies', icon: Building2 },
@@ -66,9 +68,28 @@ export default function Navbar() {
               <ShieldCheck className="w-3.5 h-3.5 text-[#006c49] dark:text-[#6cf8bb]" />
               Admin Panel
             </Link>
-            <button className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white dark:text-[#141517] bg-[#000000] dark:bg-[#e3e3e3] hover:bg-[#1c1b1b] dark:hover:bg-white rounded-full shadow-lg shadow-black/10 dark:shadow-white/10 transition-all hover:scale-105 flex items-center gap-1.5">
-              <span>Sign In</span>
-            </button>
+            {isAuthenticated && user ? (
+              <Link
+                to="/login"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40] hover:border-[#006c49] transition-all"
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-[#006c49] text-white flex items-center justify-center text-[10px] font-black">
+                    {user.name.charAt(0)}
+                  </div>
+                )}
+                <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] max-w-[90px] truncate">{user.name}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white dark:text-[#141517] bg-[#000000] dark:bg-[#e3e3e3] hover:bg-[#1c1b1b] dark:hover:bg-white rounded-full shadow-lg shadow-black/10 dark:shadow-white/10 transition-all hover:scale-105 flex items-center gap-1.5"
+              >
+                <span>Sign In</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

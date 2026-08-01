@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import ContentRenderer from '@/components/ContentRenderer';
 import { Layers, Search, PlusCircle, Loader2, Edit3, Trash2, XCircle, CheckCircle2, Plus, Bookmark, BookmarkCheck } from 'lucide-react';
 
 export default function ExperiencesPage() {
@@ -277,11 +278,10 @@ export default function ExperiencesPage() {
                             {rd.roundTitle}
                           </span>
                         )}
-                        <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-headings:text-[#1f1b17] dark:prose-headings:text-[#e3e3e3] prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb] prose-h3:mt-2.5 prose-h3:mb-1 prose-p:my-1 prose-p:leading-relaxed prose-p:text-[#444748] dark:prose-p:text-[#a6adbb] prose-ul:my-1 prose-li:my-0.5 prose-li:text-[#444748] dark:prose-li:text-[#a6adbb] text-xs font-sans whitespace-pre-line">
-                          <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                            {rd.details}
-                          </ReactMarkdown>
-                        </div>
+                        <ContentRenderer
+                          content={rd.details}
+                          className="text-xs font-sans"
+                        />
                       </div>
                     );
                   })}

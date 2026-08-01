@@ -7,6 +7,8 @@ import { Link } from 'react-router';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import RichTextEditor from '@/components/RichTextEditor';
+import ContentRenderer from '@/components/ContentRenderer';
 import {
   Building2,
   BookOpen,
@@ -659,24 +661,18 @@ export default function AdminDashboardPage() {
                     className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">About Exam Markdown Text (Syllabus & Pattern)</label>
-                  <textarea
-                    rows={3}
-                    value={newExamCard.content}
-                    onChange={(e) => setNewExamCard({ ...newExamCard, content: e.target.value })}
-                    className="w-full bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Old Papers Markdown Text (Memory Questions & PYQs)</label>
-                  <textarea
-                    rows={3}
-                    value={newExamCard.oldPapers}
-                    onChange={(e) => setNewExamCard({ ...newExamCard, oldPapers: e.target.value })}
-                    className="w-full bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono"
-                  />
-                </div>
+                <RichTextEditor
+                  title="About Exam Markdown (Syllabus & Pattern)"
+                  value={newExamCard.content}
+                  onChange={(val) => setNewExamCard({ ...newExamCard, content: val })}
+                  placeholder="Write exam pattern, syllabus, and selection stages..."
+                />
+                <RichTextEditor
+                  title="Old Papers & PYQs Markdown"
+                  value={newExamCard.oldPapers}
+                  onChange={(val) => setNewExamCard({ ...newExamCard, oldPapers: val })}
+                  placeholder="Write memory-based questions, old papers, and solutions..."
+                />
                 <button
                   onClick={handleAddExamCardAdmin}
                   className="px-5 py-2.5 bg-[#006c49] hover:bg-[#005237] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
@@ -702,11 +698,10 @@ export default function AdminDashboardPage() {
                 )}
               </div>
 
-              <textarea
-                rows={6}
+              <RichTextEditor
+                title={`Company Overview & Markdown Content (${selectedCompanySlug.toUpperCase()})`}
                 value={adminOverviewInput}
-                onChange={(e) => setAdminOverviewInput(e.target.value)}
-                className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-3.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] focus:outline-none focus:border-purple-600 font-sans leading-relaxed"
+                onChange={setAdminOverviewInput}
                 placeholder="Enter company description overview..."
               />
               <button
@@ -828,11 +823,10 @@ export default function AdminDashboardPage() {
                             {!isGeneric && (
                               <span className="font-bold text-xs text-purple-700 dark:text-purple-400 block">{r.roundTitle}</span>
                             )}
-                            <div className="prose prose-xs max-w-none dark:prose-invert prose-h3:mt-2.5 prose-h3:mb-1 prose-p:my-1 prose-p:leading-relaxed prose-ul:my-1 prose-li:my-0.5 text-xs text-[#444748] dark:text-[#a6adbb] font-sans whitespace-pre-line">
-                              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                                {r.details}
-                              </ReactMarkdown>
-                            </div>
+                            <ContentRenderer
+                              content={r.details}
+                              className="text-xs font-sans"
+                            />
                           </div>
                         );
                       })}
@@ -1303,25 +1297,18 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">About Exam Markdown (Syllabus, Pattern & Rounds)</label>
-                <textarea
-                  rows={6}
-                  value={editingExam.content}
-                  onChange={(e) => setEditingExam({ ...editingExam, content: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono leading-relaxed"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Old Papers & PYQs Markdown</label>
-                <textarea
-                  rows={6}
-                  value={editingExam.oldPapers}
-                  onChange={(e) => setEditingExam({ ...editingExam, oldPapers: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono leading-relaxed"
-                />
-              </div>
+              <RichTextEditor
+                title="About Exam Markdown (Syllabus & Pattern)"
+                value={editingExam.content || ''}
+                onChange={(val) => setEditingExam({ ...editingExam, content: val })}
+                placeholder="Write syllabus, pattern, and round details..."
+              />
+              <RichTextEditor
+                title="Old Papers & PYQs Markdown"
+                value={editingExam.oldPapers || ''}
+                onChange={(val) => setEditingExam({ ...editingExam, oldPapers: val })}
+                placeholder="Write old papers, PYQs, and memory questions..."
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-[#eae1da] dark:border-[#2b2d31]">

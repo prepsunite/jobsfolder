@@ -1,7 +1,24 @@
 import { Link } from 'react-router';
 import { Building2, BookOpen, Layers, Sparkles, ArrowRight, User } from 'lucide-react';
+import { dataStore } from '@/services/dataStore';
+import { useQuery } from '@tanstack/react-query';
 
 export default function HomePage() {
+  const { data: statsData } = useQuery({
+    queryKey: ['live-home-stats'],
+    queryFn: () => {
+      const companiesCount = dataStore.getCompanies().length;
+      const examsCount = dataStore.getAllExams().length;
+      const experiencesCount = dataStore.getExperiences().length;
+      return [
+        { label: 'Companies Tracked', value: `${companiesCount}+` },
+        { label: 'Official Exam Drives', value: `${examsCount}+` },
+        { label: 'Verified Experiences', value: `${experiencesCount}+` },
+        { label: 'Placement Success Rate', value: '94%' },
+      ];
+    },
+  });
+
   const features = [
     {
       title: 'Company Directory & Hiring Maps',
@@ -33,10 +50,10 @@ export default function HomePage() {
     },
   ];
 
-  const stats = [
-    { label: 'Top Companies Tracked', value: '100+' },
-    { label: 'Official Exam Drives', value: '50+' },
-    { label: 'Verified Experiences', value: '500+' },
+  const stats = statsData || [
+    { label: 'Companies Tracked', value: '4+' },
+    { label: 'Official Exam Drives', value: '6+' },
+    { label: 'Verified Experiences', value: '10+' },
     { label: 'Placement Success Rate', value: '94%' },
   ];
 
@@ -46,7 +63,7 @@ export default function HomePage() {
       <section className="relative text-center max-w-4xl mx-auto pt-8 sm:pt-14 space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 border border-[#00714d]/20 dark:border-[#6cf8bb]/20 text-[#00714d] dark:text-[#6cf8bb] text-xs font-bold uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb]" />
-          <span>Jobsfolder 2.0 – Placement Intelligence Operating System</span>
+          <span>PrepUnite – Placement Intelligence Operating System</span>
         </div>
 
         <h1 className="font-display text-4xl sm:text-6xl font-black text-[#1f1b17] dark:text-[#e3e3e3] tracking-tight leading-tight">
@@ -54,7 +71,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-[#444748] dark:text-[#a6adbb] text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto font-normal font-sans">
-          Stop searching across Telegram, YouTube, and PDFs. Jobsfolder aggregates, organizes, and personalizes placement intelligence into one platform.
+          Stop searching across Telegram, YouTube, and PDFs. PrepUnite aggregates, organizes, and personalizes placement intelligence into one platform.
         </p>
 
         {/* CTA Buttons */}
@@ -75,7 +92,7 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Stats Row */}
+        {/* Stats Row (Dynamic from dataStore) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10 max-w-3xl mx-auto">
           {stats.map((stat, i) => (
             <div key={i} className="p-5 bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[20px] text-center shadow-sm">

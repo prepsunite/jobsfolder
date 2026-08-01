@@ -5,7 +5,7 @@ import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-// Lazy-loaded routes for 3G fast load & bundle code-splitting
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const CompaniesPage = lazy(() => import('@/pages/CompaniesPage'));
 const CompanyDetailPage = lazy(() => import('@/pages/CompanyDetailPage'));
 const QuestionsPage = lazy(() => import('@/pages/QuestionsPage'));
@@ -38,6 +38,10 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <HomePage />,
+      },
+      {
+        path: '/login',
+        element: withSuspense(LoginPage),
       },
       {
         path: '/companies',

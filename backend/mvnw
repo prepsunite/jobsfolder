@@ -1,8 +1,0 @@
-#!/bin/sh
-# Forwarding to Maven Wrapper
-APP_HOME="$(cd "$(dirname "$0")" && pwd)"
-if [ ! -f "$APP_HOME/.mvn/wrapper/maven-wrapper.jar" ]; then
-    echo "Downloading maven-wrapper.jar..."
-    wget -O "$APP_HOME/.mvn/wrapper/maven-wrapper.jar" "https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.2/maven-wrapper-3.3.2.jar" || curl -o "$APP_HOME/.mvn/wrapper/maven-wrapper.jar" "https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.2/maven-wrapper-3.3.2.jar"
-fi
-exec java -Dmaven.multiModuleProjectDirectory="$APP_HOME" -jar "$APP_HOME/.mvn/wrapper/maven-wrapper.jar" "$@"
