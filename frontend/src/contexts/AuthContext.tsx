@@ -70,8 +70,48 @@ const GUEST_USER: UserProfile = {
   role: 'GUEST',
 };
 
+function parsePreAuthJwtFromUrl(): { email: string; name: string; avatarUrl?: string } | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const hash = window.location.hash;
+    if (!hash || !hash.includes('access_token=')) return null;
+
+    const tokenMatch = hash.match(/access_token=([^&]+)/);
+    if (!tokenMatch || !tokenMatch[1]) return null;
+
+    const token = tokenMatch[1];
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const email = payload.email || payload.user_metadata?.email || '';
+    const name = payload.user_metadata?.full_name || payload.user_metadata?.name || payload.name || '';
+    const avatarUrl = payload.user_metadata?.avatar_url || payload.user_metadata?.picture || '';
+
+    if (email) {
+      return { email, name, avatarUrl };
+    }
+  } catch (e) {
+    // Ignore JSON/btoa errors
+  }
+  return null;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Pre-parse URL Hash synchronously before Supabase even loads
+  const preAuth = parsePreAuthJwtFromUrl();
+
   const [role, setRole] = useState<UserRole>(() => {
+    if (preAuth?.email) {
+      const isAdmin = isAllowedAdminEmail(preAuth.email);
+      const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+      localStorage.setItem('prepunite_role', assignedRole);
+      localStorage.setItem('prepunite_user_email', preAuth.email);
+      if (preAuth.name) localStorage.setItem('prepunite_user_name', preAuth.name);
+      if (preAuth.avatarUrl) localStorage.setItem('prepunite_user_avatar', preAuth.avatarUrl);
+      return assignedRole;
+    }
+
     const savedEmail = localStorage.getItem('prepunite_user_email') || '';
     const savedRole = localStorage.getItem('prepunite_role') as UserRole;
     if (savedEmail && isAllowedAdminEmail(savedEmail)) {
@@ -81,6 +121,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [user, setUser] = useState<UserProfile | null>(() => {
+    if (preAuth?.email) {
+      const isAdmin = isAllowedAdminEmail(preAuth.email);
+      const activeRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+      const cleanName = formatDisplayNameFromEmail(preAuth.email, preAuth.name);
+      return {
+        id: preAuth.email,
+        name: cleanName,
+        email: preAuth.email,
+        role: activeRole,
+        avatarUrl: preAuth.avatarUrl,
+        targetCompany: 'TCS NQT 2026',
+      };
+    }
+
     const savedEmail = localStorage.getItem('prepunite_user_email') || '';
     const savedRole = localStorage.getItem('prepunite_role') as UserRole;
     const savedName = localStorage.getItem('prepunite_user_name') || (savedEmail ? savedEmail.split('@')[0] : 'User');
@@ -92,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (activeRole !== 'GUEST' || isAdmin) {
       return {
         id: savedEmail || 'user-id',
-        name: savedName,
+        name: formatDisplayNameFromEmail(savedEmail, savedName),
         email: savedEmail || 'user@prepunite.com',
         role: activeRole,
         avatarUrl: savedAvatar,
@@ -102,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return GUEST_USER;
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(!preAuth && !localStorage.getItem('prepunite_user_email'));
 
   // Helper to persist profile state
   const applyUserProfile = (email: string, nameInput: string, avatarUrl?: string, metaRole?: string, appRole?: string) => {
