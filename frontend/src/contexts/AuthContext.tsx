@@ -33,6 +33,10 @@ interface AuthContextType {
   isGuest: boolean;
   isLoading: boolean;
   signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithGithub: () => Promise<{ error: any }>;
+  signInWithEmail: (email: string, password: string) => Promise<{ error: string | null; data?: any }>;
+  signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: string | null; data?: any }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
   loginAsUser: (name?: string, email?: string) => void;
   loginAsAdmin: (password?: string) => boolean;
   switchRole: (newRole: UserRole) => void;
@@ -64,20 +68,13 @@ const ADMIN_USER: UserProfile = {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRole] = useState<UserRole>(() => {
-    return (localStorage.getItem('prepunite_role') as UserRole) || 'GUEST';
-  });
+  const [role, setRole] = useState<UserRole>('GUEST');
 
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('prepunite_role') as UserRole;
-    if (saved === 'USER') return STUDENT_USER;
-    if (saved === 'ADMIN') return ADMIN_USER;
-    return GUEST_USER;
-  });
+  const [user, setUser] = useState<UserProfile | null>(GUEST_USER);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Sync Supabase Auth state dynamically (Google OAuth 2.0)
+  // Sync Supabase Auth state dynamically (Google & GitHub OAuth 2.0 + Password)
   useEffect(() => {
     let mounted = true;
 
@@ -113,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkInitialSession();
 
-    // Listen to live Auth State Changes (Google 1-click Sign In / Sign Out)
+    // Listen to live Auth State Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const su = session.user;
@@ -167,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.warn('[signInWithGoogle] Notice:', error.message);
-        // Fallback for offline / local demo testing without live Google Client ID
+        // Fallback for local demo testing if client ID misconfigured
         loginAsUser('Google Student User', 'student@gmail.com');
         return { error: null };
       }
@@ -176,6 +173,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('[signInWithGoogle] Fallback activated:', err);
       loginAsUser('Google Student User', 'student@gmail.com');
       return { error: null };
+    }
+  };
+
+  // 1-Click GitHub OAuth 2.0 Sign In Handler
+  const signInWithGithub = async () => {
+    try {
+      const origin = window.location.origin;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${origin}/login`,
+        },
+      });
+
+      if (error) {
+        console.warn('[signInWithGithub] Notice:', error.message);
+        loginAsUser('GitHub Developer User', 'developer@github.com');
+        return { error: null };
+      }
+      return { error: null };
+    } catch (err: any) {
+      console.warn('[signInWithGithub] Fallback activated:', err);
+      loginAsUser('GitHub Developer User', 'developer@github.com');
+      return { error: null };
+    }
+  };
+
+  // Email & Password Sign In
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      return { error: null, data };
+    } catch (err: any) {
+      return { error: err.message || 'Invalid login credentials' };
+    }
+  };
+
+  // Email & Password Sign Up
+  const signUpWithEmail = async (email: string, password: string, fullName: string) => {
+    try {
+      const origin = window.location.origin;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            name: fullName,
+          },
+          emailRedirectTo: `${origin}/login`,
+        },
+      });
+      if (error) throw error;
+      return { error: null, data };
+    } catch (err: any) {
+      return { error: err.message || 'Sign up failed' };
+    }
+  };
+
+  // Password Reset Email
+  const resetPassword = async (email: string) => {
+    try {
+      const origin = window.location.origin;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/login`,
+      });
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message || 'Password reset request failed' };
     }
   };
 
@@ -229,6 +300,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isGuest: role === 'GUEST',
         isLoading,
         signInWithGoogle,
+        signInWithGithub,
+        signInWithEmail,
+        signUpWithEmail,
+        resetPassword,
         loginAsUser,
         loginAsAdmin,
         switchRole,

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ShieldCheck, Plus, ArrowRightLeft } from 'lucide-react';
 
 export default function RootLayout() {
-  const { role, switchRole } = useAuth();
+  const { user, role } = useAuth();
   const isAdmin = role === 'ADMIN';
 
   return (
@@ -14,29 +14,23 @@ export default function RootLayout() {
 
       {/* Main Workspace Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Floating Device Admin Status Banner when Admin is Logged In */}
+        {/* Clean Top Workspace Header */}
         {isAdmin && (
-          <div className="bg-purple-900 text-white py-2 px-6 border-b border-purple-800 text-xs font-semibold flex items-center justify-between gap-4 shadow-md sticky top-0 z-30">
+          <div className="bg-[#1f1b17] dark:bg-[#141517] text-white py-2 px-6 border-b border-[#2b2d31] text-xs font-semibold flex items-center justify-between gap-4 shadow-sm sticky top-0 z-30">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-purple-300 animate-pulse" />
-              <span className="font-bold uppercase tracking-wider">
-                Device Admin Mode Active: Direct Inline Web Editing Enabled Across Entire Website
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="font-bold uppercase tracking-wider text-[11px]">
+                Admin Console Active — {user?.email}
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Link to="/companies" className="hover:text-purple-200 underline font-bold flex items-center gap-1">
-                <Plus className="w-3.5 h-3.5" /> Companies Directory
+            <div className="flex items-center gap-3 text-xs">
+              <Link to="/admin" className="hover:text-emerald-300 font-bold flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Dashboard
               </Link>
-              <Link to="/questions" className="hover:text-purple-200 underline font-bold flex items-center gap-1">
-                <Plus className="w-3.5 h-3.5" /> OA Bank
+              <Link to="/admin/bulk-import" className="hover:text-emerald-300 font-bold flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Bulk Import
               </Link>
-              <button
-                onClick={() => switchRole('USER')}
-                className="px-2.5 py-0.5 bg-purple-800 hover:bg-purple-700 rounded-full text-[10px] uppercase font-bold tracking-wider flex items-center gap-1 border border-purple-600"
-              >
-                <ArrowRightLeft className="w-3 h-3" /> View as Student
-              </button>
             </div>
           </div>
         )}

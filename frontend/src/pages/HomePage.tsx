@@ -78,17 +78,17 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Link
             to="/companies"
-            className="w-full sm:w-auto px-8 py-3.5 bg-[#000000] dark:bg-[#e3e3e3] hover:bg-[#006c49] dark:hover:bg-[#ffffff] text-white dark:text-[#141517] font-bold rounded-full shadow-lg shadow-black/10 hover:scale-105 transition-all flex items-center justify-center gap-2 group text-sm uppercase tracking-wider"
+            className="w-full sm:w-auto px-8 py-3.5 bg-[#006c49] hover:bg-[#005a3c] text-white font-bold rounded-full shadow-lg shadow-[#006c49]/20 hover:scale-105 transition-all flex items-center justify-center gap-2 group text-sm uppercase tracking-wider"
           >
             <span>Explore Companies</span>
-            <ArrowRight className="w-4 h-4 text-[#6cf8bb] dark:text-[#006c49] group-hover:text-white dark:group-hover:text-[#141517] group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-4 h-4 text-[#6cf8bb] group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
-            to="/questions"
-            className="w-full sm:w-auto px-8 py-3.5 bg-[#ffffff] dark:bg-[#1e1f22] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] font-bold rounded-full border border-[#c4c7c7] dark:border-[#383a40] transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+            to="/login"
+            className="w-full sm:w-auto px-8 py-3.5 bg-[#1f1b17] dark:bg-[#e3e3e3] hover:bg-black dark:hover:bg-white text-white dark:text-[#141517] font-bold rounded-full transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-md"
           >
-            <BookOpen className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb]" />
-            <span>Explore Exam Papers</span>
+            <User className="w-4 h-4 text-[#6cf8bb] dark:text-[#006c49]" />
+            <span>Sign In / Register</span>
           </Link>
         </div>
 

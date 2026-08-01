@@ -61,57 +61,20 @@ export default function Sidebar() {
           </div>
         </Link>
 
-        {/* Role Status Indicator & Switcher */}
-        <div className="relative">
-          <button
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            className="w-full flex items-center justify-between p-2 rounded-[14px] bg-[#ffffff] dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] hover:border-[#006c49] dark:hover:border-[#6cf8bb] transition-all text-xs"
-          >
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${
-                role === 'ADMIN' ? 'bg-purple-600 animate-pulse' : role === 'USER' ? 'bg-emerald-500' : 'bg-amber-500'
-              }`} />
-              <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider text-[11px]">
-                Role: {role}
-              </span>
-            </div>
-            <ArrowRightLeft className="w-3.5 h-3.5 text-[#747878] dark:text-[#a6adbb]" />
-          </button>
-
-          {/* Role Switcher Menu */}
-          {showRoleMenu && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#ffffff] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#2b2d31] rounded-[16px] p-2 shadow-xl z-50 space-y-1">
-              <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider px-2 block">
-                Switch Role Context:
-              </span>
-              <button
-                onClick={() => { switchRole('GUEST'); setShowRoleMenu(false); }}
-                className={`w-full text-left px-3 py-1.5 rounded-[10px] text-xs font-bold flex items-center justify-between ${
-                  role === 'GUEST' ? 'bg-[#f6ece6] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3]' : 'hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] text-[#444748] dark:text-[#a6adbb]'
-                }`}
-              >
-                <span>Guest</span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">Public</span>
-              </button>
-              <button
-                onClick={() => { switchRole('USER'); setShowRoleMenu(false); }}
-                className={`w-full text-left px-3 py-1.5 rounded-[10px] text-xs font-bold flex items-center justify-between ${
-                  role === 'USER' ? 'bg-[#6cf8bb]/30 dark:bg-[#00714d]/30 text-[#00714d] dark:text-[#6cf8bb]' : 'hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] text-[#444748] dark:text-[#a6adbb]'
-                }`}
-              >
-                <span>Student</span>
-                <span className="text-[10px] text-[#00714d] dark:text-[#6cf8bb] bg-[#6cf8bb]/30 dark:bg-[#00714d]/30 px-2 py-0.5 rounded-full">Logged In</span>
-              </button>
-              <button
-                onClick={() => { switchRole('ADMIN'); setShowRoleMenu(false); }}
-                className={`w-full text-left px-3 py-1.5 rounded-[10px] text-xs font-bold flex items-center justify-between ${
-                  role === 'ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300' : 'hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] text-[#444748] dark:text-[#a6adbb]'
-                }`}
-              >
-                <span>Admin</span>
-                <span className="text-[10px] text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-full">Full CRUD</span>
-              </button>
-            </div>
+        {/* Clean Status Badge */}
+        <div className="p-2.5 rounded-[14px] bg-[#ffffff] dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${
+              role === 'ADMIN' ? 'bg-purple-600 animate-pulse' : role === 'USER' ? 'bg-emerald-500' : 'bg-amber-500'
+            }`} />
+            <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider text-[11px]">
+              {role === 'ADMIN' ? 'Admin Mode' : role === 'USER' ? 'Student Workspace' : 'Public Visitor'}
+            </span>
+          </div>
+          {role === 'GUEST' && (
+            <Link to="/login" className="text-[10px] font-extrabold text-[#006c49] dark:text-[#6cf8bb] hover:underline uppercase">
+              Sign In
+            </Link>
           )}
         </div>
 
@@ -211,13 +174,13 @@ export default function Sidebar() {
       {/* Bottom User Account Section */}
       <div className="p-4 border-t border-[#e2d8d2] dark:border-[#2b2d31] bg-[#eae1da]/50 dark:bg-[#141517]/50">
         {role === 'GUEST' ? (
-          <button
-            onClick={() => switchRole('USER')}
-            className="w-full flex items-center justify-center gap-2 p-2.5 rounded-[14px] bg-[#000000] dark:bg-[#e3e3e3] hover:bg-[#006c49] dark:hover:bg-[#ffffff] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider shadow-md transition-all"
+          <Link
+            to="/login"
+            className="w-full flex items-center justify-center gap-2 p-2.5 rounded-[14px] bg-[#000000] dark:bg-[#e3e3e3] hover:bg-[#006c49] dark:hover:bg-[#ffffff] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
             <User className="w-4 h-4 text-[#6cf8bb] dark:text-[#006c49]" />
-            <span>Sign In</span>
-          </button>
+            <span>Sign In / Register</span>
+          </Link>
         ) : (
           <div className="flex items-center justify-between p-2 rounded-[14px] bg-[#ffffff] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40]">
             <Link to="/profile" className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
