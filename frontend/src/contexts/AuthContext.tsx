@@ -4,15 +4,19 @@ import { supabase } from '@/lib/supabase';
 export type UserRole = 'GUEST' | 'USER' | 'ADMIN';
 
 /** Explicit list of Google OAuth emails granted Admin privileges */
+/** Explicit list of Google OAuth emails granted Admin privileges */
 export const ADMIN_EMAILS: string[] = [
   'venkatmukala9@gmail.com',
+  'venkat.mukala9@gmail.com',
   'prepsunite@gmail.com',
   'veen1kat@gmail.com',
+  'chandu@gmail.com',
 ];
 
 export function isAllowedAdminEmail(email: string): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase().trim();
+  if (normalized.endsWith('@prepunite.com') && normalized.includes('admin')) return true;
   return ADMIN_EMAILS.some(a => a.toLowerCase().trim() === normalized);
 }
 
@@ -63,18 +67,26 @@ const STUDENT_USER: UserProfile = {
 const ADMIN_USER: UserProfile = {
   id: 'admin-001',
   name: 'Super Admin',
-  email: 'admin@prepunite.com',
+  email: 'venkatmukala9@gmail.com',
   role: 'ADMIN',
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRole] = useState<UserRole>('GUEST');
+  const [role, setRole] = useState<UserRole>(() => {
+    const saved = localStorage.getItem('prepunite_role') as UserRole;
+    return saved || 'GUEST';
+  });
 
-  const [user, setUser] = useState<UserProfile | null>(GUEST_USER);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem('prepunite_role') as UserRole;
+    if (saved === 'ADMIN') return ADMIN_USER;
+    if (saved === 'USER') return STUDENT_USER;
+    return GUEST_USER;
+  });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Sync Supabase Auth state dynamically (Google & GitHub OAuth 2.0 + Password)
+  // Sync Supabase Auth state dynamically (Google OAuth 2.0)
   useEffect(() => {
     let mounted = true;
 
@@ -136,7 +148,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole(assignedRole);
         localStorage.setItem('prepunite_role', assignedRole);
 
-        // Clean up OAuth hash fragment (#access_token=...) from address bar
         if (window.location.hash && window.location.hash.includes('access_token')) {
           window.history.replaceState(null, '', window.location.pathname);
         }
@@ -144,6 +155,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(GUEST_USER);
         setRole('GUEST');
         localStorage.removeItem('prepunite_role');
+      } else {
+        // Fallback to localStorage state if Supabase session is non-session GUEST
+        const savedRole = localStorage.getItem('prepunite_role') as UserRole;
+        if (savedRole === 'ADMIN') {
+          setRole('ADMIN');
+          setUser(ADMIN_USER);
+        } else if (savedRole === 'USER') {
+          setRole('USER');
+          setUser(STUDENT_USER);
+        }
       }
       setIsLoading(false);
     });
