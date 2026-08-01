@@ -51,7 +51,7 @@ export default function LoginPage() {
     try {
       const res = await signInWithGoogle();
       if (res?.error) {
-        setErrorMessage(typeof res.error === 'string' ? res.error : res.error.message || 'Google Sign-In failed');
+        setErrorMessage(res.error);
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred during Google Sign-In.');

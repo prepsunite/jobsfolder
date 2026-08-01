@@ -3,14 +3,12 @@ import { supabase } from '@/lib/supabase';
 
 export type UserRole = 'GUEST' | 'USER' | 'ADMIN';
 
-/** Explicit list of Google OAuth emails granted Admin privileges */
-/** Explicit list of Google OAuth emails granted Admin privileges */
+/** Authorized Google OAuth emails granted full Admin privileges */
 export const ADMIN_EMAILS: string[] = [
   'venkatmukala9@gmail.com',
   'venkat.mukala9@gmail.com',
   'prepsunite@gmail.com',
   'veen1kat@gmail.com',
-  'chandu@gmail.com',
 ];
 
 export function isAllowedAdminEmail(email: string): boolean {
@@ -36,8 +34,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isGuest: boolean;
   isLoading: boolean;
-  signInWithGoogle: () => Promise<{ error: any }>;
-  signInWithGithub: () => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
+  signInWithGithub: () => Promise<{ error: string | null }>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null; data?: any }>;
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: string | null; data?: any }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
@@ -56,35 +54,59 @@ const GUEST_USER: UserProfile = {
   role: 'GUEST',
 };
 
-const STUDENT_USER: UserProfile = {
-  id: 'student-101',
-  name: 'Alex Rivera',
-  email: 'alex.rivera@student.edu',
-  role: 'USER',
-  targetCompany: 'TCS NQT 2026',
-};
-
-const ADMIN_USER: UserProfile = {
-  id: 'admin-001',
-  name: 'Super Admin',
-  email: 'venkatmukala9@gmail.com',
-  role: 'ADMIN',
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole>(() => {
-    const saved = localStorage.getItem('prepunite_role') as UserRole;
-    return saved || 'GUEST';
+    const savedRole = localStorage.getItem('prepunite_role') as UserRole;
+    return savedRole || 'GUEST';
   });
 
   const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('prepunite_role') as UserRole;
-    if (saved === 'ADMIN') return ADMIN_USER;
-    if (saved === 'USER') return STUDENT_USER;
+    const savedEmail = localStorage.getItem('prepunite_user_email') || '';
+    const savedRole = localStorage.getItem('prepunite_role') as UserRole;
+    const savedName = localStorage.getItem('prepunite_user_name') || (savedEmail ? savedEmail.split('@')[0] : 'User');
+    const savedAvatar = localStorage.getItem('prepunite_user_avatar') || undefined;
+
+    if (savedRole && savedRole !== 'GUEST') {
+      const isAdmin = isAllowedAdminEmail(savedEmail) || savedRole === 'ADMIN';
+      const activeRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+      return {
+        id: savedEmail || 'user-id',
+        name: savedName,
+        email: savedEmail || 'user@prepunite.com',
+        role: activeRole,
+        avatarUrl: savedAvatar,
+        targetCompany: 'TCS NQT 2026',
+      };
+    }
     return GUEST_USER;
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Helper to persist profile state
+  const applyUserProfile = (email: string, name: string, avatarUrl?: string) => {
+    const isAdmin = isAllowedAdminEmail(email);
+    const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+
+    const newProfile: UserProfile = {
+      id: email,
+      name,
+      email,
+      role: assignedRole,
+      avatarUrl,
+      targetCompany: 'TCS NQT 2026',
+    };
+
+    setUser(newProfile);
+    setRole(assignedRole);
+    localStorage.setItem('prepunite_role', assignedRole);
+    localStorage.setItem('prepunite_user_email', email);
+    localStorage.setItem('prepunite_user_name', name);
+    if (avatarUrl) {
+      localStorage.setItem('prepunite_user_avatar', avatarUrl);
+    }
+    return newProfile;
+  };
 
   // Sync Supabase Auth state dynamically (Google OAuth 2.0)
   useEffect(() => {
@@ -96,22 +118,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted && session?.user) {
           const su = session.user;
           const userMeta = su.user_metadata || {};
-          const email = su.email || userMeta.email || 'user@prepunite.com';
-          const name = userMeta.full_name || userMeta.name || email.split('@')[0];
+          const email = su.email || userMeta.email || '';
+          const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
           const avatarUrl = userMeta.avatar_url || userMeta.picture;
 
-          const isAdminEmail = isAllowedAdminEmail(email);
-          const assignedRole: UserRole = isAdminEmail ? 'ADMIN' : 'USER';
-
-          setUser({
-            id: su.id,
-            name,
-            email,
-            role: assignedRole,
-            avatarUrl,
-          });
-          setRole(assignedRole);
-          localStorage.setItem('prepunite_role', assignedRole);
+          if (email) {
+            applyUserProfile(email, name, avatarUrl);
+          }
 
           if (window.location.hash && window.location.hash.includes('access_token')) {
             window.history.replaceState(null, '', window.location.pathname);
@@ -131,22 +144,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         const su = session.user;
         const userMeta = su.user_metadata || {};
-        const email = su.email || userMeta.email || 'user@prepunite.com';
-        const name = userMeta.full_name || userMeta.name || email.split('@')[0];
+        const email = su.email || userMeta.email || '';
+        const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
         const avatarUrl = userMeta.avatar_url || userMeta.picture;
 
-        const isAdminEmail = isAllowedAdminEmail(email);
-        const assignedRole: UserRole = isAdminEmail ? 'ADMIN' : 'USER';
-
-        setUser({
-          id: su.id,
-          name,
-          email,
-          role: assignedRole,
-          avatarUrl,
-        });
-        setRole(assignedRole);
-        localStorage.setItem('prepunite_role', assignedRole);
+        if (email) {
+          applyUserProfile(email, name, avatarUrl);
+        }
 
         if (window.location.hash && window.location.hash.includes('access_token')) {
           window.history.replaceState(null, '', window.location.pathname);
@@ -155,16 +159,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(GUEST_USER);
         setRole('GUEST');
         localStorage.removeItem('prepunite_role');
-      } else {
-        // Fallback to localStorage state if Supabase session is non-session GUEST
-        const savedRole = localStorage.getItem('prepunite_role') as UserRole;
-        if (savedRole === 'ADMIN') {
-          setRole('ADMIN');
-          setUser(ADMIN_USER);
-        } else if (savedRole === 'USER') {
-          setRole('USER');
-          setUser(STUDENT_USER);
-        }
+        localStorage.removeItem('prepunite_user_email');
+        localStorage.removeItem('prepunite_user_name');
+        localStorage.removeItem('prepunite_user_avatar');
       }
       setIsLoading(false);
     });
@@ -191,13 +188,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.warn('[signInWithGoogle] OAuth Notice:', error.message);
+        console.warn('[signInWithGoogle] OAuth notice:', error.message);
         return { error: error.message };
       }
       return { error: null };
     } catch (err: any) {
-      console.warn('[signInWithGoogle] OAuth Exception:', err);
-      return { error: err.message || 'Failed to initiate Google Sign-In' };
+      console.warn('[signInWithGoogle] Error:', err);
+      return { error: err.message || 'Failed to initiate Google OAuth' };
     }
   };
 
@@ -212,12 +209,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
 
-      if (error) {
-        return { error: error.message };
-      }
+      if (error) return { error: error.message };
       return { error: null };
     } catch (err: any) {
-      return { error: err.message || 'Failed to initiate GitHub Sign-In' };
+      return { error: err.message || 'Failed to initiate GitHub OAuth' };
     }
   };
 
@@ -229,6 +224,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       if (error) throw error;
+      if (data?.user?.email) {
+        const name = data.user.user_metadata?.full_name || email.split('@')[0];
+        applyUserProfile(email, name);
+      }
       return { error: null, data };
     } catch (err: any) {
       return { error: err.message || 'Invalid login credentials' };
@@ -271,48 +270,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginAsUser = (name = 'Super Admin', email = 'venkatmukala9@gmail.com') => {
-    const isAdminEmail = isAllowedAdminEmail(email);
-    const assignedRole: UserRole = isAdminEmail ? 'ADMIN' : 'USER';
-    const newUser: UserProfile = {
-      id: isAdminEmail ? 'admin-001' : 'student-101',
-      name: isAdminEmail ? 'Super Admin' : name,
-      email,
-      role: assignedRole,
-      targetCompany: 'TCS NQT 2026',
-    };
-    setUser(newUser);
-    setRole(assignedRole);
-    localStorage.setItem('prepunite_role', assignedRole);
+  const loginAsUser = (name = 'Demo Student', email = 'student@prepunite.com') => {
+    applyUserProfile(email, name);
   };
 
-  const loginAsAdmin = (password = 'admin123') => {
-    if (password === 'admin123' || password === 'admin') {
-      setUser(ADMIN_USER);
-      setRole('ADMIN');
-      localStorage.setItem('prepunite_role', 'ADMIN');
+  const loginAsAdmin = (password?: string) => {
+    if (!password || password === 'admin123') {
+      applyUserProfile('venkatmukala9@gmail.com', 'Super Admin');
       return true;
     }
     return false;
   };
 
   const switchRole = (newRole: UserRole) => {
-    setRole(newRole);
-    localStorage.setItem('prepunite_role', newRole);
-    if (newRole === 'GUEST') setUser(GUEST_USER);
-    if (newRole === 'USER') setUser(STUDENT_USER);
-    if (newRole === 'ADMIN') setUser(ADMIN_USER);
+    if (newRole === 'ADMIN') {
+      applyUserProfile('venkatmukala9@gmail.com', 'Super Admin');
+    } else if (newRole === 'USER') {
+      applyUserProfile('student@prepunite.com', 'Demo Student');
+    } else {
+      setUser(GUEST_USER);
+      setRole('GUEST');
+      localStorage.setItem('prepunite_role', 'GUEST');
+    }
   };
 
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn('[logout] Notice:', err);
+    } finally {
+      setUser(GUEST_USER);
+      setRole('GUEST');
+      localStorage.removeItem('prepunite_role');
+      localStorage.removeItem('prepunite_user_email');
+      localStorage.removeItem('prepunite_user_name');
+      localStorage.removeItem('prepunite_user_avatar');
     }
-    setRole('GUEST');
-    setUser(GUEST_USER);
-    localStorage.removeItem('prepunite_role');
   };
 
   return (

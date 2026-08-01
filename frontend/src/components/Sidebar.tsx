@@ -5,14 +5,11 @@ import {
   Building2,
   BookOpen,
   Layers,
-  Sparkles,
-  Bookmark,
   ShieldCheck,
   User,
   LogOut,
   ChevronRight,
   ChevronDown,
-  ArrowRightLeft,
   Calculator,
   BarChart3,
   Brain,
@@ -23,8 +20,7 @@ import {
 
 export default function Sidebar() {
   const location = useLocation();
-  const { user, role, switchRole, logout } = useAuth();
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const { user, role, logout } = useAuth();
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
   const navLinks = [
@@ -68,7 +64,7 @@ export default function Sidebar() {
               role === 'ADMIN' ? 'bg-purple-600 animate-pulse' : role === 'USER' ? 'bg-emerald-500' : 'bg-amber-500'
             }`} />
             <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider text-[11px]">
-              {role === 'ADMIN' ? 'Admin Mode' : role === 'USER' ? 'Student Workspace' : 'Public Visitor'}
+              {role === 'ADMIN' ? 'Admin Mode Active' : role === 'USER' ? 'Student Workspace' : 'Public Visitor'}
             </span>
           </div>
           {role === 'GUEST' && (
@@ -77,8 +73,6 @@ export default function Sidebar() {
             </Link>
           )}
         </div>
-
-
 
         {/* Main Navigation Links */}
         <nav className="space-y-1">
@@ -145,30 +139,30 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Admin Section (Protected View) */}
-        <div className="pt-3.5 border-t border-[#d8cbc4] dark:border-[#383a40] space-y-1">
-          <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block px-3 mb-1">
-            Control
-          </span>
-          <Link
-            to="/admin"
-            className={`flex items-center justify-between px-3.5 py-2.5 rounded-[14px] text-xs font-bold transition-all ${
-              location.pathname.startsWith('/admin')
-                ? 'bg-[#006c49] dark:bg-[#6cf8bb] text-white dark:text-[#000000] shadow-sm'
-                : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/70 dark:hover:bg-[#2b2d31]/70'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <ShieldCheck className={`w-4 h-4 ${role === 'ADMIN' ? 'text-purple-600 dark:text-purple-400' : 'text-[#006c49] dark:text-[#6cf8bb]'}`} />
-              <span>Admin Panel</span>
-            </div>
-            {role === 'ADMIN' && (
+        {/* Admin Control Panel Section (STRICTLY RESTRICTED TO ADMIN ROLE ONLY) */}
+        {role === 'ADMIN' && (
+          <div className="pt-3.5 border-t border-[#d8cbc4] dark:border-[#383a40] space-y-1">
+            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider block px-3 mb-1 font-mono">
+              Control Center
+            </span>
+            <Link
+              to="/admin"
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-[14px] text-xs font-bold transition-all ${
+                location.pathname.startsWith('/admin')
+                  ? 'bg-purple-700 dark:bg-purple-400 text-white dark:text-[#000000] shadow-sm'
+                  : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/70 dark:hover:bg-[#2b2d31]/70'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span>Admin Panel</span>
+              </div>
               <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500 dark:bg-purple-900/50 text-white dark:text-purple-300">
                 Admin
               </span>
-            )}
-          </Link>
-        </div>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Bottom User Account Section */}
@@ -194,14 +188,14 @@ export default function Sidebar() {
                 <span className={`text-[10px] font-semibold block truncate ${
                   role === 'ADMIN' ? 'text-purple-700 dark:text-purple-400' : 'text-[#00714d] dark:text-[#6cf8bb]'
                 }`}>
-                  {role === 'ADMIN' ? 'Administrator' : 'Student Profile'}
+                  {role === 'ADMIN' ? 'Administrator' : user?.email}
                 </span>
               </div>
             </Link>
             <button
               onClick={logout}
               title="Sign Out"
-              className="p-1.5 text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors shrink-0"
+              className="p-1.5 text-[#747878] dark:text-[#a6adbb] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors shrink-0 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
