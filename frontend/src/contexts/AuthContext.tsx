@@ -191,16 +191,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.warn('[signInWithGoogle] Notice:', error.message);
-        // Fallback for local demo testing if client ID misconfigured
-        loginAsUser('Google Student User', 'student@gmail.com');
-        return { error: null };
+        console.warn('[signInWithGoogle] OAuth Notice:', error.message);
+        return { error: error.message };
       }
       return { error: null };
     } catch (err: any) {
-      console.warn('[signInWithGoogle] Fallback activated:', err);
-      loginAsUser('Google Student User', 'student@gmail.com');
-      return { error: null };
+      console.warn('[signInWithGoogle] OAuth Exception:', err);
+      return { error: err.message || 'Failed to initiate Google Sign-In' };
     }
   };
 
@@ -216,15 +213,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.warn('[signInWithGithub] Notice:', error.message);
-        loginAsUser('GitHub Developer User', 'developer@github.com');
-        return { error: null };
+        return { error: error.message };
       }
       return { error: null };
     } catch (err: any) {
-      console.warn('[signInWithGithub] Fallback activated:', err);
-      loginAsUser('GitHub Developer User', 'developer@github.com');
-      return { error: null };
+      return { error: err.message || 'Failed to initiate GitHub Sign-In' };
     }
   };
 
@@ -278,15 +271,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginAsUser = (name = 'Alex Rivera', email = 'alex.rivera@student.edu') => {
+  const loginAsUser = (name = 'Super Admin', email = 'venkatmukala9@gmail.com') => {
+    const isAdminEmail = isAllowedAdminEmail(email);
+    const assignedRole: UserRole = isAdminEmail ? 'ADMIN' : 'USER';
     const newUser: UserProfile = {
-      ...STUDENT_USER,
-      name,
+      id: isAdminEmail ? 'admin-001' : 'student-101',
+      name: isAdminEmail ? 'Super Admin' : name,
       email,
+      role: assignedRole,
+      targetCompany: 'TCS NQT 2026',
     };
     setUser(newUser);
-    setRole('USER');
-    localStorage.setItem('prepunite_role', 'USER');
+    setRole(assignedRole);
+    localStorage.setItem('prepunite_role', assignedRole);
   };
 
   const loginAsAdmin = (password = 'admin123') => {
