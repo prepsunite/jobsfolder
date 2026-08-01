@@ -184,6 +184,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newProfile;
   };
 
+  // Standard Database `public.profiles` Table Sync
+  const syncProfileWithSupabase = async (
+    userId: string,
+    email: string,
+    rawName: string,
+    rawAvatar?: string,
+    metaRole?: string,
+    appRole?: string
+  ) => {
+    try {
+      const { data: dbProfile } = await supabase
+        .from('profiles')
+        .select('role, name, avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const dbRole = dbProfile?.role ? String(dbProfile.role).toUpperCase() : undefined;
+      const isDbAdmin = dbRole === 'ADMIN';
+      const isEmailAdmin = isAllowedAdminEmail(email);
+      const isAdmin = isEmailAdmin || isDbAdmin || metaRole === 'ADMIN' || appRole === 'ADMIN';
+
+      const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+      const finalName = dbProfile?.name || rawName;
+      const finalAvatar = dbProfile?.avatar_url || rawAvatar;
+
+      if (!dbProfile && userId && email) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: userId,
+            email: email,
+            name: finalName || email.split('@')[0],
+            role: isAdmin ? 'admin' : 'user',
+            avatar_url: finalAvatar,
+          });
+        } catch (uErr) {
+          console.warn('[syncProfileWithSupabase] Upsert notice:', uErr);
+        }
+      }
+
+      applyUserProfile(email, finalName, finalAvatar, assignedRole === 'ADMIN' ? 'ADMIN' : undefined);
+    } catch (err) {
+      console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
+      applyUserProfile(email, rawName, rawAvatar, metaRole, appRole);
+    }
+  };
+
   // Sync Supabase Auth state dynamically (Google OAuth 2.0)
   useEffect(() => {
     let mounted = true;
@@ -202,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const appRole = appMeta.role;
 
           if (email) {
-            applyUserProfile(email, name, avatarUrl, metaRole, appRole);
+            await syncProfileWithSupabase(su.id, email, name, avatarUrl, metaRole, appRole);
           }
 
           if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
@@ -219,7 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkInitialSession();
 
     // Listen to live Auth State Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const su = session.user;
         const userMeta = su.user_metadata || {};
@@ -231,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const appRole = appMeta.role;
 
         if (email) {
-          applyUserProfile(email, name, avatarUrl, metaRole, appRole);
+          await syncProfileWithSupabase(su.id, email, name, avatarUrl, metaRole, appRole);
         }
 
         if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {

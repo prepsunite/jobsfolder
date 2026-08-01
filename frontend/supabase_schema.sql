@@ -120,3 +120,60 @@ BEGIN
     RETURN v_has_paper;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- 11. STANDARDIZED USER PROFILES TABLE & AUTOMATIC ROLE ASSIGNMENT TRIGGER
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+  avatar_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Allow public & client reads/writes
+CREATE POLICY "Allow public read profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Allow insert/update profiles" ON public.profiles FOR ALL USING (true);
+
+-- Automatic trigger to insert profile into public.profiles on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user_profile()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, name, role, avatar_url)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+    CASE
+      WHEN LOWER(NEW.email) IN ('venkatmukala9@gmail.com', 'venkat.mukala9@gmail.com', 'prepsunite@gmail.com', 'veen1kat@gmail.com') THEN 'admin'
+      ELSE 'user'
+    END,
+    NEW.raw_user_meta_data->>'avatar_url'
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    role = EXCLUDED.role,
+    name = EXCLUDED.name,
+    avatar_url = EXCLUDED.avatar_url,
+    updated_at = NOW();
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Attach Trigger to auth.users
+DROP TRIGGER IF EXISTS on_auth_user_created_profile ON auth.users;
+CREATE TRIGGER on_auth_user_created_profile
+  AFTER INSERT OR UPDATE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_profile();
+
+-- Retroactive Update query to promote designated admin emails
+UPDATE public.profiles
+SET role = 'admin'
+WHERE LOWER(email) IN ('venkatmukala9@gmail.com', 'venkat.mukala9@gmail.com', 'prepsunite@gmail.com', 'veen1kat@gmail.com');
+
