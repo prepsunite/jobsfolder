@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -27,6 +27,7 @@ export default function LoginPage() {
     user,
     role,
     isAuthenticated,
+    isLoading: authLoading,
     signInWithGoogle,
     signInWithGithub,
     signInWithEmail,
@@ -38,6 +39,14 @@ export default function LoginPage() {
   } = useAuth();
 
   const navigate = useNavigate();
+
+  // Automatically navigate away from /login when authenticated via OAuth or Email
+  useEffect(() => {
+    if (isAuthenticated && user && !authLoading) {
+      const targetPath = role === 'ADMIN' ? '/admin' : '/companies';
+      navigate(targetPath, { replace: true });
+    }
+  }, [isAuthenticated, user, role, authLoading, navigate]);
 
   // Mode state: 'signIn' | 'signUp' | 'forgot'
   const [mode, setMode] = useState<'signIn' | 'signUp' | 'forgot'>('signIn');
@@ -172,6 +181,15 @@ export default function LoginPage() {
       setErrorMessage('Invalid admin key. Try default: admin123');
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
+        <div className="w-10 h-10 border-4 border-[#006c49]/20 border-t-[#006c49] rounded-full animate-spin"></div>
+        <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Verifying Authentication...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[88vh] flex items-center justify-center p-3 sm:p-6 lg:p-10 animate-fadeIn">

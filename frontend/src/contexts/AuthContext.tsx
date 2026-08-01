@@ -100,6 +100,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           setRole(assignedRole);
           localStorage.setItem('prepunite_role', assignedRole);
+
+          if (window.location.hash && window.location.hash.includes('access_token')) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
         }
       } catch (err) {
         console.warn('[AuthProvider] Supabase session check notice:', err);
@@ -131,6 +135,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         setRole(assignedRole);
         localStorage.setItem('prepunite_role', assignedRole);
+
+        // Clean up OAuth hash fragment (#access_token=...) from address bar
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
       } else {
         const savedRole = localStorage.getItem('prepunite_role') as UserRole;
         if (!savedRole || savedRole === 'GUEST') {
