@@ -61,17 +61,12 @@ export default function Sidebar() {
         <div className="p-2.5 rounded-[14px] bg-[#ffffff] dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${
-              role === 'ADMIN' ? 'bg-purple-600 animate-pulse' : role === 'USER' ? 'bg-emerald-500' : 'bg-amber-500'
+              role === 'ADMIN' ? 'bg-purple-600 animate-pulse' : role === 'USER' ? 'bg-emerald-500' : 'bg-emerald-500'
             }`} />
             <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider text-[11px]">
-              {role === 'ADMIN' ? 'Admin Mode Active' : role === 'USER' ? 'Student Workspace' : 'Public Visitor'}
+              {role === 'ADMIN' ? 'Admin Mode Active' : 'Student Workspace'}
             </span>
           </div>
-          {role === 'GUEST' && (
-            <Link to="/login" className="text-[10px] font-extrabold text-[#006c49] dark:text-[#6cf8bb] hover:underline uppercase">
-              Sign In
-            </Link>
-          )}
         </div>
 
         {/* Main Navigation Links */}
@@ -167,40 +162,30 @@ export default function Sidebar() {
 
       {/* Bottom User Account Section */}
       <div className="p-4 border-t border-[#e2d8d2] dark:border-[#2b2d31] bg-[#eae1da]/50 dark:bg-[#141517]/50">
-        {role === 'GUEST' ? (
-          <Link
-            to="/login"
-            className="w-full flex items-center justify-center gap-2 p-2.5 rounded-[14px] bg-[#000000] dark:bg-[#e3e3e3] hover:bg-[#006c49] dark:hover:bg-[#ffffff] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
-          >
-            <User className="w-4 h-4 text-[#6cf8bb] dark:text-[#006c49]" />
-            <span>Sign In / Register</span>
-          </Link>
-        ) : (
-          <div className="flex items-center justify-between p-2 rounded-[14px] bg-[#ffffff] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40]">
-            <Link to="/profile" className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-              <div className={`w-8 h-8 rounded-full text-white dark:text-[#000000] flex items-center justify-center font-bold text-xs shrink-0 ${
-                role === 'ADMIN' ? 'bg-purple-700 dark:bg-purple-400' : 'bg-[#006c49] dark:bg-[#6cf8bb]'
+        <div className="flex items-center justify-between p-2 rounded-[14px] bg-[#ffffff] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40]">
+          <Link to="/profile" className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+            <div className={`w-8 h-8 rounded-full text-white dark:text-[#000000] flex items-center justify-center font-bold text-xs shrink-0 ${
+              role === 'ADMIN' ? 'bg-purple-700 dark:bg-purple-400' : 'bg-[#006c49] dark:bg-[#6cf8bb]'
+            }`}>
+              {role === 'ADMIN' ? <KeyRound className="w-4 h-4" /> : <User className="w-4 h-4" />}
+            </div>
+            <div className="min-w-0">
+              <span className="font-bold text-xs text-[#1f1b17] dark:text-[#e3e3e3] block truncate">{user?.name || 'Workspace Account'}</span>
+              <span className={`text-[10px] font-semibold block truncate ${
+                role === 'ADMIN' ? 'text-purple-700 dark:text-purple-400' : 'text-[#00714d] dark:text-[#6cf8bb]'
               }`}>
-                {role === 'ADMIN' ? <KeyRound className="w-4 h-4" /> : <User className="w-4 h-4" />}
-              </div>
-              <div className="min-w-0">
-                <span className="font-bold text-xs text-[#1f1b17] dark:text-[#e3e3e3] block truncate">{user?.name}</span>
-                <span className={`text-[10px] font-semibold block truncate ${
-                  role === 'ADMIN' ? 'text-purple-700 dark:text-purple-400' : 'text-[#00714d] dark:text-[#6cf8bb]'
-                }`}>
-                  {role === 'ADMIN' ? 'Administrator' : user?.email}
-                </span>
-              </div>
-            </Link>
-            <button
-              onClick={logout}
-              title="Sign Out"
-              className="p-1.5 text-[#747878] dark:text-[#a6adbb] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors shrink-0 cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+                {role === 'ADMIN' ? 'Administrator' : (user?.email || 'Active Account')}
+              </span>
+            </div>
+          </Link>
+          <button
+            onClick={logout}
+            title="Sign Out"
+            className="p-1.5 text-[#747878] dark:text-[#a6adbb] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors shrink-0 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </aside>
   );
