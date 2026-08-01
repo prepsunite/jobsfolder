@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkInitialSession();
 
     // Listen to live Auth State Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const su = session.user;
         const userMeta = su.user_metadata || {};
@@ -140,12 +140,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (window.location.hash && window.location.hash.includes('access_token')) {
           window.history.replaceState(null, '', window.location.pathname);
         }
-      } else {
-        const savedRole = localStorage.getItem('prepunite_role') as UserRole;
-        if (!savedRole || savedRole === 'GUEST') {
-          setUser(GUEST_USER);
-          setRole('GUEST');
-        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(GUEST_USER);
+        setRole('GUEST');
+        localStorage.removeItem('prepunite_role');
       }
       setIsLoading(false);
     });
