@@ -22,8 +22,6 @@ export default function LoginPage() {
     isAuthenticated,
     isLoading: authLoading,
     signInWithGoogle,
-    loginAsUser,
-    loginAsAdmin,
     logout,
   } = useAuth();
 
@@ -32,10 +30,6 @@ export default function LoginPage() {
   // Status & loading states
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Quick Admin Passcode Modal
-  const [adminPasswordInput, setAdminPasswordInput] = useState('');
-  const [showAdminModal, setShowAdminModal] = useState(false);
 
   // Automatically navigate away from /login when authenticated
   useEffect(() => {
@@ -57,22 +51,6 @@ export default function LoginPage() {
       setErrorMessage(err.message || 'An unexpected error occurred during Google Sign-In.');
     } finally {
       setGoogleLoading(false);
-    }
-  };
-
-  const handleQuickDemoStudent = () => {
-    loginAsUser('Demo Student', 'student@prepunite.com');
-    navigate('/profile');
-  };
-
-  const handleQuickAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = loginAsAdmin(adminPasswordInput);
-    if (success) {
-      setShowAdminModal(false);
-      navigate('/admin');
-    } else {
-      setErrorMessage('Invalid admin passcode. Try default: admin123');
     }
   };
 
@@ -281,27 +259,8 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              {/* DEMO ACCESS OPTION & SECURITY FOOTER */}
-              <div className="pt-6 border-t border-[#eae1da] dark:border-[#2b2d31] space-y-4">
-                <div className="flex items-center justify-between text-xs text-[#747878] dark:text-[#a6adbb]">
-                  <span className="font-semibold">Local Demo Access:</span>
-                  <div className="flex items-center gap-2 font-bold">
-                    <button
-                      onClick={handleQuickDemoStudent}
-                      className="text-[#006c49] dark:text-[#6cf8bb] hover:underline cursor-pointer"
-                    >
-                      Student Demo
-                    </button>
-                    <span>•</span>
-                    <button
-                      onClick={() => setShowAdminModal(true)}
-                      className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-                    >
-                      Admin Demo
-                    </button>
-                  </div>
-                </div>
-
+              {/* SECURITY FOOTER */}
+              <div className="pt-6 border-t border-[#eae1da] dark:border-[#2b2d31]">
                 <div className="flex items-center justify-center gap-1.5 text-xs text-[#747878] dark:text-[#a6adbb]">
                   <ShieldCheck className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb]" />
                   <span>Secured by Supabase OAuth 2.0 &amp; 256-bit SSL</span>
@@ -313,61 +272,6 @@ export default function LoginPage() {
 
         </div>
       </div>
-
-      {/* QUICK ADMIN ACCESS MODAL */}
-      {showAdminModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 relative">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <KeyRound className="w-4 h-4" />
-                </div>
-                <h3 className="font-display font-black text-base text-[#1f1b17] dark:text-white">
-                  Admin Passcode Access
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowAdminModal(false)}
-                className="text-xs font-bold text-[#747878] hover:text-black dark:hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
-              Enter the admin passcode to unlock full platform management, question uploads, and experience approvals.
-            </p>
-
-            <form onSubmit={handleQuickAdminLogin} className="space-y-3">
-              <input
-                type="password"
-                required
-                value={adminPasswordInput}
-                onChange={(e) => setAdminPasswordInput(e.target.value)}
-                placeholder="Enter passcode (default: admin123)"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#f8f5f2] dark:bg-[#141517] border border-[#eae1da] dark:border-[#2b2d31] focus:ring-2 focus:ring-amber-500 text-xs font-semibold outline-none text-[#1f1b17] dark:text-white"
-              />
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowAdminModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#eae1da] dark:border-[#2b2d31] text-xs font-bold text-[#747878] dark:text-[#a6adbb]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm"
-                >
-                  Unlock Admin
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

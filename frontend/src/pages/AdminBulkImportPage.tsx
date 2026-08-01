@@ -11,10 +11,14 @@ import {
   FileCode,
   Layers
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import NotFoundPage from '@/pages/NotFoundPage';
 import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
 
 export default function AdminBulkImportPage() {
+  const { role } = useAuth();
+
   const [jsonText, setJsonText] = useState('');
   const [parsedPreview, setParsedPreview] = useState<{
     items: Partial<TopicQuestionItem>[];
@@ -28,6 +32,10 @@ export default function AdminBulkImportPage() {
   const [previewPage, setPreviewPage] = useState<number>(1);
   const PREVIEW_PAGE_SIZE = 15;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  if (role !== 'ADMIN') {
+    return <NotFoundPage />;
+  }
 
   // Topic Name Mapping Helper
   const getTopicDisplayName = (slug: string) => {

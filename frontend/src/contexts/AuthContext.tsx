@@ -40,8 +40,6 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: string | null; data?: any }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   loginAsUser: (name?: string, email?: string) => void;
-  loginAsAdmin: (password?: string) => boolean;
-  switchRole: (newRole: UserRole) => void;
   logout: () => Promise<void>;
 }
 
@@ -274,26 +272,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     applyUserProfile(email, name);
   };
 
-  const loginAsAdmin = (password?: string) => {
-    if (!password || password === 'admin123') {
-      applyUserProfile('venkatmukala9@gmail.com', 'Super Admin');
-      return true;
-    }
-    return false;
-  };
-
-  const switchRole = (newRole: UserRole) => {
-    if (newRole === 'ADMIN') {
-      applyUserProfile('venkatmukala9@gmail.com', 'Super Admin');
-    } else if (newRole === 'USER') {
-      applyUserProfile('student@prepunite.com', 'Demo Student');
-    } else {
-      setUser(GUEST_USER);
-      setRole('GUEST');
-      localStorage.setItem('prepunite_role', 'GUEST');
-    }
-  };
-
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -324,8 +302,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUpWithEmail,
         resetPassword,
         loginAsUser,
-        loginAsAdmin,
-        switchRole,
         logout,
       }}
     >

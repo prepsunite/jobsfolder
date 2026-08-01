@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin.service';
 import { dataStore, type CompanyItem, type ExamItem, type ExperienceItem } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
+import NotFoundPage from '@/pages/NotFoundPage';
 import { Link } from 'react-router';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -33,11 +34,9 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
-  const { role, loginAsAdmin } = useAuth();
+  const { role } = useAuth();
   const queryClient = useQueryClient();
 
-  const [adminPassword, setAdminPassword] = useState('');
-  const [authError, setAuthError] = useState(false);
   const [adminTab, setAdminTab] = useState<'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'metrics'>('manage-exams');
 
   // Dynamically Loaded Companies, Exams, and Experiences from dataStore
@@ -138,16 +137,6 @@ export default function AdminDashboardPage() {
     enabled: role === 'ADMIN',
     retry: 1,
   });
-
-  const handleAdminAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = loginAsAdmin(adminPassword);
-    if (!success) {
-      setAuthError(true);
-    } else {
-      setAuthError(false);
-    }
-  };
 
   const handleNameChange = (name: string) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
@@ -297,57 +286,9 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 🛡️ ADMIN ACCESS GATE FOR GUESTS AND STUDENTS
+  // 🛡️ STRICT ADMIN ACCESS PROTECTION: NON-ADMINS GET A 404 PAGE
   if (role !== 'ADMIN') {
-    return (
-      <div className="max-w-md mx-auto py-16 space-y-6 animate-fadeIn text-center">
-        <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 mx-auto flex items-center justify-center shadow-lg shadow-purple-500/10">
-          <Lock className="w-8 h-8" />
-        </div>
-
-        <div className="space-y-2">
-          <h1 className="font-display text-2xl font-black text-[#1f1b17] dark:text-[#e3e3e3]">Admin Authentication Required</h1>
-          <p className="text-xs text-[#747878] dark:text-[#a6adbb] leading-relaxed">
-            You are currently viewing as <strong className="uppercase text-[#006c49] dark:text-[#6cf8bb]">{role}</strong>. Please enter administrative credentials to unlock full CRUD control center features.
-          </p>
-        </div>
-
-        <form onSubmit={handleAdminAuth} className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] p-6 shadow-sm space-y-4 text-left">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider block">
-              Admin Access Code
-            </label>
-            <div className="relative">
-              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#747878] dark:text-[#6e7278]" />
-              <input
-                type="password"
-                placeholder="Enter password (e.g. admin123)..."
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] focus:border-purple-600 rounded-full pl-10 pr-4 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-sans"
-              />
-            </div>
-            {authError && (
-              <span className="text-[11px] text-rose-600 font-bold block pt-1">
-                Invalid Admin Access Code. Demo pass: admin123
-              </span>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2.5 rounded-full bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2"
-          >
-            <ShieldCheck className="w-4 h-4 text-purple-300" />
-            <span>Authenticate as Admin</span>
-          </button>
-        </form>
-
-        <div className="p-3 bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#2b2d31] rounded-[14px] text-xs text-[#747878] dark:text-[#a6adbb]">
-          💡 <strong>Demo Password:</strong> <code className="bg-[#ffffff] dark:bg-[#141517] px-2 py-0.5 rounded font-mono text-[#1f1b17] dark:text-[#e3e3e3]">admin123</code>
-        </div>
-      </div>
-    );
+    return <NotFoundPage />;
   }
 
   const allExamsCount = dataStore.getAllExams().length;
