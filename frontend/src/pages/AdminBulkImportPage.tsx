@@ -1,34 +1,28 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router';
 import {
-  FileJson,
   Upload,
   CheckCircle2,
-  AlertTriangle,
-  XCircle,
   Folder,
   ArrowRight,
   ShieldCheck,
-  Zap,
-  HelpCircle,
   Eye,
-  RefreshCw,
   Sparkles,
   FileCode,
   Layers
 } from 'lucide-react';
-import { dataStore, type ImportReport, type TopicQuestionItem, resolveTopicSlug } from '@/services/dataStore';
+import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
 
 export default function AdminBulkImportPage() {
   const [jsonText, setJsonText] = useState('');
-  const [targetTopicOverride, setTargetTopicOverride] = useState<string>('AUTO');
   const [parsedPreview, setParsedPreview] = useState<{
     items: Partial<TopicQuestionItem>[];
     topicSummary: Record<string, number>;
     parseErrors: string[];
   } | null>(null);
 
+  const [targetTopicOverride, setTargetTopicOverride] = useState<string>('AUTO');
   const [importReport, setImportReport] = useState<ImportReport | null>(null);
   const [affectedTopics, setAffectedTopics] = useState<string[]>([]);
   const [previewPage, setPreviewPage] = useState<number>(1);

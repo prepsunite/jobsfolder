@@ -18,8 +18,7 @@ import {
   ShieldCheck,
   Filter,
   FileJson,
-  Upload,
-  Check
+  Upload
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,14 +76,15 @@ export default function TopicQuestionsPage() {
   const [bulkJsonInput, setBulkJsonInput] = useState('');
   const [bulkImportResult, setBulkImportResult] = useState<ImportReport | null>(null);
 
+  useEffect(() => {
+    const list = dataStore.getTopicQuestions(topicId);
+    setQuestions(list);
+  }, [topicId]);
+
   const loadQuestions = () => {
     const list = dataStore.getTopicQuestions(topicId);
     setQuestions(list);
   };
-
-  useEffect(() => {
-    loadQuestions();
-  }, [topicId]);
 
   const handleSelectOption = (qId: string, optionKey: string) => {
     setSelectedAnswers(prev => ({ ...prev, [qId]: optionKey }));
@@ -385,7 +385,7 @@ export default function TopicQuestionsPage() {
             )}
           </div>
         ) : (
-          filteredQuestions.map((q, idx) => {
+          filteredQuestions.map((q) => {
             const userSel = selectedAnswers[q.id];
             const isExplVisible = revealedExpl[q.id];
             const isSaved = savedQuestionIds.includes(q.id);

@@ -4,9 +4,6 @@ import QuestionCard from '@/components/QuestionCard';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import ContentRenderer from '@/components/ContentRenderer';
 import {
   User,
@@ -23,9 +20,7 @@ import {
   Monitor,
   Folder,
   ArrowRight,
-  Lock,
-  Sparkles,
-  ShieldCheck
+  Sparkles
 } from 'lucide-react';
 
 export default function ProfilePage() {

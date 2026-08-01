@@ -3,12 +3,8 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router';
 // Native Document Explorer View Enabled
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
-import { PaperService } from '@/services/paper.service';
-import { dataStore, type ExamItem, type DocTabNode } from '@/services/dataStore';
+import { dataStore, type ExamItem } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -20,7 +16,6 @@ import {
   ArrowLeft,
   ExternalLink,
   ChevronRight,
-  ChevronDown,
   GraduationCap,
   Heart,
   Edit3,
@@ -29,48 +24,8 @@ import {
   Trash2,
   CheckCircle2,
   Maximize2,
-  Save,
-  PanelLeftClose,
-  PanelLeftOpen,
-  FileText,
-  Clock,
-  Sparkles,
-  Folder,
-  FolderOpen,
-  List,
   Bookmark,
-  BookmarkCheck,
-  MoreVertical,
-  Copy,
-  Smile,
-  ArrowUp,
-  Lock,
-  ArrowRight,
-  ShieldCheck,
-  ArrowDown,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Link2 as LinkIcon,
-  Image as ImageIcon,
-  ListOrdered,
-  Minus,
-  Undo,
-  Redo,
-  Code,
-  Table,
-  Quote,
-  Search,
-  Printer,
-  ZoomIn,
-  ZoomOut,
-  Check,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Highlighter,
-  Palette
+  BookmarkCheck
 } from 'lucide-react';
 
 type TabType = 'aboutCompany' | 'aboutExam' | 'oldPapers';
@@ -139,7 +94,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         setSelectedExamId(companyExams[0].id);
       }
     }
-  }, [companyExams, urlExamId]);
+  }, [companyExams, urlExamId, selectedExamId]);
 
   const handleSelectExam = (examId: string) => {
     setSelectedExamId(examId);

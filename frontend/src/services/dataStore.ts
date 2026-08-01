@@ -1346,7 +1346,7 @@ class DataStoreManager {
     try {
       const parsed = JSON.parse(jsonText);
       items = Array.isArray(parsed) ? parsed : [parsed];
-    } catch (e) {
+    } catch {
       report.invalid = 1;
       report.errors.push({ itemIndex: 1, reason: 'Invalid JSON syntax. Please check brackets and quotes.' });
       return report;

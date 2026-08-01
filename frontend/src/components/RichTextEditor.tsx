@@ -18,7 +18,6 @@ import CharacterCount from '@tiptap/extension-character-count';
 import { marked } from 'marked';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
-  Heading1, Heading2, Heading3,
   List, ListOrdered, CheckSquare,
   Quote, Code, FileCode,
   Table as TableIcon,
@@ -27,9 +26,9 @@ import {
   IndentIncrease, IndentDecrease,
   Undo2, Redo2, Maximize2, Minimize2,
   RotateCcw, Copy, Check, Eye, Edit3, Columns, Sparkles,
-  ChevronDown, Type, Search, X, Upload, ExternalLink,
+  ChevronDown, Type, Search, X, Upload,
   Palette, Highlighter,
-  TableRowsSplit, Columns2, Trash2, Plus,
+  Trash2, Plus,
 } from 'lucide-react';
 
 // ─── Props ────────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Sparkles, Plus, GraduationCap, Edit3, Trash2 } from 'lucide-react';
+import { Building2, Plus, Edit3, Trash2 } from 'lucide-react';
 
 interface CompanyCardProps {
   company: Company & { examsList?: string[] };
