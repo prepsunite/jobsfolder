@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin.service';
+import { companyService } from '@/services/company.service';
+import { examService } from '@/services/exam.service';
+import { questionService } from '@/services/question.service';
+import { experienceService } from '@/services/experience.service';
 import { dataStore, type CompanyItem, type ExamItem, type ExperienceItem } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -145,74 +149,110 @@ export default function AdminDashboardPage() {
   };
 
   // STREAMLINED COMPANY & EXAM PUBLISHING FLOW
-  const handlePublishCompanyPackage = (e: React.FormEvent) => {
+  const handlePublishCompanyPackage = async (e: React.FormEvent) => {
     e.preventDefault();
     const slug = companyForm.slug || companyForm.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
     const examTitle = companyForm.examName || `${companyForm.name} Placement Papers 2026`;
 
-    // 1. Create Company Profile
-    dataStore.addCompany({
-      name: companyForm.name,
-      slug: slug,
-      industry: companyForm.industry,
-      companySize: companyForm.companySize,
-      headquarters: companyForm.headquarters,
-      website: companyForm.website,
-      logoUrl: companyForm.logoUrl || undefined,
-      description: companyForm.description,
-      examsList: [examTitle],
-    });
+    try {
+      // 1. Create Company Profile in Supabase
+      const createdCompany = await companyService.createCompany({
+        name: companyForm.name,
+        slug: slug,
+        industry: companyForm.industry,
+        companySize: companyForm.companySize,
+        headquarters: companyForm.headquarters,
+        website: companyForm.website,
+        logoUrl: companyForm.logoUrl || undefined,
+        description: companyForm.description,
+      });
 
-    // 2. Create Exam Object with Text-Based Markdown Content
-    dataStore.addExam({
-      companySlug: slug,
-      name: examTitle,
-      badge: companyForm.examBadge || 'Official Campus Drive 2026',
-      content: companyForm.examContent,
-      oldPapers: companyForm.oldPapersContent,
-    });
+      // 2. Create Exam Object in Supabase
+      await examService.createExam({
+        companySlug: slug,
+        name: examTitle,
+        badge: companyForm.examBadge || 'Official Campus Drive 2026',
+        content: companyForm.examContent,
+        oldPapers: companyForm.oldPapersContent,
+      });
 
-    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
-    queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-    setSelectedCompanySlug(slug);
-    setAdminTab('manage-exams');
-    reloadDataStoreLists(slug);
+      dataStore.addCompany(createdCompany as any);
+      dataStore.addExam({
+        companySlug: slug,
+        name: examTitle,
+        badge: companyForm.examBadge || 'Official Campus Drive 2026',
+        content: companyForm.examContent,
+        oldPapers: companyForm.oldPapersContent,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      setSelectedCompanySlug(slug);
+      setAdminTab('manage-exams');
+      reloadDataStoreLists(slug);
+    } catch (err: any) {
+      alert(`Failed to publish company package to Supabase: ${err.message || err}`);
+    }
   };
 
-  const handleSaveCompanyOverviewAdmin = () => {
+  const handleSaveCompanyOverviewAdmin = async () => {
     const activeCompany = allCompanies.find(c => c.slug === selectedCompanySlug);
     if (!activeCompany) return;
 
-    dataStore.updateCompany(activeCompany.id, {
-      description: adminOverviewInput
-    });
+    try {
+      await companyService.updateCompany(activeCompany.slug || selectedCompanySlug, {
+        description: adminOverviewInput
+      });
 
-    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
-    queryClient.invalidateQueries({ queryKey: ['company', selectedCompanySlug] });
-    setOverviewSavedNotice(true);
-    setTimeout(() => setOverviewSavedNotice(false), 3000);
+      dataStore.updateCompany(activeCompany.id, {
+        description: adminOverviewInput
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['company', selectedCompanySlug] });
+      setOverviewSavedNotice(true);
+      setTimeout(() => setOverviewSavedNotice(false), 3000);
+    } catch (err: any) {
+      alert(`Failed to update company overview in Supabase: ${err.message || err}`);
+    }
   };
 
-  const handleQuestionSubmit = (e: React.FormEvent) => {
+  const handleQuestionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dataStore.addQuestion({
-      title: questionForm.title,
-      companyName: questionForm.companyName,
-      companySlug: questionForm.companySlug,
-      role: questionForm.role,
-      category: questionForm.category,
-      difficulty: questionForm.difficulty,
-      problemStatement: questionForm.problemStatement,
-      inputFormat: questionForm.inputFormat,
-      outputFormat: questionForm.outputFormat,
-      sampleInput: questionForm.sampleInput,
-      sampleOutput: questionForm.sampleOutput,
-      explanation: questionForm.explanation,
-    });
+    try {
+      await questionService.createQuestion({
+        title: questionForm.title,
+        companySlug: questionForm.companySlug,
+        questionType: questionForm.category as any,
+        difficulty: questionForm.difficulty as any,
+        description: questionForm.problemStatement,
+        explanation: questionForm.explanation,
+      });
 
-    queryClient.invalidateQueries({ queryKey: ['live-questions'] });
-    setQuestionSuccess(true);
-    setTimeout(() => setQuestionSuccess(false), 4000);
+      dataStore.addQuestion({
+        title: questionForm.title,
+        companyName: questionForm.companyName,
+        companySlug: questionForm.companySlug,
+        role: questionForm.role,
+        category: questionForm.category,
+        difficulty: questionForm.difficulty,
+        problemStatement: questionForm.problemStatement,
+        inputFormat: questionForm.inputFormat,
+        outputFormat: questionForm.outputFormat,
+        sampleInput: questionForm.sampleInput,
+        sampleOutput: questionForm.sampleOutput,
+        explanation: questionForm.explanation,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['topic-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['live-questions'] });
+      setQuestionSuccess(true);
+      setTimeout(() => setQuestionSuccess(false), 4000);
+    } catch (err: any) {
+      alert(`Failed to create question in Supabase: ${err.message || err}`);
+    }
   };
 
   const handleResourceSubmit = (e: React.FormEvent) => {
@@ -232,50 +272,79 @@ export default function AdminDashboardPage() {
   };
 
   // --- EXAM CARDS CRUD ---
-  const handleAddExamCardAdmin = () => {
+  const handleAddExamCardAdmin = async () => {
     if (!newExamCard.name) return;
-    dataStore.addExam({
-      companySlug: selectedCompanySlug,
-      name: newExamCard.name,
-      badge: newExamCard.badge || 'Official Campus Drive 2026',
-      content: newExamCard.content,
-      oldPapers: newExamCard.oldPapers,
-    });
-    queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-    queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
-    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
-    reloadDataStoreLists(selectedCompanySlug);
-    setNewExamCard({
-      name: '',
-      badge: 'Official Campus Drive 2026',
-      content: '### Exam Pattern & Syllabus Overview\n\n- **Round 1:** Aptitude & Reasoning MCQs\n- **Round 2:** Technical Coding Assessment',
-      oldPapers: '### Memory Papers & PYQs\n\n1. **Previous Year Question 1:** Array manipulation\n2. **Previous Year Question 2:** SQL Inner Join query'
-    });
+    try {
+      await examService.createExam({
+        companySlug: selectedCompanySlug,
+        name: newExamCard.name,
+        badge: newExamCard.badge || 'Official Campus Drive 2026',
+        content: newExamCard.content,
+        oldPapers: newExamCard.oldPapers,
+      });
+      dataStore.addExam({
+        companySlug: selectedCompanySlug,
+        name: newExamCard.name,
+        badge: newExamCard.badge || 'Official Campus Drive 2026',
+        content: newExamCard.content,
+        oldPapers: newExamCard.oldPapers,
+      });
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      reloadDataStoreLists(selectedCompanySlug);
+      setNewExamCard({
+        name: '',
+        badge: 'Official Campus Drive 2026',
+        content: '### Exam Pattern & Syllabus Overview\n\n- **Round 1:** Aptitude & Reasoning MCQs\n- **Round 2:** Technical Coding Assessment',
+        oldPapers: '### Memory Papers & PYQs\n\n1. **Previous Year Question 1:** Array manipulation\n2. **Previous Year Question 2:** SQL Inner Join query'
+      });
+    } catch (err: any) {
+      alert(`Failed to add exam card in Supabase: ${err.message || err}`);
+    }
   };
 
-  const handleSaveEditedExam = () => {
+  const handleSaveEditedExam = async () => {
     if (!editingExam) return;
-    dataStore.updateExam(editingExam.id, editingExam);
-    queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-    queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
-    reloadDataStoreLists(selectedCompanySlug);
-    setEditingExam(null);
-  };
-
-  const handleDeleteExam = (id: string) => {
-    if (confirm('Are you sure you want to delete this exam module?')) {
-      dataStore.deleteExam(id);
+    try {
+      await examService.updateExam(editingExam.id, editingExam);
+      dataStore.updateExam(editingExam.id, editingExam);
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
       reloadDataStoreLists(selectedCompanySlug);
+      setEditingExam(null);
+    } catch (err: any) {
+      alert(`Failed to update exam in Supabase: ${err.message || err}`);
+    }
+  };
+
+  const handleDeleteExam = async (id: string) => {
+    if (confirm('Are you sure you want to delete this exam module?')) {
+      try {
+        await examService.deleteExam(id);
+        dataStore.deleteExam(id);
+        queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+        queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
+        reloadDataStoreLists(selectedCompanySlug);
+      } catch (err: any) {
+        alert(`Failed to delete exam from Supabase: ${err.message || err}`);
+      }
     }
   };
 
   // --- MODERATION ACTIONS (APPROVE / DISAPPROVE / REJECT) ---
-  const handleUpdateExperienceStatus = (id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') => {
-    dataStore.updateExperienceStatus(id, status);
-    queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
-    reloadDataStoreLists();
+  const handleUpdateExperienceStatus = async (id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') => {
+    try {
+      if (status === 'APPROVED' || status === 'REJECTED') {
+        await experienceService.updateExperienceStatus(id, status);
+      }
+      dataStore.updateExperienceStatus(id, status);
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      reloadDataStoreLists();
+    } catch (err: any) {
+      alert(`Failed to update experience status in Supabase: ${err.message || err}`);
+    }
   };
 
   const handleDeleteExperience = (id: string) => {

@@ -135,6 +135,18 @@ ALTER TABLE public.exams ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME
 ALTER TABLE public.exams ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE NOT NULL;
 ALTER TABLE public.exams ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
 
+-- Safely Add Unique Constraint to Exams Table
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_company_exam_name'
+    ) THEN
+        ALTER TABLE public.exams ADD CONSTRAINT uq_company_exam_name UNIQUE (company_slug, name);
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
 DROP TRIGGER IF EXISTS tr_exams_updated_at ON public.exams;
 CREATE TRIGGER tr_exams_updated_at
   BEFORE UPDATE ON public.exams

@@ -66,8 +66,9 @@ VALUES
     'https://logo.clearbit.com/wipro.com',
     '### About Wipro\n\nWipro Limited is an Indian multinational corporation providing IT, consulting, and business process services.'
   )
-ON CONFLICT (slug) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
+  slug = EXCLUDED.slug,
   description = EXCLUDED.description,
   about_company = EXCLUDED.about_company,
   logo_url = EXCLUDED.logo_url;
@@ -97,6 +98,8 @@ VALUES
     99.00,
     '[{"id":"inf-tab-1","title":"Dynamic Programming Challenge","emoji":"🧠","content":"### Problem: Longest Common Subsequence\\n\\nGiven two strings text1 and text2, return the length of their longest common subsequence."}]'::jsonb
   )
-ON CONFLICT (company_slug, name) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  company_slug = EXCLUDED.company_slug,
   content = EXCLUDED.content,
   paper_tabs = EXCLUDED.paper_tabs;

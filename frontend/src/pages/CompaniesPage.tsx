@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Search, Building2, SlidersHorizontal, Loader2, Plus, XCircle } from 'lucide-react';
 import type { Company } from '@/types/company';
 
+import { companyService } from '@/services/company.service';
+
 export default function CompaniesPage() {
   const { role } = useAuth();
   const isAdmin = role === 'ADMIN';
@@ -28,6 +30,27 @@ export default function CompaniesPage() {
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['live-companies', searchTerm],
     queryFn: async () => {
+      try {
+        const res = await companyService.getCompanies(searchTerm);
+        if (res.content && res.content.length > 0) {
+          return res.content.map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            description: c.description || `${c.name} recruitment drives and hiring patterns.`,
+            industry: c.industry || 'IT Services & Consulting',
+            companySize: c.companySize || '10,000+ employees',
+            headquarters: c.headquarters || 'India & Global',
+            website: c.website,
+            logoUrl: c.logoUrl,
+            examsList: [`${c.name} Placement Papers 2026`],
+            isActive: c.isActive,
+            createdAt: c.createdAt,
+          }));
+        }
+      } catch (e) {
+        console.warn('[CompaniesPage] Supabase load fallback:', e);
+      }
       const all = dataStore.getCompanies();
       const enriched = all.map(c => {
         const actualExams = dataStore.getExams(c.slug).map(e => e.name);
@@ -46,36 +69,64 @@ export default function CompaniesPage() {
     },
   });
 
-  const handleCreateCompany = (e: React.FormEvent) => {
+  const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCompany.name) return;
 
-    dataStore.addCompany({
-      name: newCompany.name,
-      slug: newCompany.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      industry: newCompany.industry,
-      description: newCompany.description || `${newCompany.name} conducts annual recruitment drives.`,
-      logoUrl: newCompany.logoUrl || undefined,
-      website: newCompany.website || undefined,
-      headquarters: newCompany.headquarters,
-      examsList: [`${newCompany.name} Recruitment Drive 2026`],
-    });
+    try {
+      const created = await companyService.createCompany({
+        name: newCompany.name,
+        slug: newCompany.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        industry: newCompany.industry,
+        description: newCompany.description || `${newCompany.name} conducts annual recruitment drives.`,
+        logoUrl: newCompany.logoUrl || undefined,
+        website: newCompany.website || undefined,
+        headquarters: newCompany.headquarters,
+      });
 
-    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
-    setShowAddModal(false);
-    setNewCompany({ name: '', industry: 'IT Services & Consulting', description: '', logoUrl: '', website: '', headquarters: 'India & Global' });
+      dataStore.addCompany({
+        id: created.id,
+        name: created.name,
+        slug: created.slug,
+        industry: created.industry,
+        description: created.description,
+        logoUrl: created.logoUrl,
+        website: created.website,
+        headquarters: created.headquarters,
+        examsList: [`${created.name} Recruitment Drive 2026`],
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setShowAddModal(false);
+      setNewCompany({ name: '', industry: 'IT Services & Consulting', description: '', logoUrl: '', website: '', headquarters: 'India & Global' });
+    } catch (err: any) {
+      alert(`Failed to create company in Supabase: ${err.message || err}`);
+    }
   };
 
-  const handleSaveEditedCompany = () => {
+  const handleSaveEditedCompany = async () => {
     if (!editingCompany) return;
-    dataStore.updateCompany(editingCompany.id, editingCompany);
-    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
-    setEditingCompany(null);
+    try {
+      await companyService.updateCompany(editingCompany.slug || editingCompany.id, editingCompany);
+      dataStore.updateCompany(editingCompany.id, editingCompany);
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setEditingCompany(null);
+    } catch (err: any) {
+      alert(`Failed to update company in Supabase: ${err.message || err}`);
+    }
   };
 
-  const handleDeleteCompany = (id: string) => {
-    dataStore.deleteCompany(id);
-    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+  const handleDeleteCompany = async (id: string) => {
+    try {
+      await companyService.deleteCompany(id);
+      dataStore.deleteCompany(id);
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    } catch (err: any) {
+      alert(`Failed to delete company in Supabase: ${err.message || err}`);
+    }
   };
 
   return (

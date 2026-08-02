@@ -605,18 +605,24 @@ class DataStoreManager {
   // --- SUPABASE REALTIME & DATABASE PERSISTENCE ENGINE ---
   async syncCompanyToSupabase(company: CompanyItem): Promise<void> {
     try {
-      await supabase.from('companies').upsert({
+      const { error } = await supabase.from('companies').upsert({
         id: company.id,
         name: company.name,
         slug: company.slug,
         industry: company.industry,
+        company_size: company.companySize,
         headquarters: company.headquarters,
         description: company.description,
+        about_company: company.aboutCompany,
         logo_url: company.logoUrl,
         website_url: company.website,
-      });
+        is_deleted: false,
+      }, { onConflict: 'slug' });
+      if (error) {
+        console.error('[dataStore] Supabase company sync error:', error);
+      }
     } catch (err) {
-      console.warn('[dataStore] Supabase company sync error:', err);
+      console.error('[dataStore] Supabase company sync exception:', err);
     }
   }
 

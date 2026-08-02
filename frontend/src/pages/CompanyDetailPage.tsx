@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router';
 // Native Document Explorer View Enabled
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
+import { examService } from '@/services/exam.service';
 import { dataStore, type ExamItem } from '@/services/dataStore';
 import { PaperService } from '@/services/paper.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,34 +219,61 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     setShowEditHeaderModal(true);
   };
 
-  const handleSaveHeaderProfile = (e: React.FormEvent) => {
+  const handleSaveHeaderProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    dataStore.updateCompany(currentCompanyStoreItem.id, {
-      name: headerForm.name,
-      industry: headerForm.industry,
-      headquarters: headerForm.headquarters,
-      website: headerForm.website,
-      logoUrl: headerForm.logoUrl || undefined,
-      description: headerForm.description,
-    });
-    setShowEditHeaderModal(false);
-    forceRefreshData();
+    try {
+      await companyService.updateCompany(currentCompanyStoreItem.slug || slug, {
+        name: headerForm.name,
+        industry: headerForm.industry,
+        headquarters: headerForm.headquarters,
+        website: headerForm.website,
+        logoUrl: headerForm.logoUrl || undefined,
+        description: headerForm.description,
+      });
+      dataStore.updateCompany(currentCompanyStoreItem.id, {
+        name: headerForm.name,
+        industry: headerForm.industry,
+        headquarters: headerForm.headquarters,
+        website: headerForm.website,
+        logoUrl: headerForm.logoUrl || undefined,
+        description: headerForm.description,
+      });
+      setShowEditHeaderModal(false);
+      queryClient.invalidateQueries({ queryKey: ['company', slug] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      forceRefreshData();
+    } catch (err: any) {
+      alert(`Failed to save company header to Supabase: ${err.message || err}`);
+    }
   };
 
   // --- EXAM ACTIONS ---
-  const handleAddNewExam = () => {
-    const newExam = dataStore.addExam({
-      companySlug: slug,
-      name: 'New Exam Module',
-      badge: 'Draft',
-      content: '### New Exam Syllabus\n\nWrite details here...',
-      oldPapers: '### Old Papers\n\nWrite old papers here...',
-    });
-    setSelectedExamId(newExam.id);
-    setActiveTab('aboutExam');
-    setExamForm(newExam);
-    setIsEditing(true);
-    forceRefreshData();
+  const handleAddNewExam = async () => {
+    try {
+      const created = await examService.createExam({
+        companySlug: slug,
+        name: 'New Exam Module',
+        badge: 'Draft',
+        content: '### New Exam Syllabus\n\nWrite details here...',
+        oldPapers: '### Old Papers\n\nWrite old papers here...',
+      });
+      const newExam = dataStore.addExam({
+        id: created.id,
+        companySlug: slug,
+        name: created.name,
+        badge: created.badge,
+        content: created.content,
+        oldPapers: created.oldPapers,
+      });
+      setSelectedExamId(newExam.id);
+      setActiveTab('aboutExam');
+      setExamForm(newExam);
+      setIsEditing(true);
+      queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+      forceRefreshData();
+    } catch (err: any) {
+      alert(`Failed to create exam in Supabase: ${err.message || err}`);
+    }
   };
 
   const handleOpenEdit = () => {
@@ -261,36 +289,59 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     // oldPapers: do nothing here — DocumentExplorer has its own "Manage" toggle
   };
 
-  const handleSaveContent = () => {
-    if (activeTab === 'aboutCompany') {
-      dataStore.updateCompany(currentCompanyStoreItem.id, {
-        aboutCompany: aboutCompanyForm
-      });
-    } else if (activeTab === 'aboutExam' && currentExam && examForm) {
-      dataStore.updateExam(currentExam.id, {
-        ...currentExam,
-        name: examForm.name,
-        badge: examForm.badge,
-        content: examForm.content
-      });
-    } else if (activeTab === 'oldPapers' && currentExam && examForm) {
-      dataStore.updateExam(currentExam.id, {
-        ...currentExam,
-        oldPapers: examForm.oldPapers
-      });
+  const handleSaveContent = async () => {
+    try {
+      if (activeTab === 'aboutCompany') {
+        await companyService.updateCompany(currentCompanyStoreItem.slug || slug, {
+          aboutCompany: aboutCompanyForm
+        });
+        dataStore.updateCompany(currentCompanyStoreItem.id, {
+          aboutCompany: aboutCompanyForm
+        });
+      } else if (activeTab === 'aboutExam' && currentExam && examForm) {
+        await examService.updateExam(currentExam.id, {
+          name: examForm.name,
+          badge: examForm.badge,
+          content: examForm.content
+        });
+        dataStore.updateExam(currentExam.id, {
+          ...currentExam,
+          name: examForm.name,
+          badge: examForm.badge,
+          content: examForm.content
+        });
+      } else if (activeTab === 'oldPapers' && currentExam && examForm) {
+        await examService.updateExam(currentExam.id, {
+          oldPapers: examForm.oldPapers
+        });
+        dataStore.updateExam(currentExam.id, {
+          ...currentExam,
+          oldPapers: examForm.oldPapers
+        });
+      }
+      
+      setIsEditing(false);
+      setExamSavedSuccess(true);
+      setTimeout(() => setExamSavedSuccess(false), 3000);
+      queryClient.invalidateQueries({ queryKey: ['company', slug] });
+      queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+      forceRefreshData();
+    } catch (err: any) {
+      alert(`Failed to save content to Supabase: ${err.message || err}`);
     }
-    
-    setIsEditing(false);
-    setExamSavedSuccess(true);
-    setTimeout(() => setExamSavedSuccess(false), 3000);
-    forceRefreshData();
   };
 
-  const handleDeleteExam = () => {
+  const handleDeleteExam = async () => {
     if (currentExam && confirm("Are you sure you want to delete this exam module?")) {
-      dataStore.deleteExam(currentExam.id);
-      setIsEditing(false);
-      forceRefreshData();
+      try {
+        await examService.deleteExam(currentExam.id);
+        dataStore.deleteExam(currentExam.id);
+        setIsEditing(false);
+        queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+        forceRefreshData();
+      } catch (err: any) {
+        alert(`Failed to delete exam from Supabase: ${err.message || err}`);
+      }
     }
   };
 
