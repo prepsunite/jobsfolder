@@ -1,6 +1,7 @@
 // Global synchronized state manager for Admin CRUD operations visible to all users live!
 import { resolveTopicSlug } from './topicMap';
 import { isAllowedAdminEmail } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 export { resolveTopicSlug };
 
 // STORAGE KEYS CONSTANTS
@@ -562,6 +563,10 @@ const INITIAL_TOPIC_QUESTIONS: TopicQuestionItem[] = [
 const INITIAL_EXPERIENCES: ExperienceItem[] = [];
 
 class DataStoreManager {
+  constructor() {
+    this.initRealtimeSync();
+  }
+
   private getStorage<T>(key: string, fallback: T): T {
     try {
       const data = localStorage.getItem(key);
@@ -594,6 +599,217 @@ class DataStoreManager {
         }
       } catch (e) {}
     }
+  }
+
+  // --- SUPABASE REALTIME & DATABASE PERSISTENCE ENGINE ---
+  async syncCompanyToSupabase(company: CompanyItem): Promise<void> {
+    try {
+      await supabase.from('companies').upsert({
+        id: company.id,
+        name: company.name,
+        slug: company.slug,
+        industry: company.industry,
+        headquarters: company.headquarters,
+        description: company.description,
+        logo_url: company.logoUrl,
+        website_url: company.website,
+      });
+    } catch (err) {
+      console.warn('[dataStore] Supabase company sync error:', err);
+    }
+  }
+
+  async syncExamToSupabase(exam: ExamItem): Promise<void> {
+    try {
+      await supabase.from('exams').upsert({
+        id: exam.id,
+        company_slug: exam.companySlug,
+        name: exam.name,
+        badge: exam.badge,
+        content: exam.content,
+        old_papers: exam.oldPapers,
+        price: 99,
+      });
+    } catch (err) {
+      console.warn('[dataStore] Supabase exam sync error:', err);
+    }
+  }
+
+  async syncTopicQuestionToSupabase(q: TopicQuestionItem): Promise<void> {
+    try {
+      await supabase.from('topic_questions').upsert({
+        id: q.id,
+        topic_id: q.topicId,
+        statement: q.statement,
+        options: q.options,
+        correct_answer: q.correctAnswer,
+        explanation: q.explanation,
+        structured_explanation: q.structuredExplanation,
+        difficulty: q.difficulty,
+        difficulty_level: q.difficultyLevel,
+        is_hidden: q.isHidden,
+        question_number: q.questionNumber,
+      });
+    } catch (err) {
+      console.warn('[dataStore] Supabase topic question sync error:', err);
+    }
+  }
+
+  async syncExperienceToSupabase(exp: ExperienceItem): Promise<void> {
+    try {
+      await supabase.from('experiences').upsert({
+        id: exp.id,
+        company_slug: (exp.companyName || 'tcs').toLowerCase(),
+        student_name: exp.studentName,
+        role_title: exp.role,
+        result: exp.verdict,
+        rounds: exp.rounds,
+        status: exp.status || 'PENDING',
+      });
+    } catch (err) {
+      console.warn('[dataStore] Supabase experience sync error:', err);
+    }
+  }
+
+  initRealtimeSync(): void {
+    try {
+      if (typeof window === 'undefined') return;
+
+      // Subscribe to Realtime DB updates
+      supabase
+        .channel('public_realtime_data')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
+          this.fetchLiveCompaniesFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
+          this.fetchLiveExamsFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'topic_questions' }, () => {
+          this.fetchLiveTopicQuestionsFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'experiences' }, () => {
+          this.fetchLiveExperiencesFromSupabase();
+        })
+        .subscribe();
+
+      // Initial Fetch
+      this.fetchLiveCompaniesFromSupabase();
+      this.fetchLiveExamsFromSupabase();
+      this.fetchLiveTopicQuestionsFromSupabase();
+      this.fetchLiveExperiencesFromSupabase();
+    } catch (err) {
+      console.warn('[dataStore] Realtime sync init notice:', err);
+    }
+  }
+
+  async fetchLiveCompaniesFromSupabase(): Promise<void> {
+    try {
+      const { data } = await supabase.from('companies').select('*');
+      if (data && data.length > 0) {
+        const mapped: CompanyItem[] = data.map(c => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          industry: c.industry || 'IT Services',
+          companySize: '500,000+ employees',
+          headquarters: c.headquarters || 'India',
+          website: c.website_url,
+          logoUrl: c.logo_url,
+          description: c.description || '',
+          isActive: true,
+          createdAt: c.created_at || new Date().toISOString(),
+        }));
+        const existing = this.getStorage<CompanyItem[]>('prepunite_companies', INITIAL_COMPANIES);
+        const merged = [...mapped];
+        existing.forEach(ex => {
+          if (!merged.some(m => m.id === ex.id || m.slug === ex.slug)) {
+            merged.push(ex);
+          }
+        });
+        this.setStorage('prepunite_companies', merged);
+      }
+    } catch (e) {}
+  }
+
+  async fetchLiveExamsFromSupabase(): Promise<void> {
+    try {
+      const { data } = await supabase.from('exams').select('*');
+      if (data && data.length > 0) {
+        const mapped: ExamItem[] = data.map(e => ({
+          id: e.id,
+          companySlug: e.company_slug,
+          name: e.name,
+          badge: e.badge || 'Campus Recruitment Drive',
+          upvotes: 85,
+          content: e.content || '',
+          oldPapers: e.old_papers || '',
+          price: e.price || 99,
+        }));
+        const existing = this.getStorage<ExamItem[]>('prepunite_exams', INITIAL_EXAMS);
+        const merged = [...mapped];
+        existing.forEach(ex => {
+          if (!merged.some(m => m.id === ex.id)) {
+            merged.push(ex);
+          }
+        });
+        this.setStorage('prepunite_exams', merged);
+      }
+    } catch (e) {}
+  }
+
+  async fetchLiveTopicQuestionsFromSupabase(): Promise<void> {
+    try {
+      const { data } = await supabase.from('topic_questions').select('*');
+      if (data && data.length > 0) {
+        const mapped: TopicQuestionItem[] = data.map(q => ({
+          id: q.id,
+          topicId: q.topic_id,
+          statement: q.statement,
+          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+          correctAnswer: q.correct_answer,
+          explanation: q.explanation,
+          structuredExplanation: typeof q.structured_explanation === 'string' ? JSON.parse(q.structured_explanation) : q.structured_explanation,
+          difficulty: q.difficulty || 'MEDIUM',
+          difficultyLevel: q.difficulty_level || 2,
+          isHidden: q.is_hidden || false,
+          questionNumber: q.question_number,
+        }));
+        const existing = this.getStorage<TopicQuestionItem[]>('prepunite_topic_questions', INITIAL_TOPIC_QUESTIONS);
+        const merged = [...mapped];
+        existing.forEach(ex => {
+          if (!merged.some(m => m.id === ex.id)) {
+            merged.push(ex);
+          }
+        });
+        this.setStorage('prepunite_topic_questions', merged);
+      }
+    } catch (e) {}
+  }
+
+  async fetchLiveExperiencesFromSupabase(): Promise<void> {
+    try {
+      const { data } = await supabase.from('experiences').select('*');
+      if (data && data.length > 0) {
+        const mapped: ExperienceItem[] = data.map(e => ({
+          id: e.id,
+          companyName: e.company_slug.toUpperCase(),
+          companySlug: e.company_slug,
+          role: e.role_title,
+          roleTitle: e.role_title,
+          studentName: e.student_name,
+          college: 'Engineering College',
+          year: 2026,
+          difficulty: 'MEDIUM',
+          verdict: e.result as any,
+          result: e.result,
+          rounds: typeof e.rounds === 'string' ? JSON.parse(e.rounds) : e.rounds,
+          overallExperience: e.overall_experience,
+          tips: e.tips,
+          status: e.status || 'PENDING',
+        }));
+        this.setStorage('prepunite_experiences', mapped);
+      }
+    } catch (e) {}
   }
 
   // --- COMPANIES ---
@@ -630,6 +846,7 @@ class DataStoreManager {
       updated = [...companies, newCompany];
     }
     this.setStorage('prepunite_companies', updated);
+    this.syncCompanyToSupabase(newCompany);
     return newCompany;
   }
 
@@ -639,6 +856,7 @@ class DataStoreManager {
     if (index > -1) {
       companies[index] = { ...companies[index], ...updatedFields };
       this.setStorage('prepunite_companies', companies);
+      this.syncCompanyToSupabase(companies[index]);
     } else {
       const existing = companies.find(c => c.slug === idOrSlug || c.id === idOrSlug) || {
         id: idOrSlug,
@@ -740,6 +958,7 @@ class DataStoreManager {
       updated = [...list, ...virtualExamsToPersist, newExam];
     }
     this.setStorage('prepunite_exams', updated);
+    this.syncExamToSupabase(newExam);
     return newExam;
   }
 
@@ -749,6 +968,7 @@ class DataStoreManager {
     if (index > -1) {
       stored[index] = { ...stored[index], ...updatedFields };
       this.setStorage('prepunite_exams', stored);
+      this.syncExamToSupabase(stored[index]);
     } else {
       const allExams = this.getAllExams();
       const existingVirtual = allExams.find(e => e.id === id);
@@ -971,22 +1191,34 @@ class DataStoreManager {
     };
     const updated = [newExp, ...list];
     this.setStorage('prepunite_experiences', updated);
+    this.syncExperienceToSupabase(newExp);
     return newExp;
   }
 
   updateExperienceStatus(id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING'): void {
-    const all = this.getExperiences().map(e => e.id === id ? { ...e, status } : e);
-    this.setStorage('prepunite_experiences', all);
+    const experiences = this.getExperiences();
+    const target = experiences.find(e => e.id === id);
+    if (target) {
+      target.status = status;
+      this.setStorage('prepunite_experiences', experiences);
+      this.syncExperienceToSupabase(target);
+    }
   }
 
   updateExperience(id: string, updatedExp: Partial<ExperienceItem>): void {
-    const all = this.getExperiences().map(e => e.id === id ? { ...e, ...updatedExp } : e);
-    this.setStorage('prepunite_experiences', all);
+    const experiences = this.getExperiences();
+    const index = experiences.findIndex(e => e.id === id);
+    if (index > -1) {
+      experiences[index] = { ...experiences[index], ...updatedExp };
+      this.setStorage('prepunite_experiences', experiences);
+      this.syncExperienceToSupabase(experiences[index]);
+    }
   }
 
   deleteExperience(id: string): void {
     const all = this.getExperiences().filter(e => e.id !== id);
     this.setStorage('prepunite_experiences', all);
+    supabase.from('experiences').delete().eq('id', id).then();
   }
 
 

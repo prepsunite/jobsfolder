@@ -177,3 +177,83 @@ UPDATE public.profiles
 SET role = 'admin'
 WHERE LOWER(email) IN ('venkatmukala9@gmail.com', 'venkat.mukala9@gmail.com', 'prepsunite@gmail.com', 'veen1kat@gmail.com');
 
+-- ============================================================================
+-- 12. DYNAMIC CONTENT TABLES FOR LIVE ADMIN SYNCHRONIZATION
+-- ============================================================================
+
+-- 12.1 Companies Table
+CREATE TABLE IF NOT EXISTS public.companies (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  logo_url TEXT,
+  industry TEXT,
+  headquarters TEXT,
+  website_url TEXT,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12.2 Exams / Drive Papers Table
+CREATE TABLE IF NOT EXISTS public.exams (
+  id TEXT PRIMARY KEY,
+  company_slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  badge TEXT,
+  content TEXT,
+  old_papers TEXT,
+  price DECIMAL(10, 2) DEFAULT 99,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12.3 Topic Practice Questions Table
+CREATE TABLE IF NOT EXISTS public.topic_questions (
+  id TEXT PRIMARY KEY,
+  topic_id TEXT NOT NULL,
+  statement TEXT NOT NULL,
+  options JSONB NOT NULL,
+  correct_answer TEXT NOT NULL,
+  explanation TEXT,
+  structured_explanation JSONB,
+  difficulty TEXT DEFAULT 'MEDIUM',
+  difficulty_level INT DEFAULT 2,
+  is_hidden BOOLEAN DEFAULT FALSE,
+  question_number INT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12.4 Student Interview Experiences Table
+CREATE TABLE IF NOT EXISTS public.experiences (
+  id TEXT PRIMARY KEY,
+  company_slug TEXT NOT NULL,
+  student_name TEXT NOT NULL,
+  role_title TEXT NOT NULL,
+  package TEXT,
+  result TEXT NOT NULL,
+  rounds JSONB,
+  overall_experience TEXT,
+  tips TEXT,
+  status TEXT DEFAULT 'PENDING',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.topic_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.experiences ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS Policies
+CREATE POLICY "Public read companies" ON public.companies FOR SELECT USING (true);
+CREATE POLICY "Admin/Client manage companies" ON public.companies FOR ALL USING (true);
+
+CREATE POLICY "Public read exams" ON public.exams FOR SELECT USING (true);
+CREATE POLICY "Admin/Client manage exams" ON public.exams FOR ALL USING (true);
+
+CREATE POLICY "Public read topic_questions" ON public.topic_questions FOR SELECT USING (true);
+CREATE POLICY "Admin/Client manage topic_questions" ON public.topic_questions FOR ALL USING (true);
+
+CREATE POLICY "Public read experiences" ON public.experiences FOR SELECT USING (true);
+CREATE POLICY "Admin/Client manage experiences" ON public.experiences FOR ALL USING (true);
+
+
