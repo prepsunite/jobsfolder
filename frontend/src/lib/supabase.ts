@@ -4,6 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tufajuhxjfbrbx
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_6kSZ_kEtFmNEIyhdrydtLw_Eb4G2dBc';
 
 console.log('[Supabase Client Initialized]: URL =', supabaseUrl);
+console.log('[Supabase Client Initialized]: KEY =', supabaseAnonKey);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

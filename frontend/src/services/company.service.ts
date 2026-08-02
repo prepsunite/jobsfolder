@@ -111,8 +111,8 @@ export const companyService = {
       .single();
 
     if (error) {
-      console.error('[companyService.createCompany] Supabase error:', error);
-      throw new Error(error.message || 'Failed to save company in Supabase');
+      console.error('[companyService.createCompany] Full Supabase error:', error);
+      throw new Error(`[${error.code || 'ERR'}] ${error.message || 'Failed to save company in Supabase'}`);
     }
 
     const created: Company = {
