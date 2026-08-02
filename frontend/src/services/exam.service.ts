@@ -113,6 +113,9 @@ export const examService = {
 
     if (error) {
       console.error('[examService.createExam] Supabase error:', error);
+      if (error.message?.includes('API key') || error.message?.includes('JWT') || error.code === 'PGRST301' || (error as any).status === 401) {
+        throw new Error('Your Supabase session has expired or is invalid. Please sign out and sign back in to refresh your admin credentials.');
+      }
       throw error;
     }
 
