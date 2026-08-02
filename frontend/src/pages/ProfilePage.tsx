@@ -637,14 +637,14 @@ export default function ProfilePage() {
                   <div className="flex items-start justify-between gap-3 pr-12">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/20 border border-[#38bdf8]/40 text-[#0284c7] font-black text-base flex items-center justify-center shrink-0">
-                        {exp.companyName.charAt(0)}
+                        {(exp.companyName || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <h3 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3]">
-                          {exp.role} @ {exp.companyName}
+                          {exp.role || 'Interview Candidate'} @ {exp.companyName || 'Company Drive'}
                         </h3>
                         <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
-                          {exp.studentName} • {exp.college} • {exp.year}
+                          {exp.studentName || 'Anonymous Student'} • {exp.college || 'Engineering Candidate'} • {exp.year || 2026}
                         </p>
                       </div>
                     </div>
@@ -660,10 +660,10 @@ export default function ProfilePage() {
 
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
-                      Verdict: {exp.verdict}
+                      Verdict: {exp.verdict || 'SELECTED'}
                     </span>
                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider bg-amber-500/15 text-amber-600 border-amber-500/30">
-                      Difficulty: {exp.difficulty}
+                      Difficulty: {exp.difficulty || 'MEDIUM'}
                     </span>
                   </div>
 
