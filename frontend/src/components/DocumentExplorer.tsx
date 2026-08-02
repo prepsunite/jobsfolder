@@ -468,15 +468,27 @@ export default function DocumentExplorer({
         {/* PAYWALL OVERLAY */}
         {!hasAccess && !isAdmin ? (
           <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#f6ece6]/30 dark:bg-[#141517]/30">
-            {/* Blurred teaser */}
-            <div className="absolute inset-0 p-8 opacity-15 filter blur-xs pointer-events-none select-none overflow-hidden font-mono text-xs text-left space-y-4">
-              <h2 className="text-xl font-bold text-[#1f1b17] dark:text-white">{companyName} – {examName} Official Papers</h2>
-              <div className="h-0.5 bg-gray-400 w-full" />
-              <p>Section 1: Quantitative Aptitude &amp; Problem Solving</p>
-              <p>Q1. A candidate scored 45% marks in an examination and failed by 15 marks...</p>
-              <p>Q2. The ratio of speeds of two trains is 7:8. If the second train runs 400 km in 4 hours...</p>
-              <p>Section 2: Advanced Coding &amp; Algorithmic Problem Solving</p>
-              <p>Write an optimal algorithm to find the longest palindromic substring in O(N) time...</p>
+            {/* Visual Abstract Skeleton Background (ZERO Text/Questions in HTML) */}
+            <div className="absolute inset-0 p-8 opacity-10 filter blur-xs pointer-events-none select-none overflow-hidden space-y-6">
+              <div className="h-6 bg-current rounded-xl w-2/3 opacity-40" />
+              <div className="h-0.5 bg-current w-full opacity-20" />
+              <div className="space-y-3 pt-2">
+                <div className="h-4 bg-current rounded-lg w-1/3 opacity-30" />
+                <div className="h-3 bg-current rounded-md w-full opacity-20" />
+                <div className="h-3 bg-current rounded-md w-5/6 opacity-20" />
+                <div className="h-3 bg-current rounded-md w-4/5 opacity-20" />
+              </div>
+              <div className="space-y-3 pt-4">
+                <div className="h-4 bg-current rounded-lg w-2/5 opacity-30" />
+                <div className="h-3 bg-current rounded-md w-full opacity-20" />
+                <div className="h-3 bg-current rounded-md w-3/4 opacity-20" />
+                <div className="h-3 bg-current rounded-md w-11/12 opacity-20" />
+              </div>
+              <div className="space-y-3 pt-4">
+                <div className="h-4 bg-current rounded-lg w-1/4 opacity-30" />
+                <div className="h-3 bg-current rounded-md w-full opacity-20" />
+                <div className="h-3 bg-current rounded-md w-2/3 opacity-20" />
+              </div>
             </div>
 
             {/* Lock card */}
