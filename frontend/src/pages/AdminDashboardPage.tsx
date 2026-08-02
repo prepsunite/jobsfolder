@@ -113,6 +113,14 @@ export default function AdminDashboardPage() {
     status: e.status || 'PENDING',
   }));
 
+  // --- React Query: All Exams Global from Supabase ---
+  const { data: allExamsGlobal = [] } = useQuery({
+    queryKey: ['live-all-exams'],
+    queryFn: () => examService.getAllExams(),
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+
   // Keep adminOverviewInput in sync with selected company
   useEffect(() => {
     const currentCompany = allCompanies.find(c => c.slug === selectedCompanySlug);
@@ -125,6 +133,7 @@ export default function AdminDashboardPage() {
   const reloadDataStoreLists = (slug: string = selectedCompanySlug) => {
     queryClient.invalidateQueries({ queryKey: ['live-companies'] });
     queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+    queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
     queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
     queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
   };
@@ -1277,7 +1286,7 @@ export default function AdminDashboardPage() {
               </h3>
               <div className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
                 {allCompanies.map((comp) => {
-                  const compExams = dataStore.getExams(comp.slug);
+                  const compExams = allExamsGlobal.filter((e) => e.companySlug === comp.slug);
                   return (
                     <div key={comp.id} className="py-3 flex items-center justify-between">
                       <div>

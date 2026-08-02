@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ExamCard from '@/components/ExamCard';
 import { dataStore, type ExamWithCompany } from '@/services/dataStore';
+import { examService } from '@/services/exam.service';
+import { companyService } from '@/services/company.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, Search, Loader2, Plus, XCircle, Building2 } from 'lucide-react';
 
@@ -20,10 +22,37 @@ export default function QuestionsPage() {
     badge: 'Campus Recruitment Drive',
   });
 
+  // Query Companies for modal dropdown
+  const { data: companyList = [] } = useQuery({
+    queryKey: ['live-companies'],
+    queryFn: async () => {
+      try {
+        const res = await companyService.getCompanies();
+        if (res.content && res.content.length > 0) return res.content;
+      } catch (e) {}
+      return dataStore.getCompanies();
+    },
+  });
+
   // Live Exams Query
   const { data: exams = [], isLoading: isLoadingExams } = useQuery({
     queryKey: ['live-all-exams', searchTerm],
     queryFn: async () => {
+      try {
+        const all = await examService.getAllExams();
+        if (all && all.length > 0) {
+          if (!searchTerm) return all;
+          return all.filter(
+            (e) =>
+              e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              e.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              e.companyIndustry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              e.badge?.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        }
+      } catch (err) {
+        console.warn('[QuestionsPage] Supabase getAllExams failed, falling back to dataStore:', err);
+      }
       const all = dataStore.getAllExams();
       if (!searchTerm) return all;
       return all.filter(
@@ -34,11 +63,25 @@ export default function QuestionsPage() {
           e.badge?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const handleCreateExam = (e: React.FormEvent) => {
+  const handleCreateExam = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExamForm.name) return;
+
+    try {
+      await examService.createExam({
+        companySlug: newExamForm.companySlug,
+        name: newExamForm.name,
+        badge: newExamForm.badge,
+        content: `### ${newExamForm.name} Overview\n\nAdd your complete exam syllabus, pattern, and role details here.`,
+        oldPapers: `### Old Papers\n\nLink your live Google Doc to show old papers and syllabus.`
+      });
+    } catch (err: any) {
+      console.warn('[QuestionsPage] Supabase create exam notice:', err);
+    }
 
     dataStore.addExam({
       companySlug: newExamForm.companySlug,
@@ -57,10 +100,16 @@ export default function QuestionsPage() {
     });
   };
 
-  const handleDeleteExam = (examId: string) => {
+  const handleDeleteExam = async (examId: string) => {
+    try {
+      await examService.deleteExam(examId);
+    } catch (err: any) {
+      console.warn('[QuestionsPage] Supabase delete exam notice:', err);
+    }
     dataStore.deleteExam(examId);
     queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
   };
+
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
@@ -149,7 +198,7 @@ export default function QuestionsPage() {
                   onChange={(e) => setNewExamForm({ ...newExamForm, companySlug: e.target.value })}
                   className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
                 >
-                  {dataStore.getCompanies().map((c) => (
+                  {companyList.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.name} ({c.slug})</option>
                   ))}
                 </select>

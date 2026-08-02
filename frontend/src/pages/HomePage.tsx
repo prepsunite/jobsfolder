@@ -1,15 +1,36 @@
 import { Link } from 'react-router';
 import { Building2, BookOpen, Layers, Sparkles, ArrowRight, User } from 'lucide-react';
 import { dataStore } from '@/services/dataStore';
+import { companyService } from '@/services/company.service';
+import { examService } from '@/services/exam.service';
+import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
 export default function HomePage() {
   const { data: statsData } = useQuery({
     queryKey: ['live-home-stats'],
-    queryFn: () => {
-      const companiesCount = dataStore.getCompanies().length;
-      const examsCount = dataStore.getAllExams().length;
-      const experiencesCount = dataStore.getExperiences().length;
+    queryFn: async () => {
+      let companiesCount = dataStore.getCompanies().length;
+      let examsCount = dataStore.getAllExams().length;
+      let experiencesCount = dataStore.getExperiences().length;
+
+      try {
+        const compRes = await companyService.getCompanies();
+        if (compRes.totalElements) companiesCount = compRes.totalElements;
+
+        const examsRes = await examService.getAllExams();
+        if (examsRes.length) examsCount = examsRes.length;
+
+        const { count } = await supabase
+          .from('experiences')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_deleted', false)
+          .eq('status', 'APPROVED');
+        if (count !== null && count !== undefined) experiencesCount = count;
+      } catch (err) {
+        console.warn('[HomePage] Live stats fetch warning:', err);
+      }
+
       return [
         { label: 'Companies Tracked', value: `${companiesCount}+` },
         { label: 'Official Exam Drives', value: `${examsCount}+` },
@@ -17,6 +38,8 @@ export default function HomePage() {
         { label: 'Placement Success Rate', value: '94%' },
       ];
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const features = [
