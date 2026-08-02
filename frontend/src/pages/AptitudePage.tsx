@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { dataStore } from '@/services/dataStore';
 import {
@@ -161,6 +161,17 @@ export default function AptitudePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
   const [selectedTopic, setSelectedTopic] = useState<AptitudeTopic | null>(null);
+  const [, setStoreVersion] = useState(0);
+
+  useEffect(() => {
+    const handleSync = () => setStoreVersion(v => v + 1);
+    window.addEventListener('prepunite_datastore_updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('prepunite_datastore_updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
 
   // Category Title Mapping
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
@@ -244,8 +255,7 @@ export default function AptitudePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
         {sortedTopics.map((topic) => {
           const TopicIcon = topic.icon || Folder;
-          const liveCount = dataStore.getTopicQuestions(topic.id).length;
-          const displayCount = liveCount > 0 ? liveCount : topic.count;
+          const displayCount = dataStore.getTopicQuestions(topic.id).length;
 
           return (
             <div

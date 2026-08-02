@@ -1,12 +1,14 @@
 import { supabase, type SupabaseTransaction, type SupabaseUserSubscription, type SupabasePaperPurchase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
 
+export type CheckoutItemType = 'SINGLE_PAPER' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'MONTHLY_PASS';
+
 export interface ProcessPaymentParams {
   paymentId: string;
   orderId?: string;
   amount: number;
   currency?: string;
-  itemType: 'SINGLE_PAPER' | 'MONTHLY_PASS';
+  itemType: CheckoutItemType;
   examId?: string;
   userEmail: string;
 }
@@ -78,11 +80,13 @@ export class SupabasePaymentService {
 
       // 3. Grant Entitlement based on Item Type
       if (itemType === 'SINGLE_PAPER' && examId) {
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30-day expiry
         const purchasePayload: SupabasePaperPurchase = {
           user_email: userEmail,
           exam_id: examId,
           payment_id: paymentId,
           amount_paid: amount,
+          expires_at: expiresAt,
           purchased_at: new Date().toISOString(),
         };
 
@@ -93,11 +97,21 @@ export class SupabasePaymentService {
         if (purchaseErr && purchaseErr.code !== '23505') {
           console.warn('[Supabase] Single paper unlock notice:', purchaseErr.message);
         }
-      } else if (itemType === 'MONTHLY_PASS') {
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      } else {
+        let days = 30;
+        let planName = 'Jobsfolder Pro Monthly Pass';
+        if (itemType === 'QUARTERLY') {
+          days = 90;
+          planName = 'Jobsfolder Pro Quarterly Pass';
+        } else if (itemType === 'YEARLY') {
+          days = 365;
+          planName = 'Jobsfolder Master Yearly Pass';
+        }
+
+        const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
         const subPayload: SupabaseUserSubscription = {
           user_email: userEmail,
-          plan_name: 'Jobsfolder Pro Monthly Pass',
+          plan_name: planName,
           payment_id: paymentId,
           status: 'ACTIVE',
           expires_at: expiresAt,
@@ -159,7 +173,7 @@ export class SupabasePaymentService {
    */
   async verifyEntitlementOnSupabase(userEmail: string, examId?: string): Promise<boolean> {
     try {
-      // Check active monthly pass
+      // Check active subscription (Monthly / Quarterly / Yearly)
       const { data: activeSub } = await supabase
         .from('user_subscriptions')
         .select('id')
@@ -170,13 +184,14 @@ export class SupabasePaymentService {
 
       if (activeSub) return true;
 
-      // Check single paper purchase
+      // Check single paper purchase (must not be expired)
       if (examId) {
         const { data: purchase } = await supabase
           .from('user_paper_purchases')
           .select('id')
           .eq('user_email', userEmail)
           .eq('exam_id', examId)
+          .gt('expires_at', new Date().toISOString())
           .maybeSingle();
 
         if (purchase) return true;
@@ -188,11 +203,15 @@ export class SupabasePaymentService {
     }
   }
 
-  private syncToLocalStore(itemType: 'SINGLE_PAPER' | 'MONTHLY_PASS', examId?: string) {
+  private syncToLocalStore(itemType: CheckoutItemType, examId?: string) {
     if (itemType === 'SINGLE_PAPER' && examId) {
-      dataStore.unlockSingleExamPaper(examId);
-    } else if (itemType === 'MONTHLY_PASS') {
-      dataStore.activateMonthlyPass();
+      dataStore.unlockSingleExamPaper(examId, 30);
+    } else if (itemType === 'QUARTERLY') {
+      dataStore.activateSubscription('QUARTERLY');
+    } else if (itemType === 'YEARLY') {
+      dataStore.activateSubscription('YEARLY');
+    } else {
+      dataStore.activateSubscription('MONTHLY');
     }
   }
 }

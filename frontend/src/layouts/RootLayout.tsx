@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -9,6 +11,42 @@ export default function RootLayout() {
   const { user, role, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isAdmin = role === 'ADMIN';
+  const queryClient = useQueryClient();
+
+  // Instant Real-Time Data Synchronization Engine across all Tabs, Pages, and Roles
+  useEffect(() => {
+    const handleStoreUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      queryClient.invalidateQueries({ queryKey: ['live-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['live-resources'] });
+      queryClient.invalidateQueries({ queryKey: ['company'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    };
+
+    window.addEventListener('prepunite_datastore_updated', handleStoreUpdate);
+    window.addEventListener('storage', handleStoreUpdate);
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('prepunite_datastore_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'DATASTORE_UPDATED') {
+            handleStoreUpdate();
+          }
+        };
+      } catch (e) {}
+    }
+
+    return () => {
+      window.removeEventListener('prepunite_datastore_updated', handleStoreUpdate);
+      window.removeEventListener('storage', handleStoreUpdate);
+      if (bc) bc.close();
+    };
+  }, [queryClient]);
 
   // Public standalone pages do not show internal dashboard sidebar
   const isPublicPage = location.pathname === '/' || location.pathname === '/login';

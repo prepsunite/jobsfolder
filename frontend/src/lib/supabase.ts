@@ -22,7 +22,7 @@ export interface SupabaseTransaction {
   amount: number;
   currency: string;
   status: 'SUCCESS' | 'FAILED' | 'PENDING';
-  item_type: 'SINGLE_PAPER' | 'MONTHLY_PASS';
+  item_type: 'SINGLE_PAPER' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'MONTHLY_PASS';
   exam_id?: string;
   created_at?: string;
 }
@@ -43,5 +43,6 @@ export interface SupabasePaperPurchase {
   exam_id: string;
   payment_id: string;
   amount_paid: number;
+  expires_at: string;
   purchased_at?: string;
 }

@@ -200,7 +200,25 @@ export default function CompaniesPage() {
             <div className="space-y-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase block">Company Name</label>
-                <input type="text" value={editingCompany.name} onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]" />
+                <input
+                  type="text"
+                  value={editingCompany.name}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    const autoSlug = newName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+                    setEditingCompany({ ...editingCompany, name: newName, slug: autoSlug });
+                  }}
+                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase block">Company Handle / Slug (@slug)</label>
+                <input
+                  type="text"
+                  value={editingCompany.slug}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-mono text-purple-700 dark:text-purple-400"
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase block">Industry</label>

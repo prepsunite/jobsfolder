@@ -77,8 +77,20 @@ export default function TopicQuestionsPage() {
   const [bulkImportResult, setBulkImportResult] = useState<ImportReport | null>(null);
 
   useEffect(() => {
-    const list = dataStore.getTopicQuestions(topicId);
-    setQuestions(list);
+    const loadQuestions = () => {
+      const list = dataStore.getTopicQuestions(topicId);
+      setQuestions(list);
+    };
+
+    loadQuestions();
+
+    window.addEventListener('prepunite_datastore_updated', loadQuestions);
+    window.addEventListener('storage', loadQuestions);
+
+    return () => {
+      window.removeEventListener('prepunite_datastore_updated', loadQuestions);
+      window.removeEventListener('storage', loadQuestions);
+    };
   }, [topicId]);
 
   const loadQuestions = () => {

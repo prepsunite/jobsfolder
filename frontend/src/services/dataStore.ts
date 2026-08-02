@@ -574,8 +574,25 @@ class DataStoreManager {
   private setStorage<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      this.notifySync(key);
     } catch (e) {
       console.error(`[DataStore] Failed to write key '${key}' to localStorage:`, e);
+    }
+  }
+
+  private notifySync(key: string): void {
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('prepunite_datastore_updated', { detail: { key } }));
+      } catch (e) {}
+
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('prepunite_datastore_channel');
+          bc.postMessage({ type: 'DATASTORE_UPDATED', key, timestamp: Date.now() });
+          bc.close();
+        }
+      } catch (e) {}
     }
   }
 
@@ -587,10 +604,11 @@ class DataStoreManager {
 
   addCompany(company: Partial<CompanyItem>): CompanyItem {
     const companies = this.getCompanies();
+    const slug = company.slug || company.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'new-company';
     const newCompany: CompanyItem = {
-      id: `c-${Date.now()}`,
+      id: company.id || `c-${Date.now()}`,
       name: company.name || 'New Company',
-      slug: company.slug || company.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'new-company',
+      slug,
       description: company.description || 'Recruitment drive overview',
       industry: company.industry || 'IT Services',
       companySize: company.companySize || 'Campus Recruitment Drive',
@@ -598,27 +616,47 @@ class DataStoreManager {
       website: company.website,
       logoUrl: company.logoUrl,
       examsList: company.examsList || [company.name ? `${company.name} Placement Drive 2026` : 'Campus Drive'],
+      aboutCompany: company.aboutCompany,
       isActive: true,
       createdAt: new Date().toISOString(),
     };
-    const updated = [...companies, newCompany];
+    
+    const existingIdx = companies.findIndex(c => c.id === newCompany.id || c.slug === slug);
+    let updated: CompanyItem[];
+    if (existingIdx > -1) {
+      updated = [...companies];
+      updated[existingIdx] = { ...updated[existingIdx], ...newCompany };
+    } else {
+      updated = [...companies, newCompany];
+    }
     this.setStorage('prepunite_companies', updated);
     return newCompany;
   }
 
-  updateCompany(id: string, updatedFields: Partial<CompanyItem>): void {
+  updateCompany(idOrSlug: string, updatedFields: Partial<CompanyItem>): void {
     const companies = this.getCompanies();
-    const index = companies.findIndex(c => c.id === id);
+    const index = companies.findIndex(c => c.id === idOrSlug || c.slug === idOrSlug);
     if (index > -1) {
       companies[index] = { ...companies[index], ...updatedFields };
       this.setStorage('prepunite_companies', companies);
     } else {
-      this.setStorage('prepunite_companies', [...companies, { id, ...updatedFields } as CompanyItem]);
+      const existing = companies.find(c => c.slug === idOrSlug || c.id === idOrSlug) || {
+        id: idOrSlug,
+        name: updatedFields.name || idOrSlug.toUpperCase(),
+        slug: updatedFields.slug || idOrSlug.toLowerCase(),
+        description: updatedFields.description || '',
+        industry: 'IT Services & Consulting',
+        companySize: 'Pan-India',
+        headquarters: 'India',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+      this.setStorage('prepunite_companies', [...companies, { ...existing, ...updatedFields }]);
     }
   }
 
   deleteCompany(id: string): void {
-    const companies = this.getCompanies().filter(c => c.id !== id);
+    const companies = this.getCompanies().filter(c => c.id !== id && c.slug !== id);
     this.setStorage('prepunite_companies', companies);
   }
 
@@ -684,7 +722,7 @@ class DataStoreManager {
     const virtualExamsToPersist = currentCompanyExams.filter(e => !list.find(l => l.id === e.id));
 
     const newExam: ExamItem = {
-      id: `e-${Date.now()}`,
+      id: exam.id || `e-${Date.now()}`,
       companySlug,
       name: exam.name || 'New Exam Module',
       badge: exam.badge || 'Drive',
@@ -692,18 +730,49 @@ class DataStoreManager {
       oldPapers: exam.oldPapers || '### Old Papers\n\nWrite old papers here...',
       upvotes: exam.upvotes || 0,
     };
-    this.setStorage('prepunite_exams', [...list, ...virtualExamsToPersist, newExam]);
+    
+    const existingIdx = list.findIndex(l => l.id === newExam.id);
+    let updated: ExamItem[];
+    if (existingIdx > -1) {
+      updated = [...list];
+      updated[existingIdx] = { ...updated[existingIdx], ...newExam };
+    } else {
+      updated = [...list, ...virtualExamsToPersist, newExam];
+    }
+    this.setStorage('prepunite_exams', updated);
     return newExam;
   }
 
   updateExam(id: string, updatedFields: Partial<ExamItem>): void {
-    const all = this.getStorage<ExamItem[]>('prepunite_exams', INITIAL_EXAMS);
-    const index = all.findIndex(e => e.id === id);
+    const stored = this.getStorage<ExamItem[]>('prepunite_exams', INITIAL_EXAMS);
+    const index = stored.findIndex(e => e.id === id);
     if (index > -1) {
-      all[index] = { ...all[index], ...updatedFields };
-      this.setStorage('prepunite_exams', all);
+      stored[index] = { ...stored[index], ...updatedFields };
+      this.setStorage('prepunite_exams', stored);
     } else {
-      this.setStorage('prepunite_exams', [...all, { id, ...updatedFields } as ExamItem]);
+      const allExams = this.getAllExams();
+      const existingVirtual = allExams.find(e => e.id === id);
+      const baseExam: ExamItem = existingVirtual ? {
+        id: existingVirtual.id,
+        companySlug: existingVirtual.companySlug,
+        name: existingVirtual.name,
+        badge: existingVirtual.badge,
+        content: existingVirtual.content,
+        oldPapers: existingVirtual.oldPapers,
+        paperTabs: existingVirtual.paperTabs,
+        googleDocEmbedUrl: existingVirtual.googleDocEmbedUrl,
+        googleDocEditUrl: existingVirtual.googleDocEditUrl,
+        upvotes: existingVirtual.upvotes || 0,
+      } : {
+        id,
+        companySlug: updatedFields.companySlug || 'tcs',
+        name: updatedFields.name || 'Exam Module',
+        badge: updatedFields.badge || 'Drive',
+        content: updatedFields.content || '',
+        oldPapers: updatedFields.oldPapers || '',
+        upvotes: updatedFields.upvotes || 0,
+      };
+      this.setStorage('prepunite_exams', [...stored, { ...baseExam, ...updatedFields }]);
     }
   }
 
@@ -994,9 +1063,40 @@ class DataStoreManager {
     return isBookmarked;
   }
 
-  // --- PAYWALL & MONETIZATION STORAGE ---
+  // --- PAYWALL & MONETIZATION STORAGE WITH 30-DAY SINGLE PAPER EXPIRATION ---
+  getPurchasedExamRecords(): { examId: string; purchasedAt: string; expiresAt: string }[] {
+    const raw = this.getStorage<any[]>('jobsfolder_purchased_exam_records', []);
+    const legacyIds = this.getStorage<string[]>('jobsfolder_purchased_exam_ids', []);
+    
+    // Migrate legacy IDs with default 30-day expiration if not present
+    const migrated: { examId: string; purchasedAt: string; expiresAt: string }[] = [...raw];
+    const now = new Date();
+    const defaultExpiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    legacyIds.forEach(id => {
+      if (!migrated.some(m => m.examId === id)) {
+        migrated.push({
+          examId: id,
+          purchasedAt: now.toISOString(),
+          expiresAt: defaultExpiry,
+        });
+      }
+    });
+
+    // Filter active non-expired paper purchases
+    const active = migrated.filter(item => {
+      if (!item.expiresAt) return true;
+      return new Date(item.expiresAt).getTime() > Date.now();
+    });
+
+    if (active.length !== raw.length) {
+      this.setStorage('jobsfolder_purchased_exam_records', active);
+    }
+    return active;
+  }
+
   getPurchasedExamIds(): string[] {
-    return this.getStorage<string[]>('jobsfolder_purchased_exam_ids', []);
+    return this.getPurchasedExamRecords().map(r => r.examId);
   }
 
   getUserSubscription(): { isPro: boolean; expiresAt: string | null; planName: string } {
@@ -1024,7 +1124,7 @@ class DataStoreManager {
     }
     const sub = this.getUserSubscription();
     if (sub.isPro) {
-      if (!sub.expiresAt || new Date(sub.expiresAt) > new Date()) {
+      if (!sub.expiresAt || new Date(sub.expiresAt).getTime() > Date.now()) {
         return true;
       }
     }
@@ -1032,21 +1132,47 @@ class DataStoreManager {
     return false;
   }
 
-  unlockSingleExamPaper(examId: string): boolean {
-    const purchased = this.getPurchasedExamIds();
-    if (!purchased.includes(examId)) {
-      this.setStorage('jobsfolder_purchased_exam_ids', [...purchased, examId]);
+  unlockSingleExamPaper(examId: string, durationDays: number = 30): boolean {
+    const records = this.getPurchasedExamRecords();
+    const purchasedAt = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
+    const existingIdx = records.findIndex(r => r.examId === examId);
+    let updated: { examId: string; purchasedAt: string; expiresAt: string }[];
+    if (existingIdx > -1) {
+      updated = [...records];
+      updated[existingIdx] = { examId, purchasedAt, expiresAt };
+    } else {
+      updated = [...records, { examId, purchasedAt, expiresAt }];
     }
+
+    this.setStorage('jobsfolder_purchased_exam_records', updated);
+    this.setStorage('jobsfolder_purchased_exam_ids', updated.map(u => u.examId));
     return true;
   }
 
-  activateMonthlyPass(): void {
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  activateSubscription(planType: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY'): void {
+    let days = 30;
+    let planName = 'Jobsfolder Pro Monthly Pass';
+
+    if (planType === 'QUARTERLY') {
+      days = 90;
+      planName = 'Jobsfolder Pro Quarterly Pass';
+    } else if (planType === 'YEARLY') {
+      days = 365;
+      planName = 'Jobsfolder Master Yearly Pass';
+    }
+
+    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     this.setStorage('jobsfolder_user_subscription', {
       isPro: true,
       expiresAt,
-      planName: 'Jobsfolder Pro Monthly Pass',
+      planName,
     });
+  }
+
+  activateMonthlyPass(): void {
+    this.activateSubscription('MONTHLY');
   }
 
   // --- SECURE BACKEND AUTHORIZATION GATEWAY FOR OLD PAPERS ---
@@ -1056,23 +1182,15 @@ class DataStoreManager {
     if (!isAuthorized) {
       return {
         status: 'PAYMENT_REQUIRED',
-        documentUrl: null, // 🔒 Zero URL shipped to client!
+        documentUrl: null,
         isAuthorized: false,
         reasonCode: 'PAYMENT_REQUIRED',
       };
     }
 
-    // In Prod: Backend retrieves private S3 / R2 presigned URL mapping for examId
-    const privateMockDocs: Record<string, string> = {
-      'e1': 'https://docs.google.com/document/d/1X5X8yL8vX9Y_sample_tcs_nqt/pub?embedded=true',
-      'e-def-tcs-0': 'https://docs.google.com/document/d/1X5X8yL8vX9Y_sample_tcs_nqt/pub?embedded=true',
-    };
-
-    const docUrl = privateMockDocs[examId] || 'https://docs.google.com/document/d/e/2PACX-1vT_demo_paper/pub?embedded=true';
-
     return {
       status: 'AUTHORIZED',
-      documentUrl: docUrl,
+      documentUrl: null,
       isAuthorized: true,
       userEmail,
       timestamp: new Date().toLocaleString(),
@@ -1083,6 +1201,23 @@ class DataStoreManager {
 
   getResources(): any[] {
     return this.getStorage<any[]>('prepunite_resources', []);
+  }
+
+  addResource(resource: any): any {
+    const list = this.getResources();
+    const newRes = {
+      id: `res-${Date.now()}`,
+      title: resource.title || 'New Resource',
+      companyName: resource.companyName || 'TCS',
+      category: resource.category || 'PDF',
+      fileType: resource.fileType || 'PDF Document',
+      url: resource.url || '#',
+      downloadsCount: resource.downloadsCount || 500,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [newRes, ...list];
+    this.setStorage('prepunite_resources', updated);
+    return newRes;
   }
 
   getTopicQuestions(topicId?: string): TopicQuestionItem[] {
