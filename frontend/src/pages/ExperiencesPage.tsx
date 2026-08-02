@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { dataStore, type ExperienceItem } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
@@ -46,63 +47,118 @@ export default function ExperiencesPage() {
     roundsText: '',
   });
 
-  const { data: rawExperiences = [], isLoading } = useQuery({
+  const { data: rawExperiences = [], isLoading, refetch: refetchExperiences } = useQuery({
     queryKey: ['live-experiences', searchTerm, isAdmin],
     queryFn: async () => {
-      const list = dataStore.getExperiences();
-      return list.filter((e) => {
-        const matchesStatus = isAdmin || e.status === 'APPROVED';
-        const matchesSearch =
-          !searchTerm ||
-          e.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          e.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          e.studentName.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesStatus && matchesSearch;
-      });
+      let query = supabase
+        .from('experiences')
+        .select('*')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
+
+      if (!isAdmin) {
+        query = query.eq('status', 'APPROVED');
+      }
+
+      if (searchTerm) {
+        query = query.or(
+          `company_name.ilike.%${searchTerm}%,role_title.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`
+        );
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (data || []).map((e: any): ExperienceItem => ({
+        id: e.id,
+        companyName: e.company_name || e.company_slug?.toUpperCase() || 'TCS',
+        role: e.role_title || 'Software Engineer',
+        studentName: e.student_name || 'Student',
+        college: e.college || '',
+        year: e.year || 2026,
+        difficulty: e.difficulty || 'MEDIUM',
+        verdict: e.verdict || 'SELECTED',
+        rounds: (() => {
+          try { return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : (e.rounds || []); }
+          catch { return [{ roundTitle: 'Interview', details: e.description || '' }]; }
+        })(),
+        status: e.status || 'PENDING',
+      }));
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const handleCreateExperience = (ev: React.FormEvent) => {
+  const handleCreateExperience = async (ev: React.FormEvent) => {
     ev.preventDefault();
     const finalStudentName = newExpForm.isAnonymous ? 'Anonymous Student' : (user?.name || 'Anonymous Student');
+    const status = isAdmin ? 'APPROVED' : 'PENDING';
 
-    dataStore.addExperience({
-      companyName: newExpForm.companyName,
-      role: newExpForm.role,
-      studentName: finalStudentName,
-      college: newExpForm.college || 'Engineering College',
-      year: newExpForm.year,
-      difficulty: newExpForm.difficulty,
-      verdict: newExpForm.verdict,
-      rounds: [
-        { roundTitle: 'Interview Rounds & Details', details: newExpForm.roundsText || 'Interview experience details provided.' },
-      ],
-      status: isAdmin ? 'APPROVED' : 'PENDING',
-    });
+    try {
+      const { error } = await supabase.from('experiences').insert({
+        company_name: newExpForm.companyName,
+        company_slug: newExpForm.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        role_title: newExpForm.role,
+        student_name: finalStudentName,
+        college: newExpForm.college || 'Engineering College',
+        year: newExpForm.year,
+        difficulty: newExpForm.difficulty,
+        verdict: newExpForm.verdict,
+        rounds: JSON.stringify([{ roundTitle: 'Interview Rounds & Details', details: newExpForm.roundsText || 'Interview experience details provided.' }]),
+        status,
+        is_deleted: false,
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.warn('[ExperiencesPage] Supabase create failed, using dataStore fallback:', err);
+      dataStore.addExperience({
+        companyName: newExpForm.companyName,
+        role: newExpForm.role,
+        studentName: finalStudentName,
+        college: newExpForm.college || 'Engineering College',
+        year: newExpForm.year,
+        difficulty: newExpForm.difficulty,
+        verdict: newExpForm.verdict,
+        rounds: [{ roundTitle: 'Interview Rounds & Details', details: newExpForm.roundsText || '' }],
+        status,
+      });
+    }
+
     queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
     setShowAddModal(false);
-    setNewExpForm({
-      companyName: 'TCS',
-      role: 'Software Engineer',
-      college: '',
-      year: 2026,
-      difficulty: 'MEDIUM',
-      verdict: 'SELECTED',
-      isAnonymous: false,
-      roundsText: '',
-    });
+    setNewExpForm({ companyName: 'TCS', role: 'Software Engineer', college: '', year: 2026, difficulty: 'MEDIUM', verdict: 'SELECTED', isAnonymous: false, roundsText: '' });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingExp) return;
-    dataStore.updateExperience(editingExp.id, editingExp);
+    try {
+      const { error } = await supabase.from('experiences').update({
+        company_name: editingExp.companyName,
+        role_title: editingExp.role,
+        student_name: editingExp.studentName,
+        college: editingExp.college,
+        year: editingExp.year,
+        difficulty: editingExp.difficulty,
+        verdict: editingExp.verdict,
+        rounds: JSON.stringify(editingExp.rounds),
+        status: editingExp.status,
+      }).eq('id', editingExp.id);
+      if (error) throw error;
+    } catch (err: any) {
+      dataStore.updateExperience(editingExp.id, editingExp);
+    }
     queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
     setEditingExp(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Delete this experience?')) return;
-    dataStore.deleteExperience(id);
+    try {
+      const { error } = await supabase.from('experiences').update({ is_deleted: true, deleted_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    } catch (err: any) {
+      dataStore.deleteExperience(id);
+    }
     queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
   };
 

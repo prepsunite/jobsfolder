@@ -55,31 +55,45 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     retry: 1,
   });
 
-  // Local DataStore Subscriptions
-  const { data: allCompaniesStore = [] } = useQuery({
-    queryKey: ['live-companies'],
-    queryFn: () => dataStore.getCompanies(),
-  });
-
+  // Exams from Supabase — live data, no localStorage
   const { data: companyExams = [] } = useQuery({
     queryKey: ['live-exams', slug],
-    queryFn: () => dataStore.getExams(slug),
+    queryFn: () => examService.getExamsByCompany(slug),
+    enabled: !!slug,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const currentCompanyStoreItem = allCompaniesStore.find(c => c.slug === slug) || {
-    id: `c-${slug}`,
-    name: company?.name || slug.toUpperCase(),
-    slug: slug,
-    description: company?.description || `${slug.toUpperCase()} conducts annual campus recruitment drives.`,
-    industry: 'IT Services & Consulting',
-    companySize: 'Pan-India Recruitment Drive',
-    headquarters: 'India & Global',
-    website: company?.website,
-    logoUrl: company?.logoUrl,
-    aboutCompany: `### About ${slug.toUpperCase()}\n\nAdd details here.`,
-    isActive: true,
-    createdAt: new Date().toISOString()
-  };
+  // Derive a CompanyItem-compatible shape from the Supabase company
+  const currentCompanyStoreItem = company
+    ? {
+        id: company.id,
+        name: company.name,
+        slug: company.slug,
+        description: company.description || `${company.name} conducts annual campus recruitment drives.`,
+        industry: company.industry || 'IT Services & Consulting',
+        companySize: company.companySize || 'Pan-India Recruitment Drive',
+        headquarters: company.headquarters || 'India & Global',
+        website: company.website,
+        logoUrl: company.logoUrl,
+        aboutCompany: company.aboutCompany || `### About ${company.name}\n\nAdd details here.`,
+        isActive: company.isActive ?? true,
+        createdAt: company.createdAt || new Date().toISOString(),
+      }
+    : {
+        id: `c-${slug}`,
+        name: slug.toUpperCase(),
+        slug: slug,
+        description: `${slug.toUpperCase()} conducts annual campus recruitment drives.`,
+        industry: 'IT Services & Consulting',
+        companySize: 'Pan-India Recruitment Drive',
+        headquarters: 'India & Global',
+        website: undefined,
+        logoUrl: undefined,
+        aboutCompany: `### About ${slug.toUpperCase()}\n\nAdd details here.`,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
 
   const companyName = currentCompanyStoreItem.name;
 
@@ -897,9 +911,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               isAdmin={isAdmin}
               watermarkText={authorizedDoc.watermarkText}
               onOpenPaywall={() => setShowPaywallModal(true)}
-              onUpdateTabs={(updatedTabs) => {
+              onUpdateTabs={async (updatedTabs) => {
                 if (currentExam) {
                   dataStore.updateExam(currentExam.id, { paperTabs: updatedTabs });
+                  await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
                   queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                 }
               }}

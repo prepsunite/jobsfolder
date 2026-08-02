@@ -23,6 +23,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services/dataStore';
+import { supabase } from '@/lib/supabase';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -76,27 +77,50 @@ export default function TopicQuestionsPage() {
   const [bulkJsonInput, setBulkJsonInput] = useState('');
   const [bulkImportResult, setBulkImportResult] = useState<ImportReport | null>(null);
 
-  useEffect(() => {
-    const loadQuestions = () => {
-      const list = dataStore.getTopicQuestions(topicId);
-      setQuestions(list);
-    };
+  // Load questions from Supabase (live — admins and students always see the same data)
+  const loadQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('topic_questions')
+        .select('*')
+        .eq('topic_id', topicId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true });
 
-    loadQuestions();
+      if (error) throw error;
 
-    window.addEventListener('prepunite_datastore_updated', loadQuestions);
-    window.addEventListener('storage', loadQuestions);
-
-    return () => {
-      window.removeEventListener('prepunite_datastore_updated', loadQuestions);
-      window.removeEventListener('storage', loadQuestions);
-    };
-  }, [topicId]);
-
-  const loadQuestions = () => {
+      if (data && data.length > 0) {
+        const mapped: TopicQuestionItem[] = data.map((q: any) => ({
+          id: q.id,
+          topicId: q.topic_id,
+          questionNumber: q.question_number || 1,
+          statement: q.statement || '',
+          options: (() => {
+            try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
+            catch { return []; }
+          })(),
+          correctAnswer: q.correct_answer || 'A',
+          explanation: q.explanation || '',
+          formulasUsed: q.formulas_used || [],
+          difficulty: q.difficulty || 'MEDIUM',
+          difficultyLevel: q.difficulty_level || 2,
+          isHidden: q.is_hidden || false,
+          createdAt: q.created_at,
+        }));
+        setQuestions(mapped);
+        return;
+      }
+    } catch (err) {
+      console.warn('[TopicQuestionsPage] Supabase load failed, using local dataStore:', err);
+    }
+    // Fallback to localStorage only if Supabase fails
     const list = dataStore.getTopicQuestions(topicId);
     setQuestions(list);
   };
+
+  useEffect(() => {
+    loadQuestions();
+  }, [topicId]);
 
   const handleSelectOption = (qId: string, optionKey: string) => {
     setSelectedAnswers(prev => ({ ...prev, [qId]: optionKey }));
@@ -144,7 +168,7 @@ export default function TopicQuestionsPage() {
     setShowModal(true);
   };
 
-  const handleSaveQuestion = (e: React.FormEvent) => {
+  const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formStatement.trim()) return alert('Question statement is required.');
 
@@ -163,43 +187,91 @@ export default function TopicQuestionsPage() {
       .map(f => f.trim())
       .filter(Boolean);
 
-    if (editingQuestion) {
-      dataStore.updateTopicQuestion(editingQuestion.id, {
-        statement: formStatement,
-        options: optionsList,
-        correctAnswer: formCorrect,
-        explanation: formExplanation,
-        formulasUsed: formulasArray,
-        difficulty: formDifficulty,
-        isHidden: formIsHidden,
-      });
-    } else {
-      dataStore.addTopicQuestion({
-        topicId,
-        questionNumber: questions.length + 1,
-        statement: formStatement,
-        options: optionsList,
-        correctAnswer: formCorrect,
-        explanation: formExplanation,
-        formulasUsed: formulasArray,
-        difficulty: formDifficulty,
-        isHidden: formIsHidden,
-      });
+    try {
+      if (editingQuestion) {
+        const { error } = await supabase
+          .from('topic_questions')
+          .update({
+            statement: formStatement,
+            options: JSON.stringify(optionsList),
+            correct_answer: formCorrect,
+            explanation: formExplanation,
+            formulas_used: formulasArray,
+            difficulty: formDifficulty,
+            is_hidden: formIsHidden,
+          })
+          .eq('id', editingQuestion.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('topic_questions')
+          .insert({
+            topic_id: topicId,
+            question_number: questions.length + 1,
+            statement: formStatement,
+            options: JSON.stringify(optionsList),
+            correct_answer: formCorrect,
+            explanation: formExplanation,
+            formulas_used: formulasArray,
+            difficulty: formDifficulty,
+            difficulty_level: formDifficulty === 'EASY' ? 1 : formDifficulty === 'HARD' ? 3 : 2,
+            is_hidden: formIsHidden,
+            is_deleted: false,
+            structured_explanation: JSON.stringify({}),
+          });
+        if (error) throw error;
+      }
+      // Also sync to local dataStore for offline fallback
+      if (editingQuestion) {
+        dataStore.updateTopicQuestion(editingQuestion.id, {
+          statement: formStatement, options: optionsList, correctAnswer: formCorrect,
+          explanation: formExplanation, formulasUsed: formulasArray, difficulty: formDifficulty, isHidden: formIsHidden,
+        });
+      } else {
+        dataStore.addTopicQuestion({
+          topicId, questionNumber: questions.length + 1, statement: formStatement,
+          options: optionsList, correctAnswer: formCorrect, explanation: formExplanation,
+          formulasUsed: formulasArray, difficulty: formDifficulty, isHidden: formIsHidden,
+        });
+      }
+    } catch (err: any) {
+      alert(`Failed to save question to Supabase: ${err.message || err}`);
     }
 
     setShowModal(false);
     loadQuestions();
   };
 
-  const handleDeleteQuestion = (qId: string) => {
+  const handleDeleteQuestion = async (qId: string) => {
     if (window.confirm('Are you sure you want to delete this question?')) {
-      dataStore.deleteTopicQuestion(qId);
+      try {
+        const { error } = await supabase
+          .from('topic_questions')
+          .update({ is_deleted: true })
+          .eq('id', qId);
+        if (error) throw error;
+        dataStore.deleteTopicQuestion(qId);
+      } catch (err: any) {
+        alert(`Failed to delete question from Supabase: ${err.message || err}`);
+      }
       loadQuestions();
     }
   };
 
-  const handleToggleVisibility = (qId: string) => {
-    dataStore.toggleTopicQuestionVisibility(qId);
+  const handleToggleVisibility = async (qId: string) => {
+    const q = questions.find(q => q.id === qId);
+    if (!q) return;
+    const newHidden = !q.isHidden;
+    try {
+      const { error } = await supabase
+        .from('topic_questions')
+        .update({ is_hidden: newHidden })
+        .eq('id', qId);
+      if (error) throw error;
+      dataStore.toggleTopicQuestionVisibility(qId);
+    } catch (err: any) {
+      alert(`Failed to update question visibility in Supabase: ${err.message || err}`);
+    }
     loadQuestions();
   };
 

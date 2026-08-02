@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { adminService } from '@/services/admin.service';
 import { companyService } from '@/services/company.service';
 import { examService } from '@/services/exam.service';
@@ -42,11 +43,7 @@ export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
 
   const [adminTab, setAdminTab] = useState<'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'metrics'>('manage-exams');
-
-  // Dynamically Loaded Companies, Exams, and Experiences from dataStore
-  const [allCompanies, setAllCompanies] = useState<CompanyItem[]>([]);
   const [selectedCompanySlug, setSelectedCompanySlug] = useState('tcs');
-  const [experiencesList, setExperiencesList] = useState<ExperienceItem[]>([]);
 
   // Moderation filter state
   const [moderationFilter, setModerationFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
@@ -55,25 +52,82 @@ export default function AdminDashboardPage() {
   const [adminOverviewInput, setAdminOverviewInput] = useState('');
   const [overviewSavedNotice, setOverviewSavedNotice] = useState(false);
 
-  // Exam Cards list for selected company
-  const [companyExamsList, setCompanyExamsList] = useState<ExamItem[]>([]);
+  // --- React Query: Companies list from Supabase ---
+  const { data: allCompanies = [] } = useQuery<CompanyItem[]>({
+    queryKey: ['live-companies'],
+    queryFn: async () => {
+      const res = await companyService.getCompanies();
+      return (res.content || []).map(c => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description || '',
+        industry: c.industry || 'IT Services & Consulting',
+        companySize: c.companySize || 'Pan-India',
+        headquarters: c.headquarters || 'India & Global',
+        website: c.website,
+        logoUrl: c.logoUrl,
+        examsList: [],
+        aboutCompany: c.aboutCompany,
+        isActive: c.isActive ?? true,
+        createdAt: c.createdAt || new Date().toISOString(),
+      }));
+    },
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
 
-  // Reload Lists whenever selected company changes or items are edited
-  const reloadDataStoreLists = (slug: string = selectedCompanySlug) => {
-    const companies = dataStore.getCompanies();
-    setAllCompanies(companies);
-    setCompanyExamsList(dataStore.getExams(slug));
-    setExperiencesList(dataStore.getExperiences());
+  // --- React Query: Exams for selected company from Supabase ---
+  const { data: companyExamsList = [] } = useQuery<ExamItem[]>({
+    queryKey: ['live-exams', selectedCompanySlug],
+    queryFn: () => examService.getExamsByCompany(selectedCompanySlug),
+    enabled: role === 'ADMIN' && !!selectedCompanySlug,
+    staleTime: 0,
+  });
 
-    const currentCompany = companies.find(c => c.slug === slug);
+  // --- React Query: Experiences (all statuses) from Supabase ---
+  const { data: experiencesPage } = useQuery({
+    queryKey: ['admin-experiences'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('experiences')
+        .select('*')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+  const experiencesList: ExperienceItem[] = (experiencesPage || []).map((e: any) => ({
+    id: e.id,
+    companyName: (e.company_slug || 'tcs').toUpperCase(),
+    role: e.role_title || 'Software Engineer',
+    studentName: e.student_name || 'Student',
+    college: e.college || '',
+    year: e.year || 2026,
+    difficulty: e.difficulty || 'MEDIUM',
+    verdict: 'SELECTED',
+    rounds: [],
+    status: e.status || 'PENDING',
+  }));
+
+  // Keep adminOverviewInput in sync with selected company
+  useEffect(() => {
+    const currentCompany = allCompanies.find(c => c.slug === selectedCompanySlug);
     if (currentCompany) {
       setAdminOverviewInput(currentCompany.description || '');
     }
-  };
+  }, [selectedCompanySlug, allCompanies]);
 
-  useEffect(() => {
-    reloadDataStoreLists(selectedCompanySlug);
-  }, [selectedCompanySlug]);
+  // Invalidate all relevant queries (replaces reloadDataStoreLists)
+  const reloadDataStoreLists = (slug: string = selectedCompanySlug) => {
+    queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+    queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+    queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+  };
 
   // STREAMLINED 2-STEP GUIDED COMPANY CREATION WIZARD STATE
   const [creationStep, setCreationStep] = useState<number>(1);
@@ -347,11 +401,14 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleDeleteExperience = (id: string) => {
+  const handleDeleteExperience = async (id: string) => {
     if (confirm('Are you sure you want to delete this student experience submission?')) {
-      dataStore.deleteExperience(id);
-      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
-      reloadDataStoreLists();
+      try {
+        await supabase.from('experiences').update({ is_deleted: true, deleted_at: new Date().toISOString() }).eq('id', id);
+        reloadDataStoreLists();
+      } catch (err: any) {
+        alert(`Failed to delete experience from Supabase: ${err.message || err}`);
+      }
     }
   };
 
@@ -360,14 +417,14 @@ export default function AdminDashboardPage() {
     return <NotFoundPage />;
   }
 
-  const allExamsCount = dataStore.getAllExams().length;
+  const allExamsCount = companyExamsList.length;
   const pendingExperiencesCount = experiencesList.filter(e => e.status === 'PENDING').length;
   const approvedExperiencesCount = experiencesList.filter(e => e.status === 'APPROVED').length;
   const rejectedExperiencesCount = experiencesList.filter(e => e.status === 'REJECTED').length;
 
   const stats = data || {
     totalUsers: 142,
-    totalCompanies: dataStore.getCompanies().length,
+    totalCompanies: allCompanies.length,
     totalQuestions: dataStore.getQuestions().length,
     totalExperiences: experiencesList.length,
     pendingApprovals: pendingExperiencesCount,

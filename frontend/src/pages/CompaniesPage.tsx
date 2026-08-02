@@ -27,46 +27,27 @@ export default function CompaniesPage() {
     headquarters: 'India & Global',
   });
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading, isError } = useQuery({
     queryKey: ['live-companies', searchTerm],
     queryFn: async () => {
-      try {
-        const res = await companyService.getCompanies(searchTerm);
-        if (res.content && res.content.length > 0) {
-          return res.content.map(c => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            description: c.description || `${c.name} recruitment drives and hiring patterns.`,
-            industry: c.industry || 'IT Services & Consulting',
-            companySize: c.companySize || '10,000+ employees',
-            headquarters: c.headquarters || 'India & Global',
-            website: c.website,
-            logoUrl: c.logoUrl,
-            examsList: [`${c.name} Placement Papers 2026`],
-            isActive: c.isActive,
-            createdAt: c.createdAt,
-          }));
-        }
-      } catch (e) {
-        console.warn('[CompaniesPage] Supabase load fallback:', e);
-      }
-      const all = dataStore.getCompanies();
-      const enriched = all.map(c => {
-        const actualExams = dataStore.getExams(c.slug).map(e => e.name);
-        return {
-          ...c,
-          examsList: actualExams.length > 0 ? actualExams : (c.examsList || ['Campus Drive'])
-        };
-      });
-      
-      if (!searchTerm) return enriched;
-      return enriched.filter((c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.examsList?.some((e) => e.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      const res = await companyService.getCompanies(searchTerm);
+      return (res.content || []).map(c => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description || `${c.name} recruitment drives and hiring patterns.`,
+        industry: c.industry || 'IT Services & Consulting',
+        companySize: c.companySize || '10,000+ employees',
+        headquarters: c.headquarters || 'India & Global',
+        website: c.website,
+        logoUrl: c.logoUrl,
+        examsList: [`${c.name} Placement Papers 2026`],
+        isActive: c.isActive,
+        createdAt: c.createdAt,
+      }));
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const handleCreateCompany = async (e: React.FormEvent) => {
