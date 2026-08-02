@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
 import { dataStore, type ExamItem } from '@/services/dataStore';
+import { PaperService } from '@/services/paper.service';
 import { useAuth } from '@/contexts/AuthContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
@@ -640,10 +641,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   isAdmin={isAdmin}
                   watermarkText={authorizedDoc.watermarkText}
                   onOpenPaywall={() => setShowPaywallModal(true)}
-                  onUpdateTabs={(updatedTabs) => {
+                  onUpdateTabs={async (updatedTabs) => {
                     if (currentExam) {
                       dataStore.updateExam(currentExam.id, { paperTabs: updatedTabs });
-                      // Use the correct query key that matches the useQuery on line 106
+                      await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
                       queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                     }
                   }}

@@ -58,6 +58,7 @@ export interface ExamItem {
   paperTabs?: DocTabNode[]; // Sub-tabs tree for Old Papers (Aptitude, Coding, Interview, etc.)
   googleDocEmbedUrl?: string;
   googleDocEditUrl?: string;
+  price?: number;
   upvotes: number;
 }
 
@@ -621,17 +622,23 @@ class DataStoreManager {
 
   async syncExamToSupabase(exam: ExamItem): Promise<void> {
     try {
-      await supabase.from('exams').upsert({
+      const { error } = await supabase.from('exams').upsert({
         id: exam.id,
         company_slug: exam.companySlug,
         name: exam.name,
         badge: exam.badge,
         content: exam.content,
         old_papers: exam.oldPapers,
-        price: 99,
+        paper_tabs: exam.paperTabs || [],
+        google_doc_embed_url: exam.googleDocEmbedUrl,
+        google_doc_edit_url: exam.googleDocEditUrl,
+        price: exam.price || 99,
       });
+      if (error) {
+        console.error('[dataStore] Supabase exam sync error:', error);
+      }
     } catch (err) {
-      console.warn('[dataStore] Supabase exam sync error:', err);
+      console.error('[dataStore] Supabase exam sync exception:', err);
     }
   }
 

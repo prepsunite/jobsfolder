@@ -26,6 +26,7 @@ export interface Company {
   logoUrl?: string;
   website?: string;
   description?: string;
+  aboutCompany?: string;
   industry?: string;
   companySize?: string;
   headquarters?: string;
