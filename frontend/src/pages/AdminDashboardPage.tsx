@@ -239,15 +239,6 @@ export default function AdminDashboardPage() {
         oldPapers: companyForm.oldPapersContent,
       });
 
-      dataStore.addCompany(createdCompany as any);
-      dataStore.addExam({
-        companySlug: slug,
-        name: examTitle,
-        badge: companyForm.examBadge || 'Official Campus Drive 2026',
-        content: companyForm.examContent,
-        oldPapers: companyForm.oldPapersContent,
-      });
-
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
@@ -265,10 +256,6 @@ export default function AdminDashboardPage() {
 
     try {
       await companyService.updateCompany(activeCompany.slug || selectedCompanySlug, {
-        description: adminOverviewInput
-      });
-
-      dataStore.updateCompany(activeCompany.id, {
         description: adminOverviewInput
       });
 
@@ -291,21 +278,6 @@ export default function AdminDashboardPage() {
         questionType: questionForm.category as any,
         difficulty: questionForm.difficulty as any,
         description: questionForm.problemStatement,
-        explanation: questionForm.explanation,
-      });
-
-      dataStore.addQuestion({
-        title: questionForm.title,
-        companyName: questionForm.companyName,
-        companySlug: questionForm.companySlug,
-        role: questionForm.role,
-        category: questionForm.category,
-        difficulty: questionForm.difficulty,
-        problemStatement: questionForm.problemStatement,
-        inputFormat: questionForm.inputFormat,
-        outputFormat: questionForm.outputFormat,
-        sampleInput: questionForm.sampleInput,
-        sampleOutput: questionForm.sampleOutput,
         explanation: questionForm.explanation,
       });
 
@@ -345,13 +317,6 @@ export default function AdminDashboardPage() {
         content: newExamCard.content,
         oldPapers: newExamCard.oldPapers,
       });
-      dataStore.addExam({
-        companySlug: selectedCompanySlug,
-        name: newExamCard.name,
-        badge: newExamCard.badge || 'Official Campus Drive 2026',
-        content: newExamCard.content,
-        oldPapers: newExamCard.oldPapers,
-      });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
@@ -371,7 +336,6 @@ export default function AdminDashboardPage() {
     if (!editingExam) return;
     try {
       await examService.updateExam(editingExam.id, editingExam);
-      dataStore.updateExam(editingExam.id, editingExam);
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
       reloadDataStoreLists(selectedCompanySlug);
@@ -385,7 +349,6 @@ export default function AdminDashboardPage() {
     if (confirm('Are you sure you want to delete this exam module?')) {
       try {
         await examService.deleteExam(id);
-        dataStore.deleteExam(id);
         queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
         queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
         reloadDataStoreLists(selectedCompanySlug);
@@ -401,7 +364,6 @@ export default function AdminDashboardPage() {
       if (status === 'APPROVED' || status === 'REJECTED') {
         await experienceService.updateExperienceStatus(id, status);
       }
-      dataStore.updateExperienceStatus(id, status);
       queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       reloadDataStoreLists();

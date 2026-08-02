@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ExamCard from '@/components/ExamCard';
-import { dataStore, type ExamWithCompany } from '@/services/dataStore';
+import type { ExamWithCompany } from '@/services/exam.service';
 import { examService } from '@/services/exam.service';
 import { companyService } from '@/services/company.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,34 +26,16 @@ export default function QuestionsPage() {
   const { data: companyList = [] } = useQuery({
     queryKey: ['live-companies'],
     queryFn: async () => {
-      try {
-        const res = await companyService.getCompanies();
-        if (res.content && res.content.length > 0) return res.content;
-      } catch (e) {}
-      return dataStore.getCompanies();
+      const res = await companyService.getCompanies();
+      return res.content || [];
     },
   });
 
-  // Live Exams Query
+  // Live Exams Query — always from Supabase
   const { data: exams = [], isLoading: isLoadingExams } = useQuery({
     queryKey: ['live-all-exams', searchTerm],
     queryFn: async () => {
-      try {
-        const all = await examService.getAllExams();
-        if (all && all.length > 0) {
-          if (!searchTerm) return all;
-          return all.filter(
-            (e) =>
-              e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              e.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              e.companyIndustry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              e.badge?.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }
-      } catch (err) {
-        console.warn('[QuestionsPage] Supabase getAllExams failed, falling back to dataStore:', err);
-      }
-      const all = dataStore.getAllExams();
+      const all = await examService.getAllExams();
       if (!searchTerm) return all;
       return all.filter(
         (e) =>
@@ -79,35 +61,25 @@ export default function QuestionsPage() {
         content: `### ${newExamForm.name} Overview\n\nAdd your complete exam syllabus, pattern, and role details here.`,
         oldPapers: `### Old Papers\n\nLink your live Google Doc to show old papers and syllabus.`
       });
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      setShowAddExamModal(false);
+      setNewExamForm({
+        companySlug: 'tcs',
+        name: 'TCS NQT Placement Papers 2026',
+        badge: 'Campus Recruitment Drive',
+      });
     } catch (err: any) {
-      console.warn('[QuestionsPage] Supabase create exam notice:', err);
+      alert(`Failed to create exam: ${err.message || err}`);
     }
-
-    dataStore.addExam({
-      companySlug: newExamForm.companySlug,
-      name: newExamForm.name,
-      badge: newExamForm.badge,
-      content: `### ${newExamForm.name} Overview\n\nAdd your complete exam syllabus, pattern, and role details here.`,
-      oldPapers: `### Old Papers\n\nLink your live Google Doc to show old papers and syllabus.`
-    });
-
-    queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-    setShowAddExamModal(false);
-    setNewExamForm({
-      companySlug: 'tcs',
-      name: 'TCS NQT Placement Papers 2026',
-      badge: 'Campus Recruitment Drive',
-    });
   };
 
   const handleDeleteExam = async (examId: string) => {
     try {
       await examService.deleteExam(examId);
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
     } catch (err: any) {
-      console.warn('[QuestionsPage] Supabase delete exam notice:', err);
+      alert(`Failed to delete exam: ${err.message || err}`);
     }
-    dataStore.deleteExam(examId);
-    queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
   };
 
 

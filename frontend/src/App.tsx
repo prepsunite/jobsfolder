@@ -7,9 +7,9 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 0, // Always refetch — admin changes must be visible immediately
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     },
   },
 })

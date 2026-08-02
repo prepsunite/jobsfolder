@@ -221,25 +221,11 @@ export default function TopicQuestionsPage() {
           });
         if (error) throw error;
       }
-      // Also sync to local dataStore for offline fallback
-      if (editingQuestion) {
-        dataStore.updateTopicQuestion(editingQuestion.id, {
-          statement: formStatement, options: optionsList, correctAnswer: formCorrect,
-          explanation: formExplanation, formulasUsed: formulasArray, difficulty: formDifficulty, isHidden: formIsHidden,
-        });
-      } else {
-        dataStore.addTopicQuestion({
-          topicId, questionNumber: questions.length + 1, statement: formStatement,
-          options: optionsList, correctAnswer: formCorrect, explanation: formExplanation,
-          formulasUsed: formulasArray, difficulty: formDifficulty, isHidden: formIsHidden,
-        });
-      }
+      setShowModal(false);
+      loadQuestions();
     } catch (err: any) {
       alert(`Failed to save question to Supabase: ${err.message || err}`);
     }
-
-    setShowModal(false);
-    loadQuestions();
   };
 
   const handleDeleteQuestion = async (qId: string) => {
@@ -250,11 +236,10 @@ export default function TopicQuestionsPage() {
           .update({ is_deleted: true })
           .eq('id', qId);
         if (error) throw error;
-        dataStore.deleteTopicQuestion(qId);
+        loadQuestions();
       } catch (err: any) {
         alert(`Failed to delete question from Supabase: ${err.message || err}`);
       }
-      loadQuestions();
     }
   };
 
@@ -268,22 +253,48 @@ export default function TopicQuestionsPage() {
         .update({ is_hidden: newHidden })
         .eq('id', qId);
       if (error) throw error;
-      dataStore.toggleTopicQuestionVisibility(qId);
+      loadQuestions();
     } catch (err: any) {
       alert(`Failed to update question visibility in Supabase: ${err.message || err}`);
     }
-    loadQuestions();
   };
 
-  // --- BULK JSON IMPORT HANDLER ---
-  const handleProcessBulkImport = (e: React.FormEvent) => {
+  // --- BULK JSON IMPORT HANDLER (writes directly to Supabase) ---
+  const handleProcessBulkImport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkJsonInput.trim()) return;
 
-    const report = dataStore.importBulkTopicQuestionsJson(bulkJsonInput, topicId);
-    setBulkImportResult(report);
-    if (report.success > 0) {
+    // Try Supabase bulk insert first
+    try {
+      const parsed = JSON.parse(bulkJsonInput);
+      const items: any[] = Array.isArray(parsed) ? parsed : [parsed];
+      const rows = items.map((q: any, idx: number) => ({
+        topic_id: topicId,
+        question_number: questions.length + idx + 1,
+        statement: q.statement || q.question || q.title || 'Question',
+        options: JSON.stringify(Array.isArray(q.options) ? q.options : [
+          { key: 'A', text: q.optionA || q.a || 'Option A' },
+          { key: 'B', text: q.optionB || q.b || 'Option B' },
+          { key: 'C', text: q.optionC || q.c || 'Option C' },
+          { key: 'D', text: q.optionD || q.d || 'Option D' },
+        ]),
+        correct_answer: q.correct_answer || q.correctAnswer || q.answer || 'A',
+        explanation: q.explanation || '',
+        formulas_used: q.formulasUsed || q.formulas || [],
+        difficulty: q.difficulty || 'MEDIUM',
+        difficulty_level: q.difficulty === 'EASY' ? 1 : q.difficulty === 'HARD' ? 3 : 2,
+        is_hidden: false,
+        is_deleted: false,
+        structured_explanation: JSON.stringify({}),
+      }));
+
+      const { error } = await supabase.from('topic_questions').insert(rows);
+      if (error) throw error;
+
+      setBulkImportResult({ success: rows.length, duplicates: 0, invalid: 0, errors: [] });
       loadQuestions();
+    } catch (err: any) {
+      setBulkImportResult({ success: 0, duplicates: 0, invalid: 1, errors: [{ itemIndex: 0, reason: `Supabase bulk import failed: ${err.message || err}` }] });
     }
   };
 

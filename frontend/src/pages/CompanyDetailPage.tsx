@@ -244,14 +244,6 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         logoUrl: headerForm.logoUrl || undefined,
         description: headerForm.description,
       });
-      dataStore.updateCompany(currentCompanyStoreItem.id, {
-        name: headerForm.name,
-        industry: headerForm.industry,
-        headquarters: headerForm.headquarters,
-        website: headerForm.website,
-        logoUrl: headerForm.logoUrl || undefined,
-        description: headerForm.description,
-      });
       setShowEditHeaderModal(false);
       queryClient.invalidateQueries({ queryKey: ['company', slug] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
@@ -271,17 +263,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         content: '### New Exam Syllabus\n\nWrite details here...',
         oldPapers: '### Old Papers\n\nWrite old papers here...',
       });
-      const newExam = dataStore.addExam({
-        id: created.id,
-        companySlug: slug,
-        name: created.name,
-        badge: created.badge,
-        content: created.content,
-        oldPapers: created.oldPapers,
-      });
-      setSelectedExamId(newExam.id);
+      setSelectedExamId(created.id);
       setActiveTab('aboutExam');
-      setExamForm(newExam);
+      setExamForm(created);
       setIsEditing(true);
       queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
       forceRefreshData();
@@ -309,27 +293,14 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         await companyService.updateCompany(currentCompanyStoreItem.slug || slug, {
           aboutCompany: aboutCompanyForm
         });
-        dataStore.updateCompany(currentCompanyStoreItem.id, {
-          aboutCompany: aboutCompanyForm
-        });
       } else if (activeTab === 'aboutExam' && currentExam && examForm) {
         await examService.updateExam(currentExam.id, {
           name: examForm.name,
           badge: examForm.badge,
           content: examForm.content
         });
-        dataStore.updateExam(currentExam.id, {
-          ...currentExam,
-          name: examForm.name,
-          badge: examForm.badge,
-          content: examForm.content
-        });
       } else if (activeTab === 'oldPapers' && currentExam && examForm) {
         await examService.updateExam(currentExam.id, {
-          oldPapers: examForm.oldPapers
-        });
-        dataStore.updateExam(currentExam.id, {
-          ...currentExam,
           oldPapers: examForm.oldPapers
         });
       }
@@ -349,7 +320,6 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     if (currentExam && confirm("Are you sure you want to delete this exam module?")) {
       try {
         await examService.deleteExam(currentExam.id);
-        dataStore.deleteExam(currentExam.id);
         setIsEditing(false);
         queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
         forceRefreshData();
@@ -708,7 +678,6 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   onOpenPaywall={() => setShowPaywallModal(true)}
                   onUpdateTabs={async (updatedTabs) => {
                     if (currentExam) {
-                      dataStore.updateExam(currentExam.id, { paperTabs: updatedTabs });
                       await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
                       queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                     }
@@ -913,7 +882,6 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               onOpenPaywall={() => setShowPaywallModal(true)}
               onUpdateTabs={async (updatedTabs) => {
                 if (currentExam) {
-                  dataStore.updateExam(currentExam.id, { paperTabs: updatedTabs });
                   await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
                   queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                 }

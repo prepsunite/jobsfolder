@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CompanyCard from '@/components/CompanyCard';
-import { dataStore, type CompanyItem } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Search, Building2, SlidersHorizontal, Loader2, Plus, XCircle } from 'lucide-react';
 import type { Company } from '@/types/company';
@@ -15,7 +14,7 @@ export default function CompaniesPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<CompanyItem | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
 
   // Add Company Form State
   const [newCompany, setNewCompany] = useState({
@@ -55,7 +54,7 @@ export default function CompaniesPage() {
     if (!newCompany.name) return;
 
     try {
-      const created = await companyService.createCompany({
+      await companyService.createCompany({
         name: newCompany.name,
         slug: newCompany.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         industry: newCompany.industry,
@@ -63,18 +62,6 @@ export default function CompaniesPage() {
         logoUrl: newCompany.logoUrl || undefined,
         website: newCompany.website || undefined,
         headquarters: newCompany.headquarters,
-      });
-
-      dataStore.addCompany({
-        id: created.id,
-        name: created.name,
-        slug: created.slug,
-        industry: created.industry,
-        description: created.description,
-        logoUrl: created.logoUrl,
-        website: created.website,
-        headquarters: created.headquarters,
-        examsList: [`${created.name} Recruitment Drive 2026`],
       });
 
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
@@ -90,7 +77,6 @@ export default function CompaniesPage() {
     if (!editingCompany) return;
     try {
       await companyService.updateCompany(editingCompany.slug || editingCompany.id, editingCompany);
-      dataStore.updateCompany(editingCompany.id, editingCompany);
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setEditingCompany(null);
@@ -102,7 +88,6 @@ export default function CompaniesPage() {
   const handleDeleteCompany = async (id: string) => {
     try {
       await companyService.deleteCompany(id);
-      dataStore.deleteCompany(id);
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     } catch (err: any) {

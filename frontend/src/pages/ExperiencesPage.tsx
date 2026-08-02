@@ -109,24 +109,12 @@ export default function ExperiencesPage() {
         is_deleted: false,
       });
       if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      setShowAddModal(false);
+      setNewExpForm({ companyName: 'TCS', role: 'Software Engineer', college: '', year: 2026, difficulty: 'MEDIUM', verdict: 'SELECTED', isAnonymous: false, roundsText: '' });
     } catch (err: any) {
-      console.warn('[ExperiencesPage] Supabase create failed, using dataStore fallback:', err);
-      dataStore.addExperience({
-        companyName: newExpForm.companyName,
-        role: newExpForm.role,
-        studentName: finalStudentName,
-        college: newExpForm.college || 'Engineering College',
-        year: newExpForm.year,
-        difficulty: newExpForm.difficulty,
-        verdict: newExpForm.verdict,
-        rounds: [{ roundTitle: 'Interview Rounds & Details', details: newExpForm.roundsText || '' }],
-        status,
-      });
+      alert(`Failed to submit experience: ${err.message || err}`);
     }
-
-    queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
-    setShowAddModal(false);
-    setNewExpForm({ companyName: 'TCS', role: 'Software Engineer', college: '', year: 2026, difficulty: 'MEDIUM', verdict: 'SELECTED', isAnonymous: false, roundsText: '' });
   };
 
   const handleSaveEdit = async () => {
@@ -144,11 +132,11 @@ export default function ExperiencesPage() {
         status: editingExp.status,
       }).eq('id', editingExp.id);
       if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      setEditingExp(null);
     } catch (err: any) {
-      dataStore.updateExperience(editingExp.id, editingExp);
+      alert(`Failed to update experience: ${err.message || err}`);
     }
-    queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
-    setEditingExp(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -156,10 +144,10 @@ export default function ExperiencesPage() {
     try {
       const { error } = await supabase.from('experiences').update({ is_deleted: true, deleted_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
     } catch (err: any) {
-      dataStore.deleteExperience(id);
+      alert(`Failed to delete experience: ${err.message || err}`);
     }
-    queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
   };
 
   const getDifficultyBadge = (d: string) => {

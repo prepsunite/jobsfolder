@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router';
-import { dataStore } from '@/services/dataStore';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import {
   Calculator,
   BarChart3,
@@ -161,17 +162,28 @@ export default function AptitudePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
   const [selectedTopic, setSelectedTopic] = useState<AptitudeTopic | null>(null);
-  const [, setStoreVersion] = useState(0);
 
-  useEffect(() => {
-    const handleSync = () => setStoreVersion(v => v + 1);
-    window.addEventListener('prepunite_datastore_updated', handleSync);
-    window.addEventListener('storage', handleSync);
-    return () => {
-      window.removeEventListener('prepunite_datastore_updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
-  }, []);
+  // Fetch live question counts from Supabase per topic
+  const { data: liveCountMap = {} } = useQuery<Record<string, number>>({
+    queryKey: ['topic-question-counts', categorySlug],
+    queryFn: async () => {
+      const topicIds = getCategoryTopics(categorySlug).map(t => t.id);
+      const { data, error } = await supabase
+        .from('topic_questions')
+        .select('topic_id')
+        .in('topic_id', topicIds)
+        .eq('is_deleted', false)
+        .eq('is_hidden', false);
+      if (error) throw error;
+      const countMap: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
+      });
+      return countMap;
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
   // Category Title Mapping
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
@@ -255,7 +267,8 @@ export default function AptitudePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
         {sortedTopics.map((topic) => {
           const TopicIcon = topic.icon || Folder;
-          const displayCount = dataStore.getTopicQuestions(topic.id).length;
+          // Use live Supabase count if available, else fall back to the topic's static count
+          const displayCount = liveCountMap[topic.id] ?? topic.count;
 
           return (
             <div
