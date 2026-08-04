@@ -233,7 +233,9 @@ export const examService = {
 
   deleteExam: async (id: string): Promise<void> => {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    let query = supabase.from('exams').update({ is_deleted: true, deleted_at: new Date().toISOString() });
+    const now = new Date().toISOString();
+
+    let query = supabase.from('exams').update({ is_deleted: true, deleted_at: now });
     if (isUuid) {
       query = query.eq('id', id);
     } else {
@@ -244,8 +246,16 @@ export const examService = {
 
     if (error) {
       console.error('[examService.deleteExam] Supabase error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to delete exam from Supabase');
     }
+
+    // Soft-delete ONLY paper tab nodes associated with this specific exam
+    try {
+      await supabase
+        .from('paper_tab_nodes')
+        .update({ is_deleted: true })
+        .eq('exam_id', id);
+    } catch (e) {}
 
     auditService.logAction({
       action: 'SOFT_DELETE_EXAM',

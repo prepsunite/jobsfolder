@@ -207,25 +207,74 @@ export const companyService = {
 
   deleteCompany: async (idOrSlug: string): Promise<void> => {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-    let query = supabase.from('companies').update({ is_deleted: true, deleted_at: new Date().toISOString() });
+
+    let targetSlug = !isUuid ? idOrSlug : '';
+    let targetId = isUuid ? idOrSlug : '';
+
+    try {
+      let fetchQuery = supabase.from('companies').select('id, slug');
+      if (isUuid) {
+        fetchQuery = fetchQuery.eq('id', idOrSlug);
+      } else {
+        fetchQuery = fetchQuery.eq('slug', idOrSlug);
+      }
+      const { data: compData } = await fetchQuery.maybeSingle();
+      if (compData) {
+        targetSlug = compData.slug;
+        targetId = compData.id;
+      }
+    } catch (e) {}
+
+    const now = new Date().toISOString();
+
+    let compQuery = supabase.from('companies').update({ is_deleted: true, deleted_at: now });
     if (isUuid) {
-      query = query.eq('id', idOrSlug);
+      compQuery = compQuery.eq('id', idOrSlug);
     } else {
-      query = query.eq('slug', idOrSlug);
+      compQuery = compQuery.eq('slug', idOrSlug);
     }
-
-    const { error } = await query;
-
+    const { error } = await compQuery;
     if (error) {
       console.error('[companyService.deleteCompany] Supabase error:', error);
       throw error;
     }
 
+    // Cascade soft-delete all child exams, paper tabs, and experiences for this company
+    try {
+      if (targetSlug) {
+        const { data: childExams } = await supabase
+          .from('exams')
+          .select('id')
+          .eq('company_slug', targetSlug);
+
+        const examIds = (childExams || []).map(e => e.id);
+
+        await supabase
+          .from('exams')
+          .update({ is_deleted: true, deleted_at: now })
+          .eq('company_slug', targetSlug);
+
+        if (examIds.length > 0) {
+          await supabase
+            .from('paper_tab_nodes')
+            .update({ is_deleted: true })
+            .in('exam_id', examIds);
+        }
+
+        await supabase
+          .from('experiences')
+          .update({ is_deleted: true })
+          .eq('company_slug', targetSlug);
+      }
+    } catch (cascadeErr) {
+      console.warn('[companyService.deleteCompany] Cascade delete notice:', cascadeErr);
+    }
+
     auditService.logAction({
-      action: 'SOFT_DELETE_COMPANY',
+      action: 'SOFT_DELETE_COMPANY_CASCADE',
       targetEntity: 'companies',
-      targetId: idOrSlug,
-      afterData: { is_deleted: true },
+      targetId: targetId || idOrSlug,
+      afterData: { is_deleted: true, slug: targetSlug },
     });
   },
 };
