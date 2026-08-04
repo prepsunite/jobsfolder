@@ -1,15 +1,46 @@
-import { useState } from 'react';
-import { Check, Sparkles, Shield, Clock, Zap, ArrowRight, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { Check, Sparkles, Shield, Clock, Zap, ArrowRight, Lock, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { examService, type ExamWithCompany } from '@/services/exam.service';
 
 export default function PricingPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const urlExamId = searchParams.get('examId');
+
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [selectedExamId, setSelectedExamId] = useState<string>('');
+
+  // Fetch all available company placement papers live from database
+  const { data: exams = [] } = useQuery<ExamWithCompany[]>({
+    queryKey: ['live-all-exams'],
+    queryFn: () => examService.getAllExams(),
+  });
+
+  // Pre-select exam from URL parameter or default to first exam
+  useEffect(() => {
+    if (exams.length > 0) {
+      if (urlExamId && exams.some((e) => e.id === urlExamId)) {
+        setSelectedExamId(urlExamId);
+      } else if (!selectedExamId) {
+        setSelectedExamId(exams[0].id);
+      }
+    }
+  }, [exams, urlExamId, selectedExamId]);
 
   const handleBuy = async (planType: string, amount: number, examId?: string) => {
     try {
       setLoadingPlan(planType);
       const userEmail = user?.email || 'student@jobsfolder.com';
+
+      const targetExamId = planType === 'SINGLE_PAPER' ? (examId || selectedExamId) : undefined;
+
+      if (planType === 'SINGLE_PAPER' && !targetExamId) {
+        alert('Please select a target company exam paper to unlock.');
+        return;
+      }
 
       // 1. Call Order API
       const res = await fetch('/api/create-order', {
@@ -18,7 +49,7 @@ export default function PricingPage() {
         body: JSON.stringify({
           amount,
           itemType: planType,
-          examId,
+          examId: targetExamId,
         }),
       });
 
@@ -28,12 +59,14 @@ export default function PricingPage() {
       // 2. Open Razorpay Checkout Modal if key exists
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
       if (razorpayKey && (window as any).Razorpay) {
+        const selectedExamName = exams.find((e) => e.id === targetExamId)?.name || 'Selected Paper';
+
         const options = {
           key: razorpayKey,
           amount: orderData.amount,
           currency: orderData.currency || 'INR',
           name: 'PrepUnite',
-          description: planType === 'MONTHLY_PASS' ? '30-Day Pro Pass' : '1-Year Exam Paper Pass',
+          description: planType === 'MONTHLY_PASS' ? '30-Day Pro Pass' : `1-Year Pass: ${selectedExamName}`,
           order_id: orderData.orderId,
           prefill: { email: userEmail },
           handler: async function (response: any) {
@@ -46,12 +79,12 @@ export default function PricingPage() {
                 razorpay_signature: response.razorpay_signature,
                 userEmail,
                 itemType: planType,
-                examId,
+                examId: targetExamId,
                 amount,
               }),
             });
-            alert('Payment Verified! Access unlocked on your account.');
-            window.location.reload();
+            alert('Payment Verified! Paper access unlocked on your account for 1 year.');
+            window.location.href = `/companies?examId=${targetExamId}`;
           },
         };
 
@@ -67,6 +100,8 @@ export default function PricingPage() {
     }
   };
 
+  const currentSelectedExam = exams.find((e) => e.id === selectedExamId);
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 py-6 animate-fadeIn">
       {/* Header */}
@@ -79,11 +114,11 @@ export default function PricingPage() {
           Invest in Your Campus Placement Success.
         </h1>
         <p className="text-sm text-[#747878] dark:text-[#a6adbb] leading-relaxed">
-          Choose a single paper pass or unlock unlimited access across all company recruitment drives.
+          Select a single 1-year paper pass or unlock unlimited access across all company recruitment drives.
         </p>
       </div>
 
-      {/* Pricing Cards */}
+      {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Tier 1: Free Preview */}
         <div className="p-8 rounded-3xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex flex-col justify-between space-y-6">
@@ -127,25 +162,47 @@ export default function PricingPage() {
           </a>
         </div>
 
-        {/* Tier 2: Single Exam Pass */}
+        {/* Tier 2: Single Exam Pass with Paper Selector */}
         <div className="p-8 rounded-3xl bg-white dark:bg-[#1e1f22] border-2 border-[#006c49] dark:border-[#6cf8bb] shadow-lg flex flex-col justify-between space-y-6 relative">
           <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#006c49] text-white text-[10px] font-extrabold uppercase tracking-wider shadow">
-            Popular Choice
+            1-Year Single Paper Pass
           </div>
 
           <div className="space-y-4">
             <div>
               <span className="text-xs font-bold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider">Targeted Preparation</span>
               <h3 className="font-bold text-2xl text-[#1f1b17] dark:text-white">Single Exam Pass</h3>
-              <p className="text-xs text-[#747878] dark:text-[#a6adbb]">1-Year Access to 1 specific company paper</p>
+              <p className="text-xs text-[#747878] dark:text-[#a6adbb]">1-Year Access to 1 selected company paper</p>
             </div>
 
             <div className="flex items-baseline gap-1">
-              <span className="font-black text-4xl text-[#1f1b17] dark:text-white">₹99</span>
+              <span className="font-black text-4xl text-[#1f1b17] dark:text-white">
+                ₹{currentSelectedExam?.price || 99}
+              </span>
               <span className="text-xs text-[#747878] dark:text-[#a6adbb]">/ 1 Year Access</span>
             </div>
 
-            <ul className="space-y-3 text-xs text-[#444748] dark:text-[#a6adbb] pt-4 border-t border-[#eae1da] dark:border-[#2b2d31]">
+            {/* Interactive Paper Selector Dropdown */}
+            <div className="space-y-1.5 p-3 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40]">
+              <label className="text-[11px] font-extrabold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Select Target Exam Paper:</span>
+              </label>
+
+              <select
+                value={selectedExamId}
+                onChange={(e) => setSelectedExamId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] text-xs font-bold text-[#1f1b17] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#006c49]"
+              >
+                {exams.map((exam) => (
+                  <option key={exam.id} value={exam.id}>
+                    {exam.companyName} — {exam.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <ul className="space-y-3 text-xs text-[#444748] dark:text-[#a6adbb] pt-2 border-t border-[#eae1da] dark:border-[#2b2d31]">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] shrink-0" />
                 <strong className="text-[#1f1b17] dark:text-white">Valid for 365 Days (1 Full Year)</strong>
@@ -158,20 +215,16 @@ export default function PricingPage() {
                 <Check className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] shrink-0" />
                 <span>Full step-by-step solutions & code snippets</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] shrink-0" />
-                <span>Previous year aptitude & technical PYQs</span>
-              </li>
             </ul>
           </div>
 
           <button
             type="button"
-            onClick={() => handleBuy('SINGLE_PAPER', 99, 'e0000000-0000-0000-0000-000000000001')}
-            disabled={loadingPlan === 'SINGLE_PAPER'}
+            onClick={() => handleBuy('SINGLE_PAPER', currentSelectedExam?.price || 99, selectedExamId)}
+            disabled={loadingPlan === 'SINGLE_PAPER' || !selectedExamId}
             className="w-full py-3.5 rounded-2xl bg-[#006c49] hover:bg-[#005a3c] text-white text-xs font-black uppercase tracking-wider shadow-md hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            {loadingPlan === 'SINGLE_PAPER' ? 'Processing...' : 'Unlock Single Paper (₹99)'}
+            {loadingPlan === 'SINGLE_PAPER' ? 'Processing...' : `Unlock ${currentSelectedExam?.companyName || ''} Paper (₹99)`}
           </button>
         </div>
 
