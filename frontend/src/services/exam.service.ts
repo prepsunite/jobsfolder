@@ -188,32 +188,44 @@ export const examService = {
       query = query.eq('name', updatedFields.name || id);
     }
 
-    const { data, error } = await query.select('*').single();
+    let { data, error } = await query.select('*');
+
+    if ((!data || data.length === 0) && updatedFields.name) {
+      const fallbackRes = await supabase.from('exams').update(payload).eq('name', updatedFields.name).select('*');
+      data = fallbackRes.data;
+      error = fallbackRes.error;
+    }
 
     if (error) {
       console.error('[examService.updateExam] Supabase error:', error);
       throw error;
     }
 
+    if (!data || data.length === 0) {
+      throw new Error(`Exam '${id}' not found in Supabase database.`);
+    }
+
+    const first = data[0];
+
     const updated: ExamItem = {
-      id: data.id,
-      companySlug: data.company_slug,
-      name: data.name,
-      badge: data.badge,
-      content: data.content,
-      oldPapers: data.old_papers,
-      price: data.price ? Number(data.price) : 99,
-      paperTabs: typeof data.paper_tabs === 'string' ? JSON.parse(data.paper_tabs) : (data.paper_tabs || []),
-      googleDocEmbedUrl: data.google_doc_embed_url,
-      googleDocEditUrl: data.google_doc_edit_url,
-      upvotes: data.upvotes || 0,
+      id: first.id,
+      companySlug: first.company_slug,
+      name: first.name,
+      badge: first.badge,
+      content: first.content,
+      oldPapers: first.old_papers,
+      price: first.price ? Number(first.price) : 99,
+      paperTabs: typeof first.paper_tabs === 'string' ? JSON.parse(first.paper_tabs) : (first.paper_tabs || []),
+      googleDocEmbedUrl: first.google_doc_embed_url,
+      googleDocEditUrl: first.google_doc_edit_url,
+      upvotes: first.upvotes || 0,
     };
 
     auditService.logAction({
       action: 'UPDATE_EXAM',
       targetEntity: 'exams',
-      targetId: data.id,
-      afterData: data,
+      targetId: first.id,
+      afterData: first,
     });
 
     return updated;

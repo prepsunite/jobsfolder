@@ -161,33 +161,45 @@ export const companyService = {
       query = query.eq('slug', idOrSlug);
     }
 
-    const { data, error } = await query.select('*').single();
+    let { data, error } = await query.select('*');
+
+    if ((!data || data.length === 0) && updatedFields.slug) {
+      const fallbackRes = await supabase.from('companies').update(payload).eq('slug', updatedFields.slug).select('*');
+      data = fallbackRes.data;
+      error = fallbackRes.error;
+    }
 
     if (error) {
       console.error('[companyService.updateCompany] Supabase error:', error);
       throw error;
     }
 
+    if (!data || data.length === 0) {
+      throw new Error(`Company '${idOrSlug}' not found in Supabase database.`);
+    }
+
+    const first = data[0];
+
     const updated: Company = {
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      industry: data.industry,
-      companySize: data.company_size,
-      headquarters: data.headquarters,
-      website: data.website_url,
-      logoUrl: data.logo_url,
-      description: data.description,
-      aboutCompany: data.about_company,
-      isActive: !data.is_deleted,
-      createdAt: data.created_at,
+      id: first.id,
+      name: first.name,
+      slug: first.slug,
+      industry: first.industry,
+      companySize: first.company_size,
+      headquarters: first.headquarters,
+      website: first.website_url,
+      logoUrl: first.logo_url,
+      description: first.description,
+      aboutCompany: first.about_company,
+      isActive: !first.is_deleted,
+      createdAt: first.created_at,
     };
 
     auditService.logAction({
       action: 'UPDATE_COMPANY',
       targetEntity: 'companies',
-      targetId: data.id,
-      afterData: data,
+      targetId: first.id,
+      afterData: first,
     });
 
     return updated;
