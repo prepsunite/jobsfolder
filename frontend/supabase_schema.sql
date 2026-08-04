@@ -47,7 +47,8 @@ CREATE TABLE IF NOT EXISTS public.user_paper_purchases (
     exam_id VARCHAR(100) NOT NULL, -- e.g. 'tcs-nqt-2024'
     payment_id VARCHAR(100) UNIQUE NOT NULL,
     amount_paid DECIMAL(10, 2) NOT NULL,
-    purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year')
 );
 
 -- 6. Paper Tab Nodes Table (Hierarchical DocumentExplorer Content)
@@ -66,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.paper_tab_nodes (
 CREATE INDEX IF NOT EXISTS idx_transactions_email ON public.transactions(user_email);
 CREATE INDEX IF NOT EXISTS idx_transactions_payment ON public.transactions(payment_id);
 CREATE INDEX IF NOT EXISTS idx_subs_lookup ON public.user_subscriptions(user_email, status, expires_at);
-CREATE INDEX IF NOT EXISTS idx_purchases_lookup ON public.user_paper_purchases(user_email, exam_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_lookup ON public.user_paper_purchases(user_email, exam_id, expires_at);
 CREATE INDEX IF NOT EXISTS idx_nodes_exam ON public.paper_tab_nodes(exam_id, sort_order);
 
 -- 8. Enable Row Level Security (RLS)

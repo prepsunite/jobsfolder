@@ -17,6 +17,11 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 const AdminBulkImportPage = lazy(() => import('@/pages/AdminBulkImportPage'));
 
+const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const ContactPage = lazy(() => import('@/pages/ContactPage'));
+const PricingPage = lazy(() => import('@/pages/PricingPage'));
+const PolicyPage = lazy(() => import('@/pages/PolicyPage'));
+
 const PageLoader = () => (
   <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
     <div className="w-10 h-10 border-4 border-[#006c49]/20 border-t-[#006c49] rounded-full animate-spin"></div>
@@ -38,6 +43,30 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <HomePage />,
+      },
+      {
+        path: '/about',
+        element: withSuspense(AboutPage),
+      },
+      {
+        path: '/contact',
+        element: withSuspense(ContactPage),
+      },
+      {
+        path: '/pricing',
+        element: withSuspense(PricingPage),
+      },
+      {
+        path: '/privacy-policy',
+        element: withSuspense(PolicyPage, { type: 'privacy' }),
+      },
+      {
+        path: '/terms-and-conditions',
+        element: withSuspense(PolicyPage, { type: 'terms' }),
+      },
+      {
+        path: '/refund-policy',
+        element: withSuspense(PolicyPage, { type: 'refund' }),
       },
       {
         path: '/login',
@@ -94,3 +123,4 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+

@@ -1,7 +1,19 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
+function safeTimingEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a, 'hex');
+  const bufB = Buffer.from(b, 'hex');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 export default async function handler(req, res) {
+  // Set anti-caching & security headers
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -19,15 +31,19 @@ export default async function handler(req, res) {
 
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
 
-    // 1. HMAC Verification (if secret is configured)
-    if (key_secret && razorpay_signature && razorpay_order_id) {
+    // 1. HMAC Verification
+    if (key_secret) {
+      if (!razorpay_signature || !razorpay_order_id || !razorpay_payment_id) {
+        return res.status(400).json({ success: false, message: 'Missing payment signature or order metadata!' });
+      }
+
       const body = razorpay_order_id + '|' + razorpay_payment_id;
       const expectedSignature = crypto
         .createHmac('sha256', key_secret)
         .update(body.toString())
         .digest('hex');
 
-      if (expectedSignature !== razorpay_signature) {
+      if (!safeTimingEqual(expectedSignature, razorpay_signature)) {
         return res.status(400).json({ success: false, message: 'Invalid payment signature!' });
       }
     }
@@ -52,13 +68,16 @@ export default async function handler(req, res) {
 
       // Grant Entitlement in Supabase DB
       if (itemType === 'SINGLE_PAPER' && examId) {
+        const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
         await supabaseAdmin.from('user_paper_purchases').insert([{
           user_email: userEmail,
           exam_id: examId,
           payment_id: razorpay_payment_id,
           amount_paid: amount,
+          expires_at: paperExpiresAt,
         }]);
       } else if (itemType === 'MONTHLY_PASS') {
+
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         await supabaseAdmin.from('user_subscriptions').insert([{
           user_email: userEmail,
@@ -76,6 +95,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('[api/verify-payment] Error:', error);
-    return res.status(500).json({ error: error.message || 'Payment verification failed' });
+    return res.status(500).json({ error: 'Payment verification failed' });
   }
 }
+

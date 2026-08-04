@@ -39,22 +39,26 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. User Paper Purchases Table (Granular Lifetime Single Paper Unlocks)
+-- 5. User Paper Purchases Table (Granular 1-Year Single Paper Unlocks)
 CREATE TABLE IF NOT EXISTS public.user_paper_purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_email VARCHAR(255) NOT NULL,
     exam_id VARCHAR(100) NOT NULL,
     payment_id VARCHAR(100) UNIQUE NOT NULL,
     amount_paid DECIMAL(10, 2) NOT NULL,
-    purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year')
 );
+
+-- Ensure expires_at column exists if table was created previously
+ALTER TABLE public.user_paper_purchases ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
 
 -- 6. Document Explorer Hierarchical Paper Content Table
 CREATE TABLE IF NOT EXISTS public.paper_tab_nodes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     exam_id VARCHAR(100) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    emoji VARCHAR(10) DEFAULT '??',
+    emoji VARCHAR(10) DEFAULT '📄',
     content TEXT, -- TipTap HTML payload with Base64 images
     parent_id UUID REFERENCES public.paper_tab_nodes(id) ON DELETE CASCADE,
     sort_order INT DEFAULT 0,
@@ -64,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.paper_tab_nodes (
 -- 7. High-Performance Indexing
 CREATE INDEX IF NOT EXISTS idx_transactions_email ON public.transactions(user_email);
 CREATE INDEX IF NOT EXISTS idx_subs_lookup ON public.user_subscriptions(user_email, status, expires_at);
-CREATE INDEX IF NOT EXISTS idx_purchases_lookup ON public.user_paper_purchases(user_email, exam_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_lookup ON public.user_paper_purchases(user_email, exam_id, expires_at);
 CREATE INDEX IF NOT EXISTS idx_paper_nodes_exam ON public.paper_tab_nodes(exam_id);
 
 -- 8. Enable Row Level Security (RLS)
@@ -79,7 +83,7 @@ CREATE POLICY "Allow select/insert" ON public.user_subscriptions FOR ALL USING (
 CREATE POLICY "Allow select/insert" ON public.user_paper_purchases FOR ALL USING (true);
 CREATE POLICY "Allow select" ON public.paper_tab_nodes FOR SELECT USING (true);
 
--- 9. Supabase RPC Function: Check User Paper Access Live on Database
+-- 9. Supabase RPC Function: Check User Paper Access Live on Database (1-Year Rule for Single Paper)
 CREATE OR REPLACE FUNCTION public.check_user_paper_access(
     p_user_email VARCHAR,
     p_exam_id VARCHAR
@@ -93,10 +97,13 @@ BEGIN
         RETURN TRUE;
     END IF;
 
-    -- 2. Check single paper purchase
+    -- 2. Check single paper purchase (valid for 1 year from purchase)
     RETURN EXISTS (
         SELECT 1 FROM public.user_paper_purchases
-        WHERE user_email = p_user_email AND exam_id = p_exam_id
+        WHERE user_email = p_user_email 
+          AND exam_id = p_exam_id 
+          AND (expires_at IS NULL OR expires_at > NOW())
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+

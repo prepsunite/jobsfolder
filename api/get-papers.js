@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
+  // Set anti-caching & security headers
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -56,6 +60,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('[api/get-papers] Error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to fetch paper content' });
+    return res.status(500).json({ error: 'Failed to fetch paper content' });
   }
 }
+

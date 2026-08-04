@@ -77,6 +77,12 @@ export default function RootLayout() {
               <Link to="/" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
                 Home
               </Link>
+              <Link to="/about" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
+                About Us
+              </Link>
+              <Link to="/pricing" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
+                Pricing
+              </Link>
               <Link to="/companies" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5" />
                 <span>Companies</span>
@@ -85,9 +91,8 @@ export default function RootLayout() {
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>OA Papers</span>
               </Link>
-              <Link to="/experiences" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5" />
-                <span>Experiences</span>
+              <Link to="/contact" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
+                Contact Us
               </Link>
             </nav>
 
@@ -131,16 +136,18 @@ export default function RootLayout() {
 
         {/* PUBLIC FOOTER */}
         <footer className="border-t border-[#eae1da] dark:border-[#2b2d31] bg-[#f6ece6] dark:bg-[#1e1f22] py-8 px-6 text-xs text-[#747878] dark:text-[#a6adbb]">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-[#1f1b17] dark:text-white">Jobsfolder</span>
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+              <span className="font-bold text-[#1f1b17] dark:text-white text-sm">Jobsfolder</span>
               <span>© 2026 PrepUnite • Placement Intelligence Operating System.</span>
             </div>
-            <div className="flex items-center gap-6 font-semibold text-[#1f1b17] dark:text-[#e3e3e3]">
-              <Link to="/companies" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Companies</Link>
-              <Link to="/questions" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">OA Papers</Link>
-              <Link to="/experiences" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Interview Experiences</Link>
-              <Link to="/login" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Sign In</Link>
+            <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-[#1f1b17] dark:text-[#e3e3e3]">
+              <Link to="/about" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">About Us</Link>
+              <Link to="/contact" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Contact Us</Link>
+              <Link to="/pricing" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Pricing</Link>
+              <Link to="/privacy-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Privacy Policy</Link>
+              <Link to="/terms-and-conditions" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Terms & Conditions</Link>
+              <Link to="/refund-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Cancellation & Refund Policy</Link>
             </div>
           </div>
         </footer>
@@ -181,15 +188,19 @@ export default function RootLayout() {
           <Outlet />
         </main>
         
-        <footer className="border-t border-[#eae1da] dark:border-[#2b2d31] bg-[#f6ece6] dark:bg-[#1e1f22] py-6 px-8 text-xs text-[#747878] dark:text-[#a6adbb] flex items-center justify-between transition-colors">
-          <p>© 2026 PrepUnite • Elite Placement Intelligence System.</p>
-          <div className="flex items-center gap-4 font-semibold text-[#1f1b17] dark:text-[#e3e3e3]">
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Support</span>
+        <footer className="border-t border-[#eae1da] dark:border-[#2b2d31] bg-[#f6ece6] dark:bg-[#1e1f22] py-6 px-8 text-xs text-[#747878] dark:text-[#a6adbb] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
+          <p>© 2026 PrepUnite • Placement Intelligence Operating System.</p>
+          <div className="flex flex-wrap items-center gap-4 font-semibold text-[#1f1b17] dark:text-[#e3e3e3]">
+            <Link to="/about" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">About Us</Link>
+            <Link to="/contact" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Contact Us</Link>
+            <Link to="/pricing" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Pricing</Link>
+            <Link to="/privacy-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Privacy Policy</Link>
+            <Link to="/terms-and-conditions" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Terms & Conditions</Link>
+            <Link to="/refund-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Refund Policy</Link>
           </div>
         </footer>
       </div>
     </div>
   );
 }
+

@@ -15,7 +15,10 @@ import {
   Brain,
   MessageSquare,
   Compass,
-  KeyRound
+  KeyRound,
+  Zap,
+  Info,
+  Mail
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -28,7 +31,11 @@ export default function Sidebar() {
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
+    { name: 'Pricing & Passes', href: '/pricing', icon: Zap },
+    { name: 'About Us', href: '/about', icon: Info },
+    { name: 'Contact Us', href: '/contact', icon: Mail },
   ];
+
 
   const aptitudeCategories = [
     { name: 'Arithmetic Aptitude', slug: 'arithmetic-aptitude', icon: Calculator },

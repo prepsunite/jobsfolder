@@ -1,6 +1,14 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
+function safeTimingEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a, 'hex');
+  const bufB = Buffer.from(b, 'hex');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).send('Method not allowed');
@@ -11,14 +19,18 @@ export default async function handler(req, res) {
     const signature = req.headers['x-razorpay-signature'];
 
     // Verify webhook signature if secret is present
-    if (webhookSecret && signature) {
+    if (webhookSecret) {
+      if (!signature) {
+        return res.status(400).send('Missing webhook signature');
+      }
+
       const body = JSON.stringify(req.body);
       const expectedSig = crypto
         .createHmac('sha256', webhookSecret)
         .update(body)
         .digest('hex');
 
-      if (signature !== expectedSig) {
+      if (!safeTimingEqual(expectedSig, signature)) {
         return res.status(400).send('Invalid webhook signature');
       }
     }
@@ -50,13 +62,16 @@ export default async function handler(req, res) {
           }]);
 
           if (itemType === 'SINGLE_PAPER' && examId) {
+            const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
             await supabaseAdmin.from('user_paper_purchases').insert([{
               user_email: userEmail,
               exam_id: examId,
               payment_id: paymentId,
               amount_paid: amount,
+              expires_at: paperExpiresAt,
             }]);
           } else if (itemType === 'MONTHLY_PASS') {
+
             const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
             await supabaseAdmin.from('user_subscriptions').insert([{
               user_email: userEmail,
@@ -76,3 +91,4 @@ export default async function handler(req, res) {
     return res.status(500).send('Webhook Processing Error');
   }
 }
+
