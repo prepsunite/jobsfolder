@@ -42,27 +42,43 @@ export const examService = {
   },
 
   getAllExams: async (): Promise<ExamWithCompany[]> => {
-    const { data, error } = await supabase
-      .from('exams')
-      .select(`
-        *,
-        companies (
-          name,
-          logo_url,
-          industry
-        )
-      `)
-      .eq('is_deleted', false)
-      .order('name', { ascending: true });
+    const [examsRes, compsRes] = await Promise.all([
+      supabase
+        .from('exams')
+        .select(`
+          *,
+          companies (
+            id,
+            name,
+            logo_url,
+            industry
+          )
+        `)
+        .eq('is_deleted', false)
+        .order('name', { ascending: true }),
+      supabase
+        .from('companies')
+        .select('id, name, slug, logo_url, industry')
+        .eq('is_deleted', false),
+    ]);
 
-    if (error) {
-      console.error('[examService.getAllExams] Supabase error:', error);
-      throw error;
+    if (examsRes.error) {
+      console.error('[examService.getAllExams] Supabase error:', examsRes.error);
+      throw examsRes.error;
     }
 
-    if (data && data.length > 0) {
-      return data.map(e => {
-        const comp = Array.isArray(e.companies) ? e.companies[0] : e.companies;
+    const companyMapBySlug = new Map(
+      (compsRes.data || []).map(c => [c.slug, c])
+    );
+    const companyMapById = new Map(
+      (compsRes.data || []).map(c => [c.id, c])
+    );
+
+    if (examsRes.data && examsRes.data.length > 0) {
+      return examsRes.data.map(e => {
+        const joinedComp = Array.isArray(e.companies) ? e.companies[0] : e.companies;
+        const fallbackComp = joinedComp || companyMapBySlug.get(e.company_slug) || companyMapById.get(e.company_id);
+
         return {
           id: e.id,
           companySlug: e.company_slug,
@@ -75,9 +91,9 @@ export const examService = {
           googleDocEmbedUrl: e.google_doc_embed_url,
           googleDocEditUrl: e.google_doc_edit_url,
           upvotes: e.upvotes || 0,
-          companyName: comp?.name || e.company_slug.toUpperCase(),
-          companyLogoUrl: comp?.logo_url,
-          companyIndustry: comp?.industry || 'IT Services & Consulting',
+          companyName: fallbackComp?.name || e.company_slug.toUpperCase(),
+          companyLogoUrl: fallbackComp?.logo_url || undefined,
+          companyIndustry: fallbackComp?.industry || 'IT Services & Consulting',
         };
       });
     }
@@ -87,8 +103,20 @@ export const examService = {
 
   createExam: async (examData: Partial<ExamItem>): Promise<ExamItem> => {
     const companySlug = examData.companySlug || 'tcs';
+
+    let companyId: string | null = null;
+    try {
+      const { data: comp } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('slug', companySlug)
+        .maybeSingle();
+      if (comp?.id) companyId = comp.id;
+    } catch (e) {}
+
     const payload: Record<string, any> = {
       company_slug: companySlug,
+      company_id: companyId,
       name: examData.name || 'New Exam Module',
       badge: examData.badge || 'Drive',
       content: examData.content || '### New Exam Syllabus\n\nWrite details here...',
