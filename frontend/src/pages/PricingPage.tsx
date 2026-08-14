@@ -5,6 +5,26 @@ import { Check, Sparkles, Shield, Clock, Zap, ArrowRight, Lock, BookOpen } from 
 import { useAuth } from '@/contexts/AuthContext';
 import { examService, type ExamWithCompany } from '@/services/exam.service';
 
+import type { DocTabNode } from '@/services/dataStore';
+import { useMemo } from 'react';
+
+function hasLockedNodes(nodes?: DocTabNode[]): boolean {
+  if (!nodes || nodes.length === 0) return false;
+  return nodes.some(n => {
+    if (!n.isFree) return true;
+    if (n.children && n.children.length > 0) return hasLockedNodes(n.children);
+    return false;
+  });
+}
+
+function isPaywalledExam(exam: ExamWithCompany): boolean {
+  if (exam.price === 0 || (exam as any).isFree === true) return false;
+  if (exam.paperTabs && exam.paperTabs.length > 0) {
+    return hasLockedNodes(exam.paperTabs);
+  }
+  return true;
+}
+
 export default function PricingPage() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -19,16 +39,21 @@ export default function PricingPage() {
     queryFn: () => examService.getAllExams(),
   });
 
-  // Pre-select exam from URL parameter or default to first exam
+  // Filter out public/free exams that do not require any paywall purchase
+  const paywalledExams = useMemo(() => {
+    return exams.filter(isPaywalledExam);
+  }, [exams]);
+
+  // Pre-select exam from URL parameter or default to first paywalled exam
   useEffect(() => {
-    if (exams.length > 0) {
-      if (urlExamId && exams.some((e) => e.id === urlExamId)) {
+    if (paywalledExams.length > 0) {
+      if (urlExamId && paywalledExams.some((e) => e.id === urlExamId)) {
         setSelectedExamId(urlExamId);
-      } else if (!selectedExamId) {
-        setSelectedExamId(exams[0].id);
+      } else if (!selectedExamId || !paywalledExams.some((e) => e.id === selectedExamId)) {
+        setSelectedExamId(paywalledExams[0].id);
       }
     }
-  }, [exams, urlExamId, selectedExamId]);
+  }, [paywalledExams, urlExamId, selectedExamId]);
 
   const handleBuy = async (planType: string, amount: number, examId?: string) => {
     try {
@@ -100,7 +125,7 @@ export default function PricingPage() {
     }
   };
 
-  const currentSelectedExam = exams.find((e) => e.id === selectedExamId);
+  const currentSelectedExam = paywalledExams.find((e) => e.id === selectedExamId);
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 py-6 animate-fadeIn">
@@ -192,13 +217,18 @@ export default function PricingPage() {
               <select
                 value={selectedExamId}
                 onChange={(e) => setSelectedExamId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] text-xs font-bold text-[#1f1b17] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#006c49]"
+                disabled={paywalledExams.length === 0}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] text-xs font-bold text-[#1f1b17] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#006c49] disabled:opacity-60"
               >
-                {exams.map((exam) => (
-                  <option key={exam.id} value={exam.id}>
-                    {exam.companyName} — {exam.name}
-                  </option>
-                ))}
+                {paywalledExams.length > 0 ? (
+                  paywalledExams.map((exam) => (
+                    <option key={exam.id} value={exam.id}>
+                      {exam.companyName} — {exam.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">All current placement papers are freely accessible!</option>
+                )}
               </select>
             </div>
 
