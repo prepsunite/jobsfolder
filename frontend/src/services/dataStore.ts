@@ -44,6 +44,7 @@ export interface DocTabNode {
   content: string;
   emoji?: string;
   isCollapsed?: boolean;
+  isFree?: boolean;
   children?: DocTabNode[];
 }
 

@@ -11,6 +11,7 @@ import {
   FileText,
   Search,
   Lock,
+  Unlock,
   ArrowRight,
   ShieldCheck,
   BookOpen,
@@ -314,7 +315,18 @@ export default function DocumentExplorer({
               className="flex-1 min-w-0 bg-white dark:bg-[#1e1f22] border border-purple-400 rounded px-1 py-0.5 text-xs focus:outline-none"
             />
           ) : (
-            <span className="truncate flex-1 min-w-0">{node.title}</span>
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-1">
+              <span className="truncate">{node.title}</span>
+              {node.isFree ? (
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex-shrink-0">
+                  FREE
+                </span>
+              ) : adminMode && isAdmin ? (
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase tracking-wider flex-shrink-0 opacity-70 group-hover:opacity-100">
+                  PAID
+                </span>
+              ) : null}
+            </div>
           )}
 
           {/* Admin action buttons */}
@@ -466,7 +478,7 @@ export default function DocumentExplorer({
       <div className="flex-1 flex flex-col relative min-h-[600px] overflow-hidden bg-white dark:bg-[#141517]">
 
         {/* PAYWALL OVERLAY */}
-        {!hasAccess && !isAdmin ? (
+        {!(hasAccess || isAdmin || activeNode?.isFree === true) ? (
           <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#f6ece6]/30 dark:bg-[#141517]/30">
             {/* Visual Abstract Skeleton Background (ZERO Text/Questions in HTML) */}
             <div className="absolute inset-0 p-8 opacity-10 filter blur-xs pointer-events-none select-none overflow-hidden space-y-6">
@@ -551,6 +563,29 @@ export default function DocumentExplorer({
                       className="flex-1 bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] rounded-xl px-3 py-1.5 text-sm font-bold text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:ring-2 focus:ring-purple-400/50"
                       placeholder="Section title..."
                     />
+
+                    {/* Access level toggle */}
+                    <button
+                      onClick={() => persist(updateNode(localTabs, activeNode.id, { isFree: !activeNode.isFree }))}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                        activeNode.isFree
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                          : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
+                      }`}
+                      title="Toggle whether non-paying users can view this section for free or must purchase access"
+                    >
+                      {activeNode.isFree ? (
+                        <>
+                          <Unlock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>Free (Public)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                          <span>Paid (Locked)</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -597,12 +632,19 @@ export default function DocumentExplorer({
             {/* Document header */}
             {activeNode && (
               <div className="space-y-3 border-b border-[#eae1da] dark:border-[#2b2d31] pb-6 mb-8">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{activeNode.emoji || '📄'}</span>
-                  <div>
-                    <h1 className="font-display text-2xl sm:text-3xl font-black text-[#1f1b17] dark:text-white">{activeNode.title}</h1>
-                    <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5">{companyName} • {examName} Official Placement Series</p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{activeNode.emoji || '📄'}</span>
+                    <div>
+                      <h1 className="font-display text-2xl sm:text-3xl font-black text-[#1f1b17] dark:text-white">{activeNode.title}</h1>
+                      <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5">{companyName} • {examName} Official Placement Series</p>
+                    </div>
                   </div>
+                  {activeNode.isFree && (
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                      <Unlock className="w-3 h-3" /> Free Practice Guide
+                    </span>
+                  )}
                 </div>
               </div>
             )}
