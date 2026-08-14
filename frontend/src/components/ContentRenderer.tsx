@@ -33,6 +33,7 @@ export default function ContentRenderer({
 }: ContentRendererProps) {
   const wrapCls =
     'prose prose-sm max-w-none dark:prose-invert ' +
+    'prose-p:my-1.5 prose-p:leading-relaxed ' +
     'prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg ' +
     'prose-h3:text-base prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb] ' +
     'prose-a:text-[#0284c7] dark:prose-a:text-[#38bdf8] prose-a:no-underline hover:prose-a:underline ' +

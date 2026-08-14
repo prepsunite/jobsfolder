@@ -101,7 +101,7 @@ export default function TopicQuestionsPage() {
           })(),
           correctAnswer: q.correct_answer || 'A',
           explanation: q.explanation || '',
-          formulasUsed: q.formulas_used || [],
+          formulasUsed: q.structured_explanation?.formulaUsed || (typeof q.structured_explanation === 'string' ? (() => { try { return JSON.parse(q.structured_explanation)?.formulaUsed; } catch { return []; } })() : []) || [],
           difficulty: q.difficulty || 'MEDIUM',
           difficultyLevel: q.difficulty_level || 2,
           isHidden: q.is_hidden || false,
@@ -188,6 +188,9 @@ export default function TopicQuestionsPage() {
       .filter(Boolean);
 
     try {
+      const structuredExp = {
+        formulaUsed: formulasArray,
+      };
       if (editingQuestion) {
         const { error } = await supabase
           .from('topic_questions')
@@ -196,7 +199,7 @@ export default function TopicQuestionsPage() {
             options: JSON.stringify(optionsList),
             correct_answer: formCorrect,
             explanation: formExplanation,
-            formulas_used: formulasArray,
+            structured_explanation: JSON.stringify(structuredExp),
             difficulty: formDifficulty,
             is_hidden: formIsHidden,
           })
@@ -212,12 +215,11 @@ export default function TopicQuestionsPage() {
             options: JSON.stringify(optionsList),
             correct_answer: formCorrect,
             explanation: formExplanation,
-            formulas_used: formulasArray,
+            structured_explanation: JSON.stringify(structuredExp),
             difficulty: formDifficulty,
             difficulty_level: formDifficulty === 'EASY' ? 1 : formDifficulty === 'HARD' ? 3 : 2,
             is_hidden: formIsHidden,
             is_deleted: false,
-            structured_explanation: JSON.stringify({}),
           });
         if (error) throw error;
       }
@@ -268,25 +270,48 @@ export default function TopicQuestionsPage() {
     try {
       const parsed = JSON.parse(bulkJsonInput);
       const items: any[] = Array.isArray(parsed) ? parsed : [parsed];
-      const rows = items.map((q: any, idx: number) => ({
-        topic_id: topicId,
-        question_number: questions.length + idx + 1,
-        statement: q.statement || q.question || q.title || 'Question',
-        options: JSON.stringify(Array.isArray(q.options) ? q.options : [
-          { key: 'A', text: q.optionA || q.a || 'Option A' },
-          { key: 'B', text: q.optionB || q.b || 'Option B' },
-          { key: 'C', text: q.optionC || q.c || 'Option C' },
-          { key: 'D', text: q.optionD || q.d || 'Option D' },
-        ]),
-        correct_answer: q.correct_answer || q.correctAnswer || q.answer || 'A',
-        explanation: q.explanation || '',
-        formulas_used: q.formulasUsed || q.formulas || [],
-        difficulty: q.difficulty || 'MEDIUM',
-        difficulty_level: q.difficulty === 'EASY' ? 1 : q.difficulty === 'HARD' ? 3 : 2,
-        is_hidden: false,
-        is_deleted: false,
-        structured_explanation: JSON.stringify({}),
-      }));
+      const rows = items.map((q: any, idx: number) => {
+        const rawFormulas = q.formulasUsed || q.formulas || (typeof q.explanation === 'object' ? (q.explanation?.formulaUsed || q.explanation?.formulasUsed) : []);
+        const structuredExp = typeof q.explanation === 'object' && q.explanation !== null
+          ? q.explanation
+          : { formulaUsed: Array.isArray(rawFormulas) ? rawFormulas : [] };
+
+        const expStr = typeof q.explanation === 'string'
+          ? q.explanation
+          : (q.explanation?.finalAnswer || (Array.isArray(q.explanation?.steps) ? q.explanation.steps.map((s: any) => typeof s === 'string' ? s : `${s.title || 'Step'}: ${s.content || s.text || ''}`).join('\n') : ''));
+
+        let resolvedCorrect = 'A';
+        if (typeof q.correctOption === 'number') {
+          resolvedCorrect = ['A', 'B', 'C', 'D', 'E'][q.correctOption] || 'A';
+        } else if (typeof q.correctOption === 'string') {
+          const num = parseInt(q.correctOption, 10);
+          resolvedCorrect = !isNaN(num) ? (['A', 'B', 'C', 'D', 'E'][num] || 'A') : q.correctOption.toUpperCase();
+        } else {
+          resolvedCorrect = q.correct_answer || q.correctAnswer || q.answer || 'A';
+        }
+
+        return {
+          topic_id: topicId,
+          question_number: questions.length + idx + 1,
+          statement: q.statement || q.question || q.title || 'Question',
+          options: JSON.stringify(Array.isArray(q.options) ? q.options.map((opt: any, oIdx: number) => {
+            if (typeof opt === 'string') return { key: ['A', 'B', 'C', 'D', 'E'][oIdx] || `${oIdx + 1}`, text: opt };
+            return { key: opt.id || opt.key || ['A', 'B', 'C', 'D', 'E'][oIdx], text: opt.text || String(opt) };
+          }) : [
+            { key: 'A', text: q.optionA || q.a || 'Option A' },
+            { key: 'B', text: q.optionB || q.b || 'Option B' },
+            { key: 'C', text: q.optionC || q.c || 'Option C' },
+            { key: 'D', text: q.optionD || q.d || 'Option D' },
+          ]),
+          correct_answer: resolvedCorrect,
+          explanation: expStr,
+          difficulty: (q.difficulty || 'MEDIUM').toUpperCase(),
+          difficulty_level: q.difficulty === 'EASY' ? 1 : q.difficulty === 'HARD' ? 3 : 2,
+          is_hidden: false,
+          is_deleted: false,
+          structured_explanation: JSON.stringify(structuredExp),
+        };
+      });
 
       const { error } = await supabase.from('topic_questions').insert(rows);
       if (error) throw error;
