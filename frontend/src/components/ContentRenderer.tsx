@@ -26,6 +26,13 @@ function isHTML(str: string): boolean {
   return str.trim().startsWith('<');
 }
 
+function sanitizeSpacing(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/(<p>\s*<br\s*\/?>\s*<\/p>)+/gi, '')
+    .replace(/(<p>\s*<\/p>)+/gi, '');
+}
+
 export default function ContentRenderer({
   content,
   className = '',
@@ -33,7 +40,7 @@ export default function ContentRenderer({
 }: ContentRendererProps) {
   const wrapCls =
     'prose prose-sm max-w-none dark:prose-invert ' +
-    'prose-p:my-1.5 prose-p:leading-relaxed ' +
+    'prose-p:my-1 prose-p:leading-snug ' +
     'prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg ' +
     'prose-h3:text-base prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb] ' +
     'prose-a:text-[#0284c7] dark:prose-a:text-[#38bdf8] prose-a:no-underline hover:prose-a:underline ' +
@@ -58,7 +65,7 @@ export default function ContentRenderer({
     return (
       <div
         className={wrapCls}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeSpacing(content) }}
       />
     );
   }
