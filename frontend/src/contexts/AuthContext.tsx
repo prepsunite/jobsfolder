@@ -90,7 +90,7 @@ function parsePreAuthJwtFromUrl(): { email: string; name: string; avatarUrl?: st
     if (email) {
       return { email, name, avatarUrl };
     }
-  } catch (e) {
+  } catch {
     // Ignore JSON/btoa errors
   }
   return null;
