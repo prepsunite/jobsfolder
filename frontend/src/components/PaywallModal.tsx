@@ -30,8 +30,14 @@ export default function PaywallModal({
   if (!isOpen) return null;
 
   const handleCheckout = async (option: PaywallOptionType) => {
+    const email = userEmail?.trim();
+    if (!email) {
+      alert('Please log in with your email account first so your unlocked papers are permanently linked to your account.');
+      window.location.href = '/login?redirectTo=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
     setIsProcessing(true);
-    const email = userEmail || '';
 
     let amountINR = 299;
     let itemType: 'SINGLE_PAPER' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY';
@@ -140,7 +146,7 @@ export default function PaywallModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-xl bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 shadow-2xl space-y-5 text-[#1f1b17] dark:text-[#e3e3e3] max-h-[92vh] overflow-y-auto">
         
         {/* Close Button */}

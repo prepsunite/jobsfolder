@@ -63,7 +63,12 @@ export default function PricingPage() {
   const handleBuy = async (planType: string, amount: number, examId?: string) => {
     try {
       setLoadingPlan(planType);
-      const userEmail = user?.email || 'student@jobsfolder.com';
+      const userEmail = user?.email;
+      if (!userEmail) {
+        alert('Please log in with your email account first so your pass is permanently attached to your account.');
+        window.location.href = '/login?redirectTo=/pricing';
+        return;
+      }
 
       const targetExamId = planType === 'SINGLE_PAPER' ? (examId || selectedExamId) : undefined;
 
