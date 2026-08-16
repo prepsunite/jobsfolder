@@ -26,7 +26,7 @@ export default function CompaniesPage() {
     headquarters: 'India & Global',
   });
 
-  const { data: companies = [], isLoading, isError } = useQuery({
+  const { data: companies = [], isLoading } = useQuery({
     queryKey: ['live-companies', searchTerm],
     queryFn: async () => {
       const res = await companyService.getCompanies(searchTerm);

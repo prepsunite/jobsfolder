@@ -592,7 +592,7 @@ class DataStoreManager {
     if (typeof window !== 'undefined') {
       try {
         window.dispatchEvent(new CustomEvent('prepunite_datastore_updated', { detail: { key } }));
-      } catch (e) {}
+      } catch {}
 
       try {
         if ('BroadcastChannel' in window) {
@@ -600,7 +600,7 @@ class DataStoreManager {
           bc.postMessage({ type: 'DATASTORE_UPDATED', key, timestamp: Date.now() });
           bc.close();
         }
-      } catch (e) {}
+      } catch {}
     }
   }
 
@@ -744,7 +744,7 @@ class DataStoreManager {
         });
         this.setStorage('prepunite_companies', merged);
       }
-    } catch (e) {}
+    } catch {}
   }
 
   async fetchLiveExamsFromSupabase(): Promise<void> {
@@ -772,7 +772,7 @@ class DataStoreManager {
         });
         this.setStorage('prepunite_exams', merged);
       }
-    } catch (e) {}
+    } catch {}
   }
 
   async fetchLiveTopicQuestionsFromSupabase(): Promise<void> {
@@ -801,7 +801,7 @@ class DataStoreManager {
         });
         this.setStorage('prepunite_topic_questions', merged);
       }
-    } catch (e) {}
+    } catch {}
   }
 
   async fetchLiveExperiencesFromSupabase(): Promise<void> {
@@ -827,7 +827,7 @@ class DataStoreManager {
         }));
         this.setStorage('prepunite_experiences', mapped);
       }
-    } catch (e) {}
+    } catch {}
   }
 
   // --- COMPANIES ---

@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useSearchParams, Link } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   ShieldCheck,
   Sparkles,
-  CheckCircle2,
   ArrowRight,
   LogOut,
   GraduationCap,
   Star,
   AlertCircle,
   Check,
-  KeyRound,
   User,
 } from 'lucide-react';
 
@@ -26,6 +24,8 @@ export default function LoginPage() {
   } = useAuth();
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
 
   // Status & loading states
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -34,10 +34,12 @@ export default function LoginPage() {
   // Automatically navigate away from /login when authenticated
   useEffect(() => {
     if (isAuthenticated && user && !authLoading) {
-      const targetPath = role === 'ADMIN' ? '/admin' : '/profile';
+      const targetPath = redirectTo && redirectTo.startsWith('/')
+        ? redirectTo
+        : (role === 'ADMIN' ? '/admin' : '/profile');
       navigate(targetPath, { replace: true });
     }
-  }, [isAuthenticated, user, role, authLoading, navigate]);
+  }, [isAuthenticated, user, role, authLoading, navigate, redirectTo]);
 
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);

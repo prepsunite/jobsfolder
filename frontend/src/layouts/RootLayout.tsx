@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, Sparkles, Building2, BookOpen, Layers, ArrowRight, User } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, Building2, BookOpen, ArrowRight, User } from 'lucide-react';
 
 export default function RootLayout() {
   const location = useLocation();
@@ -38,7 +38,7 @@ export default function RootLayout() {
             handleStoreUpdate();
           }
         };
-      } catch (e) {}
+      } catch {}
     }
 
     return () => {

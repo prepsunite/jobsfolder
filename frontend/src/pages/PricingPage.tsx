@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Sparkles, Shield, Clock, Zap, ArrowRight, Lock, BookOpen } from 'lucide-react';
+import { Check, Zap, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { examService, type ExamWithCompany } from '@/services/exam.service';
-
 import type { DocTabNode } from '@/services/dataStore';
-import { useMemo } from 'react';
 
 function hasLockedNodes(nodes?: DocTabNode[]): boolean {
   if (!nodes || nodes.length === 0) return false;

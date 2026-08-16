@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import type { ExamWithCompany } from '@/services/dataStore';
 import { dataStore } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Sparkles, GraduationCap, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface ExamCardProps {
   exam: ExamWithCompany;

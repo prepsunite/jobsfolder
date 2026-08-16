@@ -45,8 +45,7 @@ import {
   CheckCircle2,
   Folder,
   Code,
-  Eye,
-  FileText
+  Eye
 } from 'lucide-react';
 
 export interface AptitudeTopic {

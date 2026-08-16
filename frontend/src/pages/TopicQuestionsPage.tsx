@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import {
   ChevronLeft,
@@ -78,7 +78,7 @@ export default function TopicQuestionsPage() {
   const [bulkImportResult, setBulkImportResult] = useState<ImportReport | null>(null);
 
   // Load questions from Supabase (live — admins and students always see the same data)
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('topic_questions')
@@ -116,11 +116,11 @@ export default function TopicQuestionsPage() {
     // Fallback to localStorage only if Supabase fails
     const list = dataStore.getTopicQuestions(topicId);
     setQuestions(list);
-  };
+  }, [topicId]);
 
   useEffect(() => {
     loadQuestions();
-  }, [topicId]);
+  }, [loadQuestions]);
 
   const handleSelectOption = (qId: string, optionKey: string) => {
     setSelectedAnswers(prev => ({ ...prev, [qId]: optionKey }));

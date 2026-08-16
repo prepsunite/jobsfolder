@@ -1,11 +1,10 @@
 import { useRouteError, isRouteErrorResponse, Link } from 'react-router';
-import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 export default function ErrorBoundary() {
   const error = useRouteError();
 
   let errorMessage = 'An unexpected error occurred.';
-  let errorDetails = '';
 
   const isChunkError = 
     (error instanceof Error && (error.message.includes('dynamically imported module') || error.message.includes('Loading chunk'))) ||

@@ -10,9 +10,6 @@ import { dataStore, type CompanyItem, type ExamItem, type ExperienceItem } from 
 import { useAuth } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { Link } from 'react-router';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
 import {
@@ -24,8 +21,6 @@ import {
   Bookmark,
   CheckCircle2,
   XCircle,
-  Lock,
-  KeyRound,
   Plus,
   ArrowRight,
   Trash2,
@@ -219,7 +214,7 @@ export default function AdminDashboardPage() {
 
     try {
       // 1. Create Company Profile in Supabase
-      const createdCompany = await companyService.createCompany({
+      await companyService.createCompany({
         name: companyForm.name,
         slug: slug,
         industry: companyForm.industry,

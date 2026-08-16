@@ -1,8 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { type DocTabNode } from '@/services/dataStore';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
 import {
@@ -25,7 +22,6 @@ import {
   Edit3,
   Check,
   X,
-  GripVertical,
   Settings2,
 } from 'lucide-react';
 

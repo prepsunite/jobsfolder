@@ -223,7 +223,7 @@ export const companyService = {
         targetSlug = compData.slug;
         targetId = compData.id;
       }
-    } catch (e) {}
+    } catch {}
 
     const now = new Date().toISOString();
 

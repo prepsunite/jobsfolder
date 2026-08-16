@@ -29,8 +29,6 @@ import {
   Maximize2,
   Bookmark,
   BookmarkCheck,
-  Lock,
-  Unlock
 } from 'lucide-react';
 
 type TabType = 'aboutCompany' | 'aboutExam' | 'oldPapers';
@@ -145,9 +143,6 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const [aboutCompanyForm, setAboutCompanyForm] = useState('');
   const [examForm, setExamForm] = useState<Partial<ExamItem>>({});
   const [examSavedSuccess, setExamSavedSuccess] = useState(false);
-  const [isSyncingDoc, setIsSyncingDoc] = useState(false);
-
-
 
   // Paywall & Monetization State
   const [showPaywallModal, setShowPaywallModal] = useState(false);
@@ -167,7 +162,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       const fallback = dataStore.hasAccessToOldPapers(currentExam.id, role, userEmail);
       setHasOldPapersAccess(fallback);
     }
-  }, [currentExam?.id, isAdmin, role, user?.email]);
+  }, [currentExam, isAdmin, role, user?.email]);
 
   useEffect(() => { checkLiveAccess(); }, [checkLiveAccess]);
 

@@ -58,7 +58,7 @@ export default function ProfilePage() {
         if (data) {
           return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
         }
-      } catch (e) {}
+      } catch {}
       return { isPro: dataStore.getUserSubscription().isPro, planName: 'Free Tier' };
     },
     enabled: !!user?.email,
