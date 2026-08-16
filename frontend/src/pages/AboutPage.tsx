@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Target, ShieldCheck, BookOpen, Layers, Users, Sparkles, ArrowRight, Award, CheckCircle2 } from 'lucide-react';
+import { Target, ShieldCheck, Sparkles, ArrowRight, Award, CheckCircle2 } from 'lucide-react';
 
 export default function AboutPage() {
   return (
