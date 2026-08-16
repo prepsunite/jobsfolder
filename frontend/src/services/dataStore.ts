@@ -60,6 +60,7 @@ export interface ExamItem {
   googleDocEmbedUrl?: string;
   googleDocEditUrl?: string;
   price?: number;
+  isPublicExam?: boolean; // true = all content is free, no paywall for any section
   upvotes: number;
 }
 
@@ -747,17 +748,19 @@ class DataStoreManager {
 
   async fetchLiveExamsFromSupabase(): Promise<void> {
     try {
-      const { data } = await supabase.from('exams').select('*');
+      const { data } = await supabase.from('exams').select('*').eq('is_deleted', false);
       if (data && data.length > 0) {
         const mapped: ExamItem[] = data.map(e => ({
           id: e.id,
           companySlug: e.company_slug,
           name: e.name,
           badge: e.badge || 'Campus Recruitment Drive',
-          upvotes: 85,
+          upvotes: e.upvotes || 0,
           content: e.content || '',
           oldPapers: e.old_papers || '',
           price: e.price || 99,
+          paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+          isPublicExam: e.is_public_exam ?? false,
         }));
         const existing = this.getStorage<ExamItem[]>('prepunite_exams', INITIAL_EXAMS);
         const merged = [...mapped];

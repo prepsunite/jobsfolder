@@ -34,6 +34,7 @@ export const examService = {
         paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
         googleDocEmbedUrl: e.google_doc_embed_url,
         googleDocEditUrl: e.google_doc_edit_url,
+        isPublicExam: e.is_public_exam ?? false,
         upvotes: e.upvotes || 0,
       }));
     }
@@ -90,6 +91,7 @@ export const examService = {
           paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
           googleDocEmbedUrl: e.google_doc_embed_url,
           googleDocEditUrl: e.google_doc_edit_url,
+          isPublicExam: e.is_public_exam ?? false,
           upvotes: e.upvotes || 0,
           companyName: fallbackComp?.name || e.company_slug.toUpperCase(),
           companyLogoUrl: fallbackComp?.logo_url || undefined,
@@ -125,6 +127,7 @@ export const examService = {
       google_doc_embed_url: examData.googleDocEmbedUrl || null,
       google_doc_edit_url: examData.googleDocEditUrl || null,
       price: examData.price || 99,
+      is_public_exam: examData.isPublicExam ?? false,
       is_deleted: false,
     };
 
@@ -155,6 +158,7 @@ export const examService = {
       paperTabs: typeof data.paper_tabs === 'string' ? JSON.parse(data.paper_tabs) : (data.paper_tabs || []),
       googleDocEmbedUrl: data.google_doc_embed_url,
       googleDocEditUrl: data.google_doc_edit_url,
+      isPublicExam: data.is_public_exam ?? false,
       upvotes: data.upvotes || 0,
     };
 
@@ -180,6 +184,7 @@ export const examService = {
     if (updatedFields.googleDocEmbedUrl !== undefined) payload.google_doc_embed_url = updatedFields.googleDocEmbedUrl;
     if (updatedFields.googleDocEditUrl !== undefined) payload.google_doc_edit_url = updatedFields.googleDocEditUrl;
     if (updatedFields.price !== undefined) payload.price = updatedFields.price;
+    if (updatedFields.isPublicExam !== undefined) payload.is_public_exam = updatedFields.isPublicExam;
 
     let query = supabase.from('exams').update(payload);
     if (isUuid) {
@@ -218,6 +223,7 @@ export const examService = {
       paperTabs: typeof first.paper_tabs === 'string' ? JSON.parse(first.paper_tabs) : (first.paper_tabs || []),
       googleDocEmbedUrl: first.google_doc_embed_url,
       googleDocEditUrl: first.google_doc_edit_url,
+      isPublicExam: first.is_public_exam ?? false,
       upvotes: first.upvotes || 0,
     };
 

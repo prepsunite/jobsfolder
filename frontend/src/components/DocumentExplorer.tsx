@@ -36,6 +36,7 @@ interface DocumentExplorerProps {
   tabs: DocTabNode[];
   hasAccess: boolean;
   isAdmin?: boolean;
+  isPublicExam?: boolean;
   watermarkText?: string;
   onOpenPaywall: () => void;
   onUpdateTabs?: (updatedTabs: DocTabNode[]) => void;
@@ -121,6 +122,7 @@ function makeNewNode(title: string): DocTabNode {
     title,
     content: `### ${title}\n\nWrite content here...`,
     emoji: '📄',
+    isFree: true, // Default: FREE/PUBLIC — admin must explicitly lock sections they want paid
   };
 }
 
@@ -138,6 +140,7 @@ export default function DocumentExplorer({
   tabs,
   hasAccess,
   isAdmin = false,
+  isPublicExam = false,
   watermarkText,
   onOpenPaywall,
   onUpdateTabs,
@@ -478,7 +481,7 @@ export default function DocumentExplorer({
       <div className="flex-1 flex flex-col relative min-h-[600px] overflow-hidden bg-white dark:bg-[#141517]">
 
         {/* PAYWALL OVERLAY */}
-        {!(hasAccess || isAdmin || activeNode?.isFree === true) ? (
+        {!(hasAccess || isAdmin || isPublicExam || activeNode?.isFree === true) ? (
           <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#f6ece6]/30 dark:bg-[#141517]/30">
             {/* Visual Abstract Skeleton Background (ZERO Text/Questions in HTML) */}
             <div className="absolute inset-0 p-8 opacity-10 filter blur-xs pointer-events-none select-none overflow-hidden space-y-6">

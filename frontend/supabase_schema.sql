@@ -197,14 +197,23 @@ CREATE TABLE IF NOT EXISTS public.companies (
 
 -- 12.2 Exams / Drive Papers Table
 CREATE TABLE IF NOT EXISTS public.exams (
-  id TEXT PRIMARY KEY,
-  company_slug TEXT NOT NULL,
-  name TEXT NOT NULL,
-  badge TEXT,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID,
+  company_slug VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  badge VARCHAR(255) DEFAULT 'Campus Recruitment Drive',
   content TEXT,
   old_papers TEXT,
-  price DECIMAL(10, 2) DEFAULT 99,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  price DECIMAL(10, 2) DEFAULT 99.00,
+  paper_tabs JSONB DEFAULT '[]'::jsonb,
+  google_doc_embed_url TEXT,
+  google_doc_edit_url TEXT,
+  upvotes INT DEFAULT 0,
+  is_public_exam BOOLEAN DEFAULT false,
+  is_deleted BOOLEAN DEFAULT false,
+  deleted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 12.3 Topic Practice Questions Table

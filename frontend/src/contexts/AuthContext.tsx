@@ -57,7 +57,6 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null; data?: any }>;
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: string | null; data?: any }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
-  loginAsUser: (name?: string, email?: string) => void;
   logout: () => Promise<void>;
 }
 
@@ -131,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: preAuth.email,
         role: activeRole,
         avatarUrl: preAuth.avatarUrl,
-        targetCompany: 'TCS NQT 2026',
       };
     }
 
@@ -150,7 +148,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: savedEmail || 'user@prepunite.com',
         role: activeRole,
         avatarUrl: savedAvatar,
-        targetCompany: 'TCS NQT 2026',
       };
     }
     return GUEST_USER;
@@ -170,7 +167,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       role: assignedRole,
       avatarUrl,
-      targetCompany: 'TCS NQT 2026',
     };
 
     setUser(newProfile);
@@ -398,9 +394,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginAsUser = (name = 'Demo Student', email = 'student@prepunite.com') => {
-    applyUserProfile(email, name);
-  };
+  // NOTE: loginAsUser() has been removed — it bypassed real Supabase auth and allowed
+  // unauthenticated session creation. All sign-in must go through signInWithGoogle,
+  // signInWithGithub, or signInWithEmail.
 
   const logout = async () => {
     try {
@@ -431,7 +427,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithEmail,
         signUpWithEmail,
         resetPassword,
-        loginAsUser,
         logout,
       }}
     >

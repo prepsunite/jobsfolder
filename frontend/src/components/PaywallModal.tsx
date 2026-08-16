@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Lock, Sparkles, CheckCircle2, ShieldCheck, Zap, X, CreditCard, ArrowRight, ShieldAlert } from 'lucide-react';
-import { dataStore } from '@/services/dataStore';
+import { Lock, CheckCircle2, ShieldCheck, X, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
 import { supabasePaymentService } from '@/services/supabasePaymentService';
 
 interface PaywallModalProps {
@@ -9,6 +8,7 @@ interface PaywallModalProps {
   examId: string;
   examName: string;
   companyName: string;
+  userEmail?: string;
   onUnlocked: () => void;
 }
 
@@ -20,6 +20,7 @@ export default function PaywallModal({
   examId,
   examName,
   companyName,
+  userEmail,
   onUnlocked,
 }: PaywallModalProps) {
   const [selectedOption, setSelectedOption] = useState<PaywallOptionType>('MONTHLY');
@@ -30,44 +31,103 @@ export default function PaywallModal({
 
   const handleCheckout = async (option: PaywallOptionType) => {
     setIsProcessing(true);
+    const email = userEmail || '';
 
-    const paymentId = `pay_${option.toLowerCase()}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    
-    let amount = 299;
+    let amountINR = 299;
     let itemType: 'SINGLE_PAPER' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY';
+    let description = 'Jobsfolder Pro Monthly Pass';
 
     if (option === 'SINGLE') {
-      amount = 99;
+      amountINR = 99;
       itemType = 'SINGLE_PAPER';
-    } else if (option === 'MONTHLY') {
-      amount = 299;
-      itemType = 'MONTHLY';
+      description = `1-Year Paper Access: ${examName}`;
     } else if (option === 'QUARTERLY') {
-      amount = 699;
+      amountINR = 699;
       itemType = 'QUARTERLY';
+      description = 'Jobsfolder Pro Quarterly Pass';
     } else if (option === 'YEARLY') {
-      amount = 1999;
+      amountINR = 1999;
       itemType = 'YEARLY';
+      description = 'Jobsfolder Master Yearly Pass';
     }
 
-    // Verify payment, log transaction in Supabase DB, and grant entitlement
-    await supabasePaymentService.verifyAndLogTransaction({
-      paymentId,
-      amount,
-      currency: 'INR',
-      itemType,
-      examId,
-      userEmail: 'student@jobsfolder.com',
-    });
+    try {
+      // 1. Create order on backend
+      const res = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountINR,
+          itemType,
+          examId: itemType === 'SINGLE_PAPER' ? examId : undefined,
+        }),
+      });
 
-    setIsProcessing(false);
-    setPaymentSuccess(true);
+      const orderData = await res.json();
+      if (!res.ok) throw new Error(orderData.error || 'Failed to create order');
 
-    setTimeout(() => {
-      setPaymentSuccess(false);
-      onUnlocked();
-      onClose();
-    }, 1200);
+      // 2. Open Razorpay checkout if key is configured
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (razorpayKey && (window as any).Razorpay) {
+        const options = {
+          key: razorpayKey,
+          amount: orderData.amount,
+          currency: orderData.currency || 'INR',
+          name: 'PrepUnite',
+          description,
+          order_id: orderData.orderId,
+          prefill: { email },
+          handler: async (response: any) => {
+            // 3. Verify payment server-side
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                userEmail: email,
+                itemType,
+                examId: itemType === 'SINGLE_PAPER' ? examId : undefined,
+                amount: amountINR,
+              }),
+            });
+
+            if (!verifyRes.ok) {
+              const vd = await verifyRes.json().catch(() => ({}));
+              alert(`Payment verification failed: ${vd.error || 'Please contact support with Payment ID: ' + response.razorpay_payment_id}`);
+              setIsProcessing(false);
+              return;
+            }
+
+            // 4. Sync local state for instant UX
+            await supabasePaymentService.verifyAndLogTransaction({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              amount: amountINR,
+              currency: 'INR',
+              itemType,
+              examId: itemType === 'SINGLE_PAPER' ? examId : undefined,
+              userEmail: email,
+            });
+
+            setIsProcessing(false);
+            setPaymentSuccess(true);
+            setTimeout(() => { setPaymentSuccess(false); onUnlocked(); onClose(); }, 1200);
+          },
+          modal: { ondismiss: () => setIsProcessing(false) },
+        };
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } else {
+        // Dev/staging fallback — shown only when Razorpay key is NOT configured
+        alert(`[Dev Mode] Order created: ${orderData.orderId}\nConfigure VITE_RAZORPAY_KEY_ID to enable live payments.`);
+        setIsProcessing(false);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Payment initiation failed. Please try again.');
+      setIsProcessing(false);
+    }
   };
 
   const getOptionPrice = (option: PaywallOptionType) => {

@@ -18,11 +18,16 @@ function hasLockedNodes(nodes?: DocTabNode[]): boolean {
 }
 
 function isPaywalledExam(exam: ExamWithCompany): boolean {
-  if (exam.price === 0 || (exam as any).isFree === true) return false;
+  // Exam-level public flag: skip paywall entirely
+  if (exam.isPublicExam === true) return false;
+  // Explicitly priced at 0
+  if (exam.price === 0) return false;
+  // Has paper tabs — check if any are locked
   if (exam.paperTabs && exam.paperTabs.length > 0) {
     return hasLockedNodes(exam.paperTabs);
   }
-  return true;
+  // No paper tabs yet — don't sell access to empty exams
+  return false;
 }
 
 export default function PricingPage() {
@@ -95,7 +100,7 @@ export default function PricingPage() {
           order_id: orderData.orderId,
           prefill: { email: userEmail },
           handler: async function (response: any) {
-            await fetch('/api/verify-payment', {
+            const verifyRes = await fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -108,6 +113,13 @@ export default function PricingPage() {
                 amount,
               }),
             });
+
+            if (!verifyRes.ok) {
+              const verifyData = await verifyRes.json().catch(() => ({}));
+              alert(`Payment verification failed: ${verifyData.error || 'Please contact support with your Payment ID: ' + response.razorpay_payment_id}`);
+              return;
+            }
+
             alert('Payment Verified! Paper access unlocked on your account for 1 year.');
             window.location.href = `/companies?examId=${targetExamId}`;
           },
