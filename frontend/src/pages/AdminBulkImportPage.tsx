@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
+import { supabase } from '@/lib/supabase';
 import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
 
@@ -30,6 +31,7 @@ export default function AdminBulkImportPage() {
   const [importReport, setImportReport] = useState<ImportReport | null>(null);
   const [affectedTopics, setAffectedTopics] = useState<string[]>([]);
   const [previewPage, setPreviewPage] = useState<number>(1);
+  const [isImporting, setIsImporting] = useState<boolean>(false);
   const PREVIEW_PAGE_SIZE = 15;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -112,11 +114,42 @@ export default function AdminBulkImportPage() {
   };
 
   // Execute Bulk Import
-  const handleExecuteImport = () => {
+  const handleExecuteImport = async () => {
     if (!jsonText.trim()) return;
 
+    setIsImporting(true);
     const defaultTopic = targetTopicOverride !== 'AUTO' ? targetTopicOverride : undefined;
     const report = dataStore.importBulkTopicQuestionsJson(jsonText, defaultTopic);
+
+    // Also persist directly to Supabase topic_questions table for universal live sync
+    try {
+      if (parsedPreview?.items && parsedPreview.items.length > 0) {
+        const rowsToInsert = parsedPreview.items.map((item, idx) => ({
+          id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
+          topic_id: item.topicId || 'numbers',
+          statement: item.statement || '',
+          options: JSON.stringify(item.options || []),
+          correct_answer: item.correctAnswer || 'A',
+          explanation: item.explanation || '',
+          structured_explanation: JSON.stringify(item.structuredExplanation || { formulaUsed: item.formulasUsed || [] }),
+          difficulty: item.difficulty || 'MEDIUM',
+          difficulty_level: item.difficultyLevel || 2,
+          is_hidden: item.isHidden ?? false,
+          question_number: item.questionNumber || idx + 1,
+        }));
+
+        const { error } = await supabase.from('topic_questions').upsert(rowsToInsert, { onConflict: 'id' });
+        if (error) {
+          console.error('[AdminBulkImport] Supabase bulk upsert error:', error);
+          report.errors.push({ itemIndex: 0, reason: `Supabase database sync note: ${error.message}` });
+        }
+      }
+    } catch (err: any) {
+      console.error('[AdminBulkImport] Supabase sync exception:', err);
+    } finally {
+      setIsImporting(false);
+    }
+
     setImportReport(report);
 
     // Collect affected topic IDs for quick navigation links
@@ -299,10 +332,20 @@ export default function AdminBulkImportPage() {
 
               <button
                 onClick={handleExecuteImport}
-                className="w-full py-3 bg-purple-700 hover:bg-purple-600 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 mt-2"
+                disabled={isImporting}
+                className="w-full py-3 bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer"
               >
-                <Upload className="w-4 h-4" />
-                <span>Import {parsedPreview.items.length} Questions Now</span>
+                {isImporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Syncing to Supabase Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    <span>Import {parsedPreview.items.length} Questions Now</span>
+                  </>
+                )}
               </button>
             </div>
           )}

@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import QuestionCard from '@/components/QuestionCard';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
@@ -24,6 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';
 
@@ -33,6 +38,33 @@ export default function ProfilePage() {
   const [bookmarkedTopicQuestions, setBookmarkedTopicQuestions] = useState<TopicQuestionItem[]>([]);
   const [bookmarkedExperiences, setBookmarkedExperiences] = useState<ExperienceItem[]>([]);
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
+
+  // Live Supabase subscription query for Pro Pass
+  const { data: subData } = useQuery({
+    queryKey: ['user-subscription', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return { isPro: false, planName: 'Free Tier' };
+      try {
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_email', user.email)
+          .eq('status', 'ACTIVE')
+          .gt('expires_at', new Date().toISOString())
+          .order('expires_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
+        }
+      } catch (e) {}
+      return { isPro: dataStore.getUserSubscription().isPro, planName: 'Free Tier' };
+    },
+    enabled: !!user?.email,
+  });
+
+  const isUserPro = subData?.isPro ?? dataStore.getUserSubscription().isPro;
 
   const getSubtopicDisplayName = (topicId: string) => {
     const matched = ARITHMETIC_TOPICS.find(t => t.id === topicId);
@@ -76,25 +108,50 @@ export default function ProfilePage() {
     }
   };
 
-  const loadBookmarks = () => {
-    // Exams
+  const loadBookmarks = async () => {
+    // 1. Exams (live Supabase query with fallback)
     const examIds = dataStore.getBookmarkedExamIds();
-    const allExams = dataStore.getAllExams();
+    let allExams: any[] = [];
+    try {
+      allExams = await examService.getAllExams();
+    } catch {
+      allExams = dataStore.getAllExams();
+    }
+    if (allExams.length === 0) allExams = dataStore.getAllExams();
     const examMatches = examIds.map(id => allExams.find(e => e.id === id)).filter(Boolean);
     setBookmarkedExams(examMatches);
 
-    // Topic Practice Questions (TopicQuestionItem)
+    // 2. Topic Practice Questions (live Supabase query with fallback)
     const questionIds = dataStore.getBookmarkedQuestionIds();
-    const allTopicQuestions = dataStore.getTopicQuestions();
+    let allTopicQuestions: TopicQuestionItem[] = [];
+    try {
+      const { data: qData } = await supabase.from('topic_questions').select('*');
+      if (qData && qData.length > 0) {
+        allTopicQuestions = qData.map(q => ({
+          id: q.id,
+          topicId: q.topic_id,
+          statement: q.statement,
+          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+          correctAnswer: q.correct_answer,
+          explanation: q.explanation,
+          structuredExplanation: typeof q.structured_explanation === 'string' ? JSON.parse(q.structured_explanation) : q.structured_explanation,
+          difficulty: q.difficulty || 'MEDIUM',
+          difficultyLevel: q.difficulty_level || 2,
+          isHidden: q.is_hidden || false,
+          questionNumber: q.question_number,
+        }));
+      }
+    } catch {}
+    if (allTopicQuestions.length === 0) allTopicQuestions = dataStore.getTopicQuestions();
     const topicMatches = questionIds.map(id => allTopicQuestions.find(q => q.id === id)).filter(Boolean) as TopicQuestionItem[];
     setBookmarkedTopicQuestions(topicMatches);
 
-    // OA Questions fallback
+    // 3. OA Questions fallback
     const allQuestions = dataStore.getQuestions();
     const questionMatches = questionIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean) as QuestionItem[];
     setBookmarkedQuestions(questionMatches);
 
-    // Experiences
+    // 4. Experiences
     const expIds = dataStore.getBookmarkedExperienceIds();
     const allExps = dataStore.getExperiences();
     const expMatches = expIds.map(id => allExps.find(e => e.id === id)).filter(Boolean) as ExperienceItem[];
@@ -145,7 +202,7 @@ export default function ProfilePage() {
                 <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
                   Student Profile
                 </h1>
-                {dataStore.getUserSubscription().isPro ? (
+                {isUserPro ? (
                   <span className="text-xs font-black px-3 py-1 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-purple-500" />
                     <span>Jobsfolder Pro Pass</span>
