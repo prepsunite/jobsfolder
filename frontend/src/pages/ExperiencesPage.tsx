@@ -4,9 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { dataStore, type ExperienceItem } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import ContentRenderer from '@/components/ContentRenderer';
 import { Layers, Search, PlusCircle, Loader2, Edit3, Trash2, XCircle, CheckCircle2, Plus, Bookmark, BookmarkCheck } from 'lucide-react';
 
@@ -47,7 +44,7 @@ export default function ExperiencesPage() {
     roundsText: '',
   });
 
-  const { data: rawExperiences = [], isLoading, refetch: refetchExperiences } = useQuery({
+  const { data: rawExperiences = [], isLoading } = useQuery({
     queryKey: ['live-experiences', searchTerm, isAdmin],
     queryFn: async () => {
       let query = supabase

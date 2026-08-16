@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { ExamItem, DocTabNode } from '@/services/dataStore';
+import type { ExamItem } from '@/services/dataStore';
 import { auditService } from '@/services/audit.service';
 
 export interface ExamWithCompany extends ExamItem {
@@ -142,7 +142,7 @@ export const examService = {
         .eq('slug', companySlug)
         .maybeSingle();
       if (comp?.id) companyId = comp.id;
-    } catch (e) {}
+    } catch {}
 
     const payload: Record<string, any> = {
       company_slug: companySlug,
@@ -289,7 +289,7 @@ export const examService = {
         .from('paper_tab_nodes')
         .update({ is_deleted: true })
         .eq('exam_id', id);
-    } catch (e) {}
+    } catch {}
 
     auditService.logAction({
       action: 'SOFT_DELETE_EXAM',
