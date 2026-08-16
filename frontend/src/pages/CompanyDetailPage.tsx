@@ -152,14 +152,11 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   // Paywall & Monetization State
   const [showPaywallModal, setShowPaywallModal] = useState(false);
   const [hasOldPapersAccess, setHasOldPapersAccess] = useState<boolean>(false);
-  const [isPublicExamToggling, setIsPublicExamToggling] = useState(false);
 
   // Live Supabase entitlement check — re-runs whenever the exam changes
   const checkLiveAccess = useCallback(async () => {
     if (!currentExam) { setHasOldPapersAccess(false); return; }
     if (isAdmin) { setHasOldPapersAccess(true); return; }
-    // Fast path: public exam flag
-    if (currentExam.isPublicExam) { setHasOldPapersAccess(true); return; }
     const userEmail = user?.email;
     if (!userEmail) { setHasOldPapersAccess(false); return; }
     try {
@@ -351,43 +348,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     }
   };
 
-  // Admin: toggle the entire exam between Public (free) and Paid (locked)
-  const handleTogglePublicExam = async () => {
-    if (!currentExam || !isAdmin) return;
-    const newValue = !currentExam.isPublicExam;
-    setIsPublicExamToggling(true);
 
-    // 1. Optimistic instant UI update across all active queries
-    queryClient.setQueriesData({ queryKey: ['live-exams'] }, (old: any) => {
-      if (Array.isArray(old)) {
-        return old.map((ex: ExamItem) => ex.id === currentExam.id ? { ...ex, isPublicExam: newValue } : ex);
-      }
-      return old;
-    });
-
-    try {
-      // 2. Persist to Supabase Database & dataStore
-      await examService.updateExam(currentExam.id, { isPublicExam: newValue });
-      dataStore.updateExam(currentExam.id, { isPublicExam: newValue });
-      
-      // 3. Update local access state
-      if (newValue) {
-        setHasOldPapersAccess(true);
-      } else {
-        await checkLiveAccess();
-      }
-
-      // 4. Invalidate to ensure background sync is completely aligned
-      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
-      forceRefreshData();
-    } catch (err: any) {
-      alert(`Failed to update exam access mode: ${err.message || err}`);
-      // Revert on error
-      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
-    } finally {
-      setIsPublicExamToggling(false);
-    }
-  };
 
   const handleUpvote = () => {
     if (isUpvoted) {
@@ -728,57 +689,21 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   </div>
                 </div>
               ) : activeTab === 'oldPapers' ? (
-                <div className="space-y-3">
-                  {/* Admin: Exam-Level Access Mode Toggle */}
-                  {isAdmin && currentExam && (
-                    <div className="flex items-center justify-between bg-[#f6ece6]/60 dark:bg-[#141517]/60 border border-[#e2d8d2] dark:border-[#383a40] rounded-[14px] px-4 py-2.5">
-                      <div className="flex items-center gap-2">
-                        {currentExam.isPublicExam ? (
-                          <Unlock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                        ) : (
-                          <Lock className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
-                        )}
-                        <span className="text-[11px] font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider">
-                          Exam Access Mode:
-                        </span>
-                        <span className={`text-[11px] font-extrabold uppercase tracking-wider ${
-                          currentExam.isPublicExam
-                            ? 'text-emerald-700 dark:text-emerald-400'
-                            : 'text-rose-600 dark:text-rose-400'
-                        }`}>
-                          {currentExam.isPublicExam ? 'PUBLIC (Free for all)' : 'PAID (Per-section paywall)'}
-                        </span>
-                      </div>
-                      <button
-                        onClick={handleTogglePublicExam}
-                        disabled={isPublicExamToggling}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                          currentExam.isPublicExam
-                            ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200'
-                            : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200'
-                        } disabled:opacity-50`}
-                      >
-                        {isPublicExamToggling ? 'Saving...' : (currentExam.isPublicExam ? '🔒 Make Paid' : '🔓 Make Public')}
-                      </button>
-                    </div>
-                  )}
-                  <DocumentExplorer
-                    examName={currentExam?.name || 'Recruitment Drive'}
-                    companyName={companyName}
-                    tabs={currentExam?.paperTabs || []}
-                    hasAccess={hasOldPapersAccess}
-                    isAdmin={isAdmin}
-                    isPublicExam={currentExam?.isPublicExam ?? false}
-                    watermarkText={watermarkText}
-                    onOpenPaywall={() => setShowPaywallModal(true)}
-                    onUpdateTabs={async (updatedTabs) => {
-                      if (currentExam) {
-                        await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
-                        queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
-                      }
-                    }}
-                  />
-                </div>
+                <DocumentExplorer
+                  examName={currentExam?.name || 'Recruitment Drive'}
+                  companyName={companyName}
+                  tabs={currentExam?.paperTabs || []}
+                  hasAccess={hasOldPapersAccess}
+                  isAdmin={isAdmin}
+                  watermarkText={watermarkText}
+                  onOpenPaywall={() => setShowPaywallModal(true)}
+                  onUpdateTabs={async (updatedTabs) => {
+                    if (currentExam) {
+                      await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
+                      queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+                    }
+                  }}
+                />
               ) : (
                 <ContentRenderer
                   content={
