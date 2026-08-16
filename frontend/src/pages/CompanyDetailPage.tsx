@@ -58,10 +58,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     retry: 1,
   });
 
-  // Exams from Supabase — live data, no localStorage
+  // Exams from Supabase — live data with server-side payload redaction
   const { data: companyExams = [] } = useQuery({
-    queryKey: ['live-exams', slug],
-    queryFn: () => examService.getExamsByCompany(slug),
+    queryKey: ['live-exams', slug, user?.email],
+    queryFn: () => examService.getExamsByCompany(slug, user?.email),
     enabled: !!slug,
     staleTime: 0,
     refetchOnWindowFocus: true,

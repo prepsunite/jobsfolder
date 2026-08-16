@@ -266,4 +266,109 @@ CREATE POLICY "Admin/Client manage topic_questions" ON public.topic_questions FO
 CREATE POLICY "Public read experiences" ON public.experiences FOR SELECT USING (true);
 CREATE POLICY "Admin/Client manage experiences" ON public.experiences FOR ALL USING (true);
 
+-- ============================================================================
+-- 13. SERVER-SIDE REDACTION RPC FUNCTIONS (ZERO UNPAID LEAKAGE)
+-- ============================================================================
+
+-- 13.1 Helper: Redact Locked Paper Nodes on Database Server
+CREATE OR REPLACE FUNCTION public.redact_paper_nodes(
+  p_nodes JSONB,
+  p_has_access BOOLEAN,
+  p_is_public BOOLEAN
+) RETURNS JSONB AS $$
+DECLARE
+  v_result JSONB := '[]'::jsonb;
+  v_node JSONB;
+  v_children JSONB;
+  v_is_free BOOLEAN;
+BEGIN
+  IF p_nodes IS NULL OR jsonb_array_length(p_nodes) = 0 THEN
+    RETURN '[]'::jsonb;
+  END IF;
+
+  IF p_has_access OR p_is_public THEN
+    RETURN p_nodes;
+  END IF;
+
+  FOR v_node IN SELECT * FROM jsonb_array_elements(p_nodes) LOOP
+    v_is_free := COALESCE((v_node->>'isFree')::boolean, true);
+    
+    IF v_node ? 'children' AND jsonb_array_length(v_node->'children') > 0 THEN
+      v_children := public.redact_paper_nodes(v_node->'children', p_has_access, p_is_public);
+      v_node := jsonb_set(v_node, '{children}', v_children);
+    END IF;
+
+    -- If NOT free and user has no access, completely strip content on the database server!
+    IF NOT v_is_free THEN
+      v_node := jsonb_set(v_node, '{content}', 'null'::jsonb);
+    END IF;
+
+    v_result := v_result || jsonb_build_array(v_node);
+  END LOOP;
+
+  RETURN v_result;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- 13.2 RPC: Fetch Company Exams with Database-Level Redaction
+CREATE OR REPLACE FUNCTION public.get_secure_exams_by_company(
+  p_company_slug TEXT,
+  p_user_email TEXT DEFAULT NULL
+) RETURNS TABLE (
+  id UUID,
+  company_id UUID,
+  company_slug VARCHAR,
+  name VARCHAR,
+  badge VARCHAR,
+  content TEXT,
+  old_papers TEXT,
+  price NUMERIC,
+  paper_tabs JSONB,
+  google_doc_embed_url TEXT,
+  google_doc_edit_url TEXT,
+  upvotes INT,
+  is_public_exam BOOLEAN,
+  has_user_access BOOLEAN,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+) AS $$
+DECLARE
+  v_is_admin BOOLEAN := FALSE;
+BEGIN
+  IF p_user_email IS NOT NULL AND p_user_email != '' THEN
+    SELECT EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE LOWER(email) = LOWER(p_user_email) AND role = 'admin'
+    ) INTO v_is_admin;
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    e.id,
+    e.company_id,
+    e.company_slug,
+    e.name,
+    e.badge,
+    e.content,
+    e.old_papers,
+    e.price,
+    public.redact_paper_nodes(
+      e.paper_tabs, 
+      v_is_admin OR (p_user_email IS NOT NULL AND public.check_user_paper_access(p_user_email, e.id::text)),
+      COALESCE(e.is_public_exam, false)
+    ) AS paper_tabs,
+    e.google_doc_embed_url,
+    e.google_doc_edit_url,
+    e.upvotes,
+    COALESCE(e.is_public_exam, false) AS is_public_exam,
+    (v_is_admin OR COALESCE(e.is_public_exam, false) OR (p_user_email IS NOT NULL AND public.check_user_paper_access(p_user_email, e.id::text))) AS has_user_access,
+    e.created_at,
+    e.updated_at
+  FROM public.exams e
+  WHERE e.company_slug = p_company_slug
+    AND e.is_deleted = false
+  ORDER BY e.created_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 

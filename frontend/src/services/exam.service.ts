@@ -9,7 +9,35 @@ export interface ExamWithCompany extends ExamItem {
 }
 
 export const examService = {
-  getExamsByCompany: async (companySlug: string): Promise<ExamItem[]> => {
+  getExamsByCompany: async (companySlug: string, userEmail?: string): Promise<ExamItem[]> => {
+    // 1. Attempt Secure Server-Side Redaction RPC
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_secure_exams_by_company', {
+        p_company_slug: companySlug,
+        p_user_email: userEmail || null,
+      });
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        return rpcData.map((e: any) => ({
+          id: e.id,
+          companySlug: e.company_slug,
+          name: e.name,
+          badge: e.badge || 'Campus Recruitment Drive',
+          content: e.content || '',
+          oldPapers: e.old_papers || '',
+          price: e.price ? Number(e.price) : 99,
+          paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+          googleDocEmbedUrl: e.google_doc_embed_url,
+          googleDocEditUrl: e.google_doc_edit_url,
+          isPublicExam: e.is_public_exam ?? false,
+          upvotes: e.upvotes || 0,
+        }));
+      }
+    } catch (rpcErr) {
+      console.warn('[examService.getExamsByCompany] RPC fallback to direct query:', rpcErr);
+    }
+
+    // 2. Direct Query Fallback
     const { data, error } = await supabase
       .from('exams')
       .select('*')
