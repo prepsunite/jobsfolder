@@ -320,9 +320,9 @@ export default function DocumentExplorer({
           ) : (
             <div className="flex-1 min-w-0 flex items-center justify-between gap-1">
               <span className="truncate">{node.title}</span>
-              {node.isFree ? (
+              {node.isFree || isPublicExam ? (
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex-shrink-0">
-                  FREE
+                  {isPublicExam ? 'PUBLIC' : 'FREE'}
                 </span>
               ) : adminMode && isAdmin ? (
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase tracking-wider flex-shrink-0 opacity-70 group-hover:opacity-100">
@@ -643,9 +643,9 @@ export default function DocumentExplorer({
                       <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5">{companyName} • {examName} Official Placement Series</p>
                     </div>
                   </div>
-                  {activeNode.isFree && (
+                  {(activeNode.isFree || isPublicExam) && (
                     <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                      <Unlock className="w-3 h-3" /> Free Practice Guide
+                      <Unlock className="w-3 h-3" /> {isPublicExam ? 'Public Exam Access' : 'Free Practice Guide'}
                     </span>
                   )}
                 </div>

@@ -641,6 +641,7 @@ class DataStoreManager {
         google_doc_embed_url: exam.googleDocEmbedUrl,
         google_doc_edit_url: exam.googleDocEditUrl,
         price: exam.price || 99,
+        is_public_exam: exam.isPublicExam ?? false,
       });
       if (error) {
         console.error('[dataStore] Supabase exam sync error:', error);

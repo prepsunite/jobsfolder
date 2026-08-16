@@ -354,15 +354,36 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   // Admin: toggle the entire exam between Public (free) and Paid (locked)
   const handleTogglePublicExam = async () => {
     if (!currentExam || !isAdmin) return;
+    const newValue = !currentExam.isPublicExam;
     setIsPublicExamToggling(true);
+
+    // 1. Optimistic instant UI update across all active queries
+    queryClient.setQueriesData({ queryKey: ['live-exams'] }, (old: any) => {
+      if (Array.isArray(old)) {
+        return old.map((ex: ExamItem) => ex.id === currentExam.id ? { ...ex, isPublicExam: newValue } : ex);
+      }
+      return old;
+    });
+
     try {
-      const newValue = !currentExam.isPublicExam;
+      // 2. Persist to Supabase Database & dataStore
       await examService.updateExam(currentExam.id, { isPublicExam: newValue });
-      queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
-      // If toggled to public, grant access immediately in this session
-      if (newValue) setHasOldPapersAccess(true);
+      dataStore.updateExam(currentExam.id, { isPublicExam: newValue });
+      
+      // 3. Update local access state
+      if (newValue) {
+        setHasOldPapersAccess(true);
+      } else {
+        await checkLiveAccess();
+      }
+
+      // 4. Invalidate to ensure background sync is completely aligned
+      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
+      forceRefreshData();
     } catch (err: any) {
       alert(`Failed to update exam access mode: ${err.message || err}`);
+      // Revert on error
+      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
     } finally {
       setIsPublicExamToggling(false);
     }
