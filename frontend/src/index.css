@@ -228,6 +228,125 @@ pre code {
   white-space: inherit !important;
 }
 
+/* ═══════════════════════════════════════════════════
+   Structured Test Case Group & Item Styles
+   (Outer Box + Individual Cards with Monospace Grid)
+══════════════════════════════════════════════════════ */
+.test-case-group,
+div[data-type="test-case-group"] {
+  background-color: #f6ece6 !important;
+  border: 1.5px solid #eae1da !important;
+  border-radius: 1rem !important;
+  padding: 1.25rem !important;
+  margin: 1.25rem 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.875rem !important;
+}
+
+:where(.dark, .dark *) .test-case-group,
+:where(.dark, .dark *) div[data-type="test-case-group"] {
+  background-color: #141517 !important;
+  border-color: #2b2d31 !important;
+}
+
+.test-case-group-title {
+  font-family: var(--font-display), sans-serif !important;
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #006c49 !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 1px dashed #eae1da !important;
+}
+
+:where(.dark, .dark *) .test-case-group-title {
+  color: #6cf8bb !important;
+  border-bottom-color: #2b2d31 !important;
+}
+
+.test-case-item,
+div[data-type="test-case"] {
+  background-color: #ffffff !important;
+  border: 1px solid #e2d8d2 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.875rem 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+:where(.dark, .dark *) .test-case-item,
+:where(.dark, .dark *) div[data-type="test-case"] {
+  background-color: #1e1f22 !important;
+  border-color: #342f2b !important;
+}
+
+.test-case-header {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #1f1b17 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+:where(.dark, .dark *) .test-case-header {
+  color: #e3e3e3 !important;
+}
+
+.test-case-io-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0.625rem !important;
+}
+
+@media (min-width: 640px) {
+  .test-case-io-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+.test-case-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.test-case-label {
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #747878 !important;
+}
+
+:where(.dark, .dark *) .test-case-label {
+  color: #a6adbb !important;
+}
+
+.test-case-code,
+pre.test-case-code {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace !important;
+  font-size: 0.8rem !important;
+  line-height: 1.55 !important;
+  white-space: pre-wrap !important;
+  background-color: #141517 !important;
+  color: #6cf8bb !important;
+  border: 1px solid #2b2d31 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.6rem 0.75rem !important;
+  margin: 0 !important;
+  word-break: break-word !important;
+}
+
+:where(.dark, .dark *) .test-case-code,
+:where(.dark, .dark *) pre.test-case-code {
+  background-color: #0f1012 !important;
+  border-color: #2b2d31 !important;
+}
+
 /* Horizontal rule */
 .tiptap-wrapper .ProseMirror hr { border: none; border-top: 2px solid #eae1da; margin: 1.25rem 0; }
 :where(.dark, .dark *) .tiptap-wrapper .ProseMirror hr { border-top-color: #2b2d31; }

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Node as TipTapNode } from '@tiptap/core';
 import { DOMParser } from '@tiptap/pm/model';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
@@ -146,6 +147,85 @@ const ResizableImage = Image.extend({
   },
 });
 
+// ─── Custom TestCase Nodes ──────────────────────────────────────────────────
+export const TestCaseGroup = TipTapNode.create({
+  name: 'testCaseGroup',
+  group: 'block',
+  content: 'testCase+',
+  defining: true,
+  parseHTML() {
+    return [
+      { tag: 'div[data-type="test-case-group"]' },
+      { tag: 'div.test-case-group' },
+    ];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['div', { ...HTMLAttributes, 'data-type': 'test-case-group', class: 'test-case-group' }, 0];
+  },
+});
+
+export const TestCase = TipTapNode.create({
+  name: 'testCase',
+  group: 'block',
+  content: 'block+',
+  defining: true,
+  parseHTML() {
+    return [
+      { tag: 'div[data-type="test-case"]' },
+      { tag: 'div.test-case-item' },
+    ];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['div', { ...HTMLAttributes, 'data-type': 'test-case', class: 'test-case-item' }, 0];
+  },
+});
+
+export function parseChatGPTTestCasesToHTML(plainText: string): string {
+  if (!plainText?.trim()) return '';
+
+  // Match test case blocks: "Test Case 1", "Test Case 2", etc.
+  const regex = /(?:Test\s*Case\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:Test\s*Case\s*\d+|$))/gi;
+  const matches = [...plainText.matchAll(regex)];
+
+  if (matches.length === 0) {
+    const safeText = plainText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<div data-type="test-case-group" class="test-case-group"><div data-type="test-case" class="test-case-item"><div class="test-case-header">Test Case 1</div><pre class="test-case-code">${safeText}</pre></div></div><p></p>`;
+  }
+
+  const itemsHtml = matches.map((m, idx) => {
+    const caseNum = m[1] || `${idx + 1}`;
+    const content = m[2].trim();
+
+    // Extract Input & Output
+    const inputMatch = content.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
+    const outputMatch = content.match(/Output:?\s*([\s\S]*?)$/i);
+
+    let innerHtml = '';
+    if (inputMatch || outputMatch) {
+      const inputVal = inputMatch ? inputMatch[1].trim() : '';
+      const outputVal = outputMatch ? outputMatch[1].trim() : '';
+
+      innerHtml = `
+        <div class="test-case-header">Test Case ${caseNum}</div>
+        <div class="test-case-io-grid">
+          ${inputVal ? `<div class="test-case-section"><span class="test-case-label">Input:</span><pre class="test-case-code">${inputVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></div>` : ''}
+          ${outputVal ? `<div class="test-case-section"><span class="test-case-label">Output:</span><pre class="test-case-code">${outputVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></div>` : ''}
+        </div>
+      `.trim();
+    } else {
+      const safe = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      innerHtml = `
+        <div class="test-case-header">Test Case ${caseNum}</div>
+        <pre class="test-case-code">${safe}</pre>
+      `.trim();
+    }
+
+    return `<div data-type="test-case" class="test-case-item">${innerHtml}</div>`;
+  }).join('');
+
+  return `<div data-type="test-case-group" class="test-case-group"><div class="test-case-group-title">🧪 Test Cases</div>${itemsHtml}</div><p></p>`;
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function RichTextEditor({
   value,
@@ -228,6 +308,8 @@ export default function RichTextEditor({
       Subscript,
       Placeholder.configure({ placeholder }),
       CharacterCount,
+      TestCaseGroup,
+      TestCase,
     ],
     content: parseToHTML(value),
     onUpdate: ({ editor }) => {
@@ -304,12 +386,7 @@ export default function RichTextEditor({
         ) {
           event.preventDefault();
 
-          const safeText = plainText
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-
-          const htmlToInsert = `<pre class="test-case">${safeText}</pre><p></p>`;
+          const htmlToInsert = parseChatGPTTestCasesToHTML(plainText);
           const div = document.createElement('div');
           div.innerHTML = htmlToInsert;
 
@@ -431,7 +508,9 @@ export default function RichTextEditor({
 
   const insertTestCase = useCallback(() => {
     if (!editor) return;
-    editor.chain().focus().insertContent('<pre class="test-case">Input:\n4\nA B 500 100\nC D 200 120\nA B 500 150\nA B 700 160\n\nOutput:\n0 2</pre><p></p>').run();
+    const sample = `Test Cases\n\nTest Case 1\nInput:\n6\nOutput:\n7000\n\nTest Case 2\nInput:\n15\nOutput:\n20000`;
+    const htmlToInsert = parseChatGPTTestCasesToHTML(sample);
+    editor.chain().focus().insertContent(htmlToInsert).run();
   }, [editor]);
 
   const commitTestCase = useCallback(() => {
@@ -439,10 +518,8 @@ export default function RichTextEditor({
       setShowTestCaseModal(false);
       return;
     }
-    const safe = rawTestCaseInput
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    editor.chain().focus().insertContent(`<pre class="test-case">${safe}</pre><p></p>`).run();
+    const htmlToInsert = parseChatGPTTestCasesToHTML(rawTestCaseInput);
+    editor.chain().focus().insertContent(htmlToInsert).run();
     setRawTestCaseInput('');
     setShowTestCaseModal(false);
   }, [editor, rawTestCaseInput]);
