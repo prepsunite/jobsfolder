@@ -147,83 +147,120 @@ const ResizableImage = Image.extend({
   },
 });
 
-// ─── Custom TestCase Nodes ──────────────────────────────────────────────────
-export const TestCaseGroup = TipTapNode.create({
-  name: 'testCaseGroup',
+// ─── Custom TestCaseBox Atomic Node ─────────────────────────────────────────
+export const TestCaseBox = TipTapNode.create({
+  name: 'testCaseBox',
   group: 'block',
-  content: 'testCase+',
-  defining: true,
+  atom: true, // Prevents TipTap from stripping or flattening internal structure
+  draggable: true,
+  selectable: true,
+  addAttributes() {
+    return {
+      cases: {
+        default: [],
+        parseHTML: (element) => {
+          const raw = element.getAttribute('data-cases');
+          if (raw) {
+            try { return JSON.parse(raw); } catch { return []; }
+          }
+          const items = element.querySelectorAll('.test-case-item');
+          if (items.length > 0) {
+            return Array.from(items).map((item, i) => {
+              const header = item.querySelector('.test-case-header')?.textContent || `Test Case ${i + 1}`;
+              const input = item.querySelector('.test-case-input-val')?.textContent || '';
+              const output = item.querySelector('.test-case-output-val')?.textContent || '';
+              return { title: header, input, output };
+            });
+          }
+          return [];
+        },
+        renderHTML: (attributes) => ({
+          'data-cases': JSON.stringify(attributes.cases || []),
+        }),
+      },
+    };
+  },
   parseHTML() {
     return [
-      { tag: 'div[data-type="test-case-group"]' },
+      { tag: 'div[data-type="test-case-box"]' },
       { tag: 'div.test-case-group' },
     ];
   },
-  renderHTML({ HTMLAttributes }) {
-    return ['div', { ...HTMLAttributes, 'data-type': 'test-case-group', class: 'test-case-group' }, 0];
-  },
-});
+  renderHTML({ node, HTMLAttributes }) {
+    const cases: Array<{ title: string; input: string; output: string }> = node.attrs.cases || [];
 
-export const TestCase = TipTapNode.create({
-  name: 'testCase',
-  group: 'block',
-  content: 'block+',
-  defining: true,
-  parseHTML() {
+    const caseElements = cases.map((c, idx) => [
+      'div',
+      { class: 'test-case-item', 'data-type': 'test-case' },
+      ['div', { class: 'test-case-header' }, c.title || `Test Case ${idx + 1}`],
+      [
+        'div',
+        { class: 'test-case-io-grid' },
+        [
+          'div',
+          { class: 'test-case-section' },
+          ['span', { class: 'test-case-label' }, 'Input:'],
+          ['pre', { class: 'test-case-code test-case-input-val' }, c.input || ''],
+        ],
+        [
+          'div',
+          { class: 'test-case-section' },
+          ['span', { class: 'test-case-label' }, 'Output:'],
+          ['pre', { class: 'test-case-code test-case-output-val' }, c.output || ''],
+        ],
+      ],
+    ]);
+
     return [
-      { tag: 'div[data-type="test-case"]' },
-      { tag: 'div.test-case-item' },
+      'div',
+      {
+        ...HTMLAttributes,
+        'data-type': 'test-case-box',
+        class: 'test-case-group',
+      },
+      ['div', { class: 'test-case-group-title' }, '🧪 Test Cases'],
+      ...caseElements,
     ];
   },
-  renderHTML({ HTMLAttributes }) {
-    return ['div', { ...HTMLAttributes, 'data-type': 'test-case', class: 'test-case-item' }, 0];
-  },
 });
 
-export function parseChatGPTTestCasesToHTML(plainText: string): string {
-  if (!plainText?.trim()) return '';
+export function parseChatGPTToCases(text: string): Array<{ title: string; input: string; output: string }> {
+  if (!text?.trim()) return [];
 
   // Match test case blocks: "Test Case 1", "Test Case 2", etc.
   const regex = /(?:Test\s*Case\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:Test\s*Case\s*\d+|$))/gi;
-  const matches = [...plainText.matchAll(regex)];
+  const matches = [...text.matchAll(regex)];
 
   if (matches.length === 0) {
-    const safeText = plainText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<div data-type="test-case-group" class="test-case-group"><div data-type="test-case" class="test-case-item"><div class="test-case-header">Test Case 1</div><pre class="test-case-code">${safeText}</pre></div></div><p></p>`;
+    const inputMatch = text.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
+    const outputMatch = text.match(/Output:?\s*([\s\S]*?)$/i);
+    if (inputMatch || outputMatch) {
+      return [{
+        title: 'Test Case 1',
+        input: inputMatch ? inputMatch[1].trim() : '',
+        output: outputMatch ? outputMatch[1].trim() : '',
+      }];
+    }
+    return [{
+      title: 'Test Case 1',
+      input: text.trim(),
+      output: '',
+    }];
   }
 
-  const itemsHtml = matches.map((m, idx) => {
+  return matches.map((m, idx) => {
     const caseNum = m[1] || `${idx + 1}`;
     const content = m[2].trim();
 
-    // Extract Input & Output
     const inputMatch = content.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
     const outputMatch = content.match(/Output:?\s*([\s\S]*?)$/i);
 
-    let innerHtml = '';
-    if (inputMatch || outputMatch) {
-      const inputVal = inputMatch ? inputMatch[1].trim() : '';
-      const outputVal = outputMatch ? outputMatch[1].trim() : '';
-
-      innerHtml = `
-        <div class="test-case-header">Test Case ${caseNum}</div>
-        <div class="test-case-io-grid">
-          ${inputVal ? `<div class="test-case-section"><span class="test-case-label">Input:</span><pre class="test-case-code">${inputVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></div>` : ''}
-          ${outputVal ? `<div class="test-case-section"><span class="test-case-label">Output:</span><pre class="test-case-code">${outputVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></div>` : ''}
-        </div>
-      `.trim();
-    } else {
-      const safe = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      innerHtml = `
-        <div class="test-case-header">Test Case ${caseNum}</div>
-        <pre class="test-case-code">${safe}</pre>
-      `.trim();
-    }
-
-    return `<div data-type="test-case" class="test-case-item">${innerHtml}</div>`;
-  }).join('');
-
-  return `<div data-type="test-case-group" class="test-case-group"><div class="test-case-group-title">🧪 Test Cases</div>${itemsHtml}</div><p></p>`;
+    return {
+      title: `Test Case ${caseNum}`,
+      input: inputMatch ? inputMatch[1].trim() : (outputMatch ? '' : content),
+      output: outputMatch ? outputMatch[1].trim() : '',
+    };
+  });
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -308,8 +345,7 @@ export default function RichTextEditor({
       Subscript,
       Placeholder.configure({ placeholder }),
       CharacterCount,
-      TestCaseGroup,
-      TestCase,
+      TestCaseBox,
     ],
     content: parseToHTML(value),
     onUpdate: ({ editor }) => {
@@ -386,15 +422,13 @@ export default function RichTextEditor({
         ) {
           event.preventDefault();
 
-          const htmlToInsert = parseChatGPTTestCasesToHTML(plainText);
-          const div = document.createElement('div');
-          div.innerHTML = htmlToInsert;
-
-          const slice = DOMParser.fromSchema(view.state.schema).parseSlice(div);
-          const tr = view.state.tr.replaceSelection(slice);
-          view.dispatch(tr);
-
-          return true;
+          const cases = parseChatGPTToCases(plainText);
+          const node = view.state.schema.nodes.testCaseBox?.create({ cases });
+          if (node) {
+            const tr = view.state.tr.replaceSelectionWith(node);
+            view.dispatch(tr);
+            return true;
+          }
         }
 
         return false;
@@ -508,9 +542,16 @@ export default function RichTextEditor({
 
   const insertTestCase = useCallback(() => {
     if (!editor) return;
-    const sample = `Test Cases\n\nTest Case 1\nInput:\n6\nOutput:\n7000\n\nTest Case 2\nInput:\n15\nOutput:\n20000`;
-    const htmlToInsert = parseChatGPTTestCasesToHTML(sample);
-    editor.chain().focus().insertContent(htmlToInsert).run();
+    const sampleCases = [
+      { title: 'Test Case 1', input: '6', output: '7000' },
+      { title: 'Test Case 2', input: '15', output: '19000' },
+      { title: 'Test Case 3', input: '5', output: 'error' },
+      { title: 'Test Case 4', input: '12', output: '15000' },
+    ];
+    editor.chain().focus().insertContent({
+      type: 'testCaseBox',
+      attrs: { cases: sampleCases },
+    }).run();
   }, [editor]);
 
   const commitTestCase = useCallback(() => {
@@ -518,8 +559,11 @@ export default function RichTextEditor({
       setShowTestCaseModal(false);
       return;
     }
-    const htmlToInsert = parseChatGPTTestCasesToHTML(rawTestCaseInput);
-    editor.chain().focus().insertContent(htmlToInsert).run();
+    const cases = parseChatGPTToCases(rawTestCaseInput);
+    editor.chain().focus().insertContent({
+      type: 'testCaseBox',
+      attrs: { cases },
+    }).run();
     setRawTestCaseInput('');
     setShowTestCaseModal(false);
   }, [editor, rawTestCaseInput]);

@@ -233,6 +233,7 @@ pre code {
    (Outer Box + Individual Cards with Monospace Grid)
 ══════════════════════════════════════════════════════ */
 .test-case-group,
+div[data-type="test-case-box"],
 div[data-type="test-case-group"] {
   background-color: #f6ece6 !important;
   border: 1.5px solid #eae1da !important;
@@ -245,6 +246,7 @@ div[data-type="test-case-group"] {
 }
 
 :where(.dark, .dark *) .test-case-group,
+:where(.dark, .dark *) div[data-type="test-case-box"],
 :where(.dark, .dark *) div[data-type="test-case-group"] {
   background-color: #141517 !important;
   border-color: #2b2d31 !important;
