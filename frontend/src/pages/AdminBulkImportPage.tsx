@@ -167,6 +167,7 @@ export default function AdminBulkImportPage() {
     "variables": { "x": 24 },
     "difficulty": "Easy",
     "question": "A number exceeds its one-third by 24. What is the number?",
+    "testCase": "Test Cases\n\nTest Case 1\nInput:\n6\nOutput:\n7000\n\nTest Case 2\nInput:\n15\nOutput:\n20000",
     "options": ["30", "36", "42", "48"],
     "correctOption": 1,
     "explanation": {
@@ -504,6 +505,13 @@ export default function AdminBulkImportPage() {
                     <p className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
                       {q.statement}
                     </p>
+
+                    {/* Test Case Preview */}
+                    {q.testCase && (
+                      <pre className="test-case">
+                        {q.testCase}
+                      </pre>
+                    )}
 
                     {/* Options Preview */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
