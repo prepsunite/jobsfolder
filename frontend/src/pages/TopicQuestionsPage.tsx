@@ -69,6 +69,7 @@ export default function TopicQuestionsPage() {
   const [formCorrect, setFormCorrect] = useState('A');
   const [formExplanation, setFormExplanation] = useState('');
   const [formFormulas, setFormFormulas] = useState('');
+  const [formTestCase, setFormTestCase] = useState('');
   const [formDifficulty, setFormDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM');
   const [formIsHidden, setFormIsHidden] = useState(false);
 
@@ -90,23 +91,35 @@ export default function TopicQuestionsPage() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const mapped: TopicQuestionItem[] = data.map((q: any) => ({
-          id: q.id,
-          topicId: q.topic_id,
-          questionNumber: q.question_number || 1,
-          statement: q.statement || '',
-          options: (() => {
-            try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
-            catch { return []; }
-          })(),
-          correctAnswer: q.correct_answer || 'A',
-          explanation: q.explanation || '',
-          formulasUsed: q.structured_explanation?.formulaUsed || (typeof q.structured_explanation === 'string' ? (() => { try { return JSON.parse(q.structured_explanation)?.formulaUsed; } catch { return []; } })() : []) || [],
-          difficulty: q.difficulty || 'MEDIUM',
-          difficultyLevel: q.difficulty_level || 2,
-          isHidden: q.is_hidden || false,
-          createdAt: q.created_at,
-        }));
+        const mapped: TopicQuestionItem[] = data.map((q: any) => {
+          const parsedStructured = typeof q.structured_explanation === 'string'
+            ? (() => { try { return JSON.parse(q.structured_explanation); } catch { return undefined; } })()
+            : (q.structured_explanation || undefined);
+
+          const testCase = q.test_case || parsedStructured?.testCase || (q.sample_input || q.sample_output ? `Input:\n${q.sample_input || ''}\n\nOutput:\n${q.sample_output || ''}`.trim() : undefined);
+
+          return {
+            id: q.id,
+            topicId: q.topic_id,
+            questionNumber: q.question_number || 1,
+            statement: q.statement || '',
+            options: (() => {
+              try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
+              catch { return []; }
+            })(),
+            correctAnswer: q.correct_answer || 'A',
+            explanation: q.explanation || '',
+            structuredExplanation: parsedStructured,
+            testCase,
+            sampleInput: q.sample_input,
+            sampleOutput: q.sample_output,
+            formulasUsed: parsedStructured?.formulaUsed || q.structured_explanation?.formulaUsed || [],
+            difficulty: q.difficulty || 'MEDIUM',
+            difficultyLevel: q.difficulty_level || 2,
+            isHidden: q.is_hidden || false,
+            createdAt: q.created_at,
+          };
+        });
         setQuestions(mapped);
         return;
       }
@@ -147,6 +160,7 @@ export default function TopicQuestionsPage() {
     setFormCorrect('A');
     setFormExplanation('');
     setFormFormulas('');
+    setFormTestCase('');
     setFormDifficulty('MEDIUM');
     setFormIsHidden(false);
     setShowModal(true);
@@ -163,6 +177,7 @@ export default function TopicQuestionsPage() {
     setFormCorrect(q.correctAnswer);
     setFormExplanation(q.explanation || '');
     setFormFormulas(q.formulasUsed ? q.formulasUsed.join('\n') : '');
+    setFormTestCase(q.testCase || '');
     setFormDifficulty(q.difficulty || 'MEDIUM');
     setFormIsHidden(!!q.isHidden);
     setShowModal(true);
@@ -188,9 +203,14 @@ export default function TopicQuestionsPage() {
       .filter(Boolean);
 
     try {
-      const structuredExp = {
+      const structuredExp: any = {
         formulaUsed: formulasArray,
+        ...(editingQuestion?.structuredExplanation || {}),
       };
+      if (formTestCase.trim()) {
+        structuredExp.testCase = formTestCase.trim();
+      }
+
       if (editingQuestion) {
         const { error } = await supabase
           .from('topic_questions')
@@ -200,6 +220,7 @@ export default function TopicQuestionsPage() {
             correct_answer: formCorrect,
             explanation: formExplanation,
             structured_explanation: JSON.stringify(structuredExp),
+            test_case: formTestCase.trim() || null,
             difficulty: formDifficulty,
             is_hidden: formIsHidden,
           })
@@ -216,6 +237,7 @@ export default function TopicQuestionsPage() {
             correct_answer: formCorrect,
             explanation: formExplanation,
             structured_explanation: JSON.stringify(structuredExp),
+            test_case: formTestCase.trim() || null,
             difficulty: formDifficulty,
             difficulty_level: formDifficulty === 'EASY' ? 1 : formDifficulty === 'HARD' ? 3 : 2,
             is_hidden: formIsHidden,
@@ -580,6 +602,13 @@ export default function TopicQuestionsPage() {
                   {q.statement}
                 </div>
 
+                {/* Plain Multiline Test Case / Input-Output Box */}
+                {q.testCase && (
+                  <pre className="test-case">
+                    {q.testCase}
+                  </pre>
+                )}
+
                 {/* MCQ Options List */}
                 <div className="space-y-2 pl-2">
                   {q.options.map((opt) => {
@@ -903,6 +932,21 @@ export default function TopicQuestionsPage() {
                   placeholder="Enter the complete question problem statement..."
                   className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#006c49]"
                   required
+                />
+              </div>
+
+              {/* Test Cases / Sample Input & Output (Plain multiline text) */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center justify-between">
+                  <span>Test Case / Input-Output (Plain Multiline Text)</span>
+                  <span className="text-[10px] text-[#747878] font-normal">Preserves exact spacing & line breaks</span>
+                </label>
+                <textarea
+                  rows={5}
+                  value={formTestCase}
+                  onChange={(e) => setFormTestCase(e.target.value)}
+                  placeholder={`Input:\n4\nA B 500 100\nC D 200 120\nA B 500 150\nA B 700 160\n\nOutput:\n0 2`}
+                  className="w-full font-mono bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#006c49] whitespace-pre-wrap"
                 />
               </div>
 

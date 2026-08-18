@@ -383,6 +383,11 @@ export default function RichTextEditor({
     e.target.value = '';
   }, [editor]);
 
+  const insertTestCase = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().insertContent('<pre class="test-case">Input:\n4\nA B 500 100\nC D 200 120\nA B 500 150\nA B 700 160\n\nOutput:\n0 2</pre><p></p>').run();
+  }, [editor]);
+
   // Drag & drop image support
   useEffect(() => {
     if (!editor) return;
@@ -732,6 +737,9 @@ export default function RichTextEditor({
             <button type="button" title="Blockquote" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={editor.isActive('blockquote') ? TB_ON : TB}><Quote className="w-3.5 h-3.5" /></button>
             <button type="button" title="Inline Code" onClick={() => editor.chain().focus().toggleCode().run()} className={editor.isActive('code') ? TB_ON : TB}><Code className="w-3.5 h-3.5" /></button>
             <button type="button" title="Code Block" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={editor.isActive('codeBlock') ? TB_ON : TB}><FileCode className="w-3.5 h-3.5" /></button>
+            <button type="button" title="Insert Preformatted Test Case Box" onClick={insertTestCase} className={`${TB} font-mono text-[10px] font-bold text-[#006c49] dark:text-[#6cf8bb]`}>
+              [Test]
+            </button>
             <div className={SEP} />
 
             {/* Insert */}

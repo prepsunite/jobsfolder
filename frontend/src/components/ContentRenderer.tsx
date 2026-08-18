@@ -73,7 +73,31 @@ export default function ContentRenderer({
   // Legacy Markdown
   return (
     <div className={wrapCls}>
-      <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+      <ReactMarkdown
+        rehypePlugins={[rehypeRaw]}
+        remarkPlugins={[remarkGfm]}
+        components={{
+          pre: ({ children, ...props }) => (
+            <pre className="test-case p-4 bg-[#141517] dark:bg-[#101113] text-[#6cf8bb] dark:text-[#6cf8bb] rounded-xl border border-[#383a40] overflow-x-auto text-xs font-mono whitespace-pre-wrap leading-relaxed my-3" {...props}>
+              {children}
+            </pre>
+          ),
+          code: ({ inline, className, children, ...props }: any) => {
+            if (inline) {
+              return (
+                <code className="px-1.5 py-0.5 rounded bg-[#f6ece6] dark:bg-[#2b2d31] text-[#006c49] dark:text-[#6cf8bb] text-xs font-mono font-semibold" {...props}>
+                  {children}
+                </code>
+              );
+            }
+            return (
+              <code className={`font-mono text-xs text-inherit whitespace-pre-wrap ${className || ''}`} {...props}>
+                {children}
+              </code>
+            );
+          },
+        }}
+      >
         {content}
       </ReactMarkdown>
     </div>

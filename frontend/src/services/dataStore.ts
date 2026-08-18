@@ -139,6 +139,10 @@ export interface TopicQuestionItem {
   aiMetadata?: AiMetadata;
   templateId?: string;
   variables?: Record<string, any>;
+  testCase?: string; // Plain multiline string with exact \n formatting
+  sampleInput?: string;
+  sampleOutput?: string;
+  examples?: string;
   fingerprint?: string; // SHA-256 Fixed Hash
   createdAt?: string;
 }
@@ -1705,6 +1709,18 @@ class DataStoreManager {
     const templateId = raw.templateId || raw.template_id;
     const variables = raw.variables;
 
+    // Plain multiline test cases / input-output preservation
+    let resolvedTestCase: string | undefined = undefined;
+    if (typeof raw.testCase === 'string' && raw.testCase.trim()) {
+      resolvedTestCase = raw.testCase;
+    } else if (typeof raw.testCases === 'string' && raw.testCases.trim()) {
+      resolvedTestCase = raw.testCases;
+    } else if (raw.sampleInput || raw.sampleOutput || raw.input || raw.output) {
+      const inp = raw.sampleInput || raw.input || '';
+      const out = raw.sampleOutput || raw.output || '';
+      resolvedTestCase = `Input:\n${inp}\n\nOutput:\n${out}`.trim();
+    }
+
     const parsedItem: Partial<TopicQuestionItem> = {
       version: 1, // 6. VERSION
       topicId,
@@ -1721,6 +1737,10 @@ class DataStoreManager {
       aiMetadata,
       templateId,
       variables,
+      testCase: resolvedTestCase,
+      sampleInput: raw.sampleInput || raw.input,
+      sampleOutput: raw.sampleOutput || raw.output,
+      examples: typeof raw.examples === 'string' ? raw.examples : undefined,
     };
 
     parsedItem.fingerprint = generateQuestionFingerprint(parsedItem, raw);

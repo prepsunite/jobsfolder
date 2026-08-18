@@ -187,16 +187,44 @@ h1, h2, h3, h4, h5, h6 {
 }
 :where(.dark, .dark *) .tiptap-wrapper .ProseMirror code { background: #2b2d31; color: #6cf8bb; }
 
-/* Code block */
+/* Code block & Test Case Styles (Preserves exact multiline formatting, spaces, and line breaks) */
+.test-case,
+pre.test-case,
+.prose pre,
 .tiptap-wrapper .ProseMirror pre {
-  background: #1e1f22;
-  color: #e3e3e3;
-  padding: 1rem;
-  border-radius: 10px;
-  overflow-x: auto;
-  margin: 0.75rem 0;
+  white-space: pre-wrap !important;
+  font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  tab-size: 4 !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  background: #141517 !important;
+  color: #6cf8bb !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid #383a40 !important;
+  margin: 0.75rem 0 !important;
 }
-.tiptap-wrapper .ProseMirror pre code { background: none; padding: 0; color: inherit; font-size: 0.82rem; }
+
+:where(.dark, .dark *) .test-case,
+:where(.dark, .dark *) pre.test-case,
+:where(.dark, .dark *) .prose pre,
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror pre {
+  background: #101113 !important;
+  color: #6cf8bb !important;
+  border-color: #2b2d31 !important;
+}
+
+.tiptap-wrapper .ProseMirror pre code,
+pre code {
+  background: none !important;
+  padding: 0 !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  white-space: inherit !important;
+}
 
 /* Horizontal rule */
 .tiptap-wrapper .ProseMirror hr { border: none; border-top: 2px solid #eae1da; margin: 1.25rem 0; }

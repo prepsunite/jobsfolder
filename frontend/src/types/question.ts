@@ -12,6 +12,9 @@ export interface OaQuestion {
   questionType: QuestionType;
   solution?: string;
   explanation?: string;
+  sampleInput?: string;
+  sampleOutput?: string;
+  testCase?: string;
   frequency: number;
   year?: number;
   isVerified: boolean;

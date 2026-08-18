@@ -129,9 +129,22 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
 
       {/* Description */}
       {question.description && (
-        <p className="text-xs text-[#1f1b17] leading-relaxed bg-[#f6ece6]/70 p-4 rounded-[16px] border border-[#e2d8d2] font-mono">
+        <p className="text-xs text-[#1f1b17] dark:text-[#e3e3e3] leading-relaxed bg-[#f6ece6]/70 dark:bg-[#141517] p-4 rounded-[16px] border border-[#e2d8d2] dark:border-[#383a40] font-sans whitespace-pre-line">
           {question.description}
         </p>
+      )}
+
+      {/* Test Cases / Sample Input & Output */}
+      {(question.sampleInput || question.sampleOutput) && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block">
+            Sample Test Case:
+          </span>
+          <pre className="test-case">
+            {question.sampleInput && `Input:\n${question.sampleInput}\n`}
+            {question.sampleOutput && `\nOutput:\n${question.sampleOutput}`}
+          </pre>
+        </div>
       )}
 
       {/* Tags */}
