@@ -170,6 +170,10 @@ export default function RichTextEditor({
   const [linkUrl, setLinkUrl] = useState('https://');
   const linkUrlRef = useRef<HTMLInputElement>(null);
 
+  // Test Case modal
+  const [showTestCaseModal, setShowTestCaseModal] = useState(false);
+  const [rawTestCaseInput, setRawTestCaseInput] = useState('');
+
   // Image modal
   const [showImage, setShowImage] = useState(false);
   const [imgUrl, setImgUrl] = useState('https://');
@@ -247,6 +251,19 @@ export default function RichTextEditor({
         cleaned = cleaned.replace(/<span[^>]*style="[^"]*overflow:\s*hidden[^"]*"[^>]*>\s*(<img[^>]+>)\s*<\/span>/gi, '$1');
         cleaned = cleaned.replace(/<div[^>]*style="[^"]*overflow:\s*hidden[^"]*"[^>]*>\s*(<img[^>]+>)\s*<\/div>/gi, '$1');
 
+        // 3. Normalize pre/code blocks from ChatGPT to remove nested token spans and preserve exact whitespace
+        cleaned = cleaned.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (_match, inner) => {
+          const rawText = inner
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p><p>/gi, '\n')
+            .replace(/<\/?[^>]+(>|$)/g, '')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+          const safe = rawText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<pre class="test-case">${safe}</pre>`;
+        });
+
         return cleaned;
       },
       handlePaste(view, event) {
@@ -273,8 +290,33 @@ export default function RichTextEditor({
             }
           }
         }
-        // If we handled an image file from clipboard, return true to prevent default HTML paste of broken Google URLs
-        return hasImage;
+        if (hasImage) return true;
+
+        // If pasting raw test cases (e.g. from ChatGPT with Test Case 1 / Input: / Output:)
+        const plainText = event.clipboardData?.getData('text/plain');
+        if (
+          plainText &&
+          (plainText.includes('Test Case') || (plainText.includes('Input:') && plainText.includes('Output:'))) &&
+          !plainText.includes('<html')
+        ) {
+          event.preventDefault();
+          const safeText = plainText
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+          
+          const htmlToInsert = `<pre class="test-case">${safeText}</pre><p></p>`;
+          const div = document.createElement('div');
+          div.innerHTML = htmlToInsert;
+          
+          // Insert into editor preserving exact line breaks and spaces
+          const parser = (view.state.schema.nodes.paragraph ? view.state.schema : null);
+          if (parser) {
+            const tr = view.state.tr.insertText(plainText);
+            // Alternatively let tiptap insert HTML content
+          }
+        }
+
+        return false;
       },
     },
   });
@@ -387,6 +429,19 @@ export default function RichTextEditor({
     if (!editor) return;
     editor.chain().focus().insertContent('<pre class="test-case">Input:\n4\nA B 500 100\nC D 200 120\nA B 500 150\nA B 700 160\n\nOutput:\n0 2</pre><p></p>').run();
   }, [editor]);
+
+  const commitTestCase = useCallback(() => {
+    if (!editor || !rawTestCaseInput.trim()) {
+      setShowTestCaseModal(false);
+      return;
+    }
+    const safe = rawTestCaseInput
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    editor.chain().focus().insertContent(`<pre class="test-case">${safe}</pre><p></p>`).run();
+    setRawTestCaseInput('');
+    setShowTestCaseModal(false);
+  }, [editor, rawTestCaseInput]);
 
   // Drag & drop image support
   useEffect(() => {
@@ -553,6 +608,48 @@ export default function RichTextEditor({
             <div className="flex gap-1.5 ml-auto">
               <button type="button" onClick={commitImage} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors">Insert</button>
               <button type="button" onClick={() => setShowImage(false)} className="p-1.5 text-[#747878] hover:text-rose-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TEST CASE MODAL ──────────────────────────────────────────────── */}
+      {showTestCaseModal && (
+        <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-purple-50 dark:bg-purple-950/20 p-4 space-y-3 animate-fadeIn">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+              <FileCode className="w-4 h-4" /> Insert Plain-Text Test Case Box (Preserves Exact Line Breaks & Spaces)
+            </span>
+            <button type="button" onClick={() => setShowTestCaseModal(false)} className="text-[#747878] hover:text-rose-500">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <textarea
+            rows={6}
+            value={rawTestCaseInput}
+            onChange={e => setRawTestCaseInput(e.target.value)}
+            placeholder={`Paste raw test cases from ChatGPT here:\n\nTest Cases\n\nTest Case 1\nInput:\n6\nOutput:\n7000\n\nTest Case 2\nInput:\n15\nOutput:\n20000`}
+            className="w-full font-mono text-xs p-3 rounded-xl bg-white dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:ring-2 focus:ring-purple-500 whitespace-pre-wrap leading-relaxed"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-[#747878] dark:text-[#a6adbb]">
+              This wraps your test cases inside a monospace block without converting each line into HTML spans.
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTestCaseModal(false)}
+                className="px-3 py-1.5 text-xs font-bold text-[#747878]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={commitTestCase}
+                className="px-4 py-1.5 bg-purple-700 hover:bg-purple-600 text-white rounded-xl text-xs font-extrabold transition-colors shadow-sm"
+              >
+                Insert Test Case Box
+              </button>
             </div>
           </div>
         </div>
@@ -737,8 +834,13 @@ export default function RichTextEditor({
             <button type="button" title="Blockquote" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={editor.isActive('blockquote') ? TB_ON : TB}><Quote className="w-3.5 h-3.5" /></button>
             <button type="button" title="Inline Code" onClick={() => editor.chain().focus().toggleCode().run()} className={editor.isActive('code') ? TB_ON : TB}><Code className="w-3.5 h-3.5" /></button>
             <button type="button" title="Code Block" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={editor.isActive('codeBlock') ? TB_ON : TB}><FileCode className="w-3.5 h-3.5" /></button>
-            <button type="button" title="Insert Preformatted Test Case Box" onClick={insertTestCase} className={`${TB} font-mono text-[10px] font-bold text-[#006c49] dark:text-[#6cf8bb]`}>
-              [Test]
+            <button
+              type="button"
+              title="Insert Formatted Test Case Box (Preserves Spaces & Newlines)"
+              onClick={() => setShowTestCaseModal(v => !v)}
+              className={`${showTestCaseModal ? TB_ON : TB} flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-300 font-mono`}
+            >
+              <span>[+Test Case]</span>
             </button>
             <div className={SEP} />
 
