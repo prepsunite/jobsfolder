@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { DOMParser } from '@tiptap/pm/model';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -292,28 +293,31 @@ export default function RichTextEditor({
         }
         if (hasImage) return true;
 
-        // If pasting raw test cases (e.g. from ChatGPT with Test Case 1 / Input: / Output:)
+        // Handle pasted test cases from ChatGPT or plain text
         const plainText = event.clipboardData?.getData('text/plain');
         if (
           plainText &&
-          (plainText.includes('Test Case') || (plainText.includes('Input:') && plainText.includes('Output:'))) &&
-          !plainText.includes('<html')
+          (
+            plainText.includes('Test Case') ||
+            (plainText.includes('Input:') && plainText.includes('Output:'))
+          )
         ) {
           event.preventDefault();
+
           const safeText = plainText
+            .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
-          
+
           const htmlToInsert = `<pre class="test-case">${safeText}</pre><p></p>`;
           const div = document.createElement('div');
           div.innerHTML = htmlToInsert;
-          
-          // Insert into editor preserving exact line breaks and spaces
-          const parser = (view.state.schema.nodes.paragraph ? view.state.schema : null);
-          if (parser) {
-            const tr = view.state.tr.insertText(plainText);
-            // Alternatively let tiptap insert HTML content
-          }
+
+          const slice = DOMParser.fromSchema(view.state.schema).parseSlice(div);
+          const tr = view.state.tr.replaceSelection(slice);
+          view.dispatch(tr);
+
+          return true;
         }
 
         return false;

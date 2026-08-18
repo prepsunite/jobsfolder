@@ -191,6 +191,7 @@ h1, h2, h3, h4, h5, h6 {
 .test-case,
 pre.test-case,
 .prose pre,
+.tiptap-editor-content pre.test-case,
 .tiptap-wrapper .ProseMirror pre {
   white-space: pre-wrap !important;
   font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
@@ -210,6 +211,7 @@ pre.test-case,
 :where(.dark, .dark *) .test-case,
 :where(.dark, .dark *) pre.test-case,
 :where(.dark, .dark *) .prose pre,
+:where(.dark, .dark *) .tiptap-editor-content pre.test-case,
 :where(.dark, .dark *) .tiptap-wrapper .ProseMirror pre {
   background: #101113 !important;
   color: #6cf8bb !important;
