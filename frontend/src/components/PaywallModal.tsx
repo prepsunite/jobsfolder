@@ -188,7 +188,7 @@ export default function PaywallModal({
           /* Purchasing Options Grid */
           <div className="space-y-3">
             
-            {/* OPTION 1: Single Paper Pass (30 Days) */}
+            {/* OPTION 1: Full Exam Pass (All Tabs Included) */}
             <div
               onClick={() => setSelectedOption('SINGLE')}
               className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1 ${
@@ -206,17 +206,17 @@ export default function PaywallModal({
                   </div>
                   <div>
                     <h3 className="font-extrabold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
-                      Single Paper Pass (30 Days)
+                      Full Exam Pass (All Tabs Included)
                     </h3>
                     <span className="text-[11px] text-[#747878] dark:text-[#a6adbb] font-semibold block">
-                      30 Days access ONLY for {companyName} – {examName}
+                      Unlocks ALL tabs & sections for {companyName} – {examName}
                     </span>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <span className="font-display font-black text-xl text-[#1f1b17] dark:text-[#e3e3e3]">₹99</span>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 block">/ 30 Days</span>
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 block">/ 1-Year Access</span>
                 </div>
               </div>
             </div>
