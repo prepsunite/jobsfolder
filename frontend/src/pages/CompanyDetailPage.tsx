@@ -166,6 +166,16 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
   useEffect(() => { checkLiveAccess(); }, [checkLiveAccess]);
 
+  const handleToggleExamPublic = async (isPublic: boolean) => {
+    if (!currentExam) return;
+    try {
+      await examService.updateExam(currentExam.id, { isPublicExam: isPublic });
+      queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
+    } catch (err) {
+      console.error('Failed to update exam public status:', err);
+    }
+  };
+
   // Watermark text for document viewer
   const watermarkText = user?.email ? `${user.email} • PrepUnite` : 'PrepUnite Confidential';
 
@@ -690,8 +700,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   tabs={currentExam?.paperTabs || []}
                   hasAccess={hasOldPapersAccess}
                   isAdmin={isAdmin}
+                  isPublicExam={currentExam?.isPublicExam ?? false}
                   watermarkText={watermarkText}
                   onOpenPaywall={() => setShowPaywallModal(true)}
+                  onToggleExamPublic={handleToggleExamPublic}
                   onUpdateTabs={async (updatedTabs) => {
                     if (currentExam) {
                       await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
@@ -897,6 +909,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               isPublicExam={currentExam?.isPublicExam ?? false}
               watermarkText={watermarkText}
               onOpenPaywall={() => setShowPaywallModal(true)}
+              onToggleExamPublic={handleToggleExamPublic}
               onUpdateTabs={async (updatedTabs) => {
                 if (currentExam) {
                   await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);

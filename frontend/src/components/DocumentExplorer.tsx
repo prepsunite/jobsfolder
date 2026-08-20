@@ -25,7 +25,6 @@ import {
   Settings2,
 } from 'lucide-react';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface DocumentExplorerProps {
   examName: string;
   companyName: string;
@@ -36,6 +35,7 @@ interface DocumentExplorerProps {
   watermarkText?: string;
   onOpenPaywall: () => void;
   onUpdateTabs?: (updatedTabs: DocTabNode[]) => void;
+  onToggleExamPublic?: (isPublic: boolean) => void;
 }
 
 // ─── Tree Manipulation Helpers (pure functions) ──────────────────────────────
@@ -140,6 +140,7 @@ export default function DocumentExplorer({
   watermarkText,
   onOpenPaywall,
   onUpdateTabs,
+  onToggleExamPublic,
 }: DocumentExplorerProps) {
 
   // Local tab state — keeps admin edits fast without prop round-trips
@@ -154,6 +155,19 @@ export default function DocumentExplorer({
     setLocalTabs(newTabs);
     onUpdateTabs?.(newTabs);
   }, [onUpdateTabs]);
+
+  const handleBulkSetAccess = (makeFree: boolean) => {
+    const setRecursive = (nodes: DocTabNode[]): DocTabNode[] => {
+      return nodes.map(n => ({
+        ...n,
+        isFree: makeFree,
+        children: n.children ? setRecursive(n.children) : undefined,
+      }));
+    };
+    const updated = setRecursive(localTabs);
+    persist(updated);
+    onToggleExamPublic?.(makeFree);
+  };
 
   const [selectedNodeId, setSelectedNodeId] = useState<string>(() => tabs[0]?.id || '');
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(() => {
@@ -316,13 +330,29 @@ export default function DocumentExplorer({
           ) : (
             <div className="flex-1 min-w-0 flex items-center justify-between gap-1">
               <span className="truncate">{node.title}</span>
-              {node.isFree || isPublicExam ? (
+              {adminMode && isAdmin ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newIsFree = !(node.isFree || isPublicExam);
+                    persist(updateNode(localTabs, node.id, { isFree: newIsFree }));
+                    if (!newIsFree && isPublicExam) {
+                      onToggleExamPublic?.(false);
+                    }
+                  }}
+                  className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0 transition-transform active:scale-95 cursor-pointer ${
+                    node.isFree || isPublicExam
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
+                      : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'
+                  }`}
+                  title="Click to toggle between Free and Paid for this section"
+                >
+                  {node.isFree || isPublicExam ? 'FREE' : 'PAID'}
+                </button>
+              ) : (node.isFree || isPublicExam) ? (
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex-shrink-0">
                   {isPublicExam ? 'PUBLIC' : 'FREE'}
-                </span>
-              ) : adminMode && isAdmin ? (
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase tracking-wider flex-shrink-0 opacity-70 group-hover:opacity-100">
-                  PAID
                 </span>
               ) : null}
             </div>
@@ -425,6 +455,38 @@ export default function DocumentExplorer({
               <Plus className="w-3.5 h-3.5" />
               Add Root File
             </button>
+          )}
+
+          {/* Admin Bulk Exam Access Toggle */}
+          {isAdmin && adminMode && (
+            <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-1.5 animate-fadeIn">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="font-extrabold text-purple-800 dark:text-purple-300 truncate">
+                  {examName} Access:
+                </span>
+                <span className="text-[9px] font-bold text-[#747878] dark:text-[#a6adbb]">
+                  {flatNodes.filter(n => n.isFree || isPublicExam).length}/{flatNodes.length} Free
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleBulkSetAccess(true)}
+                  className="py-1 px-2 rounded-lg font-black text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer flex items-center justify-center gap-1"
+                  title="Make all tabs in this exam Free"
+                >
+                  <Unlock className="w-3 h-3" /> Make All Free
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkSetAccess(false)}
+                  className="py-1 px-2 rounded-lg font-black text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all cursor-pointer flex items-center justify-center gap-1"
+                  title="Make all tabs in this exam Paid (Locked)"
+                >
+                  <Lock className="w-3 h-3" /> Make All Paid
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Search */}
@@ -563,9 +625,16 @@ export default function DocumentExplorer({
                       placeholder="Section title..."
                     />
 
-                    {/* Access level toggle */}
+                    {/* Access level toggle for single active section */}
                     <button
-                      onClick={() => persist(updateNode(localTabs, activeNode.id, { isFree: !activeNode.isFree }))}
+                      type="button"
+                      onClick={() => {
+                        const newIsFree = !activeNode.isFree;
+                        persist(updateNode(localTabs, activeNode.id, { isFree: newIsFree }));
+                        if (!newIsFree && isPublicExam) {
+                          onToggleExamPublic?.(false);
+                        }
+                      }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
                         activeNode.isFree
                           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
@@ -576,12 +645,12 @@ export default function DocumentExplorer({
                       {activeNode.isFree ? (
                         <>
                           <Unlock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          <span>Free (Public)</span>
+                          <span>Free (Single Tab)</span>
                         </>
                       ) : (
                         <>
                           <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                          <span>Paid (Locked)</span>
+                          <span>Paid (Single Tab)</span>
                         </>
                       )}
                     </button>
