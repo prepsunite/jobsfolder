@@ -82,15 +82,19 @@ ALTER TABLE public.user_paper_purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.paper_tab_nodes ENABLE ROW LEVEL SECURITY;
 
 -- 9. Row Level Security (RLS) Policies (Permissive for Client App API Key)
+DROP POLICY IF EXISTS "Allow public read access to paper_tab_nodes" ON public.paper_tab_nodes;
 CREATE POLICY "Allow public read access to paper_tab_nodes" 
 ON public.paper_tab_nodes FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow insert/select transactions" ON public.transactions;
 CREATE POLICY "Allow insert/select transactions" 
 ON public.transactions FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow insert/select user_subscriptions" ON public.user_subscriptions;
 CREATE POLICY "Allow insert/select user_subscriptions" 
 ON public.user_subscriptions FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow insert/select user_paper_purchases" ON public.user_paper_purchases;
 CREATE POLICY "Allow insert/select user_paper_purchases" 
 ON public.user_paper_purchases FOR ALL USING (true);
 
@@ -143,7 +147,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Allow public & client reads/writes
+DROP POLICY IF EXISTS "Allow public read profiles" ON public.profiles;
 CREATE POLICY "Allow public read profiles" ON public.profiles FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow insert/update profiles" ON public.profiles;
 CREATE POLICY "Allow insert/update profiles" ON public.profiles FOR ALL USING (true);
 
 -- Automatic trigger to insert profile into public.profiles on signup
@@ -258,16 +265,24 @@ ALTER TABLE public.topic_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.experiences ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies
+DROP POLICY IF EXISTS "Public read companies" ON public.companies;
 CREATE POLICY "Public read companies" ON public.companies FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin/Client manage companies" ON public.companies;
 CREATE POLICY "Admin/Client manage companies" ON public.companies FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Public read exams" ON public.exams;
 CREATE POLICY "Public read exams" ON public.exams FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin/Client manage exams" ON public.exams;
 CREATE POLICY "Admin/Client manage exams" ON public.exams FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Public read topic_questions" ON public.topic_questions;
 CREATE POLICY "Public read topic_questions" ON public.topic_questions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin/Client manage topic_questions" ON public.topic_questions;
 CREATE POLICY "Admin/Client manage topic_questions" ON public.topic_questions FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Public read experiences" ON public.experiences;
 CREATE POLICY "Public read experiences" ON public.experiences FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin/Client manage experiences" ON public.experiences;
 CREATE POLICY "Admin/Client manage experiences" ON public.experiences FOR ALL USING (true);
 
 -- ============================================================================
