@@ -335,24 +335,24 @@ export default function DocumentExplorer({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const newIsFree = !(node.isFree || isPublicExam);
-                    persist(updateNode(localTabs, node.id, { isFree: newIsFree }));
-                    if (!newIsFree && isPublicExam) {
-                      onToggleExamPublic?.(false);
-                    }
+                    const newIsFree = !(node.isFree === true);
+                    const updated = updateNode(localTabs, node.id, { isFree: newIsFree });
+                    persist(updated);
+                    const allFree = flattenNodes(updated).every(n => n.isFree === true);
+                    onToggleExamPublic?.(allFree);
                   }}
                   className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0 transition-transform active:scale-95 cursor-pointer ${
-                    node.isFree || isPublicExam
+                    node.isFree === true
                       ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
                       : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'
                   }`}
-                  title="Click to toggle between Free and Paid for this section"
+                  title="Click to toggle between Free and Paid for this single section"
                 >
-                  {node.isFree || isPublicExam ? 'FREE' : 'PAID'}
+                  {node.isFree === true ? 'FREE' : 'PAID'}
                 </button>
-              ) : (node.isFree || isPublicExam) ? (
+              ) : node.isFree === true ? (
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex-shrink-0">
-                  {isPublicExam ? 'PUBLIC' : 'FREE'}
+                  FREE
                 </span>
               ) : null}
             </div>
@@ -465,7 +465,7 @@ export default function DocumentExplorer({
                   {examName} Access:
                 </span>
                 <span className="text-[9px] font-bold text-[#747878] dark:text-[#a6adbb]">
-                  {flatNodes.filter(n => n.isFree || isPublicExam).length}/{flatNodes.length} Free
+                  {flatNodes.filter(n => n.isFree === true).length}/{flatNodes.length} Free
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
@@ -539,7 +539,7 @@ export default function DocumentExplorer({
       <div className="flex-1 flex flex-col relative min-h-[600px] overflow-hidden bg-white dark:bg-[#141517]">
 
         {/* PAYWALL OVERLAY */}
-        {!(hasAccess || isAdmin || isPublicExam || activeNode?.isFree === true) ? (
+        {!(hasAccess || isAdmin || activeNode?.isFree === true) ? (
           <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#f6ece6]/30 dark:bg-[#141517]/30">
             {/* Visual Abstract Skeleton Background (ZERO Text/Questions in HTML) */}
             <div className="absolute inset-0 p-8 opacity-10 filter blur-xs pointer-events-none select-none overflow-hidden space-y-6">
@@ -629,20 +629,21 @@ export default function DocumentExplorer({
                     <button
                       type="button"
                       onClick={() => {
-                        const newIsFree = !activeNode.isFree;
-                        persist(updateNode(localTabs, activeNode.id, { isFree: newIsFree }));
-                        if (!newIsFree && isPublicExam) {
-                          onToggleExamPublic?.(false);
-                        }
+                        const isCurrentFree = activeNode.isFree === true;
+                        const newIsFree = !isCurrentFree;
+                        const updated = updateNode(localTabs, activeNode.id, { isFree: newIsFree });
+                        persist(updated);
+                        const allFree = flattenNodes(updated).every(n => n.isFree === true);
+                        onToggleExamPublic?.(allFree);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
-                        activeNode.isFree
+                        activeNode.isFree === true
                           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
                           : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
                       }`}
                       title="Toggle whether non-paying users can view this section for free or must purchase access"
                     >
-                      {activeNode.isFree ? (
+                      {activeNode.isFree === true ? (
                         <>
                           <Unlock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <span>Free (Single Tab)</span>
@@ -708,9 +709,9 @@ export default function DocumentExplorer({
                       <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5">{companyName} • {examName} Official Placement Series</p>
                     </div>
                   </div>
-                  {(activeNode.isFree || isPublicExam) && (
+                  {activeNode.isFree === true && (
                     <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                      <Unlock className="w-3 h-3" /> {isPublicExam ? 'Public Exam Access' : 'Free Practice Guide'}
+                      <Unlock className="w-3 h-3" /> Free Practice Guide
                     </span>
                   )}
                 </div>
