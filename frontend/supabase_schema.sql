@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS public.user_paper_purchases (
     expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year')
 );
 
+-- Ensure expires_at exists if table was created previously without it
+ALTER TABLE public.user_paper_purchases ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
+ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '30 days');
+
 -- 6. Paper Tab Nodes Table (Hierarchical DocumentExplorer Content)
 CREATE TABLE IF NOT EXISTS public.paper_tab_nodes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
