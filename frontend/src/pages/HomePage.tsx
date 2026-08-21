@@ -22,65 +22,65 @@ const MARQUEE_COMPANIES = [
 const COMPANIES = [
   {
     abbr: 'TCS', name: 'Tata Consultancy Services',
-    badge: 'NQT · 2021–2026',
-    papers: '14 Previous Year Papers',
-    years: '2021 · 2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'NQT Drive Archive',
+    papers: '14 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'Cognitive · Advanced Coding · Verbal',
     accent: '#00C47B',
   },
   {
     abbr: 'ACN', name: 'Accenture',
-    badge: 'ASE & FSE · 2022–2026',
-    papers: '12 Previous Year Papers',
-    years: '2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'ASE & FSE Archive',
+    papers: '12 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'Critical Thinking · Pseudocode · Coding',
     accent: '#A855F7',
   },
   {
     abbr: 'CTS', name: 'Cognizant',
-    badge: 'GenC Elevate · 2022–2026',
-    papers: '10 Previous Year Papers',
-    years: '2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'GenC & Elevate Archive',
+    papers: '10 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'Quantitative · Automata Coding',
     accent: '#3B82F6',
   },
   {
     abbr: 'AMZN', name: 'Amazon',
-    badge: 'SDE 1 Campus · 2020–2026',
-    papers: '18 Previous Year Papers',
-    years: '2020 · 2021 · 2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'SDE 1 Campus Archive',
+    papers: '18 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'DSA · OS/DBMS · System Design',
     accent: '#F5A623',
   },
   {
     abbr: 'INF', name: 'Infosys',
-    badge: 'SP & DSE · 2021–2026',
-    papers: '9 Previous Year Papers',
-    years: '2021 · 2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'SP & DSE Archive',
+    papers: '9 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'Verbal · Quant · Coding',
     accent: '#00C47B',
   },
   {
     abbr: 'WIP', name: 'Wipro',
-    badge: 'NLTH · 2022–2026',
-    papers: '8 Previous Year Papers',
-    years: '2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'NLTH Elite Archive',
+    papers: '8 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'English · Analytical · Coding',
     accent: '#EF4444',
   },
   {
     abbr: 'CAP', name: 'Capgemini',
-    badge: 'GAME · 2022–2026',
-    papers: '7 Previous Year Papers',
-    years: '2022 · 2023 · 2024 · 2025 · 2026',
+    badge: 'Exceller Drive Archive',
+    papers: '7 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'Behavioral · Coding · Essay',
     accent: '#3B82F6',
   },
   {
     abbr: 'IBM', name: 'IBM',
-    badge: 'Freshers · 2023–2026',
-    papers: '6 Previous Year Papers',
-    years: '2023 · 2024 · 2025 · 2026',
+    badge: 'Freshers Drive Archive',
+    papers: '6 Solved Past Papers',
+    years: 'Full Drive Question Sets',
     sections: 'Cognitive · Technical Aptitude',
     accent: '#6366F1',
   },
@@ -89,15 +89,15 @@ const COMPANIES = [
 const FAQS = [
   {
     q: 'Are these actual OA papers from real campus drives?',
-    a: 'Yes. Every paper in our archive is sourced from students who sat the actual drive and submitted their questions through PrepUnite\'s contributor program. Papers are memory-reconstructed, cross-verified by multiple contributors, and tagged by drive year and batch.',
+    a: 'Yes. Every paper in our archive is sourced from students who sat the actual drive and submitted their questions through PrepUnite\'s contributor program. Papers are memory-reconstructed, cross-verified by multiple contributors, and categorized by recruitment drive and batch.',
   },
   {
     q: 'What exactly do I get when I pay ₹99?',
-    a: 'You get 1-year access to all previous year OA papers for a single company — every available year\'s paper, all questions, and full solutions with explanations. It is a one-time payment, no subscription.',
+    a: 'You get full access to all past OA papers for a single company — every available paper set, all questions, and full solutions with explanations. It is a one-time payment, no subscription.',
   },
   {
-    q: 'How many years of past papers are available per company?',
-    a: 'It varies by company. TCS has papers going back to 2021, Amazon to 2020. Each company page shows the exact years available before you pay.',
+    q: 'How many past papers are available per company?',
+    a: 'It varies by company. Each company archive contains comprehensive sets of real drive papers. The exact paper count and section breakdown is shown before you unlock.',
   },
   {
     q: 'How accurate are memory-reconstructed papers?',
@@ -105,7 +105,7 @@ const FAQS = [
   },
   {
     q: 'Are papers updated after every placement season?',
-    a: 'Yes. As new drives happen, contributors submit the latest papers and we add them to the archive within days. All papers are date-stamped so you always know which drive year you are looking at.',
+    a: 'Yes. As new drives happen, contributors submit the latest papers and we add them to the archive within days. All papers are categorized so you always know which drive and batch you are looking at.',
   },
 ];
 
@@ -122,7 +122,7 @@ const DELIVER = [
     num: '50+',
     numClass: 'a',
     title: 'Company Archives',
-    body: 'Previous year paper sets for 50+ recruiters. TCS, Accenture, Cognizant, Amazon, Infosys and more — years 2020 to 2026.',
+    body: 'Past recruitment paper sets for 50+ recruiters. TCS, Accenture, Cognizant, Amazon, Infosys and more with complete question sets.',
     href: '/companies',
     cta: 'Browse Companies',
   },
@@ -138,7 +138,7 @@ const DELIVER = [
     num: '₹99',
     numClass: 'g',
     title: 'Per Company Archive',
-    body: 'One-time payment. 1-year access to all past papers for that company. No subscription, no recurring charges.',
+    body: 'One-time payment. Full access to all past papers for that company. No subscription, no recurring charges.',
     href: '/pricing',
     cta: 'See Pricing',
   },
@@ -202,7 +202,7 @@ export default function HomePage() {
             <div>
               <div className="hp-hero-tag">
                 <span className="hp-hero-tag-dot" />
-                Previous Year OA Papers — 2020 to 2026
+                Real Placement OA Papers & Solved Solutions
               </div>
               <h1 className="hp-hero-h1">
                 The Actual Papers.<br />
@@ -210,7 +210,7 @@ export default function HomePage() {
               </h1>
               <p className="hp-hero-sub">
                 We archive the exact OA questions asked in TCS, Accenture, Cognizant, Amazon
-                and 15+ campus drives every year — sourced directly from students who sat the exam,
+                and 15+ major campus drives — sourced directly from students who sat the exam,
                 cross-verified, and solved. Access any company's full paper archive for ₹99.
               </p>
               <div className="hp-hero-actions">
@@ -242,7 +242,7 @@ export default function HomePage() {
               <div className="hp-mock-card">
                 <div className="hp-mock-card-top">
                   <span className="hp-mock-card-tag">TCS NQT — Advanced Coding</span>
-                  <span className="hp-mock-card-meta">2025 Drive</span>
+                  <span className="hp-mock-card-meta">Official Drive Paper</span>
                 </div>
                 <div className="hp-mock-card-title">
                   Given a string, find the longest palindromic substring...
@@ -257,7 +257,7 @@ export default function HomePage() {
               <div className="hp-mock-card">
                 <div className="hp-mock-card-top">
                   <span className="hp-mock-card-tag">Accenture ASE — Pseudocode</span>
-                  <span className="hp-mock-card-meta">2024 Drive</span>
+                  <span className="hp-mock-card-meta">Official Drive Paper</span>
                 </div>
                 <div className="hp-mock-card-title">
                   What is the output of the following pseudocode for input n=5?
@@ -265,7 +265,7 @@ export default function HomePage() {
                 <div className="hp-mock-card-sub">12 similar questions from this section · Solved</div>
                 <div className="hp-mock-card-footer">
                   <span className="hp-mock-price">Part of ACN Archive · ₹99</span>
-                  <span className="hp-mock-badge">1-Year Access</span>
+                  <span className="hp-mock-badge">Full Access</span>
                 </div>
               </div>
 
@@ -309,7 +309,7 @@ export default function HomePage() {
           <p className="hp-section-desc">
             Every question in our archive came from a real drive. Students who sat
             the exam contributed the questions — we verify, solve, and organise them by
-            company, year, and section.
+            company, drive, and section.
           </p>
         </div>
         <div className="hp-deliver-grid">
@@ -393,7 +393,7 @@ export default function HomePage() {
               questions in my actual test were identical. This is the only prep
               resource that actually matters."
             </p>
-            <div className="hp-proof-quote-author">Arjun M. — Placed at TCS, NQT 2025</div>
+            <div className="hp-proof-quote-author">Arjun M. — Placed at TCS, NQT Drive</div>
           </div>
           <div>
             <div className="hp-label" style={{ marginBottom: '1rem' }}>Sections Covered</div>
@@ -441,7 +441,7 @@ export default function HomePage() {
         </h2>
         <p className="hp-cta-sub">
           Every question in our archive came from a real campus placement drive.
-          Pick your company, get all previous year papers, and walk into your OA prepared.
+          Pick your company, get all previous drive papers, and walk into your OA prepared.
           Starts at ₹99.
         </p>
         <div className="hp-cta-btns">
@@ -463,7 +463,7 @@ export default function HomePage() {
           </span>
           <span className="hp-cta-trust-item">
             <Shield size={13} style={{ color: 'var(--e-green)' }} />
-            ₹99 One-Time · 1-Year Access
+            ₹99 One-Time · Full Archive Access
           </span>
         </div>
       </div>
