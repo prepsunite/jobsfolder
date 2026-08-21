@@ -368,7 +368,7 @@ export default function TopicQuestionsPage() {
       case 'EASY':
       case '1':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-2xs">
+          <span className="inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Easy</span>
           </span>
@@ -376,7 +376,7 @@ export default function TopicQuestionsPage() {
       case 'HARD':
       case '3':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 shadow-2xs">
+          <span className="inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
             <span>Hard</span>
           </span>
@@ -385,7 +385,7 @@ export default function TopicQuestionsPage() {
       case '2':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-2xs">
+          <span className="inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
             <span>Medium</span>
           </span>
@@ -399,39 +399,35 @@ export default function TopicQuestionsPage() {
       <div className="flex items-center justify-between">
         <Link
           to={`/aptitude/${categorySlug}`}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#006c49] dark:text-[#6cf8bb] hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#009D63] dark:text-[#00C47B] hover:underline"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
           <span>Back to Topic Directory</span>
         </Link>
 
         {isAdmin ? (
-          <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/30">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Admin Editor Mode Active</span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-display font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/30">
+            <ShieldCheck className="w-3 h-3" />
+            <span>Admin Editor Mode</span>
           </span>
         ) : (
-          <span className="text-xs font-semibold text-[#747878] dark:text-[#a6adbb]">
+          <span className="text-xs text-[#868E96] dark:text-[#555555]">
             Topic Practice Mode
           </span>
         )}
       </div>
 
       {/* Header Banner */}
-      <div className={`p-6 rounded-[24px] border transition-colors shadow-xs ${
-        isDarkMode
-          ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]'
-          : 'bg-[#ffffff] border-[#eae1da] text-[#1f1b17]'
-      }`}>
+      <div className="p-5 sm:p-6 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider block">
+            <span className="text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider block">
               Quantitative Aptitude • {topicName}
             </span>
-            <h1 className="font-display text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
               {topicName} Questions
             </h1>
-            <p className="text-xs text-[#747878] dark:text-[#a6adbb] leading-relaxed">
+            <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
               Filter questions by difficulty, test your answer with MCQ options, or view detailed step-by-step solutions.
             </p>
           </div>
@@ -445,23 +441,23 @@ export default function TopicQuestionsPage() {
                     setBulkImportResult(null);
                     setShowBulkModal(true);
                   }}
-                  className="px-3.5 py-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-full text-xs font-extrabold transition-all border border-purple-500/30 flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-md text-xs font-display font-bold transition-all border border-purple-500/30 flex items-center gap-1.5"
                 >
-                  <FileJson className="w-4 h-4" />
-                  <span>Bulk Import JSON</span>
+                  <FileJson className="w-3.5 h-3.5" />
+                  <span>Bulk JSON</span>
                 </button>
 
                 <button
                   onClick={handleOpenAddModal}
-                  className="px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-full text-xs font-extrabold uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-600 text-white rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all shadow-xs flex items-center gap-1.5"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Add Question</span>
                 </button>
               </>
             )}
 
-            <div className="px-3.5 py-1.5 rounded-xl bg-[#6cf8bb]/20 dark:bg-[#006c49]/30 text-[#00714d] dark:text-[#6cf8bb] text-xs font-extrabold border border-[#00714d]/20">
+            <div className="px-2.5 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-xs font-display font-bold border border-[#009D63]/20">
               {filteredQuestions.length} Problems
             </div>
           </div>
@@ -469,10 +465,10 @@ export default function TopicQuestionsPage() {
       </div>
 
       {/* 🎯 DIFFICULTY FILTER BAR */}
-      <div className="flex items-center justify-between gap-2 overflow-x-auto p-1.5">
+      <div className="flex items-center justify-between gap-2 overflow-x-auto p-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-extrabold text-[#747878] dark:text-[#a6adbb] flex items-center gap-1 mr-1">
-            <Filter className="w-3.5 h-3.5" />
+          <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] flex items-center gap-1 mr-1">
+            <Filter className="w-3 h-3" />
             <span>Difficulty:</span>
           </span>
 
@@ -487,10 +483,10 @@ export default function TopicQuestionsPage() {
               <button
                 key={item.id}
                 onClick={() => setActiveDifficulty(item.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-extrabold transition-all border ${
+                className={`px-2.5 py-1 rounded-md text-xs font-display font-bold transition-all border ${
                   isActive
-                    ? 'bg-[#006c49] dark:bg-[#6cf8bb] text-white dark:text-[#141517] border-[#006c49] shadow-xs ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#fff8f5] dark:ring-offset-[#141517]'
-                    : 'bg-[#ffffff] dark:bg-[#1e1f22] border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] hover:border-[#006c49]/40'
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
                 }`}
               >
                 {item.label}
@@ -501,25 +497,23 @@ export default function TopicQuestionsPage() {
       </div>
 
       {/* QUESTIONS LIST */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {filteredQuestions.length === 0 ? (
-          <div className={`p-12 text-center rounded-[24px] border ${
-            isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-[#ffffff] border-[#eae1da]'
-          }`}>
-            <p className="text-sm font-bold text-[#747878] dark:text-[#a6adbb]">
+          <div className="p-10 text-center rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
+            <p className="text-sm font-semibold text-[#868E96] dark:text-[#555555]">
               No {activeDifficulty !== 'ALL' ? activeDifficulty.toLowerCase() : ''} questions found for {topicName}.
             </p>
             {isAdmin && (
-              <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="mt-3 flex items-center justify-center gap-2">
                 <button
                   onClick={() => setShowBulkModal(true)}
-                  className="px-4 py-2 bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold uppercase tracking-wider"
+                  className="px-3 py-1.5 bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-md text-xs font-display font-bold uppercase tracking-wider"
                 >
                   Bulk Import JSON
                 </button>
                 <button
                   onClick={handleOpenAddModal}
-                  className="px-4 py-2 bg-[#006c49] text-white rounded-full text-xs font-bold uppercase tracking-wider"
+                  className="px-3 py-1.5 bg-[#009D63] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider"
                 >
                   Add Question
                 </button>
@@ -536,19 +530,17 @@ export default function TopicQuestionsPage() {
             return (
               <div
                 key={q.id}
-                className={`p-6 rounded-[24px] border transition-all duration-200 shadow-xs space-y-4 relative ${
+                className={`p-5 rounded-lg border transition-all duration-200 shadow-xs space-y-3.5 relative ${
                   q.isHidden
                     ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
-                    : isDarkMode
-                    ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]'
-                    : 'bg-[#ffffff] border-[#eae1da] text-[#1f1b17]'
+                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF]'
                 }`}
               >
                 {/* Header Row: Question # Badge + Difficulty Badge + Admin Actions */}
-                <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#eae1da]/60 dark:border-[#2b2d31]">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    {/* Question Number Badge (Permanent LeetCode-style ID) */}
-                    <span className="px-3 py-1 rounded-xl bg-[#006c49]/10 text-[#006c49] dark:bg-[#6cf8bb]/15 dark:text-[#6cf8bb] font-extrabold text-xs tracking-tight border border-[#006c49]/20 dark:border-[#6cf8bb]/30">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Question Number Badge (Permanent ID) */}
+                    <span className="px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] font-display font-bold text-[10px] tracking-tight border border-[#009D63]/20 dark:border-[#00C47B]/30">
                       Question #{q.permanentNumber}
                     </span>
 
@@ -556,7 +548,7 @@ export default function TopicQuestionsPage() {
                     {getDifficultyBadge(q.difficulty, q.difficultyLevel)}
 
                     {q.isHidden && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                      <span className="text-[9px] font-display font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
                         <EyeOff className="w-3 h-3" />
                         <span>Hidden</span>
                       </span>
@@ -565,58 +557,58 @@ export default function TopicQuestionsPage() {
 
                   {/* Admin Toolbar Controls */}
                   {isAdmin && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleToggleVisibility(q.id)}
-                        className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                        className={`p-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${
                           q.isHidden
                             ? 'bg-amber-500/20 text-amber-600 border border-amber-500/40'
                             : 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/40'
                         }`}
                         title={q.isHidden ? 'Publish Question' : 'Hide Question'}
                       >
-                        {q.isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        {q.isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       </button>
 
                       <button
                         onClick={() => handleOpenEditModal(q)}
-                        className="p-1.5 rounded-lg bg-blue-500/20 text-blue-600 border border-blue-500/40 hover:bg-blue-500/30 transition-all"
+                        className="p-1 rounded bg-blue-500/20 text-blue-600 border border-blue-500/40 hover:bg-blue-500/30 transition-all"
                         title="Edit Question"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
+                        <Edit2 className="w-3 h-3" />
                       </button>
 
                       <button
                         onClick={() => handleDeleteQuestion(q.id)}
-                        className="p-1.5 rounded-lg bg-rose-500/20 text-rose-600 border border-rose-500/40 hover:bg-rose-500/30 transition-all"
+                        className="p-1 rounded bg-rose-500/20 text-rose-600 border border-rose-500/40 hover:bg-rose-500/30 transition-all"
                         title="Delete Question"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   )}
                 </div>
 
                 {/* Question Statement */}
-                <div className="text-sm font-semibold leading-relaxed text-[#1f1b17] dark:text-[#e3e3e3] whitespace-pre-line pt-1">
+                <div className="text-xs font-semibold leading-relaxed text-[#121417] dark:text-[#FFFFFF] whitespace-pre-line pt-0.5 font-sans">
                   {q.statement}
                 </div>
 
                 {/* Plain Multiline Test Case / Input-Output Box */}
                 {q.testCase && (
-                  <pre className="test-case">
+                  <pre className="test-case text-xs p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF]">
                     {q.testCase}
                   </pre>
                 )}
 
                 {/* MCQ Options List */}
-                <div className="space-y-2 pl-2">
+                <div className="space-y-1.5 pl-1">
                   {q.options.map((opt) => {
                     const optId = opt.id || opt.key || 'A';
                     const isSelected = userSel === optId;
                     const isCorrect = optId === q.correctAnswer;
                     
-                    let optionStyle = 'bg-[#f6ece6]/60 dark:bg-[#141517] border-[#eae1da] dark:border-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:border-[#006c49]/40';
+                    let optionStyle = 'bg-[#F8F9FA] dark:bg-[#0C0C0C] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#444444]';
 
                     if (userSel) {
                       if (isSelected && isCorrect) {
@@ -632,24 +624,24 @@ export default function TopicQuestionsPage() {
                       <button
                         key={optId}
                         onClick={() => handleSelectOption(q.id, optId)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl border text-xs text-left transition-all ${optionStyle}`}
+                        className={`w-full flex items-center gap-2.5 p-2 rounded-md border text-xs text-left transition-all ${optionStyle}`}
                       >
-                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 ${
+                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center font-display font-bold text-[10px] shrink-0 ${
                           isSelected
                             ? isCorrect
                               ? 'bg-emerald-500 text-white border-emerald-500'
                               : 'bg-rose-500 text-white border-rose-500'
-                            : 'border-[#c4c7c7] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb]'
+                            : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555]'
                         }`}>
                           {optId}
                         </div>
                         <span className="flex-1 font-sans">{opt.text}</span>
 
                         {userSel && isCorrect && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                         )}
                         {userSel && isSelected && !isCorrect && (
-                          <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                          <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                         )}
                       </button>
                     );
@@ -657,36 +649,36 @@ export default function TopicQuestionsPage() {
                 </div>
 
                 {/* ACTION TOOLBAR */}
-                <div className="pt-3 border-t border-[#eae1da] dark:border-[#2b2d31] flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => toggleExplanation(q.id)}
-                      className={`p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all flex items-center gap-1.5 ${
                         isExplVisible
-                          ? 'bg-[#006c49] dark:bg-[#6cf8bb] text-white dark:text-[#141517] border-[#006c49]'
-                          : 'bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white'
+                          : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                       title="Reveal Solution & Explanation"
                     >
-                      <BookOpen className="w-4 h-4" />
-                      <span className="text-[11px]">View Answer & Solution</span>
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span className="text-[10px] uppercase tracking-wider">Solution</span>
                     </button>
 
                     <button
                       onClick={() => handleToggleBookmark(q.id)}
-                      className={`p-2 rounded-xl border transition-all ${
+                      className={`p-1.5 rounded-md border transition-all ${
                         isSaved
                           ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40'
-                          : 'bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                          : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                       title={isSaved ? 'Remove Bookmark' : 'Save Question to Profile'}
                     >
-                      {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                      {isSaved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
                     </button>
 
                     <button
                       onClick={() => alert('Question flagged for review by PrepUnite admins.')}
-                      className="p-2 rounded-xl border bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-rose-500 transition-colors"
+                      className="p-1.5 rounded-md border bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-rose-500 transition-colors"
                       title="Report Question Issue"
                     >
                       <AlertTriangle className="w-4 h-4" />
@@ -702,22 +694,22 @@ export default function TopicQuestionsPage() {
 
                 {/* STEP-BY-STEP EXPLANATION ACCORDION (Enhanced for structured JSON) */}
                 {isExplVisible && (
-                  <div className="p-5 rounded-2xl bg-[#6cf8bb]/10 dark:bg-[#006c49]/20 border border-[#00714d]/20 dark:border-[#6cf8bb]/20 space-y-4 animate-fadeIn">
-                    <div className="flex items-center gap-2 text-xs font-extrabold text-[#00714d] dark:text-[#6cf8bb]">
-                      <Zap className="w-4 h-4" />
+                  <div className="p-4 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-3 animate-fadeIn">
+                    <div className="flex items-center gap-2 text-xs font-display font-bold text-[#009D63] dark:text-[#00C47B]">
+                      <Zap className="w-3.5 h-3.5" />
                       <span>Correct Answer: Option ({q.correctAnswer})</span>
                     </div>
 
                     {se ? (
                       /* Rich Structured Explanation View */
-                      <div className="space-y-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3]">
+                      <div className="space-y-2.5 text-xs text-[#121417] dark:text-[#FFFFFF]">
                         {/* Given Block */}
                         {se.given && se.given.length > 0 && (
-                          <div className="space-y-1">
-                            <span className="font-extrabold text-[10px] uppercase text-[#747878] dark:text-[#a6adbb] tracking-wider block">
+                          <div className="space-y-0.5">
+                            <span className="font-display font-bold text-[9px] uppercase text-[#868E96] dark:text-[#555555] tracking-wider block">
                               Given Information:
                             </span>
-                            <ul className="list-disc pl-4 space-y-0.5 font-medium">
+                            <ul className="list-disc pl-4 space-y-0.5 font-sans">
                               {se.given.map((g, idx) => (
                                 <li key={idx}>{g}</li>
                               ))}
@@ -725,18 +717,18 @@ export default function TopicQuestionsPage() {
                           </div>
                         )}
 
-                        {/* Step-by-Step Derivation (Clean Lines, No Step 1 / Step 2 Headers) */}
+                        {/* Step-by-Step Derivation */}
                         {se.steps && se.steps.length > 0 && (
-                          <div className="space-y-1.5">
-                            <span className="font-extrabold text-[10px] uppercase text-[#747878] dark:text-[#a6adbb] tracking-wider block">
+                          <div className="space-y-1">
+                            <span className="font-display font-bold text-[9px] uppercase text-[#868E96] dark:text-[#555555] tracking-wider block">
                               Derivation Steps:
                             </span>
-                            <div className="space-y-1 font-mono text-xs font-semibold p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#1f1b17] dark:text-[#e3e3e3] border border-[#00714d]/10">
+                            <div className="space-y-1 font-mono text-xs p-2.5 bg-white dark:bg-[#141414] rounded-md text-[#121417] dark:text-[#FFFFFF] border border-[#E9ECEF] dark:border-[#242424]">
                               {se.steps.map((st, sIdx) => {
                                 const stepText = typeof st === 'string' ? st : (st.text || (st as any).content || st.formula || st.title || '');
                                 return (
                                   <div key={sIdx} className="leading-relaxed flex items-start gap-2">
-                                    <span className="text-[#00714d] dark:text-[#6cf8bb] font-bold select-none">•</span>
+                                    <span className="text-[#009D63] dark:text-[#00C47B] font-bold select-none">•</span>
                                     <span>{stepText}</span>
                                   </div>
                                 );
@@ -747,11 +739,11 @@ export default function TopicQuestionsPage() {
 
                         {/* Quick Shortcut / Trick Box */}
                         {se.shortcut && (
-                          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 space-y-1">
-                            <span className="font-extrabold text-purple-700 dark:text-purple-300 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                          <div className="p-2.5 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] space-y-0.5">
+                            <span className="font-display font-bold text-[#009D63] dark:text-[#00C47B] flex items-center gap-1 text-[10px] uppercase tracking-wider">
                               ⚡ Quick Shortcut:
                             </span>
-                            <p className="text-[#1f1b17] dark:text-[#e3e3e3] font-semibold text-xs leading-relaxed">
+                            <p className="text-[#121417] dark:text-[#FFFFFF] font-medium text-xs leading-relaxed font-sans">
                               {se.shortcut}
                             </p>
                           </div>
@@ -759,36 +751,35 @@ export default function TopicQuestionsPage() {
 
                         {/* Final Answer */}
                         {se.finalAnswer && (
-                          <div className="pt-2 border-t border-[#00714d]/15 flex items-center gap-2">
-                            <span className="font-extrabold text-xs text-[#00714d] dark:text-[#6cf8bb]">
+                          <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
+                            <span className="font-display font-bold text-xs text-[#009D63] dark:text-[#00C47B]">
                               Final Answer:
                             </span>
-                            <span className="font-bold bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded-md">
+                            <span className="font-bold bg-[#009D63]/15 text-[#009D63] dark:text-[#00C47B] px-2 py-0.5 rounded text-xs font-mono">
                               {se.finalAnswer}
                             </span>
                           </div>
                         )}
                       </div>
                     ) : (
-                      /* Plain Fallback Text Explanation */
-                      <p className="text-xs text-[#1f1b17] dark:text-[#e3e3e3] leading-relaxed whitespace-pre-line font-sans">
-                        {q.explanation}
-                      </p>
-                    )}
-
-                    {/* Formulas Badge Bar */}
-                    {q.formulasUsed && q.formulasUsed.length > 0 && (
-                      <div className="pt-2 border-t border-[#00714d]/10 space-y-1">
-                        <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block">
-                          Formulas Used:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {q.formulasUsed.map((f, i) => (
-                            <span key={i} className="text-[10px] font-mono font-bold bg-[#ffffff] dark:bg-[#1e1f22] px-2 py-0.5 rounded border border-[#eae1da] dark:border-[#383a40] text-[#006c49] dark:text-[#6cf8bb]">
-                              {f}
-                            </span>
-                          ))}
+                      <div className="space-y-2">
+                        <div className="text-xs leading-relaxed text-[#121417] dark:text-[#FFFFFF] whitespace-pre-line font-sans">
+                          {q.explanation || 'No step-by-step explanation recorded for this question.'}
                         </div>
+                        {q.formulasUsed && q.formulasUsed.length > 0 && (
+                          <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                            <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
+                              Formulas Used:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {q.formulasUsed.map((f, i) => (
+                                <span key={i} className="text-[10px] font-mono font-bold bg-white dark:bg-[#141414] px-2 py-0.5 rounded border border-[#E9ECEF] dark:border-[#242424] text-[#009D63] dark:text-[#00C47B]">
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

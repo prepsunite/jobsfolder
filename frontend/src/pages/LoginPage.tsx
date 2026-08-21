@@ -59,193 +59,187 @@ export default function LoginPage() {
   if (authLoading) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-        <div className="w-10 h-10 border-4 border-[#006c49]/20 border-t-[#006c49] rounded-full animate-spin" />
-        <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Verifying Google Session...</span>
+        <div className="w-8 h-8 border-2 border-[#009D63] border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">Verifying Session...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[88vh] flex items-center justify-center p-3 sm:p-6 lg:p-10 animate-fadeIn">
-      <div className="w-full max-w-4xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[32px] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative">
+    <div className="min-h-[85vh] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fadeIn">
+      <div className="w-full max-w-4xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative">
         
-        {/* Ambient Blur Backgrounds */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#006c49]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
         {/* LEFT COLUMN: Brand Value Proposition (Desktop View) */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-[#006c49] via-[#005a3c] to-[#043928] p-8 sm:p-10 text-white flex flex-col justify-between relative overflow-hidden hidden lg:flex">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-          
-          <div className="relative z-10 space-y-6">
-            <Link to="/" className="inline-flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-2xl bg-white text-[#006c49] flex items-center justify-center font-black text-xl shadow-lg group-hover:scale-105 transition-transform">
+        <div className="lg:col-span-5 bg-[#121417] dark:bg-[#0C0C0C] p-8 sm:p-10 text-white flex flex-col justify-between relative border-r border-[#242424] hidden lg:flex">
+          <div className="space-y-6">
+            <Link to="/" className="inline-flex items-center gap-2.5 group">
+              <div className="w-8 h-8 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-black flex items-center justify-center font-display font-black text-base transition-transform group-hover:scale-105">
                 P
               </div>
-              <span className="font-display text-2xl font-black tracking-tight text-white">
-                Prep<span className="text-[#6cf8bb]">Unite</span>
+              <span className="font-display text-xl font-extrabold tracking-tight text-white">
+                Jobs<span className="text-[#00C47B]">folder</span>
               </span>
             </Link>
 
-            <div className="pt-4 space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-[#6cf8bb] text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Google OAuth 2.0 Only</span>
+            <div className="pt-2 space-y-2.5">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/10 text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+                <Sparkles className="w-3 h-3" />
+                <span>Verified Archive</span>
               </div>
-              <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-white">
-                1-Click Passwordless Access
+              <h2 className="font-display text-2xl font-extrabold leading-tight tracking-tight text-white">
+                Actual OA Papers. From Real Drives.
               </h2>
-              <p className="text-sm text-emerald-100/90 leading-relaxed font-medium">
-                Sign in securely with your Google account to unlock verified company past papers, aptitude topics, and interview experiences.
+              <p className="text-xs text-[#999999] leading-relaxed font-sans">
+                Sign in with Google to access solved previous year papers from TCS, Accenture, Amazon, Infosys and 50+ recruiters.
               </p>
             </div>
 
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-3 text-xs font-semibold text-emerald-50">
-                <div className="w-5 h-5 rounded-full bg-[#6cf8bb]/20 flex items-center justify-center text-[#6cf8bb]">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+            <div className="space-y-2.5 pt-2 font-sans">
+              <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
+                <div className="w-4 h-4 rounded-sm bg-[#00C47B]/20 flex items-center justify-center text-[#00C47B]">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span>TCS, Infosys, Accenture &amp; Wipro Past Papers</span>
+                <span>TCS, Infosys, Accenture & Amazon Past Papers</span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-semibold text-emerald-50">
-                <div className="w-5 h-5 rounded-full bg-[#6cf8bb]/20 flex items-center justify-center text-[#6cf8bb]">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
+                <div className="w-4 h-4 rounded-sm bg-[#00C47B]/20 flex items-center justify-center text-[#00C47B]">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span>Zero Passwords to Remember</span>
+                <span>Zero Passwords · Instant 1-Click Access</span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-semibold text-emerald-50">
-                <div className="w-5 h-5 rounded-full bg-[#6cf8bb]/20 flex items-center justify-center text-[#6cf8bb]">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
+                <div className="w-4 h-4 rounded-sm bg-[#00C47B]/20 flex items-center justify-center text-[#00C47B]">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span>Instant Profile &amp; Saved Bookmarks Sync</span>
+                <span>Saved Bookmarks & Drive Notes Sync</span>
               </div>
             </div>
           </div>
 
-          <div className="relative z-10 pt-8 mt-auto border-t border-white/15">
-            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 space-y-2">
-              <div className="flex items-center gap-1 text-amber-300">
+          <div className="pt-6 mt-auto border-t border-[#242424]">
+            <div className="p-3 rounded-md bg-[#1C1C1C] border border-[#2E2E2E] space-y-1.5 font-sans">
+              <div className="flex items-center gap-1 text-amber-400">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                  <Star key={i} className="w-3 h-3 fill-current" />
                 ))}
               </div>
-              <p className="text-xs text-white/90 italic font-medium">
-                "Signing in with Google took 2 seconds! Got immediate access to all TCS Digital OA memory papers."
+              <p className="text-[11px] text-[#999999] italic">
+                "Got immediate access to all TCS NQT advanced coding papers with full solutions."
               </p>
-              <div className="flex items-center gap-2 pt-1 text-[11px] font-bold text-emerald-200">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Priya Sharma — Placed at TCS Digital (2025)</span>
+              <div className="flex items-center gap-1.5 pt-0.5 text-[10px] font-bold text-[#00C47B]">
+                <GraduationCap className="w-3 h-3" />
+                <span>Priya Sharma — TCS Digital 2025</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* RIGHT COLUMN: 1-Click Google OAuth Form */}
-        <div className="lg:col-span-7 p-8 sm:p-12 flex flex-col justify-between relative z-10">
+        <div className="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-between relative z-10 bg-white dark:bg-[#141414]">
 
           {/* Mobile Header Brand */}
-          <div className="flex lg:hidden items-center justify-between mb-8">
+          <div className="flex lg:hidden items-center justify-between mb-6">
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-[#006c49] text-white flex items-center justify-center font-black text-lg shadow-sm">
+              <div className="w-8 h-8 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-black flex items-center justify-center font-display font-black text-sm">
                 P
               </div>
-              <span className="font-display text-xl font-black text-[#1f1b17] dark:text-white">
-                Prep<span className="text-[#006c49] dark:text-[#6cf8bb]">Unite</span>
+              <span className="font-display text-lg font-extrabold text-[#121417] dark:text-white">
+                Jobs<span className="text-[#009D63] dark:text-[#00C47B]">folder</span>
               </span>
             </Link>
 
-            <span className="px-2.5 py-1 rounded-full bg-[#006c49]/10 text-[#006c49] dark:text-[#6cf8bb] text-[10px] font-black uppercase">
+            <span className="px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:text-[#00C47B] text-[9px] font-display font-bold uppercase">
               Google OAuth
             </span>
           </div>
 
           {/* STATE 1: LOGGED IN USER VIEW */}
           {isAuthenticated && user ? (
-            <div className="my-auto space-y-6 max-w-md mx-auto w-full text-center animate-fadeIn">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#006c49]/10 border-4 border-[#006c49] relative mx-auto shadow-md">
+            <div className="my-auto space-y-5 max-w-sm mx-auto w-full text-center animate-fadeIn">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#009D63]/10 border-2 border-[#009D63] dark:border-[#00C47B] relative mx-auto">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  <span className="font-black text-2xl text-[#006c49] dark:text-[#6cf8bb]">
+                  <span className="font-display font-black text-xl text-[#009D63] dark:text-[#00C47B]">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 )}
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <h1 className="font-display text-2xl font-black text-[#1f1b17] dark:text-white">
+              <div className="space-y-0.5">
+                <h1 className="font-display text-xl font-extrabold text-[#121417] dark:text-white">
                   Welcome back, {user.name}!
                 </h1>
-                <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
-                  Signed in as <span className="font-bold text-[#1f1b17] dark:text-white">{user.email}</span>
+                <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
+                  Signed in as <span className="font-semibold text-[#121417] dark:text-white">{user.email}</span>
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#f8f5f2] dark:bg-[#141517] border border-[#eae1da] dark:border-[#2b2d31] space-y-2 text-xs">
+              <div className="p-3 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5 text-xs font-sans">
                 <div className="flex justify-between">
-                  <span className="text-[#747878] dark:text-[#a6adbb]">Role:</span>
-                  <span className="font-bold text-[#006c49] dark:text-[#6cf8bb]">{role}</span>
+                  <span className="text-[#868E96] dark:text-[#555555]">Role:</span>
+                  <span className="font-bold text-[#009D63] dark:text-[#00C47B]">{role}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#747878] dark:text-[#a6adbb]">Authentication:</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Google OAuth 2.0</span>
+                  <span className="text-[#868E96] dark:text-[#555555]">Auth Provider:</span>
+                  <span className="font-semibold text-[#121417] dark:text-[#FFFFFF]">Google OAuth 2.0</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <button
                   onClick={() => navigate('/profile')}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-[#006c49] hover:bg-[#005a3c] text-white text-xs font-extrabold uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <User className="w-4 h-4" />
+                  <User className="w-3.5 h-3.5" />
                   <span>Go to My Profile</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={logout}
-                  className="w-full py-3 px-4 rounded-2xl border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2 px-4 rounded-md border border-[#E9ECEF] dark:border-[#242424] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-xs font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
                 </button>
               </div>
             </div>
           ) : (
             /* STATE 2: 1-CLICK GOOGLE SIGN-IN VIEW */
-            <div className="my-auto space-y-8 max-w-md mx-auto w-full">
+            <div className="my-auto space-y-6 max-w-sm mx-auto w-full">
               
-              <div className="space-y-2 text-center sm:text-left">
-                <h1 className="font-display text-3xl font-black text-[#1f1b17] dark:text-white tracking-tight">
+              <div className="space-y-1.5 text-center sm:text-left">
+                <h1 className="font-display text-2xl font-extrabold text-[#121417] dark:text-white tracking-tight">
                   Sign In to PrepUnite
                 </h1>
-                <p className="text-sm text-[#747878] dark:text-[#a6adbb]">
-                  Use your Google Account to log in with 1-click. No passwords required.
+                <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
+                  Use your Google Account to log in with 1-click. No password required.
                 </p>
               </div>
 
               {errorMessage && (
-                <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-xs font-semibold flex items-start gap-2.5 animate-fadeIn">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-xs font-semibold flex items-start gap-2 animate-fadeIn font-sans">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
               {/* GIANT GOOGLE OAUTH BUTTON */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button
                   type="button"
                   disabled={googleLoading}
                   onClick={handleGoogleSignIn}
-                  className="w-full py-4 px-6 rounded-2xl bg-white dark:bg-[#2b2d31] border-2 border-[#eae1da] dark:border-[#383a40] hover:border-[#006c49] dark:hover:border-[#6cf8bb] text-[#1f1b17] dark:text-white font-extrabold text-sm shadow-md hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 group"
+                  className="w-full py-3 px-4 rounded-md bg-white dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-[#555555] text-[#121417] dark:text-white font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 group shadow-xs"
                 >
                   {googleLoading ? (
-                    <div className="w-5 h-5 border-2 border-[#006c49] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-[#009D63] border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <svg className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -253,18 +247,18 @@ export default function LoginPage() {
                     </svg>
                   )}
                   <span>Continue with Google</span>
-                  <ArrowRight className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] group-hover:translate-x-1 transition-transform ml-auto" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] ml-auto" />
                 </button>
 
-                <p className="text-[11px] text-[#747878] dark:text-[#a6adbb] text-center leading-relaxed font-medium">
-                  By continuing, you agree to PrepUnite's Terms of Service and Privacy Policy. We never post without your permission.
+                <p className="text-[10px] text-[#868E96] dark:text-[#555555] text-center leading-relaxed font-sans">
+                  By continuing, you agree to PrepUnite's Terms and Privacy Policy.
                 </p>
               </div>
 
               {/* SECURITY FOOTER */}
-              <div className="pt-6 border-t border-[#eae1da] dark:border-[#2b2d31]">
-                <div className="flex items-center justify-center gap-1.5 text-xs text-[#747878] dark:text-[#a6adbb]">
-                  <ShieldCheck className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb]" />
+              <div className="pt-4 border-t border-[#E9ECEF] dark:border-[#242424]">
+                <div className="flex items-center justify-center gap-1 text-[11px] text-[#868E96] dark:text-[#555555] font-sans">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
                   <span>Secured by Supabase OAuth 2.0 &amp; 256-bit SSL</span>
                 </div>
               </div>

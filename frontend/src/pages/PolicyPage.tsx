@@ -31,14 +31,14 @@ export default function PolicyPage({ type }: PolicyPageProps) {
   const Icon = policy.icon;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 py-4 animate-fadeIn">
+    <div className="max-w-5xl mx-auto space-y-5 py-4 animate-fadeIn">
       {/* Navigation Header */}
       <div className="flex items-center justify-between">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
           <span>Back to Home</span>
         </Link>
 
@@ -46,30 +46,30 @@ export default function PolicyPage({ type }: PolicyPageProps) {
           href={policy.docUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#006c49]/10 text-[#006c49] dark:bg-[#6cf8bb]/10 dark:text-[#6cf8bb] hover:bg-[#006c49]/20 transition-all text-xs font-bold"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] hover:bg-[#009D63]/20 transition-colors text-xs font-display font-bold uppercase tracking-wider"
         >
-          <span>Open Full Document</span>
-          <ExternalLink className="w-3.5 h-3.5" />
+          <span>Open Full Doc</span>
+          <ExternalLink className="w-3 h-3" />
         </a>
       </div>
 
       {/* Hero */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-[#006c49]/10 text-[#006c49] dark:bg-[#6cf8bb]/10 dark:text-[#6cf8bb] flex items-center justify-center shrink-0">
-          <Icon className="w-6 h-6" />
+      <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] shadow-xs flex items-center gap-3.5">
+        <div className="w-10 h-10 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center shrink-0">
+          <Icon className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="font-display font-black text-2xl text-[#1f1b17] dark:text-white tracking-tight">
+          <h1 className="font-display font-extrabold text-xl sm:text-2xl text-[#121417] dark:text-[#FFFFFF] tracking-tight">
             {policy.title}
           </h1>
-          <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
+          <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
             {policy.subtitle}
           </p>
         </div>
       </div>
 
       {/* Document Viewer Frame */}
-      <div className="w-full rounded-2xl border border-[#eae1da] dark:border-[#2b2d31] bg-white dark:bg-[#1e1f22] overflow-hidden shadow-sm h-[75vh]">
+      <div className="w-full rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] overflow-hidden shadow-xs h-[75vh]">
         <iframe
           src={`${policy.docUrl}?embedded=true`}
           className="w-full h-full border-none"

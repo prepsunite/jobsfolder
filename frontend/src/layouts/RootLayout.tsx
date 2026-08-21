@@ -205,27 +205,27 @@ export default function RootLayout() {
 
   // INTERNAL APP WORKSPACE LAYOUT (WITH PERSISTENT SIDEBAR)
   return (
-    <div className="min-h-screen bg-[#fff8f5] dark:bg-[#141517] text-[#1f1b17] dark:text-[#e3e3e3] flex font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
       {/* Persistent Left Workspace Sidebar */}
       <Sidebar />
 
       {/* Main Workspace Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0C0C0C]">
         {/* Top Admin Header Bar when Admin is Logged In */}
         {isAdmin && (
-          <div className="bg-[#1f1b17] dark:bg-[#141517] text-white py-2 px-6 border-b border-[#2b2d31] text-xs font-semibold flex items-center justify-between gap-4 shadow-sm sticky top-0 z-30">
+          <div className="bg-[#121417] dark:bg-[#141414] text-white py-2 px-6 border-b border-[#242424] text-xs font-semibold flex items-center justify-between gap-4 shadow-sm sticky top-0 z-30">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span className="font-bold uppercase tracking-wider text-[11px]">
+              <span className="font-display font-bold uppercase tracking-wider text-[10px]">
                 Admin Console Active — {user?.email}
               </span>
             </div>
 
             <div className="flex items-center gap-3 text-xs">
-              <Link to="/admin" className="hover:text-emerald-300 font-bold flex items-center gap-1">
+              <Link to="/admin" className="hover:text-emerald-300 font-display font-bold flex items-center gap-1">
                 <Plus className="w-3.5 h-3.5" /> Dashboard
               </Link>
-              <Link to="/admin/bulk-import" className="hover:text-emerald-300 font-bold flex items-center gap-1">
+              <Link to="/admin/bulk-import" className="hover:text-emerald-300 font-display font-bold flex items-center gap-1">
                 <Plus className="w-3.5 h-3.5" /> Bulk Import
               </Link>
             </div>
@@ -236,15 +236,15 @@ export default function RootLayout() {
           <Outlet />
         </main>
         
-        <footer className="border-t border-[#eae1da] dark:border-[#2b2d31] bg-[#f6ece6] dark:bg-[#1e1f22] py-6 px-8 text-xs text-[#747878] dark:text-[#a6adbb] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
-          <p>© 2026 PrepUnite • Placement Intelligence Operating System.</p>
-          <div className="flex flex-wrap items-center gap-4 font-semibold text-[#1f1b17] dark:text-[#e3e3e3]">
-            <Link to="/about" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">About Us</Link>
-            <Link to="/contact" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Contact Us</Link>
-            <Link to="/pricing" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Pricing</Link>
-            <Link to="/privacy-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Privacy Policy</Link>
-            <Link to="/terms-and-conditions" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Terms & Conditions</Link>
-            <Link to="/refund-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Refund Policy</Link>
+        <footer className="border-t border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] py-4 px-8 text-xs text-[#868E96] dark:text-[#555555] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
+          <p>© 2026 PrepUnite · Placement Intelligence Operating System.</p>
+          <div className="flex flex-wrap items-center gap-4 font-semibold text-[#495057] dark:text-[#999999]">
+            <Link to="/about" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">About Us</Link>
+            <Link to="/contact" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Contact Us</Link>
+            <Link to="/pricing" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Pricing</Link>
+            <Link to="/privacy-policy" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Privacy Policy</Link>
+            <Link to="/terms-and-conditions" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Terms & Conditions</Link>
+            <Link to="/refund-policy" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Refund Policy</Link>
           </div>
         </footer>
       </div>

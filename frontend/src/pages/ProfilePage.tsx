@@ -183,57 +183,49 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto">
-      {/* Profile Header Banner */}
-      <div className={`p-8 rounded-[28px] border transition-colors shadow-sm relative overflow-hidden ${
-        isDarkMode
-          ? 'bg-gradient-to-br from-[#1e1f22] via-[#2b2d31] to-[#141517] border-[#2b2d31] text-[#e3e3e3]'
-          : 'bg-gradient-to-br from-[#fff8f5] via-[#f6ece6] to-[#eae1da] border-[#eae1da] text-[#1f1b17]'
-      }`}>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-5">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-md overflow-hidden ${
-              isDarkMode ? 'bg-[#6cf8bb] text-[#000000]' : 'bg-[#006c49] text-white'
-            }`}>
+      {/* Profile Header Card */}
+      <div className="rounded-lg p-5 sm:p-6 border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden transition-colors">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-black flex items-center justify-center font-display font-black text-xl overflow-hidden shrink-0">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <User className="w-8 h-8" />
+                <User className="w-6 h-6" />
               )}
             </div>
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
                   {user?.name || 'Student Profile'}
                 </h1>
                 {isUserPro ? (
-                  <span className="text-xs font-black px-3 py-1 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1">
+                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1 uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span>Jobsfolder Pro Pass</span>
+                    <span>Pro Pass</span>
                   </span>
                 ) : (
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                    Free Tier Member
+                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 uppercase tracking-wider">
+                    Free Tier
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5 max-w-xl font-medium">
+              <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
                 {user?.email || 'Logged in Student'}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 flex-wrap">
             {/* Top Right Compact 3-Pill Theme Mode Switcher */}
-            <div className={`flex items-center p-1 rounded-full border shadow-sm ${
-              isDarkMode ? 'bg-[#141517]/90 border-[#383a40]' : 'bg-white/90 border-[#e2d8d2]'
-            }`}>
+            <div className="flex items-center p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
               <button
                 onClick={() => setThemeMode('light')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
                   themeMode === 'light'
-                    ? 'bg-white text-[#1f1b17] shadow-sm'
-                    : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                    ? 'bg-white text-black shadow-xs'
+                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                 }`}
                 title="Switch to Light Mode"
               >
@@ -243,10 +235,10 @@ export default function ProfilePage() {
 
               <button
                 onClick={() => setThemeMode('dark')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
                   themeMode === 'dark'
-                    ? 'bg-[#000000] text-[#6cf8bb] shadow-sm'
-                    : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                    ? 'bg-[#1C1C1C] text-[#00C47B] shadow-xs'
+                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                 }`}
                 title="Switch to Dark Mode"
               >
@@ -256,49 +248,43 @@ export default function ProfilePage() {
 
               <button
                 onClick={() => setThemeMode('system')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
                   themeMode === 'system'
-                    ? 'bg-[#006c49] dark:bg-[#6cf8bb] text-white dark:text-[#141517] shadow-sm'
-                    : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                    ? 'bg-[#009D63] dark:bg-[#00C47B] text-black shadow-xs'
+                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                 }`}
                 title="Sync with System Theme"
               >
                 <Monitor className="w-3 h-3" />
-                <span>System</span>
+                <span>Auto</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className={`px-4 py-2.5 rounded-2xl border text-center ${
-                isDarkMode ? 'bg-[#141517]/80 border-[#383a40]' : 'bg-white/80 border-[#eae1da]'
-              }`}>
-                <span className="text-lg font-black text-[#006c49] dark:text-[#6cf8bb] block">
+            <div className="flex items-center gap-2 flex-wrap font-sans">
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
+                <span className="text-sm font-display font-extrabold text-[#009D63] dark:text-[#00C47B] block">
                   {bookmarkedExams.length}
                 </span>
-                <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block">
-                  Saved Drives
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
+                  Drives
                 </span>
               </div>
 
-              <div className={`px-4 py-2.5 rounded-2xl border text-center ${
-                isDarkMode ? 'bg-[#141517]/80 border-[#383a40]' : 'bg-white/80 border-[#eae1da]'
-              }`}>
-                <span className="text-lg font-black text-amber-500 block">
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
+                <span className="text-sm font-display font-extrabold text-amber-500 block">
                   {bookmarkedQuestions.length}
                 </span>
-                <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block">
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
                   Questions
                 </span>
               </div>
 
-              <div className={`px-4 py-2.5 rounded-2xl border text-center ${
-                isDarkMode ? 'bg-[#141517]/80 border-[#383a40]' : 'bg-white/80 border-[#eae1da]'
-              }`}>
-                <span className="text-lg font-black text-purple-500 block">
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
+                <span className="text-sm font-display font-extrabold text-purple-500 block">
                   {bookmarkedExperiences.length}
                 </span>
-                <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block">
-                  Experiences
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
+                  Transcripts
                 </span>
               </div>
             </div>
@@ -307,42 +293,42 @@ export default function ProfilePage() {
       </div>
 
       {/* Navigation Tabs for Profile */}
-      <div className="flex items-center justify-between border-b border-[#eae1da] dark:border-[#2b2d31] pb-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#242424] pb-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setActiveTab('exams')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'exams'
-                ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] shadow-md ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#fff8f5] dark:ring-offset-[#141517]'
-                : 'bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <Building2 className="w-4 h-4 text-[#6cf8bb] dark:text-[#006c49]" />
-            <span>Bookmarked Exams ({bookmarkedExams.length})</span>
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Saved Exams ({bookmarkedExams.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('questions')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'questions'
-                ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] shadow-md ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#fff8f5] dark:ring-offset-[#141517]'
-                : 'bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <BookOpen className="w-4 h-4 text-amber-500" />
+            <BookOpen className="w-3.5 h-3.5" />
             <span>Saved Questions ({bookmarkedQuestions.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('experiences')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'experiences'
-                ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] shadow-md ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#fff8f5] dark:ring-offset-[#141517]'
-                : 'bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <Layers className="w-4 h-4 text-purple-500" />
-            <span>Saved Experiences ({bookmarkedExperiences.length})</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Saved Transcripts ({bookmarkedExperiences.length})</span>
           </button>
         </div>
       </div>

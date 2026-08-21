@@ -392,10 +392,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       </div>
 
       {/* Main Header Card with ADMIN EDIT CONTROL */}
-      <div className="bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#2b2d31] rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 relative transition-colors">
+      <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 shadow-xs space-y-4 relative transition-colors">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-14 h-14 rounded-[16px] bg-[#38bdf8]/15 border border-[#38bdf8]/30 text-[#0284c7] font-black text-2xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+            <div className="w-12 h-12 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#FFFFFF] font-display font-black text-xl flex items-center justify-center shrink-0 overflow-hidden">
               {currentCompanyStoreItem.logoUrl ? (
                 <img src={currentCompanyStoreItem.logoUrl} alt={companyName} className="w-full h-full object-contain p-1" />
               ) : (
@@ -403,44 +403,44 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               )}
             </div>
             <div className="space-y-0.5">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] tracking-tight">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
                   {companyName}
                 </h1>
-                <span className="bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 text-[#00714d] dark:text-[#6cf8bb] border border-[#00714d]/20 dark:border-[#6cf8bb]/20 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                <span className="bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 dark:border-[#00C47B]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                   {currentCompanyStoreItem.industry || 'IT Services'}
                 </span>
-                <span className="bg-[#ffffff] dark:bg-[#141517] text-[#1f1b17] dark:text-[#e3e3e3] border border-[#c4c7c7] dark:border-[#383a40] text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                  {companyExams.length} Active Exams
+                <span className="bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] border border-[#E9ECEF] dark:border-[#242424] text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                  {companyExams.length} Active Tracks
                 </span>
               </div>
-              <p className="text-[#444748] dark:text-[#a6adbb] text-xs font-sans">
+              <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans">
                 {currentCompanyStoreItem.description || 'Official Exam Patterns, Memory Papers, and Offer Roles'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {isAdmin && (
               <button
                 onClick={handleOpenEditHeaderModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase tracking-wider shadow-xs transition-all shrink-0"
               >
-                <Edit3 className="w-3.5 h-3.5 text-purple-300" />
-                <span>Edit Company Header</span>
+                <Edit3 className="w-3 h-3 text-purple-300" />
+                <span>Edit Header</span>
               </button>
             )}
 
             <button
               onClick={handleUpvote}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold transition-all border ${
                 isUpvoted
                   ? 'bg-rose-500 text-white border-rose-500'
-                  : 'bg-[#ffffff] dark:bg-[#1e1f22] text-[#1f1b17] dark:text-[#e3e3e3] border-[#c4c7c7] dark:border-[#383a40] hover:border-rose-400'
+                  : 'bg-white dark:bg-[#1C1C1C] text-[#121417] dark:text-[#FFFFFF] border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-rose-400'
               }`}
             >
               <Heart className={`w-3.5 h-3.5 ${isUpvoted ? 'fill-current text-white' : 'text-rose-500'}`} />
-              <span>{upvoteCount} Upvotes</span>
+              <span>{upvoteCount}</span>
             </button>
 
             {currentCompanyStoreItem.website && (
@@ -448,26 +448,26 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 href={currentCompanyStoreItem.website}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#ffffff] dark:bg-[#1e1f22] hover:bg-[#eae1da] dark:hover:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] text-xs font-bold uppercase tracking-wider rounded-full border border-[#c4c7c7] dark:border-[#383a40] transition-colors shrink-0"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#1C1C1C] hover:bg-[#F8F9FA] dark:hover:bg-[#242424] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] transition-colors shrink-0"
               >
-                <Globe className="w-3.5 h-3.5 text-[#006c49] dark:text-[#6cf8bb]" />
+                <Globe className="w-3 h-3 text-[#009D63] dark:text-[#00C47B]" />
                 <span>Site</span>
-                <ExternalLink className="w-3 h-3 opacity-60" />
+                <ExternalLink className="w-2.5 h-2.5 opacity-60" />
               </a>
             )}
           </div>
         </div>
 
-        {/* Horizontal Active Exam Module Pills */}
-        <div className="pt-4 border-t border-[#e2d8d2] dark:border-[#2b2d31] space-y-2">
+        {/* Horizontal Active Exam Module Tabs */}
+        <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block">
-              Select Active Exam Module:
+            <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
+              Active Exam Archive:
             </span>
             {isAdmin && (
               <button
                 onClick={handleAddNewExam}
-                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-purple-700 bg-purple-100 rounded-full hover:bg-purple-200"
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-display font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded hover:bg-purple-200"
               >
                 <Plus className="w-3 h-3" /> Add Exam
               </button>
@@ -484,19 +484,19 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     handleSelectExam(exam.id);
                     setIsEditing(false);
                   }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold transition-all whitespace-nowrap border ${
                     isSelected
-                      ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] border-[#000000] dark:border-[#e3e3e3] shadow-sm ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#fff8f5] dark:ring-offset-[#141517]'
-                      : 'bg-[#ffffff] dark:bg-[#1e1f22] text-[#1f1b17] dark:text-[#e3e3e3] border-[#c4c7c7] dark:border-[#383a40] hover:border-[#006c49] dark:hover:border-[#6cf8bb]'
+                      ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                      : 'bg-white dark:bg-[#1C1C1C] text-[#495057] dark:text-[#999999] border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-[#555555]'
                   }`}
                 >
-                  <GraduationCap className={`w-3.5 h-3.5 ${isSelected ? 'text-[#6cf8bb] dark:text-[#006c49]' : 'text-[#006c49] dark:text-[#6cf8bb]'}`} />
+                  <GraduationCap className={`w-3.5 h-3.5 ${isSelected ? 'text-[#00C47B] dark:text-[#009D63]' : 'text-[#868E96] dark:text-[#555555]'}`} />
                   <span>{exam.name}</span>
                 </button>
               );
             })}
             {companyExams.length === 0 && (
-              <span className="text-xs text-[#747878] dark:text-[#a6adbb]">No exams configured yet.</span>
+              <span className="text-xs text-[#868E96] dark:text-[#555555]">No exams configured yet.</span>
             )}
           </div>
         </div>
@@ -504,19 +504,19 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
       {/* Main Single Page View for Exam */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-        <main className="lg:col-span-9 bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] p-6 shadow-sm min-h-[500px] transition-colors">
+        <main className="lg:col-span-9 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 shadow-xs min-h-[500px] transition-colors">
           
           {currentExam ? (
             <div className="space-y-6">
               
               {/* Active Exam Header Bar with Bookmark Button */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#eae1da] dark:border-[#2b2d31]">
+              <div className="flex items-center justify-between pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
                 <div>
-                  <h2 className="font-display text-2xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
+                  <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF]">
                     {activeTab === 'aboutCompany' ? `${companyName} Overview` : currentExam.name}
                   </h2>
                   {activeTab !== 'aboutCompany' && (
-                    <span className="inline-block mt-1 bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 text-[#00714d] dark:text-[#6cf8bb] border border-[#00714d]/20 dark:border-[#6cf8bb]/20 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    <span className="inline-block mt-1 bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 dark:border-[#00C47B]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                       {currentExam.badge}
                     </span>
                   )}

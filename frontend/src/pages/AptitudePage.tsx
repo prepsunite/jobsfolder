@@ -215,45 +215,45 @@ export default function AptitudePage() {
   return (
     <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12 font-sans">
       {/* Sleek Top Header Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#eae1da] dark:border-[#2b2d31] pb-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] text-xs font-bold uppercase tracking-wider">
-            <MainIcon className="w-3.5 h-3.5 text-[#1f1b17] dark:text-[#e3e3e3]" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E9ECEF] dark:border-[#242424] pb-4">
+        <div className="space-y-0.5">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+            <MainIcon className="w-3 h-3" />
             <span>Aptitude Topic Directory</span>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
             {currentCategoryInfo.title}
           </h1>
-          <p className="text-[#747878] dark:text-[#a6adbb] text-xs leading-relaxed max-w-2xl">
+          <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans max-w-2xl">
             {currentCategoryInfo.subtitle}
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full sm:w-72 shrink-0">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#747878] dark:text-[#6e7278]" />
+        <div className="relative w-full sm:w-64 shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
           <input
             type="text"
             placeholder="Search sub-topics..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] focus:border-[#1f1b17] dark:focus:border-white rounded-full pl-10 pr-4 py-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] focus:outline-none transition-all font-sans"
+            className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
           />
         </div>
       </div>
 
       {/* Cluster Category Filter Pills */}
-      <div className="flex items-center gap-2.5 overflow-x-auto p-1.5 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto p-1 scrollbar-none">
         {clusterList.map((cluster) => {
           const isActive = selectedCluster === cluster;
           return (
             <button
               key={cluster}
               onClick={() => setSelectedCluster(cluster)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap transition-all border ${
+              className={`px-3 py-1 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border ${
                 isActive
-                  ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] border-[#000000] dark:border-[#e3e3e3] shadow-xs ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#fff8f5] dark:ring-offset-[#141517]'
-                  : 'bg-[#ffffff] dark:bg-[#1e1f22] border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                  : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
               }`}
             >
               {cluster}
@@ -262,51 +262,49 @@ export default function AptitudePage() {
         })}
       </div>
 
-      {/* ULTRA-COMPACT 2-COLUMN DIRECTORY LIST (Inspired by Folder Directory UI, enhanced with custom micro-icons) */}
+      {/* 2-COLUMN DIRECTORY LIST */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
         {sortedTopics.map((topic) => {
           const TopicIcon = topic.icon || Folder;
-          // Use live Supabase count if available, else fall back to the topic's static count
           const displayCount = liveCountMap[topic.id] ?? topic.count;
 
           return (
             <div
               key={topic.id}
-              className="group flex items-center justify-between p-3 bg-[#ffffff] dark:bg-[#1e1f22] hover:bg-[#fff8f5] dark:hover:bg-[#2b2d31] border border-[#eae1da] dark:border-[#2b2d31] hover:border-[#006c49]/40 dark:hover:border-[#6cf8bb]/40 rounded-xl transition-all duration-150 shadow-2xs"
+              className="group flex items-center justify-between p-2.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#383838] rounded-md transition-all duration-150 shadow-2xs"
             >
               <Link
                 to={`/aptitude/${categorySlug}/topic/${topic.id}`}
-                className="flex items-center gap-3 min-w-0 flex-1"
+                className="flex items-center gap-2.5 min-w-0 flex-1"
               >
-                {/* Yellow Folder / Icon Container */}
-                <div className="w-8 h-8 rounded-lg bg-amber-500/15 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <TopicIcon className="w-4 h-4" />
+                <div className="w-7 h-7 rounded bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center shrink-0">
+                  <TopicIcon className="w-3.5 h-3.5" />
                 </div>
 
-                <span className="font-bold text-xs text-[#1f1b17] dark:text-[#e3e3e3] group-hover:text-[#006c49] dark:group-hover:text-[#6cf8bb] transition-colors truncate">
+                <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#009D63] dark:group-hover:text-[#00C47B] transition-colors truncate">
                   {topic.name}
                 </span>
               </Link>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedTopic(topic);
                   }}
-                  className="p-1 rounded-md text-[#747878] hover:text-[#006c49] dark:hover:text-[#6cf8bb] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  className="p-1 rounded text-[#868E96] dark:text-[#555555] hover:text-[#009D63] dark:hover:text-[#00C47B] transition-colors"
                   title="Peek Formula & Overview"
                 >
-                  <Zap className="w-3.5 h-3.5" />
+                  <Zap className="w-3 h-3" />
                 </button>
 
                 <Link
                   to={`/aptitude/${categorySlug}/topic/${topic.id}`}
-                  className="flex items-center gap-1 text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] bg-[#f6ece6] dark:bg-[#2b2d31] px-2 py-0.5 rounded-md border border-[#eae1da] dark:border-[#383a40] group-hover:border-[#006c49]/30"
+                  className="flex items-center gap-1 text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] bg-[#F8F9FA] dark:bg-[#0C0C0C] px-2 py-0.5 rounded border border-[#E9ECEF] dark:border-[#242424] group-hover:border-[#121417]"
                 >
                   <span>{displayCount} Qs</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-[#747878] dark:text-[#6e7278] group-hover:text-[#006c49] dark:group-hover:text-[#6cf8bb] group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>
@@ -314,39 +312,40 @@ export default function AptitudePage() {
         })}
       </div>
 
-      {/* 📚 MODAL / DRAWER: SUB-TOPIC DETAIL & FORMULA CHEAT-SHEET */}
+      {/* MODAL: SUB-TOPIC DETAIL & FORMULA CHEAT-SHEET */}
       {selectedTopic && (
-        <div className="fixed inset-0 z-50 bg-[#000000]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] max-w-xl w-full p-6 space-y-5 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg max-w-xl w-full p-5 space-y-4 shadow-xl animate-fadeIn max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-start justify-between pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  {selectedTopic.icon ? <selectedTopic.icon className="w-5 h-5" /> : <Folder className="w-5 h-5" />}
+            <div className="flex items-start justify-between pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center shrink-0">
+                  {selectedTopic.icon ? <selectedTopic.icon className="w-4 h-4" /> : <Folder className="w-4 h-4" />}
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider block">
+                  <span className="text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider block">
                     {selectedTopic.cluster}
                   </span>
-                  <h3 className="font-display text-xl font-black text-[#1f1b17] dark:text-[#e3e3e3]">
+                  <h3 className="font-display text-base font-extrabold text-[#121417] dark:text-[#FFFFFF]">
                     {selectedTopic.name}
                   </h3>
                 </div>
               </div>
+
               <button
                 onClick={() => setSelectedTopic(null)}
-                className="text-[#747878] dark:text-[#6e7278] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+                className="p-1 rounded text-[#868E96] hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors"
               >
-                <XCircle className="w-5 h-5" />
+                <XCircle className="w-4 h-4" />
               </button>
             </div>
 
             {/* Overview */}
-            <div className="p-3.5 bg-[#f6ece6]/60 dark:bg-[#141517] rounded-[16px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
-              <span className="text-[10px] font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider block">
+            <div className="p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424] space-y-1">
+              <span className="text-[9px] font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider block">
                 Topic Overview
               </span>
-              <p className="text-xs text-[#444748] dark:text-[#a6adbb] leading-relaxed">
+              <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans leading-relaxed">
                 {selectedTopic.description}
               </p>
             </div>

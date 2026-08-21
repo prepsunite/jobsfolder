@@ -148,38 +148,38 @@ export default function ExperiencesPage() {
   };
 
   const getDifficultyBadge = (d: string) => {
-    if (d === 'EASY') return 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 dark:border-emerald-500/30';
-    if (d === 'HARD') return 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-500/30 dark:border-rose-500/30';
-    return 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 dark:border-amber-500/30';
+    if (d === 'EASY') return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30';
+    if (d === 'HARD') return 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30';
+    return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
   };
 
   const getVerdictBadge = (v: string) => {
-    if (v === 'SELECTED') return 'bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 text-[#00714d] dark:text-[#6cf8bb] border-[#00714d]/20 dark:border-[#6cf8bb]/30';
-    if (v === 'REJECTED') return 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-500/30 dark:border-rose-500/30';
-    return 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 dark:border-amber-500/30';
+    if (v === 'SELECTED') return 'bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border-[#009D63]/20 dark:border-[#00C47B]/30';
+    if (v === 'REJECTED') return 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30';
+    return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header Banner */}
-      <div className="relative rounded-[24px] bg-[#f6ece6] dark:bg-[#141517] p-6 sm:p-8 border border-[#e2d8d2] dark:border-[#2b2d31] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <div className="max-w-2xl space-y-2">
+      <div className="relative rounded-lg bg-white dark:bg-[#141414] p-5 sm:p-6 border border-[#E9ECEF] dark:border-[#242424] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="max-w-xl space-y-1.5">
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 border border-[#00714d]/20 dark:border-[#6cf8bb]/30 text-[#00714d] dark:text-[#6cf8bb] text-[11px] font-bold uppercase tracking-wider">
-              <Layers className="w-3.5 h-3.5 text-[#006c49] dark:text-[#6cf8bb]" />
-              Verified Peer Insights ({rawExperiences.length})
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+              <Layers className="w-3 h-3" />
+              <span>Verified Peer Insights ({rawExperiences.length})</span>
             </div>
             {isAdmin && (
-              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-900 text-white">
-                Admin CRUD Enabled
+              <span className="text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-700 text-white">
+                Admin Mode
               </span>
             )}
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
             Real Interview Experiences
           </h1>
-          <p className="text-[#444748] dark:text-[#a6adbb] text-sm leading-relaxed font-sans">
-            Read first-hand accounts from students who cleared campus placement drives at top companies.
+          <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans">
+            First-hand interview round breakdowns and question transcripts from recent campus drives.
           </p>
         </div>
 
@@ -187,17 +187,17 @@ export default function ExperiencesPage() {
           {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all"
+              className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase tracking-wider rounded-md shadow-xs transition-all"
             >
-              <Plus className="w-4 h-4 text-purple-300" />
-              <span>+ Add Experience</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Experience</span>
             </button>
           )}
           <Link
             to="/experiences/submit"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#000000] hover:bg-[#006c49] text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#009D63] dark:hover:bg-[#00C47B] font-display font-bold text-xs uppercase tracking-wider rounded-md shadow-xs transition-colors"
           >
-            <PlusCircle className="w-4 h-4 text-[#6cf8bb]" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>Share Yours</span>
           </Link>
         </div>
@@ -205,55 +205,55 @@ export default function ExperiencesPage() {
 
       {/* Search Filter */}
       <div className="relative w-full sm:max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#747878] dark:text-[#6e7278]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
         <input
           type="text"
-          placeholder="Search by company, role, college..."
+          placeholder="Search company, role, college..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] focus:border-[#006c49] dark:focus:border-[#6cf8bb] rounded-full pl-10 pr-4 py-2.5 text-sm text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] focus:outline-none focus:ring-2 focus:ring-[#006c49]/20 transition-all font-sans"
+          className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
         />
       </div>
 
       {/* Experiences List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 text-[#006c49] dark:text-[#6cf8bb] animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#009D63] dark:text-[#00C47B] animate-spin" />
         </div>
       ) : rawExperiences.length === 0 ? (
-        <div className="text-center py-16 bg-[#ffffff] dark:bg-[#1e1f22] rounded-[24px] border border-[#e2d8d2] dark:border-[#2b2d31]">
-          <Layers className="w-10 h-10 text-[#747878] dark:text-[#6e7278] mx-auto mb-3" />
-          <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3] mb-1">No experiences yet</h3>
-          <p className="text-[#444748] dark:text-[#a6adbb] text-xs">Be the first to share your interview experience!</p>
+        <div className="text-center py-16 bg-[#F8F9FA] dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
+          <Layers className="w-8 h-8 text-[#868E96] dark:text-[#555555] mx-auto mb-2" />
+          <h3 className="font-display text-sm font-bold text-[#121417] dark:text-[#FFFFFF] mb-1">No experiences found</h3>
+          <p className="text-[#868E96] dark:text-[#555555] text-xs">Be the first to share your interview experience!</p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {rawExperiences.map((exp) => {
             const isBookmarked = bookmarkedExpIds.includes(exp.id);
             return (
               <div
                 key={exp.id}
-                className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] hover:border-[#006c49]/30 dark:hover:border-[#6cf8bb]/30 rounded-[24px] p-6 space-y-4 transition-all shadow-sm relative"
+                className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#383838] rounded-lg p-5 space-y-3.5 transition-all shadow-xs relative"
               >
                 {/* Action Controls */}
-                <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5">
                   <button
                     onClick={() => handleToggleBookmark(exp.id)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold transition-all shadow-xs ${
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-display font-bold transition-all ${
                       isBookmarked
-                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
-                        : 'bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                        : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                     }`}
-                    title={isBookmarked ? 'Remove from profile bookmarks' : 'Save experience to profile'}
+                    title={isBookmarked ? 'Remove bookmark' : 'Save experience'}
                   >
                     {isBookmarked ? (
                       <>
-                        <BookmarkCheck className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <BookmarkCheck className="w-3 h-3 text-amber-500 fill-amber-500" />
                         <span>Saved</span>
                       </>
                     ) : (
                       <>
-                        <Bookmark className="w-3.5 h-3.5" />
+                        <Bookmark className="w-3 h-3" />
                         <span>Save</span>
                       </>
                     )}
@@ -263,44 +263,44 @@ export default function ExperiencesPage() {
                     <>
                       <button
                         onClick={() => setEditingExp({ ...exp })}
-                        className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900 transition-colors"
+                        className="p-1 rounded bg-purple-100 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-200 transition-colors"
                         title="Edit Experience"
                       >
-                        <Edit3 className="w-3.5 h-3.5" />
+                        <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => handleDelete(exp.id)}
-                        className="p-1.5 rounded-full bg-rose-100 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900 transition-colors"
+                        className="p-1 rounded bg-rose-100 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-200 transition-colors"
                         title="Delete Experience"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </>
                   )}
                 </div>
 
               {/* Header Row */}
-              <div className="flex flex-wrap items-start gap-3 pr-20">
-                <div className="w-11 h-11 rounded-[14px] bg-[#38bdf8]/15 dark:bg-[#38bdf8]/20 border border-[#38bdf8]/30 text-[#0284c7] dark:text-[#38bdf8] font-black text-lg flex items-center justify-center shrink-0">
+              <div className="flex flex-wrap items-start gap-2.5 pr-20">
+                <div className="w-9 h-9 rounded bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#FFFFFF] font-display font-black text-base flex items-center justify-center shrink-0">
                   {exp.companyName.charAt(0)}
                 </div>
                 <div className="flex-1 space-y-0.5 min-w-0">
-                  <h3 className="font-display text-base font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] leading-snug">
+                  <h3 className="font-display text-sm font-extrabold text-[#121417] dark:text-[#FFFFFF] leading-snug">
                     {exp.role} @ {exp.companyName}
                   </h3>
-                  <p className="text-xs text-[#747878] dark:text-[#6e7278] font-sans">
+                  <p className="text-[11px] text-[#868E96] dark:text-[#555555] font-sans">
                     {exp.studentName} • {exp.college} • {exp.year}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${getDifficultyBadge(exp.difficulty)}`}>
+                  <span className={`text-[9px] font-display font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${getDifficultyBadge(exp.difficulty)}`}>
                     {exp.difficulty}
                   </span>
-                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${getVerdictBadge(exp.verdict)}`}>
+                  <span className={`text-[9px] font-display font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${getVerdictBadge(exp.verdict)}`}>
                     {exp.verdict}
                   </span>
                   {exp.status === 'APPROVED' && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#006c49] dark:text-[#6cf8bb] bg-[#6cf8bb]/20 dark:bg-[#006c49]/30 px-2.5 py-0.5 rounded-full border border-[#00714d]/20 dark:border-[#6cf8bb]/30">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] bg-[#009D63]/10 dark:bg-[#00C47B]/10 px-2 py-0.5 rounded border border-[#009D63]/20 dark:border-[#00C47B]/30 uppercase tracking-wider">
                       <CheckCircle2 className="w-3 h-3" /> Verified
                     </span>
                   )}
@@ -309,19 +309,19 @@ export default function ExperiencesPage() {
 
               {/* Round Details */}
               {exp.rounds && exp.rounds.length > 0 && (
-                <div className="space-y-3 pt-3 border-t border-[#eae1da] dark:border-[#2b2d31]">
+                <div className="space-y-2.5 pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424]">
                   {exp.rounds.map((rd, idx) => {
                     const isGenericTitle = !rd.roundTitle || ['Interview Rounds & Details', 'Interview Breakdown & Rounds Details'].includes(rd.roundTitle);
                     return (
-                      <div key={idx} className="p-4 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[18px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-2">
+                      <div key={idx} className="p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
                         {!isGenericTitle && (
-                          <span className="text-xs font-black text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider block">
+                          <span className="text-[11px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider block">
                             {rd.roundTitle}
                           </span>
                         )}
                         <ContentRenderer
                           content={rd.details}
-                          className="text-xs font-sans"
+                          className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
                         />
                       </div>
                     );

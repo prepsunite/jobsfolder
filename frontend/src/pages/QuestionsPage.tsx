@@ -86,17 +86,17 @@ export default function QuestionsPage() {
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 border border-[#00714d]/20 dark:border-[#6cf8bb]/20 text-[#00714d] dark:text-[#6cf8bb] text-xs font-bold uppercase tracking-wider">
-            <BookOpen className="w-3.5 h-3.5 text-[#006c49] dark:text-[#6cf8bb]" />
-            <span>Official Papers Hub</span>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
+        <div className="space-y-0.5">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+            <BookOpen className="w-3 h-3" />
+            <span>Official Papers Archive</span>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] tracking-tight">
-            Exam Papers & Placement Drives
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
+            Exam Papers & Recruitment Drives
           </h1>
-          <p className="text-[#444748] dark:text-[#a6adbb] text-sm leading-relaxed font-sans">
-            Explore active company recruitment drives with direct access to official old placement papers, syllabus, and study material.
+          <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans">
+            Direct access to official previous year placement papers, round patterns, and study archives.
           </p>
         </div>
 
@@ -104,10 +104,10 @@ export default function QuestionsPage() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowAddExamModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#006c49] hover:bg-[#005237] text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black font-display font-bold text-xs uppercase tracking-wider rounded-md shadow-sm transition-all"
             >
-              <Plus className="w-4 h-4 text-[#6cf8bb]" />
-              <span>+ Add Exam Card</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Exam</span>
             </button>
           </div>
         )}
@@ -115,14 +115,14 @@ export default function QuestionsPage() {
 
       {/* Controls & Search Bar */}
       <div className="space-y-4">
-        <div className="relative flex-1 w-full max-w-xl">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#747878] dark:text-[#6e7278]" />
+        <div className="relative flex-1 w-full max-w-lg">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
           <input
             type="text"
-            placeholder="Search exam papers (e.g. TCS NQT, Accenture ASE, Infosys, Capgemini)..."
+            placeholder="Search TCS NQT, Accenture ASE, Infosys, Amazon..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] focus:border-[#006c49] dark:focus:border-[#6cf8bb] rounded-full pl-10 pr-4 py-2.5 text-sm text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] focus:outline-none focus:ring-2 focus:ring-[#006c49]/20 dark:focus:ring-[#6cf8bb]/20 transition-all font-sans"
+            className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#555555] focus:outline-none transition-colors font-sans"
           />
         </div>
       </div>
@@ -130,18 +130,18 @@ export default function QuestionsPage() {
       {/* COMPANY EXAM CARDS GRID */}
       {isLoadingExams ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 text-[#006c49] dark:text-[#6cf8bb] animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#009D63] dark:text-[#00C47B] animate-spin" />
         </div>
       ) : exams.length === 0 ? (
-        <div className="text-center py-16 bg-[#ffffff] dark:bg-[#1e1f22] rounded-[24px] border border-[#e2d8d2] dark:border-[#2b2d31]">
-          <Building2 className="w-10 h-10 text-[#747878] dark:text-[#6e7278] mx-auto mb-3" />
-          <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3] mb-1">No exam cards found</h3>
-          <p className="text-[#444748] dark:text-[#a6adbb] text-xs">
-            Try adjusting your search query or add an exam card as admin.
+        <div className="text-center py-16 bg-[#F8F9FA] dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
+          <Building2 className="w-8 h-8 text-[#868E96] dark:text-[#555555] mx-auto mb-2" />
+          <h3 className="font-display text-sm font-bold text-[#121417] dark:text-[#FFFFFF] mb-1">No exam papers found</h3>
+          <p className="text-[#868E96] dark:text-[#555555] text-xs">
+            Try adjusting your search query or check back as new papers are added.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {exams.map((exam: ExamWithCompany) => (
             <ExamCard
               key={exam.id}

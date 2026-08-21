@@ -36,7 +36,6 @@ export default function Sidebar() {
     { name: 'Contact Us', href: '/contact', icon: Mail },
   ];
 
-
   const aptitudeCategories = [
     { name: 'Arithmetic Aptitude', slug: 'arithmetic-aptitude', icon: Calculator },
     { name: 'Data Interpretation', slug: 'data-interpretation', icon: BarChart3 },
@@ -46,39 +45,42 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[#f6ece6] dark:bg-[#1e1f22] border-r border-[#e2d8d2] dark:border-[#2b2d31] flex flex-col justify-between h-screen sticky top-0 shrink-0 z-40 transition-colors">
+    <aside className="w-64 bg-[#F8F9FA] dark:bg-[#0C0C0C] border-r border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between h-screen sticky top-0 shrink-0 z-40 transition-colors">
       {/* Top Header & Brand */}
-      <div className="p-5 space-y-5 overflow-y-auto">
+      <div className="p-4 space-y-4 overflow-y-auto">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-2xl bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] flex items-center justify-center font-black text-xl shadow-md shadow-black/10 dark:shadow-white/10 group-hover:scale-105 transition-transform">
-            J
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-white dark:text-black flex items-center justify-center font-display font-black text-base transition-transform group-hover:scale-105">
+            P
           </div>
           <div className="flex flex-col">
-            <span className="font-display font-extrabold text-xl tracking-tight text-[#1f1b17] dark:text-[#e3e3e3] group-hover:text-[#006c49] dark:group-hover:text-[#6cf8bb] transition-colors">
-              Jobs<span className="text-[#006c49] dark:text-[#6cf8bb]">folder</span>
+            <span className="font-display font-extrabold text-base tracking-tight text-[#121417] dark:text-[#FFFFFF]">
+              Jobs<span className="text-[#009D63] dark:text-[#00C47B]">folder</span>
             </span>
-            <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider">
+            <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
               {role === 'ADMIN' ? 'Admin Portal' : role === 'USER' ? 'Student Workspace' : 'Guest Mode'}
             </span>
           </div>
         </Link>
 
         {/* Clean Status Badge */}
-        <div className="p-2.5 rounded-[14px] bg-[#ffffff] dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] text-xs flex items-center justify-between">
+        <div className="p-2 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${
-              role === 'ADMIN' ? 'bg-purple-600 animate-pulse' : role === 'USER' ? 'bg-emerald-500' : 'bg-emerald-500'
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              role === 'ADMIN' ? 'bg-purple-500 animate-pulse' : 'bg-[#009D63] dark:bg-[#00C47B]'
             }`} />
-            <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider text-[11px]">
-              {role === 'ADMIN' ? 'Admin Mode Active' : 'Student Workspace'}
+            <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
+              {role === 'ADMIN' ? 'Admin Active' : 'Student Mode'}
             </span>
           </div>
+          <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase">
+            2026
+          </span>
         </div>
 
         {/* Main Navigation Links */}
-        <nav className="space-y-1">
-          <span className="text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider block px-3 mb-1">
+        <nav className="space-y-0.5">
+          <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
             Menu
           </span>
           {navLinks.map((link) => {
@@ -88,35 +90,35 @@ export default function Sidebar() {
               <Link
                 key={link.name}
                 to={link.href}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-[14px] text-xs font-bold transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] shadow-sm ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#f6ece6] dark:ring-offset-[#1e1f22]'
-                    : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/70 dark:hover:bg-[#2b2d31]/70'
+                    ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                    : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#6cf8bb] dark:text-[#006c49]' : 'text-[#747878] dark:text-[#a6adbb]'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#00C47B]' : 'text-[#868E96] dark:text-[#555555]'}`} />
                   <span>{link.name}</span>
                 </div>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#6cf8bb] dark:text-[#006c49]" />}
+                {isActive && <ChevronRight className="w-3 h-3 text-[#00C47B]" />}
               </Link>
             );
           })}
         </nav>
 
         {/* Horizontal Separation Line & Collapsible Aptitude Categories */}
-        <div className="pt-3.5 pb-1 border-t border-[#d8cbc4] dark:border-[#383a40]">
+        <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
           <button
             type="button"
             onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
-            className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] transition-colors cursor-pointer group"
+            className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
           >
             <span>Aptitude & Reasoning</span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isAptitudeExpanded ? 'rotate-180 text-[#1f1b17] dark:text-[#e3e3e3]' : 'text-[#747878] dark:text-[#a6adbb]'}`} />
+            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isAptitudeExpanded ? 'rotate-180 text-[#121417] dark:text-[#FFFFFF]' : 'text-[#868E96] dark:text-[#555555]'}`} />
           </button>
 
           {isAptitudeExpanded && (
-            <div className="space-y-1 pt-2 animate-fadeIn">
+            <div className="space-y-0.5 pt-1.5 animate-fadeIn">
               {aptitudeCategories.map((cat) => {
                 const CatIcon = cat.icon;
                 const isCatActive = location.pathname.startsWith(`/aptitude/${cat.slug}`);
@@ -124,14 +126,14 @@ export default function Sidebar() {
                   <Link
                     key={cat.name}
                     to={`/aptitude/${cat.slug}`}
-                    className={`flex items-center justify-between px-3.5 py-2 rounded-[14px] text-xs font-bold transition-all ${
+                    className={`flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                       isCatActive
-                        ? 'bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] shadow-sm ring-1 ring-white dark:ring-white ring-offset-1 ring-offset-[#f6ece6] dark:ring-offset-[#1e1f22]'
-                        : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/70 dark:hover:bg-[#2b2d31]/70'
+                        ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <CatIcon className={`w-4 h-4 shrink-0 ${isCatActive ? 'text-[#6cf8bb] dark:text-[#006c49]' : 'text-[#747878] dark:text-[#a6adbb]'}`} />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isCatActive ? 'text-[#00C47B]' : 'text-[#868E96] dark:text-[#555555]'}`} />
                       <span className="truncate">{cat.name}</span>
                     </div>
                   </Link>
@@ -143,23 +145,23 @@ export default function Sidebar() {
 
         {/* Admin Control Panel Section (STRICTLY RESTRICTED TO ADMIN ROLE ONLY) */}
         {role === 'ADMIN' && (
-          <div className="pt-3.5 border-t border-[#d8cbc4] dark:border-[#383a40] space-y-1">
-            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider block px-3 mb-1 font-mono">
+          <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+            <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
               Control Center
             </span>
             <Link
               to="/admin"
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-[14px] text-xs font-bold transition-all ${
+              className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                 location.pathname.startsWith('/admin')
-                  ? 'bg-purple-700 dark:bg-purple-400 text-white dark:text-[#000000] shadow-sm'
-                  : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/70 dark:hover:bg-[#2b2d31]/70'
+                  ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                  : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                 <span>Admin Panel</span>
               </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500 dark:bg-purple-900/50 text-white dark:text-purple-300">
+              <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
                 Admin
               </span>
             </Link>
@@ -168,19 +170,17 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom User Account Section */}
-      <div className="p-4 border-t border-[#e2d8d2] dark:border-[#2b2d31] bg-[#eae1da]/50 dark:bg-[#141517]/50">
-        <div className="flex items-center justify-between p-2 rounded-[14px] bg-[#ffffff] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40]">
-          <Link to="/profile" className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-            <div className={`w-8 h-8 rounded-full text-white dark:text-[#000000] flex items-center justify-center font-bold text-xs shrink-0 ${
-              role === 'ADMIN' ? 'bg-purple-700 dark:bg-purple-400' : 'bg-[#006c49] dark:bg-[#6cf8bb]'
+      <div className="p-3 border-t border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
+        <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+          <Link to="/profile" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+            <div className={`w-7 h-7 rounded-md text-white dark:text-black flex items-center justify-center font-bold text-xs shrink-0 ${
+              role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#009D63] dark:bg-[#00C47B]'
             }`}>
-              {role === 'ADMIN' ? <KeyRound className="w-4 h-4" /> : <User className="w-4 h-4" />}
+              {role === 'ADMIN' ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
             </div>
             <div className="min-w-0">
-              <span className="font-bold text-xs text-[#1f1b17] dark:text-[#e3e3e3] block truncate">{user?.name || 'Workspace Account'}</span>
-              <span className={`text-[10px] font-semibold block truncate ${
-                role === 'ADMIN' ? 'text-purple-700 dark:text-purple-400' : 'text-[#00714d] dark:text-[#6cf8bb]'
-              }`}>
+              <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">{user?.name || 'Workspace Account'}</span>
+              <span className="text-[9px] font-medium text-[#868E96] dark:text-[#555555] block truncate">
                 {role === 'ADMIN' ? 'Administrator' : (user?.email || 'Active Account')}
               </span>
             </div>
@@ -188,7 +188,7 @@ export default function Sidebar() {
           <button
             onClick={logout}
             title="Sign Out"
-            className="p-1.5 text-[#747878] dark:text-[#a6adbb] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors shrink-0 cursor-pointer"
+            className="p-1 text-[#868E96] dark:text-[#555555] hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors shrink-0 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>

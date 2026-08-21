@@ -143,97 +143,97 @@ export default function PricingPage() {
   const currentSelectedExam = paywalledExams.find((e) => e.id === selectedExamId);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 py-6 animate-fadeIn">
+    <div className="max-w-6xl mx-auto space-y-10 py-4 animate-fadeIn">
       {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#006c49]/10 text-[#006c49] dark:bg-[#6cf8bb]/10 dark:text-[#6cf8bb] text-xs font-extrabold uppercase tracking-wider">
-          <Zap className="w-3.5 h-3.5" />
-          <span>Transparent Pricing</span>
+      <div className="text-center space-y-3 max-w-2xl mx-auto">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider">
+          <Zap className="w-3 h-3" />
+          <span>Paper Archives & Access</span>
         </div>
-        <h1 className="font-display font-black text-3xl sm:text-5xl text-[#1f1b17] dark:text-white tracking-tight">
-          Invest in Your Campus Placement Success.
+        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#121417] dark:text-[#FFFFFF] tracking-tight">
+          Invest in Real Drive Papers.
         </h1>
-        <p className="text-sm text-[#747878] dark:text-[#a6adbb] leading-relaxed">
-          Select a single 1-year paper pass or unlock unlimited access across all company recruitment drives.
+        <p className="text-xs text-[#868E96] dark:text-[#555555] leading-relaxed font-sans">
+          Select a single 1-year paper pass or unlock complete access across all 50+ company archives.
         </p>
       </div>
 
       {/* Pricing Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Tier 1: Free Preview */}
-        <div className="p-8 rounded-3xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex flex-col justify-between space-y-6">
+        <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-5">
           <div className="space-y-4">
             <div>
-              <span className="text-xs font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider">Freemium</span>
-              <h3 className="font-bold text-2xl text-[#1f1b17] dark:text-white">Free Preview</h3>
-              <p className="text-xs text-[#747878] dark:text-[#a6adbb]">Explore hiring patterns & syllabus</p>
+              <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display">Freemium</span>
+              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-[#FFFFFF]">Free Preview</h3>
+              <p className="text-xs text-[#868E96] dark:text-[#555555] mt-0.5">Explore hiring patterns & blueprints</p>
             </div>
 
             <div className="flex items-baseline gap-1">
-              <span className="font-black text-4xl text-[#1f1b17] dark:text-white">₹0</span>
-              <span className="text-xs text-[#747878] dark:text-[#a6adbb]">/ forever</span>
+              <span className="font-display font-black text-3xl text-[#121417] dark:text-[#FFFFFF]">₹0</span>
+              <span className="text-xs text-[#868E96] dark:text-[#555555]">/ forever</span>
             </div>
 
-            <ul className="space-y-3 text-xs text-[#444748] dark:text-[#a6adbb] pt-4 border-t border-[#eae1da] dark:border-[#2b2d31]">
+            <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-3 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Access company overviews & hiring badges</span>
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <span>Access company overviews & syllabus</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
                 <span>Round-wise test pattern breakdowns</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
                 <span>Sample memory-based preview questions</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Browse interview experiences</span>
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <span>Browse interview reports</span>
               </li>
             </ul>
           </div>
 
           <a
             href="/companies"
-            className="w-full py-3 rounded-2xl bg-[#f6ece6] dark:bg-[#2b2d31] hover:bg-[#eae1da] text-[#1f1b17] dark:text-white text-xs font-bold uppercase tracking-wider text-center transition-colors block"
+            className="w-full py-2.5 rounded-md bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider text-center transition-colors block"
           >
             Browse Free Preview
           </a>
         </div>
 
         {/* Tier 2: Single Exam Pass with Paper Selector */}
-        <div className="p-8 rounded-3xl bg-white dark:bg-[#1e1f22] border-2 border-[#006c49] dark:border-[#6cf8bb] shadow-lg flex flex-col justify-between space-y-6 relative">
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#006c49] text-white text-[10px] font-extrabold uppercase tracking-wider shadow">
-            1-Year Single Paper Pass
+        <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border-2 border-[#009D63] dark:border-[#00C47B] flex flex-col justify-between space-y-5 relative">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded bg-[#009D63] dark:bg-[#00C47B] text-black text-[9px] font-display font-black uppercase tracking-wider">
+            Most Popular · 1-Year Pass
           </div>
 
           <div className="space-y-4">
             <div>
-              <span className="text-xs font-bold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider">Targeted Preparation</span>
-              <h3 className="font-bold text-2xl text-[#1f1b17] dark:text-white">Single Exam Pass</h3>
-              <p className="text-xs text-[#747878] dark:text-[#a6adbb]">1-Year Access to 1 selected company paper</p>
+              <span className="text-[9px] font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider font-display">Targeted Archive</span>
+              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-[#FFFFFF]">Single Company Archive</h3>
+              <p className="text-xs text-[#868E96] dark:text-[#555555] mt-0.5">1-Year Access to all years for 1 company</p>
             </div>
 
             <div className="flex items-baseline gap-1">
-              <span className="font-black text-4xl text-[#1f1b17] dark:text-white">
+              <span className="font-display font-black text-3xl text-[#121417] dark:text-[#FFFFFF]">
                 ₹{currentSelectedExam?.price || 99}
               </span>
-              <span className="text-xs text-[#747878] dark:text-[#a6adbb]">/ 1 Year Access</span>
+              <span className="text-xs text-[#868E96] dark:text-[#555555]">/ 1 Year Access</span>
             </div>
 
             {/* Interactive Paper Selector Dropdown */}
-            <div className="space-y-1.5 p-3 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40]">
-              <label className="text-[11px] font-extrabold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Select Target Exam Paper:</span>
+            <div className="space-y-1 p-2.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+              <label className="text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                <span>Select Company Archive:</span>
               </label>
 
               <select
                 value={selectedExamId}
                 onChange={(e) => setSelectedExamId(e.target.value)}
                 disabled={paywalledExams.length === 0}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] text-xs font-bold text-[#1f1b17] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#006c49] disabled:opacity-60"
+                className="w-full px-2.5 py-1.5 rounded bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] text-xs font-semibold text-[#121417] dark:text-[#FFFFFF] focus:outline-none focus:border-[#009D63] disabled:opacity-60"
               >
                 {paywalledExams.length > 0 ? (
                   paywalledExams.map((exam) => (
@@ -242,23 +242,23 @@ export default function PricingPage() {
                     </option>
                   ))
                 ) : (
-                  <option value="">All current placement papers are freely accessible!</option>
+                  <option value="">All placement papers currently open!</option>
                 )}
               </select>
             </div>
 
-            <ul className="space-y-3 text-xs text-[#444748] dark:text-[#a6adbb] pt-2 border-t border-[#eae1da] dark:border-[#2b2d31]">
+            <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] shrink-0" />
-                <strong className="text-[#1f1b17] dark:text-white">Valid for 365 Days (1 Full Year)</strong>
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <strong className="text-[#121417] dark:text-[#FFFFFF]">Valid for 365 Days (1 Full Year)</strong>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] shrink-0" />
-                <span>Complete Document Explorer unlocked</span>
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <span>All previous year question papers</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb] shrink-0" />
-                <span>Full step-by-step solutions & code snippets</span>
+                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <span>Full step-by-step solutions & code</span>
               </li>
             </ul>
           </div>
@@ -267,42 +267,42 @@ export default function PricingPage() {
             type="button"
             onClick={() => handleBuy('SINGLE_PAPER', currentSelectedExam?.price || 99, selectedExamId)}
             disabled={loadingPlan === 'SINGLE_PAPER' || !selectedExamId}
-            className="w-full py-3.5 rounded-2xl bg-[#006c49] hover:bg-[#005a3c] text-white text-xs font-black uppercase tracking-wider shadow-md hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-md bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
-            {loadingPlan === 'SINGLE_PAPER' ? 'Processing...' : `Unlock ${currentSelectedExam?.companyName || ''} Paper (₹99)`}
+            {loadingPlan === 'SINGLE_PAPER' ? 'Processing...' : `Unlock ${currentSelectedExam?.companyName || ''} (₹99)`}
           </button>
         </div>
 
         {/* Tier 3: Monthly Pro Pass */}
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-[#1f1b17] to-[#2b2d31] text-white shadow-xl flex flex-col justify-between space-y-6">
+        <div className="p-6 rounded-lg bg-[#121417] dark:bg-[#141414] border border-[#121417] dark:border-[#242424] text-white flex flex-col justify-between space-y-5">
           <div className="space-y-4">
             <div>
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">All-Access Pass</span>
-              <h3 className="font-bold text-2xl">Monthly Pro Pass</h3>
-              <p className="text-xs text-slate-300">Unlimited access to ALL companies & papers</p>
+              <span className="text-[9px] font-bold text-[#00C47B] uppercase tracking-wider font-display">All-Access Pass</span>
+              <h3 className="font-display font-bold text-xl text-white">Monthly Pro Pass</h3>
+              <p className="text-xs text-[#999999] mt-0.5">Unlimited access to ALL companies & papers</p>
             </div>
 
             <div className="flex items-baseline gap-1">
-              <span className="font-black text-4xl text-white">₹299</span>
-              <span className="text-xs text-slate-300">/ 30 Days</span>
+              <span className="font-display font-black text-3xl text-white">₹299</span>
+              <span className="text-xs text-[#999999]">/ 30 Days</span>
             </div>
 
-            <ul className="space-y-3 text-xs text-slate-200 pt-4 border-t border-slate-700">
+            <ul className="space-y-2.5 text-xs text-[#999999] pt-3 border-t border-[#2E2E2E]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <strong className="text-white">Unlimited Access to ALL Company Papers</strong>
+                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <strong className="text-white">Unlimited Access to ALL 50+ Archives</strong>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
                 <span>30-Day active placement drive validity</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Access all TCS, Accenture, Infosys & product tracks</span>
+                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <span>Access TCS, Accenture, Amazon & more</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Priority support & new paper updates</span>
+                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <span>Latest 2026 drive questions included</span>
               </li>
             </ul>
           </div>
@@ -311,7 +311,7 @@ export default function PricingPage() {
             type="button"
             onClick={() => handleBuy('MONTHLY_PASS', 299)}
             disabled={loadingPlan === 'MONTHLY_PASS'}
-            className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-black text-xs font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-md bg-white text-black hover:bg-[#F1F3F5] text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
             {loadingPlan === 'MONTHLY_PASS' ? 'Processing...' : 'Get Monthly Pro Pass (₹299)'}
           </button>

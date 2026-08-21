@@ -378,10 +378,10 @@ export default function DocumentExplorer({
                   <button onClick={e => startRename(e, node)} className="p-0.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Rename">
                     <Edit3 className="w-3 h-3" />
                   </button>
-                  <button onClick={e => handleMoveUp(e, node.id)} className="p-0.5 text-[#747878] dark:text-[#a6adbb] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded" title="Move up">
+                  <button onClick={e => handleMoveUp(e, node.id)} className="p-0.5 text-[#868E96] hover:bg-[#E9ECEF] dark:hover:bg-[#242424] rounded" title="Move up">
                     <ArrowUp className="w-3 h-3" />
                   </button>
-                  <button onClick={e => handleMoveDown(e, node.id)} className="p-0.5 text-[#747878] dark:text-[#a6adbb] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded" title="Move down">
+                  <button onClick={e => handleMoveDown(e, node.id)} className="p-0.5 text-[#868E96] hover:bg-[#E9ECEF] dark:hover:bg-[#242424] rounded" title="Move down">
                     <ArrowDown className="w-3 h-3" />
                   </button>
                   <button onClick={e => handleAddChild(e, node.id)} className="p-0.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded" title="Add subtab inside">
@@ -401,7 +401,7 @@ export default function DocumentExplorer({
 
         {/* Children */}
         {hasChildren && isExpanded && (
-          <div className="mt-0.5 space-y-0.5 border-l border-[#eae1da] dark:border-[#2b2d31] ml-4">
+          <div className="mt-0.5 space-y-0.5 border-l border-[#E9ECEF] dark:border-[#242424] ml-3.5">
             {node.children!.map(child => renderTreeNode(child, level + 1))}
           </div>
         )}
@@ -411,21 +411,21 @@ export default function DocumentExplorer({
 
   // ─── Main Render ─────────────────────────────────────────────────────────
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-[#eae1da] dark:border-[#2b2d31] bg-white dark:bg-[#141517] shadow-xl flex flex-col md:flex-row min-h-[680px]">
+    <div className="w-full rounded-lg overflow-hidden border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col md:flex-row min-h-[680px]">
 
       {/* ── LEFT SIDEBAR ─────────────────────────────────────────────────── */}
-      <div className="w-full md:w-72 lg:w-80 border-r border-[#eae1da] dark:border-[#2b2d31] bg-[#fbf7f4]/80 dark:bg-[#18191c]/80 flex flex-col shrink-0">
+      <div className="w-full md:w-72 lg:w-80 border-r border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] flex flex-col shrink-0">
 
         {/* Sidebar Header */}
-        <div className="p-3 border-b border-[#eae1da] dark:border-[#2b2d31] space-y-2">
+        <div className="p-3 border-b border-[#E9ECEF] dark:border-[#242424] space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center font-display">
                 <BookOpen className="w-3.5 h-3.5" />
               </div>
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#1f1b17] dark:text-white">Document Tabs</h4>
-                <p className="text-[10px] text-[#747878] dark:text-[#a6adbb]">{flatNodes.length} sections</p>
+                <h4 className="text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-[#FFFFFF]">Paper Sections</h4>
+                <p className="text-[10px] text-[#868E96] dark:text-[#555555]">{flatNodes.length} sections</p>
               </div>
             </div>
 
@@ -433,10 +433,10 @@ export default function DocumentExplorer({
             {isAdmin && (
               <button
                 onClick={() => setAdminMode(v => !v)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-display font-bold transition-all border ${
                   adminMode
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:border-purple-400 hover:text-purple-600'
+                    ? 'bg-purple-700 text-white border-purple-700'
+                    : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:border-purple-400 hover:text-purple-600'
                 }`}
                 title="Toggle admin editing mode"
               >
@@ -450,7 +450,7 @@ export default function DocumentExplorer({
           {isAdmin && adminMode && (
             <button
               onClick={handleAddRootFile}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-purple-400 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[11px] font-bold transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-purple-400 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[10px] font-display font-bold uppercase tracking-wider transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Root File
@@ -459,12 +459,12 @@ export default function DocumentExplorer({
 
           {/* Admin Bulk Exam Access Toggle */}
           {isAdmin && adminMode && (
-            <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-1.5 animate-fadeIn">
+            <div className="p-2.5 rounded-md bg-purple-500/10 border border-purple-500/20 space-y-1.5 animate-fadeIn">
               <div className="flex items-center justify-between text-[10px]">
                 <span className="font-extrabold text-purple-800 dark:text-purple-300 truncate">
                   {examName} Access:
                 </span>
-                <span className="text-[9px] font-bold text-[#747878] dark:text-[#a6adbb]">
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555]">
                   {flatNodes.filter(n => n.isFree === true).length}/{flatNodes.length} Free
                 </span>
               </div>
@@ -472,7 +472,7 @@ export default function DocumentExplorer({
                 <button
                   type="button"
                   onClick={() => handleBulkSetAccess(true)}
-                  className="py-1 px-2 rounded-lg font-black text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer flex items-center justify-center gap-1"
+                  className="py-1 px-2 rounded font-display font-bold text-[9px] uppercase bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer flex items-center justify-center gap-1"
                   title="Make all tabs in this exam Free"
                 >
                   <Unlock className="w-3 h-3" /> Make All Free
@@ -480,7 +480,7 @@ export default function DocumentExplorer({
                 <button
                   type="button"
                   onClick={() => handleBulkSetAccess(false)}
-                  className="py-1 px-2 rounded-lg font-black text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all cursor-pointer flex items-center justify-center gap-1"
+                  className="py-1 px-2 rounded font-display font-bold text-[9px] uppercase bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all cursor-pointer flex items-center justify-center gap-1"
                   title="Make all tabs in this exam Paid (Locked)"
                 >
                   <Lock className="w-3 h-3" /> Make All Paid
@@ -491,43 +491,31 @@ export default function DocumentExplorer({
 
           {/* Search */}
           <div className="relative">
-            <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-[#747878] dark:text-[#a6adbb]" />
+            <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-[#868E96] dark:text-[#555555]" />
             <input
               type="text"
               placeholder="Search topics..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-white dark:bg-[#202225] border border-[#eae1da] dark:border-[#383a40] text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+              className="w-full pl-7 pr-3 py-1.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs text-[#121417] dark:text-[#FFFFFF] focus:outline-none focus:border-[#121417] dark:focus:border-[#444444]"
             />
           </div>
         </div>
-
-        {/* Admin Controls Legend */}
-        {isAdmin && adminMode && (
-          <div className="px-3 py-2 bg-purple-500/5 border-b border-purple-200/30 dark:border-purple-700/20 flex items-center gap-2 flex-wrap">
-            <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Hover a node →</span>
-            <span className="flex items-center gap-0.5 text-[9px] text-[#747878] dark:text-[#a6adbb]"><Edit3 className="w-2.5 h-2.5" />Rename</span>
-            <span className="flex items-center gap-0.5 text-[9px] text-[#747878] dark:text-[#a6adbb]"><ArrowUp className="w-2.5 h-2.5" /><ArrowDown className="w-2.5 h-2.5" />Reorder</span>
-            <span className="flex items-center gap-0.5 text-[9px] text-[#747878] dark:text-[#a6adbb]"><FolderPlus className="w-2.5 h-2.5" />Subtab</span>
-            <span className="flex items-center gap-0.5 text-[9px] text-[#747878] dark:text-[#a6adbb]"><FilePlus className="w-2.5 h-2.5" />File After</span>
-            <span className="flex items-center gap-0.5 text-[9px] text-rose-500"><Trash2 className="w-2.5 h-2.5" />Delete</span>
-          </div>
-        )}
 
         {/* Tree Node List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
           {localTabs.length > 0 ? (
             localTabs.map(node => renderTreeNode(node))
           ) : (
-            <div className="p-6 text-center text-xs text-[#747878] dark:text-[#a6adbb] space-y-3">
+            <div className="p-6 text-center text-xs text-[#868E96] dark:text-[#555555] space-y-3">
               <FileText className="w-8 h-8 mx-auto opacity-30" />
               <p>No document sections yet.</p>
               {isAdmin && (
                 <button
                   onClick={handleAddRootFile}
-                  className="mx-auto flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-xl text-[11px] font-bold hover:bg-purple-500 transition-colors"
+                  className="mx-auto flex items-center gap-1 px-3 py-1.5 bg-purple-700 text-white rounded-md text-[10px] font-display font-bold uppercase tracking-wider hover:bg-purple-600 transition-colors"
                 >
-                  <Plus className="w-3 h-3" /> Add First Section
+                  <Plus className="w-3 h-3" /> Add Section
                 </button>
               )}
             </div>
@@ -536,61 +524,49 @@ export default function DocumentExplorer({
       </div>
 
       {/* ── RIGHT CONTENT PANEL ──────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col relative min-h-[600px] overflow-hidden bg-white dark:bg-[#141517]">
+      <div className="flex-1 flex flex-col relative min-h-[600px] overflow-hidden bg-white dark:bg-[#141414]">
 
         {/* PAYWALL OVERLAY */}
         {!(hasAccess || isAdmin || activeNode?.isFree === true) ? (
-          <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#f6ece6]/30 dark:bg-[#141517]/30">
-            {/* Visual Abstract Skeleton Background (ZERO Text/Questions in HTML) */}
+          <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#F8F9FA]/50 dark:bg-[#0C0C0C]/50">
+            {/* Visual Abstract Skeleton Background */}
             <div className="absolute inset-0 p-8 opacity-10 filter blur-xs pointer-events-none select-none overflow-hidden space-y-6">
-              <div className="h-6 bg-current rounded-xl w-2/3 opacity-40" />
+              <div className="h-6 bg-current rounded w-2/3 opacity-40" />
               <div className="h-0.5 bg-current w-full opacity-20" />
               <div className="space-y-3 pt-2">
-                <div className="h-4 bg-current rounded-lg w-1/3 opacity-30" />
-                <div className="h-3 bg-current rounded-md w-full opacity-20" />
-                <div className="h-3 bg-current rounded-md w-5/6 opacity-20" />
-                <div className="h-3 bg-current rounded-md w-4/5 opacity-20" />
-              </div>
-              <div className="space-y-3 pt-4">
-                <div className="h-4 bg-current rounded-lg w-2/5 opacity-30" />
-                <div className="h-3 bg-current rounded-md w-full opacity-20" />
-                <div className="h-3 bg-current rounded-md w-3/4 opacity-20" />
-                <div className="h-3 bg-current rounded-md w-11/12 opacity-20" />
-              </div>
-              <div className="space-y-3 pt-4">
-                <div className="h-4 bg-current rounded-lg w-1/4 opacity-30" />
-                <div className="h-3 bg-current rounded-md w-full opacity-20" />
-                <div className="h-3 bg-current rounded-md w-2/3 opacity-20" />
+                <div className="h-4 bg-current rounded w-1/3 opacity-30" />
+                <div className="h-3 bg-current rounded w-full opacity-20" />
+                <div className="h-3 bg-current rounded w-5/6 opacity-20" />
               </div>
             </div>
 
             {/* Lock card */}
-            <div className="relative z-10 max-w-md w-full p-8 rounded-[28px] bg-white/95 dark:bg-[#1e1f22]/95 border border-[#eae1da] dark:border-[#383a40] shadow-2xl space-y-5 backdrop-blur-md">
-              <div className="w-14 h-14 rounded-2xl bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto shadow-md">
-                <Lock className="w-7 h-7 animate-pulse" />
+            <div className="relative z-10 max-w-md w-full p-6 sm:p-8 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] shadow-lg space-y-4">
+              <div className="w-12 h-12 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center mx-auto">
+                <Lock className="w-6 h-6 animate-pulse" />
               </div>
-              <div className="space-y-2">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-400 text-[10px] font-extrabold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3" /> Official Papers Locked
+              <div className="space-y-1.5">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" /> Previous Year Paper Locked
                 </span>
-                <h3 className="font-display text-xl font-black text-[#1f1b17] dark:text-[#e3e3e3]">
-                  Unlock Complete {examName} Papers
+                <h3 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF]">
+                  Unlock Complete {examName} Archive
                 </h3>
-                <p className="text-xs text-[#747878] dark:text-[#a6adbb] leading-relaxed">
-                  Unlock full access to all sections, questions, and test cases for <strong>{companyName} – {examName}</strong>.
+                <p className="text-xs text-[#868E96] dark:text-[#555555] leading-relaxed font-sans">
+                  Unlock full access to all sections, solved memory questions, and code solutions for <strong>{companyName} – {examName}</strong>.
                 </p>
               </div>
               <button
                 onClick={onOpenPaywall}
-                className="w-full py-4 px-6 rounded-2xl bg-purple-700 hover:bg-purple-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-900/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-md bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Lock className="w-4 h-4 text-purple-300" />
+                <Lock className="w-3.5 h-3.5" />
                 <span>Unlock All {examName} Tabs (from ₹99)</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
-              <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-[#747878] dark:text-[#a6adbb]">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Full Exam Access (₹99) • All-Company Pass (₹299/mo)</span>
+              <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[#868E96] dark:text-[#555555]">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+                <span>1-Year Access (₹99) · All-Company Pass (₹299/mo)</span>
               </div>
             </div>
           </div>
