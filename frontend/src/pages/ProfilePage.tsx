@@ -337,22 +337,16 @@ export default function ProfilePage() {
       {activeTab === 'exams' && (
         <div className="space-y-4">
           {bookmarkedExams.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {bookmarkedExams.map((exam) => (
                 <div
                   key={exam.id}
-                  className={`p-4 rounded-[20px] border transition-all duration-200 hover:shadow-md space-y-3 flex flex-col justify-between ${
-                    isDarkMode
-                      ? 'bg-[#1e1f22] border-[#2b2d31] hover:border-[#6cf8bb]/50'
-                      : 'bg-[#ffffff] border-[#eae1da] hover:border-[#006c49]/40'
-                  }`}
+                  className="p-5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
                 >
-                  <div className="space-y-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 ${
-                          isDarkMode ? 'bg-[#2b2d31] text-[#6cf8bb]' : 'bg-[#f6ece6] text-[#006c49]'
-                        }`}>
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0">
                           {exam.companyLogoUrl ? (
                             <img src={exam.companyLogoUrl} alt={exam.companyName || 'Company'} className="w-full h-full object-contain p-1" />
                           ) : (
@@ -360,10 +354,10 @@ export default function ProfilePage() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] block truncate">
+                          <span className="text-[11px] font-display font-bold text-[#868E96] dark:text-[#555555] block truncate">
                             {exam.companyName || 'Company Drive'}
                           </span>
-                          <h3 className="font-bold text-xs text-[#1f1b17] dark:text-[#e3e3e3] truncate leading-tight">
+                          <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] truncate leading-tight">
                             {exam.name}
                           </h3>
                         </div>
@@ -371,7 +365,7 @@ export default function ProfilePage() {
 
                       <button
                         onClick={() => handleRemoveExamBookmark(exam.id)}
-                        className="p-1.5 text-[#747878] dark:text-[#a6adbb] hover:text-rose-600 dark:hover:text-rose-400 rounded-full hover:bg-rose-500/10 transition-colors shrink-0"
+                        className="p-1 text-[#868E96] dark:text-[#555555] hover:text-rose-600 rounded transition-colors shrink-0"
                         title="Remove from bookmarks"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -379,11 +373,11 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                      <span className="bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                         {exam.badge || 'Official Drive'}
                       </span>
                       {exam.googleDocEmbedUrl && (
-                        <span className="bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1">
                           <CheckCircle2 className="w-2.5 h-2.5" />
                           Live Papers
                         </span>
@@ -391,24 +385,20 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="pt-2.5 border-t border-[#eae1da] dark:border-[#2b2d31] flex items-center gap-2">
+                  <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
                     <Link
                       to={`/companies/${exam.companySlug}?examId=${exam.id}`}
-                      className="flex-1 py-1.5 px-3 bg-[#006c49] hover:bg-[#00573b] dark:bg-[#6cf8bb] dark:hover:bg-[#4edea3] text-white dark:text-[#141517] rounded-lg text-[11px] font-bold text-center transition-colors shadow-xs"
+                      className="flex-1 py-1.5 px-3 bg-[#121417] hover:bg-[#009D63] dark:bg-white dark:hover:bg-[#00C47B] text-white dark:text-black font-display font-bold rounded-md text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
                     >
                       View Drive
                     </Link>
 
                     <Link
                       to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
-                      className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-colors flex items-center gap-1 ${
-                        isDarkMode
-                          ? 'bg-[#2b2d31] hover:bg-[#383a40] border-[#383a40] text-[#e3e3e3]'
-                          : 'bg-[#f6ece6] hover:bg-[#eae1da] border-[#eae1da] text-[#1f1b17]'
-                      }`}
+                      className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#121417]"
                       title="Open Old Papers Fullscreen Dashboard"
                     >
-                      <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                      <FileText className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
                       <span>Papers</span>
                     </Link>
                   </div>
