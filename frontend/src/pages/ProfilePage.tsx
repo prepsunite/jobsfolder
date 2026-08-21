@@ -59,12 +59,12 @@ export default function ProfilePage() {
           return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
         }
       } catch {}
-      return { isPro: dataStore.getUserSubscription().isPro, planName: 'Free Tier' };
+      return { isPro: false, planName: 'Free Tier' };
     },
     enabled: !!user?.email,
   });
 
-  const isUserPro = subData?.isPro ?? dataStore.getUserSubscription().isPro;
+  const isUserPro = subData?.isPro ?? false;
 
   const getSubtopicDisplayName = (topicId: string) => {
     const matched = ARITHMETIC_TOPICS.find(t => t.id === topicId);
@@ -191,16 +191,20 @@ export default function ProfilePage() {
       }`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-5">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-md ${
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-md overflow-hidden ${
               isDarkMode ? 'bg-[#6cf8bb] text-[#000000]' : 'bg-[#006c49] text-white'
             }`}>
-              <User className="w-8 h-8" />
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-8 h-8" />
+              )}
             </div>
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  Student Profile
+                  {user?.name || 'Student Profile'}
                 </h1>
                 {isUserPro ? (
                   <span className="text-xs font-black px-3 py-1 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1">
@@ -213,8 +217,8 @@ export default function ProfilePage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-1 max-w-xl">
-                Your saved recruitment drives, practice questions, unlocked placement papers, and candidate interview experiences.
+              <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5 max-w-xl font-medium">
+                {user?.email || 'Logged in Student'}
               </p>
             </div>
           </div>

@@ -30,15 +30,18 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
-  Activity
+  Activity,
+  CreditCard,
+  ShoppingBag
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { role } = useAuth();
   const queryClient = useQueryClient();
 
-  const [adminTab, setAdminTab] = useState<'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'metrics'>('manage-exams');
+  const [adminTab, setAdminTab] = useState<'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'users' | 'metrics'>('manage-exams');
   const [selectedCompanySlug, setSelectedCompanySlug] = useState('tcs');
+  const [usersSubTab, setUsersSubTab] = useState<'users' | 'transactions' | 'purchases' | 'subscriptions'>('users');
 
   // Moderation filter state
   const [moderationFilter, setModerationFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
@@ -112,6 +115,38 @@ export default function AdminDashboardPage() {
   const { data: allExamsGlobal = [] } = useQuery({
     queryKey: ['live-all-exams'],
     queryFn: () => examService.getAllExams(),
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+
+  // --- React Query: Live Registered Users from Supabase ---
+  const { data: registeredUsersList = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: adminService.getRegisteredUsers,
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+
+  // --- React Query: Live Transactions from Supabase ---
+  const { data: allTransactionsList = [], isLoading: txLoading } = useQuery({
+    queryKey: ['admin-transactions'],
+    queryFn: adminService.getAllTransactions,
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+
+  // --- React Query: Live Purchases from Supabase ---
+  const { data: allPurchasesList = [] } = useQuery({
+    queryKey: ['admin-purchases'],
+    queryFn: adminService.getAllPaperPurchases,
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+
+  // --- React Query: Live Subscriptions from Supabase ---
+  const { data: allSubscriptionsList = [] } = useQuery({
+    queryKey: ['admin-subscriptions'],
+    queryFn: adminService.getAllSubscriptions,
     enabled: role === 'ADMIN',
     staleTime: 0,
   });
@@ -520,6 +555,23 @@ export default function AdminDashboardPage() {
         >
           <Bookmark className="w-3.5 h-3.5 text-purple-300" />
           <span>Add Resource</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('users')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+            adminTab === 'users'
+              ? 'bg-purple-900 text-white shadow-sm'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5 text-purple-300" />
+          <span>Users &amp; Purchases</span>
+          {registeredUsersList.length > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-extrabold">
+              {registeredUsersList.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -1206,6 +1258,271 @@ export default function AdminDashboardPage() {
               + Publish Resource Live
             </button>
           </form>
+        </div>
+      )}
+
+      {/* 👥 TAB 5.5: USERS & PURCHASES MANAGEMENT */}
+      {adminTab === 'users' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Header & Sub-Tab Switcher */}
+          <div className="bg-[#ffffff] dark:bg-[#1e1f22] p-5 rounded-[24px] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="font-display text-lg font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <span>Registered Students &amp; Monetization Audit</span>
+              </h3>
+              <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
+                Live synchronization with Supabase <code className="text-purple-600 dark:text-purple-400 font-bold">auth.users</code>, <code className="text-purple-600 dark:text-purple-400 font-bold">profiles</code>, and <code className="text-purple-600 dark:text-purple-400 font-bold">transactions</code>.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 bg-[#f6ece6] dark:bg-[#141517] p-1.5 rounded-full border border-[#eae1da] dark:border-[#2b2d31] overflow-x-auto">
+              <button
+                onClick={() => setUsersSubTab('users')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  usersSubTab === 'users'
+                    ? 'bg-purple-900 text-white shadow-sm'
+                    : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                }`}
+              >
+                Registered Users ({registeredUsersList.length})
+              </button>
+              <button
+                onClick={() => setUsersSubTab('transactions')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  usersSubTab === 'transactions'
+                    ? 'bg-purple-900 text-white shadow-sm'
+                    : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                }`}
+              >
+                Transactions ({allTransactionsList.length})
+              </button>
+              <button
+                onClick={() => setUsersSubTab('purchases')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  usersSubTab === 'purchases'
+                    ? 'bg-purple-900 text-white shadow-sm'
+                    : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                }`}
+              >
+                Exam Paper Passes ({allPurchasesList.length})
+              </button>
+              <button
+                onClick={() => setUsersSubTab('subscriptions')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  usersSubTab === 'subscriptions'
+                    ? 'bg-purple-900 text-white shadow-sm'
+                    : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                }`}
+              >
+                Pro Subscriptions ({allSubscriptionsList.length})
+              </button>
+            </div>
+          </div>
+
+          {/* SubTab 1: Registered Users */}
+          {usersSubTab === 'users' && (
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
+                  All Authenticated Users ({registeredUsersList.length})
+                </span>
+                <span className="text-[11px] text-[#747878] dark:text-[#a6adbb]">
+                  Synced from Supabase database
+                </span>
+              </div>
+
+              {registeredUsersList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#747878] dark:text-[#a6adbb]">
+                  No registered users found yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                        <th className="pb-3 px-3">User</th>
+                        <th className="pb-3 px-3">Email</th>
+                        <th className="pb-3 px-3">Role</th>
+                        <th className="pb-3 px-3">Registered On</th>
+                        <th className="pb-3 px-3">User ID</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                      {registeredUsersList.map((u: any) => (
+                        <tr key={u.id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                          <td className="py-3.5 px-3 flex items-center gap-2.5">
+                            {u.avatar_url ? (
+                              <img src={u.avatar_url} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-[#eae1da] dark:border-[#2b2d31]" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center text-xs">
+                                {(u.name || u.email || 'U').charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{u.name || 'Student'}</span>
+                          </td>
+                          <td className="py-3.5 px-3 text-[#444748] dark:text-[#a6adbb] font-medium">{u.email}</td>
+                          <td className="py-3.5 px-3">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                              u.role === 'admin'
+                                ? 'bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300 dark:border-purple-700'
+                                : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                            }`}>
+                              {u.role || 'user'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 text-[#747878] dark:text-[#a6adbb]">
+                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="py-3.5 px-3 text-[10px] font-mono text-[#747878] dark:text-[#a6adbb]">{u.id}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SubTab 2: Payment Transactions */}
+          {usersSubTab === 'transactions' && (
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
+                  Razorpay &amp; Platform Payment Logs ({allTransactionsList.length})
+                </span>
+              </div>
+
+              {allTransactionsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#747878] dark:text-[#a6adbb]">
+                  No payment transactions recorded yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                        <th className="pb-3 px-3">Customer Email</th>
+                        <th className="pb-3 px-3">Plan / Item</th>
+                        <th className="pb-3 px-3">Amount</th>
+                        <th className="pb-3 px-3">Status</th>
+                        <th className="pb-3 px-3">Payment ID</th>
+                        <th className="pb-3 px-3">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                      {allTransactionsList.map((tx: any) => (
+                        <tr key={tx.id || tx.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                          <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{tx.user_email}</td>
+                          <td className="py-3.5 px-3">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-300">
+                              {tx.item_type || 'SINGLE_PAPER'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 font-extrabold text-[#006c49] dark:text-[#6cf8bb]">₹{tx.amount}</td>
+                          <td className="py-3.5 px-3">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              {tx.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 font-mono text-[10px] text-[#747878] dark:text-[#a6adbb]">{tx.payment_id}</td>
+                          <td className="py-3.5 px-3 text-[#747878] dark:text-[#a6adbb]">
+                            {tx.created_at ? new Date(tx.created_at).toLocaleString() : 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SubTab 3: Paper Purchases */}
+          {usersSubTab === 'purchases' && (
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
+                  Active Exam Paper Unlocks ({allPurchasesList.length})
+                </span>
+              </div>
+
+              {allPurchasesList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#747878] dark:text-[#a6adbb]">
+                  No exam paper purchases recorded yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                        <th className="pb-3 px-3">User Email</th>
+                        <th className="pb-3 px-3">Exam ID</th>
+                        <th className="pb-3 px-3">Amount</th>
+                        <th className="pb-3 px-3">Purchased On</th>
+                        <th className="pb-3 px-3">Expires On</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                      {allPurchasesList.map((p: any) => (
+                        <tr key={p.id || p.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                          <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{p.user_email}</td>
+                          <td className="py-3.5 px-3 font-semibold text-purple-700 dark:text-purple-400">{p.exam_id}</td>
+                          <td className="py-3.5 px-3 font-extrabold text-[#006c49] dark:text-[#6cf8bb]">₹{p.amount_paid}</td>
+                          <td className="py-3.5 px-3 text-[#747878] dark:text-[#a6adbb]">{p.purchased_at ? new Date(p.purchased_at).toLocaleDateString() : 'N/A'}</td>
+                          <td className="py-3.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">{p.expires_at ? new Date(p.expires_at).toLocaleDateString() : '1 Year'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SubTab 4: Pro Subscriptions */}
+          {usersSubTab === 'subscriptions' && (
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
+                  Active Pro Subscriptions ({allSubscriptionsList.length})
+                </span>
+              </div>
+
+              {allSubscriptionsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#747878] dark:text-[#a6adbb]">
+                  No active pro subscriptions recorded yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                        <th className="pb-3 px-3">User Email</th>
+                        <th className="pb-3 px-3">Plan Name</th>
+                        <th className="pb-3 px-3">Status</th>
+                        <th className="pb-3 px-3">Expires On</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                      {allSubscriptionsList.map((s: any) => (
+                        <tr key={s.id || s.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                          <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{s.user_email}</td>
+                          <td className="py-3.5 px-3 font-semibold text-purple-700 dark:text-purple-400">{s.plan_name}</td>
+                          <td className="py-3.5 px-3">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              {s.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">{s.expires_at ? new Date(s.expires_at).toLocaleDateString() : 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

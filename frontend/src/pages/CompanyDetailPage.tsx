@@ -158,11 +158,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       const granted = await supabasePaymentService.verifyEntitlementOnSupabase(userEmail, currentExam.id);
       setHasOldPapersAccess(granted);
     } catch {
-      // Fallback to local store only on network failure
-      const fallback = dataStore.hasAccessToOldPapers(currentExam.id, role, userEmail);
-      setHasOldPapersAccess(fallback);
+      // Fail closed strictly on error
+      setHasOldPapersAccess(false);
     }
-  }, [currentExam, isAdmin, role, user?.email]);
+  }, [currentExam, isAdmin, user?.email]);
 
   useEffect(() => { checkLiveAccess(); }, [checkLiveAccess]);
 

@@ -1,14 +1,25 @@
 import { useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router';
+import { Outlet, Link, useLocation, Navigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ShieldCheck, Plus, Sun, Moon, LogIn, Building2, BookOpen, ArrowRight, User } from 'lucide-react';
 
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/about',
+  '/contact',
+  '/pricing',
+  '/privacy-policy',
+  '/terms-and-conditions',
+  '/refund-policy',
+];
+
 export default function RootLayout() {
   const location = useLocation();
-  const { user, role, isAuthenticated } = useAuth();
+  const { user, role, isAuthenticated, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isAdmin = role === 'ADMIN';
   const queryClient = useQueryClient();
@@ -48,10 +59,25 @@ export default function RootLayout() {
     };
   }, [queryClient]);
 
-  // Public standalone pages do not show internal dashboard sidebar
-  const isPublicPage = location.pathname === '/' || location.pathname === '/login';
+  const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);
 
-  if (isPublicPage) {
+  // While checking Supabase session, render a clean loader
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#fff8f5] dark:bg-[#141517] flex flex-col items-center justify-center gap-3 animate-fadeIn">
+        <div className="w-10 h-10 border-4 border-[#006c49]/20 border-t-[#006c49] rounded-full animate-spin" />
+        <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Verifying Session...</span>
+      </div>
+    );
+  }
+
+  // 🔒 GUEST ROUTE GUARD: If unauthenticated guest tries to access any internal app page, redirect to login
+  if (!isAuthenticated && !isPublicRoute) {
+    const redirectTarget = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirectTo=${redirectTarget}`} replace />;
+  }
+
+  if (isPublicRoute) {
     return (
       <div className="min-h-screen bg-[#fff8f5] dark:bg-[#141517] text-[#1f1b17] dark:text-[#e3e3e3] flex flex-col font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
         {/* PUBLIC STANDALONE NAVBAR */}

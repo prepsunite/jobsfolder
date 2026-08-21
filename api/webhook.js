@@ -18,21 +18,24 @@ export default async function handler(req, res) {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers['x-razorpay-signature'];
 
-    // Verify webhook signature if secret is present
-    if (webhookSecret) {
-      if (!signature) {
-        return res.status(400).send('Missing webhook signature');
-      }
+    if (!webhookSecret) {
+      console.error('[api/webhook] RAZORPAY_WEBHOOK_SECRET is not configured.');
+      return res.status(500).send('Webhook Secret Not Configured');
+    }
 
-      const body = JSON.stringify(req.body);
-      const expectedSig = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(body)
-        .digest('hex');
+    if (!signature) {
+      return res.status(400).send('Missing webhook signature');
+    }
 
-      if (!safeTimingEqual(expectedSig, signature)) {
-        return res.status(400).send('Invalid webhook signature');
-      }
+    const body = JSON.stringify(req.body);
+    const expectedSig = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(body)
+      .digest('hex');
+
+    if (!safeTimingEqual(expectedSig, signature)) {
+      console.warn('[api/webhook] Invalid webhook signature');
+      return res.status(400).send('Invalid webhook signature');
     }
 
     const event = req.body;
@@ -40,46 +43,78 @@ export default async function handler(req, res) {
       const payment = event.payload?.payment?.entity;
       if (payment) {
         const { itemType = 'SINGLE_PAPER', examId } = payment.notes || {};
-        const userEmail = payment.email || 'student@jobsfolder.com';
-        const amount = payment.amount / 100;
+        const userEmail = payment.email || payment.notes?.userEmail;
+        const amount = payment.amount ? payment.amount / 100 : 99;
         const paymentId = payment.id;
+        const orderId = payment.order_id;
 
-        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+        if (userEmail) {
+          const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+          const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
-        if (supabaseUrl && supabaseServiceKey) {
-          const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+          if (supabaseUrl && supabaseServiceKey) {
+            const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+              auth: { persistSession: false, autoRefreshToken: false },
+            });
 
-          // Log transaction (idempotent write)
-          await supabaseAdmin.from('transactions').insert([{
-            user_email: userEmail,
-            payment_id: paymentId,
-            order_id: payment.order_id,
-            amount,
-            status: 'SUCCESS',
-            item_type: itemType,
-            exam_id: examId,
-          }]);
+            const normalizedEmail = userEmail.toLowerCase().trim();
 
-          if (itemType === 'SINGLE_PAPER' && examId) {
-            const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-            await supabaseAdmin.from('user_paper_purchases').insert([{
-              user_email: userEmail,
-              exam_id: examId,
-              payment_id: paymentId,
-              amount_paid: amount,
-              expires_at: paperExpiresAt,
-            }]);
-          } else if (itemType === 'MONTHLY_PASS') {
+            // Log transaction (idempotent write)
+            await supabaseAdmin.from('transactions').upsert(
+              [
+                {
+                  user_email: normalizedEmail,
+                  payment_id: paymentId,
+                  order_id: orderId,
+                  amount,
+                  currency: 'INR',
+                  status: 'SUCCESS',
+                  item_type: itemType,
+                  exam_id: examId || null,
+                },
+              ],
+              { onConflict: 'payment_id' }
+            );
 
-            const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-            await supabaseAdmin.from('user_subscriptions').insert([{
-              user_email: userEmail,
-              plan_name: 'Jobsfolder Pro Monthly Pass',
-              payment_id: paymentId,
-              status: 'ACTIVE',
-              expires_at: expiresAt,
-            }]);
+            if (itemType === 'SINGLE_PAPER' && examId) {
+              const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+              await supabaseAdmin.from('user_paper_purchases').upsert(
+                [
+                  {
+                    user_email: normalizedEmail,
+                    exam_id: examId,
+                    payment_id: paymentId,
+                    amount_paid: amount,
+                    expires_at: paperExpiresAt,
+                  },
+                ],
+                { onConflict: 'payment_id' }
+              );
+            } else {
+              let days = 30;
+              let planName = 'Jobsfolder Pro Monthly Pass';
+              if (itemType === 'QUARTERLY') {
+                days = 90;
+                planName = 'Jobsfolder Pro Quarterly Pass';
+              } else if (itemType === 'YEARLY') {
+                days = 365;
+                planName = 'Jobsfolder Master Yearly Pass';
+              }
+
+              const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+              await supabaseAdmin.from('user_subscriptions').upsert(
+                [
+                  {
+                    user_email: normalizedEmail,
+                    plan_name: planName,
+                    payment_id: paymentId,
+                    status: 'ACTIVE',
+                    expires_at: expiresAt,
+                  },
+                ],
+                { onConflict: 'payment_id' }
+              );
+            }
           }
         }
       }

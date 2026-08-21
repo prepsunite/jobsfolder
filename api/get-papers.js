@@ -10,32 +10,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { examId, userEmail = 'student@jobsfolder.com' } = req.query;
+    const { examId } = req.query;
 
     if (!examId) {
       return res.status(400).json({ error: 'Missing examId query parameter' });
     }
 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return res.status(200).json({
-        hasAccess: true,
-        nodes: [],
-        notice: 'Configure Supabase environment variables for live database paper fetching.',
-      });
+      return res.status(500).json({ error: 'Database service configuration missing on server.' });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 1. Check access entitlement via Supabase RPC
-    const { data: hasAccess } = await supabaseAdmin.rpc('check_user_paper_access', {
-      p_user_email: userEmail,
-      p_exam_id: examId,
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // 2. Fetch Paper Tab Nodes from Database
+    // 1. Authenticate user from Bearer JWT token if present (never trust query param email directly)
+    let authenticatedUserEmail = null;
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+        if (user?.email) {
+          authenticatedUserEmail = user.email.toLowerCase().trim();
+        }
+      } catch (authErr) {
+        console.warn('[api/get-papers] JWT token verification notice:', authErr);
+      }
+    }
+
+    // 2. Check access entitlement via Supabase RPC if authenticated
+    let hasAccess = false;
+    if (authenticatedUserEmail) {
+      const { data: accessGranted } = await supabaseAdmin.rpc('check_user_paper_access', {
+        p_user_email: authenticatedUserEmail,
+        p_exam_id: examId,
+      });
+      hasAccess = !!accessGranted;
+    }
+
+    // 3. Fetch Paper Tab Nodes from Database
     const { data: nodes, error } = await supabaseAdmin
       .from('paper_tab_nodes')
       .select('*')
@@ -46,16 +63,17 @@ export default async function handler(req, res) {
       throw error;
     }
 
-    // 3. Security Payload Redaction: If unpaid, set content: null
+    // 4. Security Payload Redaction: If unpaid and not free, set content: null
     const sanitizedNodes = (nodes || []).map((node) => {
-      if (!hasAccess) {
+      const isFreeTab = node.is_free === true || node.isFree === true;
+      if (!hasAccess && !isFreeTab) {
         return { ...node, content: null }; // 🔒 Zero text/HTML shipped to client!
       }
       return node;
     });
 
     return res.status(200).json({
-      hasAccess: !!hasAccess,
+      hasAccess,
       nodes: sanitizedNodes,
     });
   } catch (error) {

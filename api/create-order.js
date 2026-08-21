@@ -20,13 +20,8 @@ export default async function handler(req, res) {
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!key_id || !key_secret) {
-      // Fallback for local testing if credentials aren't set yet
-      return res.status(200).json({
-        orderId: `order_mock_${Date.now()}`,
-        amount: (amount || 99) * 100,
-        currency,
-        isMock: true,
-      });
+      console.error('[api/create-order] RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is not configured.');
+      return res.status(500).json({ error: 'Payment gateway credentials not configured on server.' });
     }
 
     const razorpay = new Razorpay({ key_id, key_secret });

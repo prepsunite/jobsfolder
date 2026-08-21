@@ -8,6 +8,19 @@ export interface ExamWithCompany extends ExamItem {
   companyIndustry?: string;
 }
 
+function sanitizeFallbackNodes(nodes: any[], isPublicExam: boolean): any[] {
+  if (!Array.isArray(nodes)) return [];
+  return nodes.map(node => {
+    const isFree = isPublicExam || node.isFree === true || node.is_free === true;
+    return {
+      ...node,
+      isFree: node.isFree ?? node.is_free ?? false,
+      content: isFree ? (node.content || '') : '', // 🔒 Redact locked content on fallback
+      children: node.children ? sanitizeFallbackNodes(node.children, isPublicExam) : undefined,
+    };
+  });
+}
+
 export const examService = {
   getExamsByCompany: async (companySlug: string, userEmail?: string): Promise<ExamItem[]> => {
     // 1. Attempt Secure Server-Side Redaction RPC
@@ -37,7 +50,7 @@ export const examService = {
       console.warn('[examService.getExamsByCompany] RPC fallback to direct query:', rpcErr);
     }
 
-    // 2. Direct Query Fallback
+    // 2. Direct Query Fallback (Sanitized to prevent data leakage)
     const { data, error } = await supabase
       .from('exams')
       .select('*')
@@ -51,20 +64,24 @@ export const examService = {
     }
 
     if (data && data.length > 0) {
-      return data.map(e => ({
-        id: e.id,
-        companySlug: e.company_slug,
-        name: e.name,
-        badge: e.badge || 'Campus Recruitment Drive',
-        content: e.content || '',
-        oldPapers: e.old_papers || '',
-        price: e.price ? Number(e.price) : 99,
-        paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
-        googleDocEmbedUrl: e.google_doc_embed_url,
-        googleDocEditUrl: e.google_doc_edit_url,
-        isPublicExam: e.is_public_exam ?? false,
-        upvotes: e.upvotes || 0,
-      }));
+      return data.map(e => {
+        const rawTabs = typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []);
+        const isPublic = e.is_public_exam ?? false;
+        return {
+          id: e.id,
+          companySlug: e.company_slug,
+          name: e.name,
+          badge: e.badge || 'Campus Recruitment Drive',
+          content: e.content || '',
+          oldPapers: e.old_papers || '',
+          price: e.price ? Number(e.price) : 99,
+          paperTabs: sanitizeFallbackNodes(rawTabs, isPublic),
+          googleDocEmbedUrl: e.google_doc_embed_url,
+          googleDocEditUrl: e.google_doc_edit_url,
+          isPublicExam: isPublic,
+          upvotes: e.upvotes || 0,
+        };
+      });
     }
 
     return [];

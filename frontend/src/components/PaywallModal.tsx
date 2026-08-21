@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Lock, CheckCircle2, ShieldCheck, X, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
-import { supabasePaymentService } from '@/services/supabasePaymentService';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -84,7 +83,7 @@ export default function PaywallModal({
           order_id: orderData.orderId,
           prefill: { email },
           handler: async (response: any) => {
-            // 3. Verify payment server-side
+            // 3. Verify payment server-side (HMAC SHA-256 verified & logged on Supabase)
             const verifyRes = await fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -106,20 +105,14 @@ export default function PaywallModal({
               return;
             }
 
-            // 4. Sync local state for instant UX
-            await supabasePaymentService.verifyAndLogTransaction({
-              paymentId: response.razorpay_payment_id,
-              orderId: response.razorpay_order_id,
-              amount: amountINR,
-              currency: 'INR',
-              itemType,
-              examId: itemType === 'SINGLE_PAPER' ? examId : undefined,
-              userEmail: email,
-            });
-
+            // 4. Verification successful on Supabase database
             setIsProcessing(false);
             setPaymentSuccess(true);
-            setTimeout(() => { setPaymentSuccess(false); onUnlocked(); onClose(); }, 1200);
+            setTimeout(() => {
+              setPaymentSuccess(false);
+              onUnlocked();
+              onClose();
+            }, 1200);
           },
           modal: { ondismiss: () => setIsProcessing(false) },
         };

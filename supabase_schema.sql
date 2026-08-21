@@ -79,13 +79,22 @@ ALTER TABLE public.paper_tab_nodes ENABLE ROW LEVEL SECURITY;
 
 -- Anonymous/Authenticated Policies
 DROP POLICY IF EXISTS "Allow select/insert" ON public.transactions;
-CREATE POLICY "Allow select/insert" ON public.transactions FOR ALL USING (true);
+DROP POLICY IF EXISTS "Select own transactions or admin" ON public.transactions;
+CREATE POLICY "Select own transactions or admin" 
+ON public.transactions FOR SELECT 
+USING (user_email = (auth.jwt() ->> 'email') OR auth.jwt() IS NULL);
 
 DROP POLICY IF EXISTS "Allow select/insert" ON public.user_subscriptions;
-CREATE POLICY "Allow select/insert" ON public.user_subscriptions FOR ALL USING (true);
+DROP POLICY IF EXISTS "Select own subscriptions or admin" ON public.user_subscriptions;
+CREATE POLICY "Select own subscriptions or admin" 
+ON public.user_subscriptions FOR SELECT 
+USING (user_email = (auth.jwt() ->> 'email') OR auth.jwt() IS NULL);
 
 DROP POLICY IF EXISTS "Allow select/insert" ON public.user_paper_purchases;
-CREATE POLICY "Allow select/insert" ON public.user_paper_purchases FOR ALL USING (true);
+DROP POLICY IF EXISTS "Select own paper purchases or admin" ON public.user_paper_purchases;
+CREATE POLICY "Select own paper purchases or admin" 
+ON public.user_paper_purchases FOR SELECT 
+USING (user_email = (auth.jwt() ->> 'email') OR auth.jwt() IS NULL);
 
 DROP POLICY IF EXISTS "Allow select" ON public.paper_tab_nodes;
 CREATE POLICY "Allow select" ON public.paper_tab_nodes FOR SELECT USING (true);

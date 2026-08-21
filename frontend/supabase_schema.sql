@@ -81,22 +81,46 @@ ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_paper_purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.paper_tab_nodes ENABLE ROW LEVEL SECURITY;
 
--- 9. Row Level Security (RLS) Policies (Permissive for Client App API Key)
+-- 9. Row Level Security (RLS) Policies
 DROP POLICY IF EXISTS "Allow public read access to paper_tab_nodes" ON public.paper_tab_nodes;
 CREATE POLICY "Allow public read access to paper_tab_nodes" 
 ON public.paper_tab_nodes FOR SELECT USING (true);
 
+-- Transactions: Authenticated users can read their own, only admin/service-role can write
 DROP POLICY IF EXISTS "Allow insert/select transactions" ON public.transactions;
-CREATE POLICY "Allow insert/select transactions" 
-ON public.transactions FOR ALL USING (true);
+DROP POLICY IF EXISTS "Select own transactions or admin" ON public.transactions;
+CREATE POLICY "Select own transactions or admin" 
+ON public.transactions FOR SELECT 
+USING (user_email = (auth.jwt() ->> 'email') OR auth.jwt() IS NULL OR public.is_admin());
 
+DROP POLICY IF EXISTS "Admin write transactions" ON public.transactions;
+CREATE POLICY "Admin write transactions" 
+ON public.transactions FOR INSERT 
+WITH CHECK (public.is_admin());
+
+-- User Subscriptions: Users can read their own subscriptions, only admin/service-role can write
 DROP POLICY IF EXISTS "Allow insert/select user_subscriptions" ON public.user_subscriptions;
-CREATE POLICY "Allow insert/select user_subscriptions" 
-ON public.user_subscriptions FOR ALL USING (true);
+DROP POLICY IF EXISTS "Select own subscriptions or admin" ON public.user_subscriptions;
+CREATE POLICY "Select own subscriptions or admin" 
+ON public.user_subscriptions FOR SELECT 
+USING (user_email = (auth.jwt() ->> 'email') OR auth.jwt() IS NULL OR public.is_admin());
 
+DROP POLICY IF EXISTS "Admin write user_subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Admin write user_subscriptions" 
+ON public.user_subscriptions FOR INSERT 
+WITH CHECK (public.is_admin());
+
+-- User Paper Purchases: Users can read their own purchases, only admin/service-role can write
 DROP POLICY IF EXISTS "Allow insert/select user_paper_purchases" ON public.user_paper_purchases;
-CREATE POLICY "Allow insert/select user_paper_purchases" 
-ON public.user_paper_purchases FOR ALL USING (true);
+DROP POLICY IF EXISTS "Select own paper purchases or admin" ON public.user_paper_purchases;
+CREATE POLICY "Select own paper purchases or admin" 
+ON public.user_paper_purchases FOR SELECT 
+USING (user_email = (auth.jwt() ->> 'email') OR auth.jwt() IS NULL OR public.is_admin());
+
+DROP POLICY IF EXISTS "Admin write user_paper_purchases" ON public.user_paper_purchases;
+CREATE POLICY "Admin write user_paper_purchases" 
+ON public.user_paper_purchases FOR INSERT 
+WITH CHECK (public.is_admin());
 
 -- 10. Database RPC Function: Verify Entitlement Live on Server
 CREATE OR REPLACE FUNCTION public.check_user_paper_access(

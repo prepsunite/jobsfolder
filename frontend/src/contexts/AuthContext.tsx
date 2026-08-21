@@ -69,95 +69,19 @@ const GUEST_USER: UserProfile = {
   role: 'GUEST',
 };
 
-function parsePreAuthJwtFromUrl(): { email: string; name: string; avatarUrl?: string } | null {
-  try {
-    if (typeof window === 'undefined') return null;
-    const hash = window.location.hash;
-    if (!hash || !hash.includes('access_token=')) return null;
-
-    const tokenMatch = hash.match(/access_token=([^&]+)/);
-    if (!tokenMatch || !tokenMatch[1]) return null;
-
-    const token = tokenMatch[1];
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const email = payload.email || payload.user_metadata?.email || '';
-    const name = payload.user_metadata?.full_name || payload.user_metadata?.name || payload.name || '';
-    const avatarUrl = payload.user_metadata?.avatar_url || payload.user_metadata?.picture || '';
-
-    if (email) {
-      return { email, name, avatarUrl };
-    }
-  } catch {
-    // Ignore JSON/btoa errors
-  }
-  return null;
-}
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Pre-parse URL Hash synchronously before Supabase even loads
-  const preAuth = parsePreAuthJwtFromUrl();
+  const [role, setRole] = useState<UserRole>('GUEST');
+  const [user, setUser] = useState<UserProfile | null>(GUEST_USER);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const [role, setRole] = useState<UserRole>(() => {
-    if (preAuth?.email) {
-      const isAdmin = isAllowedAdminEmail(preAuth.email);
-      const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
-      localStorage.setItem('prepunite_role', assignedRole);
-      localStorage.setItem('prepunite_user_email', preAuth.email);
-      if (preAuth.name) localStorage.setItem('prepunite_user_name', preAuth.name);
-      if (preAuth.avatarUrl) localStorage.setItem('prepunite_user_avatar', preAuth.avatarUrl);
-      return assignedRole;
-    }
-
-    const savedEmail = localStorage.getItem('prepunite_user_email') || '';
-    const savedRole = localStorage.getItem('prepunite_role') as UserRole;
-    if (savedEmail && isAllowedAdminEmail(savedEmail)) {
-      return 'ADMIN';
-    }
-    return savedRole || 'GUEST';
-  });
-
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    if (preAuth?.email) {
-      const isAdmin = isAllowedAdminEmail(preAuth.email);
-      const activeRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
-      const cleanName = formatDisplayNameFromEmail(preAuth.email, preAuth.name);
-      return {
-        id: preAuth.email,
-        name: cleanName,
-        email: preAuth.email,
-        role: activeRole,
-        avatarUrl: preAuth.avatarUrl,
-      };
-    }
-
-    const savedEmail = localStorage.getItem('prepunite_user_email') || '';
-    const savedRole = localStorage.getItem('prepunite_role') as UserRole;
-    const savedName = localStorage.getItem('prepunite_user_name') || (savedEmail ? savedEmail.split('@')[0] : 'User');
-    const savedAvatar = localStorage.getItem('prepunite_user_avatar') || undefined;
-
-    const isAdmin = isAllowedAdminEmail(savedEmail);
-    const activeRole: UserRole = isAdmin ? 'ADMIN' : (savedRole && savedRole !== 'GUEST' ? savedRole : 'GUEST');
-
-    if (activeRole !== 'GUEST' || isAdmin) {
-      return {
-        id: savedEmail || 'user-id',
-        name: formatDisplayNameFromEmail(savedEmail, savedName),
-        email: savedEmail || 'user@prepunite.com',
-        role: activeRole,
-        avatarUrl: savedAvatar,
-      };
-    }
-    return GUEST_USER;
-  });
-
-  const [isLoading, setIsLoading] = useState<boolean>(!preAuth && !localStorage.getItem('prepunite_user_email'));
-
-  // Helper to persist profile state
-  const applyUserProfile = (email: string, nameInput: string, avatarUrl?: string, metaRole?: string, appRole?: string) => {
-    const isAdmin = isAllowedAdminEmail(email) || metaRole === 'ADMIN' || appRole === 'ADMIN';
+  // Helper to persist profile state securely
+  const applyUserProfile = (
+    email: string,
+    nameInput: string,
+    avatarUrl?: string,
+    isConfirmedAdmin: boolean = false
+  ) => {
+    const isAdmin = isConfirmedAdmin || isAllowedAdminEmail(email);
     const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
@@ -186,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     rawName: string,
     rawAvatar?: string,
-    metaRole?: string,
     appRole?: string
   ) => {
     try {
@@ -199,9 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const dbRole = dbProfile?.role ? String(dbProfile.role).toUpperCase() : undefined;
       const isDbAdmin = dbRole === 'ADMIN';
       const isEmailAdmin = isAllowedAdminEmail(email);
-      const isAdmin = isEmailAdmin || isDbAdmin || metaRole === 'ADMIN' || appRole === 'ADMIN';
+      const isAppAdmin = appRole === 'ADMIN' || appRole === 'admin';
+      const isAdmin = isDbAdmin || isEmailAdmin || isAppAdmin;
 
-      const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
       const finalName = dbProfile?.name || rawName;
       const finalAvatar = dbProfile?.avatar_url || rawAvatar;
 
@@ -219,10 +142,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      applyUserProfile(email, finalName, finalAvatar, assignedRole === 'ADMIN' ? 'ADMIN' : undefined);
+      applyUserProfile(email, finalName, finalAvatar, isAdmin);
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
-      applyUserProfile(email, rawName, rawAvatar, metaRole, appRole);
+      const isEmailAdmin = isAllowedAdminEmail(email);
+      applyUserProfile(email, rawName, rawAvatar, isEmailAdmin);
     }
   };
 
@@ -240,11 +164,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const email = su.email || userMeta.email || '';
           const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
           const avatarUrl = userMeta.avatar_url || userMeta.picture;
-          const metaRole = userMeta.role;
           const appRole = appMeta.role;
 
           if (email) {
-            await syncProfileWithSupabase(su.id, email, name, avatarUrl, metaRole, appRole);
+            await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
           }
 
           if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
@@ -269,11 +192,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const email = su.email || userMeta.email || '';
         const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
         const avatarUrl = userMeta.avatar_url || userMeta.picture;
-        const metaRole = userMeta.role;
         const appRole = appMeta.role;
 
         if (email) {
-          await syncProfileWithSupabase(su.id, email, name, avatarUrl, metaRole, appRole);
+          await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
         }
 
         if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
