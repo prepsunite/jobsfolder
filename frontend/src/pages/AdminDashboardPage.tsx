@@ -802,24 +802,24 @@ export default function AdminDashboardPage() {
 
       {/* 🛡️ TAB 2: STUDENT EXPERIENCES MODERATION QUEUE */}
       {adminTab === 'moderation' && (
-        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
-          <div className="space-y-1 pb-4 border-b border-[#eae1da] dark:border-[#2b2d31]">
+        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 space-y-5 shadow-xs">
+          <div className="space-y-1 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <h2 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF] flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-500" />
                 Student Experiences Moderation Queue
               </h2>
-              <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 rounded-full border border-amber-300 dark:border-amber-700">
+              <span className="text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded border border-amber-500/20">
                 {pendingExperiencesCount} Action Required
               </span>
             </div>
-            <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
-              Review student interview submissions. Approving a submission makes it live for all students on the <strong>/experiences</strong> page.
+            <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
+              Review student interview submissions. Approving a submission makes it immediately live for all students on the <strong>/experiences</strong> feed.
             </p>
           </div>
 
           {/* Filter Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto bg-[#f6ece6] dark:bg-[#141517] p-1.5 rounded-full border border-[#e2d8d2] dark:border-[#2b2d31]">
+          <div className="flex items-center gap-1.5 overflow-x-auto bg-[#F8F9FA] dark:bg-[#0C0C0C] p-1 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
             {[
               { id: 'PENDING', label: `Pending Approvals (${pendingExperiencesCount})` },
               { id: 'APPROVED', label: `Approved Live (${approvedExperiencesCount})` },
@@ -829,10 +829,10 @@ export default function AdminDashboardPage() {
               <button
                 key={tab.id}
                 onClick={() => setModerationFilter(tab.id as any)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded text-xs font-display font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                   moderationFilter === tab.id
-                    ? 'bg-purple-900 text-white shadow-sm'
-                    : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                 }`}
               >
                 {tab.label}
@@ -842,75 +842,75 @@ export default function AdminDashboardPage() {
 
           {/* Submissions List */}
           {filteredExperiences.length === 0 ? (
-            <div className="py-12 text-center space-y-2 bg-[#f6ece6]/40 dark:bg-[#141517]/40 rounded-[20px] border border-dashed border-[#c4c7c7] dark:border-[#383a40]">
-              <CheckCircle2 className="w-8 h-8 text-[#006c49] dark:text-[#6cf8bb] mx-auto" />
-              <h4 className="font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">No Submissions in this Filter</h4>
-              <p className="text-xs text-[#747878] dark:text-[#a6adbb]">All student interview submissions have been moderated!</p>
+            <div className="py-12 text-center space-y-1.5 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
+              <CheckCircle2 className="w-6 h-6 text-[#009D63] dark:text-[#00C47B] mx-auto" />
+              <h4 className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">No Submissions in this Filter</h4>
+              <p className="text-xs text-[#868E96] dark:text-[#555555]">All student interview submissions have been moderated!</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {filteredExperiences.map((exp) => (
-                <div key={exp.id} className="p-5 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[22px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#e2d8d2] dark:border-[#2b2d31]">
+                <div key={exp.id} className="p-4 bg-white dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424] space-y-3 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3]">{exp.companyName} - {exp.role}</span>
-                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-                          exp.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                          exp.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300' :
-                          'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display font-extrabold text-sm text-[#121417] dark:text-[#FFFFFF]">{exp.companyName} - {exp.role}</span>
+                        <span className={`text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          exp.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20' :
+                          exp.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20' :
+                          'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20'
                         }`}>
                           {exp.status}
                         </span>
                       </div>
-                      <span className="text-xs text-[#747878] dark:text-[#a6adbb]">
+                      <span className="text-[11px] text-[#868E96] dark:text-[#555555] font-sans">
                         Submitted by <strong>{exp.studentName}</strong> ({exp.college}) • Class of {exp.year}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {exp.status !== 'APPROVED' && (
                         <button
                           onClick={() => handleUpdateExperienceStatus(exp.id, 'APPROVED')}
-                          className="px-3.5 py-1.5 bg-[#006c49] hover:bg-[#005237] text-white text-xs font-bold rounded-full transition-colors flex items-center gap-1 shadow-sm"
+                          className="px-3 py-1.5 bg-[#009D63] hover:bg-[#007F50] text-black text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
                         >
-                          <ThumbsUp className="w-3.5 h-3.5" />
-                          <span>Approve & Publish Live</span>
+                          <ThumbsUp className="w-3 h-3" />
+                          <span>Approve & Publish</span>
                         </button>
                       )}
                       {exp.status !== 'REJECTED' && (
                         <button
                           onClick={() => handleUpdateExperienceStatus(exp.id, 'REJECTED')}
-                          className="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold rounded-full transition-colors flex items-center gap-1 shadow-sm"
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
                         >
-                          <ThumbsDown className="w-3.5 h-3.5" />
+                          <ThumbsDown className="w-3 h-3" />
                           <span>Disapprove</span>
                         </button>
                       )}
                       <button
                         onClick={() => handleDeleteExperience(exp.id)}
-                        className="text-rose-600 hover:text-rose-800 p-1.5"
+                        className="text-rose-600 hover:text-rose-700 p-1.5 rounded transition-colors"
                         title="Delete Experience"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
 
                   {/* Rounds Detail Preview */}
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] block uppercase tracking-wider">Interview Breakdown & Rounds Details:</span>
+                    <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] block uppercase tracking-wider">Interview Breakdown & Rounds Details:</span>
                     <div className="space-y-2">
                       {exp.rounds.map((r, rIdx) => {
                         const isGeneric = !r.roundTitle || ['Interview Rounds & Details', 'Interview Breakdown & Rounds Details'].includes(r.roundTitle);
                         return (
-                          <div key={rIdx} className="p-3.5 bg-[#ffffff] dark:bg-[#1e1f22] rounded-xl border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+                          <div key={rIdx} className="p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424] space-y-1">
                             {!isGeneric && (
-                              <span className="font-bold text-xs text-purple-700 dark:text-purple-400 block">{r.roundTitle}</span>
+                              <span className="font-display font-bold text-xs text-[#009D63] dark:text-[#00C47B] block uppercase tracking-wider">{r.roundTitle}</span>
                             )}
                             <ContentRenderer
                               content={r.details}
-                              className="text-xs font-sans"
+                              className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
                             />
                           </div>
                         );
