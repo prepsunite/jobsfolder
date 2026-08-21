@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       userEmail,
       itemType = 'SINGLE_PAPER',
       examId,
-      amount = 99,
+      amount,
     } = req.body || {};
 
     if (!userEmail || typeof userEmail !== 'string' || !userEmail.includes('@')) {
@@ -37,9 +37,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Missing payment signature, payment ID, or order metadata.' });
     }
 
+    const verifiedAmount = (typeof amount === 'number' && amount > 0) ? amount : 99;
+
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
     if (!key_secret) {
-      console.error('[api/verify-payment] RAZORPAY_KEY_SECRET is not configured.');
+      console.error('[api/verify-payment] RAZORPAY_KEY_SECRET configuration missing on server.');
       return res.status(500).json({ success: false, error: 'Payment gateway configuration missing on server.' });
     }
 
@@ -51,7 +53,7 @@ export default async function handler(req, res) {
       .digest('hex');
 
     if (!safeTimingEqual(expectedSignature, razorpay_signature)) {
-      console.warn('[api/verify-payment] Invalid payment signature attempt:', { razorpay_payment_id, razorpay_order_id });
+      console.warn('[api/verify-payment] Invalid payment signature attempt for order:', razorpay_order_id);
       return res.status(400).json({ success: false, error: 'Invalid payment signature. Verification failed.' });
     }
 
@@ -77,7 +79,7 @@ export default async function handler(req, res) {
           user_email: normalizedEmail,
           payment_id: razorpay_payment_id,
           order_id: razorpay_order_id,
-          amount,
+          amount: verifiedAmount,
           currency: 'INR',
           status: 'SUCCESS',
           item_type: itemType,
@@ -96,7 +98,7 @@ export default async function handler(req, res) {
             user_email: normalizedEmail,
             exam_id: examId,
             payment_id: razorpay_payment_id,
-            amount_paid: amount,
+            amount_paid: verifiedAmount,
             expires_at: paperExpiresAt,
           },
         ],
@@ -134,8 +136,8 @@ export default async function handler(req, res) {
       message: 'Payment verified and access securely granted on database.',
     });
   } catch (error) {
-    console.error('[api/verify-payment] Exception:', error);
+    // Safe production logging
+    console.error('[api/verify-payment] Exception during verification:', error?.message || 'Unknown error');
     return res.status(500).json({ success: false, error: 'Payment verification server error.' });
   }
 }
-

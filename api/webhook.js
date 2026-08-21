@@ -122,8 +122,7 @@ export default async function handler(req, res) {
 
     return res.status(200).send('OK');
   } catch (error) {
-    console.error('[api/webhook] Error:', error);
+    console.error('[api/webhook] Error processing webhook:', error?.message || 'Unknown error');
     return res.status(500).send('Webhook Processing Error');
   }
 }
-

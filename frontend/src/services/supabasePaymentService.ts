@@ -22,22 +22,22 @@ export interface VerificationResult {
 export class SupabasePaymentService {
   /**
    * Fetches transaction history for a user from Supabase.
+   * Throws on database failure so callers can display proper error states.
    */
   async getUserTransactions(userEmail: string): Promise<SupabaseTransaction[]> {
-    try {
-      const normalizedEmail = userEmail.toLowerCase().trim();
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_email', normalizedEmail)
-        .order('created_at', { ascending: false });
+    const normalizedEmail = userEmail.toLowerCase().trim();
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_email', normalizedEmail)
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
-    } catch (err) {
-      console.warn('[SupabasePaymentService.getUserTransactions] Notice:', err);
-      return [];
+    if (error) {
+      console.error('[SupabasePaymentService.getUserTransactions] Supabase query error:', error.message);
+      throw new Error(`Failed to load transactions: ${error.message}`);
     }
+
+    return data || [];
   }
 
   /**

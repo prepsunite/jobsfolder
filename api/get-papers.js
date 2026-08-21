@@ -20,6 +20,7 @@ export default async function handler(req, res) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[api/get-papers] Supabase service role credentials not configured.');
       return res.status(500).json({ error: 'Database service configuration missing on server.' });
     }
 
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
           authenticatedUserEmail = user.email.toLowerCase().trim();
         }
       } catch (authErr) {
-        console.warn('[api/get-papers] JWT token verification notice:', authErr);
+        console.warn('[api/get-papers] JWT token verification notice:', authErr?.message || 'Invalid token');
       }
     }
 
@@ -77,8 +78,7 @@ export default async function handler(req, res) {
       nodes: sanitizedNodes,
     });
   } catch (error) {
-    console.error('[api/get-papers] Error:', error);
+    console.error('[api/get-papers] Error fetching paper content:', error?.message || 'Unknown error');
     return res.status(500).json({ error: 'Failed to fetch paper content' });
   }
 }
-

@@ -2,9 +2,20 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { type DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
+import { TreeNodeItem } from '@/components/TreeNodeItem';
 import {
-  ChevronRight,
-  ChevronDown,
+  cloneTree,
+  moveUp,
+  moveDown,
+  deleteNode,
+  addChildTo,
+  addAfterNode,
+  updateNode,
+  makeNewNode,
+  flattenNodes,
+  findNodeById,
+} from '@/utils/treeUtils';
+import {
   FileText,
   Search,
   Lock,
@@ -14,14 +25,6 @@ import {
   BookOpen,
   Sparkles,
   Plus,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-  FilePlus,
-  FolderPlus,
-  Edit3,
-  Check,
-  X,
   Settings2,
 } from 'lucide-react';
 
@@ -38,105 +41,12 @@ interface DocumentExplorerProps {
   onToggleExamPublic?: (isPublic: boolean) => void;
 }
 
-// ─── Tree Manipulation Helpers (pure functions) ──────────────────────────────
-function cloneTree(nodes: DocTabNode[]): DocTabNode[] {
-  return JSON.parse(JSON.stringify(nodes));
-}
-
-/** Returns true if a modification was made */
-function findAndModify(
-  nodes: DocTabNode[],
-  nodeId: string,
-  modifier: (node: DocTabNode, siblings: DocTabNode[], idx: number) => void
-): boolean {
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === nodeId) {
-      modifier(nodes[i], nodes, i);
-      return true;
-    }
-    if (nodes[i].children && findAndModify(nodes[i].children!, nodeId, modifier)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function moveUp(nodes: DocTabNode[], nodeId: string): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (node, siblings, i) => {
-    if (i > 0) { siblings.splice(i, 1); siblings.splice(i - 1, 0, node); }
-  });
-  return tree;
-}
-
-function moveDown(nodes: DocTabNode[], nodeId: string): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (node, siblings, i) => {
-    if (i < siblings.length - 1) { siblings.splice(i, 1); siblings.splice(i + 1, 0, node); }
-  });
-  return tree;
-}
-
-function deleteNode(nodes: DocTabNode[], nodeId: string): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (_node, siblings, i) => { siblings.splice(i, 1); });
-  return tree;
-}
-
-function addChildTo(nodes: DocTabNode[], parentId: string, newNode: DocTabNode): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, parentId, (node) => {
-    node.children = node.children ? [...node.children, newNode] : [newNode];
-  });
-  return tree;
-}
-
-function addAfterNode(nodes: DocTabNode[], siblingId: string, newNode: DocTabNode): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  let inserted = false;
-  const insert = (arr: DocTabNode[]): boolean => {
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i].id === siblingId) { arr.splice(i + 1, 0, newNode); inserted = true; return true; }
-      if (arr[i].children && insert(arr[i].children!)) return true;
-    }
-    return false;
-  };
-  insert(tree);
-  if (!inserted) tree.push(newNode); // fallback: push to root
-  return tree;
-}
-
-function updateNode(nodes: DocTabNode[], nodeId: string, updates: Partial<DocTabNode>): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (node) => { Object.assign(node, updates); });
-  return tree;
-}
-
-function makeNewNode(title: string): DocTabNode {
-  return {
-    id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    title,
-    content: `### ${title}\n\nWrite content here...`,
-    emoji: '📄',
-    isFree: true, // Default: FREE/PUBLIC — admin must explicitly lock sections they want paid
-  };
-}
-
-function flattenNodes(nodes: DocTabNode[]): DocTabNode[] {
-  const list: DocTabNode[] = [];
-  const traverse = (arr: DocTabNode[]) => arr.forEach(n => { list.push(n); if (n.children) traverse(n.children); });
-  traverse(nodes);
-  return list;
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
 export default function DocumentExplorer({
   examName,
   companyName,
   tabs,
   hasAccess,
   isAdmin = false,
-  isPublicExam = false,
   watermarkText,
   onOpenPaywall,
   onUpdateTabs,
@@ -180,19 +90,12 @@ export default function DocumentExplorer({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [emojiValue, setEmojiValue] = useState('');
-  const [adminMode, setAdminMode] = useState(false); // shown in admin but toggleable
+  const [adminMode, setAdminMode] = useState(false);
 
   const flatNodes = useMemo(() => flattenNodes(localTabs), [localTabs]);
 
   const activeNode = useMemo(() => {
-    const find = (nodes: DocTabNode[], id: string): DocTabNode | null => {
-      for (const n of nodes) {
-        if (n.id === id) return n;
-        if (n.children) { const f = find(n.children, id); if (f) return f; }
-      }
-      return null;
-    };
-    return find(localTabs, selectedNodeId) || localTabs[0] || null;
+    return findNodeById(localTabs, selectedNodeId) || localTabs[0] || null;
   }, [localTabs, selectedNodeId]);
 
   const currentIndex = flatNodes.findIndex(n => n.id === activeNode?.id);
@@ -204,14 +107,7 @@ export default function DocumentExplorer({
     setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const matchesSearch = (node: DocTabNode, q: string): boolean => {
-    if (!q) return true;
-    const lq = q.toLowerCase();
-    if (node.title.toLowerCase().includes(lq) || node.content.toLowerCase().includes(lq)) return true;
-    return !!node.children?.some(c => matchesSearch(c, q));
-  };
-
-  // ── Admin: tree operations ──────────────────────────────────────────────
+  // ── Admin tree operations ──────────────────────────────────────────────
   const handleAddRootFile = () => {
     const n = makeNewNode('New File');
     const updated = [...localTabs, n];
@@ -266,150 +162,19 @@ export default function DocumentExplorer({
     setRenamingId(null);
   };
 
-  // ── Admin: content editing (right panel) ───────────────────────────────
+  const handleToggleNodeAccess = (node: DocTabNode) => {
+    const newIsFree = !(node.isFree === true);
+    const updated = updateNode(localTabs, node.id, { isFree: newIsFree });
+    persist(updated);
+    const allFree = flattenNodes(updated).every(n => n.isFree === true);
+    onToggleExamPublic?.(allFree);
+  };
+
   const handleContentChange = useCallback((newContent: string) => {
     if (!activeNode) return;
     persist(updateNode(localTabs, activeNode.id, { content: newContent }));
   }, [activeNode, localTabs, persist]);
 
-  // ── Render tree node ───────────────────────────────────────────────────
-  const renderTreeNode = (node: DocTabNode, level = 0): React.ReactNode => {
-    if (searchQuery && !matchesSearch(node, searchQuery)) return null;
-
-    const hasChildren = !!node.children?.length;
-    const isExpanded = !!expandedIds[node.id];
-    const isSelected = selectedNodeId === node.id;
-    const isRenaming = renamingId === node.id;
-
-    return (
-      <div key={node.id} className="select-none">
-        <div
-          onClick={() => setSelectedNodeId(node.id)}
-          style={{ paddingLeft: `${level * 14 + 8}px` }}
-          className={`group flex items-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-            isSelected
-              ? 'bg-purple-600/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-xs'
-              : 'text-[#585c5c] dark:text-[#a6adbb] hover:bg-[#eae1da]/60 dark:hover:bg-[#2b2d31]/60 hover:text-[#1f1b17] dark:hover:text-white'
-          }`}
-        >
-          {/* Expand toggle */}
-          {hasChildren ? (
-            <button onClick={(e) => toggleExpand(node.id, e)} className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 flex-shrink-0">
-              {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            </button>
-          ) : (
-            <span className="w-4 flex-shrink-0" />
-          )}
-
-          {/* Emoji */}
-          {isRenaming ? (
-            <input
-              value={emojiValue}
-              onChange={e => setEmojiValue(e.target.value)}
-              onClick={e => e.stopPropagation()}
-              className="w-8 text-center bg-white dark:bg-[#1e1f22] border border-purple-400 rounded px-0.5 text-sm"
-              maxLength={2}
-            />
-          ) : (
-            <span className="text-sm flex-shrink-0">{node.emoji || (hasChildren ? (isExpanded ? '📂' : '📁') : '📄')}</span>
-          )}
-
-          {/* Title or Rename input */}
-          {isRenaming ? (
-            <input
-              autoFocus
-              value={renameValue}
-              onChange={e => setRenameValue(e.target.value)}
-              onClick={e => e.stopPropagation()}
-              onKeyDown={e => {
-                if (e.key === 'Enter') commitRename(node.id);
-                if (e.key === 'Escape') setRenamingId(null);
-              }}
-              className="flex-1 min-w-0 bg-white dark:bg-[#1e1f22] border border-purple-400 rounded px-1 py-0.5 text-xs focus:outline-none"
-            />
-          ) : (
-            <div className="flex-1 min-w-0 flex items-center justify-between gap-1">
-              <span className="truncate">{node.title}</span>
-              {adminMode && isAdmin ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const newIsFree = !(node.isFree === true);
-                    const updated = updateNode(localTabs, node.id, { isFree: newIsFree });
-                    persist(updated);
-                    const allFree = flattenNodes(updated).every(n => n.isFree === true);
-                    onToggleExamPublic?.(allFree);
-                  }}
-                  className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0 transition-transform active:scale-95 cursor-pointer ${
-                    node.isFree === true
-                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
-                      : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'
-                  }`}
-                  title="Click to toggle between Free and Paid for this single section"
-                >
-                  {node.isFree === true ? 'FREE' : 'PAID'}
-                </button>
-              ) : node.isFree === true ? (
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex-shrink-0">
-                  FREE
-                </span>
-              ) : null}
-            </div>
-          )}
-
-          {/* Admin action buttons */}
-          {adminMode && isAdmin && (
-            <div
-              className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-              onClick={e => e.stopPropagation()}
-            >
-              {isRenaming ? (
-                <>
-                  <button onClick={() => commitRename(node.id)} className="p-0.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded" title="Save name">
-                    <Check className="w-3 h-3" />
-                  </button>
-                  <button onClick={() => setRenamingId(null)} className="p-0.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded" title="Cancel">
-                    <X className="w-3 h-3" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={e => startRename(e, node)} className="p-0.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Rename">
-                    <Edit3 className="w-3 h-3" />
-                  </button>
-                  <button onClick={e => handleMoveUp(e, node.id)} className="p-0.5 text-[#868E96] hover:bg-[#E9ECEF] dark:hover:bg-[#242424] rounded" title="Move up">
-                    <ArrowUp className="w-3 h-3" />
-                  </button>
-                  <button onClick={e => handleMoveDown(e, node.id)} className="p-0.5 text-[#868E96] hover:bg-[#E9ECEF] dark:hover:bg-[#242424] rounded" title="Move down">
-                    <ArrowDown className="w-3 h-3" />
-                  </button>
-                  <button onClick={e => handleAddChild(e, node.id)} className="p-0.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded" title="Add subtab inside">
-                    <FolderPlus className="w-3 h-3" />
-                  </button>
-                  <button onClick={e => handleAddAfter(e, node.id)} className="p-0.5 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded" title="Add file after">
-                    <FilePlus className="w-3 h-3" />
-                  </button>
-                  <button onClick={e => handleDelete(e, node.id)} className="p-0.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded" title="Delete">
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Children */}
-        {hasChildren && isExpanded && (
-          <div className="mt-0.5 space-y-0.5 border-l border-[#E9ECEF] dark:border-[#242424] ml-3.5">
-            {node.children!.map(child => renderTreeNode(child, level + 1))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // ─── Main Render ─────────────────────────────────────────────────────────
   return (
     <div className="w-full rounded-lg overflow-hidden border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col md:flex-row min-h-[680px]">
 
@@ -450,7 +215,7 @@ export default function DocumentExplorer({
           {isAdmin && adminMode && (
             <button
               onClick={handleAddRootFile}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-purple-400 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[10px] font-display font-bold uppercase tracking-wider transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-purple-400 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[10px] font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Root File
@@ -502,10 +267,36 @@ export default function DocumentExplorer({
           </div>
         </div>
 
-        {/* Tree Node List */}
+        {/* Tree Node List (Modular TreeNodeItem) */}
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
           {localTabs.length > 0 ? (
-            localTabs.map(node => renderTreeNode(node))
+            localTabs.map(node => (
+              <TreeNodeItem
+                key={node.id}
+                node={node}
+                selectedNodeId={selectedNodeId}
+                expandedIds={expandedIds}
+                renamingId={renamingId}
+                renameValue={renameValue}
+                emojiValue={emojiValue}
+                adminMode={adminMode}
+                isAdmin={isAdmin}
+                searchQuery={searchQuery}
+                onSelectNode={setSelectedNodeId}
+                onToggleExpand={toggleExpand}
+                onSetRenameValue={setRenameValue}
+                onSetEmojiValue={setEmojiValue}
+                onCommitRename={commitRename}
+                onCancelRename={() => setRenamingId(null)}
+                onStartRename={startRename}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
+                onAddChild={handleAddChild}
+                onAddAfter={handleAddAfter}
+                onDeleteNode={handleDelete}
+                onToggleNodeAccess={handleToggleNodeAccess}
+              />
+            ))
           ) : (
             <div className="p-6 text-center text-xs text-[#868E96] dark:text-[#555555] space-y-3">
               <FileText className="w-8 h-8 mx-auto opacity-30" />
@@ -547,7 +338,7 @@ export default function DocumentExplorer({
               </div>
               <div className="space-y-1.5">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3" /> Previous Year Paper Locked
+                  <Sparkles className="w-3 h-3" /> Previous Paper Locked
                 </span>
                 <h3 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF]">
                   Unlock Complete {examName} Archive
@@ -577,8 +368,8 @@ export default function DocumentExplorer({
             {activeNode ? (
               <>
                 {/* Node meta editor */}
-                <div className="p-4 border-b border-[#eae1da] dark:border-[#2b2d31] bg-purple-50/50 dark:bg-purple-900/10 space-y-3">
-                  <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-purple-600 dark:text-purple-400 uppercase tracking-widest">
+                <div className="p-4 border-b border-[#E9ECEF] dark:border-[#242424] bg-purple-50/50 dark:bg-purple-900/10 space-y-3">
+                  <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-purple-600 dark:text-purple-400 uppercase tracking-widest font-display">
                     <Settings2 className="w-3 h-3" />
                     Editing Section
                   </div>
@@ -590,29 +381,22 @@ export default function DocumentExplorer({
                         setEmojiValue(val);
                         persist(updateNode(localTabs, activeNode.id, { emoji: val }));
                       }}
-                      className="w-10 text-center text-xl bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] rounded-lg py-1"
+                      className="w-10 text-center text-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-md py-1"
                       maxLength={2}
                       title="Emoji icon"
                     />
                     <input
                       value={activeNode.title}
                       onChange={e => persist(updateNode(localTabs, activeNode.id, { title: e.target.value }))}
-                      className="flex-1 bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#383a40] rounded-xl px-3 py-1.5 text-sm font-bold text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+                      className="flex-1 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-md px-3 py-1.5 text-sm font-bold text-[#121417] dark:text-[#FFFFFF] focus:outline-none focus:border-[#121417]"
                       placeholder="Section title..."
                     />
 
                     {/* Access level toggle for single active section */}
                     <button
                       type="button"
-                      onClick={() => {
-                        const isCurrentFree = activeNode.isFree === true;
-                        const newIsFree = !isCurrentFree;
-                        const updated = updateNode(localTabs, activeNode.id, { isFree: newIsFree });
-                        persist(updated);
-                        const allFree = flattenNodes(updated).every(n => n.isFree === true);
-                        onToggleExamPublic?.(allFree);
-                      }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                      onClick={() => handleToggleNodeAccess(activeNode)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-black transition-all border cursor-pointer ${
                         activeNode.isFree === true
                           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
                           : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
@@ -646,12 +430,12 @@ export default function DocumentExplorer({
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-[#747878] p-8 text-center">
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-[#868E96] p-8 text-center">
                 <FileText className="w-10 h-10 opacity-30" />
                 <p className="text-sm font-semibold">Select a section from the left to edit its content.</p>
                 <button
                   onClick={handleAddRootFile}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-500 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white rounded-md text-xs font-bold hover:bg-purple-500 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add First Section
                 </button>
@@ -676,17 +460,17 @@ export default function DocumentExplorer({
 
             {/* Document header */}
             {activeNode && (
-              <div className="space-y-3 border-b border-[#eae1da] dark:border-[#2b2d31] pb-6 mb-8">
+              <div className="space-y-3 border-b border-[#E9ECEF] dark:border-[#242424] pb-6 mb-8">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{activeNode.emoji || '📄'}</span>
                     <div>
-                      <h1 className="font-display text-2xl sm:text-3xl font-black text-[#1f1b17] dark:text-white">{activeNode.title}</h1>
-                      <p className="text-xs text-[#747878] dark:text-[#a6adbb] mt-0.5">{companyName} • {examName} Official Placement Series</p>
+                      <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF]">{activeNode.title}</h1>
+                      <p className="text-xs text-[#868E96] dark:text-[#555555] mt-0.5">{companyName} • {examName} Official Placement Series</p>
                     </div>
                   </div>
                   {activeNode.isFree === true && (
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[#009D63] dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider flex items-center gap-1">
                       <Unlock className="w-3 h-3" /> Free Practice Guide
                     </span>
                   )}
@@ -701,29 +485,29 @@ export default function DocumentExplorer({
                 emptyText="No content added yet."
               />
             ) : (
-              <div className="p-8 text-center text-gray-500 text-xs">Select a section from the left.</div>
+              <div className="p-8 text-center text-[#868E96] text-xs">Select a section from the left.</div>
             )}
 
             {/* Prev / Next navigation */}
             {flatNodes.length > 1 && (
-              <div className="mt-12 pt-6 border-t border-[#eae1da] dark:border-[#2b2d31] flex items-center justify-between gap-4">
+              <div className="mt-12 pt-6 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-4">
                 {prevNode ? (
-                  <button onClick={() => setSelectedNodeId(prevNode.id)} className="flex items-center gap-2 p-3 rounded-2xl border border-[#eae1da] dark:border-[#2b2d31] hover:bg-[#f6ece6] dark:hover:bg-[#1e1f22] text-left group transition-all">
-                    <span className="text-lg">←</span>
+                  <button onClick={() => setSelectedNodeId(prevNode.id)} className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-left group transition-all cursor-pointer">
+                    <span className="text-lg text-[#121417] dark:text-[#FFFFFF]">←</span>
                     <div>
-                      <span className="block text-[10px] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider">Previous</span>
-                      <span className="text-xs font-bold text-[#1f1b17] dark:text-white group-hover:text-purple-600">{prevNode.title}</span>
+                      <span className="block text-[10px] text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display font-bold">Previous</span>
+                      <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#009D63] dark:group-hover:text-[#00C47B]">{prevNode.title}</span>
                     </div>
                   </button>
                 ) : <div />}
 
                 {nextNode && (
-                  <button onClick={() => setSelectedNodeId(nextNode.id)} className="flex items-center gap-2 p-3 rounded-2xl border border-[#eae1da] dark:border-[#2b2d31] hover:bg-[#f6ece6] dark:hover:bg-[#1e1f22] text-right group transition-all ml-auto">
+                  <button onClick={() => setSelectedNodeId(nextNode.id)} className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-right group transition-all ml-auto cursor-pointer">
                     <div>
-                      <span className="block text-[10px] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider">Next</span>
-                      <span className="text-xs font-bold text-[#1f1b17] dark:text-white group-hover:text-purple-600">{nextNode.title}</span>
+                      <span className="block text-[10px] text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display font-bold">Next</span>
+                      <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#009D63] dark:group-hover:text-[#00C47B]">{nextNode.title}</span>
                     </div>
-                    <span className="text-lg">→</span>
+                    <span className="text-lg text-[#121417] dark:text-[#FFFFFF]">→</span>
                   </button>
                 )}
               </div>
