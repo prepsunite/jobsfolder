@@ -4,6 +4,7 @@ import RootLayout from '@/layouts/RootLayout';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const CompaniesPage = lazy(() => import('@/pages/CompaniesPage'));
@@ -24,8 +25,10 @@ const PolicyPage = lazy(() => import('@/pages/PolicyPage'));
 
 const PageLoader = () => (
   <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-    <div className="w-10 h-10 border-4 border-[#006c49]/20 border-t-[#006c49] rounded-full animate-spin"></div>
-    <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Loading PrepUnite...</span>
+    <div className="w-8 h-8 border-3 border-[#009D63]/20 border-t-[#009D63] dark:border-t-[#00C47B] rounded-full animate-spin"></div>
+    <span className="text-[11px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+      Loading...
+    </span>
   </div>
 );
 
@@ -94,7 +97,11 @@ export const router = createBrowserRouter([
       },
       {
         path: '/experiences/submit',
-        element: withSuspense(SubmitExperiencePage),
+        element: (
+          <ProtectedRoute>
+            {withSuspense(SubmitExperiencePage)}
+          </ProtectedRoute>
+        ),
       },
       {
         path: '/aptitude/:categorySlug',
@@ -106,15 +113,27 @@ export const router = createBrowserRouter([
       },
       {
         path: '/profile',
-        element: withSuspense(ProfilePage),
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
       },
       {
         path: '/admin',
-        element: withSuspense(AdminDashboardPage),
+        element: (
+          <ProtectedRoute requireAdmin>
+            {withSuspense(AdminDashboardPage)}
+          </ProtectedRoute>
+        ),
       },
       {
         path: '/admin/bulk-import',
-        element: withSuspense(AdminBulkImportPage),
+        element: (
+          <ProtectedRoute requireAdmin>
+            {withSuspense(AdminBulkImportPage)}
+          </ProtectedRoute>
+        ),
       },
       {
         path: '*',
@@ -123,4 +142,3 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-

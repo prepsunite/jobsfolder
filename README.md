@@ -1,73 +1,84 @@
-# 🎯 PrepUnite
+# 🎯 PrepUnite (Jobsfolder)
 
-> The operating system for placement preparation.
+> The operating system for placement preparation — Official past campus placement OA papers, solved memory questions, and interview transcripts.
 
-PrepUnite aggregates, organizes, verifies, and personalizes placement preparation into one platform. If a student has an interview next week, they should know exactly what to study and where to study it.
+PrepUnite aggregates, organizes, verifies, and personalizes placement preparation into one platform. Students can prepare for upcoming campus recruitment drives by accessing real past papers with solved solutions for TCS, Accenture, Infosys, Amazon, Cognizant, Wipro, and 50+ top tech recruiters.
 
-## 🏗️ Repository Structure
+---
+
+## 🏗️ Architecture & Tech Stack
 
 ```
 PrepUnite/
-├── frontend/          # React 19 + Vite + TypeScript
-├── backend/           # Java 21 + Spring Boot 3.5+
-├── docs/              # Project documentation
-├── database/          # SQL migrations & seed data
-├── scripts/           # Utility scripts
-├── docker/            # Docker configurations
-├── .github/           # GitHub Actions CI/CD
-└── README.md
+├── frontend/          # React 19 + Vite + TypeScript + Tailwind CSS
+│   ├── src/
+│   │   ├── components/    # Reusable UI components & modals
+│   │   ├── constants/     # Centralized data constants (homeData, pricingData)
+│   │   ├── contexts/      # AuthContext (Supabase Auth & Roles), ThemeContext
+│   │   ├── layouts/       # RootLayout, Navbar, Footer
+│   │   ├── pages/         # Feature pages & Admin dashboards
+│   │   ├── services/      # Supabase data services & RPC callers
+│   │   └── utils/         # questionParser, treeUtils
+├── api/               # Vercel Serverless Functions (Node.js)
+│   ├── create-order.js    # Razorpay order generation with strict validation
+│   ├── verify-payment.js  # Server-side HMAC SHA-256 signature verification & Supabase access grant
+│   ├── get-papers.js      # JWT-validated server-side paper delivery
+│   └── webhook.js         # Razorpay payment webhook handler
+├── database/          # SQL migrations & RLS policies
+└── docs/              # Architecture diagrams & API documentation
 ```
 
-## 🚀 Tech Stack
+### Technology Matrix
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui |
-| Backend | Java 21, Spring Boot 3.5+, Spring Security, Spring Data JPA |
-| Database | PostgreSQL (Neon) |
-| Auth | Clerk |
-| Cache | Redis (Upstash) |
-| Search | PostgreSQL Full-Text Search |
-| Storage | Cloudflare R2 |
-| Email | Resend |
-| Analytics | PostHog |
+| Layer | Technology | Details |
+|-------|-----------|---------|
+| **Frontend** | React 19, TypeScript, Vite | Fast client-side rendering with Tailwind CSS & TanStack Query |
+| **Backend & API** | Vercel Serverless Functions | Secure Node.js serverless handlers (`/api/`) |
+| **Database & Auth** | Supabase (PostgreSQL) | Managed PostgreSQL with Row-Level Security (RLS) & Auth |
+| **Access Control** | Supabase RPC Functions | Zero unpaid content leakage via server-side redaction RPCs |
+| **Payments** | Razorpay Gateway | UPI, Netbanking, Cards with HMAC SHA-256 verification |
+| **Security** | Row Level Security (RLS) | Granular database policies for user ownership & admin moderation |
 
-## 📦 Getting Started
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** >= 22
-- **Java** 21
-- **Docker** & Docker Compose (optional, for full stack)
+- **Node.js** >= 18
+- **npm** or **pnpm**
+- **Supabase Project** (Database & Auth)
+- **Razorpay Account** (Key ID & Secret for payments)
 
-### Quick Start (Docker)
+### Environment Variables
 
-```bash
-docker compose -f docker/docker-compose.yml up
+Create `.env` inside `frontend/`:
+```env
+VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_RAZORPAY_KEY_ID=rzp_live_your_key_id
 ```
 
-### Manual Start
+Configure in Vercel / Environment for `/api/`:
+```env
+RAZORPAY_KEY_ID=rzp_live_your_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+SUPABASE_URL=https://your-supabase-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
 
-**Frontend:**
+### Running Locally
+
 ```bash
+# Navigate to frontend and install dependencies
 cd frontend
 npm install
+
+# Start development server
 npm run dev
 ```
 
-**Backend:**
-```bash
-cd backend
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
 ## 📄 License
 
