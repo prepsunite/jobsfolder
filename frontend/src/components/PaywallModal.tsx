@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import { Lock, CheckCircle2, ShieldCheck, X, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  PAYWALL_PRICING_TIERS,
+  type PaywallOptionType,
+  type PaywallPricingTier,
+} from '@/constants/pricingData';
+
+export type { PaywallOptionType };
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -10,8 +17,6 @@ interface PaywallModalProps {
   userEmail?: string;
   onUnlocked: () => void;
 }
-
-export type PaywallOptionType = 'SINGLE' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
 
 export default function PaywallModal({
   isOpen,
@@ -28,6 +33,9 @@ export default function PaywallModal({
 
   if (!isOpen) return null;
 
+  const currentTier =
+    PAYWALL_PRICING_TIERS.find((t) => t.id === selectedOption) || PAYWALL_PRICING_TIERS[1];
+
   const handleCheckout = async (option: PaywallOptionType) => {
     const email = userEmail?.trim();
     if (!email) {
@@ -38,23 +46,13 @@ export default function PaywallModal({
 
     setIsProcessing(true);
 
-    let amountINR = 299;
-    let itemType: 'SINGLE_PAPER' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY';
-    let description = 'Jobsfolder Pro Monthly Pass';
-
-    if (option === 'SINGLE') {
-      amountINR = 99;
-      itemType = 'SINGLE_PAPER';
-      description = `1-Year Paper Access: ${examName}`;
-    } else if (option === 'QUARTERLY') {
-      amountINR = 699;
-      itemType = 'QUARTERLY';
-      description = 'Jobsfolder Pro Quarterly Pass';
-    } else if (option === 'YEARLY') {
-      amountINR = 1999;
-      itemType = 'YEARLY';
-      description = 'Jobsfolder Master Yearly Pass';
-    }
+    const tier = PAYWALL_PRICING_TIERS.find((t) => t.id === option) || PAYWALL_PRICING_TIERS[1];
+    const amountINR = tier.amountINR;
+    const itemType = tier.itemType;
+    const description =
+      option === 'SINGLE'
+        ? `1-Year Paper Access: ${examName}`
+        : tier.defaultDescription;
 
     try {
       // 1. Create order on backend
@@ -83,7 +81,7 @@ export default function PaywallModal({
           order_id: orderData.orderId,
           prefill: { email },
           handler: async (response: any) => {
-            // 3. Verify payment server-side (HMAC SHA-256 verified & logged on Supabase)
+            // 3. Verify payment server-side
             const verifyRes = await fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -129,215 +127,151 @@ export default function PaywallModal({
     }
   };
 
-  const getOptionPrice = (option: PaywallOptionType) => {
-    switch (option) {
-      case 'SINGLE': return '₹99';
-      case 'MONTHLY': return '₹299';
-      case 'QUARTERLY': return '₹699';
-      case 'YEARLY': return '₹1,999';
+  const getTierBorderClass = (tier: PaywallPricingTier, isSelected: boolean) => {
+    if (!isSelected) {
+      return 'bg-[#F8F9FA]/60 dark:bg-[#0C0C0C]/60 border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#444444]';
+    }
+
+    switch (tier.themeColor) {
+      case 'emerald':
+        return 'bg-emerald-500/10 border-[#009D63] dark:border-[#00C47B] shadow-sm ring-1 ring-[#009D63]/30';
+      case 'purple':
+        return 'bg-purple-500/10 border-purple-600 shadow-sm ring-1 ring-purple-500/30';
+      case 'blue':
+        return 'bg-blue-500/10 border-blue-600 shadow-sm ring-1 ring-blue-500/30';
+      case 'amber':
+        return 'bg-amber-500/10 border-amber-500 shadow-sm ring-1 ring-amber-500/30';
+    }
+  };
+
+  const getTierCheckboxClass = (tier: PaywallPricingTier, isSelected: boolean) => {
+    if (!isSelected) return 'border-[#868E96] dark:border-[#555555]';
+    switch (tier.themeColor) {
+      case 'emerald':
+        return 'border-[#009D63] bg-[#009D63] dark:border-[#00C47B] dark:bg-[#00C47B] text-black';
+      case 'purple':
+        return 'border-purple-600 bg-purple-600 text-white';
+      case 'blue':
+        return 'border-blue-600 bg-blue-600 text-white';
+      case 'amber':
+        return 'border-amber-500 bg-amber-500 text-black';
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-xl bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 shadow-2xl space-y-5 text-[#1f1b17] dark:text-[#e3e3e3] max-h-[92vh] overflow-y-auto">
-        
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-6 sm:p-8 shadow-2xl space-y-5 text-[#121417] dark:text-[#FFFFFF] max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full text-[#747878] dark:text-[#a6adbb] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-md text-[#868E96] dark:text-[#555555] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Lock Security Badge */}
         <div className="space-y-2 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 dark:bg-amber-400/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto shadow-md">
-            <Lock className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center mx-auto shadow-xs">
+            <Lock className="w-6 h-6 animate-pulse" />
           </div>
-          <span className="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-extrabold uppercase tracking-wider">
-            Premium Placement Content
+          <span className="inline-block px-3 py-0.5 rounded-md bg-[#009D63]/10 border border-[#009D63]/20 text-[#009D63] dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider">
+            Premium Placement Drive Content
           </span>
-          <h2 className="font-display text-2xl font-black tracking-tight">
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">
             Unlock Official Placement Papers
           </h2>
-          <p className="text-xs text-[#747878] dark:text-[#a6adbb] max-w-md mx-auto">
-            Access locked placement drive papers for <strong className="text-[#1f1b17] dark:text-[#e3e3e3]">{companyName} – {examName}</strong>. Choose your pass duration:
+          <p className="text-xs text-[#868E96] dark:text-[#555555] max-w-md mx-auto">
+            Access locked placement drive papers for{' '}
+            <strong className="text-[#121417] dark:text-[#FFFFFF]">{companyName} – {examName}</strong>. Choose your pass duration:
           </p>
         </div>
 
         {/* Payment Success State */}
         {paymentSuccess ? (
-          <div className="p-6 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-center space-y-3 animate-fadeIn">
-            <CheckCircle2 className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto animate-bounce" />
-            <h3 className="font-extrabold text-base text-emerald-800 dark:text-emerald-300">
-              Payment Verified & Unlocked!
+          <div className="p-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center space-y-3 animate-fadeIn">
+            <CheckCircle2 className="w-12 h-12 text-[#009D63] dark:text-[#00C47B] mx-auto animate-bounce" />
+            <h3 className="font-extrabold text-base text-[#009D63] dark:text-[#00C47B]">
+              Payment Verified &amp; Unlocked!
             </h3>
-            <p className="text-xs text-emerald-700 dark:text-emerald-400">
-              Granting 30-day verified access to official placement paper...
+            <p className="text-xs text-[#868E96] dark:text-[#555555]">
+              Granting verified access to official placement paper archive...
             </p>
           </div>
         ) : (
-          /* Purchasing Options Grid */
+          /* Purchasing Options Grid (Generated from pricingData constants) */
           <div className="space-y-3">
-            
-            {/* OPTION 1: Full Exam Pass (All Tabs Included) */}
-            <div
-              onClick={() => setSelectedOption('SINGLE')}
-              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1 ${
-                selectedOption === 'SINGLE'
-                  ? 'bg-emerald-500/10 border-emerald-600 shadow-md ring-1 ring-emerald-500'
-                  : 'bg-[#f6ece6]/60 dark:bg-[#141517]/60 border-[#eae1da] dark:border-[#383a40] hover:border-emerald-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedOption === 'SINGLE' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-[#747878]'
-                  }`}>
-                    {selectedOption === 'SINGLE' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
-                      Full Exam Pass (All Tabs Included)
-                    </h3>
-                    <span className="text-[11px] text-[#747878] dark:text-[#a6adbb] font-semibold block">
-                      Unlocks ALL tabs & sections for {companyName} – {examName}
-                    </span>
-                  </div>
-                </div>
+            {PAYWALL_PRICING_TIERS.map((tier) => {
+              const isSelected = selectedOption === tier.id;
+              const resolvedSubtitle =
+                tier.id === 'SINGLE'
+                  ? `Unlocks ALL tabs & sections for ${companyName} – ${examName}`
+                  : tier.subtitle;
 
-                <div className="text-right">
-                  <span className="font-display font-black text-xl text-[#1f1b17] dark:text-[#e3e3e3]">₹99</span>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 block">/ 1-Year Access</span>
-                </div>
-              </div>
-            </div>
+              return (
+                <div
+                  key={tier.id}
+                  onClick={() => setSelectedOption(tier.id)}
+                  className={`p-4 rounded-lg border transition-all cursor-pointer relative space-y-1 ${getTierBorderClass(
+                    tier,
+                    isSelected
+                  )}`}
+                >
+                  {tier.badge && (
+                    <div className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-[9px] font-display font-bold uppercase tracking-wider shadow-xs flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span>{tier.badge}</span>
+                    </div>
+                  )}
 
-            {/* OPTION 2: Monthly All-Access Pass (30 Days) */}
-            <div
-              onClick={() => setSelectedOption('MONTHLY')}
-              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative space-y-1 ${
-                selectedOption === 'MONTHLY'
-                  ? 'bg-purple-500/10 border-purple-600 shadow-md ring-1 ring-purple-500'
-                  : 'bg-[#f6ece6]/60 dark:bg-[#141517]/60 border-[#eae1da] dark:border-[#383a40] hover:border-purple-400'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedOption === 'MONTHLY' ? 'border-purple-600 bg-purple-600 text-white' : 'border-[#747878]'
-                  }`}>
-                    {selectedOption === 'MONTHLY' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
-                      Monthly All-Access Pass
-                    </h3>
-                    <span className="text-[11px] text-[#747878] dark:text-[#a6adbb] font-semibold block">
-                      30 Days access to ALL company old papers & drives
-                    </span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${getTierCheckboxClass(
+                          tier,
+                          isSelected
+                        )}`}
+                      >
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] truncate">
+                          {tier.title}
+                        </h3>
+                        <span className="text-[11px] text-[#868E96] dark:text-[#555555] font-sans block truncate">
+                          {resolvedSubtitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="font-display font-extrabold text-lg text-[#121417] dark:text-[#FFFFFF]">
+                        {tier.priceDisplay}
+                      </span>
+                      <span className="text-[10px] font-bold text-[#868E96] dark:text-[#555555] block font-display">
+                        {tier.durationLabel}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <span className="font-display font-black text-xl text-[#1f1b17] dark:text-[#e3e3e3]">₹299</span>
-                  <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 block">/ 30 Days</span>
-                </div>
-              </div>
-            </div>
-
-            {/* OPTION 3: Quarterly Pro Pass (90 Days - Save 22%) */}
-            <div
-              onClick={() => setSelectedOption('QUARTERLY')}
-              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative space-y-1 ${
-                selectedOption === 'QUARTERLY'
-                  ? 'bg-blue-500/10 border-blue-600 shadow-md ring-1 ring-blue-500'
-                  : 'bg-[#f6ece6]/60 dark:bg-[#141517]/60 border-[#eae1da] dark:border-[#383a40] hover:border-blue-400'
-              }`}
-            >
-              <div className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider shadow-xs">
-                Popular • Save 22%
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedOption === 'QUARTERLY' ? 'border-blue-600 bg-blue-600 text-white' : 'border-[#747878]'
-                  }`}>
-                    {selectedOption === 'QUARTERLY' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
-                      Quarterly Pro Pass
-                    </h3>
-                    <span className="text-[11px] text-[#747878] dark:text-[#a6adbb] font-semibold block">
-                      90 Days unlimited access to ALL company papers
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="font-display font-black text-xl text-[#1f1b17] dark:text-[#e3e3e3]">₹699</span>
-                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 block">/ 90 Days</span>
-                </div>
-              </div>
-            </div>
-
-            {/* OPTION 4: Yearly Master Pass (365 Days - Save 45%) */}
-            <div
-              onClick={() => setSelectedOption('YEARLY')}
-              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative space-y-1 ${
-                selectedOption === 'YEARLY'
-                  ? 'bg-amber-500/10 border-amber-600 shadow-md ring-1 ring-amber-500'
-                  : 'bg-[#f6ece6]/60 dark:bg-[#141517]/60 border-[#eae1da] dark:border-[#383a40] hover:border-amber-400'
-              }`}
-            >
-              <div className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full bg-amber-500 text-black text-[9px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                <span>Best Value • Save 45%</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedOption === 'YEARLY' ? 'border-amber-600 bg-amber-600 text-white' : 'border-[#747878]'
-                  }`}>
-                    {selectedOption === 'YEARLY' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
-                      Yearly Master Pass
-                    </h3>
-                    <span className="text-[11px] text-[#747878] dark:text-[#a6adbb] font-semibold block">
-                      365 Days unlimited access + Priority Support
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="font-display font-black text-xl text-[#1f1b17] dark:text-[#e3e3e3]">₹1,999</span>
-                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 block">/ 365 Days</span>
-                </div>
-              </div>
-            </div>
+              );
+            })}
 
             {/* Checkout Action Button */}
             <button
               disabled={isProcessing}
               onClick={() => handleCheckout(selectedOption)}
-              className="w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 bg-[#006c49] hover:bg-[#005237] text-white shadow-emerald-900/20 mt-3"
+              className="w-full py-3.5 rounded-md text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all flex items-center justify-center gap-2 bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black mt-4 cursor-pointer disabled:opacity-50"
             >
               {isProcessing ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                   <span>Connecting Secure Checkout (UPI / Razorpay)...</span>
                 </>
               ) : (
                 <>
                   <CreditCard className="w-4 h-4" />
                   <span>
-                    Pay {getOptionPrice(selectedOption)} &amp; Unlock Instantly
+                    Pay {currentTier.priceDisplay} &amp; Unlock Instantly
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
@@ -345,9 +279,9 @@ export default function PaywallModal({
             </button>
 
             {/* Security Guarantee Note */}
-            <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-[#747878] dark:text-[#a6adbb] pt-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>256-bit Encrypted Checkout • Instant 30-Day Document Access Guarantee</span>
+            <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[#868E96] dark:text-[#555555] pt-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+              <span>256-bit Encrypted Checkout • Instant Document Access Guarantee</span>
             </div>
           </div>
         )}
