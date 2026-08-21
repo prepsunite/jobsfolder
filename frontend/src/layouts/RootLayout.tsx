@@ -79,101 +79,123 @@ export default function RootLayout() {
 
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen bg-[#fff8f5] dark:bg-[#141517] text-[#1f1b17] dark:text-[#e3e3e3] flex flex-col font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
-        {/* PUBLIC STANDALONE NAVBAR */}
-        <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#1e1f22]/80 backdrop-blur-md border-b border-[#eae1da] dark:border-[#2b2d31] transition-colors">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            {/* Brand Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition-transform">
-                P
-              </div>
-              <div className="flex flex-col">
-                <span className="font-display font-extrabold text-xl tracking-tight text-[#1f1b17] dark:text-[#e3e3e3]">
-                  Jobs<span className="text-[#006c49] dark:text-[#6cf8bb]">folder</span>
+      <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
+
+        {/* ── PREMIUM PUBLIC NAVBAR ── */}
+        <header className="pub-nav">
+          <div className="pub-nav-inner">
+            {/* Brand */}
+            <Link to="/" className="pub-nav-brand">
+              <div className="pub-nav-logo-box">P</div>
+              <div className="pub-nav-brand-text">
+                <span className="pub-nav-brand-name">
+                  Jobs<span>folder</span>
                 </span>
-                <span className="text-[9px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider">
-                  PrepUnite Placement Intelligence
-                </span>
+                <span className="pub-nav-brand-sub">PrepUnite Placement Intelligence</span>
               </div>
             </Link>
 
-            {/* Navigation Links */}
-            <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-[#444748] dark:text-[#a6adbb]">
-              <Link to="/" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
-                Home
-              </Link>
-              <Link to="/about" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
-                About Us
-              </Link>
-              <Link to="/pricing" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
-                Pricing
-              </Link>
-              <Link to="/companies" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Companies</span>
-              </Link>
-              <Link to="/questions" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors flex items-center gap-1">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>OA Papers</span>
-              </Link>
-              <Link to="/contact" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb] transition-colors">
-                Contact Us
-              </Link>
+            {/* Nav Links */}
+            <nav className="pub-nav-links">
+              <Link to="/" className="pub-nav-link">Home</Link>
+              <Link to="/about" className="pub-nav-link">About</Link>
+              <Link to="/companies" className="pub-nav-link">Companies</Link>
+              <Link to="/questions" className="pub-nav-link">OA Papers</Link>
+              <Link to="/pricing" className="pub-nav-link">Pricing</Link>
+              <Link to="/contact" className="pub-nav-link">Contact</Link>
             </nav>
 
-            {/* Right Action Buttons */}
-            <div className="flex items-center gap-3">
+            {/* Right actions */}
+            <div className="pub-nav-right">
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-2 rounded-full border border-[#eae1da] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-white hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] transition-colors"
+                className="pub-nav-theme-btn"
                 title="Toggle Theme"
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
               </button>
 
               {isAuthenticated && user ? (
-                <Link
-                  to="/companies"
-                  className="px-5 py-2.5 rounded-full bg-[#006c49] hover:bg-[#005a3c] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2"
-                >
+                <Link to="/companies" className="pub-nav-cta">
                   <User className="w-3.5 h-3.5" />
-                  <span>Go to Workspace</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Workspace</span>
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
               ) : (
-                <Link
-                  to="/login"
-                  className="px-5 py-2.5 rounded-full bg-[#006c49] hover:bg-[#005a3c] text-white text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2"
-                >
+                <Link to="/login" className="pub-nav-cta">
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Sign In / Register</span>
+                  <span>Sign In</span>
                 </Link>
               )}
             </div>
           </div>
         </header>
 
-        {/* PUBLIC CONTENT AREA */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* PUBLIC CONTENT AREA — no padding for home page full bleed */}
+        <main className="flex-1 w-full">
           <Outlet />
         </main>
 
-        {/* PUBLIC FOOTER */}
-        <footer className="border-t border-[#eae1da] dark:border-[#2b2d31] bg-[#f6ece6] dark:bg-[#1e1f22] py-8 px-6 text-xs text-[#747878] dark:text-[#a6adbb]">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-              <span className="font-bold text-[#1f1b17] dark:text-white text-sm">Jobsfolder</span>
-              <span>© 2026 PrepUnite • Placement Intelligence Operating System.</span>
+        {/* ── PREMIUM DARK FOOTER ── */}
+        <footer className="pub-footer">
+          <div className="pub-footer-inner">
+            {/* Brand column */}
+            <div className="pub-footer-brand">
+              <Link to="/" className="pub-footer-logo">
+                <div className="pub-footer-logo-box">P</div>
+                <span className="pub-footer-logo-name">Jobs<span>folder</span></span>
+              </Link>
+              <p className="pub-footer-tagline">
+                PrepUnite's placement intelligence platform for engineering students preparing for India's top campus recruiters.
+              </p>
+              <div className="pub-footer-social">
+                <span className="pub-footer-social-btn">X</span>
+                <span className="pub-footer-social-btn">in</span>
+                <span className="pub-footer-social-btn">▶</span>
+                <span className="pub-footer-social-btn">ig</span>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-[#1f1b17] dark:text-[#e3e3e3]">
-              <Link to="/about" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">About Us</Link>
-              <Link to="/contact" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Contact Us</Link>
-              <Link to="/pricing" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Pricing</Link>
-              <Link to="/privacy-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Privacy Policy</Link>
-              <Link to="/terms-and-conditions" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Terms & Conditions</Link>
-              <Link to="/refund-policy" className="hover:text-[#006c49] dark:hover:text-[#6cf8bb]">Cancellation & Refund Policy</Link>
+
+            {/* Platform links */}
+            <div className="pub-footer-col">
+              <div className="pub-footer-col-title">Platform</div>
+              <div className="pub-footer-col-links">
+                <Link to="/companies" className="pub-footer-col-link">Company Blueprints</Link>
+                <Link to="/questions" className="pub-footer-col-link">OA Question Bank</Link>
+                <Link to="/experiences" className="pub-footer-col-link">Interview Experiences</Link>
+                <Link to="/pricing" className="pub-footer-col-link">Pricing & Plans</Link>
+              </div>
+            </div>
+
+            {/* Company links */}
+            <div className="pub-footer-col">
+              <div className="pub-footer-col-title">Company</div>
+              <div className="pub-footer-col-links">
+                <Link to="/about" className="pub-footer-col-link">About Us</Link>
+                <Link to="/contact" className="pub-footer-col-link">Contact Us</Link>
+                <Link to="/login" className="pub-footer-col-link">Sign In</Link>
+              </div>
+            </div>
+
+            {/* Legal links */}
+            <div className="pub-footer-col">
+              <div className="pub-footer-col-title">Legal</div>
+              <div className="pub-footer-col-links">
+                <Link to="/privacy-policy" className="pub-footer-col-link">Privacy Policy</Link>
+                <Link to="/terms-and-conditions" className="pub-footer-col-link">Terms & Conditions</Link>
+                <Link to="/refund-policy" className="pub-footer-col-link">Refund Policy</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="pub-footer-bottom">
+            <p className="pub-footer-copy">© 2026 PrepUnite · Jobsfolder · Placement Intelligence Operating System</p>
+            <div className="pub-footer-legal">
+              <Link to="/privacy-policy">Privacy Policy</Link>
+              <Link to="/terms-and-conditions">Terms of Service</Link>
+              <Link to="/refund-policy">Refund Policy</Link>
             </div>
           </div>
         </footer>

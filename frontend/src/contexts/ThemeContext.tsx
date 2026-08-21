@@ -64,7 +64,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleTheme = () => {
-    setThemeModeState(prev => (prev === 'light' ? 'dark' : prev === 'dark' ? 'system' : 'light'));
+    setThemeModeState(prev => {
+      const current = prev === 'system' ? activeTheme : prev;
+      return current === 'dark' ? 'light' : 'dark';
+    });
   };
 
   return (

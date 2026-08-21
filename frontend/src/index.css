@@ -69,9 +69,9 @@
   --color-surface-900: #f6ece6;
   --color-surface-950: #fff8f5;
 
-  /* ===== Typography ===== */
-  --font-sans: "Manrope", sans-serif;
-  --font-display: "Epilogue", sans-serif;
+  /* ===== Typography (Heathgreen/Cabinet Grotesk architectural style) ===== */
+  --font-sans: "General Sans", "Plus Jakarta Sans", "Inter", -apple-system, sans-serif;
+  --font-display: "Cabinet Grotesk", "Syne", "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
   /* ===== Border Radius ===== */
@@ -421,3 +421,62 @@ pre.test-case-code {
 :where(.dark, .dark *) th {
   border-color: #383a40 !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   🌟 Modern SaaS Revamp Utilities (3D Fan, Grid, Marquee)
+══════════════════════════════════════════════════════ */
+.bg-grid-white {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+}
+
+.bg-grid-dark {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+}
+
+.perspective-1200 {
+  perspective: 1200px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee-infinite {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee-infinite:hover {
+  animation-play-state: paused;
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+:where(.dark, .dark *) .glass-pill {
+  background: rgba(30, 31, 34, 0.85);
+}
+
+.glass-card-glow {
+  box-shadow: 0 20px 40px -15px rgba(0, 108, 73, 0.15), 0 0 1px 1px rgba(255, 255, 255, 0.6) inset;
+}
+
+:where(.dark, .dark *) .glass-card-glow {
+  box-shadow: 0 20px 40px -15px rgba(108, 248, 187, 0.1), 0 0 1px 1px rgba(255, 255, 255, 0.1) inset;
+}
+
