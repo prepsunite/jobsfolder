@@ -1,6 +1,5 @@
 // Global synchronized state manager for Admin CRUD operations visible to all users live!
 import { resolveTopicSlug } from './topicMap';
-import { isAllowedAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 export { resolveTopicSlug };
 
@@ -1369,12 +1368,9 @@ class DataStoreManager {
     return sub;
   }
 
-  hasAccessToOldPapers(examId?: string, userRole?: string, userEmail?: string): boolean {
+  hasAccessToOldPapers(examId?: string, userRole?: string, _userEmail?: string): boolean {
     if (userRole === 'ADMIN') {
-      const activeEmail = userEmail || this.getStorage<string>('prepunite_user_email', '') || '';
-      if (isAllowedAdminEmail(activeEmail)) {
-        return true;
-      }
+      return true;
     }
     const sub = this.getUserSubscription();
     if (sub.isPro) {

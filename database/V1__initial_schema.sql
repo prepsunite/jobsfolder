@@ -497,3 +497,106 @@ CREATE TRIGGER trg_resources_updated_at BEFORE UPDATE ON resources FOR EACH ROW 
 CREATE TRIGGER trg_roadmaps_updated_at BEFORE UPDATE ON roadmaps FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trg_roadmap_steps_updated_at BEFORE UPDATE ON roadmap_steps FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trg_reports_updated_at BEFORE UPDATE ON reports FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================
+
+-- 1. Enable RLS on all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE company_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hiring_process ENABLE ROW LEVEL SECURITY;
+ALTER TABLE oa_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE question_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interview_experiences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roadmaps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roadmap_steps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roadmap_step_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- 2. Public Catalog Tables (Public read, Admin manage)
+CREATE POLICY "Public read companies" ON companies FOR SELECT USING (true);
+CREATE POLICY "Admin manage companies" ON companies FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read company_roles" ON company_roles FOR SELECT USING (true);
+CREATE POLICY "Admin manage company_roles" ON company_roles FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read hiring_process" ON hiring_process FOR SELECT USING (true);
+CREATE POLICY "Admin manage hiring_process" ON hiring_process FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read oa_questions" ON oa_questions FOR SELECT USING (true);
+CREATE POLICY "Admin manage oa_questions" ON oa_questions FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read question_tags" ON question_tags FOR SELECT USING (true);
+CREATE POLICY "Admin manage question_tags" ON question_tags FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read resources" ON resources FOR SELECT USING (true);
+CREATE POLICY "Admin manage resources" ON resources FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read resource_tags" ON resource_tags FOR SELECT USING (true);
+CREATE POLICY "Admin manage resource_tags" ON resource_tags FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read roadmaps" ON roadmaps FOR SELECT USING (is_published = true);
+CREATE POLICY "Admin manage roadmaps" ON roadmaps FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read roadmap_steps" ON roadmap_steps FOR SELECT USING (true);
+CREATE POLICY "Admin manage roadmap_steps" ON roadmap_steps FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+CREATE POLICY "Public read roadmap_step_links" ON roadmap_step_links FOR SELECT USING (true);
+CREATE POLICY "Admin manage roadmap_step_links" ON roadmap_step_links FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+-- 3. User & Experience Policies
+CREATE POLICY "Public read users" ON users FOR SELECT USING (true);
+CREATE POLICY "Users can update own record" ON users FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Public read approved experiences" ON interview_experiences FOR SELECT USING (
+  status = 'APPROVED' OR auth.uid() = user_id OR auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+CREATE POLICY "Authenticated users submit experiences" ON interview_experiences FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own pending experiences" ON interview_experiences FOR UPDATE USING (
+  (auth.uid() = user_id AND status = 'PENDING') OR auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+CREATE POLICY "Admin delete experiences" ON interview_experiences FOR DELETE USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+-- 4. User-Specific Data (Bookmarks, Likes, Notifications, Reports)
+CREATE POLICY "Users manage own bookmarks" ON bookmarks FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own likes" ON likes FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users read own notifications" ON notifications FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users submit reports" ON reports FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+CREATE POLICY "Admin manage reports" ON reports FOR ALL USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);
+
+-- 5. Audit Logs (Admin only)
+CREATE POLICY "Admin read audit_logs" ON audit_logs FOR SELECT USING (
+  auth.uid() IN (SELECT id FROM users WHERE role IN ('ADMIN', 'SUPER_ADMIN'))
+);

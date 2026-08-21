@@ -3,20 +3,6 @@ import { supabase } from '@/lib/supabase';
 
 export type UserRole = 'GUEST' | 'USER' | 'ADMIN';
 
-/** Authorized Google OAuth emails granted full Admin privileges */
-export const ADMIN_EMAILS: string[] = [
-  'venkatmukala9@gmail.com',
-  'venkat.mukala9@gmail.com',
-  'prepsunite@gmail.com',
-  'veen1kat@gmail.com',
-];
-
-export function isAllowedAdminEmail(email: string): boolean {
-  if (!email) return false;
-  const normalized = email.toLowerCase().trim();
-  return ADMIN_EMAILS.some(a => a.toLowerCase().trim() === normalized);
-}
-
 export function formatDisplayNameFromEmail(email: string, rawName?: string): string {
   if (rawName && rawName.trim() && !['User', 'Demo Student', 'Student', 'GUEST'].includes(rawName.trim())) {
     return rawName.trim();
@@ -74,15 +60,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(GUEST_USER);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Helper to persist profile state securely
+  // Helper to persist profile state from Supabase database
   const applyUserProfile = (
     email: string,
     nameInput: string,
     avatarUrl?: string,
     isConfirmedAdmin: boolean = false
   ) => {
-    const isAdmin = isConfirmedAdmin || isAllowedAdminEmail(email);
-    const assignedRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
+    const assignedRole: UserRole = isConfirmedAdmin ? 'ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
     const newProfile: UserProfile = {
@@ -104,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newProfile;
   };
 
-  // Standard Database `public.profiles` Table Sync
+  // Standard Database `public.profiles` Table Sync — role is strictly driven by the database table
   const syncProfileWithSupabase = async (
     userId: string,
     email: string,
@@ -113,17 +98,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     appRole?: string
   ) => {
     try {
-      const { data: dbProfile } = await supabase
+      const { data: dbProfile, error } = await supabase
         .from('profiles')
         .select('role, name, avatar_url')
         .eq('id', userId)
         .maybeSingle();
 
-      const dbRole = dbProfile?.role ? String(dbProfile.role).toUpperCase() : undefined;
-      const isDbAdmin = dbRole === 'ADMIN';
-      const isEmailAdmin = isAllowedAdminEmail(email);
-      const isAppAdmin = appRole === 'ADMIN' || appRole === 'admin';
-      const isAdmin = isDbAdmin || isEmailAdmin || isAppAdmin;
+      if (error) {
+        console.warn('[syncProfileWithSupabase] Profile lookup notice:', error.message);
+      }
+
+      // Check database role column as source of truth
+      const dbRole = dbProfile?.role ? String(dbProfile.role).toLowerCase() : undefined;
+      const isDbAdmin = dbRole === 'admin' || appRole === 'admin';
 
       const finalName = dbProfile?.name || rawName;
       const finalAvatar = dbProfile?.avatar_url || rawAvatar;
@@ -134,19 +121,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: userId,
             email: email,
             name: finalName || email.split('@')[0],
-            role: isAdmin ? 'admin' : 'user',
+            role: isDbAdmin ? 'admin' : 'user',
             avatar_url: finalAvatar,
           });
         } catch (uErr) {
-          console.warn('[syncProfileWithSupabase] Upsert notice:', uErr);
+          console.warn('[syncProfileWithSupabase] Profile creation notice:', uErr);
         }
       }
 
-      applyUserProfile(email, finalName, finalAvatar, isAdmin);
+      applyUserProfile(email, finalName, finalAvatar, isDbAdmin);
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
-      const isEmailAdmin = isAllowedAdminEmail(email);
-      applyUserProfile(email, rawName, rawAvatar, isEmailAdmin);
+      applyUserProfile(email, rawName, rawAvatar, false);
     }
   };
 
@@ -315,10 +301,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: err.message || 'Password reset request failed' };
     }
   };
-
-  // NOTE: loginAsUser() has been removed — it bypassed real Supabase auth and allowed
-  // unauthenticated session creation. All sign-in must go through signInWithGoogle,
-  // signInWithGithub, or signInWithEmail.
 
   const logout = async () => {
     try {

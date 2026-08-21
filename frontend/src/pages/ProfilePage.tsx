@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import QuestionCard from '@/components/QuestionCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -29,14 +29,11 @@ import {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences'>('exams');
-  const [bookmarkedExams, setBookmarkedExams] = useState<any[]>([]);
-  const [bookmarkedQuestions, setBookmarkedQuestions] = useState<QuestionItem[]>([]);
-  const [bookmarkedTopicQuestions, setBookmarkedTopicQuestions] = useState<TopicQuestionItem[]>([]);
-  const [bookmarkedExperiences, setBookmarkedExperiences] = useState<ExperienceItem[]>([]);
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
 
   // Live Supabase subscription query for Pro Pass
@@ -66,10 +63,82 @@ export default function ProfilePage() {
 
   const isUserPro = subData?.isPro ?? false;
 
+  // TanStack Query: Bookmarked Exams
+  const { data: bookmarkedExams = [] } = useQuery({
+    queryKey: ['profile-bookmarked-exams'],
+    queryFn: async () => {
+      const examIds = dataStore.getBookmarkedExamIds();
+      let allExams: any[] = [];
+      try {
+        allExams = await examService.getAllExams();
+      } catch {
+        allExams = dataStore.getAllExams();
+      }
+      if (allExams.length === 0) allExams = dataStore.getAllExams();
+      return examIds.map((id) => allExams.find((e) => e.id === id)).filter(Boolean);
+    },
+  });
+
+  // TanStack Query: Bookmarked Topic Practice Questions
+  const { data: bookmarkedTopicQuestions = [] } = useQuery({
+    queryKey: ['profile-bookmarked-topic-questions'],
+    queryFn: async () => {
+      const questionIds = dataStore.getBookmarkedQuestionIds();
+      let allTopicQuestions: TopicQuestionItem[] = [];
+      try {
+        const { data: qData } = await supabase.from('topic_questions').select('*');
+        if (qData && qData.length > 0) {
+          allTopicQuestions = qData.map((q) => ({
+            id: q.id,
+            topicId: q.topic_id,
+            statement: q.statement,
+            options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+            correctAnswer: q.correct_answer,
+            explanation: q.explanation,
+            structuredExplanation:
+              typeof q.structured_explanation === 'string'
+                ? JSON.parse(q.structured_explanation)
+                : q.structured_explanation,
+            difficulty: q.difficulty || 'MEDIUM',
+            difficultyLevel: q.difficulty_level || 2,
+            isHidden: q.is_hidden || false,
+            questionNumber: q.question_number,
+          }));
+        }
+      } catch {}
+      if (allTopicQuestions.length === 0) allTopicQuestions = dataStore.getTopicQuestions();
+      return questionIds
+        .map((id) => allTopicQuestions.find((q) => q.id === id))
+        .filter(Boolean) as TopicQuestionItem[];
+    },
+  });
+
+  // TanStack Query: Bookmarked General Questions Fallback
+  const { data: bookmarkedQuestions = [] } = useQuery({
+    queryKey: ['profile-bookmarked-oa-questions'],
+    queryFn: async () => {
+      const questionIds = dataStore.getBookmarkedQuestionIds();
+      const allQuestions = dataStore.getQuestions();
+      return questionIds
+        .map((id) => allQuestions.find((q) => q.id === id))
+        .filter(Boolean) as QuestionItem[];
+    },
+  });
+
+  // TanStack Query: Bookmarked Interview Transcripts
+  const { data: bookmarkedExperiences = [] } = useQuery({
+    queryKey: ['profile-bookmarked-experiences'],
+    queryFn: async () => {
+      const expIds = dataStore.getBookmarkedExperienceIds();
+      const allExps = dataStore.getExperiences();
+      return expIds.map((id) => allExps.find((e) => e.id === id)).filter(Boolean) as ExperienceItem[];
+    },
+  });
+
   const getSubtopicDisplayName = (topicId: string) => {
-    const matched = ARITHMETIC_TOPICS.find(t => t.id === topicId);
+    const matched = ARITHMETIC_TOPICS.find((t) => t.id === topicId);
     if (matched) return matched.name;
-    return topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return topicId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   const getDifficultyBadge = (diff?: string, diffLevel?: number) => {
@@ -108,77 +177,24 @@ export default function ProfilePage() {
     }
   };
 
-  const loadBookmarks = async () => {
-    // 1. Exams (live Supabase query with fallback)
-    const examIds = dataStore.getBookmarkedExamIds();
-    let allExams: any[] = [];
-    try {
-      allExams = await examService.getAllExams();
-    } catch {
-      allExams = dataStore.getAllExams();
-    }
-    if (allExams.length === 0) allExams = dataStore.getAllExams();
-    const examMatches = examIds.map(id => allExams.find(e => e.id === id)).filter(Boolean);
-    setBookmarkedExams(examMatches);
-
-    // 2. Topic Practice Questions (live Supabase query with fallback)
-    const questionIds = dataStore.getBookmarkedQuestionIds();
-    let allTopicQuestions: TopicQuestionItem[] = [];
-    try {
-      const { data: qData } = await supabase.from('topic_questions').select('*');
-      if (qData && qData.length > 0) {
-        allTopicQuestions = qData.map(q => ({
-          id: q.id,
-          topicId: q.topic_id,
-          statement: q.statement,
-          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-          correctAnswer: q.correct_answer,
-          explanation: q.explanation,
-          structuredExplanation: typeof q.structured_explanation === 'string' ? JSON.parse(q.structured_explanation) : q.structured_explanation,
-          difficulty: q.difficulty || 'MEDIUM',
-          difficultyLevel: q.difficulty_level || 2,
-          isHidden: q.is_hidden || false,
-          questionNumber: q.question_number,
-        }));
-      }
-    } catch {}
-    if (allTopicQuestions.length === 0) allTopicQuestions = dataStore.getTopicQuestions();
-    const topicMatches = questionIds.map(id => allTopicQuestions.find(q => q.id === id)).filter(Boolean) as TopicQuestionItem[];
-    setBookmarkedTopicQuestions(topicMatches);
-
-    // 3. OA Questions fallback
-    const allQuestions = dataStore.getQuestions();
-    const questionMatches = questionIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean) as QuestionItem[];
-    setBookmarkedQuestions(questionMatches);
-
-    // 4. Experiences
-    const expIds = dataStore.getBookmarkedExperienceIds();
-    const allExps = dataStore.getExperiences();
-    const expMatches = expIds.map(id => allExps.find(e => e.id === id)).filter(Boolean) as ExperienceItem[];
-    setBookmarkedExperiences(expMatches);
-  };
-
   const toggleExplanation = (qId: string) => {
-    setRevealedExpl(prev => ({ ...prev, [qId]: !prev[qId] }));
+    setRevealedExpl((prev) => ({ ...prev, [qId]: !prev[qId] }));
   };
-
-  useEffect(() => {
-    loadBookmarks();
-  }, []);
 
   const handleRemoveExamBookmark = (examId: string) => {
     dataStore.toggleBookmarkExam(examId);
-    loadBookmarks();
+    queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-exams'] });
   };
 
   const handleRemoveQuestionBookmark = (qId: string) => {
     dataStore.toggleBookmarkQuestion(qId);
-    loadBookmarks();
+    queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-topic-questions'] });
+    queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-oa-questions'] });
   };
 
   const handleRemoveExperienceBookmark = (expId: string) => {
     dataStore.toggleBookmarkExperience(expId);
-    loadBookmarks();
+    queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-experiences'] });
   };
 
   return (
