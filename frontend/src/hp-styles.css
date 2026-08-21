@@ -422,17 +422,17 @@ html.dark {
 @media (min-width: 1024px) { .hp-deliver-grid { grid-template-columns: repeat(4, 1fr); } }
 .hp-d-card {
   background: var(--e-bg);
-  padding: 2.25rem 2rem;
+  padding: 1.75rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.75rem;
   transition: background 0.2s;
 }
 .hp-d-card:hover { background: var(--e-surface); }
 .hp-d-num {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 2.75rem;
+  font-size: 2.25rem;
   letter-spacing: -0.04em;
   line-height: 1;
   color: var(--e-text);
@@ -443,18 +443,18 @@ html.dark {
 .hp-d-title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--e-text);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   transition: color 0.2s ease;
 }
-.hp-d-body { font-size: 0.82rem; color: var(--e-text-2); line-height: 1.6; }
+.hp-d-body { font-size: 0.78rem; color: var(--e-text-2); line-height: 1.6; }
 .hp-d-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
+  gap: 0.25rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -463,7 +463,7 @@ html.dark {
   margin-top: auto;
   transition: gap 0.15s;
 }
-.hp-d-link:hover { gap: 0.5rem; }
+.hp-d-link:hover { gap: 0.4rem; }
 
 /* ── COMPANY GRID ───────────────────────────────────────── */
 .hp-co-grid {
@@ -477,24 +477,23 @@ html.dark {
   transition: background 0.2s, border-color 0.2s;
 }
 @media (min-width: 640px) { .hp-co-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1024px) { .hp-co-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1200px) { .hp-co-grid { grid-template-columns: repeat(4, 1fr); } }
 .hp-co-card {
   background: var(--e-bg);
-  padding: 2.25rem 2rem;
+  padding: 1.75rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1rem;
   text-decoration: none;
   transition: background 0.2s;
   position: relative;
   overflow: hidden;
-  min-height: 240px;
 }
 .hp-co-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 3px;
+  height: 2px;
   background: var(--co-accent, var(--e-green));
   opacity: 0;
   transition: opacity 0.2s;
@@ -505,9 +504,9 @@ html.dark {
 .hp-co-abbr {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.65rem;
   border-radius: 4px;
   background: var(--e-surface-2);
   border: 1px solid var(--e-border);
@@ -515,49 +514,49 @@ html.dark {
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 .hp-co-badge {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--e-text-3);
   border: 1px solid var(--e-border);
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 4px;
   transition: border-color 0.2s, color 0.2s;
 }
 .hp-co-name {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   color: var(--e-text);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   transition: color 0.2s ease;
 }
-.hp-co-pkg { font-size: 0.95rem; font-weight: 700; color: var(--co-accent, var(--e-green)); }
-.hp-co-pattern { font-size: 0.82rem; color: var(--e-text-3); line-height: 1.5; }
+.hp-co-pkg { font-size: 0.85rem; font-weight: 700; color: var(--co-accent, var(--e-green)); }
+.hp-co-pattern { font-size: 0.75rem; color: var(--e-text-3); line-height: 1.5; }
 .hp-co-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 1rem;
+  padding-top: 0.875rem;
   border-top: 1px solid var(--e-border);
   margin-top: auto;
   transition: border-color 0.2s ease;
 }
-.hp-co-papers { font-size: 0.78rem; color: var(--e-text-3); }
+.hp-co-papers { font-size: 0.72rem; color: var(--e-text-3); }
 .hp-co-cta {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.78rem;
+  gap: 0.25rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--e-green);
   transition: gap 0.15s;
 }
-.hp-co-card:hover .hp-co-cta { gap: 0.45rem; }
+.hp-co-card:hover .hp-co-cta { gap: 0.4rem; }
 
 .hp-filter-strip {
   display: flex;
