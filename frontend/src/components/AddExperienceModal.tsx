@@ -117,7 +117,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                     type="checkbox"
                     checked={isAnonymous}
                     onChange={(e) => setIsAnonymous(e.target.checked)}
-                    className="rounded text-[#009D63] focus:ring-[#009D63]"
+                    className="rounded text-[#FD4A32] focus:ring-[#FD4A32]"
                   />
                   <span>Anonymous</span>
                 </label>
@@ -180,7 +180,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
           </div>
 
           <div className="space-y-1 pt-1">
-            <label className="text-[10px] font-bold text-[#009D63] dark:text-[#00C47B] uppercase block font-display">
+            <label className="text-[10px] font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase block font-display">
               Interview Breakdown & Rounds Details *
             </label>
             <textarea
@@ -204,7 +204,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-[#009D63] dark:bg-[#00C47B] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider hover:bg-[#007F50] transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 bg-[#FD4A32] dark:bg-[#FD4A32] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider hover:bg-[#E0351D] transition-colors cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? 'Submitting...' : 'Publish Experience'}
             </button>

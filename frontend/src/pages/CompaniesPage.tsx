@@ -129,7 +129,7 @@ export default function CompaniesPage() {
           </div>
 
           <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#444444] text-[#121417] dark:text-[#FFFFFF] rounded-md text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0">
-            <SlidersHorizontal className="w-3 h-3 text-[#009D63] dark:text-[#00C47B]" />
+            <SlidersHorizontal className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32]" />
             <span>Filters</span>
           </button>
 
@@ -149,7 +149,7 @@ export default function CompaniesPage() {
       {/* Grid Content */}
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-[#009D63] dark:text-[#00C47B] animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#FD4A32] dark:text-[#FD4A32] animate-spin" />
         </div>
       ) : companies.length === 0 ? (
         <div className="text-center py-16 bg-[#F8F9FA] dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">

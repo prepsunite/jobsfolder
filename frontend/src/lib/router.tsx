@@ -25,7 +25,7 @@ const PolicyPage = lazy(() => import('@/pages/PolicyPage'));
 
 const PageLoader = () => (
   <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-    <div className="w-8 h-8 border-3 border-[#009D63]/20 border-t-[#009D63] dark:border-t-[#00C47B] rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-3 border-[#FD4A32]/20 border-t-[#FD4A32] dark:border-t-[#FD4A32] rounded-full animate-spin"></div>
     <span className="text-[11px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
       Loading...
     </span>

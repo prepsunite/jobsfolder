@@ -217,7 +217,7 @@ export default function AptitudePage() {
       {/* Sleek Top Header Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E9ECEF] dark:border-[#242424] pb-4">
         <div className="space-y-0.5">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
             <MainIcon className="w-3 h-3" />
             <span>Aptitude Topic Directory</span>
           </div>
@@ -281,7 +281,7 @@ export default function AptitudePage() {
                   <TopicIcon className="w-3.5 h-3.5" />
                 </div>
 
-                <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#009D63] dark:group-hover:text-[#00C47B] transition-colors truncate">
+                <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
                   {topic.name}
                 </span>
               </Link>
@@ -293,7 +293,7 @@ export default function AptitudePage() {
                     e.stopPropagation();
                     setSelectedTopic(topic);
                   }}
-                  className="p-1 rounded text-[#868E96] dark:text-[#555555] hover:text-[#009D63] dark:hover:text-[#00C47B] transition-colors"
+                  className="p-1 rounded text-[#868E96] dark:text-[#555555] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors"
                   title="Peek Formula & Overview"
                 >
                   <Zap className="w-3 h-3" />
@@ -323,7 +323,7 @@ export default function AptitudePage() {
                   {selectedTopic.icon ? <selectedTopic.icon className="w-4 h-4" /> : <Folder className="w-4 h-4" />}
                 </div>
                 <div>
-                  <span className="text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider block">
+                  <span className="text-[9px] font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">
                     {selectedTopic.cluster}
                   </span>
                   <h3 className="font-display text-base font-extrabold text-[#121417] dark:text-[#FFFFFF]">
@@ -354,13 +354,13 @@ export default function AptitudePage() {
             {selectedTopic.formulas && selectedTopic.formulas.length > 0 && (
               <div className="space-y-2.5">
                 <h4 className="font-display text-xs font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
-                  <Zap className="w-3.5 h-3.5 text-[#006c49] dark:text-[#6cf8bb]" />
+                  <Zap className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
                   <span>Key Formulas & Important Concepts</span>
                 </h4>
                 <div className="space-y-1.5">
                   {selectedTopic.formulas.map((f, i) => (
-                    <div key={i} className="p-2.5 bg-[#ffffff] dark:bg-[#2b2d31] border border-[#eae1da] dark:border-[#383a40] rounded-lg text-xs font-mono text-[#006c49] dark:text-[#6cf8bb] flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[#006c49] dark:text-[#6cf8bb]" />
+                    <div key={i} className="p-2.5 bg-[#ffffff] dark:bg-[#2b2d31] border border-[#eae1da] dark:border-[#383a40] rounded-lg text-xs font-mono text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] dark:text-[#FD4A32]" />
                       <span>{f}</span>
                     </div>
                   ))}
@@ -380,7 +380,7 @@ export default function AptitudePage() {
               <Link
                 to={`/aptitude/${categorySlug}/topic/${selectedTopic.id}`}
                 onClick={() => setSelectedTopic(null)}
-                className="w-full sm:w-auto px-5 py-2 bg-[#006c49] hover:bg-[#00573b] dark:bg-[#6cf8bb] dark:hover:bg-[#4edea3] text-white dark:text-[#141517] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 py-2 bg-[#FD4A32] hover:bg-[#D62F18] dark:bg-[#FD4A32] dark:hover:bg-[#FF6D59] text-white dark:text-[#141517] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all flex items-center justify-center gap-2"
               >
                 <span>Proceed to Practice Questions ({selectedTopic.count})</span>
                 <ArrowRight className="w-3.5 h-3.5" />

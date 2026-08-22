@@ -164,7 +164,7 @@ export const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
               key={idx}
               className="space-y-1 p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424]"
             >
-              <label className="text-[10px] font-bold text-[#009D63] dark:text-[#00C47B] uppercase block font-display">
+              <label className="text-[10px] font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase block font-display">
                 Round {idx + 1}
               </label>
               <input
@@ -201,7 +201,7 @@ export const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2 bg-[#009D63] dark:bg-[#00C47B] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider hover:bg-[#007F50] transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 bg-[#FD4A32] dark:bg-[#FD4A32] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider hover:bg-[#E0351D] transition-colors cursor-pointer disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>

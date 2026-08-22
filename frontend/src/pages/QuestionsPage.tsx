@@ -88,7 +88,7 @@ export default function QuestionsPage() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
         <div className="space-y-0.5">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
             <BookOpen className="w-3 h-3" />
             <span>Official Papers Archive</span>
           </div>
@@ -130,7 +130,7 @@ export default function QuestionsPage() {
       {/* COMPANY EXAM CARDS GRID */}
       {isLoadingExams ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-[#009D63] dark:text-[#00C47B] animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#FD4A32] dark:text-[#FD4A32] animate-spin" />
         </div>
       ) : exams.length === 0 ? (
         <div className="text-center py-16 bg-[#F8F9FA] dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
@@ -209,7 +209,7 @@ export default function QuestionsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#006c49] hover:bg-[#00573b] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm"
+                  className="px-5 py-2 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm"
                 >
                   Create Exam Card
                 </button>

@@ -185,7 +185,7 @@ export default function DocumentExplorer({
         <div className="p-3 border-b border-[#E9ECEF] dark:border-[#242424] space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center font-display">
+              <div className="w-6 h-6 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] flex items-center justify-center font-display">
                 <BookOpen className="w-3.5 h-3.5" />
               </div>
               <div>
@@ -333,11 +333,11 @@ export default function DocumentExplorer({
 
             {/* Lock card */}
             <div className="relative z-10 max-w-md w-full p-6 sm:p-8 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] shadow-lg space-y-4">
-              <div className="w-12 h-12 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] flex items-center justify-center mx-auto">
                 <Lock className="w-6 h-6 animate-pulse" />
               </div>
               <div className="space-y-1.5">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
                   <Sparkles className="w-3 h-3" /> Previous Paper Locked
                 </span>
                 <h3 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF]">
@@ -349,14 +349,14 @@ export default function DocumentExplorer({
               </div>
               <button
                 onClick={onOpenPaywall}
-                className="w-full py-2.5 px-4 rounded-md bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Unlock All {examName} Tabs (from ₹99)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[#868E96] dark:text-[#555555]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
                 <span>1-Year Access (₹99) · All-Company Pass (₹299/mo)</span>
               </div>
             </div>
@@ -470,7 +470,7 @@ export default function DocumentExplorer({
                     </div>
                   </div>
                   {activeNode.isFree === true && (
-                    <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[#009D63] dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider flex items-center gap-1">
+                    <span className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider flex items-center gap-1">
                       <Unlock className="w-3 h-3" /> Free Practice Guide
                     </span>
                   )}
@@ -496,7 +496,7 @@ export default function DocumentExplorer({
                     <span className="text-lg text-[#121417] dark:text-[#FFFFFF]">←</span>
                     <div>
                       <span className="block text-[10px] text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display font-bold">Previous</span>
-                      <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#009D63] dark:group-hover:text-[#00C47B]">{prevNode.title}</span>
+                      <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32]">{prevNode.title}</span>
                     </div>
                   </button>
                 ) : <div />}
@@ -505,7 +505,7 @@ export default function DocumentExplorer({
                   <button onClick={() => setSelectedNodeId(nextNode.id)} className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-right group transition-all ml-auto cursor-pointer">
                     <div>
                       <span className="block text-[10px] text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display font-bold">Next</span>
-                      <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#009D63] dark:group-hover:text-[#00C47B]">{nextNode.title}</span>
+                      <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32]">{nextNode.title}</span>
                     </div>
                     <span className="text-lg text-[#121417] dark:text-[#FFFFFF]">→</span>
                   </button>

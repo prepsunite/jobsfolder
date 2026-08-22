@@ -44,7 +44,7 @@ export interface RichTextEditorProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TB = 'p-1.5 rounded-lg transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed text-[#747878] dark:text-[#a6adbb] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]';
-const TB_ON = 'p-1.5 rounded-lg transition-all flex-shrink-0 bg-[#006c49]/15 text-[#006c49] dark:bg-[#6cf8bb]/15 dark:text-[#6cf8bb]';
+const TB_ON = 'p-1.5 rounded-lg transition-all flex-shrink-0 bg-[#FD4A32]/15 text-[#FD4A32] dark:bg-[#FD4A32]/15 dark:text-[#FD4A32]';
 const SEP = 'w-px self-stretch bg-[#e2d8d2] dark:bg-[#2b2d31] mx-0.5 flex-shrink-0';
 
 const TEXT_COLORS = [
@@ -653,11 +653,11 @@ export default function RichTextEditor({
       {/* ── TOP BAR ─────────────────────────────────────────────────────── */}
       <div className="bg-[#f6ece6]/80 dark:bg-[#141517]/80 border-b border-[#e2d8d2] dark:border-[#2b2d31] px-3 py-2 flex items-center justify-between gap-2 flex-wrap flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-[#006c49]/15 dark:bg-[#6cf8bb]/15 flex items-center justify-center text-[#006c49] dark:text-[#6cf8bb]">
+          <div className="w-6 h-6 rounded-lg bg-[#FD4A32]/15 dark:bg-[#FD4A32]/15 flex items-center justify-center text-[#FD4A32] dark:text-[#FD4A32]">
             <Sparkles className="w-3 h-3" />
           </div>
           <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wide">{title}</span>
-          <span className="text-[10px] px-1.5 py-0.5 bg-[#006c49]/10 text-[#006c49] dark:bg-[#6cf8bb]/10 dark:text-[#6cf8bb] rounded-md font-bold">WYSIWYG</span>
+          <span className="text-[10px] px-1.5 py-0.5 bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] rounded-md font-bold">WYSIWYG</span>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -669,7 +669,7 @@ export default function RichTextEditor({
               { k: 'preview', icon: <Eye className="w-3 h-3" />,     lbl: 'HTML' },
             ] as const).map(m => (
               <button key={m.k} type="button" onClick={() => setMode(m.k)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${mode === m.k ? 'bg-[#006c49] text-white' : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'}`}>
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${mode === m.k ? 'bg-[#FD4A32] text-white' : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'}`}>
                 {m.icon}<span>{m.lbl}</span>
               </button>
             ))}
@@ -687,16 +687,16 @@ export default function RichTextEditor({
       {showLink && (
         <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-emerald-50 dark:bg-emerald-900/10 px-4 py-2.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-extrabold text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider flex items-center gap-1 flex-shrink-0">
+            <span className="text-[11px] font-extrabold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider flex items-center gap-1 flex-shrink-0">
               <LinkIcon className="w-3 h-3" /> Link
             </span>
             <input type="text" placeholder="Display text" value={linkText} onChange={e => setLinkText(e.target.value)}
-              className="min-w-[100px] flex-1 bg-white dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#006c49]/40" />
+              className="min-w-[100px] flex-1 bg-white dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40" />
             <input ref={linkUrlRef} type="url" placeholder="https://example.com" value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && commitLink()}
-              className="min-w-[180px] flex-1 bg-white dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#006c49]/40" />
+              className="min-w-[180px] flex-1 bg-white dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40" />
             <div className="flex gap-1.5">
-              <button type="button" onClick={commitLink} className="px-3 py-1.5 bg-[#006c49] hover:bg-[#005a3c] text-white rounded-xl text-xs font-bold transition-colors">Apply</button>
+              <button type="button" onClick={commitLink} className="px-3 py-1.5 bg-[#FD4A32] hover:bg-[#C82A14] text-white rounded-xl text-xs font-bold transition-colors">Apply</button>
               {editor.isActive('link') && (
                 <button type="button" onClick={() => { editor.chain().focus().unsetLink().run(); setShowLink(false); }}
                   className="px-3 py-1.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 rounded-xl text-xs font-bold transition-colors">Remove</button>
@@ -1005,13 +1005,13 @@ export default function RichTextEditor({
             { label: 'S', title: 'Strike', active: editor.isActive('strike'), action: () => editor.chain().focus().toggleStrike().run(), cls: 'line-through' },
           ].map(b => (
             <button key={b.label} type="button" title={b.title} onClick={b.action}
-              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${b.active ? 'bg-[#006c49] text-white' : 'text-white dark:text-[#1e1f22] hover:bg-white/10 dark:hover:bg-black/10'} ${b.cls}`}>
+              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${b.active ? 'bg-[#FD4A32] text-white' : 'text-white dark:text-[#1e1f22] hover:bg-white/10 dark:hover:bg-black/10'} ${b.cls}`}>
               {b.label}
             </button>
           ))}
           <div className="w-px self-stretch bg-[#383a40] dark:bg-[#e2d8d2] mx-0.5" />
           <button type="button" title="Link" onClick={openLinkModal}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editor.isActive('link') ? 'bg-[#006c49] text-white' : 'text-white dark:text-[#1e1f22] hover:bg-white/10 dark:hover:bg-black/10'}`}>
+            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editor.isActive('link') ? 'bg-[#FD4A32] text-white' : 'text-white dark:text-[#1e1f22] hover:bg-white/10 dark:hover:bg-black/10'}`}>
             <LinkIcon className="w-3 h-3" />
           </button>
         </BubbleMenu>
@@ -1033,7 +1033,7 @@ export default function RichTextEditor({
         {/* HTML source / Preview panel */}
         {mode !== 'write' && (
           <div className={`overflow-y-auto bg-[#f6ece6]/20 dark:bg-[#141517]/20 p-4 ${isFullscreen ? 'flex-1' : 'max-h-[600px]'}`}>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#006c49] dark:text-[#6cf8bb] mb-3 pb-1 border-b border-[#eae1da] dark:border-[#2b2d31]">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#FD4A32] dark:text-[#FD4A32] mb-3 pb-1 border-b border-[#eae1da] dark:border-[#2b2d31]">
               HTML Output
             </div>
             <pre className="text-[10px] font-mono text-[#444748] dark:text-[#a6adbb] whitespace-pre-wrap break-all leading-relaxed">
@@ -1051,7 +1051,7 @@ export default function RichTextEditor({
         </div>
         <div className="flex items-center gap-2">
           {isTableActive && <span className="text-indigo-600 dark:text-indigo-400 font-bold">In Table — use toolbar above ↑</span>}
-          <span className="text-[#006c49] dark:text-[#6cf8bb] font-bold">TipTap WYSIWYG</span>
+          <span className="text-[#FD4A32] dark:text-[#FD4A32] font-bold">TipTap WYSIWYG</span>
           {isFullscreen && (
             <button type="button" onClick={() => setIsFullscreen(false)} className="px-2 py-0.5 bg-[#eae1da] dark:bg-[#2b2d31] rounded text-[10px] font-bold">Esc to exit</button>
           )}

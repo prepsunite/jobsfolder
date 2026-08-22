@@ -40,7 +40,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
   };
 
   return (
-    <div className="bg-[#ffffff] dark:bg-[#1e1f22] hover:bg-[#fff8f5] dark:hover:bg-[#2b2d31] border border-[#eae1da] dark:border-[#383a40] hover:border-[#006c49]/40 dark:hover:border-[#6cf8bb]/40 rounded-[24px] p-6 transition-all duration-300 space-y-4 shadow-sm relative">
+    <div className="bg-[#ffffff] dark:bg-[#1e1f22] hover:bg-[#fff8f5] dark:hover:bg-[#2b2d31] border border-[#eae1da] dark:border-[#383a40] hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 rounded-[24px] p-6 transition-all duration-300 space-y-4 shadow-sm relative">
       {/* Top Header Bar */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2 flex-1">
@@ -48,18 +48,18 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
             <span className={`text-xs font-bold px-3 py-0.5 rounded-full border ${getDifficultyBadge(question.difficulty)}`}>
               {question.difficulty}
             </span>
-            <span className="text-xs font-semibold px-3 py-0.5 rounded-full bg-[#6cf8bb]/30 text-[#00714d] border border-[#00714d]/20">
+            <span className="text-xs font-semibold px-3 py-0.5 rounded-full bg-[#FD4A32]/30 text-[#E0351D] border border-[#E0351D]/20">
               {question.questionType}
             </span>
             {question.companyName && (
               <Link
                 to={`/companies/${question.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}/oldpapers`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#006c49] bg-[#6cf8bb]/20 hover:bg-[#6cf8bb]/40 px-3 py-0.5 rounded-full border border-[#006c49]/30 transition-all"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#FD4A32] bg-[#FD4A32]/20 hover:bg-[#FD4A32]/40 px-3 py-0.5 rounded-full border border-[#FD4A32]/30 transition-all"
                 title={`Open ${question.companyName} Old Papers Dashboard`}
               >
-                <Building2 className="w-3 h-3 text-[#006c49]" />
+                <Building2 className="w-3 h-3 text-[#FD4A32]" />
                 <span>{question.companyName} Old Papers</span>
-                <ExternalLink className="w-3 h-3 text-[#006c49]" />
+                <ExternalLink className="w-3 h-3 text-[#FD4A32]" />
               </Link>
             )}
             {question.frequency > 1 && (
@@ -164,7 +164,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
         <div className="pt-2 border-t border-[#eae1da]">
           <button
             onClick={() => setShowSolution(!showSolution)}
-            className="flex items-center gap-2 text-xs font-bold text-[#006c49] hover:text-[#00714d] transition-colors"
+            className="flex items-center gap-2 text-xs font-bold text-[#FD4A32] hover:text-[#E0351D] transition-colors"
           >
             <Code className="w-4 h-4" />
             <span>{showSolution ? 'Hide Solution & Explanation' : 'View Verified Solution'}</span>
@@ -180,8 +180,8 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
                 </div>
               )}
               <div>
-                <span className="text-xs font-semibold text-[#6cf8bb] block mb-1">Code Solution:</span>
-                <pre className="p-3 bg-[#000000] rounded-lg text-xs font-mono text-[#6cf8bb] overflow-x-auto border border-[#342f2b]">
+                <span className="text-xs font-semibold text-[#FD4A32] block mb-1">Code Solution:</span>
+                <pre className="p-3 bg-[#000000] rounded-lg text-xs font-mono text-[#FD4A32] overflow-x-auto border border-[#342f2b]">
                   {question.solution}
                 </pre>
               </div>

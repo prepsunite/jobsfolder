@@ -407,7 +407,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
                   {companyName}
                 </h1>
-                <span className="bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 dark:border-[#00C47B]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                <span className="bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                   {currentCompanyStoreItem.industry || 'IT Services'}
                 </span>
                 <span className="bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] border border-[#E9ECEF] dark:border-[#242424] text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
@@ -450,7 +450,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#1C1C1C] hover:bg-[#F8F9FA] dark:hover:bg-[#242424] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] transition-colors shrink-0"
               >
-                <Globe className="w-3 h-3 text-[#009D63] dark:text-[#00C47B]" />
+                <Globe className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32]" />
                 <span>Site</span>
                 <ExternalLink className="w-2.5 h-2.5 opacity-60" />
               </a>
@@ -490,7 +490,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                       : 'bg-white dark:bg-[#1C1C1C] text-[#495057] dark:text-[#999999] border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-[#555555]'
                   }`}
                 >
-                  <GraduationCap className={`w-3.5 h-3.5 ${isSelected ? 'text-[#00C47B] dark:text-[#009D63]' : 'text-[#868E96] dark:text-[#555555]'}`} />
+                  <GraduationCap className={`w-3.5 h-3.5 ${isSelected ? 'text-[#FD4A32] dark:text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'}`} />
                   <span>{exam.name}</span>
                 </button>
               );
@@ -516,7 +516,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     {activeTab === 'aboutCompany' ? `${companyName} Overview` : currentExam.name}
                   </h2>
                   {activeTab !== 'aboutCompany' && (
-                    <span className="inline-block mt-1 bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 dark:border-[#00C47B]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                    <span className="inline-block mt-1 bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                       {currentExam.badge}
                     </span>
                   )}
@@ -575,7 +575,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                         onClick={() => setActiveTab(tab.id as TabType)}
                         className={`pb-3 text-sm font-bold transition-all border-b-2 ${
                           activeTab === tab.id
-                            ? 'border-[#006c49] dark:border-[#6cf8bb] text-[#006c49] dark:text-[#6cf8bb]'
+                            ? 'border-[#FD4A32] dark:border-[#FD4A32] text-[#FD4A32] dark:text-[#FD4A32]'
                             : 'border-transparent text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
                         }`}
                       >
@@ -718,7 +718,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                       : (currentExam.content || '')
                   }
                   emptyText="No details added yet."
-                  className="prose-headings:font-display prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb]"
+                  className="prose-headings:font-display prose-h3:text-[#FD4A32] dark:prose-h3:text-[#FD4A32]"
                 />
               )}
             </div>
@@ -742,7 +742,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               <h4 className="font-display text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider">
                 Recent Questions
               </h4>
-              <span className="text-[10px] font-bold text-[#00714d] dark:text-[#6cf8bb] bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 px-2 py-0.5 rounded-full">Live</span>
+              <span className="text-[10px] font-bold text-[#E0351D] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 px-2 py-0.5 rounded-full">Live</span>
             </div>
 
             <div className="space-y-2.5">
@@ -752,7 +752,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 { q: 'Clock Angle at 3:25', type: 'Aptitude' },
                 { q: 'Process vs Thread Memory', type: 'OS Core' },
               ].map((item, idx) => (
-                <div key={idx} className="p-2.5 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[12px] border border-[#e2d8d2] dark:border-[#383a40] space-y-1 hover:border-[#006c49]/40 dark:hover:border-[#6cf8bb]/40 transition-all cursor-pointer">
+                <div key={idx} className="p-2.5 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[12px] border border-[#e2d8d2] dark:border-[#383a40] space-y-1 hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 transition-all cursor-pointer">
                   <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] block leading-snug">{item.q}</span>
                   <span className="text-[10px] text-[#747878] dark:text-[#a6adbb] font-semibold">{item.type}</span>
                 </div>

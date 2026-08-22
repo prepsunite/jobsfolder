@@ -134,7 +134,7 @@ export default function PaywallModal({
 
     switch (tier.themeColor) {
       case 'emerald':
-        return 'bg-emerald-500/10 border-[#009D63] dark:border-[#00C47B] shadow-sm ring-1 ring-[#009D63]/30';
+        return 'bg-[#FD4A32]/10 border-[#FD4A32] dark:border-[#FD4A32] shadow-sm ring-1 ring-[#FD4A32]/30';
       case 'purple':
         return 'bg-purple-500/10 border-purple-600 shadow-sm ring-1 ring-purple-500/30';
       case 'blue':
@@ -148,7 +148,7 @@ export default function PaywallModal({
     if (!isSelected) return 'border-[#868E96] dark:border-[#555555]';
     switch (tier.themeColor) {
       case 'emerald':
-        return 'border-[#009D63] bg-[#009D63] dark:border-[#00C47B] dark:bg-[#00C47B] text-black';
+        return 'border-[#FD4A32] bg-[#FD4A32] dark:border-[#FD4A32] dark:bg-[#FD4A32] text-black';
       case 'purple':
         return 'border-purple-600 bg-purple-600 text-white';
       case 'blue':
@@ -171,10 +171,10 @@ export default function PaywallModal({
 
         {/* Lock Security Badge */}
         <div className="space-y-2 text-center">
-          <div className="w-12 h-12 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center mx-auto shadow-xs">
+          <div className="w-12 h-12 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] flex items-center justify-center mx-auto shadow-xs">
             <Lock className="w-6 h-6 animate-pulse" />
           </div>
-          <span className="inline-block px-3 py-0.5 rounded-md bg-[#009D63]/10 border border-[#009D63]/20 text-[#009D63] dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider">
+          <span className="inline-block px-3 py-0.5 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
             Premium Placement Drive Content
           </span>
           <h2 className="font-display text-2xl font-extrabold tracking-tight">
@@ -189,8 +189,8 @@ export default function PaywallModal({
         {/* Payment Success State */}
         {paymentSuccess ? (
           <div className="p-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center space-y-3 animate-fadeIn">
-            <CheckCircle2 className="w-12 h-12 text-[#009D63] dark:text-[#00C47B] mx-auto animate-bounce" />
-            <h3 className="font-extrabold text-base text-[#009D63] dark:text-[#00C47B]">
+            <CheckCircle2 className="w-12 h-12 text-[#FD4A32] dark:text-[#FD4A32] mx-auto animate-bounce" />
+            <h3 className="font-extrabold text-base text-[#FD4A32] dark:text-[#FD4A32]">
               Payment Verified &amp; Unlocked!
             </h3>
             <p className="text-xs text-[#868E96] dark:text-[#555555]">
@@ -260,7 +260,7 @@ export default function PaywallModal({
             <button
               disabled={isProcessing}
               onClick={() => handleCheckout(selectedOption)}
-              className="w-full py-3.5 rounded-md text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all flex items-center justify-center gap-2 bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black mt-4 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 rounded-md text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all flex items-center justify-center gap-2 bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black mt-4 cursor-pointer disabled:opacity-50"
             >
               {isProcessing ? (
                 <>
@@ -280,7 +280,7 @@ export default function PaywallModal({
 
             {/* Security Guarantee Note */}
             <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[#868E96] dark:text-[#555555] pt-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
               <span>256-bit Encrypted Checkout • Instant Document Access Guarantee</span>
             </div>
           </div>

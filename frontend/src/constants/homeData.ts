@@ -50,7 +50,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '14 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'Cognitive · Advanced Coding · Verbal',
-    accent: '#00C47B',
+    accent: '#FD4A32',
   },
   {
     abbr: 'ACN',
@@ -59,7 +59,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '12 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'Critical Thinking · Pseudocode · Coding',
-    accent: '#A855F7',
+    accent: '#FD4A32',
   },
   {
     abbr: 'CTS',
@@ -68,7 +68,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '10 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'Quantitative · Automata Coding',
-    accent: '#3B82F6',
+    accent: '#FD4A32',
   },
   {
     abbr: 'AMZN',
@@ -77,7 +77,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '18 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'DSA · OS/DBMS · System Design',
-    accent: '#F5A623',
+    accent: '#FD4A32',
   },
   {
     abbr: 'INF',
@@ -86,7 +86,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '9 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'Verbal · Quant · Coding',
-    accent: '#00C47B',
+    accent: '#FD4A32',
   },
   {
     abbr: 'WIP',
@@ -95,7 +95,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '8 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'English · Analytical · Coding',
-    accent: '#EF4444',
+    accent: '#FD4A32',
   },
   {
     abbr: 'CAP',
@@ -104,7 +104,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '7 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'Behavioral · Coding · Essay',
-    accent: '#3B82F6',
+    accent: '#FD4A32',
   },
   {
     abbr: 'IBM',
@@ -113,7 +113,7 @@ export const COMPANIES: HomeCompany[] = [
     papers: '6 Solved Past Papers',
     years: 'Full Drive Question Sets',
     sections: 'Cognitive · Technical Aptitude',
-    accent: '#6366F1',
+    accent: '#FD4A32',
   },
 ];
 

@@ -435,9 +435,9 @@ export default function AdminDashboardPage() {
 
   const statCards = [
     { label: 'Registered Students', value: stats.totalUsers, icon: Users, color: 'text-[#0284c7] dark:text-[#38bdf8] bg-[#38bdf8]/15 border-[#38bdf8]/30' },
-    { label: 'Target Companies', value: stats.totalCompanies, icon: Building2, color: 'text-[#006c49] dark:text-[#6cf8bb] bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 border-[#00714d]/20 dark:border-[#6cf8bb]/20' },
+    { label: 'Target Companies', value: stats.totalCompanies, icon: Building2, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
     { label: 'Live Exam Cards', value: allExamsCount, icon: GraduationCap, color: 'text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-800' },
-    { label: 'OA Questions', value: stats.totalQuestions, icon: BookOpen, color: 'text-[#006c49] dark:text-[#6cf8bb] bg-[#6cf8bb]/30 dark:bg-[#006c49]/30 border-[#00714d]/20 dark:border-[#6cf8bb]/20' },
+    { label: 'OA Questions', value: stats.totalQuestions, icon: BookOpen, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
     { label: 'Resource Vault', value: stats.totalResources, icon: Bookmark, color: 'text-[#0284c7] dark:text-[#38bdf8] bg-[#38bdf8]/15 border-[#38bdf8]/30' },
     { label: 'Approved Experiences', value: approvedExperiencesCount, icon: ThumbsUp, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
     { label: 'Pending Approvals', value: pendingExperiencesCount, icon: Clock, color: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/30' },
@@ -688,7 +688,7 @@ export default function AdminDashboardPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#e2d8d2] dark:border-[#2b2d31]">
                       <div>
                         <h4 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
-                          <GraduationCap className="w-5 h-5 text-[#006c49] dark:text-[#6cf8bb]" />
+                          <GraduationCap className="w-5 h-5 text-[#FD4A32] dark:text-[#FD4A32]" />
                           <span>{exam.name}</span>
                         </h4>
                         <span className="text-xs text-[#747878] dark:text-[#a6adbb]">{exam.badge || 'Official Campus Drive'}</span>
@@ -696,7 +696,7 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/companies/${exam.companySlug}/oldpapers`}
-                          className="px-3.5 py-1.5 bg-[#006c49] hover:bg-[#005237] text-white text-[11px] font-bold rounded-full transition-colors flex items-center gap-1"
+                          className="px-3.5 py-1.5 bg-[#FD4A32] hover:bg-[#005237] text-white text-[11px] font-bold rounded-full transition-colors flex items-center gap-1"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           <span>View Old Papers ➔</span>
@@ -760,7 +760,7 @@ export default function AdminDashboardPage() {
                 />
                 <button
                   onClick={handleAddExamCardAdmin}
-                  className="px-5 py-2.5 bg-[#006c49] hover:bg-[#005237] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+                  className="px-5 py-2.5 bg-[#FD4A32] hover:bg-[#005237] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
                 >
                   + Add Exam Card Live to /questions
                 </button>
@@ -791,7 +791,7 @@ export default function AdminDashboardPage() {
               />
               <button
                 onClick={handleSaveCompanyOverviewAdmin}
-                className="px-5 py-2.5 bg-[#006c49] hover:bg-[#00714d] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+                className="px-5 py-2.5 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
               >
                 ✔ Save Overview Live
               </button>
@@ -843,7 +843,7 @@ export default function AdminDashboardPage() {
           {/* Submissions List */}
           {filteredExperiences.length === 0 ? (
             <div className="py-12 text-center space-y-1.5 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
-              <CheckCircle2 className="w-6 h-6 text-[#009D63] dark:text-[#00C47B] mx-auto" />
+              <CheckCircle2 className="w-6 h-6 text-[#FD4A32] dark:text-[#FD4A32] mx-auto" />
               <h4 className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">No Submissions in this Filter</h4>
               <p className="text-xs text-[#868E96] dark:text-[#555555]">All student interview submissions have been moderated!</p>
             </div>
@@ -872,7 +872,7 @@ export default function AdminDashboardPage() {
                       {exp.status !== 'APPROVED' && (
                         <button
                           onClick={() => handleUpdateExperienceStatus(exp.id, 'APPROVED')}
-                          className="px-3 py-1.5 bg-[#009D63] hover:bg-[#007F50] text-black text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                          className="px-3 py-1.5 bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
                         >
                           <ThumbsUp className="w-3 h-3" />
                           <span>Approve & Publish</span>
@@ -906,7 +906,7 @@ export default function AdminDashboardPage() {
                         return (
                           <div key={rIdx} className="p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424] space-y-1">
                             {!isGeneric && (
-                              <span className="font-display font-bold text-xs text-[#009D63] dark:text-[#00C47B] block uppercase tracking-wider">{r.roundTitle}</span>
+                              <span className="font-display font-bold text-xs text-[#FD4A32] dark:text-[#FD4A32] block uppercase tracking-wider">{r.roundTitle}</span>
                             )}
                             <ContentRenderer
                               content={r.details}
@@ -1028,7 +1028,7 @@ export default function AdminDashboardPage() {
 
                 <div className="flex gap-3 pt-3 border-t border-[#eae1da] dark:border-[#2b2d31]">
                   <button type="button" onClick={() => setCreationStep(1)} className="px-4 py-2.5 bg-[#f6ece6] dark:bg-[#141517] text-[#747878] dark:text-[#a6adbb] text-xs font-bold rounded-full">Back</button>
-                  <button type="submit" className="px-6 py-3 rounded-full bg-[#006c49] hover:bg-[#00714d] text-white font-bold text-xs uppercase tracking-wider shadow-lg">
+                  <button type="submit" className="px-6 py-3 rounded-full bg-[#FD4A32] hover:bg-[#E0351D] text-white font-bold text-xs uppercase tracking-wider shadow-lg">
                     ✔ Publish Company & Exam Card Live
                   </button>
                 </div>
@@ -1057,10 +1057,10 @@ export default function AdminDashboardPage() {
                 <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                 <div>
                   <h4 className="font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">OA Question Published Live!</h4>
-                  <p className="text-xs text-[#00714d] dark:text-[#6cf8bb]">Students can now practice this question in the OA Question Bank.</p>
+                  <p className="text-xs text-[#E0351D] dark:text-[#FD4A32]">Students can now practice this question in the OA Question Bank.</p>
                 </div>
               </div>
-              <Link to="/questions" className="px-4 py-2 rounded-full bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider hover:bg-[#006c49] dark:hover:bg-white transition-colors shrink-0">
+              <Link to="/questions" className="px-4 py-2 rounded-full bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider hover:bg-[#FD4A32] dark:hover:bg-white transition-colors shrink-0">
                 View Question Bank ➔
               </Link>
             </div>
@@ -1167,7 +1167,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <button type="submit" className="px-6 py-3 rounded-full bg-[#006c49] hover:bg-[#00714d] text-white font-bold text-xs uppercase tracking-wider shadow-md">
+            <button type="submit" className="px-6 py-3 rounded-full bg-[#FD4A32] hover:bg-[#E0351D] text-white font-bold text-xs uppercase tracking-wider shadow-md">
               + Publish Question Live to Bank
             </button>
           </form>
@@ -1193,10 +1193,10 @@ export default function AdminDashboardPage() {
                 <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                 <div>
                   <h4 className="font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">Resource Added Live to Vault!</h4>
-                  <p className="text-xs text-[#00714d] dark:text-[#6cf8bb]">Students can now download and view this resource.</p>
+                  <p className="text-xs text-[#E0351D] dark:text-[#FD4A32]">Students can now download and view this resource.</p>
                 </div>
               </div>
-              <Link to="/resources" className="px-4 py-2 rounded-full bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider hover:bg-[#006c49] dark:hover:bg-white transition-colors shrink-0">
+              <Link to="/resources" className="px-4 py-2 rounded-full bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] text-xs font-bold uppercase tracking-wider hover:bg-[#FD4A32] dark:hover:bg-white transition-colors shrink-0">
                 View Resource Library ➔
               </Link>
             </div>
@@ -1419,7 +1419,7 @@ export default function AdminDashboardPage() {
                               {tx.item_type || 'SINGLE_PAPER'}
                             </span>
                           </td>
-                          <td className="py-3.5 px-3 font-extrabold text-[#006c49] dark:text-[#6cf8bb]">₹{tx.amount}</td>
+                          <td className="py-3.5 px-3 font-extrabold text-[#FD4A32] dark:text-[#FD4A32]">₹{tx.amount}</td>
                           <td className="py-3.5 px-3">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                               {tx.status}
@@ -1468,7 +1468,7 @@ export default function AdminDashboardPage() {
                         <tr key={p.id || p.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
                           <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{p.user_email}</td>
                           <td className="py-3.5 px-3 font-semibold text-purple-700 dark:text-purple-400">{p.exam_id}</td>
-                          <td className="py-3.5 px-3 font-extrabold text-[#006c49] dark:text-[#6cf8bb]">₹{p.amount_paid}</td>
+                          <td className="py-3.5 px-3 font-extrabold text-[#FD4A32] dark:text-[#FD4A32]">₹{p.amount_paid}</td>
                           <td className="py-3.5 px-3 text-[#747878] dark:text-[#a6adbb]">{p.purchased_at ? new Date(p.purchased_at).toLocaleDateString() : 'N/A'}</td>
                           <td className="py-3.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">{p.expires_at ? new Date(p.expires_at).toLocaleDateString() : '1 Year'}</td>
                         </tr>
@@ -1579,7 +1579,7 @@ export default function AdminDashboardPage() {
             {/* Moderation Metrics Breakdown */}
             <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
               <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#006c49] dark:text-[#6cf8bb]" />
+                <ShieldCheck className="w-4 h-4 text-[#FD4A32] dark:text-[#FD4A32]" />
                 <span>Student Submissions Moderation Metrics</span>
               </h3>
               <div className="space-y-3">

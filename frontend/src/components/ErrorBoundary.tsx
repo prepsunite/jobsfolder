@@ -50,7 +50,7 @@ export default function ErrorBoundary() {
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
             onClick={handleReload}
-            className="px-5 py-2.5 bg-[#006c49] hover:bg-[#00573b] dark:bg-[#6cf8bb] dark:hover:bg-[#5be3ab] text-white dark:text-[#141517] rounded-full text-xs font-extrabold transition-all shadow-md flex items-center gap-2"
+            className="px-5 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] dark:bg-[#FD4A32] dark:hover:bg-[#FF6D59] text-white dark:text-[#141517] rounded-full text-xs font-extrabold transition-all shadow-md flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Reload Page</span>

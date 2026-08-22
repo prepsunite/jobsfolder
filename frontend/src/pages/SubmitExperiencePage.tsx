@@ -64,7 +64,7 @@ export default function SubmitExperiencePage() {
   if (submittedSuccess) {
     return (
       <div className="max-w-md mx-auto py-16 text-center space-y-3 animate-fadeIn">
-        <div className="w-12 h-12 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 flex items-center justify-center mx-auto">
+        <div className="w-12 h-12 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 flex items-center justify-center mx-auto">
           <CheckCircle2 className="w-6 h-6" />
         </div>
         <h2 className="font-display text-xl font-extrabold text-[#121417] dark:text-[#FFFFFF]">Experience Submitted!</h2>
@@ -88,7 +88,7 @@ export default function SubmitExperiencePage() {
 
       <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-6 sm:p-8 space-y-5 shadow-xs">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
             <Sparkles className="w-3 h-3" />
             <span>Community Contribution</span>
           </div>
@@ -220,7 +220,7 @@ export default function SubmitExperiencePage() {
               id="anonymous"
               checked={isAnonymous}
               onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#242424] text-[#009D63] focus:ring-[#009D63]"
+              className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#242424] text-[#FD4A32] focus:ring-[#FD4A32]"
             />
             <label htmlFor="anonymous" className="text-xs text-[#121417] dark:text-[#FFFFFF] font-medium font-sans">
               Publish anonymously (Your name will be hidden from public view)
@@ -231,7 +231,7 @@ export default function SubmitExperiencePage() {
           <button
             type="submit"
             disabled={submitMutation.isPending}
-            className="w-full py-2.5 bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black font-display font-bold text-xs uppercase tracking-wider rounded-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full py-2.5 bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider rounded-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
             <span>{submitMutation.isPending ? 'Submitting...' : 'Submit Experience'}</span>

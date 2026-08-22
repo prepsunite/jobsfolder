@@ -103,8 +103,8 @@ export default function ExperiencesPage() {
     switch (d) {
       case 'EASY':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-[#009D63] dark:text-[#00C47B] border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#009D63] dark:bg-[#00C47B]" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32] dark:bg-[#FD4A32]" />
             Easy Difficulty
           </span>
         );
@@ -130,7 +130,7 @@ export default function ExperiencesPage() {
     switch (v) {
       case 'SELECTED':
         return (
-          <span className="px-2.5 py-1 rounded-md text-[10px] font-display font-bold uppercase tracking-wider bg-emerald-500/10 text-[#009D63] dark:text-[#00C47B] border border-emerald-500/20">
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-display font-bold uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] border border-emerald-500/20">
             Selected
           </span>
         );
@@ -155,7 +155,7 @@ export default function ExperiencesPage() {
       {/* Header Banner */}
       <div className="rounded-lg p-6 sm:p-8 border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden">
         <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
             <Layers className="w-3.5 h-3.5" />
             <span>Real Student Interviews</span>
           </div>
@@ -171,7 +171,7 @@ export default function ExperiencesPage() {
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Share Your Experience</span>
@@ -201,7 +201,7 @@ export default function ExperiencesPage() {
       {/* Feed List */}
       {isLoading ? (
         <div className="p-12 text-center text-[#868E96] flex items-center justify-center gap-2 text-xs">
-          <Loader2 className="w-4 h-4 animate-spin text-[#009D63]" />
+          <Loader2 className="w-4 h-4 animate-spin text-[#FD4A32]" />
           <span>Loading interview reports...</span>
         </div>
       ) : rawExperiences.length === 0 ? (
@@ -251,7 +251,7 @@ export default function ExperiencesPage() {
                       onClick={() => handleToggleBookmark(exp.id)}
                       className={`p-1.5 rounded-md border transition-colors cursor-pointer ${
                         isBookmarked
-                          ? 'border-[#009D63]/30 bg-[#009D63]/10 text-[#009D63] dark:text-[#00C47B]'
+                          ? 'border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32]'
                           : 'border-[#E9ECEF] dark:border-[#242424] text-[#868E96] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                       title={isBookmarked ? 'Remove bookmark' : 'Bookmark this experience'}
@@ -295,7 +295,7 @@ export default function ExperiencesPage() {
                       >
                         {rd.roundTitle && (
                           <div className="flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
                             <h4 className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
                               {rd.roundTitle}
                             </h4>

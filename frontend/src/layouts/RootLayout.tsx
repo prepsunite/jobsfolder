@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
+import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ShieldCheck, Plus, Sun, Moon, LogIn, Building2, BookOpen, ArrowRight, User } from 'lucide-react';
@@ -65,7 +66,7 @@ export default function RootLayout() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#fff8f5] dark:bg-[#141517] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-        <div className="w-10 h-10 border-4 border-[#006c49]/20 border-t-[#006c49] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#FD4A32]/20 border-t-[#FD4A32] rounded-full animate-spin" />
         <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Verifying Session...</span>
       </div>
     );
@@ -79,14 +80,14 @@ export default function RootLayout() {
 
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
+      <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-[#8C1D0F] transition-colors">
 
         {/* ── PREMIUM PUBLIC NAVBAR ── */}
         <header className="pub-nav">
           <div className="pub-nav-inner">
             {/* Brand */}
             <Link to="/" className="pub-nav-brand">
-              <div className="pub-nav-logo-box">P</div>
+              <img src="/favicon.svg" alt="Jobsfolder Logo" className="pub-nav-logo-img" />
               <div className="pub-nav-brand-text">
                 <span className="pub-nav-brand-name">
                   Jobs<span>folder</span>
@@ -139,11 +140,14 @@ export default function RootLayout() {
 
         {/* ── PREMIUM DARK FOOTER ── */}
         <footer className="pub-footer">
+          {/* 3D Floating Glass Tokens & Code Particles (Raycast / Figma Style) */}
+          <FloatingGlassTokens />
+
           <div className="pub-footer-inner">
             {/* Brand column */}
             <div className="pub-footer-brand">
               <Link to="/" className="pub-footer-logo">
-                <div className="pub-footer-logo-box">P</div>
+                <img src="/favicon.svg" alt="Jobsfolder Logo" className="pub-footer-logo-img" />
                 <span className="pub-footer-logo-name">Jobs<span>folder</span></span>
               </Link>
               <p className="pub-footer-tagline">
@@ -205,7 +209,7 @@ export default function RootLayout() {
 
   // INTERNAL APP WORKSPACE LAYOUT (WITH PERSISTENT SIDEBAR)
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex font-sans selection:bg-[#6cf8bb] selection:text-[#005236] transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex font-sans selection:bg-[#FD4A32] selection:text-[#8C1D0F] transition-colors">
       {/* Persistent Left Workspace Sidebar */}
       <Sidebar />
 
@@ -239,12 +243,12 @@ export default function RootLayout() {
         <footer className="border-t border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] py-4 px-8 text-xs text-[#868E96] dark:text-[#555555] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
           <p>© 2026 PrepUnite · Placement Intelligence Operating System.</p>
           <div className="flex flex-wrap items-center gap-4 font-semibold text-[#495057] dark:text-[#999999]">
-            <Link to="/about" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">About Us</Link>
-            <Link to="/contact" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Contact Us</Link>
-            <Link to="/pricing" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Pricing</Link>
-            <Link to="/privacy-policy" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Privacy Policy</Link>
-            <Link to="/terms-and-conditions" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Terms & Conditions</Link>
-            <Link to="/refund-policy" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">Refund Policy</Link>
+            <Link to="/about" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">About Us</Link>
+            <Link to="/contact" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">Contact Us</Link>
+            <Link to="/pricing" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">Pricing</Link>
+            <Link to="/privacy-policy" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">Privacy Policy</Link>
+            <Link to="/terms-and-conditions" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">Terms & Conditions</Link>
+            <Link to="/refund-policy" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">Refund Policy</Link>
           </div>
         </footer>
       </div>

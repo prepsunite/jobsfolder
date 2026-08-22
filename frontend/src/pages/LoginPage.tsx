@@ -59,7 +59,7 @@ export default function LoginPage() {
   if (authLoading) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-        <div className="w-8 h-8 border-2 border-[#009D63] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#FD4A32] border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">Verifying Session...</span>
       </div>
     );
@@ -73,16 +73,18 @@ export default function LoginPage() {
         <div className="lg:col-span-5 bg-[#121417] dark:bg-[#0C0C0C] p-8 sm:p-10 text-white flex flex-col justify-between relative border-r border-[#242424] hidden lg:flex">
           <div className="space-y-6">
             <Link to="/" className="inline-flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-black flex items-center justify-center font-display font-black text-base transition-transform group-hover:scale-105">
-                P
-              </div>
+              <img
+                src="/favicon.svg"
+                alt="Jobsfolder Logo"
+                className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
+              />
               <span className="font-display text-xl font-extrabold tracking-tight text-white">
-                Jobs<span className="text-[#00C47B]">folder</span>
+                Jobs<span className="text-[#FD4A32]">folder</span>
               </span>
             </Link>
 
             <div className="pt-2 space-y-2.5">
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/10 text-[#00C47B] text-[9px] font-display font-bold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/10 text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
                 <Sparkles className="w-3 h-3" />
                 <span>Verified Archive</span>
               </div>
@@ -96,19 +98,19 @@ export default function LoginPage() {
 
             <div className="space-y-2.5 pt-2 font-sans">
               <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
-                <div className="w-4 h-4 rounded-sm bg-[#00C47B]/20 flex items-center justify-center text-[#00C47B]">
+                <div className="w-4 h-4 rounded-sm bg-[#FD4A32]/20 flex items-center justify-center text-[#FD4A32]">
                   <Check className="w-3 h-3 stroke-[3]" />
                 </div>
                 <span>TCS, Infosys, Accenture & Amazon Past Papers</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
-                <div className="w-4 h-4 rounded-sm bg-[#00C47B]/20 flex items-center justify-center text-[#00C47B]">
+                <div className="w-4 h-4 rounded-sm bg-[#FD4A32]/20 flex items-center justify-center text-[#FD4A32]">
                   <Check className="w-3 h-3 stroke-[3]" />
                 </div>
                 <span>Zero Passwords · Instant 1-Click Access</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs text-[#E5E7EB]">
-                <div className="w-4 h-4 rounded-sm bg-[#00C47B]/20 flex items-center justify-center text-[#00C47B]">
+                <div className="w-4 h-4 rounded-sm bg-[#FD4A32]/20 flex items-center justify-center text-[#FD4A32]">
                   <Check className="w-3 h-3 stroke-[3]" />
                 </div>
                 <span>Saved Bookmarks & Drive Notes Sync</span>
@@ -126,7 +128,7 @@ export default function LoginPage() {
               <p className="text-[11px] text-[#999999] italic">
                 "Got immediate access to all TCS NQT advanced coding papers with full solutions."
               </p>
-              <div className="flex items-center gap-1.5 pt-0.5 text-[10px] font-bold text-[#00C47B]">
+              <div className="flex items-center gap-1.5 pt-0.5 text-[10px] font-bold text-[#FD4A32]">
                 <GraduationCap className="w-3 h-3" />
                 <span>Priya Sharma — TCS Digital 2025</span>
               </div>
@@ -140,15 +142,17 @@ export default function LoginPage() {
           {/* Mobile Header Brand */}
           <div className="flex lg:hidden items-center justify-between mb-6">
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="w-8 h-8 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-black flex items-center justify-center font-display font-black text-sm">
-                P
-              </div>
+              <img
+                src="/favicon.svg"
+                alt="Jobsfolder Logo"
+                className="w-8 h-8 rounded-full object-contain shrink-0"
+              />
               <span className="font-display text-lg font-extrabold text-[#121417] dark:text-white">
-                Jobs<span className="text-[#009D63] dark:text-[#00C47B]">folder</span>
+                Jobs<span className="text-[#FD4A32] dark:text-[#FD4A32]">folder</span>
               </span>
             </Link>
 
-            <span className="px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:text-[#00C47B] text-[9px] font-display font-bold uppercase">
+            <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase">
               Google OAuth
             </span>
           </div>
@@ -156,11 +160,11 @@ export default function LoginPage() {
           {/* STATE 1: LOGGED IN USER VIEW */}
           {isAuthenticated && user ? (
             <div className="my-auto space-y-5 max-w-sm mx-auto w-full text-center animate-fadeIn">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#009D63]/10 border-2 border-[#009D63] dark:border-[#00C47B] relative mx-auto">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#FD4A32]/10 border-2 border-[#FD4A32] dark:border-[#FD4A32] relative mx-auto">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  <span className="font-display font-black text-xl text-[#009D63] dark:text-[#00C47B]">
+                  <span className="font-display font-black text-xl text-[#FD4A32] dark:text-[#FD4A32]">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -181,7 +185,7 @@ export default function LoginPage() {
               <div className="p-3 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5 text-xs font-sans">
                 <div className="flex justify-between">
                   <span className="text-[#868E96] dark:text-[#555555]">Role:</span>
-                  <span className="font-bold text-[#009D63] dark:text-[#00C47B]">{role}</span>
+                  <span className="font-bold text-[#FD4A32] dark:text-[#FD4A32]">{role}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#868E96] dark:text-[#555555]">Auth Provider:</span>
@@ -237,7 +241,7 @@ export default function LoginPage() {
                   className="w-full py-3 px-4 rounded-md bg-white dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-[#555555] text-[#121417] dark:text-white font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 group shadow-xs"
                 >
                   {googleLoading ? (
-                    <div className="w-4 h-4 border-2 border-[#009D63] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-[#FD4A32] border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -247,7 +251,7 @@ export default function LoginPage() {
                     </svg>
                   )}
                   <span>Continue with Google</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] ml-auto" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] ml-auto" />
                 </button>
 
                 <p className="text-[10px] text-[#868E96] dark:text-[#555555] text-center leading-relaxed font-sans">
@@ -258,7 +262,7 @@ export default function LoginPage() {
               {/* SECURITY FOOTER */}
               <div className="pt-4 border-t border-[#E9ECEF] dark:border-[#242424]">
                 <div className="flex items-center justify-center gap-1 text-[11px] text-[#868E96] dark:text-[#555555] font-sans">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
                   <span>Secured by Supabase OAuth 2.0 &amp; 256-bit SSL</span>
                 </div>
               </div>

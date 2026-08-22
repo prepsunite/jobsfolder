@@ -19,7 +19,7 @@ export default function ContactPage() {
     <div className="max-w-5xl mx-auto space-y-8 py-4 animate-fadeIn">
       {/* Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
           <Mail className="w-3 h-3" />
           <span>Support & Enquiries</span>
         </div>
@@ -36,23 +36,23 @@ export default function ContactPage() {
         <div className="space-y-4">
           <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-3">
             <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] flex items-center gap-2">
-              <MessageSquare className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+              <MessageSquare className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
               <span>Direct Support</span>
             </h3>
 
             <div className="space-y-2.5 text-xs text-[#868E96] dark:text-[#555555] font-sans">
               <div className="flex items-start gap-2.5">
-                <Mail className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0 mt-0.5" />
+                <Mail className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Email</span>
-                  <a href="mailto:prepsunite@gmail.com" className="hover:text-[#009D63] dark:hover:text-[#00C47B]">
+                  <a href="mailto:prepsunite@gmail.com" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">
                     prepsunite@gmail.com
                   </a>
                 </div>
               </div>
 
               <div className="flex items-start gap-2.5">
-                <Clock className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0 mt-0.5" />
+                <Clock className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Response Time</span>
                   <span>Within 24 hours</span>
@@ -60,7 +60,7 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0 mt-0.5" />
+                <MapPin className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Location</span>
                   <span>India · Placement Tech Services</span>
@@ -70,7 +70,7 @@ export default function ContactPage() {
           </div>
 
           <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
-            <h4 className="font-display font-bold text-xs text-[#009D63] dark:text-[#00C47B] flex items-center gap-1.5">
+            <h4 className="font-display font-bold text-xs text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5" />
               <span>Payment or Access Issues?</span>
             </h4>
@@ -84,7 +84,7 @@ export default function ContactPage() {
         <div className="md:col-span-2 p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424]">
           {submitted ? (
             <div className="py-10 text-center space-y-3 animate-fadeIn">
-              <div className="w-10 h-10 rounded-md bg-[#009D63]/10 text-[#009D63] dark:text-[#00C47B] flex items-center justify-center mx-auto">
+              <div className="w-10 h-10 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <h3 className="font-display font-bold text-lg text-[#121417] dark:text-[#FFFFFF]">Message Sent Successfully!</h3>
@@ -155,7 +155,7 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-md bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Submit Message</span>

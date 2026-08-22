@@ -83,7 +83,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
       {/* Inner Hero Card Container */}
       <div className="relative rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3 flex flex-col items-center justify-center min-h-[160px] overflow-hidden border border-[#E9ECEF] dark:border-[#242424] space-y-2">
         {/* Exam Title */}
-        <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#009D63] dark:group-hover:text-[#00C47B] transition-colors line-clamp-2 text-center z-10">
+        <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center z-10">
           {exam.name}
         </h3>
 
@@ -115,7 +115,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
             {exam.companyName}
           </div>
           <div className="text-[10px] text-[#868E96] dark:text-[#555555] truncate flex items-center gap-1 mt-0.5 font-sans">
-            <Building2 className="w-3 h-3 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+            <Building2 className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
             <span>{exam.companyIndustry || 'IT & Services'}</span>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
         {/* Right: Sharp Button */}
         <Link
           to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#009D63] dark:hover:bg-[#00C47B] font-display font-bold text-[10px] uppercase tracking-wider transition-colors shrink-0"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] font-display font-bold text-[10px] uppercase tracking-wider transition-colors shrink-0"
           title={`View Old Papers for ${exam.name}`}
         >
           <span>Papers</span>

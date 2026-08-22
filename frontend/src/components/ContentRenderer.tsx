@@ -42,13 +42,13 @@ export default function ContentRenderer({
     'prose prose-sm max-w-none dark:prose-invert ' +
     'prose-p:my-1 prose-p:leading-snug ' +
     'prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg ' +
-    'prose-h3:text-base prose-h3:text-[#006c49] dark:prose-h3:text-[#6cf8bb] ' +
+    'prose-h3:text-base prose-h3:text-[#FD4A32] dark:prose-h3:text-[#FD4A32] ' +
     'prose-a:text-[#0284c7] dark:prose-a:text-[#38bdf8] prose-a:no-underline hover:prose-a:underline ' +
     'prose-img:rounded-xl prose-img:max-w-full prose-img:h-auto ' +
     'prose-table:w-full prose-th:bg-[#f6ece6] dark:prose-th:bg-[#2b2d31] ' +
     'prose-td:border prose-td:border-[#e2d8d2] dark:prose-td:border-[#383a40] ' +
-    'prose-blockquote:border-l-4 prose-blockquote:border-[#006c49] dark:prose-blockquote:border-[#6cf8bb] ' +
-    'prose-code:text-[#006c49] dark:prose-code:text-[#6cf8bb] ' +
+    'prose-blockquote:border-l-4 prose-blockquote:border-[#FD4A32] dark:prose-blockquote:border-[#FD4A32] ' +
+    'prose-code:text-[#FD4A32] dark:prose-code:text-[#FD4A32] ' +
     'prose-code:bg-[#f6ece6] dark:prose-code:bg-[#2b2d31] ' +
     'text-[#1f1b17] dark:text-[#e3e3e3] ' +
     className;
@@ -78,14 +78,14 @@ export default function ContentRenderer({
         remarkPlugins={[remarkGfm]}
         components={{
           pre: ({ children, ...props }) => (
-            <pre className="test-case p-4 bg-[#141517] dark:bg-[#101113] text-[#6cf8bb] dark:text-[#6cf8bb] rounded-xl border border-[#383a40] overflow-x-auto text-xs font-mono whitespace-pre-wrap leading-relaxed my-3" {...props}>
+            <pre className="test-case p-4 bg-[#141517] dark:bg-[#101113] text-[#FD4A32] dark:text-[#FD4A32] rounded-xl border border-[#383a40] overflow-x-auto text-xs font-mono whitespace-pre-wrap leading-relaxed my-3" {...props}>
               {children}
             </pre>
           ),
           code: ({ inline, className, children, ...props }: any) => {
             if (inline) {
               return (
-                <code className="px-1.5 py-0.5 rounded bg-[#f6ece6] dark:bg-[#2b2d31] text-[#006c49] dark:text-[#6cf8bb] text-xs font-mono font-semibold" {...props}>
+                <code className="px-1.5 py-0.5 rounded bg-[#f6ece6] dark:bg-[#2b2d31] text-[#FD4A32] dark:text-[#FD4A32] text-xs font-mono font-semibold" {...props}>
                   {children}
                 </code>
               );

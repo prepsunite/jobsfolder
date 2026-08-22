@@ -50,12 +50,14 @@ export default function Sidebar() {
       <div className="p-4 space-y-4 overflow-y-auto">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-white dark:text-black flex items-center justify-center font-display font-black text-base transition-transform group-hover:scale-105">
-            P
-          </div>
+          <img
+            src="/favicon.svg"
+            alt="Jobsfolder Logo"
+            className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
+          />
           <div className="flex flex-col">
             <span className="font-display font-extrabold text-base tracking-tight text-[#121417] dark:text-[#FFFFFF]">
-              Jobs<span className="text-[#009D63] dark:text-[#00C47B]">folder</span>
+              Jobs<span className="text-[#FD4A32] dark:text-[#FD4A32]">folder</span>
             </span>
             <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
               {role === 'ADMIN' ? 'Admin Portal' : role === 'USER' ? 'Student Workspace' : 'Guest Mode'}
@@ -67,7 +69,7 @@ export default function Sidebar() {
         <div className="p-2 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-1.5 h-1.5 rounded-full ${
-              role === 'ADMIN' ? 'bg-purple-500 animate-pulse' : 'bg-[#009D63] dark:bg-[#00C47B]'
+              role === 'ADMIN' ? 'bg-purple-500 animate-pulse' : 'bg-[#FD4A32] dark:bg-[#FD4A32]'
             }`} />
             <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
               {role === 'ADMIN' ? 'Admin Active' : 'Student Mode'}
@@ -97,10 +99,10 @@ export default function Sidebar() {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#00C47B]' : 'text-[#868E96] dark:text-[#555555]'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'}`} />
                   <span>{link.name}</span>
                 </div>
-                {isActive && <ChevronRight className="w-3 h-3 text-[#00C47B]" />}
+                {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
               </Link>
             );
           })}
@@ -133,7 +135,7 @@ export default function Sidebar() {
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isCatActive ? 'text-[#00C47B]' : 'text-[#868E96] dark:text-[#555555]'}`} />
+                      <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isCatActive ? 'text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'}`} />
                       <span className="truncate">{cat.name}</span>
                     </div>
                   </Link>
@@ -174,7 +176,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
           <Link to="/profile" className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
             <div className={`w-7 h-7 rounded-md text-white dark:text-black flex items-center justify-center font-bold text-xs shrink-0 ${
-              role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#009D63] dark:bg-[#00C47B]'
+              role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#FD4A32] dark:bg-[#FD4A32]'
             }`}>
               {role === 'ADMIN' ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
             </div>

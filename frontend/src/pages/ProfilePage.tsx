@@ -203,7 +203,7 @@ export default function ProfilePage() {
       <div className="rounded-lg p-5 sm:p-6 border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden transition-colors">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-md bg-[#009D63] dark:bg-[#00C47B] text-black flex items-center justify-center font-display font-black text-xl overflow-hidden shrink-0">
+            <div className="w-12 h-12 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] text-black flex items-center justify-center font-display font-black text-xl overflow-hidden shrink-0">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                     <span>Pro Pass</span>
                   </span>
                 ) : (
-                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 uppercase tracking-wider">
+                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 uppercase tracking-wider">
                     Free Tier
                   </span>
                 )}
@@ -253,7 +253,7 @@ export default function ProfilePage() {
                 onClick={() => setThemeMode('dark')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
                   themeMode === 'dark'
-                    ? 'bg-[#1C1C1C] text-[#00C47B] shadow-xs'
+                    ? 'bg-[#1C1C1C] text-[#FD4A32] shadow-xs'
                     : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                 }`}
                 title="Switch to Dark Mode"
@@ -266,7 +266,7 @@ export default function ProfilePage() {
                 onClick={() => setThemeMode('system')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
                   themeMode === 'system'
-                    ? 'bg-[#009D63] dark:bg-[#00C47B] text-black shadow-xs'
+                    ? 'bg-[#FD4A32] dark:bg-[#FD4A32] text-black shadow-xs'
                     : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                 }`}
                 title="Sync with System Theme"
@@ -278,7 +278,7 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-2 flex-wrap font-sans">
               <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
-                <span className="text-sm font-display font-extrabold text-[#009D63] dark:text-[#00C47B] block">
+                <span className="text-sm font-display font-extrabold text-[#FD4A32] dark:text-[#FD4A32] block">
                   {bookmarkedExams.length}
                 </span>
                 <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
@@ -389,7 +389,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] border border-[#009D63]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                      <span className="bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                         {exam.badge || 'Official Drive'}
                       </span>
                       {exam.googleDocEmbedUrl && (
@@ -404,7 +404,7 @@ export default function ProfilePage() {
                   <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
                     <Link
                       to={`/companies/${exam.companySlug}?examId=${exam.id}`}
-                      className="flex-1 py-1.5 px-3 bg-[#121417] hover:bg-[#009D63] dark:bg-white dark:hover:bg-[#00C47B] text-white dark:text-black font-display font-bold rounded-md text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
+                      className="flex-1 py-1.5 px-3 bg-[#121417] hover:bg-[#FD4A32] dark:bg-white dark:hover:bg-[#FD4A32] text-white dark:text-black font-display font-bold rounded-md text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
                     >
                       View Drive
                     </Link>
@@ -414,7 +414,7 @@ export default function ProfilePage() {
                       className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#121417]"
                       title="Open Old Papers Fullscreen Dashboard"
                     >
-                      <FileText className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B]" />
+                      <FileText className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
                       <span>Papers</span>
                     </Link>
                   </div>
@@ -437,7 +437,7 @@ export default function ProfilePage() {
 
               <Link
                 to="/companies"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#006c49] hover:bg-[#00573b] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
               >
                 <Building2 className="w-4 h-4" />
                 <span>Browse Companies & Exams</span>
@@ -479,7 +479,7 @@ export default function ProfilePage() {
                           <span>{subtopicName}</span>
                         </span>
 
-                        <span className="font-mono text-xs font-black text-[#006c49] dark:text-[#6cf8bb]">
+                        <span className="font-mono text-xs font-black text-[#FD4A32] dark:text-[#FD4A32]">
                           Question #{q.questionNumber || (idx + 1)}
                         </span>
 
@@ -541,7 +541,7 @@ export default function ProfilePage() {
                         onClick={() => toggleExplanation(q.id)}
                         className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
                           isExplVisible
-                            ? 'bg-[#006c49] dark:bg-[#6cf8bb] text-white dark:text-[#141517] border-[#006c49]'
+                            ? 'bg-[#FD4A32] dark:bg-[#FD4A32] text-white dark:text-[#141517] border-[#FD4A32]'
                             : 'bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
                         }`}
                       >
@@ -552,7 +552,7 @@ export default function ProfilePage() {
 
                     {/* Expandable Explanation Block */}
                     {isExplVisible && (
-                      <div className="p-4 rounded-2xl bg-[#f6ece6]/70 dark:bg-[#141517]/70 border border-[#00714d]/20 space-y-3 animate-fadeIn">
+                      <div className="p-4 rounded-2xl bg-[#f6ece6]/70 dark:bg-[#141517]/70 border border-[#E0351D]/20 space-y-3 animate-fadeIn">
                         {se ? (
                           <div className="space-y-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3]">
                             {/* Given Block */}
@@ -575,12 +575,12 @@ export default function ProfilePage() {
                                 <span className="font-extrabold text-[10px] uppercase text-[#747878] dark:text-[#a6adbb] tracking-wider block">
                                   Derivation Steps:
                                 </span>
-                                <div className="space-y-1 font-mono text-xs font-semibold p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#1f1b17] dark:text-[#e3e3e3] border border-[#00714d]/10">
+                                <div className="space-y-1 font-mono text-xs font-semibold p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#1f1b17] dark:text-[#e3e3e3] border border-[#E0351D]/10">
                                   {se.steps.map((st, sIdx) => {
                                     const stepText = typeof st === 'string' ? st : (st.text || (st as any).content || st.formula || st.title || '');
                                     return (
                                       <div key={sIdx} className="leading-relaxed flex items-start gap-2">
-                                        <span className="text-[#00714d] dark:text-[#6cf8bb] font-bold select-none">•</span>
+                                        <span className="text-[#E0351D] dark:text-[#FD4A32] font-bold select-none">•</span>
                                         <span>{stepText}</span>
                                       </div>
                                     );
@@ -603,8 +603,8 @@ export default function ProfilePage() {
 
                             {/* Final Answer */}
                             {se.finalAnswer && (
-                              <div className="pt-2 border-t border-[#00714d]/15 flex items-center gap-2">
-                                <span className="font-extrabold text-xs text-[#00714d] dark:text-[#6cf8bb]">
+                              <div className="pt-2 border-t border-[#E0351D]/15 flex items-center gap-2">
+                                <span className="font-extrabold text-xs text-[#E0351D] dark:text-[#FD4A32]">
                                   Final Answer:
                                 </span>
                                 <span className="font-bold bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded-md">
@@ -664,7 +664,7 @@ export default function ProfilePage() {
 
               <Link
                 to="/aptitude/arithmetic-aptitude"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#006c49] hover:bg-[#00573b] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
               >
                 <BookOpen className="w-4 h-4" />
                 <span>Explore Aptitude Practice Topics</span>
@@ -725,7 +725,7 @@ export default function ProfilePage() {
                       {exp.rounds.map((rd, idx) => (
                         <div key={idx} className="p-4 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[18px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-2">
                           {rd.roundTitle && !['Interview Rounds & Details', 'Interview Breakdown & Rounds Details'].includes(rd.roundTitle) && (
-                            <span className="text-xs font-black text-[#006c49] dark:text-[#6cf8bb] uppercase tracking-wider block">
+                            <span className="text-xs font-black text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">
                               {rd.roundTitle}
                             </span>
                           )}
@@ -756,7 +756,7 @@ export default function ProfilePage() {
 
               <Link
                 to="/experiences"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#006c49] hover:bg-[#00573b] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
               >
                 <Layers className="w-4 h-4" />
                 <span>Browse Interview Experiences</span>

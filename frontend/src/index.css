@@ -27,13 +27,13 @@
   --color-primary-container: #1C1C1C;
   --color-on-primary-container: #999999;
 
-  /* Emerald Green Accent */
-  --color-secondary: #009D63;
+  /* Brand Accent: #FD4A32 (RGB: 253, 74, 50) */
+  --color-secondary: #FD4A32;
   --color-on-secondary: #FFFFFF;
-  --color-secondary-container: #00C47B;
-  --color-on-secondary-container: #005236;
-  --color-secondary-fixed: #00C47B;
-  --color-secondary-fixed-dim: #009D63;
+  --color-secondary-container: #FD4A32;
+  --color-on-secondary-container: #8C1D0F;
+  --color-secondary-fixed: #FD4A32;
+  --color-secondary-fixed-dim: #E0351D;
 
   /* Tertiary */
   --color-tertiary: #121417;
@@ -48,9 +48,9 @@
   --color-primary-50: #F8F9FA;
   --color-primary-100: #F1F3F5;
   --color-primary-200: #E9ECEF;
-  --color-primary-300: #00C47B;
-  --color-primary-400: #009D63;
-  --color-primary-500: #007F50;
+  --color-primary-300: #FF6D59;
+  --color-primary-400: #FD4A32;
+  --color-primary-500: #E0351D;
   --color-primary-600: #1C1C1C;
   --color-primary-700: #141414;
   --color-primary-800: #0C0C0C;
@@ -139,8 +139,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Headings */
 .tiptap-wrapper .ProseMirror h1 { font-size: 1.75rem; font-weight: 900; margin: 1rem 0 0.5rem; line-height: 1.2; }
 .tiptap-wrapper .ProseMirror h2 { font-size: 1.375rem; font-weight: 700; margin: 0.875rem 0 0.4rem; }
-.tiptap-wrapper .ProseMirror h3 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.3rem; color: #006c49; }
-:where(.dark, .dark *) .tiptap-wrapper .ProseMirror h3 { color: #6cf8bb; }
+.tiptap-wrapper .ProseMirror h3 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.3rem; color: #FD4A32; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror h3 { color: #ff6d59; }
 
 /* Paragraphs & Lists */
 .tiptap-wrapper .ProseMirror p { margin: 0.25rem 0; line-height: 1.45; }
@@ -169,13 +169,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Blockquote */
 .tiptap-wrapper .ProseMirror blockquote {
-  border-left: 3px solid #006c49;
+  border-left: 3px solid #FD4A32;
   padding-left: 1rem;
   margin: 0.75rem 0;
   color: #747878;
   font-style: italic;
 }
-:where(.dark, .dark *) .tiptap-wrapper .ProseMirror blockquote { border-left-color: #6cf8bb; color: #a6adbb; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror blockquote { border-left-color: #ff6d59; color: #a6adbb; }
 
 /* Inline code */
 .tiptap-wrapper .ProseMirror code {
@@ -184,9 +184,9 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 5px;
   font-size: 0.8em;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #006c49;
+  color: #FD4A32;
 }
-:where(.dark, .dark *) .tiptap-wrapper .ProseMirror code { background: #2b2d31; color: #6cf8bb; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror code { background: #2b2d31; color: #ff6d59; }
 
 /* Code block & Test Case Styles (Preserves exact multiline formatting, spaces, and line breaks) */
 .test-case,
@@ -202,7 +202,7 @@ pre.test-case,
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   background: #141517 !important;
-  color: #6cf8bb !important;
+  color: #ff6d59 !important;
   padding: 1rem 1.25rem !important;
   border-radius: 0.75rem !important;
   border: 1px solid #383a40 !important;
@@ -215,7 +215,7 @@ pre.test-case,
 :where(.dark, .dark *) .tiptap-editor-content pre.test-case,
 :where(.dark, .dark *) .tiptap-wrapper .ProseMirror pre {
   background: #101113 !important;
-  color: #6cf8bb !important;
+  color: #ff6d59 !important;
   border-color: #2b2d31 !important;
 }
 
@@ -259,13 +259,13 @@ div[data-type="test-case-group"] {
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
-  color: #006c49 !important;
+  color: #FD4A32 !important;
   padding-bottom: 0.5rem !important;
   border-bottom: 1px dashed #eae1da !important;
 }
 
 :where(.dark, .dark *) .test-case-group-title {
-  color: #6cf8bb !important;
+  color: #ff6d59 !important;
   border-bottom-color: #2b2d31 !important;
 }
 
@@ -336,7 +336,7 @@ pre.test-case-code {
   line-height: 1.55 !important;
   white-space: pre-wrap !important;
   background-color: #141517 !important;
-  color: #6cf8bb !important;
+  color: #ff6d59 !important;
   border: 1px solid #2b2d31 !important;
   border-radius: 0.5rem !important;
   padding: 0.6rem 0.75rem !important;
@@ -356,14 +356,14 @@ pre.test-case-code {
 
 /* Links */
 .tiptap-wrapper .ProseMirror a {
-  color: #2563eb;
+  color: #FD4A32;
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
   transition: color 0.1s;
 }
-.tiptap-wrapper .ProseMirror a:hover { color: #1d4ed8; }
-:where(.dark, .dark *) .tiptap-wrapper .ProseMirror a { color: #93c5fd; }
+.tiptap-wrapper .ProseMirror a:hover { color: #e0351d; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror a { color: #ff6d59; }
 
 /* Tables */
 .tiptap-wrapper .ProseMirror table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; table-layout: fixed; }
@@ -382,13 +382,13 @@ pre.test-case-code {
 .tiptap-wrapper .ProseMirror .selectedCell::after {
   z-index: 2; position: absolute; content: '';
   left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0, 108, 73, 0.15);
+  background: rgba(253, 74, 50, 0.15);
   pointer-events: none;
 }
 
 /* Images */
 .tiptap-wrapper .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0.5rem 0; }
-.tiptap-wrapper .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #006c49; outline-offset: 2px; }
+.tiptap-wrapper .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #FD4A32; outline-offset: 2px; }
 
 /* Marks */
 .tiptap-wrapper .ProseMirror mark { border-radius: 3px; padding: 0 2px; }
@@ -474,10 +474,10 @@ pre.test-case-code {
 }
 
 .glass-card-glow {
-  box-shadow: 0 20px 40px -15px rgba(0, 108, 73, 0.15), 0 0 1px 1px rgba(255, 255, 255, 0.6) inset;
+  box-shadow: 0 20px 40px -15px rgba(253, 74, 50, 0.2), 0 0 1px 1px rgba(255, 255, 255, 0.6) inset;
 }
 
 :where(.dark, .dark *) .glass-card-glow {
-  box-shadow: 0 20px 40px -15px rgba(108, 248, 187, 0.1), 0 0 1px 1px rgba(255, 255, 255, 0.1) inset;
+  box-shadow: 0 20px 40px -15px rgba(253, 74, 50, 0.15), 0 0 1px 1px rgba(255, 255, 255, 0.1) inset;
 }
 

@@ -77,7 +77,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
             {company.name}
           </div>
           <div className="text-xs text-[#868E96] dark:text-[#555555] truncate flex items-center gap-1 mt-0.5 font-sans">
-            <Building2 className="w-3 h-3 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+            <Building2 className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
             <span>{company.industry || company.headquarters || 'Active Drive'}</span>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
         {/* Right: Action Button */}
         <Link
           to={`/companies/${company.slug}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#009D63] dark:hover:bg-[#00C47B] font-display font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] font-display font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
         >
           <span>Exams</span>
           <ArrowRight className="w-3 h-3" />

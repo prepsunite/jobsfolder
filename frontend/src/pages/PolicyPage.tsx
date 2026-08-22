@@ -46,7 +46,7 @@ export default function PolicyPage({ type }: PolicyPageProps) {
           href={policy.docUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] hover:bg-[#009D63]/20 transition-colors text-xs font-display font-bold uppercase tracking-wider"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] hover:bg-[#FD4A32]/20 transition-colors text-xs font-display font-bold uppercase tracking-wider"
         >
           <span>Open Full Doc</span>
           <ExternalLink className="w-3 h-3" />
@@ -55,7 +55,7 @@ export default function PolicyPage({ type }: PolicyPageProps) {
 
       {/* Hero */}
       <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] shadow-xs flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] flex items-center justify-center shrink-0">
           <Icon className="w-5 h-5" />
         </div>
         <div>

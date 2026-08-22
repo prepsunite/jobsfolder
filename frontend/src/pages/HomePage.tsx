@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, CheckCircle, Shield, Archive } from 'lucide-react';
+import MeteorsBackground from '@/components/MeteorsBackground';
+import FaqGlobe from '@/components/FaqGlobe';
+import CtaSpotlight from '@/components/CtaSpotlight';
+import InteractiveTargetGrid from '@/components/InteractiveTargetGrid';
 import '../hp-styles.css';
 
 import {
@@ -61,6 +65,9 @@ export default function HomePage() {
 
       {/* ── HERO ──────────────────────────────────────────── */}
       <section className="hp-hero-wrapper">
+        {/* 🌠 Meteor Showers & Luminous Light Streaks */}
+        <MeteorsBackground />
+
         <div className="hp-hero">
           <div className="hp-hero-inner">
 
@@ -135,7 +142,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="hp-mock-card">
+              <div className="hp-mock-card hp-mock-card-float">
                 <div className="hp-mock-placed-row">
                   <div className="hp-mock-avatar">R</div>
                   <div>
@@ -164,82 +171,92 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── WHAT WE DELIVER ───────────────────────────────── */}
-      <hr className="hp-section-rule" />
-      <div className="hp-section">
-        <div className="hp-section-hdr">
-          <div>
-            <div className="hp-label">What's in the Archive</div>
-            <h2 className="hp-section-title">Past Papers. Solved.</h2>
-          </div>
-          <p className="hp-section-desc">
-            Every question in our archive came from a real drive. Students who sat
-            the exam contributed the questions — we verify, solve, and organise them by
-            company, drive, and section.
-          </p>
-        </div>
-        <div className="hp-deliver-grid">
-          {DELIVER.map((d) => (
-            <div className="hp-d-card" key={d.title}>
-              <div className={`hp-d-num ${d.numClass}`}>{d.num}</div>
-              <div className="hp-d-title">{d.title}</div>
-              <div className="hp-d-body">{d.body}</div>
-              <Link to={d.href} className="hp-d-link">
-                {d.cta} <ArrowRight size={11} />
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* ── ARCHIVE FEATURES & COMPANY CATALOG (INTERACTIVE TARGET GRID) ── */}
+      <div className="relative overflow-hidden">
+        {/* 🎯 Interactive Cursor Grid Targeting Background */}
+        <InteractiveTargetGrid />
 
-      {/* ── PAPER ARCHIVES BY COMPANY ─────────────────────── */}
-      <hr className="hp-section-rule" />
-      <div className="hp-section">
-        <div className="hp-section-hdr">
-          <div>
-            <div className="hp-label">Paper Archives</div>
-            <h2 className="hp-section-title">Browse by Company</h2>
+        {/* ── WHAT WE DELIVER ───────────────────────────────── */}
+        <hr className="hp-section-rule relative z-1" />
+        <div className="hp-section relative z-1">
+          <div className="hp-section-hdr">
+            <div>
+              <div className="hp-label">What's in the Archive</div>
+              <h2 className="hp-section-title">
+                <span className="hp-title-highlight">Past Papers. Solved.</span>
+              </h2>
+            </div>
+            <p className="hp-section-desc">
+              Every question in our archive came from a real drive. Students who sat
+              the exam contributed the questions — we verify, solve, and organise them by
+              company, drive, and section.
+            </p>
           </div>
-          <div className="hp-filter-strip">
-            {filters.map(f => (
-              <button
-                key={f}
-                className={`hp-filter-btn${activeFilter === f ? ' active' : ''}`}
-                onClick={() => setActiveFilter(f)}
-              >
-                {f}
-              </button>
+          <div className="hp-deliver-grid">
+            {DELIVER.map((d) => (
+              <div className="hp-d-card" key={d.title}>
+                <div className={`hp-d-num ${d.numClass}`}>{d.num}</div>
+                <div className="hp-d-title">{d.title}</div>
+                <div className="hp-d-body">{d.body}</div>
+                <Link to={d.href} className="hp-d-link">
+                  {d.cta} <ArrowRight size={11} />
+                </Link>
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="hp-co-grid">
-          {visible.map((co) => (
-            <Link
-              key={co.abbr}
-              to="/companies"
-              className="hp-co-card"
-              style={{ '--co-accent': co.accent } as React.CSSProperties}
-            >
-              <div className="hp-co-top">
-                <span className="hp-co-abbr">{co.abbr}</span>
-                <span className="hp-co-badge">{co.badge}</span>
-              </div>
-              <div className="hp-co-name">{co.name}</div>
-              <div className="hp-co-pkg">{co.papers}</div>
-              <div className="hp-co-pattern">{co.sections}</div>
-              <div className="hp-co-footer">
-                <span className="hp-co-papers">{co.years}</span>
-                <span className="hp-co-cta">View Archive <ArrowRight size={11} /></span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {/* ── PAPER ARCHIVES BY COMPANY ─────────────────────── */}
+        <hr className="hp-section-rule relative z-1" />
+        <div className="hp-section relative z-1">
+          <div className="hp-section-hdr">
+            <div>
+              <div className="hp-label">Paper Archives</div>
+              <h2 className="hp-section-title">
+                <span className="hp-title-highlight">Browse by Company</span>
+              </h2>
+            </div>
+            <div className="hp-filter-strip">
+              {filters.map(f => (
+                <button
+                  key={f}
+                  className={`hp-filter-btn${activeFilter === f ? ' active' : ''}`}
+                  onClick={() => setActiveFilter(f)}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="hp-see-all">
-          <Link to="/companies" className="hp-see-all-link">
-            See All 50+ Company Archives <ArrowRight size={13} />
-          </Link>
+          <div className="hp-co-grid">
+            {visible.map((co) => (
+              <Link
+                key={co.abbr}
+                to="/companies"
+                className="hp-co-card"
+                style={{ '--co-accent': co.accent } as React.CSSProperties}
+              >
+                <div className="hp-co-top">
+                  <span className="hp-co-abbr">{co.abbr}</span>
+                  <span className="hp-co-badge">{co.badge}</span>
+                </div>
+                <div className="hp-co-name">{co.name}</div>
+                <div className="hp-co-pkg">{co.papers}</div>
+                <div className="hp-co-pattern">{co.sections}</div>
+                <div className="hp-co-footer">
+                  <span className="hp-co-papers">{co.years}</span>
+                  <span className="hp-co-cta">View Archive <ArrowRight size={11} /></span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="hp-see-all">
+            <Link to="/companies" className="hp-see-all-link">
+              See All 50+ Company Archives <ArrowRight size={13} />
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -278,29 +295,43 @@ export default function HomePage() {
       {/* ── FAQ ───────────────────────────────────────────── */}
       <hr className="hp-section-rule" />
       <div className="hp-section">
-        <div className="hp-section-hdr">
-          <div>
-            <div className="hp-label">Questions</div>
-            <h2 className="hp-section-title">Frequently Asked</h2>
-          </div>
-        </div>
-        <div className="hp-faq-list">
-          {FAQS.map((f, i) => (
-            <div key={i} className={`hp-faq-item${openFaq === i ? ' open' : ''}`}>
-              <button className="hp-faq-btn" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                <span className="hp-faq-q">{f.q}</span>
-                <span className="hp-faq-icon">{openFaq === i ? '−' : '+'}</span>
-              </button>
-              {openFaq === i && (
-                <div className="hp-faq-answer">{f.a}</div>
-              )}
+        <div className="hp-faq-layout">
+          {/* Left Column: Heading + Questions FAQ List as it was */}
+          <div className="hp-faq-left">
+            <div className="hp-section-hdr" style={{ marginBottom: '1.5rem' }}>
+              <div>
+                <div className="hp-label">Questions</div>
+                <h2 className="hp-section-title">Frequently Asked</h2>
+              </div>
             </div>
-          ))}
+
+            <div className="hp-faq-list">
+              {FAQS.map((f, i) => (
+                <div key={i} className={`hp-faq-item${openFaq === i ? ' open' : ''}`}>
+                  <button className="hp-faq-btn" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                    <span className="hp-faq-q">{f.q}</span>
+                    <span className="hp-faq-icon">{openFaq === i ? '−' : '+'}</span>
+                  </button>
+                  {openFaq === i && (
+                    <div className="hp-faq-answer">{f.a}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: 3D Placement Intelligence Globe */}
+          <div className="hp-faq-right">
+            <FaqGlobe />
+          </div>
         </div>
       </div>
 
       {/* ── CTA ───────────────────────────────────────────── */}
       <div className="hp-cta-section">
+        {/* Fixed Top-Center Spotlight with Cursor-Tracking Focus Beam */}
+        <CtaSpotlight />
+
         <div className="hp-cta-eyebrow">Access the Archive</div>
         <h2 className="hp-cta-h2">
           Practice the Actual Papers.<br />Not Random Questions.

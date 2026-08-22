@@ -399,7 +399,7 @@ export default function TopicQuestionsPage() {
       <div className="flex items-center justify-between">
         <Link
           to={`/aptitude/${categorySlug}`}
-          className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#009D63] dark:text-[#00C47B] hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] hover:underline"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
           <span>Back to Topic Directory</span>
@@ -421,7 +421,7 @@ export default function TopicQuestionsPage() {
       <div className="p-5 sm:p-6 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider block">
+            <span className="text-[9px] font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">
               Quantitative Aptitude • {topicName}
             </span>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -457,7 +457,7 @@ export default function TopicQuestionsPage() {
               </>
             )}
 
-            <div className="px-2.5 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-xs font-display font-bold border border-[#009D63]/20">
+            <div className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/20">
               {filteredQuestions.length} Problems
             </div>
           </div>
@@ -513,7 +513,7 @@ export default function TopicQuestionsPage() {
                 </button>
                 <button
                   onClick={handleOpenAddModal}
-                  className="px-3 py-1.5 bg-[#009D63] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider"
+                  className="px-3 py-1.5 bg-[#FD4A32] text-black rounded-md text-xs font-display font-bold uppercase tracking-wider"
                 >
                   Add Question
                 </button>
@@ -540,7 +540,7 @@ export default function TopicQuestionsPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Question Number Badge (Permanent ID) */}
-                    <span className="px-2 py-0.5 rounded bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] font-display font-bold text-[10px] tracking-tight border border-[#009D63]/20 dark:border-[#00C47B]/30">
+                    <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/20 dark:border-[#FD4A32]/30">
                       Question #{q.permanentNumber}
                     </span>
 
@@ -695,7 +695,7 @@ export default function TopicQuestionsPage() {
                 {/* STEP-BY-STEP EXPLANATION ACCORDION (Enhanced for structured JSON) */}
                 {isExplVisible && (
                   <div className="p-4 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-3 animate-fadeIn">
-                    <div className="flex items-center gap-2 text-xs font-display font-bold text-[#009D63] dark:text-[#00C47B]">
+                    <div className="flex items-center gap-2 text-xs font-display font-bold text-[#FD4A32] dark:text-[#FD4A32]">
                       <Zap className="w-3.5 h-3.5" />
                       <span>Correct Answer: Option ({q.correctAnswer})</span>
                     </div>
@@ -728,7 +728,7 @@ export default function TopicQuestionsPage() {
                                 const stepText = typeof st === 'string' ? st : (st.text || (st as any).content || st.formula || st.title || '');
                                 return (
                                   <div key={sIdx} className="leading-relaxed flex items-start gap-2">
-                                    <span className="text-[#009D63] dark:text-[#00C47B] font-bold select-none">•</span>
+                                    <span className="text-[#FD4A32] dark:text-[#FD4A32] font-bold select-none">•</span>
                                     <span>{stepText}</span>
                                   </div>
                                 );
@@ -740,7 +740,7 @@ export default function TopicQuestionsPage() {
                         {/* Quick Shortcut / Trick Box */}
                         {se.shortcut && (
                           <div className="p-2.5 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] space-y-0.5">
-                            <span className="font-display font-bold text-[#009D63] dark:text-[#00C47B] flex items-center gap-1 text-[10px] uppercase tracking-wider">
+                            <span className="font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1 text-[10px] uppercase tracking-wider">
                               ⚡ Quick Shortcut:
                             </span>
                             <p className="text-[#121417] dark:text-[#FFFFFF] font-medium text-xs leading-relaxed font-sans">
@@ -752,10 +752,10 @@ export default function TopicQuestionsPage() {
                         {/* Final Answer */}
                         {se.finalAnswer && (
                           <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
-                            <span className="font-display font-bold text-xs text-[#009D63] dark:text-[#00C47B]">
+                            <span className="font-display font-bold text-xs text-[#FD4A32] dark:text-[#FD4A32]">
                               Final Answer:
                             </span>
-                            <span className="font-bold bg-[#009D63]/15 text-[#009D63] dark:text-[#00C47B] px-2 py-0.5 rounded text-xs font-mono">
+                            <span className="font-bold bg-[#FD4A32]/15 text-[#FD4A32] dark:text-[#FD4A32] px-2 py-0.5 rounded text-xs font-mono">
                               {se.finalAnswer}
                             </span>
                           </div>
@@ -773,7 +773,7 @@ export default function TopicQuestionsPage() {
                             </span>
                             <div className="flex flex-wrap gap-1.5">
                               {q.formulasUsed.map((f, i) => (
-                                <span key={i} className="text-[10px] font-mono font-bold bg-white dark:bg-[#141414] px-2 py-0.5 rounded border border-[#E9ECEF] dark:border-[#242424] text-[#009D63] dark:text-[#00C47B]">
+                                <span key={i} className="text-[10px] font-mono font-bold bg-white dark:bg-[#141414] px-2 py-0.5 rounded border border-[#E9ECEF] dark:border-[#242424] text-[#FD4A32] dark:text-[#FD4A32]">
                                   {f}
                                 </span>
                               ))}
@@ -896,7 +896,7 @@ export default function TopicQuestionsPage() {
         <div className="fixed inset-0 z-50 bg-[#000000]/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] max-w-2xl w-full p-6 space-y-5 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
-              <div className="flex items-center gap-2 text-[#006c49] dark:text-[#6cf8bb]">
+              <div className="flex items-center gap-2 text-[#FD4A32] dark:text-[#FD4A32]">
                 <Edit2 className="w-5 h-5" />
                 <h3 className="font-display text-lg font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
                   {editingQuestion ? 'Edit Topic Question' : `Add Question to ${topicName}`}
@@ -921,7 +921,7 @@ export default function TopicQuestionsPage() {
                   value={formStatement}
                   onChange={(e) => setFormStatement(e.target.value)}
                   placeholder="Enter the complete question problem statement..."
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#006c49]"
+                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32]"
                   required
                 />
               </div>
@@ -937,7 +937,7 @@ export default function TopicQuestionsPage() {
                   value={formTestCase}
                   onChange={(e) => setFormTestCase(e.target.value)}
                   placeholder={`Input:\n4\nA B 500 100\nC D 200 120\nA B 500 150\nA B 700 160\n\nOutput:\n0 2`}
-                  className="w-full font-mono bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#006c49] whitespace-pre-wrap"
+                  className="w-full font-mono bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32] whitespace-pre-wrap"
                 />
               </div>
 
@@ -965,7 +965,7 @@ export default function TopicQuestionsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-xs w-5 text-[#006c49] dark:text-[#6cf8bb]">A.</span>
+                    <span className="font-black text-xs w-5 text-[#FD4A32] dark:text-[#FD4A32]">A.</span>
                     <input
                       type="text"
                       value={formOptionA}
@@ -976,7 +976,7 @@ export default function TopicQuestionsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-xs w-5 text-[#006c49] dark:text-[#6cf8bb]">B.</span>
+                    <span className="font-black text-xs w-5 text-[#FD4A32] dark:text-[#FD4A32]">B.</span>
                     <input
                       type="text"
                       value={formOptionB}
@@ -987,7 +987,7 @@ export default function TopicQuestionsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-xs w-5 text-[#006c49] dark:text-[#6cf8bb]">C.</span>
+                    <span className="font-black text-xs w-5 text-[#FD4A32] dark:text-[#FD4A32]">C.</span>
                     <input
                       type="text"
                       value={formOptionC}
@@ -998,7 +998,7 @@ export default function TopicQuestionsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-xs w-5 text-[#006c49] dark:text-[#6cf8bb]">D.</span>
+                    <span className="font-black text-xs w-5 text-[#FD4A32] dark:text-[#FD4A32]">D.</span>
                     <input
                       type="text"
                       value={formOptionD}
@@ -1009,7 +1009,7 @@ export default function TopicQuestionsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 sm:col-span-2">
-                    <span className="font-black text-xs w-5 text-[#006c49] dark:text-[#6cf8bb]">E.</span>
+                    <span className="font-black text-xs w-5 text-[#FD4A32] dark:text-[#FD4A32]">E.</span>
                     <input
                       type="text"
                       value={formOptionE}
@@ -1049,7 +1049,7 @@ export default function TopicQuestionsPage() {
                   value={formExplanation}
                   onChange={(e) => setFormExplanation(e.target.value)}
                   placeholder="Enter step-by-step solution derivation..."
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#006c49]"
+                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
 
@@ -1063,7 +1063,7 @@ export default function TopicQuestionsPage() {
                   value={formFormulas}
                   onChange={(e) => setFormFormulas(e.target.value)}
                   placeholder="tan(θ) = Opposite / Adjacent&#10;tan(30°) = 1/√3"
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs font-mono text-[#006c49] dark:text-[#6cf8bb] focus:outline-none"
+                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs font-mono text-[#FD4A32] dark:text-[#FD4A32] focus:outline-none"
                 />
               </div>
 

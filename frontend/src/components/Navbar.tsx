@@ -22,11 +22,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-full bg-[#000000] dark:bg-[#e3e3e3] text-white dark:text-[#141517] flex items-center justify-center font-black text-xl shadow-md shadow-black/10 dark:shadow-white/10 group-hover:scale-105 transition-transform">
-              J
-            </div>
-            <span className="font-display font-extrabold text-2xl tracking-tight text-[#1f1b17] dark:text-[#e3e3e3] group-hover:text-[#006c49] dark:group-hover:text-[#6cf8bb] transition-colors">
-              Jobs<span className="text-[#006c49] dark:text-[#6cf8bb]">folder</span>
+            <img
+              src="/favicon.svg"
+              alt="Jobsfolder Logo"
+              className="w-9 h-9 rounded-full object-contain shrink-0 shadow-xs transition-transform group-hover:scale-105"
+            />
+            <span className="font-display font-extrabold text-2xl tracking-tight text-[#1f1b17] dark:text-[#e3e3e3] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors">
+              Jobs<span className="text-[#FD4A32] dark:text-[#FD4A32]">folder</span>
             </span>
           </Link>
 
@@ -45,7 +47,7 @@ export default function Navbar() {
                       : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/60 dark:hover:bg-[#2b2d31]/60'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#6cf8bb] dark:text-[#006c49]' : 'text-[#747878] dark:text-[#a6adbb]'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FD4A32] dark:text-[#FD4A32]' : 'text-[#747878] dark:text-[#a6adbb]'}`} />
                   {link.name}
                 </Link>
               );
@@ -73,12 +75,12 @@ export default function Navbar() {
             {isAuthenticated && user ? (
               <Link
                 to="/login"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40] hover:border-[#006c49] transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40] hover:border-[#FD4A32] transition-all"
               >
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-[#006c49] text-white flex items-center justify-center text-[10px] font-black">
+                  <div className="w-6 h-6 rounded-full bg-[#FD4A32] text-white flex items-center justify-center text-[10px] font-black">
                     {user.name.charAt(0)}
                   </div>
                 )}

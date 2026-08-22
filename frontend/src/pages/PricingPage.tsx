@@ -146,7 +146,7 @@ export default function PricingPage() {
     <div className="max-w-6xl mx-auto space-y-10 py-4 animate-fadeIn">
       {/* Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#009D63]/10 text-[#009D63] dark:bg-[#00C47B]/10 dark:text-[#00C47B] text-[10px] font-display font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
           <Zap className="w-3 h-3" />
           <span>Paper Archives & Access</span>
         </div>
@@ -176,19 +176,19 @@ export default function PricingPage() {
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-3 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <span>Access company overviews & syllabus</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <span>Round-wise test pattern breakdowns</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <span>Sample memory-based preview questions</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <span>Browse interview reports</span>
               </li>
             </ul>
@@ -203,14 +203,14 @@ export default function PricingPage() {
         </div>
 
         {/* Tier 2: Single Exam Pass with Paper Selector */}
-        <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border-2 border-[#009D63] dark:border-[#00C47B] flex flex-col justify-between space-y-5 relative">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded bg-[#009D63] dark:bg-[#00C47B] text-black text-[9px] font-display font-black uppercase tracking-wider">
+        <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border-2 border-[#FD4A32] dark:border-[#FD4A32] flex flex-col justify-between space-y-5 relative">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded bg-[#FD4A32] dark:bg-[#FD4A32] text-black text-[9px] font-display font-black uppercase tracking-wider">
             Most Popular · 1-Year Pass
           </div>
 
           <div className="space-y-4">
             <div>
-              <span className="text-[9px] font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider font-display">Targeted Archive</span>
+              <span className="text-[9px] font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider font-display">Targeted Archive</span>
               <h3 className="font-display font-bold text-xl text-[#121417] dark:text-[#FFFFFF]">Single Company Archive</h3>
               <p className="text-xs text-[#868E96] dark:text-[#555555] mt-0.5">1-Year Access to all years for 1 company</p>
             </div>
@@ -224,7 +224,7 @@ export default function PricingPage() {
 
             {/* Interactive Paper Selector Dropdown */}
             <div className="space-y-1 p-2.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-              <label className="text-[9px] font-display font-bold text-[#009D63] dark:text-[#00C47B] uppercase tracking-wider flex items-center gap-1">
+              <label className="text-[9px] font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 <span>Select Company Archive:</span>
               </label>
@@ -233,7 +233,7 @@ export default function PricingPage() {
                 value={selectedExamId}
                 onChange={(e) => setSelectedExamId(e.target.value)}
                 disabled={paywalledExams.length === 0}
-                className="w-full px-2.5 py-1.5 rounded bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] text-xs font-semibold text-[#121417] dark:text-[#FFFFFF] focus:outline-none focus:border-[#009D63] disabled:opacity-60"
+                className="w-full px-2.5 py-1.5 rounded bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] text-xs font-semibold text-[#121417] dark:text-[#FFFFFF] focus:outline-none focus:border-[#FD4A32] disabled:opacity-60"
               >
                 {paywalledExams.length > 0 ? (
                   paywalledExams.map((exam) => (
@@ -249,15 +249,15 @@ export default function PricingPage() {
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <strong className="text-[#121417] dark:text-[#FFFFFF]">Valid for 365 Days (1 Full Year)</strong>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <span>All previous year question papers</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#009D63] dark:text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
                 <span>Full step-by-step solutions & code</span>
               </li>
             </ul>
@@ -267,7 +267,7 @@ export default function PricingPage() {
             type="button"
             onClick={() => handleBuy('SINGLE_PAPER', currentSelectedExam?.price || 99, selectedExamId)}
             disabled={loadingPlan === 'SINGLE_PAPER' || !selectedExamId}
-            className="w-full py-2.5 rounded-md bg-[#009D63] dark:bg-[#00C47B] hover:bg-[#007F50] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
             {loadingPlan === 'SINGLE_PAPER' ? 'Processing...' : `Unlock ${currentSelectedExam?.companyName || ''} (₹99)`}
           </button>
@@ -277,7 +277,7 @@ export default function PricingPage() {
         <div className="p-6 rounded-lg bg-[#121417] dark:bg-[#141414] border border-[#121417] dark:border-[#242424] text-white flex flex-col justify-between space-y-5">
           <div className="space-y-4">
             <div>
-              <span className="text-[9px] font-bold text-[#00C47B] uppercase tracking-wider font-display">All-Access Pass</span>
+              <span className="text-[9px] font-bold text-[#FD4A32] uppercase tracking-wider font-display">All-Access Pass</span>
               <h3 className="font-display font-bold text-xl text-white">Monthly Pro Pass</h3>
               <p className="text-xs text-[#999999] mt-0.5">Unlimited access to ALL companies & papers</p>
             </div>
@@ -289,19 +289,19 @@ export default function PricingPage() {
 
             <ul className="space-y-2.5 text-xs text-[#999999] pt-3 border-t border-[#2E2E2E]">
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                 <strong className="text-white">Unlimited Access to ALL 50+ Archives</strong>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                 <span>30-Day active placement drive validity</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                 <span>Access TCS, Accenture, Amazon & more</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#00C47B] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                 <span>Latest 2026 drive questions included</span>
               </li>
             </ul>
