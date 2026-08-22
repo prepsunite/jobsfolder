@@ -36,8 +36,8 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
           onClick={handleToggleBookmark}
           className={`pointer-events-auto p-1.5 rounded-md border shadow-xs transition-all ${
             isBookmarked
-              ? 'bg-[#FD4A32] border-[#FD4A32] text-white'
-              : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#FD4A32] dark:hover:text-[#FD4A32]'
+              ? 'bg-amber-500 border-amber-600 text-white'
+              : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
           }`}
           title={isBookmarked ? 'Remove bookmark' : 'Save bookmark'}
         >
@@ -123,7 +123,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
         {/* Right: Sharp Button */}
         <Link
           to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#D62F18] text-white font-display font-bold text-[10px] uppercase tracking-wider shadow-xs transition-colors shrink-0"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#23272f] dark:hover:bg-[#e6e6e6] font-display font-bold text-[10px] uppercase tracking-wider transition-colors shrink-0"
           title={`View Old Papers for ${exam.name}`}
         >
           <span>Papers</span>

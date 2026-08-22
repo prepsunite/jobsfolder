@@ -85,7 +85,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
         {/* Right: Action Button */}
         <Link
           to={`/companies/${company.slug}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#D62F18] text-white font-display font-bold text-[11px] uppercase tracking-wider shadow-xs transition-colors shrink-0"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#23272f] dark:hover:bg-[#e6e6e6] font-display font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
         >
           <span>Exams</span>
           <ArrowRight className="w-3 h-3" />
