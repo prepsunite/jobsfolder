@@ -47,7 +47,7 @@ export default function Navbar() {
                       : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#ffffff]/60 dark:hover:bg-[#2b2d31]/60'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FD4A32] dark:text-[#FD4A32]' : 'text-[#747878] dark:text-[#a6adbb]'}`} />
+                  <Icon className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                   {link.name}
                 </Link>
               );

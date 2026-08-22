@@ -99,7 +99,7 @@ export default function Sidebar() {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'}`} />
+                  <Icon className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                   <span>{link.name}</span>
                 </div>
                 {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
