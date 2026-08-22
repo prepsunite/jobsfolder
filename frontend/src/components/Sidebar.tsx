@@ -49,7 +49,7 @@ export default function Sidebar() {
       {/* Top Header & Brand */}
       <div className="p-4 space-y-4 overflow-y-auto">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to="/profile" className="flex items-center gap-2.5 group">
           <img
             src="/favicon.svg"
             alt="Jobsfolder Logo"
@@ -135,7 +135,7 @@ export default function Sidebar() {
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isCatActive ? 'text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'}`} />
+                      <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32]" />
                       <span className="truncate">{cat.name}</span>
                     </div>
                   </Link>

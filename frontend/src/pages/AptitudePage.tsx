@@ -277,8 +277,8 @@ export default function AptitudePage() {
                 to={`/aptitude/${categorySlug}/topic/${topic.id}`}
                 className="flex items-center gap-2.5 min-w-0 flex-1"
               >
-                <div className="w-7 h-7 rounded bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center shrink-0">
-                  <TopicIcon className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 rounded bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 dark:border-[#FD4A32]/30 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
+                  <TopicIcon className="w-3.5 h-3.5 text-[#FD4A32]" />
                 </div>
 
                 <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
@@ -293,10 +293,10 @@ export default function AptitudePage() {
                     e.stopPropagation();
                     setSelectedTopic(topic);
                   }}
-                  className="p-1 rounded text-[#868E96] dark:text-[#555555] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors"
+                  className="p-1 rounded text-[#FD4A32] hover:opacity-80 transition-colors"
                   title="Peek Formula & Overview"
                 >
-                  <Zap className="w-3 h-3" />
+                  <Zap className="w-3 h-3 text-[#FD4A32]" />
                 </button>
 
                 <Link
@@ -319,8 +319,8 @@ export default function AptitudePage() {
             {/* Header */}
             <div className="flex items-start justify-between pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center shrink-0">
-                  {selectedTopic.icon ? <selectedTopic.icon className="w-4 h-4" /> : <Folder className="w-4 h-4" />}
+                <div className="w-8 h-8 rounded bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 dark:border-[#FD4A32]/30 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
+                  {selectedTopic.icon ? <selectedTopic.icon className="w-4 h-4 text-[#FD4A32]" /> : <Folder className="w-4 h-4 text-[#FD4A32]" />}
                 </div>
                 <div>
                   <span className="text-[9px] font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">

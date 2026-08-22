@@ -469,8 +469,8 @@ export default function ProfilePage() {
                     {/* Header Row: Topic Badge + Subtopic + Question Number + Difficulty + Action Links */}
                     <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 font-extrabold text-[10px] uppercase tracking-wider border border-purple-500/30 flex items-center gap-1">
-                          <Layers className="w-3 h-3 text-purple-500" />
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-extrabold text-[10px] uppercase tracking-wider border border-[#FD4A32]/20 flex items-center gap-1">
+                          <Layers className="w-3 h-3 text-[#FD4A32]" />
                           <span>Arithmetic Aptitude</span>
                         </span>
 
