@@ -180,11 +180,9 @@ export default function HomePage() {
         <hr className="hp-section-rule relative z-1" />
         <div className="hp-section relative z-1">
           <div className="hp-section-hdr">
-            <div>
+            <div className="hp-hdr-highlight-box">
               <div className="hp-label">What's in the Archive</div>
-              <h2 className="hp-section-title">
-                <span className="hp-title-highlight">Past Papers. Solved.</span>
-              </h2>
+              <h2 className="hp-section-title">Past Papers. Solved.</h2>
             </div>
             <p className="hp-section-desc">
               Every question in our archive came from a real drive. Students who sat
@@ -210,11 +208,9 @@ export default function HomePage() {
         <hr className="hp-section-rule relative z-1" />
         <div className="hp-section relative z-1">
           <div className="hp-section-hdr">
-            <div>
+            <div className="hp-hdr-highlight-box">
               <div className="hp-label">Paper Archives</div>
-              <h2 className="hp-section-title">
-                <span className="hp-title-highlight">Browse by Company</span>
-              </h2>
+              <h2 className="hp-section-title">Browse by Company</h2>
             </div>
             <div className="hp-filter-strip">
               {filters.map(f => (

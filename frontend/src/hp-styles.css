@@ -607,6 +607,26 @@ html.dark {
   color: var(--e-text);
   transition: color 0.2s ease;
 }
+.hp-hdr-highlight-box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  background: #FD4A32;
+  color: #FFFFFF;
+  padding: 0.875rem 1.35rem;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(253, 74, 50, 0.28);
+}
+.hp-hdr-highlight-box .hp-label {
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0;
+  letter-spacing: 0.14em;
+}
+.hp-hdr-highlight-box .hp-section-title {
+  color: #FFFFFF;
+  line-height: 1;
+}
 .hp-title-highlight {
   display: inline-block;
   background: #FD4A32;
