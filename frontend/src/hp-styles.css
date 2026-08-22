@@ -718,7 +718,7 @@ html.dark {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: var(--e-green);
+  background: #FD4A32;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -780,7 +780,7 @@ html.dark {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--e-green);
+  color: #FD4A32;
   transition: gap 0.15s;
 }
 .hp-co-card:hover .hp-co-cta { gap: 0.4rem; }

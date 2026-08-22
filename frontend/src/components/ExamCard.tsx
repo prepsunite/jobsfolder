@@ -29,15 +29,15 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
   };
 
   return (
-    <div className="group relative bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-4 transition-all duration-200 hover:border-[#121417] dark:hover:border-[#383838] hover:shadow-sm flex flex-col justify-between">
+    <div className="group relative bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between">
       {/* Top Right Action Overlay Bar */}
       <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 pointer-events-none">
         <button
           onClick={handleToggleBookmark}
           className={`pointer-events-auto p-1.5 rounded-md border shadow-xs transition-all ${
             isBookmarked
-              ? 'bg-amber-500 border-amber-600 text-white'
-              : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+              ? 'bg-[#FD4A32] border-[#FD4A32] text-white'
+              : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#FD4A32] dark:hover:text-[#FD4A32]'
           }`}
           title={isBookmarked ? 'Remove bookmark' : 'Save bookmark'}
         >
@@ -81,14 +81,14 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
       </div>
 
       {/* Inner Hero Card Container */}
-      <div className="relative rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3 flex flex-col items-center justify-center min-h-[160px] overflow-hidden border border-[#E9ECEF] dark:border-[#242424] space-y-2">
+      <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 p-3 flex flex-col items-center justify-center min-h-[160px] overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 space-y-2">
         {/* Exam Title */}
         <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center z-10">
           {exam.name}
         </h3>
 
         {/* Center Main Visual Logo */}
-        <div className="my-auto flex items-center justify-center w-full h-24 sm:h-28 rounded-md border border-[#E9ECEF] dark:border-[#242424] overflow-hidden bg-white dark:bg-[#141414]">
+        <div className="my-auto flex items-center justify-center w-full h-24 sm:h-28 rounded-md border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 overflow-hidden bg-white dark:bg-[#141414]">
           {exam.companyLogoUrl ? (
             <img
               src={exam.companyLogoUrl}
@@ -99,7 +99,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
             />
           ) : (
             <div className="flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform duration-200">
-              <div className="w-10 h-10 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display text-lg font-black">
+              <div className="w-10 h-10 rounded-md bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-lg font-black">
                 {exam.companyName.charAt(0)}
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
       <div className="pt-3 px-0.5 flex items-center justify-between gap-2.5 border-t border-[#E9ECEF] dark:border-[#242424] mt-3">
         {/* Left: Handle & Industry Metadata */}
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF] truncate">
+          <div className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
             {exam.companyName}
           </div>
           <div className="text-[10px] text-[#868E96] dark:text-[#555555] truncate flex items-center gap-1 mt-0.5 font-sans">
@@ -123,7 +123,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
         {/* Right: Sharp Button */}
         <Link
           to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] font-display font-bold text-[10px] uppercase tracking-wider transition-colors shrink-0"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#D62F18] text-white font-display font-bold text-[10px] uppercase tracking-wider shadow-xs transition-colors shrink-0"
           title={`View Old Papers for ${exam.name}`}
         >
           <span>Papers</span>

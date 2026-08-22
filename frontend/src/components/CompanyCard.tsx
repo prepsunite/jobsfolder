@@ -14,7 +14,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
   const isAdmin = role === 'ADMIN';
 
   return (
-    <div className="group relative bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-4 transition-all duration-200 hover:border-[#121417] dark:hover:border-[#383838] hover:shadow-sm flex flex-col justify-between">
+    <div className="group relative bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between">
       {/* Admin Inline Action Badges */}
       {isAdmin && (
         <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 bg-white/95 dark:bg-[#1C1C1C]/95 p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] shadow-xs">
@@ -48,7 +48,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
       )}
 
       {/* Edge-to-Edge Company Logo Hero Container */}
-      <div className="relative rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] flex items-center justify-center h-36 overflow-hidden border border-[#E9ECEF] dark:border-[#242424]">
+      <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 flex items-center justify-center h-36 overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20">
         {company.logoUrl ? (
           <img
             src={company.logoUrl}
@@ -59,7 +59,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
           />
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-200 p-3">
-            <div className="w-12 h-12 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display text-2xl font-black">
+            <div className="w-12 h-12 rounded-md bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-2xl font-black">
               {company.name.charAt(0)}
             </div>
             <span className="font-display text-sm font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight text-center">
@@ -73,7 +73,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
       <div className="pt-3 flex items-center justify-between gap-2.5 border-t border-[#E9ECEF] dark:border-[#242424] mt-3">
         {/* Left: Handle & Metadata */}
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-display font-bold text-[#121417] dark:text-[#FFFFFF] truncate">
+          <div className="text-sm font-display font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
             {company.name}
           </div>
           <div className="text-xs text-[#868E96] dark:text-[#555555] truncate flex items-center gap-1 mt-0.5 font-sans">
@@ -85,7 +85,7 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
         {/* Right: Action Button */}
         <Link
           to={`/companies/${company.slug}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] font-display font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#D62F18] text-white font-display font-bold text-[11px] uppercase tracking-wider shadow-xs transition-colors shrink-0"
         >
           <span>Exams</span>
           <ArrowRight className="w-3 h-3" />
