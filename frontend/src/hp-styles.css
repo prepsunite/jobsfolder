@@ -438,6 +438,12 @@ html.dark {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+:where(.dark, .dark *) .hp-hero-highlight,
+html.dark .hp-hero-highlight,
+.dark .hp-hero-highlight {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
 .hp-hero-h1 em {
   font-style: normal;
   color: var(--e-green);
