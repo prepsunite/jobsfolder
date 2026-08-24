@@ -84,6 +84,18 @@
 }
 
 /* ===== Base Styles ===== */
+::selection {
+  background-color: #FD4A32;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+::-moz-selection {
+  background-color: #FD4A32;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
 body {
   font-family: var(--font-sans);
   @apply bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF];

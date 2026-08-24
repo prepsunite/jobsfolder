@@ -80,7 +80,7 @@ export default function RootLayout() {
 
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-[#8C1D0F] transition-colors">
+      <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
 
         {/* ── PREMIUM PUBLIC NAVBAR ── */}
         <header className="pub-nav">
@@ -209,7 +209,7 @@ export default function RootLayout() {
 
   // INTERNAL APP WORKSPACE LAYOUT (WITH PERSISTENT SIDEBAR)
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex font-sans selection:bg-[#FD4A32] selection:text-[#8C1D0F] transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
       {/* Persistent Left Workspace Sidebar */}
       <Sidebar />
 

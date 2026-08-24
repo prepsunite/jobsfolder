@@ -426,6 +426,13 @@ html.dark {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+.hp-root ::selection,
+.hp-hero-h1 ::selection,
+.hp-hero-h1 em::selection {
+  background-color: #FD4A32 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
 .hp-hero-sub {
   font-size: 0.95rem;
   color: var(--e-text-2);
