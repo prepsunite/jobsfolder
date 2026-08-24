@@ -49,6 +49,18 @@ html.dark {
   --e-invert-btn-text: #000000;
 }
 
+/* ── Universal Selection ── */
+::selection {
+  background-color: #FD4A32 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+::-moz-selection {
+  background-color: #FD4A32 !important;
+  color: #FFFFFF !important;
+}
+
 /* ── NAVBAR ─────────────────────────────────────────────── */
 .pub-nav {
   position: sticky;
@@ -425,13 +437,6 @@ html.dark {
   background: linear-gradient(135deg, #FD4A32 0%, #FF8473 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-.hp-root ::selection,
-.hp-hero-h1 ::selection,
-.hp-hero-h1 em::selection {
-  background-color: #FD4A32 !important;
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
 }
 .hp-hero-sub {
   font-size: 0.95rem;

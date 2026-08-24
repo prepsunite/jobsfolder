@@ -84,18 +84,6 @@
 }
 
 /* ===== Base Styles ===== */
-::selection {
-  background-color: #FD4A32;
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-}
-
-::-moz-selection {
-  background-color: #FD4A32;
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-}
-
 body {
   font-family: var(--font-sans);
   @apply bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF];
@@ -106,6 +94,18 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   letter-spacing: -0.025em;
+}
+
+/* ===== Selection Highlighting (Orange background with crisp white text) ===== */
+::selection {
+  background-color: #FD4A32 !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+::-moz-selection {
+  background-color: #FD4A32 !important;
+  color: #FFFFFF !important;
 }
 
 /* ===== Anti-Print & Anti-Copy Protection ===== */
