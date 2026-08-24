@@ -79,7 +79,7 @@ export default function HomePage() {
               </div>
               <h1 className="hp-hero-h1">
                 The <span className="hp-hero-highlight">Actual Papers.</span><br />
-                From <span className="hp-hero-highlight">Real Drives.</span>
+                <span className="hp-hero-highlight">From Real</span> <em>Drives.</em>
               </h1>
               <p className="hp-hero-sub">
                 We archive the exact OA questions asked in TCS, Accenture, Cognizant, Amazon
