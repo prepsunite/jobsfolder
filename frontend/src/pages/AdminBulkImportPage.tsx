@@ -124,14 +124,34 @@ export default function AdminBulkImportPage() {
     // Also persist directly to Supabase topic_questions table for universal live sync
     try {
       if (parsedPreview?.items && parsedPreview.items.length > 0) {
+        // Fetch current max question numbers from Supabase for all affected topics
+        const topics = Array.from(new Set(parsedPreview.items.map(item => item.topicId || 'numbers')));
+        const { data: existingQ } = await supabase
+          .from('topic_questions')
+          .select('topic_id, question_number')
+          .in('topic_id', topics)
+          .eq('is_deleted', false);
+
+        const topicMaxMap: Record<string, number> = {};
+        (existingQ || []).forEach(q => {
+          topicMaxMap[q.topic_id] = Math.max(topicMaxMap[q.topic_id] || 0, q.question_number || 0);
+        });
+
+        const topicCounter: Record<string, number> = {};
+
         const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
         const rowsToInsert = parsedPreview.items.map((item, idx) => {
+          const tId = item.topicId || 'numbers';
+          const baseMax = topicMaxMap[tId] || 0;
+          topicCounter[tId] = (topicCounter[tId] || 0) + 1;
+          const assignedNum = typeof item.questionNumber === 'number' ? item.questionNumber : (baseMax + topicCounter[tId]);
+
           // Convert letter-based correctAnswer (A/B/C/D) to 0-based INT index for the DB
           const ca = String(item.correctAnswer || 'A').trim().toUpperCase();
           const correctAnswerInt = isNaN(Number(ca)) ? (letterToIdx[ca] ?? 0) : Number(ca);
           return {
             id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
-            topic_id: item.topicId || 'numbers',
+            topic_id: tId,
             company_slug: (item as any).companySlug || (item as any).company || 'general',
             statement: item.statement || '',
             options: JSON.stringify(item.options || []),
@@ -141,7 +161,7 @@ export default function AdminBulkImportPage() {
             difficulty: item.difficulty || 'MEDIUM',
             difficulty_level: item.difficultyLevel || 2,
             is_hidden: item.isHidden ?? false,
-            question_number: item.questionNumber || idx + 1,
+            question_number: assignedNum,
           };
         });
 

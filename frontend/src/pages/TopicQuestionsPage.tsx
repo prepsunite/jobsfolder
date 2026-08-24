@@ -34,16 +34,41 @@ export default function TopicQuestionsPage() {
 
   // Topic display names
   const topicNames: Record<string, string> = {
-    'height-and-distance': 'Height and Distance',
+    'numbers': 'Numbers',
+    'problems-on-numbers': 'Problems on Numbers',
+    'hcf-lcm': 'Problems on H.C.F and L.C.M',
+    'decimal-fraction': 'Decimal Fraction',
+    'simplification': 'Simplification',
+    'square-cube-root': 'Square Root and Cube Root',
+    'surds-indices': 'Surds and Indices',
+    'logarithm': 'Logarithm',
     'problems-on-trains': 'Problems on Trains',
     'time-and-distance': 'Time and Distance',
     'time-and-work': 'Time and Work',
-    'profit-and-loss': 'Profit and Loss',
+    'pipes-and-cistern': 'Pipes and Cistern',
+    'boats-and-streams': 'Boats and Streams',
+    'chain-rule': 'Chain Rule',
+    'races-and-games': 'Races and Games',
     'percentage': 'Percentage',
+    'profit-and-loss': 'Profit and Loss',
     'simple-interest': 'Simple Interest',
     'compound-interest': 'Compound Interest',
-    'probability': 'Probability',
+    'partnership': 'Partnership',
+    'ratio-and-proportion': 'Ratio and Proportion',
+    'alligation-or-mixture': 'Alligation or Mixture',
+    'stocks-and-shares': 'Stocks and Shares',
+    'true-discount': 'True Discount',
+    'bankers-discount': 'Banker\'s Discount',
+    'height-and-distance': 'Height and Distance',
+    'area': 'Area',
+    'volume-and-surface-area': 'Volume and Surface Area',
     'permutation-and-combination': 'Permutation and Combination',
+    'probability': 'Probability',
+    'average': 'Average',
+    'problems-on-ages': 'Problems on Ages',
+    'calendar': 'Calendar',
+    'clock': 'Clock',
+    'odd-man-out-and-series': 'Odd Man Out and Series',
   };
 
   const topicName = topicNames[topicId] || topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -86,6 +111,7 @@ export default function TopicQuestionsPage() {
         .select('*')
         .eq('topic_id', topicId)
         .eq('is_deleted', false)
+        .order('question_number', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -127,6 +153,7 @@ export default function TopicQuestionsPage() {
             createdAt: q.created_at,
           };
         });
+        mapped.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
         setQuestions(mapped);
         return;
       }
@@ -238,12 +265,13 @@ export default function TopicQuestionsPage() {
           .eq('id', editingQuestion.id);
         if (error) throw error;
       } else {
+        const nextNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) + 1 : 1;
         const { error } = await supabase
           .from('topic_questions')
           .insert({
             topic_id: topicId,
             company_slug: 'general',
-            question_number: questions.length + 1,
+            question_number: nextNum,
             statement: formStatement,
             options: JSON.stringify(optionsList),
             correct_answer: correctIdx,
@@ -304,6 +332,7 @@ export default function TopicQuestionsPage() {
     try {
       const parsed = JSON.parse(bulkJsonInput);
       const items: any[] = Array.isArray(parsed) ? parsed : [parsed];
+      const maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
       const rows = items.map((q: any, idx: number) => {
         const rawFormulas = q.formulasUsed || q.formulas || (typeof q.explanation === 'object' ? (q.explanation?.formulaUsed || q.explanation?.formulasUsed) : []);
         const structuredExp = typeof q.explanation === 'object' && q.explanation !== null
@@ -335,7 +364,7 @@ export default function TopicQuestionsPage() {
         return {
           topic_id: topicId,
           company_slug: q.company_slug || q.companySlug || q.company || 'general',
-          question_number: questions.length + idx + 1,
+          question_number: typeof q.questionNumber === 'number' ? q.questionNumber : (maxExistingNum + idx + 1),
           statement: q.statement || q.question || q.title || 'Question',
           options: JSON.stringify(Array.isArray(q.options) ? q.options.map((opt: any, oIdx: number) => {
             if (typeof opt === 'string') return { key: ['A', 'B', 'C', 'D', 'E'][oIdx] || `${oIdx + 1}`, text: opt };
@@ -366,8 +395,9 @@ export default function TopicQuestionsPage() {
     }
   };
 
-  // Permanent LeetCode-style Question Number Assignment (Master topic list order)
-  const roleFilteredQuestions = (isAdmin ? questions : questions.filter(q => !q.isHidden)).map((q, index) => ({
+  // Permanent LeetCode-style Question Number Assignment (Master topic list order sorted numerically)
+  const sortedQuestions = [...questions].sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
+  const roleFilteredQuestions = (isAdmin ? sortedQuestions : sortedQuestions.filter(q => !q.isHidden)).map((q, index) => ({
     ...q,
     permanentNumber: q.questionNumber || (index + 1),
   }));

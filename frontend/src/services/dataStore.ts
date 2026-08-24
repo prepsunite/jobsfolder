@@ -791,7 +791,11 @@ class DataStoreManager {
 
   async fetchLiveTopicQuestionsFromSupabase(): Promise<void> {
     try {
-      const { data } = await supabase.from('topic_questions').select('*');
+      const { data } = await supabase
+        .from('topic_questions')
+        .select('*')
+        .order('question_number', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
       if (data && data.length > 0) {
         const mapped: TopicQuestionItem[] = data.map(q => {
           const rawCorrect = q.correct_answer;
@@ -813,6 +817,7 @@ class DataStoreManager {
             difficultyLevel: q.difficulty_level || 2,
             isHidden: q.is_hidden || false,
             questionNumber: q.question_number,
+            createdAt: q.created_at,
           };
         });
         const existing = this.getStorage<TopicQuestionItem[]>('prepunite_topic_questions', INITIAL_TOPIC_QUESTIONS);
@@ -822,6 +827,7 @@ class DataStoreManager {
             merged.push(ex);
           }
         });
+        merged.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
         this.setStorage('prepunite_topic_questions', merged);
       }
     } catch {}
@@ -1525,14 +1531,14 @@ class DataStoreManager {
       this.setStorage('prepunite_topic_questions', sanitizedList);
     }
 
-    if (!topicId) return sanitizedList;
+    if (!topicId) return sanitizedList.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
 
     // Resolve normalized target slug
     const targetSlug = resolveTopicSlug(topicId, topicId);
     return sanitizedList.filter(q => {
       const qSlug = resolveTopicSlug(q.topicId, q.topicId);
       return qSlug === targetSlug || q.topicId === topicId;
-    });
+    }).sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
   }
 
   addTopicQuestion(question: Partial<TopicQuestionItem>, allowDuplicate = false): { item: TopicQuestionItem | null; reason?: string } {
@@ -1557,6 +1563,7 @@ class DataStoreManager {
     }
 
     const topicList = list.filter(q => resolveTopicSlug(q.topicId, q.topicId) === resolvedTopicId);
+    const nextQuestionNum = question.questionNumber || (topicList.length > 0 ? Math.max(...topicList.map(q => q.questionNumber || 0)) + 1 : 1);
     
     // 5. UUID QUESTION ID
     const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
@@ -1575,7 +1582,7 @@ class DataStoreManager {
       id: question.id || newId,
       version: 1, // 6. VERSION
       topicId: resolvedTopicId,
-      questionNumber: question.questionNumber || (topicList.length + 1),
+      questionNumber: nextQuestionNum,
       statement: question.statement || '',
       options: question.options || [],
       correctAnswer: question.correctAnswer || 'A',
@@ -1699,11 +1706,16 @@ class DataStoreManager {
 
         let difficultyLevel: 1 | 2 | 3 = parsed.difficultyLevel || 2;
 
+        const topicMatches = existingList.filter(q => resolveTopicSlug(q.topicId, q.topicId) === resolvedTopicId);
+        const existingMax = topicMatches.length > 0 ? Math.max(...topicMatches.map(q => q.questionNumber || 0)) : 0;
+        const countInCurrentBatch = newItems.filter(n => n.topicId === resolvedTopicId).length;
+        const nextQNum = typeof parsed.questionNumber === 'number' ? parsed.questionNumber : (existingMax + countInCurrentBatch + 1);
+
         const newItem: TopicQuestionItem = {
           id: parsed.id || newId,
           version: 1,
           topicId: resolvedTopicId,
-          questionNumber: parsed.questionNumber || (existingList.length + newItems.length + 1),
+          questionNumber: nextQNum,
           statement: parsed.statement || '',
           options: parsed.options || [],
           correctAnswer: parsed.correctAnswer || 'A',
