@@ -78,8 +78,8 @@ export default function HomePage() {
                 Real Placement OA Papers & Solved Solutions
               </div>
               <h1 className="hp-hero-h1">
-                The Actual Papers.<br />
-                From <em>Real Drives.</em>
+                The <span className="hp-hero-highlight">Actual Papers.</span><br />
+                From <span className="hp-hero-highlight">Real Drives.</span>
               </h1>
               <p className="hp-hero-sub">
                 We archive the exact OA questions asked in TCS, Accenture, Cognizant, Amazon
