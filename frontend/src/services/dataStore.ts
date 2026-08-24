@@ -662,12 +662,17 @@ class DataStoreManager {
 
   async syncTopicQuestionToSupabase(q: TopicQuestionItem): Promise<void> {
     try {
+      const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+      const ca = String(q.correctAnswer || 'A').trim().toUpperCase();
+      const correctAnswerInt = isNaN(Number(ca)) ? (letterToIdx[ca] ?? 0) : Number(ca);
+
       await supabase.from('topic_questions').upsert({
         id: q.id,
         topic_id: q.topicId,
+        company_slug: (q as any).companySlug || (q as any).company || 'general',
         statement: q.statement,
         options: q.options,
-        correct_answer: q.correctAnswer,
+        correct_answer: correctAnswerInt,
         explanation: q.explanation,
         structured_explanation: q.structuredExplanation,
         difficulty: q.difficulty,
@@ -788,19 +793,28 @@ class DataStoreManager {
     try {
       const { data } = await supabase.from('topic_questions').select('*');
       if (data && data.length > 0) {
-        const mapped: TopicQuestionItem[] = data.map(q => ({
-          id: q.id,
-          topicId: q.topic_id,
-          statement: q.statement,
-          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-          correctAnswer: q.correct_answer,
-          explanation: q.explanation,
-          structuredExplanation: typeof q.structured_explanation === 'string' ? JSON.parse(q.structured_explanation) : q.structured_explanation,
-          difficulty: q.difficulty || 'MEDIUM',
-          difficultyLevel: q.difficulty_level || 2,
-          isHidden: q.is_hidden || false,
-          questionNumber: q.question_number,
-        }));
+        const mapped: TopicQuestionItem[] = data.map(q => {
+          const rawCorrect = q.correct_answer;
+          const resolvedLetter = typeof rawCorrect === 'number'
+            ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
+            : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
+                ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
+                : (String(rawCorrect || 'A').toUpperCase()));
+
+          return {
+            id: q.id,
+            topicId: q.topic_id,
+            statement: q.statement,
+            options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+            correctAnswer: resolvedLetter,
+            explanation: q.explanation,
+            structuredExplanation: typeof q.structured_explanation === 'string' ? JSON.parse(q.structured_explanation) : q.structured_explanation,
+            difficulty: q.difficulty || 'MEDIUM',
+            difficultyLevel: q.difficulty_level || 2,
+            isHidden: q.is_hidden || false,
+            questionNumber: q.question_number,
+          };
+        });
         const existing = this.getStorage<TopicQuestionItem[]>('prepunite_topic_questions', INITIAL_TOPIC_QUESTIONS);
         const merged = [...mapped];
         existing.forEach(ex => {

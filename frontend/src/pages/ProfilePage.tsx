@@ -88,22 +88,31 @@ export default function ProfilePage() {
       try {
         const { data: qData } = await supabase.from('topic_questions').select('*');
         if (qData && qData.length > 0) {
-          allTopicQuestions = qData.map((q) => ({
-            id: q.id,
-            topicId: q.topic_id,
-            statement: q.statement,
-            options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-            correctAnswer: q.correct_answer,
-            explanation: q.explanation,
-            structuredExplanation:
-              typeof q.structured_explanation === 'string'
-                ? JSON.parse(q.structured_explanation)
-                : q.structured_explanation,
-            difficulty: q.difficulty || 'MEDIUM',
-            difficultyLevel: q.difficulty_level || 2,
-            isHidden: q.is_hidden || false,
-            questionNumber: q.question_number,
-          }));
+          allTopicQuestions = qData.map((q) => {
+            const rawCorrect = q.correct_answer;
+            const resolvedLetter = typeof rawCorrect === 'number'
+              ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
+              : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
+                  ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
+                  : (String(rawCorrect || 'A').toUpperCase()));
+
+            return {
+              id: q.id,
+              topicId: q.topic_id,
+              statement: q.statement,
+              options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+              correctAnswer: resolvedLetter,
+              explanation: q.explanation,
+              structuredExplanation:
+                typeof q.structured_explanation === 'string'
+                  ? JSON.parse(q.structured_explanation)
+                  : q.structured_explanation,
+              difficulty: q.difficulty || 'MEDIUM',
+              difficultyLevel: q.difficulty_level || 2,
+              isHidden: q.is_hidden || false,
+              questionNumber: q.question_number,
+            };
+          });
         }
       } catch {}
       if (allTopicQuestions.length === 0) allTopicQuestions = dataStore.getTopicQuestions();

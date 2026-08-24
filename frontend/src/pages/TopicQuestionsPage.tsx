@@ -98,6 +98,13 @@ export default function TopicQuestionsPage() {
 
           const testCase = q.test_case || parsedStructured?.testCase || (q.sample_input || q.sample_output ? `Input:\n${q.sample_input || ''}\n\nOutput:\n${q.sample_output || ''}`.trim() : undefined);
 
+          const rawCorrect = q.correct_answer;
+          const resolvedLetter = typeof rawCorrect === 'number'
+            ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
+            : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
+                ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
+                : (String(rawCorrect || 'A').toUpperCase()));
+
           return {
             id: q.id,
             topicId: q.topic_id,
@@ -107,7 +114,7 @@ export default function TopicQuestionsPage() {
               try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
               catch { return []; }
             })(),
-            correctAnswer: q.correct_answer || 'A',
+            correctAnswer: resolvedLetter,
             explanation: q.explanation || '',
             structuredExplanation: parsedStructured,
             testCase,
@@ -211,13 +218,17 @@ export default function TopicQuestionsPage() {
         structuredExp.testCase = formTestCase.trim();
       }
 
+      const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+      const correctIdx = letterToIdx[formCorrect.toUpperCase()] ?? 0;
+
       if (editingQuestion) {
         const { error } = await supabase
           .from('topic_questions')
           .update({
+            company_slug: 'general',
             statement: formStatement,
             options: JSON.stringify(optionsList),
-            correct_answer: formCorrect,
+            correct_answer: correctIdx,
             explanation: formExplanation,
             structured_explanation: JSON.stringify(structuredExp),
             test_case: formTestCase.trim() || null,
@@ -231,10 +242,11 @@ export default function TopicQuestionsPage() {
           .from('topic_questions')
           .insert({
             topic_id: topicId,
+            company_slug: 'general',
             question_number: questions.length + 1,
             statement: formStatement,
             options: JSON.stringify(optionsList),
-            correct_answer: formCorrect,
+            correct_answer: correctIdx,
             explanation: formExplanation,
             structured_explanation: JSON.stringify(structuredExp),
             test_case: formTestCase.trim() || null,
@@ -322,6 +334,7 @@ export default function TopicQuestionsPage() {
 
         return {
           topic_id: topicId,
+          company_slug: q.company_slug || q.companySlug || q.company || 'general',
           question_number: questions.length + idx + 1,
           statement: q.statement || q.question || q.title || 'Question',
           options: JSON.stringify(Array.isArray(q.options) ? q.options.map((opt: any, oIdx: number) => {

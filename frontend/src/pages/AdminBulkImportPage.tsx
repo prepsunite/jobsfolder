@@ -132,6 +132,7 @@ export default function AdminBulkImportPage() {
           return {
             id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
             topic_id: item.topicId || 'numbers',
+            company_slug: (item as any).companySlug || (item as any).company || 'general',
             statement: item.statement || '',
             options: JSON.stringify(item.options || []),
             correct_answer: correctAnswerInt,
