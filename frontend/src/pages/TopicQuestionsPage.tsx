@@ -302,14 +302,22 @@ export default function TopicQuestionsPage() {
           ? q.explanation
           : (q.explanation?.finalAnswer || (Array.isArray(q.explanation?.steps) ? q.explanation.steps.map((s: any) => typeof s === 'string' ? s : `${s.title || 'Step'}: ${s.content || s.text || ''}`).join('\n') : ''));
 
-        let resolvedCorrect = 'A';
+        // Resolve to an INTEGER index (0=A, 1=B, 2=C, 3=D) to match the INT correct_answer DB column
+        const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+        let resolvedCorrectInt = 0;
         if (typeof q.correctOption === 'number') {
-          resolvedCorrect = ['A', 'B', 'C', 'D', 'E'][q.correctOption] || 'A';
+          resolvedCorrectInt = q.correctOption;
         } else if (typeof q.correctOption === 'string') {
-          const num = parseInt(q.correctOption, 10);
-          resolvedCorrect = !isNaN(num) ? (['A', 'B', 'C', 'D', 'E'][num] || 'A') : q.correctOption.toUpperCase();
+          const asNum = parseInt(q.correctOption, 10);
+          if (!isNaN(asNum)) {
+            resolvedCorrectInt = asNum;
+          } else {
+            resolvedCorrectInt = letterToIdx[q.correctOption.toUpperCase()] ?? 0;
+          }
         } else {
-          resolvedCorrect = q.correct_answer || q.correctAnswer || q.answer || 'A';
+          const fallback = q.correct_answer || q.correctAnswer || q.answer || '0';
+          const asNum = parseInt(String(fallback), 10);
+          resolvedCorrectInt = !isNaN(asNum) ? asNum : (letterToIdx[String(fallback).toUpperCase()] ?? 0);
         }
 
         return {
@@ -325,10 +333,10 @@ export default function TopicQuestionsPage() {
             { key: 'C', text: q.optionC || q.c || 'Option C' },
             { key: 'D', text: q.optionD || q.d || 'Option D' },
           ]),
-          correct_answer: resolvedCorrect,
+          correct_answer: resolvedCorrectInt,
           explanation: expStr,
           difficulty: (q.difficulty || 'MEDIUM').toUpperCase(),
-          difficulty_level: q.difficulty === 'EASY' ? 1 : q.difficulty === 'HARD' ? 3 : 2,
+          difficulty_level: q.difficulty?.toUpperCase() === 'EASY' ? 1 : q.difficulty?.toUpperCase() === 'HARD' ? 3 : 2,
           is_hidden: false,
           is_deleted: false,
           structured_explanation: JSON.stringify(structuredExp),

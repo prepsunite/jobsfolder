@@ -124,19 +124,25 @@ export default function AdminBulkImportPage() {
     // Also persist directly to Supabase topic_questions table for universal live sync
     try {
       if (parsedPreview?.items && parsedPreview.items.length > 0) {
-        const rowsToInsert = parsedPreview.items.map((item, idx) => ({
-          id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
-          topic_id: item.topicId || 'numbers',
-          statement: item.statement || '',
-          options: JSON.stringify(item.options || []),
-          correct_answer: item.correctAnswer || 'A',
-          explanation: item.explanation || '',
-          structured_explanation: JSON.stringify(item.structuredExplanation || { formulaUsed: item.formulasUsed || [] }),
-          difficulty: item.difficulty || 'MEDIUM',
-          difficulty_level: item.difficultyLevel || 2,
-          is_hidden: item.isHidden ?? false,
-          question_number: item.questionNumber || idx + 1,
-        }));
+        const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+        const rowsToInsert = parsedPreview.items.map((item, idx) => {
+          // Convert letter-based correctAnswer (A/B/C/D) to 0-based INT index for the DB
+          const ca = String(item.correctAnswer || 'A').trim().toUpperCase();
+          const correctAnswerInt = isNaN(Number(ca)) ? (letterToIdx[ca] ?? 0) : Number(ca);
+          return {
+            id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
+            topic_id: item.topicId || 'numbers',
+            statement: item.statement || '',
+            options: JSON.stringify(item.options || []),
+            correct_answer: correctAnswerInt,
+            explanation: item.explanation || '',
+            structured_explanation: JSON.stringify(item.structuredExplanation || { formulaUsed: item.formulasUsed || [] }),
+            difficulty: item.difficulty || 'MEDIUM',
+            difficulty_level: item.difficultyLevel || 2,
+            is_hidden: item.isHidden ?? false,
+            question_number: item.questionNumber || idx + 1,
+          };
+        });
 
         const { error } = await supabase.from('topic_questions').upsert(rowsToInsert, { onConflict: 'id' });
         if (error) {
