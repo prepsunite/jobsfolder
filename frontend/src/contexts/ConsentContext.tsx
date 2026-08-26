@@ -81,10 +81,9 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setRecord(null);
   };
 
-  if (!initialized) return null; // Don't flash banner before localStorage loads
-
   const consentStatus: ConsentStatus = record?.status ?? 'pending';
-  const hasResponded = record !== null;
+  // hasResponded is false while not initialized (suppresses banner until localStorage is read)
+  const hasResponded = initialized ? record !== null : true;
 
   return (
     <ConsentContext.Provider
