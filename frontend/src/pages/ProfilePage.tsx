@@ -24,17 +24,23 @@ import {
   Monitor,
   Folder,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  ShieldCheck,
+  Mail,
+  AlertTriangle,
 } from 'lucide-react';
+import { useConsent } from '@/contexts/ConsentContext';
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { theme, themeMode, setThemeMode } = useTheme();
+  const { consentStatus, withdrawConsent } = useConsent();
   const isDarkMode = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences'>('exams');
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Live Supabase subscription query for Pro Pass
   const { data: subData } = useQuery({
@@ -775,6 +781,153 @@ export default function ProfilePage() {
           )}
         </div>
       )}
+      {/* ─── DPDP Act 2023 — Data & Privacy Section (Pillar 6) ─── */}
+      <div className={`rounded-[28px] border overflow-hidden ${isDarkMode ? 'bg-[#141517] border-[#2b2d31]' : 'bg-white border-[#eae1da]'}`}>
+        {/* Header */}
+        <div className={`flex items-center gap-3 px-6 py-4 border-b ${isDarkMode ? 'border-[#2b2d31]' : 'border-[#eae1da]'}`}>
+          <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-4 h-4 text-[#FD4A32]" />
+          </div>
+          <div>
+            <h2 className={`font-display font-bold text-sm ${isDarkMode ? 'text-[#e3e3e3]' : 'text-[#1f1b17]'}`}>
+              Data &amp; Privacy
+            </h2>
+            <p className={`text-[10px] ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+              Your rights under the Digital Personal Data Protection Act, 2023
+            </p>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* What data we hold */}
+          <div className="space-y-2">
+            <p className={`text-[10px] font-display font-bold uppercase tracking-wider ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+              Data We Hold About You
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { label: 'Name', value: user?.name ?? '—' },
+                { label: 'Email', value: user?.email ?? '—' },
+                { label: 'Profile Picture', value: user?.avatarUrl ? 'Stored (Google URL)' : 'Not stored' },
+              ].map(({ label, value }) => (
+                <div key={label} className={`p-3 rounded-xl border text-xs ${isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-[#f6ece6]/60 border-[#eae1da]'}`}>
+                  <p className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>{label}</p>
+                  <p className={`font-semibold truncate ${isDarkMode ? 'text-[#e3e3e3]' : 'text-[#1f1b17]'}`}>{value}</p>
+                </div>
+              ))}
+            </div>
+            <p className={`text-[10px] ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+              Payment records (order IDs) are retained for 7 years as required by Indian tax law. No card or financial data is stored by us.{' '}
+              <Link to="/privacy-policy" className="text-[#FD4A32] underline">Full data table →</Link>
+            </p>
+          </div>
+
+          {/* Consent Status */}
+          <div className={`p-4 rounded-xl border space-y-2 ${isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-[#f6ece6]/60 border-[#eae1da]'}`}>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${consentStatus === 'accepted' ? 'bg-emerald-500' : consentStatus === 'declined' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                <p className={`text-xs font-bold ${isDarkMode ? 'text-[#e3e3e3]' : 'text-[#1f1b17]'}`}>
+                  Consent Status:{' '}
+                  <span className={consentStatus === 'accepted' ? 'text-emerald-500' : consentStatus === 'declined' ? 'text-rose-500' : 'text-amber-500'}>
+                    {consentStatus === 'accepted' ? 'Accepted' : consentStatus === 'declined' ? 'Declined' : 'Pending'}
+                  </span>
+                </p>
+              </div>
+              {consentStatus === 'accepted' && (
+                <button
+                  type="button"
+                  onClick={withdrawConsent}
+                  className="text-[10px] font-bold text-rose-500 hover:text-rose-600 underline transition-colors cursor-pointer"
+                >
+                  Withdraw Consent
+                </button>
+              )}
+            </div>
+            <p className={`text-[10px] ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+              Under <strong>DPDP Act 2023, Section 6</strong>, you may withdraw consent at any time with the same ease it was given.
+              Withdrawing consent may limit platform functionality.
+            </p>
+          </div>
+
+          {/* Your Rights */}
+          <div className="space-y-2">
+            <p className={`text-[10px] font-display font-bold uppercase tracking-wider ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+              Your Rights (DPDP Act, Sections 11–14)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              {[
+                { right: 'Access your data', desc: 'View all data we hold — shown above' },
+                { right: 'Correct your data', desc: 'Update name via Google account settings' },
+                { right: 'Erasure of data', desc: 'Delete your account and all personal data' },
+                { right: 'Nominate a person', desc: 'Contact grievance officer to set up nomination' },
+              ].map(({ right, desc }) => (
+                <div key={right} className={`p-3 rounded-xl border ${isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-[#f6ece6]/60 border-[#eae1da]'}`}>
+                  <p className={`font-bold text-[11px] ${isDarkMode ? 'text-[#e3e3e3]' : 'text-[#1f1b17]'}`}>{right}</p>
+                  <p className={`text-[10px] mt-0.5 ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Delete Account */}
+          <div className={`p-4 rounded-xl border space-y-3 ${isDarkMode ? 'bg-rose-900/10 border-rose-800/30' : 'bg-rose-50 border-rose-200'}`}>
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-rose-600 dark:text-rose-400">Request Account & Data Deletion</p>
+                <p className={`text-[10px] mt-0.5 ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+                  This will permanently delete your account, bookmarks, submitted experiences, and all personal data.
+                  Payment records (order IDs) are retained for 7 years as legally required. This action is irreversible.
+                </p>
+              </div>
+            </div>
+            {!showDeleteConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/20 text-[11px] font-bold transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Request Deletion
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                  To confirm deletion, email our Grievance Officer with your registered email and subject "Account Deletion Request":
+                </p>
+                <a
+                  href={`mailto:prepsunite@gmail.com?subject=Account Deletion Request&body=I request permanent deletion of my Jobsfolder account and all associated personal data.%0A%0ARegistered Email: ${user?.email ?? ''}`}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition-colors w-fit"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Send Deletion Request Email
+                </a>
+                <button type="button" onClick={() => setShowDeleteConfirm(false)} className="text-[10px] text-[#868E96] underline cursor-pointer">Cancel</button>
+              </div>
+            )}
+          </div>
+
+          {/* Grievance Officer */}
+          <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border ${isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-[#f6ece6]/60 border-[#eae1da]'}`}>
+            <div>
+              <p className={`text-xs font-bold ${isDarkMode ? 'text-[#e3e3e3]' : 'text-[#1f1b17]'}`}>Grievance Officer</p>
+              <p className={`text-[10px] mt-0.5 ${isDarkMode ? 'text-[#a6adbb]' : 'text-[#747878]'}`}>
+                For data complaints, corrections, or nominations — response within 7 working days
+              </p>
+            </div>
+            <a
+              href="mailto:prepsunite@gmail.com"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[11px] font-bold transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              prepsunite@gmail.com
+            </a>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   );
 }

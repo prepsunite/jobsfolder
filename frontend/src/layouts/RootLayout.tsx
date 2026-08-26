@@ -193,6 +193,29 @@ export default function RootLayout() {
             </div>
           </div>
 
+          {/* DPDP Act 2023 — Grievance Officer notice (Section 13) */}
+          <div className="pub-footer-inner border-t border-[#2a2a2a] pt-4 mt-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <div>
+                  <p className="text-[10px] font-display font-bold text-white uppercase tracking-wider">
+                    Grievance Officer — DPDP Act, 2023 (Section 13)
+                  </p>
+                  <p className="text-[10px] text-[#666666] font-sans">
+                    For data access, correction, erasure, or privacy complaints — response within 7 working days
+                  </p>
+                </div>
+              </div>
+              <a
+                href="mailto:prepsunite@gmail.com"
+                className="shrink-0 text-[10px] font-bold text-[#FD4A32] hover:text-[#e03e28] underline transition-colors"
+              >
+                prepsunite@gmail.com
+              </a>
+            </div>
+          </div>
+
           {/* Bottom bar */}
           <div className="pub-footer-bottom">
             <p className="pub-footer-copy">© 2026 PrepUnite · Jobsfolder · Placement Intelligence Operating System</p>

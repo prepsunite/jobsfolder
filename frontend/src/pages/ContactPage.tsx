@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle } from 'lucide-react';
+import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle, ShieldCheck } from 'lucide-react';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -164,6 +164,85 @@ export default function ContactPage() {
           )}
         </div>
       </div>
+
+      {/* DPDP Act 2023 — Data Grievance Section (Pillar 7, Section 13) */}
+      <div className="p-6 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-md bg-[#FD4A32]/10 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-4 h-4 text-[#FD4A32]" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF]">
+              Data Rights &amp; Privacy Complaints
+            </h2>
+            <p className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">
+              Grievance Officer — DPDP Act, 2023 (Section 13) · Response within 7 working days
+            </p>
+          </div>
+        </div>
+
+        <p className="text-xs text-[#495057] dark:text-[#999999] font-sans leading-relaxed">
+          Under the <strong className="text-[#121417] dark:text-white">Digital Personal Data Protection Act, 2023</strong>, you have
+          the right to access, correct, or request erasure of your personal data, withdraw your consent, or file a
+          complaint about how your data is handled. Use the options below to exercise these rights.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            {
+              title: 'Request Data Access',
+              desc: 'Get a summary of all personal data we hold about you.',
+              subject: 'Data Access Request',
+              body: 'I request a summary of all personal data Jobsfolder holds about me.',
+            },
+            {
+              title: 'Request Data Correction',
+              desc: 'Ask us to correct or complete inaccurate personal data.',
+              subject: 'Data Correction Request',
+              body: 'I request correction of the following personal data: [describe what needs correcting]',
+            },
+            {
+              title: 'Request Account Deletion',
+              desc: 'Request permanent deletion of your account and personal data.',
+              subject: 'Account Deletion Request',
+              body: 'I request permanent deletion of my Jobsfolder account and all associated personal data.',
+            },
+            {
+              title: 'File a Privacy Complaint',
+              desc: 'Report a concern about how your data has been handled.',
+              subject: 'Privacy Complaint',
+              body: 'I wish to file a privacy complaint regarding: [describe your concern]',
+            },
+          ].map(({ title, desc, subject, body }) => (
+            <a
+              key={title}
+              href={`mailto:prepsunite@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+              className="p-3.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] group transition-colors space-y-1 block"
+            >
+              <p className="text-xs font-display font-bold text-[#121417] dark:text-white group-hover:text-[#FD4A32] transition-colors">
+                {title}
+              </p>
+              <p className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">{desc}</p>
+            </a>
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
+          <div className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">
+            <strong className="text-[#495057] dark:text-[#999999]">Grievance Officer:</strong> prepsunite@gmail.com ·{' '}
+            <strong className="text-[#495057] dark:text-[#999999]">SLA:</strong> 7 working days ·{' '}
+            If unresolved in 30 days, escalate to the Data Protection Board of India (DPBI).
+          </div>
+          <a
+            href="mailto:prepsunite@gmail.com"
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[11px] font-display font-bold uppercase tracking-wider transition-colors"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Email Grievance Officer
+          </a>
+        </div>
+      </div>
+
     </div>
   );
 }

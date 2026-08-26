@@ -331,3 +331,42 @@ CREATE POLICY "Admin write paper nodes" ON public.paper_tab_nodes FOR ALL USING 
 -- Admin Audit Logs Policies
 DROP POLICY IF EXISTS "Admin select/insert audit logs" ON public.admin_audit_logs;
 CREATE POLICY "Admin select/insert audit logs" ON public.admin_audit_logs FOR ALL USING (public.is_admin());
+
+-- ============================================================
+-- 15. DPDP Act 2023, Rule 6 — Payment Table RLS (CRITICAL)
+-- Added: August 2026 — these were missing from original schema
+-- ============================================================
+
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "User reads own transactions" ON public.transactions;
+CREATE POLICY "User reads own transactions"
+  ON public.transactions FOR SELECT
+  USING (user_email = (SELECT email FROM public.profiles WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Admin full access transactions" ON public.transactions;
+CREATE POLICY "Admin full access transactions"
+  ON public.transactions FOR ALL USING (public.is_admin());
+
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "User reads own subscription" ON public.user_subscriptions;
+CREATE POLICY "User reads own subscription"
+  ON public.user_subscriptions FOR SELECT
+  USING (user_email = (SELECT email FROM public.profiles WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Admin full access subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Admin full access subscriptions"
+  ON public.user_subscriptions FOR ALL USING (public.is_admin());
+
+ALTER TABLE public.user_paper_purchases ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "User reads own paper purchases" ON public.user_paper_purchases;
+CREATE POLICY "User reads own paper purchases"
+  ON public.user_paper_purchases FOR SELECT
+  USING (user_email = (SELECT email FROM public.profiles WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Admin full access paper purchases" ON public.user_paper_purchases;
+CREATE POLICY "Admin full access paper purchases"
+  ON public.user_paper_purchases FOR ALL USING (public.is_admin());
+

@@ -295,11 +295,38 @@ export default function TopicQuestionsPage() {
   const handleDeleteQuestion = async (qId: string) => {
     if (window.confirm('Are you sure you want to delete this question?')) {
       try {
-        const { error } = await supabase
+        const questionToDelete = questions.find(q => q.id === qId);
+        if (!questionToDelete) return;
+
+        const deletedNum = questionToDelete.questionNumber;
+
+        const { error: deleteError } = await supabase
           .from('topic_questions')
-          .update({ is_deleted: true })
+          .delete()
           .eq('id', qId);
-        if (error) throw error;
+        if (deleteError) throw deleteError;
+
+        if (typeof deletedNum === 'number') {
+          const { data: subsequentQuestions, error: fetchError } = await supabase
+            .from('topic_questions')
+            .select('id, question_number')
+            .eq('topic_id', topicId)
+            .gt('question_number', deletedNum);
+
+          if (fetchError) throw fetchError;
+
+          if (subsequentQuestions && subsequentQuestions.length > 0) {
+            const updatePromises = subsequentQuestions.map(sq => {
+              const currentNum = sq.question_number || 0;
+              return supabase
+                .from('topic_questions')
+                .update({ question_number: currentNum - 1 })
+                .eq('id', sq.id);
+            });
+            await Promise.all(updatePromises);
+          }
+        }
+
         loadQuestions();
       } catch (err: any) {
         alert(`Failed to delete question from Supabase: ${err.message || err}`);
