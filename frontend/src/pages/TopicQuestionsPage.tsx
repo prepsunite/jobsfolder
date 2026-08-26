@@ -116,7 +116,7 @@ export default function TopicQuestionsPage() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
+      if (data) {
         const mapped: TopicQuestionItem[] = data.map((q: any) => {
           const parsedStructured = typeof q.structured_explanation === 'string'
             ? (() => { try { return JSON.parse(q.structured_explanation); } catch { return undefined; } })()
@@ -159,10 +159,10 @@ export default function TopicQuestionsPage() {
       }
     } catch (err) {
       console.warn('[TopicQuestionsPage] Supabase load failed, using local dataStore:', err);
+      // Fallback to localStorage only if Supabase request fails
+      const list = dataStore.getTopicQuestions(topicId);
+      setQuestions(list);
     }
-    // Fallback to localStorage only if Supabase fails
-    const list = dataStore.getTopicQuestions(topicId);
-    setQuestions(list);
   }, [topicId]);
 
   useEffect(() => {
