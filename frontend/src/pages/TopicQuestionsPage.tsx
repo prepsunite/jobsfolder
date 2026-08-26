@@ -24,6 +24,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services/dataStore';
 import { supabase } from '@/lib/supabase';
+import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -131,22 +132,31 @@ export default function TopicQuestionsPage() {
                 ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
                 : (String(rawCorrect || 'A').toUpperCase()));
 
+          const rawOpts = (() => {
+            try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
+            catch { return []; }
+          })();
+
+          const normOpts = Array.isArray(rawOpts) ? rawOpts.map((opt: any) => ({
+            ...opt,
+            text: normalizeMathText(opt.text || String(opt))
+          })) : [];
+
+          const formulas = parsedStructured?.formulaUsed || q.structured_explanation?.formulaUsed || [];
+
           return {
             id: q.id,
             topicId: q.topic_id,
             questionNumber: q.question_number || 1,
-            statement: q.statement || '',
-            options: (() => {
-              try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
-              catch { return []; }
-            })(),
+            statement: normalizeMathText(q.statement || ''),
+            options: normOpts,
             correctAnswer: resolvedLetter,
-            explanation: q.explanation || '',
+            explanation: normalizeMathText(q.explanation || ''),
             structuredExplanation: parsedStructured,
             testCase,
             sampleInput: q.sample_input,
             sampleOutput: q.sample_output,
-            formulasUsed: parsedStructured?.formulaUsed || q.structured_explanation?.formulaUsed || [],
+            formulasUsed: Array.isArray(formulas) ? formulas.map((f: any) => normalizeMathText(String(f))) : [],
             difficulty: q.difficulty || 'MEDIUM',
             difficultyLevel: q.difficulty_level || 2,
             isHidden: q.is_hidden || false,
@@ -200,6 +210,57 @@ export default function TopicQuestionsPage() {
     setShowModal(true);
   };
 
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+
+  const toggleQuestionSelection = (qId: string) => {
+    const nextSet = new Set(selectedQuestionIds);
+    if (nextSet.has(qId)) nextSet.delete(qId);
+    else nextSet.add(qId);
+    setSelectedQuestionIds(nextSet);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const sortedQuestions = [...questions].sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
+      const roleFilteredQuestions = isAdmin ? sortedQuestions : sortedQuestions.filter(q => !q.isHidden);
+      const currentlyFiltered = roleFilteredQuestions.filter(q => {
+        if (activeDifficulty === 'ALL') return true;
+        const normDiff = q.difficultyLevel === 1 ? 'EASY' : q.difficultyLevel === 3 ? 'HARD' : (q.difficulty || 'MEDIUM').toUpperCase();
+        return normDiff === activeDifficulty;
+      });
+      setSelectedQuestionIds(new Set(currentlyFiltered.map(q => q.id)));
+    } else {
+      setSelectedQuestionIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedQuestionIds.size === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedQuestionIds.size} selected question(s)? This action cannot be undone.`)) return;
+
+    try {
+      const idsToDelete = Array.from(selectedQuestionIds);
+      
+      const { error } = await supabase
+        .from('topic_questions')
+        .update({ is_deleted: true })
+        .in('id', idsToDelete);
+        
+      if (error) {
+        console.error('[TopicQuestionsPage] Bulk delete failed:', error);
+        alert(`Failed to bulk delete from Supabase: ${error.message}`);
+      }
+      
+      idsToDelete.forEach(id => dataStore.deleteTopicQuestion(id));
+      
+      setSelectedQuestionIds(new Set());
+      await loadQuestions();
+    } catch (err) {
+      console.error(err);
+      alert('An unexpected error occurred during bulk deletion.');
+    }
+  };
+
   const handleOpenEditModal = (q: TopicQuestionItem) => {
     setEditingQuestion(q);
     setFormStatement(q.statement);
@@ -222,18 +283,18 @@ export default function TopicQuestionsPage() {
     if (!formStatement.trim()) return alert('Question statement is required.');
 
     const optionsList = [
-      { key: 'A', text: formOptionA.trim() || 'Option A' },
-      { key: 'B', text: formOptionB.trim() || 'Option B' },
-      { key: 'C', text: formOptionC.trim() || 'Option C' },
-      { key: 'D', text: formOptionD.trim() || 'Option D' },
+      { key: 'A', text: normalizeMathText(formOptionA.trim()) || 'Option A' },
+      { key: 'B', text: normalizeMathText(formOptionB.trim()) || 'Option B' },
+      { key: 'C', text: normalizeMathText(formOptionC.trim()) || 'Option C' },
+      { key: 'D', text: normalizeMathText(formOptionD.trim()) || 'Option D' },
     ];
     if (formOptionE.trim()) {
-      optionsList.push({ key: 'E', text: formOptionE.trim() });
+      optionsList.push({ key: 'E', text: normalizeMathText(formOptionE.trim()) });
     }
 
     const formulasArray = formFormulas
       .split('\n')
-      .map(f => f.trim())
+      .map(f => normalizeMathText(f.trim()))
       .filter(Boolean);
 
     try {
@@ -248,15 +309,18 @@ export default function TopicQuestionsPage() {
       const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
       const correctIdx = letterToIdx[formCorrect.toUpperCase()] ?? 0;
 
+      const formattedStatement = normalizeMathText(formStatement);
+      const formattedExplanation = normalizeMathText(formExplanation);
+
       if (editingQuestion) {
         const { error } = await supabase
           .from('topic_questions')
           .update({
             company_slug: 'general',
-            statement: formStatement,
+            statement: formattedStatement,
             options: JSON.stringify(optionsList),
             correct_answer: correctIdx,
-            explanation: formExplanation,
+            explanation: formattedExplanation,
             structured_explanation: JSON.stringify(structuredExp),
             test_case: formTestCase.trim() || null,
             difficulty: formDifficulty,
@@ -272,10 +336,10 @@ export default function TopicQuestionsPage() {
             topic_id: topicId,
             company_slug: 'general',
             question_number: nextNum,
-            statement: formStatement,
+            statement: formattedStatement,
             options: JSON.stringify(optionsList),
             correct_answer: correctIdx,
-            explanation: formExplanation,
+            explanation: formattedExplanation,
             structured_explanation: JSON.stringify(structuredExp),
             test_case: formTestCase.trim() || null,
             difficulty: formDifficulty,
@@ -357,7 +421,7 @@ export default function TopicQuestionsPage() {
 
     // Try Supabase bulk insert first
     try {
-      const parsed = JSON.parse(bulkJsonInput);
+      const parsed = safeJsonParse(bulkJsonInput);
       const items: any[] = Array.isArray(parsed) ? parsed : [parsed];
       const maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
       const rows = items.map((q: any, idx: number) => {
@@ -366,9 +430,33 @@ export default function TopicQuestionsPage() {
           ? q.explanation
           : { formulaUsed: Array.isArray(rawFormulas) ? rawFormulas : [] };
 
+        if (Array.isArray(structuredExp.formulaUsed)) {
+          structuredExp.formulaUsed = structuredExp.formulaUsed.map((f: any) => normalizeMathText(String(f)));
+        }
+        if (Array.isArray(structuredExp.given)) {
+          structuredExp.given = structuredExp.given.map((g: any) => normalizeMathText(String(g)));
+        }
+        if (Array.isArray(structuredExp.steps)) {
+          structuredExp.steps = structuredExp.steps.map((s: any) => {
+            if (typeof s === 'string') return normalizeMathText(s);
+            if (s && typeof s === 'object') {
+              const val = s.text || s.content || s.formula || s.title || '';
+              const title = s.title && s.title !== 'Step' ? `${s.title}: ` : '';
+              return normalizeMathText(`${title}${val}`);
+            }
+            return normalizeMathText(String(s));
+          });
+        }
+        if (structuredExp.shortcut) {
+          structuredExp.shortcut = normalizeMathText(String(structuredExp.shortcut));
+        }
+        if (structuredExp.finalAnswer) {
+          structuredExp.finalAnswer = normalizeMathText(String(structuredExp.finalAnswer));
+        }
+
         const expStr = typeof q.explanation === 'string'
-          ? q.explanation
-          : (q.explanation?.finalAnswer || (Array.isArray(q.explanation?.steps) ? q.explanation.steps.map((s: any) => typeof s === 'string' ? s : `${s.title || 'Step'}: ${s.content || s.text || ''}`).join('\n') : ''));
+          ? normalizeMathText(q.explanation)
+          : (structuredExp.finalAnswer || (Array.isArray(structuredExp.steps) ? structuredExp.steps.map((s: any) => typeof s === 'string' ? s : `${s.title || 'Step'}: ${s.content || s.text || ''}`).join('\n') : ''));
 
         // Resolve to an INTEGER index (0=A, 1=B, 2=C, 3=D) to match the INT correct_answer DB column
         const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
@@ -388,19 +476,22 @@ export default function TopicQuestionsPage() {
           resolvedCorrectInt = !isNaN(asNum) ? asNum : (letterToIdx[String(fallback).toUpperCase()] ?? 0);
         }
 
+        const rawStatement = q.statement || q.question || q.title || 'Question';
+        const formattedStatement = normalizeMathText(rawStatement);
+
         return {
           topic_id: topicId,
           company_slug: q.company_slug || q.companySlug || q.company || 'general',
           question_number: typeof q.questionNumber === 'number' ? q.questionNumber : (maxExistingNum + idx + 1),
-          statement: q.statement || q.question || q.title || 'Question',
+          statement: formattedStatement,
           options: JSON.stringify(Array.isArray(q.options) ? q.options.map((opt: any, oIdx: number) => {
-            if (typeof opt === 'string') return { key: ['A', 'B', 'C', 'D', 'E'][oIdx] || `${oIdx + 1}`, text: opt };
-            return { key: opt.id || opt.key || ['A', 'B', 'C', 'D', 'E'][oIdx], text: opt.text || String(opt) };
+            if (typeof opt === 'string') return { key: ['A', 'B', 'C', 'D', 'E'][oIdx] || `${oIdx + 1}`, text: normalizeMathText(opt) };
+            return { key: opt.id || opt.key || ['A', 'B', 'C', 'D', 'E'][oIdx], text: normalizeMathText(opt.text || String(opt)) };
           }) : [
-            { key: 'A', text: q.optionA || q.a || 'Option A' },
-            { key: 'B', text: q.optionB || q.b || 'Option B' },
-            { key: 'C', text: q.optionC || q.c || 'Option C' },
-            { key: 'D', text: q.optionD || q.d || 'Option D' },
+            { key: 'A', text: normalizeMathText(q.optionA || q.a || 'Option A') },
+            { key: 'B', text: normalizeMathText(q.optionB || q.b || 'Option B') },
+            { key: 'C', text: normalizeMathText(q.optionC || q.c || 'Option C') },
+            { key: 'D', text: normalizeMathText(q.optionD || q.d || 'Option D') },
           ]),
           correct_answer: resolvedCorrectInt,
           explanation: expStr,
@@ -542,8 +633,8 @@ export default function TopicQuestionsPage() {
         </div>
       </div>
 
-      {/* 🎯 DIFFICULTY FILTER BAR */}
-      <div className="flex items-center justify-between gap-2 overflow-x-auto p-1">
+      {/* 🎯 DIFFICULTY FILTER BAR & BULK ACTIONS */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-x-auto p-1">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] flex items-center gap-1 mr-1">
             <Filter className="w-3 h-3" />
@@ -572,6 +663,38 @@ export default function TopicQuestionsPage() {
             );
           })}
         </div>
+
+        {isAdmin && filteredQuestions.length > 0 && (
+          <div className="flex items-center gap-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={selectedQuestionIds.size > 0 && selectedQuestionIds.size === filteredQuestions.length}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+              />
+              <span className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
+                Select All
+              </span>
+            </label>
+
+            {selectedQuestionIds.size > 0 && (
+              <>
+                <div className="w-px h-4 bg-[#E9ECEF] dark:bg-[#242424]"></div>
+                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555]">
+                  {selectedQuestionIds.size} selected
+                </span>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-xs font-display font-bold transition-colors flex items-center gap-1 border border-rose-500/20"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Delete Selected</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* QUESTIONS LIST */}
@@ -612,11 +735,20 @@ export default function TopicQuestionsPage() {
                   q.isHidden
                     ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
                     : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF]'
-                }`}
+                } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500' : ''}`}
               >
                 {/* Header Row: Question # Badge + Difficulty Badge + Admin Actions */}
                 <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
                   <div className="flex items-center gap-2 flex-wrap">
+                    {isAdmin && (
+                      <input
+                        type="checkbox"
+                        checked={selectedQuestionIds.has(q.id)}
+                        onChange={() => toggleQuestionSelection(q.id)}
+                        className="w-4 h-4 mr-1 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                      />
+                    )}
+
                     {/* Question Number Badge (Permanent ID) */}
                     <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/20 dark:border-[#FD4A32]/30">
                       Question #{q.permanentNumber}

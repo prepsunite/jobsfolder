@@ -16,6 +16,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import { supabase } from '@/lib/supabase';
 import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
+import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 
 export default function AdminBulkImportPage() {
   const { role } = useAuth();
@@ -59,7 +60,7 @@ export default function AdminBulkImportPage() {
     }
 
     try {
-      const rawParsed = JSON.parse(text);
+      const rawParsed = safeJsonParse(text);
       const itemsArray = Array.isArray(rawParsed) ? rawParsed : [rawParsed];
 
       const previewItems: Partial<TopicQuestionItem>[] = [];
@@ -153,10 +154,13 @@ export default function AdminBulkImportPage() {
             id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
             topic_id: tId,
             company_slug: (item as any).companySlug || (item as any).company || 'general',
-            statement: item.statement || '',
-            options: JSON.stringify(item.options || []),
+            statement: normalizeMathText(item.statement || ''),
+            options: JSON.stringify((item.options || []).map((o: any) => ({
+              ...o,
+              text: normalizeMathText(o.text || '')
+            }))),
             correct_answer: correctAnswerInt,
-            explanation: item.explanation || '',
+            explanation: normalizeMathText(item.explanation || ''),
             structured_explanation: JSON.stringify(item.structuredExplanation || { formulaUsed: item.formulasUsed || [] }),
             difficulty: item.difficulty || 'MEDIUM',
             difficulty_level: item.difficultyLevel || 2,

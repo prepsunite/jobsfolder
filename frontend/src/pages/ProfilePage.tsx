@@ -9,6 +9,7 @@ import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionIt
 import { useTheme } from '@/contexts/ThemeContext';
 import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
 import ContentRenderer from '@/components/ContentRenderer';
+import { normalizeMathText } from '@/utils/questionParser';
 import {
   User,
   BookmarkCheck,
@@ -97,13 +98,19 @@ export default function ProfilePage() {
                   ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
                   : (String(rawCorrect || 'A').toUpperCase()));
 
+            const rawOpts = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []);
+            const normOpts = Array.isArray(rawOpts) ? rawOpts.map((opt: any) => ({
+              ...opt,
+              text: normalizeMathText(opt.text || String(opt))
+            })) : [];
+
             return {
               id: q.id,
               topicId: q.topic_id,
-              statement: q.statement,
-              options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+              statement: normalizeMathText(q.statement || ''),
+              options: normOpts,
               correctAnswer: resolvedLetter,
-              explanation: q.explanation,
+              explanation: normalizeMathText(q.explanation || ''),
               structuredExplanation:
                 typeof q.structured_explanation === 'string'
                   ? JSON.parse(q.structured_explanation)

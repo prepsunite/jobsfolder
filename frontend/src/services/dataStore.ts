@@ -6,6 +6,8 @@ import {
   validateQuestionItem,
   generateQuestionFingerprint,
   parseTopicQuestionJsonItem as parseTopicQuestionJsonItemUtil,
+  safeJsonParse,
+  normalizeMathText,
 } from '@/utils/questionParser';
 export { resolveTopicSlug };
 
@@ -1660,7 +1662,7 @@ class DataStoreManager {
 
     let items: any[] = [];
     try {
-      const parsed = JSON.parse(jsonText);
+      const parsed = safeJsonParse(jsonText);
       items = Array.isArray(parsed) ? parsed : [parsed];
     } catch {
       report.invalid = 1;

@@ -8,6 +8,123 @@ import type {
 } from '@/services/dataStore';
 
 /**
+ * Unicode Subscript Mapping for Math & Scientific expressions.
+ */
+const SUBSCRIPT_MAP: Record<string, string> = {
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+  '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+  '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎',
+  'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ',
+  'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ',
+  'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ', 'u': 'ᵤ',
+  'v': 'ᵥ', 'x': 'ₓ',
+};
+
+/**
+ * Unicode Superscript Mapping for Powers & Exponents.
+ */
+const SUPERSCRIPT_MAP: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+  '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+  '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾',
+  'a': 'ᵃ', 'b': 'ᵇ', 'c': 'ᶜ', 'd': 'ᵈ', 'e': 'ᵉ',
+  'f': 'ᶠ', 'g': 'ᵍ', 'h': 'ʰ', 'i': 'ⁱ', 'j': 'ʲ',
+  'k': 'ᵏ', 'l': 'ˡ', 'm': 'ᵐ', 'n': 'ⁿ', 'o': 'ᵒ',
+  'p': 'ᵖ', 'r': 'ʳ', 's': 'ˢ', 't': 'ᵗ', 'u': 'ᵘ',
+  'v': 'ᵛ', 'w': 'ʷ', 'x': 'ˣ', 'y': 'ʸ', 'z': 'ᶻ',
+};
+
+export function toSubscript(str: string): string {
+  if (!str) return '';
+  return str
+    .split('')
+    .map((c) => SUBSCRIPT_MAP[c] || SUBSCRIPT_MAP[c.toLowerCase()] || c)
+    .join('');
+}
+
+export function toSuperscript(str: string): string {
+  if (!str) return '';
+  return str
+    .split('')
+    .map((c) => SUPERSCRIPT_MAP[c] || SUPERSCRIPT_MAP[c.toLowerCase()] || c)
+    .join('');
+}
+
+/**
+ * Universal Mathematical Normalizer
+ * Converts LaTeX/HTML/Markdown math notation into clean Unicode mathematical symbols:
+ * - log_2(x) / log_{16}(x) / \log_2(x) / log<sub>2</sub>(x) -> log₂(x) / log₁₆(x)
+ * - x^2 / x^{m+n} / x<sup>2</sup> -> x² / xᵐ⁺ⁿ
+ * - \sqrt{x} / sqrt(x) -> √(x)
+ * - \theta, \pi, \pm, \le, \ge, \ne, \times, \div -> θ, π, ±, ≤, ≥, ≠, ×, ÷
+ */
+export function normalizeMathText(text: string): string {
+  if (!text || typeof text !== 'string') return text || '';
+
+  let res = text;
+
+  // 1. Convert HTML <sub>...</sub> and <sup>...</sup>
+  res = res.replace(/<sub>(.*?)<\/sub>/gi, (_, match) => toSubscript(match));
+  res = res.replace(/<sup>(.*?)<\/sup>/gi, (_, match) => toSuperscript(match));
+
+  // 2. Convert Logarithms: log_{16}(x), log_2(x), \log_{2}(x), \log_2(x)
+  res = res.replace(/\\?log_\{([a-zA-Z0-9+\-_]+)\}/gi, (_, base) => `log${toSubscript(base)}`);
+  res = res.replace(/\\?log_([a-zA-Z0-9]+)/gi, (_, base) => `log${toSubscript(base)}`);
+
+  // 3. Convert general subscript variables: a_{n+1}, x_1, T_2
+  res = res.replace(/([a-zA-Z])_\{([a-zA-Z0-9+\-_]+)\}/g, (_, varName, sub) => `${varName}${toSubscript(sub)}`);
+  res = res.replace(/([a-zA-Z])_([0-9a-zA-Z])/g, (_, varName, sub) => `${varName}${toSubscript(sub)}`);
+
+  // 4. Convert superscripts and exponents: x^{2}, 2^{n+1}, x^2, a^m
+  res = res.replace(/\^\{([a-zA-Z0-9+\-_]+)\}/g, (_, exp) => toSuperscript(exp));
+  res = res.replace(/\^([0-9a-zA-Z])/g, (_, exp) => toSuperscript(exp));
+
+  // 5. Common LaTeX mathematical symbols & operations
+  res = res.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+  res = res.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, '√$1');
+  res = res.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1 / $2)');
+  res = res.replace(/\\times/g, '×');
+  res = res.replace(/\\div/g, '÷');
+  res = res.replace(/\\pm/g, '±');
+  res = res.replace(/\\le(q)?\b/g, '≤');
+  res = res.replace(/\\ge(q)?\b/g, '≥');
+  res = res.replace(/\\ne(q)?\b/g, '≠');
+  res = res.replace(/\\approx/g, '≈');
+  res = res.replace(/\\theta/gi, 'θ');
+  res = res.replace(/\\pi/gi, 'π');
+  res = res.replace(/\\alpha/gi, 'α');
+  res = res.replace(/\\beta/gi, 'β');
+  res = res.replace(/\\degree/g, '°');
+  res = res.replace(/\\infty/g, '∞');
+
+  return res;
+}
+
+/**
+ * Sanitizes JSON strings before parsing to auto-escape raw LaTeX backslashes.
+ * e.g. converts unescaped \log, \frac, \sqrt into \\log, \\frac, \\sqrt
+ */
+export function sanitizeJsonInput(rawJson: string): string {
+  if (!rawJson) return '';
+  let str = rawJson.trim();
+  // Negative lookahead for valid JSON escape sequences: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
+  str = str.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, '\\\\');
+  return str;
+}
+
+/**
+ * Safe JSON parser with auto-recovery for LaTeX backslash escapes.
+ */
+export function safeJsonParse<T = any>(input: string): T {
+  try {
+    return JSON.parse(input);
+  } catch {
+    const sanitized = sanitizeJsonInput(input);
+    return JSON.parse(sanitized);
+  }
+}
+
+/**
  * Fast deterministic SHA-256 equivalent hex hash generator.
  */
 export function computeSha256Hex(str: string): string {
@@ -46,6 +163,7 @@ export function validateQuestionItem(parsed: Partial<TopicQuestionItem>): { isVa
 
 /**
  * Deterministic fingerprint generator for question deduplication.
+ * Preserves Unicode subscripts/math symbols so unique math expressions are never marked as false duplicates.
  */
 export function generateQuestionFingerprint(item: Partial<TopicQuestionItem>, raw?: any): string {
   const templateId = raw?.templateId || raw?.template_id || item?.templateId;
@@ -65,12 +183,13 @@ export function generateQuestionFingerprint(item: Partial<TopicQuestionItem>, ra
     return computeSha256Hex(`TMPL:${String(templateId).trim()}`);
   }
 
-  // Deterministic Fingerprint from Normalized Statement Text
+  // Deterministic Fingerprint from Normalized Math Statement Text:
+  // Lowercases and normalizes spaces while preserving Unicode subscripts, superscripts, Greek & math symbols
   const rawStatement = item.statement || raw?.question || raw?.statement || '';
-  const normText = rawStatement
+  const normText = normalizeMathText(rawStatement)
+    .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+    .replace(/\s+/g, ' ');
 
   if (normText) {
     return computeSha256Hex(`STATEMENT:${normText}`);
@@ -86,6 +205,9 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
   const rawSubtopic = raw.subtopic || raw.subTopic || raw.topic || raw.topicId;
   const topicId = resolveTopicSlug(rawSubtopic, defaultTopicId);
 
+  const rawStatement = raw.question || raw.statement || '';
+  const statement = normalizeMathText(rawStatement);
+
   const keys = ['A', 'B', 'C', 'D', 'E', 'F'];
   let parsedOptions: QuestionOption[] = [];
   if (Array.isArray(raw.options)) {
@@ -95,7 +217,7 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
       return {
         id: String(optionId).toUpperCase(),
         key: String(optionId).toUpperCase(),
-        text: optionText,
+        text: normalizeMathText(optionText),
       };
     });
   }
@@ -126,33 +248,45 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
 
   let explanationText: string | undefined = undefined;
   let structuredExplanation: StructuredExplanation | undefined = undefined;
-  let formulasUsed: string[] = raw.formulasUsed || [];
+  let formulasUsed: string[] = Array.isArray(raw.formulasUsed) 
+    ? raw.formulasUsed.map((f: any) => normalizeMathText(String(f))) 
+    : [];
 
   if (raw.explanation && typeof raw.explanation === 'object') {
     const rawSteps = raw.explanation.steps || [];
     const parsedSteps = Array.isArray(rawSteps)
       ? rawSteps.map((st: any) => {
-          if (typeof st === 'string') return st;
+          if (typeof st === 'string') return normalizeMathText(st);
           if (st && typeof st === 'object') {
             const val = st.text || st.content || st.formula || st.title || '';
-            return st.title && st.title !== 'Step' ? `${st.title}: ${val}` : val;
+            const title = st.title && st.title !== 'Step' ? `${st.title}: ` : '';
+            return normalizeMathText(`${title}${val}`);
           }
-          return String(st);
+          return normalizeMathText(String(st));
         })
       : [];
 
     structuredExplanation = {
-      given: Array.isArray(raw.explanation.given) ? raw.explanation.given : (raw.explanation.given ? [raw.explanation.given] : []),
+      given: Array.isArray(raw.explanation.given)
+        ? raw.explanation.given.map((g: any) => normalizeMathText(String(g)))
+        : (raw.explanation.given ? [normalizeMathText(String(raw.explanation.given))] : []),
       steps: parsedSteps,
-      shortcut: raw.explanation.shortcut || raw.explanation.shortCut || raw.explanation.tricks || undefined,
-      formulaUsed: raw.explanation.formulaUsed || raw.explanation.formulasUsed || [],
-      finalAnswer: raw.explanation.finalAnswer || '',
+      shortcut: raw.explanation.shortcut
+        ? normalizeMathText(String(raw.explanation.shortcut))
+        : (raw.explanation.shortCut ? normalizeMathText(String(raw.explanation.shortCut)) : undefined),
+      formulaUsed: Array.isArray(raw.explanation.formulaUsed || raw.explanation.formulasUsed)
+        ? (raw.explanation.formulaUsed || raw.explanation.formulasUsed).map((f: any) => normalizeMathText(String(f)))
+        : [],
+      finalAnswer: raw.explanation.finalAnswer ? normalizeMathText(String(raw.explanation.finalAnswer)) : '',
     };
     if (raw.explanation.formulaUsed && Array.isArray(raw.explanation.formulaUsed)) {
-      formulasUsed = [...formulasUsed, ...raw.explanation.formulaUsed];
+      formulasUsed = [
+        ...formulasUsed,
+        ...raw.explanation.formulaUsed.map((f: any) => normalizeMathText(String(f))),
+      ];
     }
   } else if (typeof raw.explanation === 'string') {
-    explanationText = raw.explanation;
+    explanationText = normalizeMathText(raw.explanation);
   }
 
   const status: QuestionStatus = raw.status || (raw.isHidden ? 'draft' : 'published');
@@ -178,7 +312,7 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
   const parsedItem: Partial<TopicQuestionItem> = {
     version: 1,
     topicId,
-    statement: raw.question || raw.statement || '',
+    statement,
     options: parsedOptions,
     correctAnswer,
     explanation: explanationText,
