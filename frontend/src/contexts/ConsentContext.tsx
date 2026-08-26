@@ -11,6 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 type ConsentStatus = 'pending' | 'accepted' | 'declined';
 
@@ -59,14 +60,32 @@ export const ConsentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
-  const persist = (status: ConsentStatus) => {
+  const persist = async (status: ConsentStatus) => {
     const r: ConsentRecord = {
       status,
       timestamp: new Date().toISOString(),
       version: CURRENT_POLICY_VERSION,
     };
+    // Always write to localStorage first (works even before sign-in)
     localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(r));
     setRecord(r);
+
+    // Also write to Supabase profiles table as server-side proof of consent
+    // (only possible when the user is authenticated)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        await supabase
+          .from('profiles')
+          .update({
+            consent_status: status,
+            consent_accepted_at: status === 'accepted' ? new Date().toISOString() : null,
+          })
+          .eq('id', user.id);
+      }
+    } catch {
+      // Supabase write failure is non-fatal — localStorage still holds the record
+    }
   };
 
   const acceptConsent = () => persist('accepted');
