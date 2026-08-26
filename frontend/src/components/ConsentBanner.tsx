@@ -8,6 +8,9 @@
  *  - Offers Accept and Decline with equal prominence (no dark patterns)
  *  - Disappears permanently once the user responds
  *
+ * NOTE: This component is rendered OUTSIDE <RouterProvider> in App.tsx
+ * so it must use plain <a href> tags instead of react-router <Link>.
+ *
  * DPDP Requirements met:
  *  ✔  Notice given before/at data collection (Rule 3)
  *  ✔  Plain language — no legalese (Rule 3)
@@ -16,7 +19,6 @@
  *  ✔  No pre-acceptance forced (equal Accept/Decline)
  */
 
-import { Link } from 'react-router';
 import { ShieldCheck, X, Check } from 'lucide-react';
 import { useConsent } from '@/contexts/ConsentContext';
 
@@ -52,19 +54,19 @@ export default function ConsentBanner() {
               Sign-In to authenticate your account and personalise your learning experience.
               We do <strong className="text-[#495057] dark:text-[#999999]">not</strong> sell your data. You can withdraw consent and delete your
               account at any time from your Profile page.{' '}
-              <Link
-                to="/privacy-policy"
+              <a
+                href="/privacy-policy"
                 className="underline text-[#FD4A32] hover:text-[#e03e28] transition-colors"
               >
                 Privacy Policy
-              </Link>{' '}
+              </a>{' '}
               ·{' '}
-              <Link
-                to="/terms-and-conditions"
+              <a
+                href="/terms-and-conditions"
                 className="underline text-[#FD4A32] hover:text-[#e03e28] transition-colors"
               >
                 Terms
-              </Link>
+              </a>
             </p>
           </div>
 
@@ -97,9 +99,9 @@ export default function ConsentBanner() {
         <div className="border-t border-[#F1F3F5] dark:border-[#1C1C1C] px-4 sm:px-6 py-2 max-w-7xl mx-auto">
           <p className="text-[10px] text-[#ADB5BD] dark:text-[#444444] font-sans">
             You can withdraw your consent at any time by visiting{' '}
-            <Link to="/profile" className="underline hover:text-[#FD4A32] transition-colors">
+            <a href="/profile" className="underline hover:text-[#FD4A32] transition-colors">
               Profile → Data &amp; Privacy
-            </Link>. Declining may limit some features.
+            </a>. Declining may limit some features.
             Grievance Officer: <a href="mailto:prepsunite@gmail.com" className="underline hover:text-[#FD4A32] transition-colors">prepsunite@gmail.com</a>
           </p>
         </div>
