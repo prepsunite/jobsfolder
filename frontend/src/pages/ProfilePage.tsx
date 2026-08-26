@@ -135,13 +135,55 @@ export default function ProfilePage() {
     },
   });
 
-  // TanStack Query: Bookmarked Interview Transcripts
+  // Calculate accurate total saved questions count (topic questions + any general questions)
+  const nonTopicGeneralQuestions = bookmarkedQuestions.filter(
+    (gq) => !bookmarkedTopicQuestions.some((tq) => tq.id === gq.id)
+  );
+  const totalQuestionsCount = bookmarkedTopicQuestions.length + nonTopicGeneralQuestions.length;
+
+  // TanStack Query: Bookmarked Interview Transcripts (queries live Supabase experiences + local fallback)
   const { data: bookmarkedExperiences = [] } = useQuery({
     queryKey: ['profile-bookmarked-experiences'],
     queryFn: async () => {
       const expIds = dataStore.getBookmarkedExperienceIds();
-      const allExps = dataStore.getExperiences();
-      return expIds.map((id) => allExps.find((e) => e.id === id)).filter(Boolean) as ExperienceItem[];
+      if (expIds.length === 0) return [];
+      let allExps: ExperienceItem[] = [];
+      try {
+        const { data, error } = await supabase
+          .from('experiences')
+          .select('*')
+          .eq('is_deleted', false);
+        if (data && data.length > 0) {
+          allExps = data.map((e: any): ExperienceItem => ({
+            id: e.id,
+            companyName: e.company_name || e.company_slug?.toUpperCase() || 'TCS',
+            role: e.role_title || 'Software Engineer',
+            studentName: e.student_name || 'Student',
+            college: e.college || '',
+            year: e.year || 2026,
+            difficulty: e.difficulty || 'MEDIUM',
+            verdict: e.verdict || 'SELECTED',
+            rounds: (() => {
+              try {
+                return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : e.rounds || [];
+              } catch {
+                return [{ roundTitle: 'Interview', details: e.description || e.overall_experience || '' }];
+              }
+            })(),
+            status: e.status || 'APPROVED',
+          }));
+        }
+      } catch (err) {
+        console.warn('[ProfilePage] Failed to fetch live experiences from Supabase:', err);
+      }
+      const localExps = dataStore.getExperiences();
+      const combined = [...allExps];
+      localExps.forEach((le) => {
+        if (!combined.some((c) => c.id === le.id)) {
+          combined.push(le);
+        }
+      });
+      return expIds.map((id) => combined.find((e) => e.id === id)).filter(Boolean) as ExperienceItem[];
     },
   });
 
@@ -298,7 +340,7 @@ export default function ProfilePage() {
 
               <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
                 <span className="text-sm font-display font-extrabold text-amber-500 block">
-                  {bookmarkedQuestions.length}
+                  {totalQuestionsCount}
                 </span>
                 <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
                   Questions
@@ -342,7 +384,7 @@ export default function ProfilePage() {
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Saved Questions ({bookmarkedQuestions.length})</span>
+            <span>Saved Questions ({totalQuestionsCount})</span>
           </button>
 
           <button
@@ -461,7 +503,7 @@ export default function ProfilePage() {
       {/* Tab Content: Saved Practice Questions */}
       {activeTab === 'questions' && (
         <div className="space-y-4">
-          {bookmarkedTopicQuestions.length > 0 ? (
+          {totalQuestionsCount > 0 ? (
             <div className="space-y-4">
               {bookmarkedTopicQuestions.map((q, idx) => {
                 const subtopicName = getSubtopicDisplayName(q.topicId);
@@ -633,10 +675,8 @@ export default function ProfilePage() {
                   </div>
                 );
               })}
-            </div>
-          ) : bookmarkedQuestions.length > 0 ? (
-            <div className="space-y-4">
-              {bookmarkedQuestions.map((question) => (
+
+              {nonTopicGeneralQuestions.map((question) => (
                 <QuestionCard
                   key={question.id}
                   question={{
