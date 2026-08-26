@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConsent } from '@/contexts/ConsentContext';
 import {
   ShieldCheck,
   Sparkles,
@@ -22,6 +23,9 @@ export default function LoginPage() {
     signInWithGoogle,
     logout,
   } = useAuth();
+
+  // Sync login consent to global ConsentContext (fixes Profile showing wrong status)
+  const { acceptConsent } = useConsent();
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -47,6 +51,9 @@ export default function LoginPage() {
     setErrorMessage(null);
     setGoogleLoading(true);
     try {
+      // User has ticked the checkbox — record explicit consent in ConsentContext
+      // This syncs the status across the app (Profile page, banner, etc.)
+      acceptConsent();
       const res = await signInWithGoogle();
       if (res?.error) {
         setErrorMessage(res.error);
