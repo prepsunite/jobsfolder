@@ -166,24 +166,48 @@ export default function AptitudePage() {
     queryKey: ['topic-question-counts', categorySlug],
     queryFn: async () => {
       const topicIds = getCategoryTopics(categorySlug).map(t => t.id);
-      const { data, error } = await supabase
-        .from('topic_questions')
-        .select('topic_id')
-        .in('topic_id', topicIds)
-        .eq('is_deleted', false);
-      if (error) {
-        console.warn('Failed to fetch live topic question counts:', error);
-        return {};
+      
+      let allFetchedData: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('topic_questions')
+          .select('topic_id')
+          .in('topic_id', topicIds)
+          .eq('is_deleted', false)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (error) {
+          console.warn('Failed to fetch live topic question counts:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          allFetchedData = allFetchedData.concat(data);
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
       }
+
       const countMap: Record<string, number> = {};
       topicIds.forEach(id => {
         countMap[id] = 0;
       });
-      (data || []).forEach((row: any) => {
+      
+      allFetchedData.forEach((row: any) => {
         if (row.topic_id) {
           countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
         }
       });
+      
       return countMap;
     },
     staleTime: 0,

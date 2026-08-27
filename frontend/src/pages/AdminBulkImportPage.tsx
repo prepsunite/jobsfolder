@@ -127,14 +127,39 @@ export default function AdminBulkImportPage() {
       if (parsedPreview?.items && parsedPreview.items.length > 0) {
         // Fetch current max question numbers from Supabase for all affected topics
         const topics = Array.from(new Set(parsedPreview.items.map(item => item.topicId || 'numbers')));
-        const { data: existingQ } = await supabase
-          .from('topic_questions')
-          .select('topic_id, question_number')
-          .in('topic_id', topics)
-          .eq('is_deleted', false);
+        
+        let allExistingQ: any[] = [];
+        let page = 0;
+        const PAGE_SIZE = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data: existingQ, error } = await supabase
+            .from('topic_questions')
+            .select('topic_id, question_number')
+            .in('topic_id', topics)
+            .eq('is_deleted', false)
+            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+            
+          if (error) {
+            console.error('[AdminBulkImport] Error fetching max question numbers:', error);
+            break;
+          }
+          
+          if (existingQ && existingQ.length > 0) {
+            allExistingQ = allExistingQ.concat(existingQ);
+            if (existingQ.length < PAGE_SIZE) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
 
         const topicMaxMap: Record<string, number> = {};
-        (existingQ || []).forEach(q => {
+        allExistingQ.forEach(q => {
           topicMaxMap[q.topic_id] = Math.max(topicMaxMap[q.topic_id] || 0, q.question_number || 0);
         });
 
