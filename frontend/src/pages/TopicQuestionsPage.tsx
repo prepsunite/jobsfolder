@@ -123,6 +123,52 @@ export default function TopicQuestionsPage() {
     }
   };
 
+  // Cheatcode State
+  const [showCheatcodeModal, setShowCheatcodeModal] = useState(false);
+  const [cheatcodeContent, setCheatcodeContent] = useState('');
+  const [isCheatcodeSaving, setIsCheatcodeSaving] = useState(false);
+
+  const loadCheatcode = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('topic_cheat_codes')
+        .select('content')
+        .eq('topic_id', topicId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.warn('Cheatcodes table might not exist yet:', error);
+        return;
+      }
+      if (data) {
+        setCheatcodeContent(data.content || '');
+      }
+    } catch (err) {
+      console.warn('Failed to load cheatcode', err);
+    }
+  }, [topicId]);
+
+  useEffect(() => {
+    loadCheatcode();
+  }, [loadCheatcode]);
+
+  const handleSaveCheatcode = async () => {
+    setIsCheatcodeSaving(true);
+    try {
+      const { error } = await supabase
+        .from('topic_cheat_codes')
+        .upsert({ topic_id: topicId, content: cheatcodeContent, updated_at: new Date().toISOString() }, { onConflict: 'topic_id' });
+      
+      if (error) throw error;
+      alert('Cheatcode saved successfully!');
+      setShowCheatcodeModal(false);
+    } catch (err: any) {
+      alert(`Failed to save cheatcode. Please make sure the 'topic_cheat_codes' table is created in Supabase.\n\nError: ${err.message}`);
+    } finally {
+      setIsCheatcodeSaving(false);
+    }
+  };
+
   // Load questions from Supabase (live — admins and students always see the same data)
   const loadQuestions = useCallback(async () => {
     try {
@@ -666,6 +712,14 @@ export default function TopicQuestionsPage() {
               </>
             )}
 
+            <button
+              onClick={() => setShowCheatcodeModal(true)}
+              className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/20 transition-all cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Cheatcode
+            </button>
+            
             <div className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/20">
               {filteredQuestions.length} Problems
             </div>
@@ -1400,6 +1454,78 @@ export default function TopicQuestionsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 📚 CHEATCODE MODAL */}
+      {showCheatcodeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowCheatcodeModal(false)}
+          ></div>
+          <div className="relative bg-white dark:bg-[#1C1C1C] rounded-2xl shadow-2xl border border-[#eae1da] dark:border-[#2b2d31] w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 sm:p-5 border-b border-[#eae1da] dark:border-[#2b2d31] flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#1C1C1C]/95 backdrop-blur-md z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#FD4A32]/10 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-[#FD4A32]" />
+                </div>
+                <div>
+                  <h3 className="font-display font-extrabold text-[#121417] dark:text-white text-base">
+                    Topic Cheatcode
+                  </h3>
+                  <p className="text-[10px] text-[#868E96] dark:text-[#888888]">
+                    Formulas, concepts, and shortcuts for {topicName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCheatcodeModal(false)}
+                className="text-[#868E96] hover:text-[#FD4A32] p-1 transition-colors"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6 overflow-y-auto">
+              {isAdmin ? (
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center justify-between">
+                    <span>Edit Cheatcode Content (Markdown supported)</span>
+                  </label>
+                  <textarea
+                    rows={12}
+                    value={cheatcodeContent}
+                    onChange={(e) => setCheatcodeContent(e.target.value)}
+                    placeholder="Enter formulas, shortcuts, and key concepts here..."
+                    className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-4 text-sm text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32] font-mono leading-relaxed"
+                  />
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={handleSaveCheatcode}
+                      disabled={isCheatcodeSaving}
+                      className="px-5 py-2 bg-[#FD4A32] hover:bg-[#e03d27] text-white rounded-md text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isCheatcodeSaving ? 'Saving...' : 'Save Cheatcode'}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:font-bold prose-a:text-[#FD4A32] prose-strong:text-[#FD4A32]">
+                  {cheatcodeContent ? (
+                    <div style={{ whiteSpace: 'pre-wrap' }} className="text-sm leading-relaxed text-[#4A4F55] dark:text-[#A1A1AA]">
+                      {cheatcodeContent}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 text-gray-500 italic text-sm">
+                      No cheatcode has been added for this topic yet.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
