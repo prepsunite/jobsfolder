@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import {
   ChevronLeft,
+  ChevronRight,
   BookOpen,
   Bookmark,
   BookmarkCheck,
@@ -1025,38 +1026,47 @@ export default function TopicQuestionsPage() {
 
       {/* 📄 PAGINATION CONTROLS */}
       {filteredQuestions.length > QUESTIONS_PER_PAGE && (
-        <div className="flex justify-center items-center mt-6 mb-8 pt-4">
-          <div className="flex rounded-md shadow-sm">
-            <button
-              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] rounded-l-md font-sans hover:bg-gray-100 dark:hover:bg-[#1C1C1C] disabled:opacity-50 transition-colors"
-            >
-              Prev
-            </button>
+        <div className="flex justify-center items-center mt-10 mb-12 gap-2">
+          {/* Previous Button */}
+          <button
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="flex items-center justify-center w-9 h-9 rounded-full border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
+            aria-label="Previous Page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
 
-            {Array.from({ length: Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE) }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i + 1)}
-                className={`px-4 py-2 border-y border-r border-[#E9ECEF] dark:border-[#242424] font-sans transition-colors ${
-                  currentPage === i + 1
-                    ? 'bg-[#FD4A32] text-white border-l border-l-[#FD4A32] border-y-[#FD4A32] border-r-[#FD4A32]' // Using primary logo color
-                    : 'bg-[#F8F9FA] dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] hover:bg-gray-100 dark:hover:bg-[#1C1C1C]'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-
-            <button
-              onClick={() => handlePageChange(Math.min(Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE), currentPage + 1))}
-              disabled={currentPage === Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE)}
-              className="px-4 py-2 border-y border-r border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#141414] text-[#868E96] dark:text-[#888888] rounded-r-md font-sans hover:bg-gray-100 dark:hover:bg-[#1C1C1C] disabled:opacity-50 transition-colors"
-            >
-              Next
-            </button>
+          {/* Page Numbers */}
+          <div className="flex items-center gap-1.5 px-2">
+            {Array.from({ length: Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE) }).map((_, i) => {
+              const page = i + 1;
+              const isActive = currentPage === page;
+              return (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`flex items-center justify-center min-w-[36px] h-[36px] px-2 rounded-full font-display font-bold text-xs transition-all ${
+                    isActive
+                      ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/20 scale-105'
+                      : 'bg-transparent text-[#868E96] dark:text-[#888888] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
           </div>
+
+          {/* Next Button */}
+          <button
+            onClick={() => handlePageChange(Math.min(Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE), currentPage + 1))}
+            disabled={currentPage === Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE)}
+            className="flex items-center justify-center w-9 h-9 rounded-full border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
+            aria-label="Next Page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
 
