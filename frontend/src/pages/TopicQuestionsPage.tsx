@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import {
   ChevronLeft,
@@ -107,6 +107,20 @@ export default function TopicQuestionsPage() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const QUESTIONS_PER_PAGE = 10;
+  const listTopRef = useRef<HTMLDivElement>(null);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (listTopRef.current) {
+      const yOffset = -24; // Slight padding above the filter bar
+      const elementPosition = listTopRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY + yOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Load questions from Supabase (live — admins and students always see the same data)
   const loadQuestions = useCallback(async () => {
@@ -657,7 +671,7 @@ export default function TopicQuestionsPage() {
                 key={item.id}
                 onClick={() => {
                   setActiveDifficulty(item.id);
-                  setCurrentPage(1);
+                  handlePageChange(1);
                 }}
                 className={`px-2.5 py-1 rounded-md text-xs font-display font-bold transition-all border ${
                   isActive
@@ -705,7 +719,7 @@ export default function TopicQuestionsPage() {
       </div>
 
       {/* QUESTIONS LIST */}
-      <div className="space-y-4">
+      <div className="space-y-4" ref={listTopRef}>
         {filteredQuestions.length === 0 ? (
           <div className="p-10 text-center rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
             <p className="text-sm font-semibold text-[#868E96] dark:text-[#555555]">
@@ -1014,7 +1028,7 @@ export default function TopicQuestionsPage() {
         <div className="flex justify-center items-center mt-6 mb-8 pt-4">
           <div className="flex rounded-md shadow-sm">
             <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className="px-4 py-2 border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] rounded-l-md font-sans hover:bg-gray-100 dark:hover:bg-[#1C1C1C] disabled:opacity-50 transition-colors"
             >
@@ -1024,10 +1038,10 @@ export default function TopicQuestionsPage() {
             {Array.from({ length: Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE) }).map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => handlePageChange(i + 1)}
                 className={`px-4 py-2 border-y border-r border-[#E9ECEF] dark:border-[#242424] font-sans transition-colors ${
                   currentPage === i + 1
-                    ? 'bg-[#65A30D] text-white border-l border-l-[#65A30D] border-y-[#65A30D] border-r-[#65A30D]' // Matching the green color from screenshot
+                    ? 'bg-[#FD4A32] text-white border-l border-l-[#FD4A32] border-y-[#FD4A32] border-r-[#FD4A32]' // Using primary logo color
                     : 'bg-[#F8F9FA] dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] hover:bg-gray-100 dark:hover:bg-[#1C1C1C]'
                 }`}
               >
@@ -1036,7 +1050,7 @@ export default function TopicQuestionsPage() {
             ))}
 
             <button
-              onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE), p + 1))}
+              onClick={() => handlePageChange(Math.min(Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE), currentPage + 1))}
               disabled={currentPage === Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE)}
               className="px-4 py-2 border-y border-r border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#141414] text-[#868E96] dark:text-[#888888] rounded-r-md font-sans hover:bg-gray-100 dark:hover:bg-[#1C1C1C] disabled:opacity-50 transition-colors"
             >
