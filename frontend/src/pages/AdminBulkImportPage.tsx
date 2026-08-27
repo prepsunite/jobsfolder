@@ -145,7 +145,7 @@ export default function AdminBulkImportPage() {
           const tId = item.topicId || 'numbers';
           const baseMax = topicMaxMap[tId] || 0;
           topicCounter[tId] = (topicCounter[tId] || 0) + 1;
-          const assignedNum = typeof item.questionNumber === 'number' ? item.questionNumber : (baseMax + topicCounter[tId]);
+          const assignedNum = baseMax + topicCounter[tId];
 
           // Convert letter-based correctAnswer (A/B/C/D) to 0-based INT index for the DB
           const ca = String(item.correctAnswer || 'A').trim().toUpperCase();

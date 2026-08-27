@@ -1711,7 +1711,7 @@ class DataStoreManager {
         const topicMatches = existingList.filter(q => resolveTopicSlug(q.topicId, q.topicId) === resolvedTopicId);
         const existingMax = topicMatches.length > 0 ? Math.max(...topicMatches.map(q => q.questionNumber || 0)) : 0;
         const countInCurrentBatch = newItems.filter(n => n.topicId === resolvedTopicId).length;
-        const nextQNum = typeof parsed.questionNumber === 'number' ? parsed.questionNumber : (existingMax + countInCurrentBatch + 1);
+        const nextQNum = existingMax + countInCurrentBatch + 1;
 
         const newItem: TopicQuestionItem = {
           id: parsed.id || newId,

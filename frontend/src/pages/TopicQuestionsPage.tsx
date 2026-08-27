@@ -518,7 +518,7 @@ export default function TopicQuestionsPage() {
         rows.push({
           topic_id: topicId,
           company_slug: q.company_slug || q.companySlug || q.company || 'general',
-          question_number: typeof q.questionNumber === 'number' ? q.questionNumber : maxExistingNum,
+          question_number: maxExistingNum,
           statement: formattedStatement,
           options: JSON.stringify(Array.isArray(q.options) ? q.options.map((opt: any, oIdx: number) => {
             if (typeof opt === 'string') return { key: ['A', 'B', 'C', 'D', 'E'][oIdx] || `${oIdx + 1}`, text: normalizeMathText(opt) };
