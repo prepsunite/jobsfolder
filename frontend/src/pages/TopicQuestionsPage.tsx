@@ -442,8 +442,28 @@ export default function TopicQuestionsPage() {
     try {
       const parsed = safeJsonParse(bulkJsonInput);
       const items: any[] = Array.isArray(parsed) ? parsed : [parsed];
-      const maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
-      const rows = items.map((q: any, idx: number) => {
+      let maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
+      
+      const uniqueFingerprints = new Set(
+        questions.map(q => q.statement.toLowerCase().replace(/[^a-z0-9]/g, ''))
+      );
+
+      const rows: any[] = [];
+      let duplicatesCount = 0;
+
+      for (const q of items) {
+        const rawStatement = q.statement || q.question || q.title || 'Question';
+        const formattedStatement = normalizeMathText(rawStatement);
+        const fingerprint = formattedStatement.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        if (uniqueFingerprints.has(fingerprint)) {
+          duplicatesCount++;
+          continue;
+        }
+        
+        uniqueFingerprints.add(fingerprint);
+        maxExistingNum++;
+
         const rawFormulas = q.formulasUsed || q.formulas || (typeof q.explanation === 'object' ? (q.explanation?.formulaUsed || q.explanation?.formulasUsed) : []);
         const structuredExp = typeof q.explanation === 'object' && q.explanation !== null
           ? q.explanation
@@ -495,13 +515,10 @@ export default function TopicQuestionsPage() {
           resolvedCorrectInt = !isNaN(asNum) ? asNum : (letterToIdx[String(fallback).toUpperCase()] ?? 0);
         }
 
-        const rawStatement = q.statement || q.question || q.title || 'Question';
-        const formattedStatement = normalizeMathText(rawStatement);
-
-        return {
+        rows.push({
           topic_id: topicId,
           company_slug: q.company_slug || q.companySlug || q.company || 'general',
-          question_number: typeof q.questionNumber === 'number' ? q.questionNumber : (maxExistingNum + idx + 1),
+          question_number: typeof q.questionNumber === 'number' ? q.questionNumber : maxExistingNum,
           statement: formattedStatement,
           options: JSON.stringify(Array.isArray(q.options) ? q.options.map((opt: any, oIdx: number) => {
             if (typeof opt === 'string') return { key: ['A', 'B', 'C', 'D', 'E'][oIdx] || `${oIdx + 1}`, text: normalizeMathText(opt) };
@@ -519,14 +536,18 @@ export default function TopicQuestionsPage() {
           is_hidden: false,
           is_deleted: false,
           structured_explanation: JSON.stringify(structuredExp),
-        };
-      });
+        });
+      }
 
-      const { error } = await supabase.from('topic_questions').insert(rows);
-      if (error) throw error;
+      if (rows.length > 0) {
+        const { error } = await supabase.from('topic_questions').insert(rows);
+        if (error) throw error;
+      }
 
-      setBulkImportResult({ success: rows.length, duplicates: 0, invalid: 0, errors: [] });
-      loadQuestions();
+      setBulkImportResult({ success: rows.length, duplicates: duplicatesCount, invalid: 0, errors: [] });
+      if (rows.length > 0) {
+        loadQuestions();
+      }
     } catch (err: any) {
       setBulkImportResult({ success: 0, duplicates: 0, invalid: 1, errors: [{ itemIndex: 0, reason: `Supabase bulk import failed: ${err.message || err}` }] });
     }
