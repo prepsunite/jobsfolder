@@ -27,6 +27,8 @@ import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services
 import { supabase } from '@/lib/supabase';
 import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 
+import { getCategoryTopics } from '@/pages/AptitudePage';
+
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
   const { theme } = useTheme();
@@ -34,46 +36,10 @@ export default function TopicQuestionsPage() {
   const isDarkMode = theme === 'dark';
   const isAdmin = role === 'ADMIN';
 
-  // Topic display names
-  const topicNames: Record<string, string> = {
-    'numbers': 'Numbers',
-    'problems-on-numbers': 'Problems on Numbers',
-    'hcf-lcm': 'Problems on H.C.F and L.C.M',
-    'decimal-fraction': 'Decimal Fraction',
-    'simplification': 'Simplification',
-    'square-cube-root': 'Square Root and Cube Root',
-    'surds-indices': 'Surds and Indices',
-    'logarithm': 'Logarithm',
-    'problems-on-trains': 'Problems on Trains',
-    'time-and-distance': 'Time and Distance',
-    'time-and-work': 'Time and Work',
-    'pipes-and-cistern': 'Pipes and Cistern',
-    'boats-and-streams': 'Boats and Streams',
-    'chain-rule': 'Chain Rule',
-    'races-and-games': 'Races and Games',
-    'percentage': 'Percentage',
-    'profit-and-loss': 'Profit and Loss',
-    'simple-interest': 'Simple Interest',
-    'compound-interest': 'Compound Interest',
-    'partnership': 'Partnership',
-    'ratio-and-proportion': 'Ratio and Proportion',
-    'alligation-or-mixture': 'Alligation or Mixture',
-    'stocks-and-shares': 'Stocks and Shares',
-    'true-discount': 'True Discount',
-    'bankers-discount': 'Banker\'s Discount',
-    'height-and-distance': 'Height and Distance',
-    'area': 'Area',
-    'volume-and-surface-area': 'Volume and Surface Area',
-    'permutation-and-combination': 'Permutation and Combination',
-    'probability': 'Probability',
-    'average': 'Average',
-    'problems-on-ages': 'Problems on Ages',
-    'calendar': 'Calendar',
-    'clock': 'Clock',
-    'odd-man-out-and-series': 'Odd Man Out and Series',
-  };
-
-  const topicName = topicNames[topicId] || topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  // Topic display name
+  const categoryTopics = getCategoryTopics(categorySlug);
+  const foundTopic = categoryTopics.find(t => t.id === topicId);
+  const topicName = foundTopic?.name || topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   // Reactive state for Questions & Filters
   const [questions, setQuestions] = useState<TopicQuestionItem[]>([]);

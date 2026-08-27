@@ -40,7 +40,7 @@ export default function Sidebar() {
     { name: 'Arithmetic Aptitude', slug: 'arithmetic-aptitude', icon: Calculator },
     { name: 'Data Interpretation', slug: 'data-interpretation', icon: BarChart3 },
     { name: 'Logical Reasoning', slug: 'logical-reasoning', icon: Brain },
-    { name: 'Verbal Reasoning', slug: 'verbal-reasoning', icon: MessageSquare },
+    { name: 'Verbal Ability', slug: 'verbal-reasoning', icon: MessageSquare },
     { name: 'Nonverbal Reasoning', slug: 'nonverbal-reasoning', icon: Compass },
   ];
 

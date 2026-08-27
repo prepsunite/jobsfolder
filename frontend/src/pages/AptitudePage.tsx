@@ -45,7 +45,16 @@ import {
   CheckCircle2,
   Folder,
   Code,
-  Eye
+  Eye,
+  List,
+  FileJson,
+  AlertTriangle,
+  Mic,
+  AlignLeft,
+  Edit2,
+  Pointer,
+  LayoutGrid,
+  BookOpen
 } from 'lucide-react';
 
 export interface AptitudeTopic {
@@ -113,21 +122,73 @@ export const DATA_INTERPRETATION_TOPICS: AptitudeTopic[] = [
 ];
 
 export const LOGICAL_REASONING_TOPICS: AptitudeTopic[] = [
-  { id: 'number-series', name: 'Number & Symbol Series', cluster: 'Series & Coding', icon: Hash, description: 'Number series, letter series, symbol patterns, and artificial language decoding.' },
-  { id: 'coding-decoding', name: 'Coding-Decoding & Analogies', cluster: 'Series & Coding', icon: Code, description: 'Letter coding, number substitution, and concept analogies.' },
-  { id: 'blood-relations', name: 'Blood Relations & Family Trees', cluster: 'Analytical Logic', icon: Users, description: 'Family tree relations, coded relations, and direct relationship puzzles.' },
-  { id: 'seating-arrangement', name: 'Seating Arrangement & Puzzles', cluster: 'Analytical Logic', icon: Grid, description: 'Linear, circular, facing center/outside seating arrangements and puzzle games.' },
-  { id: 'direction-sense', name: 'Direction Sense & Spatial Logic', cluster: 'Analytical Logic', icon: Compass, description: 'Compass directions, shadow turns, shortest distance (Pythagoras), and clocks/calendars.' },
-  { id: 'syllogisms', name: 'Critical Reasoning & Deduction', cluster: 'Deductive Logic', icon: Brain, description: 'Syllogisms, statements & assumptions, conclusions, cause & effect, and courses of action.' },
+  // Cluster 1: Core Logic
+  { id: 'number-series', name: 'Number Series', cluster: 'Core Logic', icon: Hash, description: 'Number sequence and finding missing terms.' },
+  { id: 'letter-and-symbol-series', name: 'Letter and Symbol Series', cluster: 'Core Logic', icon: Code, description: 'Alphabetical and symbol patterns.' },
+  { id: 'essential-part', name: 'Essential Part', cluster: 'Core Logic', icon: Zap, description: 'Identifying the most essential part of an object/concept.' },
+  { id: 'artificial-language', name: 'Artificial Language', cluster: 'Core Logic', icon: MessageSquare, description: 'Decoding fabricated languages.' },
+  { id: 'matching-definitions', name: 'Matching Definitions', cluster: 'Core Logic', icon: CheckSquare, description: 'Matching scenarios to definitions.' },
+  { id: 'making-judgments', name: 'Making Judgments', cluster: 'Core Logic', icon: Scale, description: 'Evaluating situations and making decisions.' },
+  
+  // Cluster 2: Analytical & Spatial
+  { id: 'logical-problems', name: 'Logical Problems', cluster: 'Analytical & Spatial', icon: Brain, description: 'General logical and analytical puzzles.' },
+  { id: 'logical-games', name: 'Logical Games', cluster: 'Analytical & Spatial', icon: Dices, description: 'Game-based logic.' },
+  { id: 'blood-relations', name: 'Blood Relation Test', cluster: 'Analytical & Spatial', icon: Users, description: 'Family tree and coded relations.' },
+  { id: 'seating-arrangement', name: 'Seating Arrangement', cluster: 'Analytical & Spatial', icon: Grid, description: 'Linear, circular, and matrix arrangements.' },
+  { id: 'direction-sense', name: 'Direction Sense Test', cluster: 'Analytical & Spatial', icon: Compass, description: 'Compass directions and shadow tracing.' },
+  { id: 'character-puzzles', name: 'Character Puzzles', cluster: 'Analytical & Spatial', icon: Box, description: 'Grid-based missing character puzzles.' },
+  
+  // Cluster 3: Deductive & Critical Reasoning
+  { id: 'analyzing-arguments', name: 'Analyzing Arguments', cluster: 'Critical Reasoning', icon: Scale, description: 'Evaluating strong and weak arguments.' },
+  { id: 'course-of-action', name: 'Course of Action', cluster: 'Critical Reasoning', icon: Flag, description: 'Selecting appropriate actions for a problem.' },
+  { id: 'theme-detection', name: 'Theme Detection', cluster: 'Critical Reasoning', icon: Search, description: 'Identifying the underlying theme of a passage.' },
+  { id: 'statement-and-argument', name: 'Statement and Argument', cluster: 'Critical Reasoning', icon: MessageSquare, description: 'Validating arguments based on statements.' },
+  { id: 'statement-and-assumption', name: 'Statement and Assumption', cluster: 'Critical Reasoning', icon: Brain, description: 'Finding implicit assumptions in statements.' },
+  { id: 'statement-and-conclusion', name: 'Statement and Conclusion', cluster: 'Critical Reasoning', icon: CheckCircle2, description: 'Deriving direct conclusions.' },
+  { id: 'logical-deduction', name: 'Logical Deduction', cluster: 'Critical Reasoning', icon: Layers, description: 'Deducing logic from multiple premises.' },
+  { id: 'cause-and-effect', name: 'Cause and Effect', cluster: 'Critical Reasoning', icon: GitMerge, description: 'Determining independent causes and effects.' },
+  { id: 'syllogisms', name: 'Syllogism', cluster: 'Critical Reasoning', icon: Layers, description: 'Categorical deductive logic and Venn intersections.' },
+  { id: 'verification-of-truth', name: 'Verification of Truth', cluster: 'Critical Reasoning', icon: CheckSquare, description: 'Verifying truth of statements.' },
+  
+  // Cluster 4: Advanced Reasoning
+  { id: 'logical-sequence-of-words', name: 'Logical Sequence of Words', cluster: 'Advanced Reasoning', icon: List, description: 'Ordering words logically (size, process, etc.).' },
+  { id: 'series-completion', name: 'Series Completion', cluster: 'Advanced Reasoning', icon: TrendingUp, description: 'Advanced series patterns.' },
+  { id: 'venn-diagrams', name: 'Venn Diagrams', cluster: 'Advanced Reasoning', icon: PieChart, description: 'Set theory and intersection puzzles.' },
+  { id: 'analogies', name: 'Analogy', cluster: 'Advanced Reasoning', icon: LinkIcon, description: 'Relationship mapping between pairs.' },
+  { id: 'classification', name: 'Classification', cluster: 'Advanced Reasoning', icon: Tag, description: 'Finding the odd one out.' },
+  { id: 'data-sufficiency', name: 'Data Sufficiency', cluster: 'Advanced Reasoning', icon: FileJson, description: 'Determining if statements are sufficient.' },
+  { id: 'arithmetic-reasoning', name: 'Arithmetic Reasoning', cluster: 'Advanced Reasoning', icon: Calculator, description: 'Logic puzzles involving numbers.' }
 ];
 
-export const VERBAL_REASONING_TOPICS: AptitudeTopic[] = [
-  { id: 'reading-comprehension', name: 'Reading Comprehension', cluster: 'Reading & Analysis', icon: MessageSquare, description: 'Passage analysis, main idea identification, tone, and inference questions.' },
-  { id: 'spotting-errors', name: 'Grammar & Spotting Errors', cluster: 'Grammar & Syntax', icon: CheckSquare, description: 'Subject-verb agreement, tenses, prepositions, active/passive voice, and speech changes.' },
-  { id: 'synonyms', name: 'Vocabulary (Synonyms & Antonyms)', cluster: 'Vocabulary & Words', icon: Tag, description: 'Synonyms, antonyms, spellings, one-word substitutes, and idioms/phrases.' },
-  { id: 'parajumbles', name: 'Sentence Structuring & Parajumbles', cluster: 'Sentence Flow', icon: Layers, description: 'Ordering of words, sentence rearrangement, and paragraph formation.' },
-  { id: 'sentence-completion', name: 'Sentence Completion & Cloze Test', cluster: 'Sentence Flow', icon: Sliders, description: 'Fill in the blanks, context fillers, and cloze passage completion.' },
-  { id: 'verbal-analogies', name: 'Verbal Logic & Analogies', cluster: 'Reading & Analysis', icon: Sparkles, description: 'Verbal analogies, logical sequence of words, data sufficiency, and truth verification.' },
+export const VERBAL_ABILITY_TOPICS: AptitudeTopic[] = [
+  // Cluster 1: Vocabulary
+  { id: 'synonyms', name: 'Synonyms', cluster: 'Vocabulary', icon: Tag, description: 'Words with similar meanings.' },
+  { id: 'antonyms', name: 'Antonyms', cluster: 'Vocabulary', icon: Compass, description: 'Words with opposite meanings.' },
+  { id: 'spellings', name: 'Spellings', cluster: 'Vocabulary', icon: CheckSquare, description: 'Correct and incorrect spellings.' },
+  { id: 'one-word-substitutes', name: 'One Word Substitutes', cluster: 'Vocabulary', icon: Hash, description: 'Single words replacing phrases.' },
+  { id: 'idioms-and-phrases', name: 'Idioms and Phrases', cluster: 'Vocabulary', icon: MessageSquare, description: 'Meaning of idioms and phrases.' },
+  
+  // Cluster 2: Grammar & Error Spotting
+  { id: 'spotting-errors', name: 'Spotting Errors', cluster: 'Grammar', icon: AlertTriangle, description: 'Finding grammatical errors in sentences.' },
+  { id: 'sentence-correction', name: 'Sentence Correction', cluster: 'Grammar', icon: CheckCircle2, description: 'Correcting grammatically wrong sentences.' },
+  { id: 'sentence-improvement', name: 'Sentence Improvement', cluster: 'Grammar', icon: TrendingUp, description: 'Improving sentence structure.' },
+  { id: 'change-of-voice', name: 'Change of Voice', cluster: 'Grammar', icon: Mic, description: 'Active and passive voice conversions.' },
+  { id: 'change-of-speech', name: 'Change of Speech', cluster: 'Grammar', icon: MessageSquare, description: 'Direct and indirect speech.' },
+  
+  // Cluster 3: Sentence Flow & Structuring
+  { id: 'ordering-of-words', name: 'Ordering of Words', cluster: 'Sentence Flow', icon: List, description: 'Arranging words to form a sentence.' },
+  { id: 'ordering-of-sentences', name: 'Ordering of Sentences', cluster: 'Sentence Flow', icon: Layers, description: 'Arranging sentences to form a logical flow.' },
+  { id: 'sentence-formation', name: 'Sentence Formation', cluster: 'Sentence Flow', icon: GitMerge, description: 'Forming meaningful sentences.' },
+  { id: 'paragraph-formation', name: 'Paragraph Formation', cluster: 'Sentence Flow', icon: AlignLeft, description: 'Structuring paragraphs correctly.' },
+  
+  // Cluster 4: Comprehension & Completion
+  { id: 'completing-statements', name: 'Completing Statements', cluster: 'Comprehension & Fillers', icon: Edit2, description: 'Completing logical statements.' },
+  { id: 'selecting-words', name: 'Selecting Words', cluster: 'Comprehension & Fillers', icon: Pointer, description: 'Choosing the correct word for blanks.' },
+  { id: 'cloze-test', name: 'Cloze Test', cluster: 'Comprehension & Fillers', icon: LayoutGrid, description: 'Paragraphs with multiple blanks.' },
+  { id: 'reading-comprehension', name: 'Comprehension', cluster: 'Comprehension & Fillers', icon: BookOpen, description: 'Reading passages and answering questions.' },
+  
+  // Cluster 5: Verbal Logic
+  { id: 'verbal-analogies', name: 'Verbal Analogies', cluster: 'Verbal Logic', icon: Sparkles, description: 'Logical relationships between words.' }
 ];
 
 export const NONVERBAL_REASONING_TOPICS: AptitudeTopic[] = [
@@ -145,7 +206,7 @@ export const getCategoryTopics = (slug: string): AptitudeTopic[] => {
     case 'logical-reasoning':
       return LOGICAL_REASONING_TOPICS;
     case 'verbal-reasoning':
-      return VERBAL_REASONING_TOPICS;
+      return VERBAL_ABILITY_TOPICS;
     case 'nonverbal-reasoning':
       return NONVERBAL_REASONING_TOPICS;
     case 'arithmetic-aptitude':
@@ -219,7 +280,7 @@ export default function AptitudePage() {
     'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Select any sub-topic below to access practice questions, formula cheat-sheets, and old exam problems.', icon: Calculator },
     'data-interpretation': { title: 'Data Interpretation', subtitle: 'Tables, Bar Charts, Pie Charts, Line Graphs, and Caselet analysis for online assessments.', icon: BarChart3 },
     'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Blood Relations, Seating Arrangements, Coding-Decoding, and Syllogisms.', icon: Brain },
-    'verbal-reasoning': { title: 'Verbal Reasoning', subtitle: 'Reading Comprehension, Grammar, Parajumbles, and Sentence Completion.', icon: MessageSquare },
+    'verbal-reasoning': { title: 'Verbal Ability (English)', subtitle: 'Reading Comprehension, Grammar, Parajumbles, and Sentence Completion.', icon: MessageSquare },
     'nonverbal-reasoning': { title: 'Nonverbal Reasoning', subtitle: 'Pattern Completion, Mirror Images, Paper Folding, and Series Completion.', icon: Compass },
   };
 
