@@ -54,7 +54,24 @@ import {
   Edit2,
   Pointer,
   LayoutGrid,
-  BookOpen
+  BookOpen,
+  Terminal,
+  Cpu,
+  Network,
+  Workflow,
+  Shuffle,
+  CheckCheck,
+  KeyRound,
+  CircleDot,
+  Shapes,
+  Combine,
+  Boxes,
+  HelpCircle,
+  Activity,
+  Target,
+  Split,
+  Binary,
+  Radio
 } from 'lucide-react';
 
 export interface AptitudeTopic {
@@ -99,11 +116,19 @@ export const ARITHMETIC_TOPICS: AptitudeTopic[] = [
   { id: 'bankers-discount', name: 'Banker\'s Discount', cluster: 'Commercial Maths', icon: CreditCard, description: 'Banker discount, banker gain, and bill face value calculations.', formulas: ['BD = SI on bill amount for unexpired time', 'BG = BD - TD = SI on TD'] },
 
   // Cluster 4: Geometry & Mensuration
+  { id: 'geometry-theorems', name: 'Geometry & Polygons', cluster: 'Geometry & Mensuration', icon: Shapes, description: 'Lines, angles, triangle theorems, similarity, tangents, and regular polygons.', formulas: ['Sum of angles in n-sided polygon = (n - 2) × 180°', 'Pythagorean Theorem: a² + b² = c²'] },
   { id: 'height-and-distance', name: 'Height and Distance', cluster: 'Geometry & Mensuration', icon: Compass, description: 'Angle of elevation, angle of depression, and trigonometric ratios.', formulas: ['tan(θ) = Opposite / Adjacent', 'sin(θ) = Opposite / Hypotenuse', 'cos(θ) = Adjacent / Hypotenuse'] },
-  { id: 'area', name: 'Area', cluster: 'Geometry & Mensuration', icon: Square, description: '2D shapes: Triangles, rectangles, circles, quadrilaterals, polygons.', formulas: ['Area of Circle = πr²', 'Perimeter of Circle = 2πr', 'Area of Triangle = 1/2 × base × height', 'Herons Formula = √(s(s-a)(s-b)(s-c))'] },
+  { id: 'area', name: 'Area & Perimeter', cluster: 'Geometry & Mensuration', icon: Square, description: '2D shapes: Triangles, rectangles, circles, quadrilaterals, polygons.', formulas: ['Area of Circle = πr²', 'Perimeter of Circle = 2πr', 'Area of Triangle = 1/2 × base × height', 'Herons Formula = √(s(s-a)(s-b)(s-c))'] },
   { id: 'volume-and-surface-area', name: 'Volume and Surface Area', cluster: 'Geometry & Mensuration', icon: Box, description: '3D shapes: Cubes, cuboids, cylinders, cones, spheres, hemispheres.', formulas: ['Volume of Cylinder = πr²h', 'Surface Area of Cylinder = 2πrh + 2πr²', 'Volume of Sphere = (4/3)πr³', 'Surface Area of Sphere = 4πr²'] },
+  { id: 'coordinate-geometry', name: 'Coordinate Geometry', cluster: 'Geometry & Mensuration', icon: Target, description: 'Slope of line, distance between points, section formula, and circle equations.', formulas: ['Distance = √((x₂-x₁)² + (y₂-y₁)²)', 'Slope m = (y₂-y₁) / (x₂-x₁)', 'Equation: y = mx + c'] },
+  { id: 'trigonometry', name: 'Trigonometry & Identities', cluster: 'Geometry & Mensuration', icon: Activity, description: 'Trigonometric functions, identities, complementary angles, and radian measures.', formulas: ['sin²θ + cos²θ = 1', '1 + tan²θ = sec²θ', '1 + cot²θ = cosec²θ'] },
 
-  // Cluster 5: Modern Maths & Analytics
+  // Cluster 5: Algebra & Higher Maths
+  { id: 'algebra-quadratic-equations', name: 'Algebra & Quadratic Equations', cluster: 'Algebra & Higher Maths', icon: Sliders, description: 'Polynomial roots, discriminant, quadratic factoring, and maxima/minima.', formulas: ['Roots = (-b ± √(b² - 4ac)) / (2a)', 'Sum of roots = -b/a', 'Product of roots = c/a'] },
+  { id: 'progressions-ap-gp-hp', name: 'Progressions (AP, GP, HP)', cluster: 'Algebra & Higher Maths', icon: TrendingUp, description: 'Arithmetic, Geometric, and Harmonic progressions, nth terms, and series sums.', formulas: ['AP nth term: a + (n-1)d', 'AP Sum: (n/2)[2a + (n-1)d]', 'GP nth term: a·rⁿ⁻¹', 'GP Sum: a(rⁿ - 1)/(r - 1)'] },
+  { id: 'set-theory', name: 'Set Theory & Venn Math', cluster: 'Algebra & Higher Maths', icon: PieChart, description: '2-set & 3-set cardinalities, union, intersection, and set maxima/minima.', formulas: ['n(A ∪ B) = n(A) + n(B) - n(A ∩ B)', 'n(A ∪ B ∪ C) = n(A)+n(B)+n(C)-n(A∩B)-n(B∩C)-n(C∩A)+n(A∩B∩C)'] },
+
+  // Cluster 6: Modern Maths & Analytics
   { id: 'permutation-and-combination', name: 'Permutation and Combination', cluster: 'Modern Maths', icon: GitMerge, description: 'Factorials, arrangements, selections, and circular permutations.', formulas: ['ⁿPᵣ = n! / (n - r)!', 'ⁿCᵣ = n! / [r! × (n - r)!]', 'ⁿCᵣ = ⁿPᵣ / r!'] },
   { id: 'probability', name: 'Probability', cluster: 'Modern Maths', icon: Dices, description: 'Sample spaces, coins, dice, cards, bags, and conditional probability.', formulas: ['P(E) = Favorable Outcomes / Total Outcomes', '0 ≤ P(E) ≤ 1', 'P(A ∪ B) = P(A) + P(B) - P(A ∩ B)'] },
   { id: 'average', name: 'Average', cluster: 'Modern Maths', icon: TrendingDown, description: 'Weighted average, inclusion/exclusion, and speed averages.', formulas: ['Average = Sum of Quantities / Number of Quantities', 'Sum of Quantities = Average × Number of Quantities'] },
@@ -114,34 +139,48 @@ export const ARITHMETIC_TOPICS: AptitudeTopic[] = [
 ];
 
 export const DATA_INTERPRETATION_TOPICS: AptitudeTopic[] = [
+  // Cluster 1: Visual Charts
   { id: 'table-charts', name: 'Table Charts', cluster: 'Visual Charts', icon: Grid, description: 'Tabular data analysis, growth rates, percentages, and financial summaries.', formulas: ['Percentage Change = (New - Old) / Old × 100', 'Average = Sum of all entries / Count of entries'] },
   { id: 'bar-charts', name: 'Bar Charts', cluster: 'Visual Charts', icon: BarChart3, description: 'Single bar, grouped bar, and stacked bar chart interpretation.', formulas: ['Ratio of A to B = Value(A) / Value(B)', 'Difference = High Bar - Low Bar'] },
   { id: 'pie-charts', name: 'Pie Charts', cluster: 'Visual Charts', icon: PieChart, description: 'Single pie, dual pie charts, and degree (360°) to percentage conversions.', formulas: ['Value = (Angle / 360°) × Total Value', 'Percentage = (Angle / 360°) × 100'] },
   { id: 'line-charts', name: 'Line Charts', cluster: 'Visual Charts', icon: TrendingUp, description: 'Trend lines, multi-line comparisons, profit/loss and sales over time.', formulas: ['Growth Rate = (Value in Final Year - Value in Initial Year) / Value in Initial Year'] },
+  { id: 'radar-web-charts', name: 'Radar & Spider Web Charts', cluster: 'Visual Charts', icon: Radio, description: 'Multivariable spider/web charts comparing performance metrics across dimensions.', formulas: ['Radial Axis Value = (Value on Axis / Max Axis Value) × 100'] },
+  { id: 'scatter-bubble-charts', name: 'Scatter Plots & Bubble Charts', cluster: 'Visual Charts', icon: CircleDot, description: 'Correlation, distribution patterns, and three-variable bubble charts.', formulas: ['Correlation = Direction and density of plot clusters'] },
+
+  // Cluster 2: Advanced DI
   { id: 'caselet-di', name: 'Caselet & Mixed DI', cluster: 'Advanced DI', icon: Square, description: 'Paragraph-based narrative data, mixed charts (Pie + Table), and Venn diagram DI.', formulas: ['Read paragraph thoroughly and formulate a 2D table or set matrix first.'] },
+  { id: 'missing-di', name: 'Missing Data Interpretation', cluster: 'Advanced DI', icon: HelpCircle, description: 'Incomplete tables and charts where missing values must be deduced using clues.', formulas: ['Missing Value = Total - Sum of known items in row/col'] },
 ];
 
 export const LOGICAL_REASONING_TOPICS: AptitudeTopic[] = [
-  // Cluster 1: Core Logic
-  { id: 'number-series', name: 'Number Series', cluster: 'Core Logic', icon: Hash, description: 'Number sequence and finding missing terms.' },
-  { id: 'letter-and-symbol-series', name: 'Letter and Symbol Series', cluster: 'Core Logic', icon: Code, description: 'Alphabetical and symbol patterns.' },
-  { id: 'essential-part', name: 'Essential Part', cluster: 'Core Logic', icon: Zap, description: 'Identifying the most essential part of an object/concept.' },
-  { id: 'artificial-language', name: 'Artificial Language', cluster: 'Core Logic', icon: MessageSquare, description: 'Decoding fabricated languages.' },
-  { id: 'matching-definitions', name: 'Matching Definitions', cluster: 'Core Logic', icon: CheckSquare, description: 'Matching scenarios to definitions.' },
-  { id: 'making-judgments', name: 'Making Judgments', cluster: 'Core Logic', icon: Scale, description: 'Evaluating situations and making decisions.' },
+  // Cluster 1: Core Logic & Series
+  { id: 'number-series', name: 'Number Series', cluster: 'Core Logic & Series', icon: Hash, description: 'Number sequence and finding missing terms.' },
+  { id: 'letter-and-symbol-series', name: 'Letter and Symbol Series', cluster: 'Core Logic & Series', icon: Code, description: 'Alphabetical and symbol patterns.' },
+  { id: 'essential-part', name: 'Essential Part', cluster: 'Core Logic & Series', icon: Zap, description: 'Identifying the most essential part of an object/concept.' },
+  { id: 'artificial-language', name: 'Artificial Language', cluster: 'Core Logic & Series', icon: MessageSquare, description: 'Decoding fabricated languages.' },
+  { id: 'matching-definitions', name: 'Matching Definitions', cluster: 'Core Logic & Series', icon: CheckSquare, description: 'Matching scenarios to definitions.' },
+  { id: 'making-judgments', name: 'Making Judgments', cluster: 'Core Logic & Series', icon: Scale, description: 'Evaluating situations and making decisions.' },
   
-  // Cluster 2: Deductive Logic
-  { id: 'logical-problems', name: 'Logical Problems', cluster: 'Deductive Logic', icon: Brain, description: 'General logical and analytical puzzles.' },
-  { id: 'logical-games', name: 'Logical Games', cluster: 'Deductive Logic', icon: Dices, description: 'Game-based logic.' },
+  // Cluster 2: Deductive & Placement Puzzles
+  { id: 'logical-problems', name: 'Logical Problems', cluster: 'Deductive & Placement Puzzles', icon: Brain, description: 'General logical and analytical puzzles.' },
+  { id: 'logical-games', name: 'Logical Games', cluster: 'Deductive & Placement Puzzles', icon: Dices, description: 'Game-based logic.' },
+  { id: 'cryptarithmetic', name: 'Cryptarithmetic (Alphametics)', cluster: 'Deductive & Placement Puzzles', icon: KeyRound, description: 'Letter-to-digit substitution math puzzles (e.g., SEND + MORE = MONEY).' },
+  { id: 'machine-input-output', name: 'Machine Input-Output', cluster: 'Deductive & Placement Puzzles', icon: Shuffle, description: 'Step-by-step rearrangement algorithms for words and numbers.' },
+  { id: 'inequalities', name: 'Mathematical & Coded Inequalities', cluster: 'Deductive & Placement Puzzles', icon: Split, description: 'Evaluating statement relationships with inequality symbols (> , < , =, ≤, ≥).' },
+  { id: 'order-and-ranking', name: 'Order and Ranking', cluster: 'Deductive & Placement Puzzles', icon: List, description: 'Position from left/right in a row, position swapping, and total count.' },
+  { id: 'floor-scheduling-puzzles', name: 'Floor & Scheduling Puzzles', cluster: 'Deductive & Placement Puzzles', icon: Boxes, description: 'Multi-variable grid arrangements (floors, days, colors, professions).' },
+  { id: 'games-and-tournaments', name: 'Games and Tournaments', cluster: 'Deductive & Placement Puzzles', icon: Flag, description: 'Round-robin points tables, knockout bracket deductions, and seeding logic.' },
+  { id: 'truth-tellers-liars', name: 'Truth-Tellers and Liars', cluster: 'Deductive & Placement Puzzles', icon: UserCheck, description: 'Binary logic puzzles with alternating, true, and false speaker statements.' },
+  { id: 'eligibility-test', name: 'Eligibility Test & Decision Making', cluster: 'Deductive & Placement Puzzles', icon: CheckCheck, description: 'Candidate condition matching, exception handling, and HR referral logic.' },
   
-  // Cluster 3: Critical Reasoning
-  { id: 'analyzing-arguments', name: 'Analyzing Arguments', cluster: 'Critical Reasoning', icon: Scale, description: 'Evaluating strong and weak arguments.' },
-  { id: 'course-of-action', name: 'Course of Action', cluster: 'Critical Reasoning', icon: Flag, description: 'Selecting appropriate actions for a problem.' },
-  { id: 'theme-detection', name: 'Theme Detection', cluster: 'Critical Reasoning', icon: Search, description: 'Identifying the underlying theme of a passage.' },
-  { id: 'statement-and-argument', name: 'Statement and Argument', cluster: 'Critical Reasoning', icon: MessageSquare, description: 'Validating arguments based on statements.' },
-  { id: 'statement-and-assumption', name: 'Statement and Assumption', cluster: 'Critical Reasoning', icon: Brain, description: 'Finding implicit assumptions in statements.' },
-  { id: 'statement-and-conclusion', name: 'Statement and Conclusion', cluster: 'Critical Reasoning', icon: CheckCircle2, description: 'Deriving direct conclusions.' },
-  { id: 'logical-deduction', name: 'Logical Deduction', cluster: 'Critical Reasoning', icon: Layers, description: 'Deducing logic from multiple premises.' }
+  // Cluster 3: Critical & Structured Logic
+  { id: 'analyzing-arguments', name: 'Analyzing Arguments', cluster: 'Critical Logic', icon: Scale, description: 'Evaluating strong and weak arguments.' },
+  { id: 'course-of-action', name: 'Course of Action', cluster: 'Critical Logic', icon: Flag, description: 'Selecting appropriate actions for a problem.' },
+  { id: 'theme-detection', name: 'Theme Detection', cluster: 'Critical Logic', icon: Search, description: 'Identifying the underlying theme of a passage.' },
+  { id: 'statement-and-argument', name: 'Statement and Argument', cluster: 'Critical Logic', icon: MessageSquare, description: 'Validating arguments based on statements.' },
+  { id: 'statement-and-assumption', name: 'Statement and Assumption', cluster: 'Critical Logic', icon: Brain, description: 'Finding implicit assumptions in statements.' },
+  { id: 'statement-and-conclusion', name: 'Statement and Conclusion', cluster: 'Critical Logic', icon: CheckCircle2, description: 'Deriving direct conclusions.' },
+  { id: 'logical-deduction', name: 'Logical Deduction', cluster: 'Critical Logic', icon: Layers, description: 'Deducing logic from multiple premises.' }
 ];
 
 export const VERBAL_REASONING_TOPICS: AptitudeTopic[] = [
@@ -158,13 +197,15 @@ export const VERBAL_REASONING_TOPICS: AptitudeTopic[] = [
   { id: 'classification', name: 'Classification', cluster: 'Pattern & Structure', icon: Tag, description: 'Finding the odd one out.' },
   { id: 'analogies', name: 'Analogy', cluster: 'Pattern & Structure', icon: LinkIcon, description: 'Relationship mapping between pairs.' },
   
-  // Cluster 3: Analytical Reasoning
+  // Cluster 3: Analytical Reasoning & Logic
   { id: 'syllogisms', name: 'Syllogism', cluster: 'Analytical Reasoning', icon: Layers, description: 'Categorical deductive logic and Venn intersections.' },
   { id: 'venn-diagrams', name: 'Venn Diagrams', cluster: 'Analytical Reasoning', icon: PieChart, description: 'Set theory and intersection puzzles.' },
   { id: 'cause-and-effect', name: 'Cause and Effect', cluster: 'Analytical Reasoning', icon: GitMerge, description: 'Determining independent causes and effects.' },
   { id: 'data-sufficiency', name: 'Data Sufficiency', cluster: 'Analytical Reasoning', icon: FileJson, description: 'Determining if statements are sufficient.' },
   { id: 'arithmetic-reasoning', name: 'Arithmetic Reasoning', cluster: 'Analytical Reasoning', icon: Calculator, description: 'Logic puzzles involving numbers.' },
-  { id: 'verification-of-truth', name: 'Verification of Truth', cluster: 'Analytical Reasoning', icon: CheckSquare, description: 'Verifying truth of statements.' }
+  { id: 'verification-of-truth', name: 'Verification of Truth', cluster: 'Analytical Reasoning', icon: CheckSquare, description: 'Verifying truth of statements.' },
+  { id: 'assertion-and-reason', name: 'Assertion and Reason', cluster: 'Analytical Reasoning', icon: CheckCheck, description: 'Evaluating Assertion (A) and Reason (R) statements.' },
+  { id: 'statement-and-inferences', name: 'Statement and Inferences', cluster: 'Analytical Reasoning', icon: Search, description: 'Evaluating definitely true, probably true, or false inferences.' }
 ];
 
 export const VERBAL_ABILITY_TOPICS: AptitudeTopic[] = [
@@ -174,6 +215,7 @@ export const VERBAL_ABILITY_TOPICS: AptitudeTopic[] = [
   { id: 'spellings', name: 'Spellings', cluster: 'Vocabulary', icon: CheckSquare, description: 'Correct and incorrect spellings.' },
   { id: 'one-word-substitutes', name: 'One Word Substitutes', cluster: 'Vocabulary', icon: Hash, description: 'Single words replacing phrases.' },
   { id: 'idioms-and-phrases', name: 'Idioms and Phrases', cluster: 'Vocabulary', icon: MessageSquare, description: 'Meaning of idioms and phrases.' },
+  { id: 'confusing-words', name: 'Confusing Words & Homophones', cluster: 'Vocabulary', icon: HelpCircle, description: 'Words frequently confused (e.g., Affect/Effect, Compliment/Complement).' },
   
   // Cluster 2: Grammar & Error Spotting
   { id: 'spotting-errors', name: 'Spotting Errors', cluster: 'Grammar', icon: AlertTriangle, description: 'Finding grammatical errors in sentences.' },
@@ -188,9 +230,10 @@ export const VERBAL_ABILITY_TOPICS: AptitudeTopic[] = [
   { id: 'sentence-formation', name: 'Sentence Formation', cluster: 'Sentence Flow', icon: GitMerge, description: 'Forming meaningful sentences.' },
   { id: 'paragraph-formation', name: 'Paragraph Formation', cluster: 'Sentence Flow', icon: AlignLeft, description: 'Structuring paragraphs correctly.' },
   
-  // Cluster 4: Comprehension & Completion
+  // Cluster 4: Comprehension & Fillers
   { id: 'completing-statements', name: 'Completing Statements', cluster: 'Comprehension & Fillers', icon: Edit2, description: 'Completing logical statements.' },
   { id: 'selecting-words', name: 'Selecting Words', cluster: 'Comprehension & Fillers', icon: Pointer, description: 'Choosing the correct word for blanks.' },
+  { id: 'double-fillers', name: 'Double Fillers & Connectors', cluster: 'Comprehension & Fillers', icon: Split, description: 'Sentences with two contextual blanks or clause connecting words.' },
   { id: 'cloze-test', name: 'Cloze Test', cluster: 'Comprehension & Fillers', icon: LayoutGrid, description: 'Paragraphs with multiple blanks.' },
   { id: 'reading-comprehension', name: 'Comprehension', cluster: 'Comprehension & Fillers', icon: BookOpen, description: 'Reading passages and answering questions.' },
   
@@ -199,11 +242,33 @@ export const VERBAL_ABILITY_TOPICS: AptitudeTopic[] = [
 ];
 
 export const NONVERBAL_REASONING_TOPICS: AptitudeTopic[] = [
-  { id: 'pattern-completion', name: 'Visual Series & Pattern Completion', cluster: 'Visual Reasoning', icon: Sparkles, description: 'Progressive figure series, figure matrices, and pattern completions.' },
-  { id: 'mirror-images', name: 'Mirror & Water Images', cluster: 'Visual Reasoning', icon: Compass, description: 'Lateral mirror reflections and vertical water image inversions.' },
-  { id: 'paper-folding', name: 'Paper Folding & Cutting', cluster: 'Spatial Reasoning', icon: Square, description: 'Unfolding paper patterns, crease lines, and punch-cut visualizations.' },
-  { id: 'embedded-images', name: 'Embedded Images & Counting', cluster: 'Spatial Reasoning', icon: Eye, description: 'Hidden shape detection, triangle/square counting, and image analysis.' },
-  { id: 'cubes-and-dice', name: 'Cubes & Dice', cluster: 'Spatial Reasoning', icon: Box, description: 'Dice nets, opposite faces, painted cube cuts, and 3D spatial problems.' },
+  // Cluster 1: Visual Transformations
+  { id: 'pattern-completion', name: 'Visual Series & Pattern Completion', cluster: 'Visual Transformations', icon: Sparkles, description: 'Progressive figure series, figure matrices, and pattern completions.' },
+  { id: 'mirror-images', name: 'Mirror & Water Images', cluster: 'Visual Transformations', icon: Compass, description: 'Lateral mirror reflections and vertical water image inversions.' },
+  { id: 'paper-folding', name: 'Paper Folding & Cutting', cluster: 'Visual Transformations', icon: Square, description: 'Unfolding paper patterns, crease lines, and punch-cut visualizations.' },
+  { id: 'figure-matrix', name: 'Figure Matrix', cluster: 'Visual Transformations', icon: Boxes, description: '3x3 figure grids with missing pattern pieces.' },
+  { id: 'rule-detection', name: 'Rule Detection', cluster: 'Visual Transformations', icon: Workflow, description: 'Identifying figures following geometric rotation and element rules.' },
+  { id: 'dot-situation', name: 'Dot Situation', cluster: 'Visual Transformations', icon: CircleDot, description: 'Region-overlap puzzles for dots placed inside geometric figures.' },
+
+  // Cluster 2: Spatial Decomposition & Construction
+  { id: 'embedded-images', name: 'Embedded Images', cluster: 'Spatial Construction', icon: Eye, description: 'Hidden shape detection inside complex figures.' },
+  { id: 'counting-of-figures', name: 'Counting of Figures', cluster: 'Spatial Construction', icon: Hash, description: 'Counting triangles, squares, rectangles, and straight lines.' },
+  { id: 'grouping-of-images', name: 'Grouping of Identical Figures', cluster: 'Spatial Construction', icon: Combine, description: 'Sorting mixed figures into matching groups of 3.' },
+  { id: 'shape-construction', name: 'Shape Construction & Reconstruction', cluster: 'Spatial Construction', icon: Shapes, description: 'Visualizing component polygon pieces assembling into a complete shape.' },
+  { id: 'nonverbal-analogy', name: 'Nonverbal Analogy', cluster: 'Spatial Construction', icon: LinkIcon, description: 'Visual shape relationships and proportional transformation.' },
+  { id: 'nonverbal-classification', name: 'Nonverbal Classification', cluster: 'Spatial Construction', icon: Tag, description: 'Spotting the odd visual figure among given options.' },
+];
+
+export const TECHNICAL_APTITUDE_TOPICS: AptitudeTopic[] = [
+  // Cluster 1: Pseudocode & Algorithms
+  { id: 'pseudocode-tracing', name: 'Pseudocode & Variable Tracing', cluster: 'Pseudocode & Algorithms', icon: Terminal, description: 'Tracing execution flow, loop variables, nested conditions, and dry-runs.' },
+  { id: 'bitwise-operators', name: 'Bitwise Operators & Logic', cluster: 'Pseudocode & Algorithms', icon: Binary, description: 'Bitwise AND (&), OR (|), XOR (^), Left Shift (<<), and Right Shift (>>).' },
+  { id: 'recursion-functions', name: 'Recursion & Function Scope', cluster: 'Pseudocode & Algorithms', icon: Workflow, description: 'Recursive call stacks, base conditions, return values, and global vs local scopes.' },
+
+  // Cluster 2: Cognitive & Speed Testing
+  { id: 'attention-to-detail', name: 'Attention to Detail & Visual Checking', cluster: 'Cognitive & Speed Testing', icon: CheckCheck, description: 'Speed-based alphanumeric string matching, error spotting, and visual accuracy.' },
+  { id: 'code-debugging-logic', name: 'Code Debugging & Automata Fix', cluster: 'Cognitive & Speed Testing', icon: Cpu, description: 'Spotting logical, syntactic, and boundary condition bugs in code snippets.' },
+  { id: 'cloud-networking-basics', name: 'General Tech, OS & Cloud Basics', cluster: 'Cognitive & Speed Testing', icon: Network, description: 'Placement MCQs on OS fundamentals, database queries, and cloud basics.' },
 ];
 
 export const getCategoryTopics = (slug: string): AptitudeTopic[] => {
@@ -218,6 +283,8 @@ export const getCategoryTopics = (slug: string): AptitudeTopic[] => {
       return VERBAL_ABILITY_TOPICS;
     case 'nonverbal-reasoning':
       return NONVERBAL_REASONING_TOPICS;
+    case 'technical-aptitude':
+      return TECHNICAL_APTITUDE_TOPICS;
     case 'arithmetic-aptitude':
     default:
       return ARITHMETIC_TOPICS;
@@ -288,10 +355,11 @@ export default function AptitudePage() {
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
     'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Select any sub-topic below to access practice questions, formula cheat-sheets, and old exam problems.', icon: Calculator },
     'data-interpretation': { title: 'Data Interpretation', subtitle: 'Tables, Bar Charts, Pie Charts, Line Graphs, and Caselet analysis for online assessments.', icon: BarChart3 },
-    'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Number Series, Essential Part, Logical Problems, and Making Judgments.', icon: Brain },
-    'verbal-reasoning': { title: 'Verbal Reasoning', subtitle: 'Blood Relations, Syllogisms, Seating Arrangements, and Data Sufficiency.', icon: GitMerge },
+    'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Number Series, Essential Part, Logical Problems, and Placement Puzzles.', icon: Brain },
+    'verbal-reasoning': { title: 'Verbal Reasoning', subtitle: 'Blood Relations, Syllogisms, Seating Arrangements, and Analytical Logic.', icon: GitMerge },
     'verbal-ability': { title: 'Verbal Ability (English)', subtitle: 'Reading Comprehension, Grammar, Synonyms, and Sentence Completion.', icon: MessageSquare },
     'nonverbal-reasoning': { title: 'Nonverbal Reasoning', subtitle: 'Pattern Completion, Mirror Images, Paper Folding, and Series Completion.', icon: Compass },
+    'technical-aptitude': { title: 'Technical & Cognitive Aptitude', subtitle: 'Pseudocode dry-runs, Bitwise logic, Automata fix, and Attention to detail.', icon: Terminal },
   };
 
   const currentCategoryInfo = categoryTitles[categorySlug] || categoryTitles['arithmetic-aptitude'];

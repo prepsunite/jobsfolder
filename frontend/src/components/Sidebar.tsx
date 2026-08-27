@@ -19,7 +19,8 @@ import {
   Zap,
   Info,
   Mail,
-  GitMerge
+  GitMerge,
+  Terminal
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -44,6 +45,7 @@ export default function Sidebar() {
     { name: 'Verbal Reasoning', slug: 'verbal-reasoning', icon: GitMerge },
     { name: 'Verbal Ability', slug: 'verbal-ability', icon: MessageSquare },
     { name: 'Nonverbal Reasoning', slug: 'nonverbal-reasoning', icon: Compass },
+    { name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },
   ];
 
   return (
