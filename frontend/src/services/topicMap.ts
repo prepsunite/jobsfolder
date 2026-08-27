@@ -15,6 +15,8 @@ export const TOPIC_SLUG_MAP: Readonly<Record<string, string>> = Object.freeze({
   'line chart': 'line-charts',
 
   // Verbal Ability
+  'verbal ability': 'verbal-ability',
+  'english': 'verbal-ability',
   'spotting errors': 'spotting-errors',
   'error spotting': 'spotting-errors',
   'antonyms': 'antonyms',

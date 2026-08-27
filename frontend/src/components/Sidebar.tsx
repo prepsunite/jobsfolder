@@ -18,7 +18,8 @@ import {
   KeyRound,
   Zap,
   Info,
-  Mail
+  Mail,
+  GitMerge
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -40,7 +41,8 @@ export default function Sidebar() {
     { name: 'Arithmetic Aptitude', slug: 'arithmetic-aptitude', icon: Calculator },
     { name: 'Data Interpretation', slug: 'data-interpretation', icon: BarChart3 },
     { name: 'Logical Reasoning', slug: 'logical-reasoning', icon: Brain },
-    { name: 'Verbal Ability', slug: 'verbal-reasoning', icon: MessageSquare },
+    { name: 'Verbal Reasoning', slug: 'verbal-reasoning', icon: GitMerge },
+    { name: 'Verbal Ability', slug: 'verbal-ability', icon: MessageSquare },
     { name: 'Nonverbal Reasoning', slug: 'nonverbal-reasoning', icon: Compass },
   ];
 

@@ -130,34 +130,41 @@ export const LOGICAL_REASONING_TOPICS: AptitudeTopic[] = [
   { id: 'matching-definitions', name: 'Matching Definitions', cluster: 'Core Logic', icon: CheckSquare, description: 'Matching scenarios to definitions.' },
   { id: 'making-judgments', name: 'Making Judgments', cluster: 'Core Logic', icon: Scale, description: 'Evaluating situations and making decisions.' },
   
-  // Cluster 2: Analytical & Spatial
-  { id: 'logical-problems', name: 'Logical Problems', cluster: 'Analytical & Spatial', icon: Brain, description: 'General logical and analytical puzzles.' },
-  { id: 'logical-games', name: 'Logical Games', cluster: 'Analytical & Spatial', icon: Dices, description: 'Game-based logic.' },
-  { id: 'blood-relations', name: 'Blood Relation Test', cluster: 'Analytical & Spatial', icon: Users, description: 'Family tree and coded relations.' },
-  { id: 'seating-arrangement', name: 'Seating Arrangement', cluster: 'Analytical & Spatial', icon: Grid, description: 'Linear, circular, and matrix arrangements.' },
-  { id: 'direction-sense', name: 'Direction Sense Test', cluster: 'Analytical & Spatial', icon: Compass, description: 'Compass directions and shadow tracing.' },
-  { id: 'character-puzzles', name: 'Character Puzzles', cluster: 'Analytical & Spatial', icon: Box, description: 'Grid-based missing character puzzles.' },
+  // Cluster 2: Deductive Logic
+  { id: 'logical-problems', name: 'Logical Problems', cluster: 'Deductive Logic', icon: Brain, description: 'General logical and analytical puzzles.' },
+  { id: 'logical-games', name: 'Logical Games', cluster: 'Deductive Logic', icon: Dices, description: 'Game-based logic.' },
   
-  // Cluster 3: Deductive & Critical Reasoning
+  // Cluster 3: Critical Reasoning
   { id: 'analyzing-arguments', name: 'Analyzing Arguments', cluster: 'Critical Reasoning', icon: Scale, description: 'Evaluating strong and weak arguments.' },
   { id: 'course-of-action', name: 'Course of Action', cluster: 'Critical Reasoning', icon: Flag, description: 'Selecting appropriate actions for a problem.' },
   { id: 'theme-detection', name: 'Theme Detection', cluster: 'Critical Reasoning', icon: Search, description: 'Identifying the underlying theme of a passage.' },
   { id: 'statement-and-argument', name: 'Statement and Argument', cluster: 'Critical Reasoning', icon: MessageSquare, description: 'Validating arguments based on statements.' },
   { id: 'statement-and-assumption', name: 'Statement and Assumption', cluster: 'Critical Reasoning', icon: Brain, description: 'Finding implicit assumptions in statements.' },
   { id: 'statement-and-conclusion', name: 'Statement and Conclusion', cluster: 'Critical Reasoning', icon: CheckCircle2, description: 'Deriving direct conclusions.' },
-  { id: 'logical-deduction', name: 'Logical Deduction', cluster: 'Critical Reasoning', icon: Layers, description: 'Deducing logic from multiple premises.' },
-  { id: 'cause-and-effect', name: 'Cause and Effect', cluster: 'Critical Reasoning', icon: GitMerge, description: 'Determining independent causes and effects.' },
-  { id: 'syllogisms', name: 'Syllogism', cluster: 'Critical Reasoning', icon: Layers, description: 'Categorical deductive logic and Venn intersections.' },
-  { id: 'verification-of-truth', name: 'Verification of Truth', cluster: 'Critical Reasoning', icon: CheckSquare, description: 'Verifying truth of statements.' },
+  { id: 'logical-deduction', name: 'Logical Deduction', cluster: 'Critical Reasoning', icon: Layers, description: 'Deducing logic from multiple premises.' }
+];
+
+export const VERBAL_REASONING_TOPICS: AptitudeTopic[] = [
+  // Cluster 1: Relational & Spatial
+  { id: 'blood-relations', name: 'Blood Relation Test', cluster: 'Relational & Spatial', icon: Users, description: 'Family tree and coded relations.' },
+  { id: 'seating-arrangement', name: 'Seating Arrangement', cluster: 'Relational & Spatial', icon: Grid, description: 'Linear, circular, and matrix arrangements.' },
+  { id: 'direction-sense', name: 'Direction Sense Test', cluster: 'Relational & Spatial', icon: Compass, description: 'Compass directions and shadow tracing.' },
+  { id: 'cubes-and-dice', name: 'Dice, Cube and Cuboid', cluster: 'Relational & Spatial', icon: Box, description: 'Dice nets, opposite faces, and painted cubes.' },
   
-  // Cluster 4: Advanced Reasoning
-  { id: 'logical-sequence-of-words', name: 'Logical Sequence of Words', cluster: 'Advanced Reasoning', icon: List, description: 'Ordering words logically (size, process, etc.).' },
-  { id: 'series-completion', name: 'Series Completion', cluster: 'Advanced Reasoning', icon: TrendingUp, description: 'Advanced series patterns.' },
-  { id: 'venn-diagrams', name: 'Venn Diagrams', cluster: 'Advanced Reasoning', icon: PieChart, description: 'Set theory and intersection puzzles.' },
-  { id: 'analogies', name: 'Analogy', cluster: 'Advanced Reasoning', icon: LinkIcon, description: 'Relationship mapping between pairs.' },
-  { id: 'classification', name: 'Classification', cluster: 'Advanced Reasoning', icon: Tag, description: 'Finding the odd one out.' },
-  { id: 'data-sufficiency', name: 'Data Sufficiency', cluster: 'Advanced Reasoning', icon: FileJson, description: 'Determining if statements are sufficient.' },
-  { id: 'arithmetic-reasoning', name: 'Arithmetic Reasoning', cluster: 'Advanced Reasoning', icon: Calculator, description: 'Logic puzzles involving numbers.' }
+  // Cluster 2: Pattern & Structure
+  { id: 'logical-sequence-of-words', name: 'Logical Sequence of Words', cluster: 'Pattern & Structure', icon: List, description: 'Ordering words logically (size, process, etc.).' },
+  { id: 'series-completion', name: 'Series Completion', cluster: 'Pattern & Structure', icon: TrendingUp, description: 'Advanced series patterns.' },
+  { id: 'character-puzzles', name: 'Character Puzzles', cluster: 'Pattern & Structure', icon: Box, description: 'Grid-based missing character puzzles.' },
+  { id: 'classification', name: 'Classification', cluster: 'Pattern & Structure', icon: Tag, description: 'Finding the odd one out.' },
+  { id: 'analogies', name: 'Analogy', cluster: 'Pattern & Structure', icon: LinkIcon, description: 'Relationship mapping between pairs.' },
+  
+  // Cluster 3: Analytical Reasoning
+  { id: 'syllogisms', name: 'Syllogism', cluster: 'Analytical Reasoning', icon: Layers, description: 'Categorical deductive logic and Venn intersections.' },
+  { id: 'venn-diagrams', name: 'Venn Diagrams', cluster: 'Analytical Reasoning', icon: PieChart, description: 'Set theory and intersection puzzles.' },
+  { id: 'cause-and-effect', name: 'Cause and Effect', cluster: 'Analytical Reasoning', icon: GitMerge, description: 'Determining independent causes and effects.' },
+  { id: 'data-sufficiency', name: 'Data Sufficiency', cluster: 'Analytical Reasoning', icon: FileJson, description: 'Determining if statements are sufficient.' },
+  { id: 'arithmetic-reasoning', name: 'Arithmetic Reasoning', cluster: 'Analytical Reasoning', icon: Calculator, description: 'Logic puzzles involving numbers.' },
+  { id: 'verification-of-truth', name: 'Verification of Truth', cluster: 'Analytical Reasoning', icon: CheckSquare, description: 'Verifying truth of statements.' }
 ];
 
 export const VERBAL_ABILITY_TOPICS: AptitudeTopic[] = [
@@ -206,6 +213,8 @@ export const getCategoryTopics = (slug: string): AptitudeTopic[] => {
     case 'logical-reasoning':
       return LOGICAL_REASONING_TOPICS;
     case 'verbal-reasoning':
+      return VERBAL_REASONING_TOPICS;
+    case 'verbal-ability':
       return VERBAL_ABILITY_TOPICS;
     case 'nonverbal-reasoning':
       return NONVERBAL_REASONING_TOPICS;
@@ -279,8 +288,9 @@ export default function AptitudePage() {
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
     'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Select any sub-topic below to access practice questions, formula cheat-sheets, and old exam problems.', icon: Calculator },
     'data-interpretation': { title: 'Data Interpretation', subtitle: 'Tables, Bar Charts, Pie Charts, Line Graphs, and Caselet analysis for online assessments.', icon: BarChart3 },
-    'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Blood Relations, Seating Arrangements, Coding-Decoding, and Syllogisms.', icon: Brain },
-    'verbal-reasoning': { title: 'Verbal Ability (English)', subtitle: 'Reading Comprehension, Grammar, Parajumbles, and Sentence Completion.', icon: MessageSquare },
+    'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Number Series, Essential Part, Logical Problems, and Making Judgments.', icon: Brain },
+    'verbal-reasoning': { title: 'Verbal Reasoning', subtitle: 'Blood Relations, Syllogisms, Seating Arrangements, and Data Sufficiency.', icon: GitMerge },
+    'verbal-ability': { title: 'Verbal Ability (English)', subtitle: 'Reading Comprehension, Grammar, Synonyms, and Sentence Completion.', icon: MessageSquare },
     'nonverbal-reasoning': { title: 'Nonverbal Reasoning', subtitle: 'Pattern Completion, Mirror Images, Paper Folding, and Series Completion.', icon: Compass },
   };
 
