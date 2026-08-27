@@ -104,6 +104,10 @@ export default function TopicQuestionsPage() {
   const [bulkJsonInput, setBulkJsonInput] = useState('');
   const [bulkImportResult, setBulkImportResult] = useState<ImportReport | null>(null);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const QUESTIONS_PER_PAGE = 10;
+
   // Load questions from Supabase (live — admins and students always see the same data)
   const loadQuestions = useCallback(async () => {
     try {
@@ -651,7 +655,10 @@ export default function TopicQuestionsPage() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveDifficulty(item.id)}
+                onClick={() => {
+                  setActiveDifficulty(item.id);
+                  setCurrentPage(1);
+                }}
                 className={`px-2.5 py-1 rounded-md text-xs font-display font-bold transition-all border ${
                   isActive
                     ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
@@ -722,7 +729,9 @@ export default function TopicQuestionsPage() {
             )}
           </div>
         ) : (
-          filteredQuestions.map((q) => {
+          filteredQuestions
+            .slice((currentPage - 1) * QUESTIONS_PER_PAGE, currentPage * QUESTIONS_PER_PAGE)
+            .map((q) => {
             const userSel = selectedAnswers[q.id];
             const isExplVisible = revealedExpl[q.id];
             const isSaved = savedQuestionIds.includes(q.id);
@@ -999,6 +1008,43 @@ export default function TopicQuestionsPage() {
           })
         )}
       </div>
+
+      {/* 📄 PAGINATION CONTROLS */}
+      {filteredQuestions.length > QUESTIONS_PER_PAGE && (
+        <div className="flex justify-center items-center mt-6 mb-8 pt-4">
+          <div className="flex rounded-md shadow-sm">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] rounded-l-md font-sans hover:bg-gray-100 dark:hover:bg-[#1C1C1C] disabled:opacity-50 transition-colors"
+            >
+              Prev
+            </button>
+
+            {Array.from({ length: Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE) }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-4 py-2 border-y border-r border-[#E9ECEF] dark:border-[#242424] font-sans transition-colors ${
+                  currentPage === i + 1
+                    ? 'bg-[#65A30D] text-white border-l border-l-[#65A30D] border-y-[#65A30D] border-r-[#65A30D]' // Matching the green color from screenshot
+                    : 'bg-[#F8F9FA] dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] hover:bg-gray-100 dark:hover:bg-[#1C1C1C]'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE), p + 1))}
+              disabled={currentPage === Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE)}
+              className="px-4 py-2 border-y border-r border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#141414] text-[#868E96] dark:text-[#888888] rounded-r-md font-sans hover:bg-gray-100 dark:hover:bg-[#1C1C1C] disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 📥 ADMIN BULK JSON IMPORT MODAL */}
       {showBulkModal && (
