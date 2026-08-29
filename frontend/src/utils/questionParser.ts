@@ -267,6 +267,8 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
       : [];
 
     structuredExplanation = {
+      passage: raw.passage || raw.explanation.passage,
+      passageTitle: raw.passageTitle || raw.explanation.passageTitle,
       given: Array.isArray(raw.explanation.given)
         ? raw.explanation.given.map((g: any) => normalizeMathText(String(g)))
         : (raw.explanation.given ? [normalizeMathText(String(raw.explanation.given))] : []),
@@ -279,6 +281,7 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
         : [],
       finalAnswer: raw.explanation.finalAnswer ? normalizeMathText(String(raw.explanation.finalAnswer)) : '',
     };
+    explanationText = undefined;
     if (raw.explanation.formulaUsed && Array.isArray(raw.explanation.formulaUsed)) {
       formulasUsed = [
         ...formulasUsed,
@@ -287,6 +290,11 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
     }
   } else if (typeof raw.explanation === 'string') {
     explanationText = normalizeMathText(raw.explanation);
+    if (raw.passage || raw.passageTitle) {
+      structuredExplanation = { passage: raw.passage, passageTitle: raw.passageTitle };
+    }
+  } else if (raw.passage || raw.passageTitle) {
+    structuredExplanation = { passage: raw.passage, passageTitle: raw.passageTitle };
   }
 
   const status: QuestionStatus = raw.status || (raw.isHidden ? 'draft' : 'published');
