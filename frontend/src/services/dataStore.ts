@@ -1665,7 +1665,22 @@ class DataStoreManager {
     let items: any[] = [];
     try {
       const parsed = safeJsonParse(jsonText);
-      items = Array.isArray(parsed) ? parsed : [parsed];
+      const rawItems = Array.isArray(parsed) ? parsed : [parsed];
+      
+      // Flatten passage-based grouping (where an item has a passage and an array of questions)
+      rawItems.forEach(item => {
+        if (item.questions && Array.isArray(item.questions)) {
+          item.questions.forEach((q: any) => {
+            items.push({
+              ...item,       // Keep topic, subtopic, passage, passageTitle, etc.
+              questions: undefined, // Remove nested array
+              ...q           // Override with specific question data
+            });
+          });
+        } else {
+          items.push(item);
+        }
+      });
     } catch {
       report.invalid = 1;
       report.errors.push({ itemIndex: 1, reason: 'Invalid JSON syntax. Please check brackets and quotes.' });

@@ -68,7 +68,22 @@ export default function AdminBulkImportPage() {
 
     try {
       const rawParsed = safeJsonParse(text);
-      const itemsArray = Array.isArray(rawParsed) ? rawParsed : [rawParsed];
+      const initialItemsArray = Array.isArray(rawParsed) ? rawParsed : [rawParsed];
+      
+      const itemsArray: any[] = [];
+      initialItemsArray.forEach(item => {
+        if (item.questions && Array.isArray(item.questions)) {
+          item.questions.forEach((q: any) => {
+            itemsArray.push({
+              ...item,
+              questions: undefined,
+              ...q
+            });
+          });
+        } else {
+          itemsArray.push(item);
+        }
+      });
 
       const previewItems: Partial<TopicQuestionItem>[] = [];
       const summary: Record<string, number> = {};
