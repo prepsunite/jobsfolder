@@ -281,7 +281,7 @@ export default function TopicQuestionsPage() {
       
       const { error } = await supabase
         .from('topic_questions')
-        .update({ is_deleted: true })
+        .delete()
         .in('id', idsToDelete);
         
       if (error) {
