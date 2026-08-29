@@ -460,7 +460,26 @@ export default function TopicQuestionsPage() {
     // Try Supabase bulk insert first
     try {
       const parsed = safeJsonParse(bulkJsonInput);
-      const items: any[] = Array.isArray(parsed) ? parsed : [parsed];
+      const rawItems: any[] = Array.isArray(parsed) ? parsed : [parsed];
+      const items: any[] = [];
+
+      for (const entry of rawItems) {
+        if (entry.questions && Array.isArray(entry.questions)) {
+          entry.questions.forEach((q: any) => {
+            items.push({
+              ...q,
+              topic: q.topic || entry.topic,
+              subtopic: q.subtopic || entry.subtopic,
+              company_slug: q.company_slug || entry.company_slug || 'general',
+              passage: entry.passage,
+              passageTitle: entry.passageTitle,
+            });
+          });
+        } else {
+          items.push(entry);
+        }
+      }
+
       let maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
       
       const uniqueFingerprints = new Set(
