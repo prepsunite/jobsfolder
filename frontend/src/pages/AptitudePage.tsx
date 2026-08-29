@@ -233,7 +233,7 @@ export default function AptitudePage() {
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
             {currentCategoryInfo.title}
           </h1>
-          <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans max-w-2xl">
+          <p className="text-sm text-gray-700 dark:text-gray-300 font-sans max-w-2xl mt-1">
             {currentCategoryInfo.subtitle}
           </p>
         </div>
