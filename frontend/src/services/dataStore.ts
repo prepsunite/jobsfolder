@@ -108,6 +108,8 @@ export interface QuestionItem {
 }
 
 export interface StructuredExplanation {
+  passage?: string;
+  passageTitle?: string;
   given?: string[];
   steps?: (string | { title?: string; text?: string; content?: string; formula?: string })[];
   shortcut?: string;

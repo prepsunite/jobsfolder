@@ -794,21 +794,40 @@ export default function TopicQuestionsPage() {
         ) : (
           filteredQuestions
             .slice((currentPage - 1) * QUESTIONS_PER_PAGE, currentPage * QUESTIONS_PER_PAGE)
-            .map((q) => {
+            .map((q, idx, arr) => {
             const userSel = selectedAnswers[q.id];
             const isExplVisible = revealedExpl[q.id];
             const isSaved = savedQuestionIds.includes(q.id);
             const se = q.structuredExplanation;
+            
+            // Passage Grouping Logic
+            const currentPassage = se?.passage || '';
+            const prevPassage = arr[idx - 1]?.structuredExplanation?.passage || '';
+            const showPassageBlock = currentPassage && currentPassage !== prevPassage;
 
             return (
-              <div
-                key={q.id}
-                className={`p-5 rounded-xl border transition-all duration-300 shadow-sm hover:shadow-md space-y-3.5 relative ${
-                  q.isHidden
-                    ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
-                    : 'bg-white dark:bg-[#141414] border-[#D1D5DB] dark:border-[#3A3A3A] hover:border-[#9CA3AF] dark:hover:border-[#555555] text-[#121417] dark:text-[#FFFFFF]'
-                } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
-              >
+              <div key={q.id} className="space-y-4">
+                {showPassageBlock && (
+                  <div className="p-5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-900/10 shadow-sm mt-8 first:mt-0">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <h3 className="font-display font-bold text-lg text-blue-900 dark:text-blue-100">
+                        {se?.passageTitle || 'Reading Comprehension Passage'}
+                      </h3>
+                    </div>
+                    <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-serif">
+                      {currentPassage}
+                    </div>
+                  </div>
+                )}
+                
+                <div
+                  className={`p-5 rounded-xl border transition-all duration-300 shadow-sm hover:shadow-md space-y-3.5 relative ${
+                    q.isHidden
+                      ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                      : 'bg-white dark:bg-[#141414] border-[#D1D5DB] dark:border-[#3A3A3A] hover:border-[#9CA3AF] dark:hover:border-[#555555] text-[#121417] dark:text-[#FFFFFF]'
+                  } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
+                >
                 {/* Header Row: Question # Badge + Difficulty Badge + Admin Actions */}
                 <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -1066,6 +1085,7 @@ export default function TopicQuestionsPage() {
                     )}
                   </div>
                 )}
+              </div>
               </div>
             );
           })
