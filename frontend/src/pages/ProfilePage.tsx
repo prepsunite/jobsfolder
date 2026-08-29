@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase';
 import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
 import ContentRenderer from '@/components/ContentRenderer';
 import { normalizeMathText } from '@/utils/questionParser';
 import {
@@ -194,10 +193,8 @@ export default function ProfilePage() {
     },
   });
 
-  const getSubtopicDisplayName = (topicId: string) => {
-    const matched = ARITHMETIC_TOPICS.find((t) => t.id === topicId);
-    if (matched) return matched.name;
-    return topicId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const getTopicDisplayName = (topicId: string) => {
+    return topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
 
   const getDifficultyBadge = (diff?: string, diffLevel?: number) => {
@@ -513,7 +510,7 @@ export default function ProfilePage() {
           {totalQuestionsCount > 0 ? (
             <div className="space-y-4">
               {bookmarkedTopicQuestions.map((q, idx) => {
-                const subtopicName = getSubtopicDisplayName(q.topicId);
+                const subtopicName = getTopicDisplayName(q.topicId);
                 const isExplVisible = revealedExpl[q.id];
                 const se = q.structuredExplanation;
                 const optKeys = ['A', 'B', 'C', 'D', 'E', 'F'];

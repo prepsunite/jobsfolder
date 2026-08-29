@@ -15,11 +15,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { supabase } from '@/lib/supabase';
 import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
-import { ARITHMETIC_TOPICS } from '@/pages/AptitudePage';
+import { useQuery } from '@tanstack/react-query';
 import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 
 export default function AdminBulkImportPage() {
   const { role } = useAuth();
+  
+  const { data: dbTopics } = useQuery({
+    queryKey: ['admin-aptitude-topics'],
+    queryFn: async () => {
+      const { data } = await supabase.from('aptitude_topics').select('*');
+      return data || [];
+    }
+  });
 
   const [jsonText, setJsonText] = useState('');
   const [parsedPreview, setParsedPreview] = useState<{
@@ -42,9 +50,8 @@ export default function AdminBulkImportPage() {
 
   // Topic Name Mapping Helper
   const getTopicDisplayName = (slug: string) => {
-    const matched = ARITHMETIC_TOPICS.find(t => t.id === slug);
-    if (matched) return matched.name;
-    return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const matched = dbTopics?.find(t => t.id === slug);
+    return matched?.name || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
 
   // Real-time JSON parse preview
@@ -342,7 +349,7 @@ export default function AdminBulkImportPage() {
               >
                 <option value="AUTO">✨ Auto-Detect from JSON ("subtopic")</option>
                 <optgroup label="Override Target Topic">
-                  {ARITHMETIC_TOPICS.map((t) => (
+                  {(dbTopics || []).map((t: any) => (
                     <option key={t.id} value={t.id}>
                       {t.name} ({t.id})
                     </option>

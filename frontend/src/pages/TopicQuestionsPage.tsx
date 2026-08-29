@@ -27,7 +27,7 @@ import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services
 import { supabase } from '@/lib/supabase';
 import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 
-import { getCategoryTopics } from '@/pages/AptitudePage';
+import { useQuery } from '@tanstack/react-query';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -37,8 +37,15 @@ export default function TopicQuestionsPage() {
   const isAdmin = role === 'ADMIN';
 
   // Topic display name
-  const categoryTopics = getCategoryTopics(categorySlug);
-  const foundTopic = categoryTopics.find(t => t.id === topicId);
+  const { data: foundTopic } = useQuery({
+    queryKey: ['aptitude-topic', topicId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('aptitude_topics').select('*').eq('id', topicId).single();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
   const topicName = foundTopic?.name || topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   // Reactive state for Questions & Filters
