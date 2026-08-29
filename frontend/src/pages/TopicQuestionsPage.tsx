@@ -25,7 +25,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services/dataStore';
 import { supabase } from '@/lib/supabase';
-import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
+import { safeJsonParse, normalizeMathText, generateQuestionFingerprint } from '@/utils/questionParser';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -464,7 +464,7 @@ export default function TopicQuestionsPage() {
       let maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
       
       const uniqueFingerprints = new Set(
-        questions.map(q => q.statement.toLowerCase().replace(/[^a-z0-9]/g, ''))
+        questions.map(q => q.fingerprint || generateQuestionFingerprint(q, q))
       );
 
       const rows: any[] = [];
@@ -473,7 +473,7 @@ export default function TopicQuestionsPage() {
       for (const q of items) {
         const rawStatement = q.statement || q.question || q.title || 'Question';
         const formattedStatement = normalizeMathText(rawStatement);
-        const fingerprint = formattedStatement.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const fingerprint = generateQuestionFingerprint({ statement: formattedStatement, templateId: q.templateId }, q);
 
         if (uniqueFingerprints.has(fingerprint)) {
           duplicatesCount++;
