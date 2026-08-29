@@ -485,8 +485,15 @@ export default function TopicQuestionsPage() {
 
         const rawFormulas = q.formulasUsed || q.formulas || (typeof q.explanation === 'object' ? (q.explanation?.formulaUsed || q.explanation?.formulasUsed) : []);
         const structuredExp = typeof q.explanation === 'object' && q.explanation !== null
-          ? q.explanation
+          ? { ...q.explanation }
           : { formulaUsed: Array.isArray(rawFormulas) ? rawFormulas : [] };
+
+        if (q.passage) {
+          structuredExp.passage = normalizeMathText(String(q.passage));
+        }
+        if (q.passageTitle) {
+          structuredExp.passageTitle = normalizeMathText(String(q.passageTitle));
+        }
 
         if (Array.isArray(structuredExp.formulaUsed)) {
           structuredExp.formulaUsed = structuredExp.formulaUsed.map((f: any) => normalizeMathText(String(f)));
