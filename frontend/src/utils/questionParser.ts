@@ -166,6 +166,18 @@ export function validateQuestionItem(parsed: Partial<TopicQuestionItem>): { isVa
  * Preserves Unicode subscripts/math symbols so unique math expressions are never marked as false duplicates.
  */
 export function generateQuestionFingerprint(item: Partial<TopicQuestionItem>, raw?: any): string {
+  // Deterministic Fingerprint from Normalized Math Statement Text:
+  // Lowercases and normalizes spaces while preserving Unicode subscripts, superscripts, Greek & math symbols
+  const rawStatement = item?.statement || raw?.question || raw?.statement || raw?.title || '';
+  const normText = normalizeMathText(rawStatement)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  if (normText) {
+    return computeSha256Hex(`STATEMENT:${normText}`);
+  }
+
   const templateId = raw?.templateId || raw?.template_id || item?.templateId;
   const variables = raw?.variables || item?.variables;
 
@@ -181,18 +193,6 @@ export function generateQuestionFingerprint(item: Partial<TopicQuestionItem>, ra
 
   if (templateId) {
     return computeSha256Hex(`TMPL:${String(templateId).trim()}`);
-  }
-
-  // Deterministic Fingerprint from Normalized Math Statement Text:
-  // Lowercases and normalizes spaces while preserving Unicode subscripts, superscripts, Greek & math symbols
-  const rawStatement = item.statement || raw?.question || raw?.statement || '';
-  const normText = normalizeMathText(rawStatement)
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-
-  if (normText) {
-    return computeSha256Hex(`STATEMENT:${normText}`);
   }
 
   return computeSha256Hex(`RAW:${Date.now()}-${Math.random()}`);

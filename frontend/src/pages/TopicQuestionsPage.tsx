@@ -464,7 +464,7 @@ export default function TopicQuestionsPage() {
       let maxExistingNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) : 0;
       
       const uniqueFingerprints = new Set(
-        questions.map(q => q.fingerprint || generateQuestionFingerprint(q, q))
+        questions.map(q => generateQuestionFingerprint({ statement: q.statement }, q))
       );
 
       const rows: any[] = [];
@@ -473,7 +473,7 @@ export default function TopicQuestionsPage() {
       for (const q of items) {
         const rawStatement = q.statement || q.question || q.title || 'Question';
         const formattedStatement = normalizeMathText(rawStatement);
-        const fingerprint = generateQuestionFingerprint({ statement: formattedStatement, templateId: q.templateId }, q);
+        const fingerprint = generateQuestionFingerprint({ statement: formattedStatement }, q);
 
         if (uniqueFingerprints.has(fingerprint)) {
           duplicatesCount++;
