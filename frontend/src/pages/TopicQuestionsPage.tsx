@@ -656,7 +656,7 @@ export default function TopicQuestionsPage() {
               {topicName} Questions
             </h1>
             <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
-              Filter questions by difficulty, test your answer with MCQ options, or view detailed step-by-step solutions.
+              {foundTopic?.description || 'Filter questions by difficulty, test your answer with MCQ options, or view detailed step-by-step solutions.'}
             </p>
           </div>
 
