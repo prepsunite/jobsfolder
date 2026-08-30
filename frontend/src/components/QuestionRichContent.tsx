@@ -19,16 +19,20 @@ export default function QuestionRichContent({
   // 1. If content contains inline SVG or raw HTML tags, render with high-fidelity direct HTML/SVG parser
   if (content.includes('<svg') || content.includes('<img') || content.includes('<table') || content.includes('<div')) {
     // Convert markdown image syntax to HTML if mixed: ![alt](url) -> <img ... />
+    const imgClass = isOption
+      ? 'max-h-16 sm:max-h-20 w-auto max-w-full object-contain rounded border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-1 shadow-xs inline-block my-0.5'
+      : 'max-h-60 sm:max-h-72 w-auto max-w-full object-contain rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-2 shadow-xs mx-auto block my-2';
+
     const processed = content.replace(
       /!\[(.*?)\]\((.*?)\)/g,
-      '<img src="$2" alt="$1" class="max-h-60 sm:max-h-72 w-auto max-w-full object-contain rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-2 shadow-xs mx-auto block my-2" />'
+      `<img src="$2" alt="$1" class="${imgClass}" />`
     );
 
     // Split text and HTML/SVG tags so text retains whitespace-pre-line and SVGs render as clean interactive vector elements
     const parts = processed.split(/(<svg[\s\S]*?<\/svg>|<img[\s\S]*?>)/gi);
 
     return (
-      <div className={`question-rich-content leading-relaxed text-inherit ${className}`}>
+      <div className={`question-rich-content text-inherit ${isOption ? 'inline-flex items-center gap-2 flex-wrap text-left w-full my-0' : `leading-relaxed ${className}`}`}>
         {parts.map((part, idx) => {
           if (!part) return null;
           const trimmed = part.trim();
@@ -36,13 +40,17 @@ export default function QuestionRichContent({
             return (
               <div
                 key={idx}
-                className="my-3 overflow-x-auto text-center flex justify-center items-center [&_svg]:max-h-60 sm:[&_svg]:max-h-72 [&_svg]:w-auto [&_svg]:h-auto [&_img]:max-h-60 sm:[&_img]:max-h-72 [&_img]:w-auto"
+                className={
+                  isOption
+                    ? 'my-0.5 inline-flex items-center justify-start text-left [&_svg]:max-h-14 sm:[&_svg]:max-h-16 [&_svg]:w-auto [&_svg]:h-auto [&_img]:max-h-14 sm:[&_img]:max-h-16 [&_img]:w-auto'
+                    : 'my-3 overflow-x-auto text-center flex justify-center items-center [&_svg]:max-h-60 sm:[&_svg]:max-h-72 [&_svg]:w-auto [&_svg]:h-auto [&_img]:max-h-60 sm:[&_img]:max-h-72 [&_img]:w-auto'
+                }
                 dangerouslySetInnerHTML={{ __html: part }}
               />
             );
           }
           return (
-            <span key={idx} className="whitespace-pre-line text-inherit inline-block w-full">
+            <span key={idx} className={isOption ? 'text-inherit inline-block' : 'whitespace-pre-line text-inherit inline-block w-full'}>
               {part}
             </span>
           );
