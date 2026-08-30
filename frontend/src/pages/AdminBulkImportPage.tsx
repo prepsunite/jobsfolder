@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
 import { useQuery } from '@tanstack/react-query';
 import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
+import QuestionRichContent from '@/components/QuestionRichContent';
 
 export default function AdminBulkImportPage() {
   const { role } = useAuth();
@@ -580,9 +581,9 @@ export default function AdminBulkImportPage() {
                       </span>
                     </div>
 
-                    <p className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
-                      {q.statement}
-                    </p>
+                    <div className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                      <QuestionRichContent content={q.statement || ''} />
+                    </div>
 
                     {/* Test Case Preview */}
                     {q.testCase && (
@@ -602,8 +603,8 @@ export default function AdminBulkImportPage() {
                               : 'bg-[#f6ece6]/60 dark:bg-[#141517] border-[#eae1da] dark:border-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3]'
                           }`}
                         >
-                          <span className="font-bold w-4">{opt.id}.</span>
-                          <span className="truncate">{opt.text}</span>
+                          <span className="font-bold w-4 shrink-0">{opt.id}.</span>
+                          <QuestionRichContent content={opt.text} isOption={true} className="flex-1" />
                         </div>
                       ))}
                     </div>

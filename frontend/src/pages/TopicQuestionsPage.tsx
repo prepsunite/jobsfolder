@@ -28,6 +28,7 @@ import { supabase } from '@/lib/supabase';
 import { safeJsonParse, normalizeMathText, generateQuestionFingerprint } from '@/utils/questionParser';
 
 import { useQuery } from '@tanstack/react-query';
+import QuestionRichContent from '@/components/QuestionRichContent';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -917,8 +918,11 @@ export default function TopicQuestionsPage() {
                 </div>
 
                 {/* Question Statement */}
-                <div className="text-xs font-semibold leading-relaxed text-[#121417] dark:text-[#FFFFFF] whitespace-pre-line pt-0.5 font-sans">
-                  {q.statement}
+                <div className="pt-0.5">
+                  <QuestionRichContent
+                    content={q.statement}
+                    className="text-xs font-semibold text-[#121417] dark:text-[#FFFFFF] font-sans"
+                  />
                 </div>
 
                 {/* Plain Multiline Test Case / Input-Output Box */}
@@ -962,7 +966,7 @@ export default function TopicQuestionsPage() {
                         }`}>
                           {optId}
                         </div>
-                        <span className="flex-1 font-sans">{opt.text}</span>
+                        <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
 
                         {userSel && isCorrect && (
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -1056,7 +1060,7 @@ export default function TopicQuestionsPage() {
                                 return (
                                   <div key={sIdx} className="leading-relaxed flex items-start gap-2">
                                     <span className="text-[#FD4A32] dark:text-[#FD4A32] font-bold select-none">•</span>
-                                    <span>{stepText}</span>
+                                    <QuestionRichContent content={stepText} className="flex-1" />
                                   </div>
                                 );
                               })}
@@ -1070,9 +1074,9 @@ export default function TopicQuestionsPage() {
                             <span className="font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1 text-[10px] uppercase tracking-wider">
                               ⚡ Quick Shortcut:
                             </span>
-                            <p className="text-[#121417] dark:text-[#FFFFFF] font-medium text-xs leading-relaxed font-sans">
-                              {se.shortcut}
-                            </p>
+                            <div className="text-[#121417] dark:text-[#FFFFFF] font-medium text-xs leading-relaxed font-sans">
+                              <QuestionRichContent content={se.shortcut} />
+                            </div>
                           </div>
                         )}
 
@@ -1090,8 +1094,8 @@ export default function TopicQuestionsPage() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="text-xs leading-relaxed text-[#121417] dark:text-[#FFFFFF] whitespace-pre-line font-sans">
-                          {q.explanation || 'No step-by-step explanation recorded for this question.'}
+                        <div className="text-xs leading-relaxed text-[#121417] dark:text-[#FFFFFF] font-sans">
+                          <QuestionRichContent content={q.explanation || 'No step-by-step explanation recorded for this question.'} />
                         </div>
                         {q.formulasUsed && q.formulasUsed.length > 0 && (
                           <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
