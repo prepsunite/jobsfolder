@@ -36,7 +36,7 @@ export default function QuestionRichContent({
             return (
               <div
                 key={idx}
-                className="my-3 overflow-x-auto text-center flex justify-center items-center"
+                className="my-3 overflow-x-auto text-center flex justify-center items-center [&_svg]:max-h-24 sm:[&_svg]:max-h-28 [&_svg]:w-auto [&_svg]:h-full [&_img]:max-h-28 [&_img]:w-auto"
                 dangerouslySetInnerHTML={{ __html: part }}
               />
             );
