@@ -612,6 +612,8 @@ export default function TopicQuestionsPage() {
     return normDiff === activeDifficulty;
   });
 
+  const totalPages = Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE);
+
   const getDifficultyBadge = (diff?: string, diffLevel?: number) => {
     let resolvedDiff = diff;
     if (!resolvedDiff && diffLevel) {
@@ -727,38 +729,69 @@ export default function TopicQuestionsPage() {
         </div>
       </div>
 
-      {/* 🎯 DIFFICULTY FILTER BAR & BULK ACTIONS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-x-auto p-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] flex items-center gap-1 mr-1">
-            <Filter className="w-3 h-3" />
-            <span>Difficulty:</span>
-          </span>
+      {/* 🎯 DIFFICULTY FILTER BAR & TOP PAGINATION & BULK ACTIONS */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-x-auto p-1">
+        <div className="flex items-center flex-wrap gap-2.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] flex items-center gap-1 mr-1">
+              <Filter className="w-3 h-3" />
+              <span>Difficulty:</span>
+            </span>
 
-          {[
-            { id: 'ALL', label: 'All Levels' },
-            { id: 'EASY', label: 'Easy' },
-            { id: 'MEDIUM', label: 'Medium' },
-            { id: 'HARD', label: 'Hard' },
-          ].map((item) => {
-            const isActive = activeDifficulty === item.id;
-            return (
+            {[
+              { id: 'ALL', label: 'All Levels' },
+              { id: 'EASY', label: 'Easy' },
+              { id: 'MEDIUM', label: 'Medium' },
+              { id: 'HARD', label: 'Hard' },
+            ].map((item) => {
+              const isActive = activeDifficulty === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveDifficulty(item.id);
+                    handlePageChange(1);
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-xs font-display font-bold transition-all border ${
+                    isActive
+                      ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                      : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 📄 TOP COMPACT PAGINATION (Prev / Page X of Y / Next) */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5 sm:ml-2 sm:pl-3 sm:border-l border-[#E9ECEF] dark:border-[#242424]">
               <button
-                key={item.id}
-                onClick={() => {
-                  setActiveDifficulty(item.id);
-                  handlePageChange(1);
-                }}
-                className={`px-2.5 py-1 rounded-md text-xs font-display font-bold transition-all border ${
-                  isActive
-                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                }`}
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
+                aria-label="Previous Page"
               >
-                {item.label}
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Prev</span>
               </button>
-            );
-          })}
+
+              <span className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
+                {currentPage} / {totalPages}
+              </span>
+
+              <button
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
+                aria-label="Next Page"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {isAdmin && filteredQuestions.length > 0 && (
