@@ -53,7 +53,7 @@ export default function ExperiencesPage() {
 
       if (searchTerm) {
         query = query.or(
-          `company_name.ilike.%${searchTerm}%,role_title.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`
+          `company_slug.ilike.%${searchTerm}%,role_title.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`
         );
       }
 

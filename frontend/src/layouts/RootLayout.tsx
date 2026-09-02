@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { Outlet, Link, useLocation, Navigate } from 'react-router';
+import { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
 import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, Building2, BookOpen, ArrowRight, User } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, User, Menu } from 'lucide-react';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -24,6 +24,7 @@ export default function RootLayout() {
   const { theme, toggleTheme } = useTheme();
   const isAdmin = role === 'ADMIN';
   const queryClient = useQueryClient();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instant Real-Time Data Synchronization Engine across all Tabs, Pages, and Roles
   useEffect(() => {
@@ -72,12 +73,6 @@ export default function RootLayout() {
     );
   }
 
-  // 🔒 GUEST ROUTE GUARD: If unauthenticated guest tries to access any internal app page, redirect to login
-  if (!isAuthenticated && !isPublicRoute) {
-    const redirectTarget = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?redirectTo=${redirectTarget}`} replace />;
-  }
-
   if (isPublicRoute) {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
@@ -118,9 +113,9 @@ export default function RootLayout() {
               </button>
 
               {isAuthenticated && user ? (
-                <Link to="/companies" className="pub-nav-cta">
+                <Link to="/profile" className="pub-nav-cta">
                   <User className="w-3.5 h-3.5" />
-                  <span>Workspace</span>
+                  <span>Profile</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               ) : (
@@ -230,11 +225,36 @@ export default function RootLayout() {
     );
   }
 
-  // INTERNAL APP WORKSPACE LAYOUT (WITH PERSISTENT SIDEBAR)
+  // INTERNAL APP WORKSPACE LAYOUT (WITH RESPONSIVE SIDEBAR)
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
-      {/* Persistent Left Workspace Sidebar */}
-      <Sidebar />
+    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col md:flex-row font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
+      {/* Mobile Workspace Top Header Bar (< md) */}
+      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] sticky top-0 z-30">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="p-1.5 -ml-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-[#121417] dark:text-white cursor-pointer"
+          title="Open Navigation"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/favicon.svg" alt="PrepUnite Logo" className="w-6 h-6 rounded-full" />
+          <span className="font-display font-extrabold text-sm tracking-tight text-[#121417] dark:text-white">
+            Prep<span className="text-[#FD4A32]">Unite</span>
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="p-1.5 text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white rounded-md cursor-pointer"
+          title="Toggle Theme"
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {/* Workspace Sidebar (Desktop persistent, Mobile drawer) */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Workspace Content Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0C0C0C]">

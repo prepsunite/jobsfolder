@@ -27,18 +27,18 @@ export default async function handler(req, res) {
       return res.status(400).send('Missing webhook signature');
     }
 
-    const body = JSON.stringify(req.body);
+    const rawPayload = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
     const expectedSig = crypto
       .createHmac('sha256', webhookSecret)
-      .update(body)
+      .update(rawPayload)
       .digest('hex');
 
     if (!safeTimingEqual(expectedSig, signature)) {
-      console.warn('[api/webhook] Invalid webhook signature');
+      console.warn('[api/webhook] Invalid webhook signature attempt');
       return res.status(400).send('Invalid webhook signature');
     }
 
-    const event = req.body;
+    const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     if (event?.event === 'payment.captured') {
       const payment = event.payload?.payment?.entity;
       if (payment) {
@@ -58,6 +58,7 @@ export default async function handler(req, res) {
             });
 
             const normalizedEmail = userEmail.toLowerCase().trim();
+            const normalizedItemType = itemType.toUpperCase();
 
             // Log transaction (idempotent write)
             await supabaseAdmin.from('transactions').upsert(
@@ -69,14 +70,14 @@ export default async function handler(req, res) {
                   amount,
                   currency: 'INR',
                   status: 'SUCCESS',
-                  item_type: itemType,
+                  item_type: normalizedItemType,
                   exam_id: examId || null,
                 },
               ],
               { onConflict: 'payment_id' }
             );
 
-            if (itemType === 'SINGLE_PAPER' && examId) {
+            if ((normalizedItemType === 'SINGLE_PAPER' || normalizedItemType === 'SINGLE') && examId) {
               const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
               await supabaseAdmin.from('user_paper_purchases').upsert(
                 [
@@ -92,13 +93,13 @@ export default async function handler(req, res) {
               );
             } else {
               let days = 30;
-              let planName = 'Jobsfolder Pro Monthly Pass';
-              if (itemType === 'QUARTERLY') {
+              let planName = 'PrepUnite Pro Monthly Pass';
+              if (normalizedItemType === 'QUARTERLY') {
                 days = 90;
-                planName = 'Jobsfolder Pro Quarterly Pass';
-              } else if (itemType === 'YEARLY') {
+                planName = 'PrepUnite Pro Quarterly Pass';
+              } else if (normalizedItemType === 'YEARLY') {
                 days = 365;
-                planName = 'Jobsfolder Master Yearly Pass';
+                planName = 'PrepUnite Master Yearly Pass';
               }
 
               const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();

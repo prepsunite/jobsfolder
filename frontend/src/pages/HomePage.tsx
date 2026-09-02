@@ -233,7 +233,7 @@ export default function HomePage() {
             {visible.map((co) => (
               <Link
                 key={co.abbr}
-                to="/companies"
+                to={`/companies/${co.slug}`}
                 className="hp-co-card"
                 style={{ '--co-accent': co.accent } as React.CSSProperties}
               >

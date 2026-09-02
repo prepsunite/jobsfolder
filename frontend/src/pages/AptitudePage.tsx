@@ -5,7 +5,32 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
-import * as Icons from 'lucide-react';
+import {
+  Folder,
+  Calculator,
+  BarChart3,
+  Brain,
+  GitMerge,
+  MessageSquare,
+  Compass,
+  Terminal,
+  Search,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Edit2,
+  Trash2,
+  BookOpen,
+  PieChart,
+  Activity,
+  Layers,
+  HelpCircle,
+  Hash,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  Clock,
+} from 'lucide-react';
 
 export interface AptitudeTopic {
   id: string;
@@ -18,10 +43,31 @@ export interface AptitudeTopic {
   is_hidden?: boolean;
 }
 
-const getIcon = (iconName: string) => {
-  if (!iconName) return Icons.Folder;
-  const Icon = (Icons as any)[iconName];
-  return Icon || Icons.Folder;
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  Folder,
+  Calculator,
+  BarChart3,
+  Brain,
+  GitMerge,
+  MessageSquare,
+  Compass,
+  Terminal,
+  Search,
+  BookOpen,
+  PieChart,
+  Activity,
+  Layers,
+  HelpCircle,
+  Hash,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  Clock,
+};
+
+const getIcon = (iconName?: string) => {
+  if (!iconName) return Folder;
+  return ICON_MAP[iconName] || Folder;
 };
 
 export default function AptitudePage() {
@@ -162,13 +208,13 @@ export default function AptitudePage() {
   }, [categoryQuestions, user?.email]);
 
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
-    'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Practice basic arithmetic problems.', icon: Icons.Calculator },
-    'data-interpretation': { title: 'Data Interpretation', subtitle: 'Tables, Bar Charts, Pie Charts.', icon: Icons.BarChart3 },
-    'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Number Series, Essential Part.', icon: Icons.Brain },
-    'verbal-reasoning': { title: 'Verbal Reasoning', subtitle: 'Blood Relations, Syllogisms.', icon: Icons.GitMerge },
-    'verbal-ability': { title: 'Verbal Ability (English)', subtitle: 'Reading Comprehension, Grammar.', icon: Icons.MessageSquare },
-    'nonverbal-reasoning': { title: 'Nonverbal Reasoning', subtitle: 'Pattern Completion, Mirror Images.', icon: Icons.Compass },
-    'technical-aptitude': { title: 'Technical & Cognitive Aptitude', subtitle: 'Pseudocode dry-runs, Bitwise logic.', icon: Icons.Terminal },
+    'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Practice basic arithmetic problems.', icon: Calculator },
+    'data-interpretation': { title: 'Data Interpretation', subtitle: 'Tables, Bar Charts, Pie Charts.', icon: BarChart3 },
+    'logical-reasoning': { title: 'Logical Reasoning', subtitle: 'Number Series, Essential Part.', icon: Brain },
+    'verbal-reasoning': { title: 'Verbal Reasoning', subtitle: 'Blood Relations, Syllogisms.', icon: GitMerge },
+    'verbal-ability': { title: 'Verbal Ability (English)', subtitle: 'Reading Comprehension, Grammar.', icon: MessageSquare },
+    'nonverbal-reasoning': { title: 'Nonverbal Reasoning', subtitle: 'Pattern Completion, Mirror Images.', icon: Compass },
+    'technical-aptitude': { title: 'Technical & Cognitive Aptitude', subtitle: 'Pseudocode dry-runs, Bitwise logic.', icon: Terminal },
   };
 
   const currentCategoryInfo = categoryTitles[categorySlug] || categoryTitles['arithmetic-aptitude'];
@@ -323,7 +369,7 @@ export default function AptitudePage() {
 
         <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
           <div className="relative w-48 sm:w-52">
-            <Icons.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
             <input
               type="text"
               placeholder="Search sub-topics..."
@@ -349,7 +395,7 @@ export default function AptitudePage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           {sortedTopics.map((topic) => {
-            const TopicIcon = topic.icon || Icons.Folder;
+            const TopicIcon = topic.icon || Folder;
             const displayCount = liveCountMap[topic.id] ?? 0;
             const isHidden = topic.is_hidden;
             const solvedCount = categoryStats.topicMastery[topic.id]?.solved ?? 0;
@@ -381,21 +427,21 @@ export default function AptitudePage() {
                     )}
                     <span className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-[#FD4A32] group-hover:text-[#FD4A32] transition-colors">
                       <span>{displayCount} {displayCount === 1 ? 'Question' : 'Questions'}</span>
-                      <Icons.ChevronRight className="w-3 h-3 text-[#868E96]" />
+                      <ChevronRight className="w-3 h-3 text-[#868E96]" />
                     </span>
                   </div>
                 </Link>
 
                 {isAdmin && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => handleToggleHide(e, topic)} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500" title={isHidden ? "Unhide" : "Hide"}>
-                      {isHidden ? <Icons.Eye className="w-3.5 h-3.5" /> : <Icons.EyeOff className="w-3.5 h-3.5" />}
+                    <button onClick={(e) => handleToggleHide(e, topic)} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 cursor-pointer" title={isHidden ? "Unhide" : "Hide"}>
+                      {isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
-                    <button onClick={(e) => openEditor(e, topic)} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-blue-500" title="Edit">
-                      <Icons.Edit2 className="w-3.5 h-3.5" />
+                    <button onClick={(e) => openEditor(e, topic)} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-blue-500 cursor-pointer" title="Edit">
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={(e) => handleDelete(e, topic)} className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500" title="Delete">
-                      <Icons.Trash2 className="w-3.5 h-3.5" />
+                    <button onClick={(e) => handleDelete(e, topic)} className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 cursor-pointer" title="Delete">
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}

@@ -370,3 +370,263 @@ DROP POLICY IF EXISTS "Admin full access paper purchases" ON public.user_paper_p
 CREATE POLICY "Admin full access paper purchases"
   ON public.user_paper_purchases FOR ALL USING (public.is_admin());
 
+-- ============================================================
+-- 16. Aptitude Topics Master Directory Table
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.aptitude_topics (
+    id VARCHAR(100) PRIMARY KEY,
+    category_slug VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    cluster VARCHAR(150) NOT NULL,
+    description TEXT,
+    icon_name VARCHAR(100) DEFAULT 'Folder' NOT NULL,
+    formulas TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
+    is_hidden BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_aptitude_topics_category ON public.aptitude_topics(category_slug);
+CREATE INDEX IF NOT EXISTS idx_aptitude_topics_cluster ON public.aptitude_topics(cluster);
+CREATE INDEX IF NOT EXISTS idx_aptitude_topics_is_hidden ON public.aptitude_topics(is_hidden);
+
+ALTER TABLE public.aptitude_topics ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can view non-hidden aptitude topics" ON public.aptitude_topics;
+CREATE POLICY "Public can view non-hidden aptitude topics"
+  ON public.aptitude_topics FOR SELECT
+  USING (is_hidden = false OR public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can manage aptitude topics" ON public.aptitude_topics;
+CREATE POLICY "Admins can manage aptitude topics"
+  ON public.aptitude_topics FOR ALL
+  USING (public.is_admin());
+
+-- ============================================================
+-- 17. Question Reports & Contact Messages Tables
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.question_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question_id VARCHAR(255) NOT NULL,
+    question_statement TEXT NOT NULL,
+    company_slug VARCHAR(255),
+    topic_id VARCHAR(150),
+    issue_type VARCHAR(100) NOT NULL DEFAULT 'OTHER',
+    details TEXT,
+    reporter_email VARCHAR(255),
+    status VARCHAR(50) NOT NULL DEFAULT 'OPEN',
+    admin_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    resolved_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_question_reports_status ON public.question_reports(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_question_reports_qid ON public.question_reports(question_id);
+
+ALTER TABLE public.question_reports ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public insert question reports" ON public.question_reports;
+CREATE POLICY "Public insert question reports"
+  ON public.question_reports FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admin full access question reports" ON public.question_reports;
+CREATE POLICY "Admin full access question reports"
+  ON public.question_reports FOR ALL USING (public.is_admin());
+
+CREATE TABLE IF NOT EXISTS public.contact_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL DEFAULT 'General Inquiry',
+    message TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'NEW',
+    admin_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    resolved_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON public.contact_messages(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_email ON public.contact_messages(email);
+
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public insert contact messages" ON public.contact_messages;
+CREATE POLICY "Public insert contact messages"
+  ON public.contact_messages FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admin full access contact messages" ON public.contact_messages;
+CREATE POLICY "Admin full access contact messages"
+  ON public.contact_messages FOR ALL USING (public.is_admin());
+
+-- ============================================================
+-- 18. Topic Cheat Codes Table
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.topic_cheat_codes (
+    topic_id VARCHAR(150) PRIMARY KEY,
+    content TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_cheat_codes_topic ON public.topic_cheat_codes(topic_id);
+
+ALTER TABLE public.topic_cheat_codes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public select cheat codes" ON public.topic_cheat_codes;
+CREATE POLICY "Public select cheat codes"
+  ON public.topic_cheat_codes FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admin modify cheat codes" ON public.topic_cheat_codes;
+CREATE POLICY "Admin modify cheat codes"
+  ON public.topic_cheat_codes FOR ALL USING (public.is_admin());
+
+-- ============================================================
+-- 19. Access Entitlement & Server-Side Redaction RPC Functions
+-- ============================================================
+
+-- Helper: Verify user access to exam or subscription
+CREATE OR REPLACE FUNCTION public.check_user_paper_access(
+    p_user_email VARCHAR,
+    p_exam_id VARCHAR
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_has_pass BOOLEAN := FALSE;
+    v_has_paper BOOLEAN := FALSE;
+    v_clean_email VARCHAR;
+BEGIN
+    IF p_user_email IS NULL OR p_user_email = '' THEN
+        RETURN FALSE;
+    END IF;
+
+    v_clean_email := LOWER(TRIM(p_user_email));
+
+    -- Check active subscription (Monthly / Quarterly / Yearly)
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_subscriptions
+        WHERE LOWER(user_email) = v_clean_email
+          AND status = 'ACTIVE'
+          AND expires_at > NOW()
+    ) INTO v_has_pass;
+
+    IF v_has_pass THEN
+        RETURN TRUE;
+    END IF;
+
+    -- Check single paper purchase
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_paper_purchases
+        WHERE LOWER(user_email) = v_clean_email
+          AND exam_id = p_exam_id
+          AND expires_at > NOW()
+    ) INTO v_has_paper;
+
+    RETURN v_has_paper;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper: Recursively redact unpaid paper nodes on database server
+CREATE OR REPLACE FUNCTION public.redact_paper_nodes(
+  p_nodes JSONB,
+  p_has_access BOOLEAN,
+  p_is_public BOOLEAN
+) RETURNS JSONB AS $$
+DECLARE
+  v_result JSONB := '[]'::jsonb;
+  v_node JSONB;
+  v_children JSONB;
+  v_is_free BOOLEAN;
+BEGIN
+  IF p_nodes IS NULL OR jsonb_array_length(p_nodes) = 0 THEN
+    RETURN '[]'::jsonb;
+  END IF;
+
+  IF p_has_access OR p_is_public THEN
+    RETURN p_nodes;
+  END IF;
+
+  FOR v_node IN SELECT * FROM jsonb_array_elements(p_nodes) LOOP
+    v_is_free := COALESCE((v_node->>'isFree')::boolean, (v_node->>'is_free')::boolean, false);
+    
+    IF v_node ? 'children' AND jsonb_array_length(v_node->'children') > 0 THEN
+      v_children := public.redact_paper_nodes(v_node->'children', p_has_access, p_is_public);
+      v_node := jsonb_set(v_node, '{children}', v_children);
+    END IF;
+
+    -- If NOT free and user lacks access, strip content to null on database server
+    IF NOT v_is_free THEN
+      v_node := jsonb_set(v_node, '{content}', 'null'::jsonb);
+    END IF;
+
+    v_result := v_result || jsonb_build_array(v_node);
+  END LOOP;
+
+  RETURN v_result;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- Main RPC: Fetch company exams with database-level payload redaction
+CREATE OR REPLACE FUNCTION public.get_secure_exams_by_company(
+  p_company_slug TEXT,
+  p_user_email TEXT DEFAULT NULL
+) RETURNS TABLE (
+  id UUID,
+  company_id UUID,
+  company_slug VARCHAR,
+  name VARCHAR,
+  badge VARCHAR,
+  content TEXT,
+  old_papers TEXT,
+  price NUMERIC,
+  paper_tabs JSONB,
+  google_doc_embed_url TEXT,
+  google_doc_edit_url TEXT,
+  upvotes INT,
+  is_public_exam BOOLEAN,
+  has_user_access BOOLEAN,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+) AS $$
+DECLARE
+  v_is_admin BOOLEAN := FALSE;
+  v_effective_email TEXT := NULL;
+  v_jwt_email TEXT;
+BEGIN
+  -- 1. Check if caller is authenticated admin
+  v_is_admin := public.is_admin();
+
+  -- 2. Verify identity: authenticated JWT email takes precedence over parameter
+  v_jwt_email := auth.jwt() ->> 'email';
+  IF v_jwt_email IS NOT NULL AND v_jwt_email != '' THEN
+    v_effective_email := LOWER(TRIM(v_jwt_email));
+  ELSIF v_is_admin AND p_user_email IS NOT NULL THEN
+    v_effective_email := LOWER(TRIM(p_user_email));
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    e.id,
+    e.company_id,
+    e.company_slug,
+    e.name,
+    e.badge,
+    e.content,
+    e.old_papers,
+    e.price,
+    public.redact_paper_nodes(
+      e.paper_tabs, 
+      v_is_admin OR (v_effective_email IS NOT NULL AND public.check_user_paper_access(v_effective_email, e.id::text)),
+      COALESCE(e.is_public_exam, false)
+    ) AS paper_tabs,
+    e.google_doc_embed_url,
+    e.google_doc_edit_url,
+    e.upvotes,
+    COALESCE(e.is_public_exam, false) AS is_public_exam,
+    (v_is_admin OR COALESCE(e.is_public_exam, false) OR (v_effective_email IS NOT NULL AND public.check_user_paper_access(v_effective_email, e.id::text))) AS has_user_access,
+    e.created_at,
+    e.updated_at
+  FROM public.exams e
+  WHERE e.company_slug = p_company_slug
+    AND e.is_deleted = false
+  ORDER BY e.created_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+

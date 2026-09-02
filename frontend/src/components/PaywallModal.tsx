@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Lock, CheckCircle2, ShieldCheck, X, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import {
   PAYWALL_PRICING_TIERS,
   type PaywallOptionType,
@@ -81,10 +82,15 @@ export default function PaywallModal({
           order_id: orderData.orderId,
           prefill: { email },
           handler: async (response: any) => {
-            // 3. Verify payment server-side
+            // 3. Verify payment server-side with session JWT
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData?.session?.access_token;
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const verifyRes = await fetch('/api/verify-payment', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers,
               body: JSON.stringify({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,

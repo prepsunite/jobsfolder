@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router';
-import { Building2, BookOpen, Layers, Bookmark, ShieldCheck, Sparkles, Sun, Moon } from 'lucide-react';
+import { Building2, BookOpen, Layers, Zap, Info, ShieldCheck, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -7,13 +7,13 @@ export default function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { user, role, isAuthenticated } = useAuth();
-  
+
   const navLinks = [
     { name: 'Companies', href: '/companies', icon: Building2 },
     { name: 'OA Questions', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
-    { name: 'Roadmaps', href: '/roadmaps', icon: Sparkles },
-    { name: 'Resources', href: '/resources', icon: Bookmark },
+    { name: 'Pricing', href: '/pricing', icon: Zap },
+    { name: 'About', href: '/about', icon: Info },
   ];
 
   return (
@@ -24,11 +24,11 @@ export default function Navbar() {
           <Link to="/" className="flex items-center gap-3 group">
             <img
               src="/favicon.svg"
-              alt="Jobsfolder Logo"
+              alt="PrepUnite Logo"
               className="w-9 h-9 rounded-full object-contain shrink-0 shadow-xs transition-transform group-hover:scale-105"
             />
             <span className="font-display font-extrabold text-2xl tracking-tight text-[#1f1b17] dark:text-[#e3e3e3] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors">
-              Jobs<span className="text-[#FD4A32] dark:text-[#FD4A32]">folder</span>
+              Prep<span className="text-[#FD4A32]">Unite</span>
             </span>
           </Link>
 
@@ -58,10 +58,10 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="p-2.5 text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors"
+              className="p-2.5 text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] rounded-full transition-colors cursor-pointer"
               title="Toggle Dark Mode"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
             {role === 'ADMIN' && (
               <Link
@@ -74,7 +74,7 @@ export default function Navbar() {
             )}
             {isAuthenticated && user ? (
               <Link
-                to="/login"
+                to="/profile"
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#383a40] hover:border-[#FD4A32] transition-all"
               >
                 {user.avatarUrl ? (

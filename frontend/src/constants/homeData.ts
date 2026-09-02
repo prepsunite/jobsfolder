@@ -4,6 +4,7 @@ export interface MarqueeCompany {
 }
 
 export interface HomeCompany {
+  slug: string;
   abbr: string;
   name: string;
   badge: string;
@@ -44,6 +45,7 @@ export const MARQUEE_COMPANIES: MarqueeCompany[] = [
 
 export const COMPANIES: HomeCompany[] = [
   {
+    slug: 'tcs',
     abbr: 'TCS',
     name: 'Tata Consultancy Services',
     badge: 'NQT Drive Archive',
@@ -53,6 +55,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'accenture',
     abbr: 'ACN',
     name: 'Accenture',
     badge: 'ASE & FSE Archive',
@@ -62,6 +65,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'cognizant',
     abbr: 'CTS',
     name: 'Cognizant',
     badge: 'GenC & Elevate Archive',
@@ -71,6 +75,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'amazon',
     abbr: 'AMZN',
     name: 'Amazon',
     badge: 'SDE 1 Campus Archive',
@@ -80,6 +85,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'infosys',
     abbr: 'INF',
     name: 'Infosys',
     badge: 'SP & DSE Archive',
@@ -89,6 +95,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'wipro',
     abbr: 'WIP',
     name: 'Wipro',
     badge: 'NLTH Elite Archive',
@@ -98,6 +105,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'capgemini',
     abbr: 'CAP',
     name: 'Capgemini',
     badge: 'Exceller Drive Archive',
@@ -107,6 +115,7 @@ export const COMPANIES: HomeCompany[] = [
     accent: '#FD4A32',
   },
   {
+    slug: 'ibm',
     abbr: 'IBM',
     name: 'IBM',
     badge: 'Freshers Drive Archive',

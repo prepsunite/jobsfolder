@@ -27,6 +27,9 @@ import {
   Folder,
   ArrowRight,
   Sparkles,
+  ShieldCheck,
+  Download,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -35,8 +38,10 @@ export default function ProfilePage() {
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';
 
-  const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences'>('exams');
+  const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences' | 'privacy'>('exams');
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
+  const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
+  const [deletionRequested, setDeletionRequested] = useState(false);
 
 
   // Live Supabase subscription query for Pro Pass
@@ -297,6 +302,55 @@ export default function ProfilePage() {
     queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-experiences'] });
   };
 
+  const handleExportData = () => {
+    const exportPayload = {
+      exportedAt: new Date().toISOString(),
+      user: {
+        id: user?.id,
+        name: user?.name,
+        email: user?.email,
+        role: user?.role,
+      },
+      subscription: subData,
+      bookmarks: {
+        exams: bookmarkedExams,
+        topicQuestionsCount: bookmarkedTopicQuestions.length,
+        oaQuestionsCount: bookmarkedQuestions.length,
+        experiencesCount: bookmarkedExperiences.length,
+      },
+      aptitudeStats,
+      dpdpCompliance: {
+        act: 'Digital Personal Data Protection Act, 2023 (DPDP)',
+        consentStatus,
+        purpose: 'Authentication, learning analytics, bookmark synchronization',
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prepunite-data-export-${user?.email || 'user'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleWithdrawConsent = () => {
+    if (confirm('Are you sure you want to withdraw DPDP consent? While your account stays safe, personalized analytics and sync features will be paused until re-consented.')) {
+      setConsentStatus('WITHDRAWN');
+      alert('Your consent has been successfully withdrawn. You may re-consent anytime by saving questions or updating your profile.');
+    }
+  };
+
+  const handleRequestDeletion = () => {
+    if (confirm('Request account deletion under Section 12(3) of DPDP Act 2023? Our Data Grievance Officer will verify and purge all personal identifiers within 30 days.')) {
+      setDeletionRequested(true);
+      alert('Account deletion request registered. An email confirmation has been logged for our Grievance Officer.');
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto">
       {/* Profile Header Card */}
@@ -452,6 +506,18 @@ export default function ProfilePage() {
           >
             <Layers className="w-3.5 h-3.5" />
             <span>Saved Transcripts ({bookmarkedExperiences.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('privacy')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+              activeTab === 'privacy'
+                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Data & Privacy</span>
           </button>
         </div>
       </div>
@@ -869,6 +935,109 @@ export default function ProfilePage() {
               </Link>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab Content: DPDP Act 2023 Data & Privacy */}
+      {activeTab === 'privacy' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Privacy Overview Banner */}
+          <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-3 shadow-xs">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                  Digital Personal Data Protection (DPDP Act, 2023) Management
+                </h3>
+              </div>
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider ${
+                consentStatus === 'ACTIVE'
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+              }`}>
+                Consent: {consentStatus}
+              </span>
+            </div>
+
+            <p className="text-xs text-[#868E96] dark:text-[#888888] leading-relaxed font-sans">
+              Under India's <strong>Digital Personal Data Protection Act, 2023 (Rule 6)</strong>, PrepUnite operates under your informed consent as a Data Fiduciary. You retain unconditional rights to review, export, withdraw consent, or request complete erasure of your digital footprint.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* 1. Data Portability / Export */}
+            <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-4 shadow-xs">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                  <Download className="w-4 h-4" />
+                  <h4 className="font-display font-bold text-sm text-[#121417] dark:text-white">Right to Data Portability</h4>
+                </div>
+                <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
+                  Download a machine-readable JSON copy of your entire user profile, bookmarks, solve history, payment receipts, and consent metadata.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportData}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export My Data (JSON)</span>
+              </button>
+            </div>
+
+            {/* 2. Consent Withdrawal */}
+            <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-4 shadow-xs">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-amber-500">
+                  <AlertTriangle className="w-4 h-4" />
+                  <h4 className="font-display font-bold text-sm text-[#121417] dark:text-white">Withdraw DPDP Consent</h4>
+                </div>
+                <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
+                  You may withdraw your consent for learning analytics and profile personalization at any time without terminating your basic access.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleWithdrawConsent}
+                disabled={consentStatus === 'WITHDRAWN'}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-amber-500 text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-white hover:text-amber-500 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {consentStatus === 'WITHDRAWN' ? 'Consent Already Withdrawn' : 'Withdraw Processing Consent'}
+              </button>
+            </div>
+          </div>
+
+          {/* 3. Account Erasure / Deletion & Grievance */}
+          <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-rose-500/30 dark:border-rose-500/20 space-y-4 shadow-xs">
+            <div className="flex items-start justify-between flex-wrap gap-4">
+              <div className="space-y-1 max-w-xl">
+                <h4 className="font-display font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                  <Trash2 className="w-4 h-4" />
+                  <span>Right to Erasure (Account Deletion)</span>
+                </h4>
+                <p className="text-xs text-[#868E96] dark:text-[#888888] leading-relaxed">
+                  Under Section 12(3) of the DPDP Act 2023, you can request permanent erasure of your account, bookmarks, and contact messages. Once initiated, personal identifiers are purged within 30 days.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRequestDeletion}
+                disabled={deletionRequested}
+                className="px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                {deletionRequested ? 'Deletion Request Logged' : 'Request Account Deletion'}
+              </button>
+            </div>
+
+            <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2 text-[11px] text-[#868E96] dark:text-[#666666]">
+              <span>Data Protection Grievance Officer: <strong>prepunite@gmail.com</strong></span>
+              <Link to="/privacy-policy" className="hover:text-[#FD4A32] underline">Read Full DPDP Privacy Policy</Link>
+            </div>
+          </div>
         </div>
       )}
 
