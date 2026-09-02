@@ -29,6 +29,7 @@ import { safeJsonParse, normalizeMathText, generateQuestionFingerprint } from '@
 
 import { useQuery } from '@tanstack/react-query';
 import QuestionRichContent from '@/components/QuestionRichContent';
+import ReportQuestionModal from '@/components/ReportQuestionModal';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -55,6 +56,7 @@ export default function TopicQuestionsPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [savedQuestionIds, setSavedQuestionIds] = useState<string[]>(() => dataStore.getBookmarkedQuestionIds());
+  const [reportingQuestion, setReportingQuestion] = useState<TopicQuestionItem | null>(null);
 
   // Admin Single Question Modal State
   const [showModal, setShowModal] = useState(false);
@@ -1041,8 +1043,8 @@ export default function TopicQuestionsPage() {
                     </button>
 
                     <button
-                      onClick={() => alert('Question flagged for review by PrepUnite admins.')}
-                      className="p-1.5 rounded-md border bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-rose-500 transition-colors"
+                      onClick={() => setReportingQuestion(q)}
+                      className="p-1.5 rounded-md border bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-rose-500 transition-colors cursor-pointer"
                       title="Report Question Issue"
                     >
                       <AlertTriangle className="w-4 h-4" />
@@ -1584,6 +1586,18 @@ export default function TopicQuestionsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Report Question Modal */}
+      {reportingQuestion && (
+        <ReportQuestionModal
+          isOpen={!!reportingQuestion}
+          onClose={() => setReportingQuestion(null)}
+          questionId={reportingQuestion.id}
+          questionStatement={reportingQuestion.statement}
+          companySlug={(reportingQuestion as any).companySlug}
+          topicId={reportingQuestion.topicId}
+        />
       )}
     </div>
   );

@@ -12,6 +12,8 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import { Link } from 'react-router';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
+import { feedbackService } from '@/services/feedback.service';
+import type { QuestionReport, ContactMessage, ReportStatus, ContactMessageStatus } from '@/types/feedback';
 import {
   Building2,
   BookOpen,
@@ -32,19 +34,27 @@ import {
   ThumbsDown,
   Activity,
   CreditCard,
-  ShoppingBag
+  ShoppingBag,
+  AlertTriangle,
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { role } = useAuth();
   const queryClient = useQueryClient();
 
-  const [adminTab, setAdminTab] = useState<'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'users' | 'metrics'>('manage-exams');
+  const [adminTab, setAdminTab] = useState<
+    'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'question-reports' | 'contact-messages' | 'users' | 'metrics'
+  >('manage-exams');
   const [selectedCompanySlug, setSelectedCompanySlug] = useState('tcs');
   const [usersSubTab, setUsersSubTab] = useState<'users' | 'transactions' | 'purchases' | 'subscriptions'>('users');
 
   // Moderation filter state
   const [moderationFilter, setModerationFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
+  // Reports & Contact filter states
+  const [reportsFilter, setReportsFilter] = useState<'ALL' | 'OPEN' | 'RESOLVED' | 'DISMISSED'>('OPEN');
+  const [contactFilter, setContactFilter] = useState<'ALL' | 'NEW' | 'IN_PROGRESS' | 'RESOLVED'>('NEW');
 
   // Company Overview edit state
   const [adminOverviewInput, setAdminOverviewInput] = useState('');
@@ -98,18 +108,62 @@ export default function AdminDashboardPage() {
     enabled: role === 'ADMIN',
     staleTime: 0,
   });
-  const experiencesList: ExperienceItem[] = (experiencesPage || []).map((e: any) => ({
-    id: e.id,
-    companyName: (e.company_slug || 'tcs').toUpperCase(),
-    role: e.role_title || 'Software Engineer',
-    studentName: e.student_name || 'Student',
-    college: e.college || '',
-    year: e.year || 2026,
-    difficulty: e.difficulty || 'MEDIUM',
-    verdict: 'SELECTED',
-    rounds: [],
-    status: e.status || 'PENDING',
-  }));
+  const experiencesList: ExperienceItem[] = (experiencesPage || []).map((e: any) => {
+    let parsedRounds: any[] = [];
+    if (Array.isArray(e.rounds) && e.rounds.length > 0) {
+      parsedRounds = e.rounds;
+    } else if (typeof e.rounds === 'string') {
+      try {
+        parsedRounds = JSON.parse(e.rounds);
+      } catch {
+        parsedRounds = [];
+      }
+    }
+
+    if (!parsedRounds || parsedRounds.length === 0) {
+      parsedRounds = [
+        {
+          roundTitle: 'Overall Interview Breakdown',
+          details: e.overall_experience || 'No experience details entered.',
+        },
+      ];
+      if (e.tips && e.tips.trim()) {
+        parsedRounds.push({
+          roundTitle: 'Candidate Tips & Preparation Strategy',
+          details: e.tips,
+        });
+      }
+    }
+
+    return {
+      id: e.id,
+      companyName: (e.company_slug || 'tcs').toUpperCase(),
+      role: e.role_title || 'Software Engineer',
+      studentName: e.student_name || 'Student Explorer',
+      college: e.college || 'Engineering College',
+      year: e.year || 2026,
+      difficulty: e.difficulty || 'MEDIUM',
+      verdict: e.verdict || 'SELECTED',
+      rounds: parsedRounds,
+      status: e.status || 'PENDING',
+    };
+  });
+
+  // --- React Query: Question Reports from feedbackService ---
+  const { data: questionReportsList = [], isLoading: reportsLoading } = useQuery<QuestionReport[]>({
+    queryKey: ['admin-question-reports'],
+    queryFn: () => feedbackService.getQuestionReports('ALL'),
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
+
+  // --- React Query: Contact Messages from feedbackService ---
+  const { data: contactMessagesList = [], isLoading: contactLoading } = useQuery<ContactMessage[]>({
+    queryKey: ['admin-contact-messages'],
+    queryFn: () => feedbackService.getContactMessages('ALL'),
+    enabled: role === 'ADMIN',
+    staleTime: 0,
+  });
 
   // --- React Query: All Exams Global from Supabase ---
   const { data: allExamsGlobal = [] } = useQuery({
@@ -389,11 +443,14 @@ export default function AdminDashboardPage() {
   };
 
   // --- MODERATION ACTIONS (APPROVE / DISAPPROVE / REJECT) ---
-  const handleUpdateExperienceStatus = async (id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') => {
+  const handleUpdateExperienceStatus = async (
+    id: string,
+    status: 'APPROVED' | 'REJECTED' | 'PENDING',
+    reason?: string
+  ) => {
     try {
-      if (status === 'APPROVED' || status === 'REJECTED') {
-        await experienceService.updateExperienceStatus(id, status);
-      }
+      await experienceService.updateExperienceStatus(id, status, reason);
+      queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
       queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       reloadDataStoreLists();
@@ -402,13 +459,74 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleDeclineExperiencePrompt = (id: string) => {
+    const reason = prompt(
+      'Enter decline rationale / note for this submission (optional):',
+      'Needs more specific details on round questions and company pattern'
+    );
+    if (reason !== null) {
+      handleUpdateExperienceStatus(id, 'REJECTED', reason || undefined);
+    }
+  };
+
   const handleDeleteExperience = async (id: string) => {
     if (confirm('Are you sure you want to delete this student experience submission?')) {
       try {
         await supabase.from('experiences').update({ is_deleted: true, deleted_at: new Date().toISOString() }).eq('id', id);
+        queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
         reloadDataStoreLists();
       } catch (err: any) {
         alert(`Failed to delete experience from Supabase: ${err.message || err}`);
+      }
+    }
+  };
+
+  // --- QUESTION REPORT ACTIONS ---
+  const handleUpdateReportStatus = async (
+    id: string,
+    status: ReportStatus,
+    adminNotes?: string
+  ) => {
+    try {
+      await feedbackService.updateReportStatus(id, status, adminNotes);
+      queryClient.invalidateQueries({ queryKey: ['admin-question-reports'] });
+    } catch (err: any) {
+      alert(`Failed to update report status: ${err.message || err}`);
+    }
+  };
+
+  const handleDeleteReport = async (id: string) => {
+    if (confirm('Delete this question report?')) {
+      try {
+        await feedbackService.deleteQuestionReport(id);
+        queryClient.invalidateQueries({ queryKey: ['admin-question-reports'] });
+      } catch (err: any) {
+        alert(`Failed to delete report: ${err.message || err}`);
+      }
+    }
+  };
+
+  // --- CONTACT MESSAGE ACTIONS ---
+  const handleUpdateContactStatus = async (
+    id: string,
+    status: ContactMessageStatus,
+    adminNotes?: string
+  ) => {
+    try {
+      await feedbackService.updateContactStatus(id, status, adminNotes);
+      queryClient.invalidateQueries({ queryKey: ['admin-contact-messages'] });
+    } catch (err: any) {
+      alert(`Failed to update message status: ${err.message || err}`);
+    }
+  };
+
+  const handleDeleteContactMessage = async (id: string) => {
+    if (confirm('Delete this contact message?')) {
+      try {
+        await feedbackService.deleteContactMessage(id);
+        queryClient.invalidateQueries({ queryKey: ['admin-contact-messages'] });
+      } catch (err: any) {
+        alert(`Failed to delete message: ${err.message || err}`);
       }
     }
   };
@@ -422,6 +540,9 @@ export default function AdminDashboardPage() {
   const pendingExperiencesCount = experiencesList.filter(e => e.status === 'PENDING').length;
   const approvedExperiencesCount = experiencesList.filter(e => e.status === 'APPROVED').length;
   const rejectedExperiencesCount = experiencesList.filter(e => e.status === 'REJECTED').length;
+
+  const openReportsCount = questionReportsList.filter(r => r.status === 'OPEN').length;
+  const newContactsCount = contactMessagesList.filter(c => c.status === 'NEW').length;
 
   const stats = data || {
     totalUsers: 142,
@@ -438,14 +559,25 @@ export default function AdminDashboardPage() {
     { label: 'Target Companies', value: stats.totalCompanies, icon: Building2, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
     { label: 'Live Exam Cards', value: allExamsCount, icon: GraduationCap, color: 'text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-800' },
     { label: 'OA Questions', value: stats.totalQuestions, icon: BookOpen, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
-    { label: 'Resource Vault', value: stats.totalResources, icon: Bookmark, color: 'text-[#0284c7] dark:text-[#38bdf8] bg-[#38bdf8]/15 border-[#38bdf8]/30' },
-    { label: 'Approved Experiences', value: approvedExperiencesCount, icon: ThumbsUp, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
     { label: 'Pending Approvals', value: pendingExperiencesCount, icon: Clock, color: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/30' },
+    { label: 'Question Reports', value: openReportsCount, icon: AlertTriangle, color: 'text-rose-700 dark:text-rose-400 bg-rose-500/10 border-rose-500/30' },
+    { label: 'Contact Inquiries', value: newContactsCount, icon: Mail, color: 'text-blue-700 dark:text-blue-400 bg-blue-500/10 border-blue-500/30' },
+    { label: 'Approved Exp.', value: approvedExperiencesCount, icon: ThumbsUp, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
   ];
 
   const filteredExperiences = experiencesList.filter(e => {
     if (moderationFilter === 'ALL') return true;
     return e.status === moderationFilter;
+  });
+
+  const filteredReports = questionReportsList.filter(r => {
+    if (reportsFilter === 'ALL') return true;
+    return r.status === reportsFilter;
+  });
+
+  const filteredContacts = contactMessagesList.filter(c => {
+    if (contactFilter === 'ALL') return true;
+    return c.status === contactFilter;
   });
 
   return (
@@ -461,31 +593,38 @@ export default function AdminDashboardPage() {
             PrepUnite Master Admin Console
           </h1>
           <p className="text-[#444748] dark:text-[#a6adbb] text-sm leading-relaxed font-sans">
-            Full control center for target companies, exam cards, student experience approvals/disapprovals, OA questions, and platform analytics.
+            Full control center for company papers, student experience moderation, question reports, contact inquiries, and analytics.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/admin/bulk-import"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Bulk Import JSON</span>
+            <span>Bulk Import</span>
           </Link>
-          <button
-            onClick={() => setAdminTab('create-company')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5 text-purple-300" />
-            <span>Add Company & Exam Card</span>
-          </button>
           <button
             onClick={() => setAdminTab('moderation')}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
           >
             <Clock className="w-3.5 h-3.5 text-amber-200" />
-            <span>Moderation Queue ({pendingExperiencesCount})</span>
+            <span>Moderation ({pendingExperiencesCount})</span>
+          </button>
+          <button
+            onClick={() => setAdminTab('question-reports')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-200" />
+            <span>Reports ({openReportsCount})</span>
+          </button>
+          <button
+            onClick={() => setAdminTab('contact-messages')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
+          >
+            <Mail className="w-3.5 h-3.5 text-blue-200" />
+            <span>Inquiries ({newContactsCount})</span>
           </button>
         </div>
       </div>
@@ -501,7 +640,7 @@ export default function AdminDashboardPage() {
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-purple-300" />
-          <span>Manage Company & Exam Modules</span>
+          <span>Company & Exam Modules</span>
         </button>
 
         <button
@@ -513,10 +652,44 @@ export default function AdminDashboardPage() {
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
-          <span>Experience Moderation Queue</span>
+          <span>Experiences Queue</span>
           {pendingExperiencesCount > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-black font-extrabold">
-              {pendingExperiencesCount} Pending
+              {pendingExperiencesCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setAdminTab('question-reports')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+            adminTab === 'question-reports'
+              ? 'bg-purple-900 text-white shadow-sm'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+          <span>Question Reports</span>
+          {openReportsCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-extrabold">
+              {openReportsCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setAdminTab('contact-messages')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+            adminTab === 'contact-messages'
+              ? 'bg-purple-900 text-white shadow-sm'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+          }`}
+        >
+          <Mail className="w-3.5 h-3.5 text-blue-400" />
+          <span>Contact Inquiries</span>
+          {newContactsCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500 text-white font-extrabold">
+              {newContactsCount}
             </span>
           )}
         </button>
@@ -880,11 +1053,12 @@ export default function AdminDashboardPage() {
                       )}
                       {exp.status !== 'REJECTED' && (
                         <button
-                          onClick={() => handleUpdateExperienceStatus(exp.id, 'REJECTED')}
+                          onClick={() => handleDeclineExperiencePrompt(exp.id)}
                           className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                          title="Decline submission with optional note"
                         >
                           <ThumbsDown className="w-3 h-3" />
-                          <span>Disapprove</span>
+                          <span>Decline</span>
                         </button>
                       )}
                       <button
@@ -916,6 +1090,306 @@ export default function AdminDashboardPage() {
                         );
                       })}
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ⚠️ TAB: QUESTION ISSUE REPORTS */}
+      {adminTab === 'question-reports' && (
+        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 space-y-5 shadow-xs">
+          <div className="space-y-1 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF] flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-500" />
+                Reported Question Issues & Corrections
+              </h2>
+              <span className="text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded border border-rose-500/20">
+                {openReportsCount} Open Reports
+              </span>
+            </div>
+            <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
+              Review issues flagged by students (wrong answers, unclear explanations, typos, or outdated patterns).
+            </p>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto bg-[#F8F9FA] dark:bg-[#0C0C0C] p-1 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
+            {[
+              { id: 'OPEN', label: `Open Issues (${openReportsCount})` },
+              { id: 'RESOLVED', label: `Resolved (${questionReportsList.filter(r => r.status === 'RESOLVED').length})` },
+              { id: 'DISMISSED', label: `Dismissed (${questionReportsList.filter(r => r.status === 'DISMISSED').length})` },
+              { id: 'ALL', label: `All Reports (${questionReportsList.length})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setReportsFilter(tab.id as any)}
+                className={`px-3 py-1 rounded text-xs font-display font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  reportsFilter === tab.id
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Reports List */}
+          {reportsLoading ? (
+            <div className="py-12 text-center text-xs text-[#868E96]">Loading reports...</div>
+          ) : filteredReports.length === 0 ? (
+            <div className="py-12 text-center space-y-1.5 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
+              <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+              <h4 className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
+                No Question Reports Found
+              </h4>
+              <p className="text-xs text-[#868E96] dark:text-[#555555]">
+                {reportsFilter === 'OPEN' ? 'All reported question issues are resolved!' : 'No reports in this category.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="p-4 bg-white dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424] space-y-3 shadow-xs"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display font-bold text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                          {report.issue_type.replace(/_/g, ' ')}
+                        </span>
+                        {report.company_slug && (
+                          <span className="text-[10px] font-bold text-[#FD4A32] bg-[#FD4A32]/10 px-2 py-0.5 rounded uppercase">
+                            {report.company_slug}
+                          </span>
+                        )}
+                        {report.topic_id && (
+                          <span className="text-[10px] font-semibold text-[#868E96] dark:text-[#555555]">
+                            Topic: {report.topic_id}
+                          </span>
+                        )}
+                        <span
+                          className={`text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                            report.status === 'RESOLVED'
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
+                              : report.status === 'DISMISSED'
+                              ? 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-500/20'
+                              : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20'
+                          }`}
+                        >
+                          {report.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[#868E96] dark:text-[#555555] font-sans mt-1 block">
+                        Reported by: <strong>{report.reporter_email || 'Anonymous Student'}</strong> • {new Date(report.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {report.status === 'OPEN' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateReportStatus(report.id, 'RESOLVED')}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Mark Resolved</span>
+                          </button>
+                          <button
+                            onClick={() => handleUpdateReportStatus(report.id, 'DISMISSED')}
+                            className="px-3 py-1.5 bg-[#F8F9FA] dark:bg-[#242424] hover:bg-[#E9ECEF] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider rounded-md border border-[#E9ECEF] dark:border-[#383838] transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <XCircle className="w-3 h-3 text-[#868E96]" />
+                            <span>Dismiss</span>
+                          </button>
+                        </>
+                      )}
+                      {report.status !== 'OPEN' && (
+                        <button
+                          onClick={() => handleUpdateReportStatus(report.id, 'OPEN')}
+                          className="px-3 py-1.5 bg-[#F8F9FA] dark:bg-[#242424] text-xs font-bold text-[#868E96] hover:text-[#121417] dark:hover:text-[#FFFFFF] rounded-md border border-[#E9ECEF] dark:border-[#383838] transition-colors cursor-pointer"
+                        >
+                          Reopen
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteReport(report.id)}
+                        className="text-rose-600 hover:text-rose-700 p-1.5 rounded transition-colors cursor-pointer"
+                        title="Delete Report"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Question Statement */}
+                  <div className="p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                    <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] block uppercase tracking-wider">
+                      Question Statement:
+                    </span>
+                    <p className="text-xs text-[#121417] dark:text-[#FFFFFF] font-sans">
+                      {report.question_statement}
+                    </p>
+                  </div>
+
+                  {/* User Note / Details */}
+                  {report.details && (
+                    <div className="p-3 bg-amber-500/5 dark:bg-amber-500/5 rounded-md border border-amber-500/20 space-y-1">
+                      <span className="text-[9px] font-display font-bold text-amber-600 dark:text-amber-400 block uppercase tracking-wider">
+                        Student Explanation / Feedback:
+                      </span>
+                      <p className="text-xs text-[#121417] dark:text-[#e3e3e3] font-sans">
+                        {report.details}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 📬 TAB: CONTACT INQUIRIES */}
+      {adminTab === 'contact-messages' && (
+        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 space-y-5 shadow-xs">
+          <div className="space-y-1 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF] flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-500" />
+                Contact Inquiries & Student Messages
+              </h2>
+              <span className="text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded border border-blue-500/20">
+                {newContactsCount} New Inquiries
+              </span>
+            </div>
+            <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
+              Direct inquiries from the <strong>/contact</strong> page regarding payment activation, company requests, or platform support.
+            </p>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto bg-[#F8F9FA] dark:bg-[#0C0C0C] p-1 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
+            {[
+              { id: 'NEW', label: `New Inquiries (${newContactsCount})` },
+              { id: 'IN_PROGRESS', label: `In Progress (${contactMessagesList.filter(c => c.status === 'IN_PROGRESS').length})` },
+              { id: 'RESOLVED', label: `Resolved (${contactMessagesList.filter(c => c.status === 'RESOLVED').length})` },
+              { id: 'ALL', label: `All Inquiries (${contactMessagesList.length})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setContactFilter(tab.id as any)}
+                className={`px-3 py-1 rounded text-xs font-display font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  contactFilter === tab.id
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Messages List */}
+          {contactLoading ? (
+            <div className="py-12 text-center text-xs text-[#868E96]">Loading contact inquiries...</div>
+          ) : filteredContacts.length === 0 ? (
+            <div className="py-12 text-center space-y-1.5 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
+              <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+              <h4 className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
+                No Inquiries in this Category
+              </h4>
+              <p className="text-xs text-[#868E96] dark:text-[#555555]">
+                {contactFilter === 'NEW' ? 'All contact inquiries have been replied to or processed!' : 'No messages found.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredContacts.map((msg) => (
+                <div
+                  key={msg.id}
+                  className="p-4 bg-white dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424] space-y-3 shadow-xs"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display font-extrabold text-sm text-[#121417] dark:text-[#FFFFFF]">
+                          {msg.name}
+                        </span>
+                        <a
+                          href={`mailto:${msg.email}`}
+                          className="text-xs text-[#FD4A32] dark:text-[#FD4A32] hover:underline flex items-center gap-1 font-sans"
+                        >
+                          <Mail className="w-3 h-3" />
+                          <span>{msg.email}</span>
+                        </a>
+                        <span
+                          className={`text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                            msg.status === 'RESOLVED'
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
+                              : msg.status === 'IN_PROGRESS'
+                              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20'
+                              : 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20'
+                          }`}
+                        >
+                          {msg.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[#868E96] dark:text-[#555555] font-sans mt-0.5 block">
+                        Subject: <strong>{msg.subject}</strong> • Received: {new Date(msg.created_at).toLocaleDateString()} at {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <a
+                        href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}`}
+                        className="px-3 py-1.5 bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1.5 shadow-xs"
+                        title="Open email client to reply directly"
+                      >
+                        <Mail className="w-3 h-3" />
+                        <span>Reply via Email</span>
+                      </a>
+                      {msg.status !== 'RESOLVED' && (
+                        <button
+                          onClick={() => handleUpdateContactStatus(msg.id, 'RESOLVED')}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-display font-bold uppercase tracking-wider rounded-md transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Mark Resolved</span>
+                        </button>
+                      )}
+                      {msg.status === 'NEW' && (
+                        <button
+                          onClick={() => handleUpdateContactStatus(msg.id, 'IN_PROGRESS')}
+                          className="px-2.5 py-1.5 bg-[#F8F9FA] dark:bg-[#242424] hover:bg-[#E9ECEF] text-[#121417] dark:text-[#FFFFFF] text-xs font-semibold rounded-md border border-[#E9ECEF] dark:border-[#383838] transition-colors cursor-pointer"
+                        >
+                          Mark In Progress
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteContactMessage(msg.id)}
+                        className="text-rose-600 hover:text-rose-700 p-1.5 rounded transition-colors cursor-pointer"
+                        title="Delete Message"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Message Body */}
+                  <div className="p-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] rounded-md border border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                    <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] block uppercase tracking-wider">
+                      Message Content:
+                    </span>
+                    <p className="text-xs text-[#121417] dark:text-[#FFFFFF] font-sans whitespace-pre-wrap leading-relaxed">
+                      {msg.message}
+                    </p>
                   </div>
                 </div>
               ))}

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "npm --prefix frontend run dev",
     "ci:check": "npm run ci:frontend",
     "ci:frontend": "cd frontend && npm run lint && npx tsc --noEmit && npm run build"
   },

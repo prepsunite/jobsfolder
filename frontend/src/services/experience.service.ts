@@ -227,10 +227,19 @@ export const experienceService = {
     };
   },
 
-  updateExperienceStatus: async (id: string, status: 'APPROVED' | 'REJECTED'): Promise<void> => {
+  updateExperienceStatus: async (
+    id: string,
+    status: 'APPROVED' | 'REJECTED' | 'PENDING',
+    declineReason?: string
+  ): Promise<void> => {
+    const payload: any = { status };
+    if (status === 'REJECTED' && declineReason) {
+      payload.tips = declineReason;
+    }
+
     const { error } = await supabase
       .from('experiences')
-      .update({ status })
+      .update(payload)
       .eq('id', id);
 
     if (error) {
@@ -242,7 +251,7 @@ export const experienceService = {
       action: `UPDATE_EXPERIENCE_STATUS_${status}`,
       targetEntity: 'experiences',
       targetId: id,
-      afterData: { status },
+      afterData: { status, declineReason },
     });
 
     dataStore.updateExperience(id, { status: status as any });

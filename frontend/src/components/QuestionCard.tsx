@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import type { OaQuestion } from '@/types/question';
 import { useAuth } from '@/contexts/AuthContext';
 import { dataStore } from '@/services/dataStore';
-import { Bookmark, BookmarkCheck, Building2, ChevronDown, ChevronUp, Code, Hash, Flame, Edit3, Trash2, ExternalLink } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Building2, ChevronDown, ChevronUp, Code, Hash, Flame, Edit3, Trash2, ExternalLink, AlertTriangle } from 'lucide-react';
+import ReportQuestionModal from '@/components/ReportQuestionModal';
 
 interface QuestionCardProps {
   question: OaQuestion;
@@ -16,6 +17,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
   const isAdmin = role === 'ADMIN';
   const [showSolution, setShowSolution] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(() => dataStore.isQuestionBookmarked(question.id));
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     setIsBookmarked(dataStore.isQuestionBookmarked(question.id));
@@ -124,6 +126,14 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
               </>
             )}
           </button>
+
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="p-1.5 rounded-full border border-[#e2d8d2] dark:border-[#383a40] bg-[#f6ece6] dark:bg-[#2b2d31] text-[#747878] dark:text-[#a6adbb] hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+            title="Report Question Issue"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -188,6 +198,16 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
             </div>
           )}
         </div>
+      )}
+
+      {showReportModal && (
+        <ReportQuestionModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          questionId={question.id}
+          questionStatement={question.title + (question.description ? ' - ' + question.description : '')}
+          companySlug={question.companyName ? question.companyName.toLowerCase() : undefined}
+        />
       )}
     </div>
   );
