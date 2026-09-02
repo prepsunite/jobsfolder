@@ -294,6 +294,7 @@ export default function AptitudePage() {
               stats={categoryStats}
               title={`${currentCategoryInfo.title} Progress`}
               variant="embedded"
+              showBadges={false}
             />
           </div>
         </div>

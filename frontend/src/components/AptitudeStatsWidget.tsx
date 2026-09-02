@@ -8,6 +8,7 @@ interface AptitudeStatsWidgetProps {
   subtitle?: string;
   className?: string;
   variant?: 'card' | 'embedded';
+  showBadges?: boolean;
 }
 
 export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
@@ -15,6 +16,7 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   title = 'Aptitude Mastery',
   className = '',
   variant = 'card',
+  showBadges = true,
 }) => {
   const {
     totalQuestions,
@@ -205,30 +207,32 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
         </div>
 
         {/* 3. Right: Compact Performance Badges */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-            <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-            <span className="text-[11px] font-display font-black">
-              {streakDays}d Streak
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
-            <Target className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-[11px] font-display font-black">
-              {accuracyRate}% Acc
-            </span>
-          </div>
-
-          {firstTryAccuracyRate > 0 && (
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-              <Zap className="w-3 h-3 fill-emerald-500 text-emerald-500" />
+        {showBadges && (
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+              <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
               <span className="text-[11px] font-display font-black">
-                {firstTryAccuracyRate}% 1st
+                {streakDays}d Streak
               </span>
             </div>
-          )}
-        </div>
+
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
+              <Target className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-[11px] font-display font-black">
+                {accuracyRate}% Acc
+              </span>
+            </div>
+
+            {firstTryAccuracyRate > 0 && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <Zap className="w-3 h-3 fill-emerald-500 text-emerald-500" />
+                <span className="text-[11px] font-display font-black">
+                  {firstTryAccuracyRate}% 1st
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
