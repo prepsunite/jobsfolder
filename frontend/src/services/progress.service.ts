@@ -230,11 +230,14 @@ export const progressService = {
    * Aggregate high-level LeetCode-style statistics from question list and user progress
    */
   computeStats: (
-    allQuestions: { id: string; difficulty?: string; difficultyLevel?: number; topicId?: string }[],
+    allQuestions: { id: string; difficulty?: string; difficultyLevel?: number; topicId?: string; topic_id?: string }[],
     userEmail?: string
   ): ProgressSummaryStats => {
     const recordsMap = getLocalRecords(userEmail);
     const recordsList = Object.values(recordsMap);
+
+    // Build fast lookup set of question IDs for the current scope (category, topic, or all)
+    const questionIdSet = new Set(allQuestions.map((q) => q.id));
 
     let easyTotal = 0;
     let mediumTotal = 0;
@@ -251,21 +254,28 @@ export const progressService = {
     let mediumSolved = 0;
     let hardSolved = 0;
     let totalSolved = 0;
+    let totalAttempted = 0;
     let totalWrongAttempts = 0;
     let firstTryCount = 0;
 
     const topicMastery: Record<string, { solved: number; total: number; percentage: number }> = {};
 
-    // Initialize topic mastery totals
+    // Initialize topic mastery totals for all questions in scope
     allQuestions.forEach((q) => {
-      const tId = q.topicId || 'general';
+      const tId = q.topicId || q.topic_id || 'general';
       if (!topicMastery[tId]) {
         topicMastery[tId] = { solved: 0, total: 0, percentage: 0 };
       }
       topicMastery[tId].total++;
     });
 
+    // Only process records that belong to the current questions scope!
     recordsList.forEach((r) => {
+      if (questionIdSet.size > 0 && !questionIdSet.has(r.questionId)) {
+        return;
+      }
+
+      totalAttempted++;
       totalWrongAttempts += r.wrongAttempts;
 
       if (r.isSolved) {
@@ -277,8 +287,9 @@ export const progressService = {
         else if (diff === 'HARD') hardSolved++;
         else mediumSolved++;
 
-        if (r.topicId && topicMastery[r.topicId]) {
-          topicMastery[r.topicId].solved++;
+        const tId = r.topicId || (r as any).topic_id;
+        if (tId && topicMastery[tId]) {
+          topicMastery[tId].solved++;
         }
       }
     });
@@ -289,11 +300,12 @@ export const progressService = {
       entry.percentage = entry.total > 0 ? Math.round((entry.solved / entry.total) * 100) : 0;
     });
 
-    const totalAttempted = recordsList.length;
     const totalSubmissions = totalSolved + totalWrongAttempts;
     const accuracyRate = totalSubmissions > 0 ? Math.round((totalSolved / totalSubmissions) * 1000) / 10 : 0;
     const firstTryAccuracyRate = totalSolved > 0 ? Math.round((firstTryCount / totalSolved) * 1000) / 10 : 0;
-    const streakDays = computeStreak(recordsList);
+    
+    // Active daily practice streak across all solved activities
+    const streakDays = computeStreak(recordsList.filter((r) => r.isSolved));
 
     return {
       totalQuestions: allQuestions.length,

@@ -120,16 +120,38 @@ export default function AptitudePage() {
     queryFn: async () => {
       if (!currentCategoryTopics.length) return [];
       const topicIds = currentCategoryTopics.map((t) => t.id);
-      const { data, error } = await supabase
-        .from('topic_questions')
-        .select('id, difficulty, topic_id')
-        .in('topic_id', topicIds)
-        .eq('is_deleted', false);
-      if (error) {
-        console.warn('Failed to fetch category questions for stats:', error);
-        return [];
+      
+      let allFetchedData: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('topic_questions')
+          .select('id, difficulty, topic_id')
+          .in('topic_id', topicIds)
+          .eq('is_deleted', false)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (error) {
+          console.warn('Failed to fetch category questions for stats:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          allFetchedData = allFetchedData.concat(data);
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
       }
-      return data || [];
+
+      return allFetchedData;
     },
     enabled: currentCategoryTopics.length > 0,
     staleTime: 60 * 1000,

@@ -70,15 +70,36 @@ export default function ProfilePage() {
   const { data: allQuestionsMeta = [] } = useQuery({
     queryKey: ['profile-all-questions-meta'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('topic_questions')
-        .select('id, difficulty, topic_id')
-        .eq('is_deleted', false);
-      if (error) {
-        console.warn('Failed to fetch questions meta for profile stats:', error);
-        return [];
+      let allFetchedData: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('topic_questions')
+          .select('id, difficulty, topic_id')
+          .eq('is_deleted', false)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (error) {
+          console.warn('Failed to fetch questions meta for profile stats:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          allFetchedData = allFetchedData.concat(data);
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
       }
-      return data || [];
+
+      return allFetchedData;
     },
     staleTime: 5 * 60 * 1000,
   });
