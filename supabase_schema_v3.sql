@@ -217,6 +217,21 @@ ALTER TABLE public.experiences ADD COLUMN IF NOT EXISTS updated_by UUID REFERENC
 ALTER TABLE public.experiences ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.experiences ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE NOT NULL;
 ALTER TABLE public.experiences ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.experiences ADD COLUMN IF NOT EXISTS upvotes INT DEFAULT 0;
+ALTER TABLE public.experiences ADD COLUMN IF NOT EXISTS drive_type VARCHAR(50) DEFAULT 'ON_CAMPUS';
+
+CREATE OR REPLACE FUNCTION public.increment_experience_upvotes(p_experience_id UUID)
+RETURNS INT AS $$
+DECLARE
+  v_new_count INT;
+BEGIN
+  UPDATE public.experiences
+  SET upvotes = COALESCE(upvotes, 0) + 1
+  WHERE id = p_experience_id
+  RETURNING upvotes INTO v_new_count;
+  RETURN COALESCE(v_new_count, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS tr_experiences_updated_at ON public.experiences;
 CREATE TRIGGER tr_experiences_updated_at

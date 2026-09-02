@@ -19,7 +19,10 @@ import {
   ShieldCheck,
   Filter,
   FileJson,
-  Upload
+  Upload,
+  Share2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,6 +34,8 @@ import { safeJsonParse, normalizeMathText, generateQuestionFingerprint } from '@
 import { useQuery } from '@tanstack/react-query';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import ReportQuestionModal from '@/components/ReportQuestionModal';
+import ShareModal from '@/components/ShareModal';
+import audioEffects from '@/utils/audioEffects';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -62,6 +67,13 @@ export default function TopicQuestionsPage() {
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [savedQuestionIds, setSavedQuestionIds] = useState<string[]>(() => dataStore.getBookmarkedQuestionIds());
   const [reportingQuestion, setReportingQuestion] = useState<TopicQuestionItem | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isMuted, setIsMuted] = useState(() => audioEffects.getMuted());
+
+  const handleToggleSound = () => {
+    const next = audioEffects.toggleMute();
+    setIsMuted(next);
+  };
 
   // Hydrate user progress from Supabase on mount / when user changes
   useEffect(() => {
@@ -236,6 +248,15 @@ export default function TopicQuestionsPage() {
 
   const handleSelectOption = async (q: TopicQuestionItem, optionKey: string) => {
     const isCorrect = optionKey.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
+
+    // Trigger audio and haptic feedback
+    if (isCorrect) {
+      audioEffects.playSuccessChime();
+      audioEffects.triggerHaptic('success');
+    } else {
+      audioEffects.playErrorBuzz();
+      audioEffects.triggerHaptic('error');
+    }
 
     // If incorrect, add to wrongPicks so it turns and stays RED until correct option is chosen
     if (!isCorrect) {
@@ -794,6 +815,29 @@ export default function TopicQuestionsPage() {
                 </button>
               </>
             )}
+
+            {/* Audio Feedback Toggle */}
+            <button
+              onClick={handleToggleSound}
+              className={`p-1.5 rounded-md border transition-all cursor-pointer ${
+                isMuted
+                  ? 'border-[#E9ECEF] dark:border-[#242424] text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                  : 'border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32]'
+              }`}
+              title={isMuted ? 'Sound effects muted (Click to enable)' : 'Sound effects enabled (Click to mute)'}
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+
+            {/* Share Topic with Batch */}
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#F8F9FA] dark:bg-[#1A1A1A] hover:bg-[#E9ECEF] dark:hover:bg-[#252525] text-[#121417] dark:text-white text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] transition-all cursor-pointer shadow-2xs"
+              title="Share this topic with your college batch"
+            >
+              <Share2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+              <span>Share</span>
+            </button>
 
             <button
               onClick={() => setShowCheatcodeModal(true)}
@@ -1744,6 +1788,13 @@ export default function TopicQuestionsPage() {
           topicId={reportingQuestion.topicId}
         />
       )}
+
+      {/* Share Topic Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`${topicName} Placement Aptitude Practice & Shortcuts on PrepUnite`}
+      />
     </div>
   );
 }

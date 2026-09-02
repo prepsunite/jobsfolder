@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
+import FormulaCheatSheetModal from '@/components/FormulaCheatSheetModal';
 import {
   Folder,
   Calculator,
@@ -76,6 +77,7 @@ export default function AptitudePage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
+  const [showCheatSheetModal, setShowCheatSheetModal] = useState(false);
 
   // New Admin UI states
   const [isEditing, setIsEditing] = useState(false);
@@ -333,6 +335,18 @@ export default function AptitudePage() {
             <p className="text-xs text-gray-600 dark:text-gray-400 font-sans mt-0.5">
               {currentCategoryInfo.subtitle}
             </p>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCheatSheetModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] border border-[#FD4A32]/25 text-xs font-display font-bold transition-all cursor-pointer shadow-2xs"
+                title="Export formula cheat sheet as PDF"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Export Cheat Sheet (PDF)</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 lg:max-w-2xl">
@@ -496,6 +510,15 @@ export default function AptitudePage() {
           </div>
         </div>
       )}
+
+      {/* 📖 Formula Cheat Sheet Modal */}
+      <FormulaCheatSheetModal
+        isOpen={showCheatSheetModal}
+        onClose={() => setShowCheatSheetModal(false)}
+        categoryTitle={currentCategoryInfo.title}
+        categorySlug={categorySlug}
+        topics={rawTopics}
+      />
     </div>
   );
 }

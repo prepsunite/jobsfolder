@@ -182,6 +182,8 @@ export interface ExperienceItem {
   verdict: 'SELECTED' | 'REJECTED' | 'WAITLISTED';
   rounds: { roundTitle: string; details: string }[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  upvotes?: number;
+  driveType?: 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS';
 }
 
 

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import { AddExperienceModal } from '@/components/AddExperienceModal';
 import { EditExperienceModal } from '@/components/EditExperienceModal';
+import { experienceService } from '@/services/experience.service';
 import {
   Layers,
   Search,
@@ -17,6 +18,7 @@ import {
   CheckCircle2,
   Bookmark,
   BookmarkCheck,
+  ThumbsUp,
 } from 'lucide-react';
 
 export default function ExperiencesPage() {
@@ -27,6 +29,38 @@ export default function ExperiencesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingExp, setEditingExp] = useState<ExperienceItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Filter States
+  const [verdictFilter, setVerdictFilter] = useState<'ALL' | 'SELECTED' | 'REJECTED'>('ALL');
+  const [driveTypeFilter, setDriveTypeFilter] = useState<'ALL' | 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS'>('ALL');
+
+  // Upvote / Helpful State
+  const [upvotedIds, setUpvotedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('prepunite_upvoted_experiences');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [localUpvotes, setLocalUpvotes] = useState<Record<string, number>>({});
+
+  const handleToggleUpvote = async (expId: string) => {
+    if (upvotedIds.includes(expId)) return;
+    const nextUpvoted = [...upvotedIds, expId];
+    setUpvotedIds(nextUpvoted);
+    try {
+      localStorage.setItem('prepunite_upvoted_experiences', JSON.stringify(nextUpvoted));
+    } catch {}
+
+    setLocalUpvotes((prev) => ({
+      ...prev,
+      [expId]: (prev[expId] ?? 0) + 1,
+    }));
+
+    await experienceService.upvoteExperience(expId);
+    queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+  };
 
   // Bookmark State
   const [bookmarkedExpIds, setBookmarkedExpIds] = useState<string[]>(() =>
@@ -70,11 +104,13 @@ export default function ExperiencesPage() {
           year: e.year || 2026,
           difficulty: e.difficulty || 'MEDIUM',
           verdict: e.verdict || 'SELECTED',
+          upvotes: e.upvotes || 0,
+          driveType: e.drive_type || 'ON_CAMPUS',
           rounds: (() => {
             try {
               return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : e.rounds || [];
             } catch {
-              return [{ roundTitle: 'Interview', details: e.description || '' }];
+              return [{ roundTitle: 'Interview', details: e.overall_experience || e.description || '' }];
             }
           })(),
           status: e.status || 'PENDING',
@@ -83,6 +119,12 @@ export default function ExperiencesPage() {
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
+  });
+
+  const filteredExperiences = rawExperiences.filter((exp) => {
+    if (verdictFilter !== 'ALL' && exp.verdict !== verdictFilter) return false;
+    if (driveTypeFilter !== 'ALL' && (exp.driveType || 'ON_CAMPUS') !== driveTypeFilter) return false;
+    return true;
   });
 
   const handleDelete = async (id: string) => {
@@ -186,16 +228,61 @@ export default function ExperiencesPage() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-3 text-[#868E96] dark:text-[#555555]" />
-        <input
-          type="text"
-          placeholder="Search experiences by company, role, or student name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#555555] focus:outline-none focus:border-[#121417] dark:focus:border-[#444444]"
-        />
+      {/* Search & Filter Bar */}
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-[#868E96] dark:text-[#555555]" />
+          <input
+            type="text"
+            placeholder="Search experiences by company, role, or student name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#555555] focus:outline-none focus:border-[#121417] dark:focus:border-[#444444]"
+          />
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          {/* Verdict Filter */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-display font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider mr-1">
+              Result:
+            </span>
+            {(['ALL', 'SELECTED', 'REJECTED'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setVerdictFilter(v)}
+                className={`px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  verdictFilter === v
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                {v === 'ALL' ? 'All Results' : v === 'SELECTED' ? 'Offered / Selected' : 'Not Selected'}
+              </button>
+            ))}
+          </div>
+
+          {/* Drive Type Filter */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-display font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider mr-1">
+              Drive:
+            </span>
+            {(['ALL', 'ON_CAMPUS', 'OFF_CAMPUS', 'POOL_CAMPUS'] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => setDriveTypeFilter(d)}
+                className={`px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  driveTypeFilter === d
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                    : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                {d === 'ALL' ? 'All Drives' : d === 'ON_CAMPUS' ? 'On-Campus' : d === 'OFF_CAMPUS' ? 'Off-Campus' : 'Pool Campus'}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Feed List */}
@@ -204,15 +291,17 @@ export default function ExperiencesPage() {
           <Loader2 className="w-4 h-4 animate-spin text-[#FD4A32]" />
           <span>Loading interview reports...</span>
         </div>
-      ) : rawExperiences.length === 0 ? (
+      ) : filteredExperiences.length === 0 ? (
         <div className="p-12 text-center rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] space-y-2">
           <p className="text-sm font-semibold">No interview experiences found.</p>
-          <p className="text-xs">Be the first to submit an interview transcript for your campus drive!</p>
+          <p className="text-xs">Try adjusting your filters or be the first to submit a transcript!</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {rawExperiences.map((exp) => {
+          {filteredExperiences.map((exp) => {
             const isBookmarked = bookmarkedExpIds.includes(exp.id);
+            const isUpvoted = upvotedIds.includes(exp.id);
+            const displayUpvotes = (exp.upvotes ?? 0) + (localUpvotes[exp.id] ?? 0);
 
             return (
               <div
@@ -243,8 +332,28 @@ export default function ExperiencesPage() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
+                    {exp.driveType && (
+                      <span className="px-2 py-0.5 rounded text-[9px] font-display font-bold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        {exp.driveType.replace(/_/g, ' ')}
+                      </span>
+                    )}
                     {getDifficultyBadge(exp.difficulty)}
                     {getVerdictBadge(exp.verdict)}
+
+                    {/* Upvote / Helpful Action */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleUpvote(exp.id)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all cursor-pointer ${
+                        isUpvoted
+                          ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-2xs'
+                          : 'border-[#E9ECEF] dark:border-[#242424] text-[#868E96] hover:text-amber-600 hover:border-amber-500/30'
+                      }`}
+                      title={isUpvoted ? 'You marked this as helpful' : 'Mark this experience as helpful'}
+                    >
+                      <ThumbsUp className={`w-3.5 h-3.5 ${isUpvoted ? 'fill-amber-500 text-amber-500' : ''}`} />
+                      <span>Helpful ({displayUpvotes})</span>
+                    </button>
 
                     {/* Bookmark Action */}
                     <button

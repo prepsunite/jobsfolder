@@ -54,6 +54,9 @@ export const experienceService = {
           status: e.status || 'APPROVED',
           isAnonymous: false,
           viewCount: 15,
+          upvotes: e.upvotes || 0,
+          verdict: e.verdict || 'SELECTED',
+          driveType: e.drive_type || 'ON_CAMPUS',
           createdAt: e.created_at,
         }));
 
@@ -258,5 +261,31 @@ export const experienceService = {
     });
 
     dataStore.updateExperience(id, { status: status as any });
+  },
+
+  upvoteExperience: async (id: string): Promise<number> => {
+    try {
+      const { data, error } = await supabase.rpc('increment_experience_upvotes', { p_experience_id: id });
+      if (!error && typeof data === 'number') {
+        return data;
+      }
+
+      const { data: current } = await supabase
+        .from('experiences')
+        .select('upvotes')
+        .eq('id', id)
+        .single();
+      const nextUpvotes = (current?.upvotes || 0) + 1;
+      await supabase.from('experiences').update({ upvotes: nextUpvotes }).eq('id', id);
+      return nextUpvotes;
+    } catch (err) {
+      console.warn('[experienceService.upvoteExperience] Error incrementing upvotes:', err);
+      const local = dataStore.getExperiences().find((e) => e.id === id);
+      if (local) {
+        local.upvotes = (local.upvotes || 0) + 1;
+        return local.upvotes;
+      }
+      return 1;
+    }
   },
 };

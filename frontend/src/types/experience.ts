@@ -18,6 +18,9 @@ export interface InterviewExperience {
   status: ExperienceStatus;
   isAnonymous: boolean;
   viewCount: number;
+  upvotes?: number;
+  verdict?: 'SELECTED' | 'REJECTED' | 'WAITLISTED';
+  driveType?: 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS';
   createdAt: string;
 }
 

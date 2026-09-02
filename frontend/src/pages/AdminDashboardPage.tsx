@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { adminService } from '@/services/admin.service';
@@ -34,6 +34,8 @@ import {
   Activity,
   AlertTriangle,
   Mail,
+  IndianRupee,
+  CreditCard,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -201,13 +203,33 @@ export default function AdminDashboardPage() {
     staleTime: 0,
   });
 
-  // Keep adminOverviewInput in sync with selected company
-  useEffect(() => {
-    const currentCompany = allCompanies.find(c => c.slug === selectedCompanySlug);
-    if (currentCompany) {
-      setAdminOverviewInput(currentCompany.description || '');
-    }
-  }, [selectedCompanySlug, allCompanies]);
+  // Revenue & Transaction Analytics
+  const totalGrossRevenue = useMemo(() => {
+    return allTransactionsList
+      .filter((t: any) => t.status === 'captured' || t.status === 'SUCCESS')
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+  }, [allTransactionsList]);
+
+  const singlePaperRevenue = useMemo(() => {
+    return allTransactionsList
+      .filter((t: any) => (t.status === 'captured' || t.status === 'SUCCESS') && t.plan_type === 'SINGLE_PAPER')
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+  }, [allTransactionsList]);
+
+  const proPassRevenue = useMemo(() => {
+    return allTransactionsList
+      .filter((t: any) => (t.status === 'captured' || t.status === 'SUCCESS') && t.plan_type !== 'SINGLE_PAPER')
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+  }, [allTransactionsList]);
+
+  const companyUnlocks = useMemo(() => {
+    const map: Record<string, number> = {};
+    allPurchasesList.forEach((p: any) => {
+      const slug = (p.company_slug || 'tcs').toLowerCase();
+      map[slug] = (map[slug] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [allPurchasesList]);
 
   // Invalidate all relevant queries (replaces reloadDataStoreLists)
   const reloadDataStoreLists = (slug: string = selectedCompanySlug) => {
@@ -551,13 +573,13 @@ export default function AdminDashboardPage() {
   };
 
   const statCards = [
+    { label: 'Gross Revenue', value: totalGrossRevenue > 0 ? `₹${totalGrossRevenue.toLocaleString('en-IN')}` : '₹0', icon: IndianRupee, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
     { label: 'Registered Students', value: stats.totalUsers, icon: Users, color: 'text-[#0284c7] dark:text-[#38bdf8] bg-[#38bdf8]/15 border-[#38bdf8]/30' },
     { label: 'Target Companies', value: stats.totalCompanies, icon: Building2, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
     { label: 'Live Exam Cards', value: allExamsCount, icon: GraduationCap, color: 'text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-800' },
     { label: 'OA Questions', value: stats.totalQuestions, icon: BookOpen, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
     { label: 'Pending Approvals', value: pendingExperiencesCount, icon: Clock, color: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/30' },
     { label: 'Question Reports', value: openReportsCount, icon: AlertTriangle, color: 'text-rose-700 dark:text-rose-400 bg-rose-500/10 border-rose-500/30' },
-    { label: 'Contact Inquiries', value: newContactsCount, icon: Mail, color: 'text-blue-700 dark:text-blue-400 bg-blue-500/10 border-blue-500/30' },
     { label: 'Approved Exp.', value: approvedExperiencesCount, icon: ThumbsUp, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
   ];
 
@@ -1213,6 +1235,16 @@ export default function AdminDashboardPage() {
                         >
                           Reopen
                         </button>
+                      )}
+                      {report.reporter_email && (
+                        <a
+                          href={`mailto:${encodeURIComponent(report.reporter_email)}?subject=${encodeURIComponent('PrepUnite: Issue Resolved for Reported Question')}&body=${encodeURIComponent(`Hi,\n\nThank you for reporting the issue on PrepUnite regarding:\n"${report.question_statement || 'Question'}"\n\nOur curriculum team has reviewed and resolved the question.\n\nBest regards,\nPrepUnite Editorial Team`)}`}
+                          className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-md border border-blue-500/30 flex items-center gap-1.5 transition-colors"
+                          title="Notify student via email"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          <span>Email Student</span>
+                        </a>
                       )}
                       <button
                         onClick={() => handleDeleteReport(report.id)}
@@ -2078,6 +2110,76 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* 💰 Revenue & Monetization Intelligence */}
+          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                  Revenue & Monetization Analytics
+                </h3>
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                Gross Volume: ₹{totalGrossRevenue.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            {/* Breakdown Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Single Paper Passes (₹99)</span>
+                <div className="font-display text-2xl font-black text-[#1f1b17] dark:text-[#e3e3e3]">
+                  ₹{singlePaperRevenue.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[10px] text-[#747878] dark:text-[#a6adbb]">
+                  {allTransactionsList.filter((t: any) => t.plan_type === 'SINGLE_PAPER').length} purchases
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Pro Memberships (₹299+)</span>
+                <div className="font-display text-2xl font-black text-purple-600 dark:text-purple-400">
+                  ₹{proPassRevenue.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[10px] text-[#747878] dark:text-[#a6adbb]">
+                  {allTransactionsList.filter((t: any) => t.plan_type !== 'SINGLE_PAPER').length} subscriptions
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Total Orders Logged</span>
+                <div className="font-display text-2xl font-black text-blue-600 dark:text-blue-400">
+                  {allTransactionsList.length}
+                </div>
+                <span className="text-[10px] text-[#747878] dark:text-[#a6adbb]">
+                  Across all payment channels
+                </span>
+              </div>
+            </div>
+
+            {/* Popular Company Archives */}
+            {companyUnlocks.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <h4 className="text-xs font-bold text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider">
+                  Top Purchased Company Archives
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {companyUnlocks.slice(0, 8).map(([slug, count]) => (
+                    <div
+                      key={slug}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1a1c1e] border border-[#eae1da] dark:border-[#2b2d31] text-xs font-bold flex items-center gap-2 shadow-2xs"
+                    >
+                      <span className="text-[#1f1b17] dark:text-white uppercase">{slug}</span>
+                      <span className="px-1.5 py-0.5 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] text-[10px]">
+                        {count} unlocks
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

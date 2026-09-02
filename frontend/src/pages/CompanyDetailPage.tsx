@@ -13,6 +13,7 @@ import ContentRenderer from '@/components/ContentRenderer';
 import { useTheme } from '@/contexts/ThemeContext';
 import PaywallModal from '@/components/PaywallModal';
 import DocumentExplorer from '@/components/DocumentExplorer';
+import ShareModal from '@/components/ShareModal';
 import {
   Building2,
   Globe,
@@ -29,6 +30,7 @@ import {
   Maximize2,
   Bookmark,
   BookmarkCheck,
+  Share2,
 } from 'lucide-react';
 
 type TabType = 'aboutCompany' | 'aboutExam' | 'oldPapers';
@@ -123,6 +125,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   // Upvote State
   const [upvoteCount, setUpvoteCount] = useState<number>(70);
   const [isUpvoted, setIsUpvoted] = useState<boolean>(false);
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
   // Edit Company Header State
   const [showEditHeaderModal, setShowEditHeaderModal] = useState(false);
@@ -523,10 +526,24 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 </div>
                 
                 <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowShareModal(true)}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs transition-all shadow-xs cursor-pointer ${
+                      isDarkMode
+                        ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#e3e3e3] border border-[#383a40]'
+                        : 'bg-[#ffffff] hover:bg-[#e3e8ef] text-[#1f1b17] border border-[#eae1da]'
+                    }`}
+                    title="Share this placement paper with your college batch"
+                  >
+                    <Share2 className="w-4 h-4 text-[#FD4A32]" />
+                    <span>Share with Batch</span>
+                  </button>
+
                   {currentExam && (
                     <button
                       onClick={handleToggleBookmark}
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs transition-all shadow-xs ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs transition-all shadow-xs cursor-pointer ${
                         isBookmarked
                           ? 'bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
                           : isDarkMode
@@ -935,6 +952,13 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
           }}
         />
       )}
+
+      {/* 📤 SHARE WITH BATCH MODAL */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`${companyName} Placement Papers, Drive Syllabus & Solutions 2026`}
+      />
     </div>
   );
 }
