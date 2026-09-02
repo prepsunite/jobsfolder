@@ -273,30 +273,55 @@ export default function AptitudePage() {
 
   return (
     <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12 font-sans relative">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E9ECEF] dark:border-[#242424] pb-4">
-        <div className="space-y-0.5">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
-            <MainIcon className="w-3 h-3" />
-            <span>Aptitude Topic Directory</span>
+      {/* 🚀 UNIFIED HEADER BANNER: Title on Left, Analytics on Right */}
+      <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1 sm:max-w-md shrink-0">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
+              <MainIcon className="w-3 h-3" />
+              <span>Aptitude Topic Directory</span>
+            </div>
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
+              {currentCategoryInfo.title}
+            </h1>
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-sans mt-0.5">
+              {currentCategoryInfo.subtitle}
+            </p>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
-            {currentCategoryInfo.title}
-          </h1>
-          <p className="text-sm text-gray-700 dark:text-gray-300 font-sans max-w-2xl mt-1">
-            {currentCategoryInfo.subtitle}
-          </p>
+
+          <div className="flex-1 lg:max-w-2xl">
+            <AptitudeStatsWidget
+              stats={categoryStats}
+              title={`${currentCategoryInfo.title} Progress`}
+              variant="embedded"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 🏷️ CLUSTER SUB-TOPIC PILLS + SEARCH BAR BESIDE THEM */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto p-1 scrollbar-none flex-1 min-w-0">
+          {clusterList.map((cluster) => {
+            const isActive = selectedCluster === cluster;
+            return (
+              <button
+                key={cluster}
+                onClick={() => setSelectedCluster(cluster)}
+                className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                }`}
+              >
+                {cluster}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
-          {isAdmin && (
-            <button
-              onClick={(e) => openEditor(e)}
-              className="px-3 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black rounded-md text-xs font-bold shrink-0 hover:bg-[#333] transition"
-            >
-              + Add Topic
-            </button>
-          )}
-          <div className="relative w-full sm:w-64 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
             <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
             <input
               type="text"
@@ -306,29 +331,16 @@ export default function AptitudePage() {
               className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
             />
           </div>
-        </div>
-      </div>
 
-      {/* 🚀 LeetCode-style Aptitude Stats Widget */}
-      <AptitudeStatsWidget
-        stats={categoryStats}
-        title={`${currentCategoryInfo.title} Mastery & Progress`}
-        subtitle="Track your curriculum accuracy, difficulty breakdown, and daily streaks."
-      />
-
-      <div className="flex items-center gap-2 overflow-x-auto p-1 scrollbar-none">
-        {clusterList.map((cluster) => {
-          const isActive = selectedCluster === cluster;
-          return (
+          {isAdmin && (
             <button
-              key={cluster}
-              onClick={() => setSelectedCluster(cluster)}
-              className={`px-3 py-1 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border ${isActive ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs' : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'}`}
+              onClick={(e) => openEditor(e)}
+              className="px-3 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black rounded-md text-xs font-bold shrink-0 hover:bg-[#333] transition cursor-pointer"
             >
-              {cluster}
+              + Add Topic
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
 
       {isTopicsLoading ? (

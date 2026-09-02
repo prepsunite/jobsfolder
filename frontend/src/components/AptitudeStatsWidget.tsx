@@ -7,12 +7,14 @@ interface AptitudeStatsWidgetProps {
   title?: string;
   subtitle?: string;
   className?: string;
+  variant?: 'card' | 'embedded';
 }
 
 export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   stats,
   title = 'Aptitude Mastery',
   className = '',
+  variant = 'card',
 }) => {
   const {
     totalQuestions,
@@ -49,10 +51,13 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   const mediumRotation = totalQuestions > 0 ? (easySolved / totalQuestions) * 360 : 0;
   const hardRotation = totalQuestions > 0 ? ((easySolved + mediumSolved) / totalQuestions) * 360 : 0;
 
+  const containerClasses =
+    variant === 'embedded'
+      ? `transition-colors ${className}`
+      : `p-3.5 sm:p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs transition-colors ${className}`;
+
   return (
-    <div
-      className={`p-3.5 sm:p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs transition-colors ${className}`}
-    >
+    <div className={containerClasses}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* 1. Left: Compact Donut + Counts */}
         <div className="flex items-center gap-3 shrink-0">
