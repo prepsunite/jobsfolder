@@ -49,6 +49,7 @@ function saveLocalContacts(contacts: ContactMessage[]): void {
 export const feedbackService = {
   // --- QUESTION REPORTS ---
   submitQuestionReport: async (payload: SubmitReportPayload): Promise<QuestionReport> => {
+    let newReport: QuestionReport | null = null;
     try {
       const { data, error } = await supabase
         .from('question_reports')
@@ -70,7 +71,7 @@ export const feedbackService = {
         throw error;
       }
 
-      return {
+      newReport = {
         id: data.id,
         question_id: data.question_id,
         question_statement: data.question_statement,
@@ -85,8 +86,8 @@ export const feedbackService = {
         resolved_at: data.resolved_at,
       };
     } catch (err) {
-      console.info('[feedbackService.submitQuestionReport] Saving report locally', err);
-      const newReport: QuestionReport = {
+      console.info('[feedbackService.submitQuestionReport] Saving report locally only', err);
+      newReport = {
         id: 'local_rep_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
         question_id: String(payload.questionId),
         question_statement: payload.questionStatement,
@@ -98,18 +99,19 @@ export const feedbackService = {
         status: 'OPEN',
         created_at: new Date().toISOString(),
       };
-      const existing = getLocalReports();
-      saveLocalReports([newReport, ...existing]);
-
-      auditService.logAction({
-        action: 'SUBMIT_QUESTION_REPORT',
-        targetEntity: 'question_reports',
-        targetId: newReport.id,
-        afterData: newReport,
-      });
-
-      return newReport;
     }
+
+    const existing = getLocalReports();
+    saveLocalReports([newReport, ...existing]);
+
+    auditService.logAction({
+      action: 'SUBMIT_QUESTION_REPORT',
+      targetEntity: 'question_reports',
+      targetId: newReport.id,
+      afterData: newReport,
+    });
+
+    return newReport;
   },
 
   getQuestionReports: async (statusFilter?: ReportStatus | 'ALL'): Promise<QuestionReport[]> => {
@@ -228,6 +230,8 @@ export const feedbackService = {
 
   // --- CONTACT MESSAGES ---
   submitContactMessage: async (payload: SubmitContactPayload): Promise<ContactMessage> => {
+    let newContact: ContactMessage | null = null;
+    
     try {
       const { data, error } = await supabase
         .from('contact_messages')
@@ -246,7 +250,7 @@ export const feedbackService = {
         throw error;
       }
 
-      return {
+      newContact = {
         id: data.id,
         name: data.name,
         email: data.email,
@@ -258,8 +262,8 @@ export const feedbackService = {
         resolved_at: data.resolved_at,
       };
     } catch (err) {
-      console.info('[feedbackService.submitContactMessage] Saving message locally', err);
-      const newContact: ContactMessage = {
+      console.info('[feedbackService.submitContactMessage] Saving message locally only', err);
+      newContact = {
         id: 'local_contact_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
         name: payload.name.trim(),
         email: payload.email.trim().toLowerCase(),
@@ -268,18 +272,20 @@ export const feedbackService = {
         status: 'NEW',
         created_at: new Date().toISOString(),
       };
-      const existing = getLocalContacts();
-      saveLocalContacts([newContact, ...existing]);
-
-      auditService.logAction({
-        action: 'SUBMIT_CONTACT_MESSAGE',
-        targetEntity: 'contact_messages',
-        targetId: newContact.id,
-        afterData: newContact,
-      });
-
-      return newContact;
     }
+
+    // Always save locally so Admin sees it immediately regardless of RLS read policies
+    const existing = getLocalContacts();
+    saveLocalContacts([newContact, ...existing]);
+
+    auditService.logAction({
+      action: 'SUBMIT_CONTACT_MESSAGE',
+      targetEntity: 'contact_messages',
+      targetId: newContact.id,
+      afterData: newContact,
+    });
+
+    return newContact;
   },
 
   getContactMessages: async (statusFilter?: ContactMessageStatus | 'ALL'): Promise<ContactMessage[]> => {
