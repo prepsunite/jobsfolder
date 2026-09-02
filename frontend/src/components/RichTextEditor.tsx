@@ -621,32 +621,38 @@ export default function RichTextEditor({
     onChange('');
   };
 
-  // Stats
-  const wordCount = editor?.storage.characterCount.words() ?? 0;
-  const charCount = editor?.storage.characterCount.characters() ?? 0;
-
-  // ── Table helpers ─────────────────────────────────────────────────────────
-  const insertTable = () => {
-    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-  };
-
-  // ── Format dropdown ───────────────────────────────────────────────────────
-  const FORMAT_OPTS = [
-    { lbl: 'Paragraph', cls: 'text-xs', action: () => { editor?.chain().focus().setParagraph().run(); setShowFormatMenu(false); } },
-    { lbl: 'Heading 1', cls: 'text-lg font-black', action: () => { editor?.chain().focus().toggleHeading({ level: 1 }).run(); setShowFormatMenu(false); } },
-    { lbl: 'Heading 2', cls: 'text-base font-bold', action: () => { editor?.chain().focus().toggleHeading({ level: 2 }).run(); setShowFormatMenu(false); } },
-    { lbl: 'Heading 3', cls: 'text-sm font-semibold', action: () => { editor?.chain().focus().toggleHeading({ level: 3 }).run(); setShowFormatMenu(false); } },
-  ];
-
-  const isTableActive = editor?.isActive('table') ?? false;
-
   // ── Wrapper class ─────────────────────────────────────────────────────────
   const wrapCls = [
     'bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex flex-col',
     isFullscreen ? 'fixed inset-0 z-[9999] rounded-none border-0 shadow-2xl overflow-hidden' : 'rounded-[20px] overflow-hidden',
   ].join(' ');
 
-  if (!editor) return <div className={wrapCls} style={{ minHeight }}><div className="flex-1 flex items-center justify-center text-xs text-[#747878]">Loading editor…</div></div>;
+  if (!editor || editor.isDestroyed) {
+    return (
+      <div className={wrapCls} style={{ minHeight }}>
+        <div className="flex-1 flex items-center justify-center text-xs text-[#747878]">Loading editor…</div>
+      </div>
+    );
+  }
+
+  // Stats
+  const wordCount = editor.storage?.characterCount?.words?.() ?? 0;
+  const charCount = editor.storage?.characterCount?.characters?.() ?? 0;
+
+  // ── Table helpers ─────────────────────────────────────────────────────────
+  const insertTable = () => {
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  };
+
+  // ── Format dropdown ───────────────────────────────────────────────────────
+  const FORMAT_OPTS = [
+    { lbl: 'Paragraph', cls: 'text-xs', action: () => { editor.chain().focus().setParagraph().run(); setShowFormatMenu(false); } },
+    { lbl: 'Heading 1', cls: 'text-lg font-black', action: () => { editor.chain().focus().toggleHeading({ level: 1 }).run(); setShowFormatMenu(false); } },
+    { lbl: 'Heading 2', cls: 'text-base font-bold', action: () => { editor.chain().focus().toggleHeading({ level: 2 }).run(); setShowFormatMenu(false); } },
+    { lbl: 'Heading 3', cls: 'text-sm font-semibold', action: () => { editor.chain().focus().toggleHeading({ level: 3 }).run(); setShowFormatMenu(false); } },
+  ];
+
+  const isTableActive = !editor.isDestroyed && editor.isActive('table');
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -997,7 +1003,7 @@ export default function RichTextEditor({
       )}
 
       {/* ── BUBBLE MENU (floating mini-toolbar on text select) ───────────── */}
-      {editor && mode !== 'preview' && (
+      {editor && !editor.isDestroyed && editor.view && mode !== 'preview' && (
         <BubbleMenu editor={editor}
           className="flex items-center gap-0.5 bg-[#1e1f22] dark:bg-[#f6ece6] rounded-xl p-1 shadow-2xl border border-[#383a40] dark:border-[#e2d8d2]">
           {[

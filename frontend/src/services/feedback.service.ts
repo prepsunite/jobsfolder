@@ -49,11 +49,27 @@ function saveLocalContacts(contacts: ContactMessage[]): void {
 export const feedbackService = {
   // --- QUESTION REPORTS ---
   submitQuestionReport: async (payload: SubmitReportPayload): Promise<QuestionReport> => {
-    let newReport: QuestionReport | null = null;
+    const reportId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('rep_' + Date.now());
+    const nowIso = new Date().toISOString();
+
+    const newReport: QuestionReport = {
+      id: reportId,
+      question_id: String(payload.questionId),
+      question_statement: payload.questionStatement,
+      company_slug: payload.companySlug,
+      topic_id: payload.topicId,
+      issue_type: payload.issueType,
+      details: payload.details,
+      reporter_email: payload.reporterEmail,
+      status: 'OPEN',
+      created_at: nowIso,
+    };
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('question_reports')
         .insert({
+          id: reportId,
           question_id: String(payload.questionId),
           question_statement: payload.questionStatement,
           company_slug: payload.companySlug || null,
@@ -62,43 +78,15 @@ export const feedbackService = {
           details: payload.details || null,
           reporter_email: payload.reporterEmail || null,
           status: 'OPEN',
-        })
-        .select('*')
-        .single();
+        });
 
       if (error) {
-        console.warn('[feedbackService.submitQuestionReport] Supabase error, falling back to local storage:', error);
-        throw error;
+        console.warn('[feedbackService.submitQuestionReport] Supabase insert warning:', error.message || error);
+      } else {
+        console.info('[feedbackService.submitQuestionReport] Report saved successfully to Supabase:', reportId);
       }
-
-      newReport = {
-        id: data.id,
-        question_id: data.question_id,
-        question_statement: data.question_statement,
-        company_slug: data.company_slug,
-        topic_id: data.topic_id,
-        issue_type: data.issue_type,
-        details: data.details,
-        reporter_email: data.reporter_email,
-        status: data.status,
-        admin_notes: data.admin_notes,
-        created_at: data.created_at,
-        resolved_at: data.resolved_at,
-      };
     } catch (err) {
-      console.info('[feedbackService.submitQuestionReport] Saving report locally only', err);
-      newReport = {
-        id: 'local_rep_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-        question_id: String(payload.questionId),
-        question_statement: payload.questionStatement,
-        company_slug: payload.companySlug,
-        topic_id: payload.topicId,
-        issue_type: payload.issueType,
-        details: payload.details,
-        reporter_email: payload.reporterEmail,
-        status: 'OPEN',
-        created_at: new Date().toISOString(),
-      };
+      console.warn('[feedbackService.submitQuestionReport] Network error submitting to Supabase:', err);
     }
 
     const existing = getLocalReports();
@@ -127,7 +115,9 @@ export const feedbackService = {
       }
 
       const { data, error } = await query;
-      if (!error && data) {
+      if (error) {
+        console.warn('[feedbackService.getQuestionReports] Supabase read error (check RLS permissions on question_reports):', error.message || error);
+      } else if (data) {
         supabaseReports = data.map((r: any) => ({
           id: r.id,
           question_id: r.question_id,
@@ -230,48 +220,38 @@ export const feedbackService = {
 
   // --- CONTACT MESSAGES ---
   submitContactMessage: async (payload: SubmitContactPayload): Promise<ContactMessage> => {
-    let newContact: ContactMessage | null = null;
-    
+    const contactId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('contact_' + Date.now());
+    const nowIso = new Date().toISOString();
+
+    const newContact: ContactMessage = {
+      id: contactId,
+      name: payload.name.trim(),
+      email: payload.email.trim().toLowerCase(),
+      subject: payload.subject.trim(),
+      message: payload.message.trim(),
+      status: 'NEW',
+      created_at: nowIso,
+    };
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('contact_messages')
         .insert({
+          id: contactId,
           name: payload.name.trim(),
           email: payload.email.trim().toLowerCase(),
           subject: payload.subject.trim(),
           message: payload.message.trim(),
           status: 'NEW',
-        })
-        .select('*')
-        .single();
+        });
 
       if (error) {
-        console.warn('[feedbackService.submitContactMessage] Supabase error, falling back to local storage:', error);
-        throw error;
+        console.warn('[feedbackService.submitContactMessage] Supabase insert warning:', error.message || error);
+      } else {
+        console.info('[feedbackService.submitContactMessage] Message saved successfully to Supabase:', contactId);
       }
-
-      newContact = {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        subject: data.subject,
-        message: data.message,
-        status: data.status,
-        admin_notes: data.admin_notes,
-        created_at: data.created_at,
-        resolved_at: data.resolved_at,
-      };
     } catch (err) {
-      console.info('[feedbackService.submitContactMessage] Saving message locally only', err);
-      newContact = {
-        id: 'local_contact_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-        name: payload.name.trim(),
-        email: payload.email.trim().toLowerCase(),
-        subject: payload.subject.trim(),
-        message: payload.message.trim(),
-        status: 'NEW',
-        created_at: new Date().toISOString(),
-      };
+      console.warn('[feedbackService.submitContactMessage] Network error submitting to Supabase:', err);
     }
 
     // Always save locally so Admin sees it immediately regardless of RLS read policies
@@ -301,7 +281,9 @@ export const feedbackService = {
       }
 
       const { data, error } = await query;
-      if (!error && data) {
+      if (error) {
+        console.warn('[feedbackService.getContactMessages] Supabase read error (check RLS permissions on contact_messages):', error.message || error);
+      } else if (data) {
         supabaseMessages = data.map((c: any) => ({
           id: c.id,
           name: c.name || 'Anonymous User',

@@ -190,6 +190,9 @@ export const experienceService = {
       college: req.college || 'Engineering College',
       year: req.year || 2026,
       difficulty: req.difficulty || 'MEDIUM',
+      verdict: 'SELECTED',
+      result: 'SELECTED',
+      rounds: [],
       overall_experience: req.content || '',
       tips: req.tips || '',
       status: 'PENDING',
@@ -203,7 +206,7 @@ export const experienceService = {
       .single();
 
     if (error) {
-      console.error('[experienceService.submitExperience] Supabase error:', error);
+      console.error('[experienceService.submitExperience] Supabase error:', error.message || error);
       throw error;
     }
 
