@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { progressService } from '@/services/progress.service';
+import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import * as Icons from 'lucide-react';
 
 export interface AptitudeTopic {
@@ -24,7 +26,7 @@ const getIcon = (iconName: string) => {
 
 export default function AptitudePage() {
   const { categorySlug = 'arithmetic-aptitude' } = useParams<{ categorySlug: string }>();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
@@ -111,6 +113,31 @@ export default function AptitudePage() {
     refetchOnWindowFocus: true,
     enabled: currentCategoryTopics.length > 0
   });
+
+  // Fetch questions for this category to compute live progress stats
+  const { data: categoryQuestions = [] } = useQuery({
+    queryKey: ['category-questions-stats', categorySlug],
+    queryFn: async () => {
+      if (!currentCategoryTopics.length) return [];
+      const topicIds = currentCategoryTopics.map((t) => t.id);
+      const { data, error } = await supabase
+        .from('topic_questions')
+        .select('id, difficulty, topic_id')
+        .in('topic_id', topicIds)
+        .eq('is_deleted', false);
+      if (error) {
+        console.warn('Failed to fetch category questions for stats:', error);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: currentCategoryTopics.length > 0,
+    staleTime: 60 * 1000,
+  });
+
+  const categoryStats = useMemo(() => {
+    return progressService.computeStats(categoryQuestions, user?.email);
+  }, [categoryQuestions, user?.email]);
 
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
     'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Practice basic arithmetic problems.', icon: Icons.Calculator },
@@ -260,6 +287,13 @@ export default function AptitudePage() {
         </div>
       </div>
 
+      {/* 🚀 LeetCode-style Aptitude Stats Widget */}
+      <AptitudeStatsWidget
+        stats={categoryStats}
+        title={`${currentCategoryInfo.title} Mastery & Progress`}
+        subtitle="Track your curriculum accuracy, difficulty breakdown, and daily streaks."
+      />
+
       <div className="flex items-center gap-2 overflow-x-auto p-1 scrollbar-none">
         {clusterList.map((cluster) => {
           const isActive = selectedCluster === cluster;
@@ -283,6 +317,7 @@ export default function AptitudePage() {
             const TopicIcon = topic.icon || Icons.Folder;
             const displayCount = liveCountMap[topic.id] ?? 0;
             const isHidden = topic.is_hidden;
+            const solvedCount = categoryStats.topicMastery[topic.id]?.solved ?? 0;
 
             return (
               <div key={topic.id} className="relative group">
@@ -304,6 +339,11 @@ export default function AptitudePage() {
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 pr-12">
+                    {solvedCount > 0 && (
+                      <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                        {solvedCount} Solved
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-[#FD4A32] group-hover:text-[#FD4A32] transition-colors">
                       <span>{displayCount} {displayCount === 1 ? 'Question' : 'Questions'}</span>
                       <Icons.ChevronRight className="w-3 h-3 text-[#868E96]" />

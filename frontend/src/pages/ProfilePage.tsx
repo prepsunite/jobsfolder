@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import QuestionCard from '@/components/QuestionCard';
@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
+import { progressService } from '@/services/progress.service';
+import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import { normalizeMathText } from '@/utils/questionParser';
@@ -63,6 +65,27 @@ export default function ProfilePage() {
   });
 
   const isUserPro = subData?.isPro ?? false;
+
+  // Fetch all questions metadata to compute user's lifetime aptitude stats
+  const { data: allQuestionsMeta = [] } = useQuery({
+    queryKey: ['profile-all-questions-meta'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('topic_questions')
+        .select('id, difficulty, topic_id')
+        .eq('is_deleted', false);
+      if (error) {
+        console.warn('Failed to fetch questions meta for profile stats:', error);
+        return [];
+      }
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const aptitudeStats = useMemo(() => {
+    return progressService.computeStats(allQuestionsMeta, user?.email);
+  }, [allQuestionsMeta, user?.email]);
 
   // TanStack Query: Bookmarked Exams
   const { data: bookmarkedExams = [] } = useQuery({
@@ -363,6 +386,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* 🚀 LeetCode-style Aptitude Stats Widget */}
+      <AptitudeStatsWidget
+        stats={aptitudeStats}
+        title="Overall Aptitude Mastery & Progress"
+        subtitle="Your lifetime question solving accuracy, difficulty distribution, and active streaks."
+      />
 
       {/* Navigation Tabs for Profile */}
       <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#242424] pb-2">

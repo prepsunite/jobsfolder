@@ -24,6 +24,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services/dataStore';
+import { progressService, type QuestionProgressRecord } from '@/services/progress.service';
 import { supabase } from '@/lib/supabase';
 import { safeJsonParse, normalizeMathText, generateQuestionFingerprint } from '@/utils/questionParser';
 
@@ -34,7 +35,7 @@ import ReportQuestionModal from '@/components/ReportQuestionModal';
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
   const { theme } = useTheme();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isDarkMode = theme === 'dark';
   const isAdmin = role === 'ADMIN';
 
@@ -53,10 +54,23 @@ export default function TopicQuestionsPage() {
   // Reactive state for Questions & Filters
   const [questions, setQuestions] = useState<TopicQuestionItem[]>([]);
   const [activeDifficulty, setActiveDifficulty] = useState<string>('ALL');
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [activeStatusFilter, setActiveStatusFilter] = useState<'ALL' | 'UNSOLVED' | 'SOLVED' | 'RETRY' | 'BOOKMARKED'>('ALL');
+  const [progressRecords, setProgressRecords] = useState<Record<string, QuestionProgressRecord>>(() =>
+    progressService.getAllRecords(user?.email)
+  );
+  const [wrongPicks, setWrongPicks] = useState<Record<string, string[]>>({});
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [savedQuestionIds, setSavedQuestionIds] = useState<string[]>(() => dataStore.getBookmarkedQuestionIds());
   const [reportingQuestion, setReportingQuestion] = useState<TopicQuestionItem | null>(null);
+
+  // Hydrate user progress from Supabase on mount / when user changes
+  useEffect(() => {
+    if (user?.email) {
+      progressService.hydrateFromSupabase(user.email).then(() => {
+        setProgressRecords(progressService.getAllRecords(user.email));
+      });
+    }
+  }, [user?.email]);
 
   // Admin Single Question Modal State
   const [showModal, setShowModal] = useState(false);
@@ -220,12 +234,39 @@ export default function TopicQuestionsPage() {
     loadQuestions();
   }, [loadQuestions]);
 
-  const handleSelectOption = (qId: string, optionKey: string) => {
-    setSelectedAnswers(prev => ({ ...prev, [qId]: optionKey }));
+  const handleSelectOption = async (q: TopicQuestionItem, optionKey: string) => {
+    const isCorrect = optionKey.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
+
+    // If incorrect, add to wrongPicks so it turns and stays RED until correct option is chosen
+    if (!isCorrect) {
+      setWrongPicks(prev => ({
+        ...prev,
+        [q.id]: Array.from(new Set([...(prev[q.id] || []), optionKey])),
+      }));
+    }
+
+    // Persist attempt in progressService (saves to localStorage + syncs to Supabase)
+    const { record } = await progressService.recordAttempt({
+      questionId: q.id,
+      topicId,
+      categorySlug,
+      difficulty: q.difficulty,
+      selectedOption: optionKey,
+      correctOption: q.correctAnswer,
+      userEmail: user?.email,
+    });
+
+    setProgressRecords(prev => ({ ...prev, [q.id]: record }));
   };
 
-  const toggleExplanation = (qId: string) => {
-    setRevealedExpl(prev => ({ ...prev, [qId]: !prev[qId] }));
+  const handleToggleReveal = (qId: string) => {
+    setRevealedExpl(prev => {
+      const nextState = !prev[qId];
+      if (nextState) {
+        progressService.markRevealed(qId, user?.email);
+      }
+      return { ...prev, [qId]: nextState };
+    });
   };
 
   const handleToggleBookmark = (qId: string) => {
@@ -608,10 +649,35 @@ export default function TopicQuestionsPage() {
     permanentNumber: q.questionNumber || (index + 1),
   }));
   
+  // Topic-level completion statistics
+  const topicTotalQuestions = roleFilteredQuestions.length;
+  const topicSolvedQuestions = roleFilteredQuestions.filter(q => progressRecords[q.id]?.isSolved).length;
+  const topicNeedsRetryQuestions = roleFilteredQuestions.filter(q => !progressRecords[q.id]?.isSolved && (progressRecords[q.id]?.wrongAttempts ?? 0) > 0).length;
+  const topicPercentage = topicTotalQuestions > 0 ? Math.round((topicSolvedQuestions / topicTotalQuestions) * 100) : 0;
+
   const filteredQuestions = roleFilteredQuestions.filter(q => {
-    if (activeDifficulty === 'ALL') return true;
-    const normDiff = q.difficultyLevel === 1 ? 'EASY' : q.difficultyLevel === 3 ? 'HARD' : (q.difficulty || 'MEDIUM').toUpperCase();
-    return normDiff === activeDifficulty;
+    // 1. Difficulty filter
+    if (activeDifficulty !== 'ALL') {
+      const normDiff = q.difficultyLevel === 1 ? 'EASY' : q.difficultyLevel === 3 ? 'HARD' : (q.difficulty || 'MEDIUM').toUpperCase();
+      if (normDiff !== activeDifficulty) return false;
+    }
+
+    // 2. Status filter
+    const prog = progressRecords[q.id];
+    if (activeStatusFilter === 'SOLVED') {
+      return prog?.isSolved;
+    }
+    if (activeStatusFilter === 'UNSOLVED') {
+      return !prog?.isSolved;
+    }
+    if (activeStatusFilter === 'RETRY') {
+      return !prog?.isSolved && (prog?.wrongAttempts ?? 0) > 0;
+    }
+    if (activeStatusFilter === 'BOOKMARKED') {
+      return savedQuestionIds.includes(q.id);
+    }
+
+    return true;
   });
 
   const totalPages = Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE);
@@ -689,6 +755,19 @@ export default function TopicQuestionsPage() {
             <p className="text-sm text-gray-700 dark:text-gray-300 font-sans mt-1">
               {foundTopic?.description || 'Filter questions by difficulty, test your answer with MCQ options, or view detailed step-by-step solutions.'}
             </p>
+
+            {/* Topic Progress Bar */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="w-44 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  style={{ width: `${topicPercentage}%` }}
+                />
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                {topicSolvedQuestions} / {topicTotalQuestions} Solved ({topicPercentage}%)
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center flex-wrap gap-2 shrink-0">
@@ -731,7 +810,7 @@ export default function TopicQuestionsPage() {
         </div>
       </div>
 
-      {/* 🎯 DIFFICULTY FILTER BAR & TOP PAGINATION & BULK ACTIONS */}
+      {/* 🎯 DIFFICULTY & STATUS FILTER BAR & TOP PAGINATION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-x-auto p-1">
         <div className="flex items-center flex-wrap gap-2.5">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -758,6 +837,35 @@ export default function TopicQuestionsPage() {
                     isActive
                       ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
                       : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Status Filter Tabs (LeetCode Style) */}
+          <div className="flex items-center gap-1 sm:pl-2 sm:border-l border-[#E9ECEF] dark:border-[#242424] flex-wrap">
+            {[
+              { id: 'ALL', label: 'All' },
+              { id: 'UNSOLVED', label: 'Unsolved' },
+              { id: 'SOLVED', label: `Solved (${topicSolvedQuestions})` },
+              ...(topicNeedsRetryQuestions > 0 ? [{ id: 'RETRY', label: `Needs Retry (${topicNeedsRetryQuestions})` }] : []),
+              { id: 'BOOKMARKED', label: 'Bookmarked' },
+            ].map((item) => {
+              const isActive = activeStatusFilter === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveStatusFilter(item.id as any);
+                    handlePageChange(1);
+                  }}
+                  className={`px-2 py-1 rounded-md text-[11px] font-display font-bold transition-all border ${
+                    isActive
+                      ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-xs'
+                      : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#FD4A32]/50'
                   }`}
                 >
                   {item.label}
@@ -857,10 +965,12 @@ export default function TopicQuestionsPage() {
           filteredQuestions
             .slice((currentPage - 1) * QUESTIONS_PER_PAGE, currentPage * QUESTIONS_PER_PAGE)
             .map((q, idx, arr) => {
-            const userSel = selectedAnswers[q.id];
-            const isExplVisible = revealedExpl[q.id];
+            const prog = progressRecords[q.id];
+            const isSolved = prog?.isSolved ?? false;
+            const isExplVisible = !!revealedExpl[q.id] || (prog?.isRevealed ?? false);
             const isSaved = savedQuestionIds.includes(q.id);
             const se = q.structuredExplanation;
+            const wrongOptions = wrongPicks[q.id] || [];
             
             // Passage Grouping Logic
             const currentPassage = se?.passage || '';
@@ -890,7 +1000,7 @@ export default function TopicQuestionsPage() {
                       : 'bg-white dark:bg-[#141414] border-[#D1D5DB] dark:border-[#3A3A3A] hover:border-[#9CA3AF] dark:hover:border-[#555555] text-[#121417] dark:text-[#FFFFFF]'
                   } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                 >
-                {/* Header Row: Question # Badge + Difficulty Badge + Admin Actions */}
+                {/* Header Row: Question # Badge + Difficulty Badge + Completion Status + Admin Actions */}
                 <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
                   <div className="flex items-center gap-2 flex-wrap">
                     {isAdmin && (
@@ -909,6 +1019,19 @@ export default function TopicQuestionsPage() {
 
                     {/* Color-coded Difficulty Badge */}
                     {getDifficultyBadge(q.difficulty, q.difficultyLevel)}
+
+                    {/* LeetCode-style Completion Status Badge */}
+                    {isSolved ? (
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-display font-extrabold text-[10px] tracking-wider border border-emerald-500/30 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>Solved</span>
+                      </span>
+                    ) : (prog?.wrongAttempts ?? 0) > 0 ? (
+                      <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 font-display font-bold text-[10px] tracking-wider border border-rose-500/30 flex items-center gap-1">
+                        <XCircle className="w-3 h-3 text-rose-500" />
+                        <span>Needs Retry</span>
+                      </span>
+                    ) : null}
 
                     {q.isHidden && (
                       <span className="text-[9px] font-display font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
@@ -967,46 +1090,47 @@ export default function TopicQuestionsPage() {
                   </pre>
                 )}
 
-                {/* MCQ Options List */}
+                {/* MCQ Options List (Active Learning Attempt Flow) */}
                 <div className="space-y-1.5 pl-1">
                   {q.options.map((opt) => {
                     const optId = opt.id || opt.key || 'A';
-                    const isSelected = userSel === optId;
-                    const isCorrect = optId === q.correctAnswer;
-                    
+                    const isCorrect = optId.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
+                    const wasWrong = wrongOptions.includes(optId) || (!isSolved && prog?.selectedOption === optId && !isCorrect);
+
                     let optionStyle = 'bg-[#F8F9FA] dark:bg-[#0C0C0C] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#444444]';
 
-                    if (userSel) {
-                      if (isSelected && isCorrect) {
-                        optionStyle = 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold';
-                      } else if (isSelected && !isCorrect) {
-                        optionStyle = 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
-                      } else if (!isSelected && isCorrect) {
-                        optionStyle = 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-semibold';
-                      }
+                    if (isSolved && isCorrect) {
+                      // Correctly solved: Green badge!
+                      optionStyle = 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs';
+                    } else if (wasWrong) {
+                      // Wrong pick: Stays RED until correct option is chosen!
+                      optionStyle = 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
+                    } else if (isExplVisible && isCorrect) {
+                      // Revealed via "Show Answer" button
+                      optionStyle = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-semibold';
                     }
 
                     return (
                       <button
                         key={optId}
-                        onClick={() => handleSelectOption(q.id, optId)}
+                        onClick={() => handleSelectOption(q, optId)}
                         className={`w-full flex items-center gap-2.5 p-2 rounded-md border text-xs text-left transition-all ${optionStyle}`}
                       >
                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center font-display font-bold text-[10px] shrink-0 ${
-                          isSelected
-                            ? isCorrect
-                              ? 'bg-emerald-500 text-white border-emerald-500'
-                              : 'bg-rose-500 text-white border-rose-500'
-                            : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555]'
+                          (isSolved && isCorrect) || (isExplVisible && isCorrect)
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : wasWrong
+                              ? 'bg-rose-500 text-white border-rose-500'
+                              : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555]'
                         }`}>
                           {optId}
                         </div>
                         <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
 
-                        {userSel && isCorrect && (
+                        {((isSolved && isCorrect) || (isExplVisible && isCorrect)) && (
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                         )}
-                        {userSel && isSelected && !isCorrect && (
+                        {wasWrong && !isSolved && (
                           <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                         )}
                       </button>
@@ -1018,16 +1142,18 @@ export default function TopicQuestionsPage() {
                 <div className="pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => toggleExplanation(q.id)}
+                      onClick={() => handleToggleReveal(q.id)}
                       className={`px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all flex items-center gap-1.5 ${
                         isExplVisible
                           ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white'
                           : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
-                      title="Reveal Solution & Explanation"
+                      title={isExplVisible ? 'Hide Solution' : 'Show Answer & Detailed Solution'}
                     >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      <span className="text-[10px] uppercase tracking-wider">Solution</span>
+                      <Eye className="w-3.5 h-3.5" />
+                      <span className="text-[10px] uppercase tracking-wider">
+                        {isExplVisible ? 'Hide Solution' : 'Show Answer & Solution'}
+                      </span>
                     </button>
 
                     <button
@@ -1051,11 +1177,17 @@ export default function TopicQuestionsPage() {
                     </button>
                   </div>
 
-                  {userSel && (
-                    <span className={`text-xs font-extrabold ${userSel === q.correctAnswer ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                      {userSel === q.correctAnswer ? '✓ Correct Answer!' : `✗ Incorrect (Correct: ${q.correctAnswer})`}
+                  {isSolved ? (
+                    <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Correct! Question Solved</span>
                     </span>
-                  )}
+                  ) : (prog?.wrongAttempts ?? 0) > 0 ? (
+                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Incorrect option. Re-calculate and try again!</span>
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* STEP-BY-STEP EXPLANATION ACCORDION (Enhanced for structured JSON) */}
