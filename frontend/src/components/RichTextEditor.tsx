@@ -316,38 +316,40 @@ export default function RichTextEditor({
   const updatingExternally = useRef(false);
 
   // ── TipTap Editor ────────────────────────────────────────────────────────
+  const extensions = React.useMemo(() => [
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3] },
+      bulletList: { keepMarks: true, keepAttributes: true },
+      orderedList: { keepMarks: true, keepAttributes: true },
+      link: false,
+      underline: false,
+    }),
+    Underline,
+    TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
+    TextStyle,
+    Color,
+    Highlight.configure({ multicolor: true }),
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: { class: 'tiptap-link', rel: 'noopener noreferrer' },
+    }),
+    ResizableImage.configure({ inline: false, allowBase64: true }),
+    Table.configure({ resizable: false }),
+    TableRow,
+    TableHeader,
+    TableCell,
+    TaskList,
+    TaskItem.configure({ nested: true }),
+    Superscript,
+    Subscript,
+    Placeholder.configure({ placeholder }),
+    CharacterCount,
+    TestCaseBox,
+  ], [placeholder]);
+
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        bulletList: { keepMarks: true, keepAttributes: true },
-        orderedList: { keepMarks: true, keepAttributes: true },
-        link: false,
-        underline: false,
-      }),
-      Underline,
-      TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: 'tiptap-link', rel: 'noopener noreferrer' },
-      }),
-      ResizableImage.configure({ inline: false, allowBase64: true }),
-      Table.configure({ resizable: false }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Superscript,
-      Subscript,
-      Placeholder.configure({ placeholder }),
-      CharacterCount,
-      TestCaseBox,
-    ],
-    content: parseToHTML(value),
+    extensions,
+    content: parseToHTML(value) || '<p></p>',
     onUpdate: ({ editor }) => {
       if (updatingExternally.current) return;
       const html = editor.getHTML();
