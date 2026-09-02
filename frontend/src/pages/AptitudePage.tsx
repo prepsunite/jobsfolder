@@ -299,9 +299,9 @@ export default function AptitudePage() {
         </div>
       </div>
 
-      {/* 🏷️ CLUSTER SUB-TOPIC PILLS + SEARCH BAR BESIDE THEM */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto p-1 scrollbar-none flex-1 min-w-0">
+      {/* 🏷️ CLUSTER SUB-TOPIC PILLS + COMPACT SEARCH BAR */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {clusterList.map((cluster) => {
             const isActive = selectedCluster === cluster;
             return (
@@ -320,22 +320,22 @@ export default function AptitudePage() {
           })}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
-            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
+        <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
+          <div className="relative w-48 sm:w-52">
+            <Icons.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
             <input
               type="text"
               placeholder="Search sub-topics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
+              className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
             />
           </div>
 
           {isAdmin && (
             <button
               onClick={(e) => openEditor(e)}
-              className="px-3 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black rounded-md text-xs font-bold shrink-0 hover:bg-[#333] transition cursor-pointer"
+              className="px-2.5 py-1 bg-[#121417] dark:bg-white text-white dark:text-black rounded-md text-xs font-bold shrink-0 hover:bg-[#333] transition cursor-pointer whitespace-nowrap"
             >
               + Add Topic
             </button>
