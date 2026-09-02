@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { auditService } from '@/services/audit.service';
+import { rateLimiter } from '@/utils/rateLimiter';
 import type {
   QuestionReport,
   ContactMessage,
@@ -49,6 +50,33 @@ function saveLocalContacts(contacts: ContactMessage[]): void {
 export const feedbackService = {
   // --- QUESTION REPORTS ---
   submitQuestionReport: async (payload: SubmitReportPayload): Promise<QuestionReport> => {
+    // 1. Client-Side Rate Limit & Cooldown Check
+    const rateCheck = rateLimiter.check('question_report');
+    if (!rateCheck.allowed) {
+      throw new Error(rateCheck.reason);
+    }
+
+    // 2. Database Pre-flight Check (Server-side 24h limit)
+    if (payload.reporterEmail && payload.reporterEmail.trim()) {
+      try {
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count, error } = await supabase
+          .from('question_reports')
+          .select('id', { count: 'exact', head: true })
+          .eq('reporter_email', payload.reporterEmail.trim().toLowerCase())
+          .gte('created_at', oneDayAgo);
+
+        if (!error && count !== null && count >= 5) {
+          throw new Error('Daily report limit reached (5/5) for this email. Thank you for your feedback!');
+        }
+      } catch (checkErr: any) {
+        if (checkErr.message?.includes('Daily report limit reached')) {
+          throw checkErr;
+        }
+        console.warn('[feedbackService.submitQuestionReport] DB rate limit check notice:', checkErr);
+      }
+    }
+
     const reportId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('rep_' + Date.now());
     const nowIso = new Date().toISOString();
 
@@ -88,6 +116,9 @@ export const feedbackService = {
     } catch (err) {
       console.warn('[feedbackService.submitQuestionReport] Network error submitting to Supabase:', err);
     }
+
+    // Record submission to update cooldown and quota counters
+    rateLimiter.record('question_report');
 
     const existing = getLocalReports();
     saveLocalReports([newReport, ...existing]);
@@ -220,13 +251,39 @@ export const feedbackService = {
 
   // --- CONTACT MESSAGES ---
   submitContactMessage: async (payload: SubmitContactPayload): Promise<ContactMessage> => {
+    // 1. Client-Side Rate Limit & Cooldown Check
+    const rateCheck = rateLimiter.check('contact_message');
+    if (!rateCheck.allowed) {
+      throw new Error(rateCheck.reason);
+    }
+
+    // 2. Database Pre-flight Check (Server-side 24h limit)
+    const normalizedEmail = payload.email.trim().toLowerCase();
+    try {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count, error } = await supabase
+        .from('contact_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('email', normalizedEmail)
+        .gte('created_at', oneDayAgo);
+
+      if (!error && count !== null && count >= 3) {
+        throw new Error('Daily inquiry limit reached (3/3) for this email. For urgent assistance, please contact prepsunite@gmail.com directly.');
+      }
+    } catch (checkErr: any) {
+      if (checkErr.message?.includes('Daily inquiry limit reached')) {
+        throw checkErr;
+      }
+      console.warn('[feedbackService.submitContactMessage] DB rate limit check notice:', checkErr);
+    }
+
     const contactId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('contact_' + Date.now());
     const nowIso = new Date().toISOString();
 
     const newContact: ContactMessage = {
       id: contactId,
       name: payload.name.trim(),
-      email: payload.email.trim().toLowerCase(),
+      email: normalizedEmail,
       subject: payload.subject.trim(),
       message: payload.message.trim(),
       status: 'NEW',
@@ -239,7 +296,7 @@ export const feedbackService = {
         .insert({
           id: contactId,
           name: payload.name.trim(),
-          email: payload.email.trim().toLowerCase(),
+          email: normalizedEmail,
           subject: payload.subject.trim(),
           message: payload.message.trim(),
           status: 'NEW',
@@ -253,6 +310,9 @@ export const feedbackService = {
     } catch (err) {
       console.warn('[feedbackService.submitContactMessage] Network error submitting to Supabase:', err);
     }
+
+    // Record submission to update cooldown and quota counters
+    rateLimiter.record('contact_message');
 
     // Always save locally so Admin sees it immediately regardless of RLS read policies
     const existing = getLocalContacts();

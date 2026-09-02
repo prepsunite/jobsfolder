@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle, ShieldCheck, Loader2, ShieldAlert } from 'lucide-react';
 import { feedbackService } from '@/services/feedback.service';
+import { rateLimiter, type RateLimitStatus } from '@/utils/rateLimiter';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState(''); // Anti-bot honeypot trap
+  const [rateStatus, setRateStatus] = useState<RateLimitStatus>(() => rateLimiter.check('contact_message'));
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -13,9 +17,31 @@ export default function ContactPage() {
     message: '',
   });
 
+  // Re-check rate limit status on mount and when submitted changes
+  useEffect(() => {
+    setRateStatus(rateLimiter.check('contact_message'));
+  }, [submitted]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Invisible Anti-Bot Honeypot Trap
+    // Bots automatically populate hidden inputs; humans do not see or touch them.
+    if (honeypot.trim()) {
+      console.warn('[ContactPage] Bot submission intercepted via honeypot trap.');
+      setSubmitted(true); // Fake success to disarm automated spam scrapers
+      return;
+    }
+
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) return;
+
+    // 2. Client-side Rate Limit / Cooldown check
+    const currentLimit = rateLimiter.check('contact_message');
+    if (!currentLimit.allowed) {
+      setErrorMsg(currentLimit.reason || 'Submission limit exceeded. Please try again later.');
+      setRateStatus(currentLimit);
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMsg(null);
@@ -28,6 +54,7 @@ export default function ContactPage() {
         message: form.message,
       });
       setSubmitted(true);
+      setRateStatus(rateLimiter.check('contact_message'));
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to send message. Please try again or email us directly.');
     } finally {
@@ -121,6 +148,28 @@ export default function ContactPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3.5">
+              {/* Invisible Bot Honeypot Trap (Automated bots will fill this; humans will not see it) */}
+              <div aria-hidden="true" style={{ display: 'none', position: 'absolute', left: '-9999px' }}>
+                <label htmlFor="company_fax_website">Leave this field blank</label>
+                <input
+                  type="text"
+                  id="company_fax_website"
+                  name="company_fax_website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
+
+              {/* Anti-Spam / Daily Quota Indicator */}
+              <div className="flex items-center justify-between pb-1 border-b border-[#E9ECEF] dark:border-[#242424] text-[10px] text-[#868E96] dark:text-[#555555]">
+                <span>Anti-Spam Shield Active</span>
+                <span className={`font-mono font-bold ${rateStatus.remainingToday === 0 ? 'text-rose-500' : 'text-[#121417] dark:text-[#FFFFFF]'}`}>
+                  Quota: {rateStatus.remainingToday} of {rateStatus.maxDaily} inquiries remaining today
+                </span>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
                   <label className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] uppercase block">Your Full Name</label>
@@ -173,16 +222,17 @@ export default function ContactPage() {
                 />
               </div>
 
-              {errorMsg && (
-                <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium">
-                  {errorMsg}
+              {(!rateStatus.allowed || errorMsg) && (
+                <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-start gap-2">
+                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{errorMsg || rateStatus.reason}</span>
                 </div>
               )}
 
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full py-2.5 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                disabled={isSubmitting || !rateStatus.allowed}
+                className="w-full py-2.5 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { feedbackService } from '@/services/feedback.service';
 import type { ReportIssueType } from '@/types/feedback';
-import { AlertTriangle, CheckCircle2, X, Send, Loader2 } from 'lucide-react';
+import { rateLimiter, type RateLimitStatus } from '@/utils/rateLimiter';
+import { AlertTriangle, CheckCircle2, X, Send, Loader2, ShieldAlert } from 'lucide-react';
 
 interface ReportQuestionModalProps {
   isOpen: boolean;
@@ -62,17 +63,41 @@ export default function ReportQuestionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
+  const [rateStatus, setRateStatus] = useState<RateLimitStatus>(() => rateLimiter.check('question_report'));
+
+  useEffect(() => {
+    if (isOpen) {
+      setRateStatus(rateLimiter.check('question_report'));
+    }
+  }, [isOpen, isSubmitted]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Bot Honeypot Trap
+    if (honeypot.trim()) {
+      console.warn('[ReportQuestionModal] Bot submission dropped via honeypot.');
+      setIsSubmitted(true);
+      return;
+    }
+
+    // 2. Client-side Rate Limit check
+    const currentLimit = rateLimiter.check('question_report');
+    if (!currentLimit.allowed) {
+      setErrorMsg(currentLimit.reason || 'Report limit reached. Please try again later.');
+      setRateStatus(currentLimit);
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg(null);
 
     try {
       await feedbackService.submitQuestionReport({
-        questionId,
+        questionId: String(questionId),
         questionStatement,
         companySlug,
         topicId,
@@ -82,6 +107,7 @@ export default function ReportQuestionModal({
       });
 
       setIsSubmitted(true);
+      setRateStatus(rateLimiter.check('question_report'));
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to submit report. Please try again.');
     } finally {
@@ -197,6 +223,20 @@ export default function ReportQuestionModal({
               />
             </div>
 
+            {/* Invisible Bot Honeypot Trap */}
+            <div aria-hidden="true" style={{ display: 'none', position: 'absolute', left: '-9999px' }}>
+              <label htmlFor="hp_question_report">Leave this field blank</label>
+              <input
+                type="text"
+                id="hp_question_report"
+                name="hp_question_report"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             {/* Email */}
             <div className="space-y-1">
               <label className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555] block">
@@ -211,10 +251,19 @@ export default function ReportQuestionModal({
               />
             </div>
 
-            {errorMsg && (
-              <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
-                {errorMsg}
-              </p>
+            {/* Anti-Spam Quota Status */}
+            <div className="flex items-center justify-between text-[10px] text-[#868E96] dark:text-[#555555] pt-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+              <span>Anti-Spam Quota</span>
+              <span className={`font-mono font-bold ${rateStatus.remainingToday === 0 ? 'text-rose-500' : 'text-[#121417] dark:text-[#FFFFFF]'}`}>
+                {rateStatus.remainingToday} of {rateStatus.maxDaily} reports remaining today
+              </span>
+            </div>
+
+            {(!rateStatus.allowed || errorMsg) && (
+              <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-start gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{errorMsg || rateStatus.reason}</span>
+              </div>
             )}
 
             {/* Action Buttons */}
@@ -228,8 +277,8 @@ export default function ReportQuestionModal({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="px-5 py-2 rounded-full bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
+                disabled={isSubmitting || !rateStatus.allowed}
+                className="px-5 py-2 rounded-full bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
