@@ -810,129 +810,142 @@ export default function TopicQuestionsPage() {
         </div>
       </div>
 
-      {/* 🎯 DIFFICULTY & STATUS FILTER BAR & TOP PAGINATION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-x-auto p-1">
-        <div className="flex items-center flex-wrap gap-2.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] flex items-center gap-1 mr-1">
-              <Filter className="w-3 h-3" />
-              <span>Difficulty:</span>
-            </span>
+      {/* 🎯 FILTER BAR & CENTERED PAGINATION */}
+      <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
+        {/* Filters Row */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center flex-wrap gap-4">
+            {/* Difficulty Filter Group */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555] flex items-center gap-1">
+                <Filter className="w-3 h-3 text-[#FD4A32]" />
+                <span>Difficulty:</span>
+              </span>
+              <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                {[
+                  { id: 'ALL', label: 'All Levels' },
+                  { id: 'EASY', label: 'Easy' },
+                  { id: 'MEDIUM', label: 'Medium' },
+                  { id: 'HARD', label: 'Hard' },
+                ].map((item) => {
+                  const isActive = activeDifficulty === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveDifficulty(item.id);
+                        handlePageChange(1);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            {[
-              { id: 'ALL', label: 'All Levels' },
-              { id: 'EASY', label: 'Easy' },
-              { id: 'MEDIUM', label: 'Medium' },
-              { id: 'HARD', label: 'Hard' },
-            ].map((item) => {
-              const isActive = activeDifficulty === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveDifficulty(item.id);
-                    handlePageChange(1);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-xs font-display font-bold transition-all border ${
-                    isActive
-                      ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                      : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
+            {/* Status Filter Group */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                Status:
+              </span>
+              <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-wrap">
+                {[
+                  { id: 'ALL', label: 'All' },
+                  { id: 'UNSOLVED', label: 'Unsolved' },
+                  { id: 'SOLVED', label: `Solved (${topicSolvedQuestions})` },
+                  ...(topicNeedsRetryQuestions > 0 ? [{ id: 'RETRY', label: `Needs Retry (${topicNeedsRetryQuestions})` }] : []),
+                  { id: 'BOOKMARKED', label: 'Bookmarked' },
+                ].map((item) => {
+                  const isActive = activeStatusFilter === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveStatusFilter(item.id as any);
+                        handlePageChange(1);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#FD4A32] text-white shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Status Filter Tabs (LeetCode Style) */}
-          <div className="flex items-center gap-1 sm:pl-2 sm:border-l border-[#E9ECEF] dark:border-[#242424] flex-wrap">
-            {[
-              { id: 'ALL', label: 'All' },
-              { id: 'UNSOLVED', label: 'Unsolved' },
-              { id: 'SOLVED', label: `Solved (${topicSolvedQuestions})` },
-              ...(topicNeedsRetryQuestions > 0 ? [{ id: 'RETRY', label: `Needs Retry (${topicNeedsRetryQuestions})` }] : []),
-              { id: 'BOOKMARKED', label: 'Bookmarked' },
-            ].map((item) => {
-              const isActive = activeStatusFilter === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveStatusFilter(item.id as any);
-                    handlePageChange(1);
-                  }}
-                  className={`px-2 py-1 rounded-md text-[11px] font-display font-bold transition-all border ${
-                    isActive
-                      ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-xs'
-                      : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#FD4A32]/50'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Admin Bulk Actions */}
+          {isAdmin && filteredQuestions.length > 0 && (
+            <div className="flex items-center gap-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={selectedQuestionIds.size > 0 && selectedQuestionIds.size === filteredQuestions.length}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                />
+                <span className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
+                  Select All
+                </span>
+              </label>
 
-          {/* 📄 TOP COMPACT PAGINATION (Prev / Page X of Y / Next) */}
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1.5 sm:ml-2 sm:pl-3 sm:border-l border-[#E9ECEF] dark:border-[#242424]">
+              {selectedQuestionIds.size > 0 && (
+                <>
+                  <div className="w-px h-4 bg-[#E9ECEF] dark:bg-[#242424]"></div>
+                  <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555]">
+                    {selectedQuestionIds.size} selected
+                  </span>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-xs font-display font-bold transition-colors flex items-center gap-1 border border-rose-500/20 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Delete Selected</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 📄 CENTERED PAGINATION IN THE MIDDLE */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424]">
+            <div className="inline-flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
                 aria-label="Previous Page"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Prev</span>
               </button>
 
-              <span className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
-                {currentPage} / {totalPages}
+              <span className="px-3.5 py-1.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
+                Page {currentPage} of {totalPages}
               </span>
 
               <button
                 onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
                 aria-label="Next Page"
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          )}
-        </div>
-
-        {isAdmin && filteredQuestions.length > 0 && (
-          <div className="flex items-center gap-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={selectedQuestionIds.size > 0 && selectedQuestionIds.size === filteredQuestions.length}
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
-              />
-              <span className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
-                Select All
-              </span>
-            </label>
-
-            {selectedQuestionIds.size > 0 && (
-              <>
-                <div className="w-px h-4 bg-[#E9ECEF] dark:bg-[#242424]"></div>
-                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555]">
-                  {selectedQuestionIds.size} selected
-                </span>
-                <button
-                  onClick={handleBulkDelete}
-                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-xs font-display font-bold transition-colors flex items-center gap-1 border border-rose-500/20"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  <span>Delete Selected</span>
-                </button>
-              </>
-            )}
           </div>
         )}
       </div>
