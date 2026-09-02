@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Target, Zap } from 'lucide-react';
+import { Flame, Target, Zap, Brain } from 'lucide-react';
 import type { ProgressSummaryStats } from '@/services/progress.service';
 
 interface AptitudeStatsWidgetProps {
@@ -14,6 +14,7 @@ interface AptitudeStatsWidgetProps {
 export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   stats,
   title = 'Aptitude Mastery',
+  subtitle,
   className = '',
   variant = 'card',
   showBadges = true,
@@ -32,16 +33,27 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
     streakDays,
   } = stats;
 
-  const totalPercentage = totalQuestions > 0 ? Math.round((totalSolved / totalQuestions) * 100) : 0;
-  const easyPct = easyTotal > 0 ? Math.round((easySolved / easyTotal) * 100) : 0;
-  const mediumPct = mediumTotal > 0 ? Math.round((mediumSolved / mediumTotal) * 100) : 0;
-  const hardPct = hardTotal > 0 ? Math.round((hardSolved / hardTotal) * 100) : 0;
+  // Percentage calculations with subtle precision for early progress (< 1%)
+  const rawPct = totalQuestions > 0 ? (totalSolved / totalQuestions) * 100 : 0;
+  const displayPct =
+    totalSolved === 0
+      ? '0%'
+      : rawPct < 0.1
+      ? '<0.1%'
+      : rawPct < 1
+      ? `${rawPct.toFixed(1)}%`
+      : `${Math.round(rawPct)}%`;
 
-  // Mini SVG Donut Dimensions
-  const radius = 24;
-  const strokeWidth = 5.5;
+  const easyPct = easyTotal > 0 ? Math.min(100, Math.round((easySolved / easyTotal) * 100)) : 0;
+  const mediumPct = mediumTotal > 0 ? Math.min(100, Math.round((mediumSolved / mediumTotal) * 100)) : 0;
+  const hardPct = hardTotal > 0 ? Math.min(100, Math.round((hardSolved / hardTotal) * 100)) : 0;
+
+  // Refined SVG Donut Dimensions
+  const radius = 28;
+  const strokeWidth = 4.5;
   const circumference = 2 * Math.PI * radius;
 
+  // Arc segments based on solved proportion
   const easyPortion = totalQuestions > 0 ? (easySolved / totalQuestions) * circumference : 0;
   const mediumPortion = totalQuestions > 0 ? (mediumSolved / totalQuestions) * circumference : 0;
   const hardPortion = totalQuestions > 0 ? (hardSolved / totalQuestions) * circumference : 0;
@@ -53,24 +65,188 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   const mediumRotation = totalQuestions > 0 ? (easySolved / totalQuestions) * 360 : 0;
   const hardRotation = totalQuestions > 0 ? ((easySolved + mediumSolved) / totalQuestions) * 360 : 0;
 
-  const containerClasses =
-    variant === 'embedded'
-      ? `transition-colors ${className}`
-      : `p-3.5 sm:p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs transition-colors ${className}`;
+  // Embedded view for Aptitude Category Banner
+  if (variant === 'embedded') {
+    return (
+      <div className={`transition-colors ${className}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Donut + Counts */}
+          <div className="flex items-center gap-3.5 shrink-0">
+            <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
+                <circle
+                  cx="35"
+                  cy="35"
+                  r={radius}
+                  className="stroke-[#E9ECEF] dark:stroke-[#262626]"
+                  strokeWidth={strokeWidth}
+                  fill="none"
+                />
+                {easySolved > 0 && (
+                  <circle
+                    cx="35"
+                    cy="35"
+                    r={radius}
+                    className="stroke-emerald-500 transition-all duration-700 ease-out"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={easyDashOffset}
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                )}
+                {mediumSolved > 0 && (
+                  <circle
+                    cx="35"
+                    cy="35"
+                    r={radius}
+                    className="stroke-amber-500 transition-all duration-700 ease-out"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={mediumDashOffset}
+                    strokeLinecap="round"
+                    fill="none"
+                    style={{ transformOrigin: 'center', transform: `rotate(${mediumRotation}deg)` }}
+                  />
+                )}
+                {hardSolved > 0 && (
+                  <circle
+                    cx="35"
+                    cy="35"
+                    r={radius}
+                    className="stroke-rose-500 transition-all duration-700 ease-out"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={hardDashOffset}
+                    strokeLinecap="round"
+                    fill="none"
+                    style={{ transformOrigin: 'center', transform: `rotate(${hardRotation}deg)` }}
+                  />
+                )}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="font-display font-black text-xs text-[#121417] dark:text-white leading-none">
+                  {totalSolved}
+                </span>
+                <span className="text-[7px] font-bold uppercase tracking-wider text-[#868E96] dark:text-[#777777] leading-none mt-0.5">
+                  Solved
+                </span>
+              </div>
+            </div>
 
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-display font-extrabold text-sm text-[#121417] dark:text-white">
+                  {totalSolved}
+                </span>
+                <span className="text-xs text-[#868E96] dark:text-[#666666]">
+                  / {totalQuestions.toLocaleString()} Solved
+                </span>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/5 text-[#868E96] dark:text-[#777777]">
+                  {displayPct}
+                </span>
+              </div>
+              <div className="text-[11px] font-display font-semibold text-[#868E96] dark:text-[#777777] truncate">
+                {title}
+              </div>
+            </div>
+          </div>
+
+          {/* Difficulty progress bars */}
+          <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Easy</span>
+                <span className="text-[#868E96] dark:text-[#666666]">{easySolved}/{easyTotal}</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${easyPct}%` }} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                <span className="font-display font-bold text-amber-600 dark:text-amber-400">Med</span>
+                <span className="text-[#868E96] dark:text-[#666666]">{mediumSolved}/{mediumTotal}</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${mediumPct}%` }} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
+                <span className="text-[#868E96] dark:text-[#666666]">{hardSolved}/{hardTotal}</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                <div className="h-full bg-rose-500 rounded-full transition-all duration-500" style={{ width: `${hardPct}%` }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Card View (Profile Page & Primary Dashboard)
   return (
-    <div className={containerClasses}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* 1. Left: Compact Donut + Counts */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 60 60">
+    <div
+      className={`rounded-2xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs transition-all ${className}`}
+    >
+      {/* 1. Header Bar: Icon + Title + Subtitle + Micro Badges */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-[#E9ECEF] dark:border-[#222222]">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center shrink-0 shadow-2xs">
+            <Brain className="w-4.5 h-4.5 text-[#FD4A32]" />
+          </div>
+          <div>
+            <h3 className="font-display font-extrabold text-sm sm:text-base text-[#121417] dark:text-white tracking-tight">
+              {title}
+            </h3>
+            {subtitle && (
+              <p className="text-[11px] text-[#868E96] dark:text-[#777777] font-sans">
+                {subtitle}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Badges in header */}
+        {showBadges && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-[11px] font-display font-bold">
+              <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+              <span>{streakDays}d Streak</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-400 text-[11px] font-display font-bold">
+              <Target className="w-3.5 h-3.5 text-blue-500" />
+              <span>{accuracyRate > 0 ? `${accuracyRate}%` : '—'} Accuracy</span>
+            </div>
+
+            {firstTryAccuracyRate > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-display font-bold">
+                <Zap className="w-3 h-3 fill-emerald-500 text-emerald-500" />
+                <span>{firstTryAccuracyRate}% 1st Try</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 2. Content Row: Donut Metric + 3 Difficulty Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        {/* Left Metric Hero: Radial Gauge + Count (4 cols) */}
+        <div className="lg:col-span-4 flex items-center gap-4 p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF]/70 dark:border-[#242424]">
+          <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
               {/* Background Track */}
               <circle
-                cx="30"
-                cy="30"
+                cx="35"
+                cy="35"
                 r={radius}
-                className="stroke-[#E9ECEF] dark:stroke-[#262626]"
+                className="stroke-[#E9ECEF] dark:stroke-[#2B2B2B]"
                 strokeWidth={strokeWidth}
                 fill="none"
               />
@@ -78,8 +254,8 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
               {/* Easy Arc */}
               {easySolved > 0 && (
                 <circle
-                  cx="30"
-                  cy="30"
+                  cx="35"
+                  cy="35"
                   r={radius}
                   className="stroke-emerald-500 transition-all duration-700 ease-out"
                   strokeWidth={strokeWidth}
@@ -93,8 +269,8 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
               {/* Medium Arc */}
               {mediumSolved > 0 && (
                 <circle
-                  cx="30"
-                  cy="30"
+                  cx="35"
+                  cy="35"
                   r={radius}
                   className="stroke-amber-500 transition-all duration-700 ease-out"
                   strokeWidth={strokeWidth}
@@ -112,8 +288,8 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
               {/* Hard Arc */}
               {hardSolved > 0 && (
                 <circle
-                  cx="30"
-                  cy="30"
+                  cx="35"
+                  cy="35"
                   r={radius}
                   className="stroke-rose-500 transition-all duration-700 ease-out"
                   strokeWidth={strokeWidth}
@@ -129,110 +305,105 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
               )}
             </svg>
 
-            <span className="absolute font-display font-black text-[11px] text-[#121417] dark:text-[#FFFFFF]">
-              {totalPercentage}%
-            </span>
-          </div>
-
-          <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-display font-black text-base text-[#121417] dark:text-[#FFFFFF] leading-none">
+            {/* In center of ring: Hero Solved Number instead of glaring 0% */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+              <span className="font-display font-black text-sm sm:text-base text-[#121417] dark:text-white leading-none">
                 {totalSolved}
               </span>
-              <span className="text-xs font-bold text-[#868E96] dark:text-[#666666]">
-                / {totalQuestions} Solved
+              <span className="text-[7.5px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#777777] leading-none mt-0.5">
+                Solved
               </span>
             </div>
-            <div className="text-[11px] font-display font-semibold text-[#868E96] dark:text-[#777777] truncate">
-              {title}
+          </div>
+
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="font-display font-black text-xl text-[#121417] dark:text-white">
+                {totalSolved}
+              </span>
+              <span className="text-xs text-[#868E96] dark:text-[#777777]">
+                / {totalQuestions.toLocaleString()} Total
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-display font-bold bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                {displayPct} Mastered
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 2. Middle: Side-by-Side 3 Difficulty Progress Bars */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-4 flex-1 max-w-xl">
-          {/* Easy */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-              <span className="font-display font-extrabold text-emerald-600 dark:text-emerald-400 uppercase">
+        {/* Right: 3 Refined Difficulty Cards (8 cols) */}
+        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Easy Card */}
+          <div className="p-3 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF]/70 dark:border-[#242424] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-display font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Easy
               </span>
-              <span className="font-bold text-[#868E96] dark:text-[#666666]">
-                {easySolved}/{easyTotal}
+              <span className="text-[11px] font-mono font-bold text-[#121417] dark:text-white">
+                {easySolved}
+                <span className="text-[#868E96] dark:text-[#666666] font-normal"> / {easyTotal.toLocaleString()}</span>
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#2B2B2B] overflow-hidden">
               <div
                 className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                 style={{ width: `${easyPct}%` }}
               />
             </div>
+            <div className="text-right text-[9px] font-mono text-[#868E96] dark:text-[#666666]">
+              {easyPct}% Completed
+            </div>
           </div>
 
-          {/* Medium */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-              <span className="font-display font-extrabold text-amber-600 dark:text-amber-400 uppercase">
-                Med
+          {/* Medium Card */}
+          <div className="p-3 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF]/70 dark:border-[#242424] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-display font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Medium
               </span>
-              <span className="font-bold text-[#868E96] dark:text-[#666666]">
-                {mediumSolved}/{mediumTotal}
+              <span className="text-[11px] font-mono font-bold text-[#121417] dark:text-white">
+                {mediumSolved}
+                <span className="text-[#868E96] dark:text-[#666666] font-normal"> / {mediumTotal.toLocaleString()}</span>
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#2B2B2B] overflow-hidden">
               <div
                 className="h-full bg-amber-500 rounded-full transition-all duration-500"
                 style={{ width: `${mediumPct}%` }}
               />
             </div>
+            <div className="text-right text-[9px] font-mono text-[#868E96] dark:text-[#666666]">
+              {mediumPct}% Completed
+            </div>
           </div>
 
-          {/* Hard */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-              <span className="font-display font-extrabold text-rose-600 dark:text-rose-400 uppercase">
+          {/* Hard Card */}
+          <div className="p-3 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF]/70 dark:border-[#242424] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-display font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                 Hard
               </span>
-              <span className="font-bold text-[#868E96] dark:text-[#666666]">
-                {hardSolved}/{hardTotal}
+              <span className="text-[11px] font-mono font-bold text-[#121417] dark:text-white">
+                {hardSolved}
+                <span className="text-[#868E96] dark:text-[#666666] font-normal"> / {hardTotal.toLocaleString()}</span>
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#2B2B2B] overflow-hidden">
               <div
                 className="h-full bg-rose-500 rounded-full transition-all duration-500"
                 style={{ width: `${hardPct}%` }}
               />
             </div>
+            <div className="text-right text-[9px] font-mono text-[#868E96] dark:text-[#666666]">
+              {hardPct}% Completed
+            </div>
           </div>
         </div>
-
-        {/* 3. Right: Compact Performance Badges */}
-        {showBadges && (
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-              <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              <span className="text-[11px] font-display font-black">
-                {streakDays}d Streak
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
-              <Target className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-[11px] font-display font-black">
-                {accuracyRate}% Acc
-              </span>
-            </div>
-
-            {firstTryAccuracyRate > 0 && (
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                <Zap className="w-3 h-3 fill-emerald-500 text-emerald-500" />
-                <span className="text-[11px] font-display font-black">
-                  {firstTryAccuracyRate}% 1st
-                </span>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
