@@ -23,7 +23,6 @@ import {
   Bookmark,
   CheckCircle2,
   XCircle,
-  Plus,
   ArrowRight,
   Trash2,
   Edit3,
@@ -33,11 +32,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   Activity,
-  CreditCard,
-  ShoppingBag,
   AlertTriangle,
   Mail,
-  MessageSquare
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
