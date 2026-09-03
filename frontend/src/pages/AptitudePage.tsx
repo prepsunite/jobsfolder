@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
-import FormulaCheatSheetModal from '@/components/FormulaCheatSheetModal';
+import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import {
   Folder,
   Calculator,
@@ -77,7 +77,7 @@ export default function AptitudePage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
-  const [showCheatSheetModal, setShowCheatSheetModal] = useState(false);
+  const [selectedCheatcodeTopic, setSelectedCheatcodeTopic] = useState<AptitudeTopic | null>(null);
 
   // New Admin UI states
   const [isEditing, setIsEditing] = useState(false);
@@ -335,18 +335,6 @@ export default function AptitudePage() {
             <p className="text-xs text-gray-600 dark:text-gray-400 font-sans mt-0.5">
               {currentCategoryInfo.subtitle}
             </p>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setShowCheatSheetModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] border border-[#FD4A32]/25 text-xs font-display font-bold transition-all cursor-pointer shadow-2xs"
-                title="Export formula cheat sheet as PDF"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Export Cheat Sheet (PDF)</span>
-              </button>
-            </div>
           </div>
 
           <div className="flex-1 lg:max-w-2xl">
@@ -434,6 +422,20 @@ export default function AptitudePage() {
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 pr-12">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedCheatcodeTopic(topic);
+                      }}
+                      className="flex items-center gap-1 text-[10px] font-display font-bold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 px-2 py-1 rounded border border-[#FD4A32]/25 transition-colors cursor-pointer shadow-2xs z-10"
+                      title={`Open ${topic.name} Cheatcode & Formulas`}
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      <span>Cheatcode</span>
+                    </button>
+
                     {solvedCount > 0 && (
                       <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                         {solvedCount} Solved
@@ -511,14 +513,17 @@ export default function AptitudePage() {
         </div>
       )}
 
-      {/* 📖 Formula Cheat Sheet Modal */}
-      <FormulaCheatSheetModal
-        isOpen={showCheatSheetModal}
-        onClose={() => setShowCheatSheetModal(false)}
-        categoryTitle={currentCategoryInfo.title}
-        categorySlug={categorySlug}
-        topics={rawTopics}
-      />
+      {/* 📖 Topic Specific Cheatcode & Formula Sheet Modal */}
+      {selectedCheatcodeTopic && (
+        <TopicCheatcodeModal
+          isOpen={!!selectedCheatcodeTopic}
+          onClose={() => setSelectedCheatcodeTopic(null)}
+          topicId={selectedCheatcodeTopic.id}
+          topicName={selectedCheatcodeTopic.name}
+          categoryTitle={currentCategoryInfo.title}
+          fallbackFormulas={selectedCheatcodeTopic.formulas}
+        />
+      )}
     </div>
   );
 }
