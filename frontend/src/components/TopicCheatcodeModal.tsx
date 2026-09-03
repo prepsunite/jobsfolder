@@ -12,13 +12,15 @@ interface TopicCheatcodeModalProps {
   fallbackFormulas?: string[];
 }
 
+const EMPTY_FALLBACK_FORMULAS: string[] = [];
+
 export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
   isOpen,
   onClose,
   topicId,
   topicName,
   categoryTitle = 'Quantitative Aptitude',
-  fallbackFormulas = [],
+  fallbackFormulas = EMPTY_FALLBACK_FORMULAS,
 }) => {
   const { isAdmin } = useAuth();
   const [content, setContent] = useState('');
@@ -28,55 +30,66 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [extractedFormulas, setExtractedFormulas] = useState<string[]>(fallbackFormulas);
 
-  // Fetch cheatcode from Supabase
-  const loadCheatcode = useCallback(async () => {
-    if (!topicId) return;
+  // Fetch cheatcode from Supabase on modal open
+  useEffect(() => {
+    if (!isOpen || !topicId) return;
+
+    let isMounted = true;
     setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('topic_cheat_codes')
-        .select('content')
-        .eq('topic_id', topicId)
-        .single();
+    setIsEditing(false);
 
-      if (!error && data?.content) {
-        setContent(data.content);
-      } else {
-        setContent('');
-        // Fallback: fetch formulas used in topic questions
-        const { data: qData } = await supabase
-          .from('topic_questions')
-          .select('structured_explanation')
+    const fetchCheatcode = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('topic_cheat_codes')
+          .select('content')
           .eq('topic_id', topicId)
-          .limit(30);
+          .single();
 
-        if (qData && qData.length > 0) {
+        if (!isMounted) return;
+
+        if (!error && data?.content) {
+          setContent(data.content);
+        } else {
+          setContent('');
+          // Fallback: fetch formulas used in topic questions
+          const { data: qData } = await supabase
+            .from('topic_questions')
+            .select('structured_explanation')
+            .eq('topic_id', topicId)
+            .limit(30);
+
+          if (!isMounted) return;
+
           const collected = new Set<string>(fallbackFormulas);
-          qData.forEach((q: any) => {
-            const exp = typeof q.structured_explanation === 'string'
-              ? JSON.parse(q.structured_explanation)
-              : q.structured_explanation;
-            const fList = exp?.formulaUsed || exp?.formulasUsed || [];
-            if (Array.isArray(fList)) {
-              fList.forEach((f: string) => f && collected.add(f.trim()));
-            }
-          });
+          if (qData && qData.length > 0) {
+            qData.forEach((q: any) => {
+              const exp = typeof q.structured_explanation === 'string'
+                ? JSON.parse(q.structured_explanation)
+                : q.structured_explanation;
+              const fList = exp?.formulaUsed || exp?.formulasUsed || [];
+              if (Array.isArray(fList)) {
+                fList.forEach((f: string) => f && collected.add(f.trim()));
+              }
+            });
+          }
           setExtractedFormulas(Array.from(collected));
         }
+      } catch (err) {
+        console.warn('Failed to load topic cheatcode:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    } catch (err) {
-      console.warn('Failed to load topic cheatcode:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [topicId, fallbackFormulas]);
+    };
 
-  useEffect(() => {
-    if (isOpen) {
-      loadCheatcode();
-      setIsEditing(false);
-    }
-  }, [isOpen, loadCheatcode]);
+    fetchCheatcode();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, topicId]);
 
   if (!isOpen) return null;
 

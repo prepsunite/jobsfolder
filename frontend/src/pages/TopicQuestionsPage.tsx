@@ -798,11 +798,12 @@ export default function TopicQuestionsPage() {
             </button>
 
             <button
+              type="button"
               onClick={() => setShowCheatcodeModal(true)}
-              className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/20 transition-all cursor-pointer"
+              className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/20 transition-all cursor-pointer shadow-2xs"
             >
               <BookOpen className="w-3.5 h-3.5" />
-              Cheatcode
+              <span>Cheatcode</span>
             </button>
             
             <div className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/20">
@@ -1664,13 +1665,16 @@ export default function TopicQuestionsPage() {
       )}
 
       {/* 📚 TOPIC CHEATCODE MODAL WITH PDF EXPORT */}
-      <TopicCheatcodeModal
-        isOpen={showCheatcodeModal}
-        onClose={() => setShowCheatcodeModal(false)}
-        topicId={topicId || ''}
-        topicName={topicName}
-        categoryTitle={categorySlug ? categorySlug.replace(/-/g, ' ') : 'Aptitude'}
-      />
+      {showCheatcodeModal && (
+        <TopicCheatcodeModal
+          isOpen={showCheatcodeModal}
+          onClose={() => setShowCheatcodeModal(false)}
+          topicId={topicId || ''}
+          topicName={topicName}
+          categoryTitle={categorySlug ? categorySlug.replace(/-/g, ' ') : 'Aptitude'}
+          fallbackFormulas={foundTopic?.formulas || []}
+        />
+      )}
 
       {/* Report Question Modal */}
       {reportingQuestion && (
