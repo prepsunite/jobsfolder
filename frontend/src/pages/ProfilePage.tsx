@@ -41,6 +41,8 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences' | 'privacy'>('exams');
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
+  const [visibleQuestionsCount, setVisibleQuestionsCount] = useState(20);
+  const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
   const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
   const [deletionRequested, setDeletionRequested] = useState(false);
   const [questionsPage, setQuestionsPage] = useState(1);
@@ -188,7 +190,7 @@ export default function ProfilePage() {
 
       let allTopicQuestions: TopicQuestionItem[] = [];
       try {
-        const CHUNK_SIZE = 40;
+        const CHUNK_SIZE = 50;
         const chunks: string[][] = [];
         for (let i = 0; i < questionIds.length; i += CHUNK_SIZE) {
           chunks.push(questionIds.slice(i, i + CHUNK_SIZE));
@@ -198,12 +200,14 @@ export default function ProfilePage() {
           chunks.map((chunk) => supabase.from('topic_questions').select('*').in('id', chunk))
         );
 
-        const qData: any[] = [];
+        let qData: any[] = [];
         for (const res of chunkResponses) {
-          if (res.data) qData.push(...res.data);
+          if (!res.error && res.data) {
+            qData = qData.concat(res.data);
+          }
         }
 
-        if (qData.length > 0) {
+        if (qData && qData.length > 0) {
           allTopicQuestions = qData.map((q) => {
             const rawCorrect = q.correct_answer;
             const resolvedLetter = typeof rawCorrect === 'number'
@@ -286,7 +290,7 @@ export default function ProfilePage() {
       if (expIds.length === 0) return [];
       let allExps: ExperienceItem[] = [];
       try {
-        const CHUNK_SIZE = 40;
+        const CHUNK_SIZE = 50;
         const chunks: string[][] = [];
         for (let i = 0; i < expIds.length; i += CHUNK_SIZE) {
           chunks.push(expIds.slice(i, i + CHUNK_SIZE));
@@ -302,9 +306,11 @@ export default function ProfilePage() {
           )
         );
 
-        const data: any[] = [];
+        let data: any[] = [];
         for (const res of chunkResponses) {
-          if (res.data) data.push(...res.data);
+          if (!res.error && res.data) {
+            data = data.concat(res.data);
+          }
         }
         if (data && data.length > 0) {
           allExps = data.map((e: any): ExperienceItem => ({
@@ -727,7 +733,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {totalQuestionsCount > 0 ? (
             <div className="space-y-4">
-              {paginatedTopicQuestions.map((q, idx) => {
+              {bookmarkedTopicQuestions.slice(0, visibleQuestionsCount).map((q, idx) => {
                 const subtopicName = getTopicDisplayName(q.topicId);
                 const isExplVisible = revealedExpl[q.id];
                 const se = q.structuredExplanation;
@@ -898,7 +904,7 @@ export default function ProfilePage() {
                 );
               })}
 
-              {nonTopicGeneralQuestions.map((question) => (
+              {nonTopicGeneralQuestions.slice(0, Math.max(0, visibleQuestionsCount - bookmarkedTopicQuestions.length)).map((question) => (
                 <QuestionCard
                   key={question.id}
                   question={{
@@ -920,34 +926,13 @@ export default function ProfilePage() {
                 />
               ))}
 
-              {totalTopicPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t border-[#eae1da] dark:border-[#2b2d31]">
+              {visibleQuestionsCount < totalQuestionsCount && (
+                <div className="flex justify-center pt-4">
                   <button
-                    type="button"
-                    onClick={() => {
-                      setQuestionsPage((p) => Math.max(1, p - 1));
-                    }}
-                    disabled={questionsPage === 1}
-                    className="px-4 py-2 rounded-full border border-[#eae1da] dark:border-[#383a40] text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] transition-all cursor-pointer flex items-center gap-1.5 text-[#1f1b17] dark:text-[#e3e3e3]"
+                    onClick={() => setVisibleQuestionsCount((prev) => prev + 20)}
+                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#eae1da] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#e2d8d2] dark:hover:bg-[#383a40] transition-colors"
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Previous</span>
-                  </button>
-
-                  <span className="text-xs font-bold text-[#747878] dark:text-[#a6adbb]">
-                    Page {questionsPage} of {totalTopicPages} ({bookmarkedTopicQuestions.length} saved)
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuestionsPage((p) => Math.min(totalTopicPages, p + 1));
-                    }}
-                    disabled={questionsPage === totalTopicPages}
-                    className="px-4 py-2 rounded-full border border-[#eae1da] dark:border-[#383a40] text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] transition-all cursor-pointer flex items-center gap-1.5 text-[#1f1b17] dark:text-[#e3e3e3]"
-                  >
-                    <span>Next</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    Load More Questions
                   </button>
                 </div>
               )}
@@ -984,7 +969,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {bookmarkedExperiences.length > 0 ? (
             <div className="space-y-4">
-              {bookmarkedExperiences.map((exp) => (
+              {bookmarkedExperiences.slice(0, visibleExperiencesCount).map((exp) => (
                 <div
                   key={exp.id}
                   className={`p-6 rounded-[24px] border transition-all space-y-4 relative ${
@@ -1043,6 +1028,17 @@ export default function ProfilePage() {
                   )}
                 </div>
               ))}
+
+              {visibleExperiencesCount < bookmarkedExperiences.length && (
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => setVisibleExperiencesCount((prev) => prev + 20)}
+                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#eae1da] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#e2d8d2] dark:hover:bg-[#383a40] transition-colors"
+                  >
+                    Load More Experiences
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
