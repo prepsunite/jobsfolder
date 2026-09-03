@@ -188,15 +188,19 @@ export default function ProfilePage() {
       let allTopicQuestions: TopicQuestionItem[] = [];
       try {
         const CHUNK_SIZE = 50;
-        let qData: any[] = [];
+        const chunks: string[][] = [];
         for (let i = 0; i < questionIds.length; i += CHUNK_SIZE) {
-          const chunk = questionIds.slice(i, i + CHUNK_SIZE);
-          const { data, error } = await supabase
-            .from('topic_questions')
-            .select('*')
-            .in('id', chunk);
-          if (!error && data) {
-            qData = qData.concat(data);
+          chunks.push(questionIds.slice(i, i + CHUNK_SIZE));
+        }
+
+        const chunkResponses = await Promise.all(
+          chunks.map((chunk) => supabase.from('topic_questions').select('*').in('id', chunk))
+        );
+
+        let qData: any[] = [];
+        for (const res of chunkResponses) {
+          if (!res.error && res.data) {
+            qData = qData.concat(res.data);
           }
         }
 
@@ -278,17 +282,25 @@ export default function ProfilePage() {
       let allExps: ExperienceItem[] = [];
       try {
         const CHUNK_SIZE = 50;
-        let data: any[] = [];
+        const chunks: string[][] = [];
         for (let i = 0; i < expIds.length; i += CHUNK_SIZE) {
-          const chunk = expIds.slice(i, i + CHUNK_SIZE);
-          const { data: chunkData, error } = await supabase
-            .from('experiences')
-            .select('*')
-            .in('id', chunk)
-            .eq('is_deleted', false);
-          if (error) throw error;
-          if (chunkData) {
-            data = data.concat(chunkData);
+          chunks.push(expIds.slice(i, i + CHUNK_SIZE));
+        }
+
+        const chunkResponses = await Promise.all(
+          chunks.map((chunk) =>
+            supabase
+              .from('experiences')
+              .select('*')
+              .in('id', chunk)
+              .eq('is_deleted', false)
+          )
+        );
+
+        let data: any[] = [];
+        for (const res of chunkResponses) {
+          if (!res.error && res.data) {
+            data = data.concat(res.data);
           }
         }
         if (data && data.length > 0) {
