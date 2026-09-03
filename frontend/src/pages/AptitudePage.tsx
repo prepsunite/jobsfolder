@@ -403,64 +403,77 @@ export default function AptitudePage() {
             const solvedCount = categoryStats.topicMastery[topic.id]?.solved ?? 0;
 
             return (
-              <div key={topic.id} className="relative group">
+              <div
+                key={topic.id}
+                className={`group flex items-center justify-between p-3 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
+                  isHidden
+                    ? 'border-dashed border-red-300 dark:border-red-900 opacity-60'
+                    : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#383838]'
+                } rounded-md transition-all duration-150 shadow-2xs`}
+              >
+                {/* 1. Left: Topic Icon & Name (Navigates to questions) */}
                 <Link
                   to={`/aptitude/${categorySlug}/topic/${topic.id}`}
-                  className={`flex items-center justify-between p-3 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${isHidden ? 'border-dashed border-red-300 dark:border-red-900 opacity-60' : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#383838]'} rounded-md transition-all duration-150 shadow-2xs`}
+                  className="flex items-center gap-2.5 min-w-0 flex-1 mr-2"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className="w-7 h-7 rounded bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 dark:border-[#FD4A32]/30 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
-                      <TopicIcon className="w-3.5 h-3.5 text-[#FD4A32]" />
-                    </div>
-
-                    <div className="flex flex-col">
-                      <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors truncate">
-                        {topic.name} {isHidden && <span className="ml-1 text-[9px] text-red-500 uppercase">(Hidden)</span>}
-                      </span>
-                      <span className="text-[10px] text-gray-400">{topic.cluster}</span>
-                    </div>
+                  <div className="w-7 h-7 rounded bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 dark:border-[#FD4A32]/30 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
+                    <TopicIcon className="w-3.5 h-3.5 text-[#FD4A32]" />
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0 pr-12">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedCheatcodeTopic(topic);
-                      }}
-                      className="flex items-center gap-1 text-[10px] font-display font-bold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 px-2 py-1 rounded border border-[#FD4A32]/25 transition-colors cursor-pointer shadow-2xs z-10"
-                      title={`Open ${topic.name} Cheatcode & Formulas`}
-                    >
-                      <BookOpen className="w-3 h-3" />
-                      <span>Cheatcode</span>
-                    </button>
-
-                    {solvedCount > 0 && (
-                      <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                        {solvedCount} Solved
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-[#FD4A32] group-hover:text-[#FD4A32] transition-colors">
-                      <span>{displayCount} {displayCount === 1 ? 'Question' : 'Questions'}</span>
-                      <ChevronRight className="w-3 h-3 text-[#868E96]" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors truncate">
+                      {topic.name} {isHidden && <span className="ml-1 text-[9px] text-red-500 uppercase">(Hidden)</span>}
                     </span>
+                    <span className="text-[10px] text-gray-400 truncate">{topic.cluster}</span>
                   </div>
                 </Link>
 
-                {isAdmin && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => handleToggleHide(e, topic)} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 cursor-pointer" title={isHidden ? "Unhide" : "Hide"}>
-                      {isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                    </button>
-                    <button onClick={(e) => openEditor(e, topic)} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-blue-500 cursor-pointer" title="Edit">
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={(e) => handleDelete(e, topic)} className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 cursor-pointer" title="Delete">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
+                {/* 2. Right: Action Buttons & Navigation */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Topic-Specific Cheatcode Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCheatcodeTopic(topic);
+                    }}
+                    className="flex items-center gap-1 text-[10px] font-display font-bold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 px-2 py-1 rounded border border-[#FD4A32]/25 transition-colors cursor-pointer shadow-2xs"
+                    title={`Open ${topic.name} Cheatcode & Formulas`}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>Cheatcode</span>
+                  </button>
+
+                  {solvedCount > 0 && (
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                      {solvedCount} Solved
+                    </span>
+                  )}
+
+                  {/* Questions link */}
+                  <Link
+                    to={`/aptitude/${categorySlug}/topic/${topic.id}`}
+                    className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#FD4A32] hover:text-[#FD4A32] transition-colors"
+                  >
+                    <span>{displayCount} {displayCount === 1 ? 'Question' : 'Questions'}</span>
+                    <ChevronRight className="w-3 h-3 text-[#868E96]" />
+                  </Link>
+
+                  {/* Admin Actions */}
+                  {isAdmin && (
+                    <div className="flex items-center gap-0.5 ml-1">
+                      <button onClick={(e) => handleToggleHide(e, topic)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 cursor-pointer" title={isHidden ? "Unhide" : "Hide"}>
+                        {isHidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      </button>
+                      <button onClick={(e) => openEditor(e, topic)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-800 text-blue-500 cursor-pointer" title="Edit">
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button onClick={(e) => handleDelete(e, topic)} className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 cursor-pointer" title="Delete">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

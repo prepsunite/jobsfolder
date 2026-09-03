@@ -114,7 +114,10 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
   const hasFormulas = content || extractedFormulas.length > 0;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs animate-fadeIn print:p-0 print:bg-white print:static print:z-auto">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs animate-fadeIn print:p-0 print:bg-white print:static print:z-auto"
+      onClick={onClose}
+    >
       <style>{`
         @media print {
           body * {
@@ -138,7 +141,10 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
         }
       `}</style>
 
-      <div className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-[#141414] rounded-2xl border border-[#E9ECEF] dark:border-[#242424] shadow-2xl flex flex-col overflow-hidden animate-scaleUp print:border-none print:shadow-none print:max-h-none print:w-full">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-[#141414] rounded-2xl border border-[#E9ECEF] dark:border-[#242424] shadow-2xl flex flex-col overflow-hidden animate-scaleUp print:border-none print:shadow-none print:max-h-none print:w-full"
+      >
         {/* Top Header Bar (Hidden during print) */}
         <div className="p-4 sm:p-5 border-b border-[#E9ECEF] dark:border-[#222222] flex items-center justify-between no-print bg-[#F8F9FA]/60 dark:bg-[#111112]">
           <div className="flex items-center gap-2.5">
