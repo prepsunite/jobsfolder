@@ -18,7 +18,6 @@ import {
   FileText,
   Trash2,
   ChevronRight,
-  ChevronLeft,
   CheckCircle2,
   Layers,
   BookOpen,
@@ -45,8 +44,6 @@ export default function ProfilePage() {
   const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
   const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
   const [deletionRequested, setDeletionRequested] = useState(false);
-  const [questionsPage, setQuestionsPage] = useState(1);
-  const QUESTIONS_PER_PAGE = 8;
 
 
   // Live Supabase subscription query for Pro Pass
@@ -275,12 +272,6 @@ export default function ProfilePage() {
     [bookmarkedQuestions, topicIdSet]
   );
   const totalQuestionsCount = bookmarkedTopicQuestions.length + nonTopicGeneralQuestions.length;
-
-  const totalTopicPages = Math.max(1, Math.ceil(bookmarkedTopicQuestions.length / QUESTIONS_PER_PAGE));
-  const paginatedTopicQuestions = useMemo(() => {
-    const start = (questionsPage - 1) * QUESTIONS_PER_PAGE;
-    return bookmarkedTopicQuestions.slice(start, start + QUESTIONS_PER_PAGE);
-  }, [bookmarkedTopicQuestions, questionsPage]);
 
   // TanStack Query: Bookmarked Interview Transcripts (queries live Supabase experiences + local fallback)
   const { data: bookmarkedExperiences = [] } = useQuery({
