@@ -50,7 +50,12 @@ function getLocalRecords(userEmail?: string): Record<string, QuestionProgressRec
 
 function saveLocalRecords(records: Record<string, QuestionProgressRecord>, userEmail?: string): void {
   try {
-    localStorage.setItem(getStorageKey(userEmail), JSON.stringify(records));
+    const key = getStorageKey(userEmail);
+    const serialized = JSON.stringify(records);
+    if (localStorage.getItem(key) === serialized) {
+      return; // Data unchanged, avoid unnecessary disk write
+    }
+    localStorage.setItem(key, serialized);
   } catch (e) {
     console.warn('[progressService] Failed to persist progress to localStorage:', e);
   }
@@ -86,7 +91,7 @@ function computeStreak(records: QuestionProgressRecord[]): number {
 
   for (let i = 0; i < sortedDays.length; i++) {
     const currentExpectedStr = checkDate.toLocaleDateString('en-CA');
-    if (sortedDays.includes(currentExpectedStr)) {
+    if (activeDays.has(currentExpectedStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
@@ -415,10 +420,6 @@ export const progressService = {
         });
 
         saveLocalRecords(localMap, normalized);
-      }
-
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('prepunite_progress_synced', { detail: { email: normalized } }));
       }
 
       return localMap;

@@ -1,10 +1,13 @@
 import type { DocTabNode } from '@/services/dataStore';
 
 /**
- * Deep clones a tree of document tab nodes.
+ * Deep clones a tree of document tab nodes recursively without JSON stringify overhead.
  */
 export function cloneTree(nodes: DocTabNode[]): DocTabNode[] {
-  return JSON.parse(JSON.stringify(nodes));
+  return nodes.map((n) => ({
+    ...n,
+    children: n.children ? cloneTree(n.children) : undefined,
+  }));
 }
 
 /**
@@ -29,86 +32,100 @@ export function findAndModify(
 }
 
 /**
- * Moves a node up among its siblings.
+ * Moves a node up among its siblings (immutable).
  */
 export function moveUp(nodes: DocTabNode[], nodeId: string): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (node, siblings, i) => {
-    if (i > 0) {
-      siblings.splice(i, 1);
-      siblings.splice(i - 1, 0, node);
-    }
-  });
-  return tree;
+  const idx = nodes.findIndex((n) => n.id === nodeId);
+  if (idx > 0) {
+    const next = [...nodes];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    return next;
+  }
+  return nodes.map((n) => (n.children ? { ...n, children: moveUp(n.children, nodeId) } : n));
 }
 
 /**
- * Moves a node down among its siblings.
+ * Moves a node down among its siblings (immutable).
  */
 export function moveDown(nodes: DocTabNode[], nodeId: string): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (node, siblings, i) => {
-    if (i < siblings.length - 1) {
-      siblings.splice(i, 1);
-      siblings.splice(i + 1, 0, node);
-    }
-  });
-  return tree;
+  const idx = nodes.findIndex((n) => n.id === nodeId);
+  if (idx >= 0 && idx < nodes.length - 1) {
+    const next = [...nodes];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    return next;
+  }
+  return nodes.map((n) => (n.children ? { ...n, children: moveDown(n.children, nodeId) } : n));
 }
 
 /**
- * Deletes a node and all of its descendants from the tree.
+ * Deletes a node and all of its descendants from the tree (immutable filter-map).
  */
 export function deleteNode(nodes: DocTabNode[], nodeId: string): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (_node, siblings, i) => {
-    siblings.splice(i, 1);
-  });
-  return tree;
+  return nodes
+    .filter((n) => n.id !== nodeId)
+    .map((n) => (n.children ? { ...n, children: deleteNode(n.children, nodeId) } : n));
 }
 
 /**
- * Adds a new child node to a specified parent node.
+ * Adds a new child node to a specified parent node (immutable structural sharing).
  */
 export function addChildTo(nodes: DocTabNode[], parentId: string, newNode: DocTabNode): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, parentId, (node) => {
-    node.children = node.children ? [...node.children, newNode] : [newNode];
+  return nodes.map((node) => {
+    if (node.id === parentId) {
+      return { ...node, children: node.children ? [...node.children, newNode] : [newNode] };
+    }
+    if (node.children) {
+      return { ...node, children: addChildTo(node.children, parentId, newNode) };
+    }
+    return node;
   });
-  return tree;
 }
 
 /**
  * Adds a new sibling node immediately after the specified node.
  */
 export function addAfterNode(nodes: DocTabNode[], siblingId: string, newNode: DocTabNode): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  let inserted = false;
-  const insert = (arr: DocTabNode[]): boolean => {
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i].id === siblingId) {
-        arr.splice(i + 1, 0, newNode);
-        inserted = true;
-        return true;
+  const result: DocTabNode[] = [];
+  let found = false;
+
+  for (const node of nodes) {
+    result.push(node);
+    if (node.id === siblingId) {
+      result.push(newNode);
+      found = true;
+    } else if (node.children) {
+      const updatedChildren = addAfterNode(node.children, siblingId, newNode);
+      if (updatedChildren !== node.children) {
+        result[result.length - 1] = { ...node, children: updatedChildren };
+        found = true;
       }
-      if (arr[i].children && insert(arr[i].children!)) return true;
     }
-    return false;
-  };
-  insert(tree);
-  if (!inserted) tree.push(newNode); // fallback: push to root
-  return tree;
+  }
+
+  if (!found) {
+    result.push(newNode);
+  }
+  return result;
 }
 
 /**
- * Updates properties of a target node in the tree.
+ * Updates properties of a target node in the tree with structural sharing.
+ * Only the modified node and its direct ancestors are cloned; all untouched branches
+ * retain their object references.
  */
 export function updateNode(nodes: DocTabNode[], nodeId: string, updates: Partial<DocTabNode>): DocTabNode[] {
-  const tree = cloneTree(nodes);
-  findAndModify(tree, nodeId, (node) => {
-    Object.assign(node, updates);
+  return nodes.map((node) => {
+    if (node.id === nodeId) {
+      return { ...node, ...updates };
+    }
+    if (node.children && node.children.length > 0) {
+      const updatedChildren = updateNode(node.children, nodeId, updates);
+      if (updatedChildren !== node.children) {
+        return { ...node, children: updatedChildren };
+      }
+    }
+    return node;
   });
-  return tree;
 }
 
 /**
@@ -120,21 +137,25 @@ export function makeNewNode(title: string): DocTabNode {
     title,
     content: `### ${title}\n\nWrite content here...`,
     emoji: '📄',
-    isFree: true, // Default: Free unless admin explicitly locks
+    isFree: true,
   };
 }
 
 /**
- * Flattens all nested tree nodes into a sequential array.
+ * Flattens all nested tree nodes into a sequential array using iterative DFS.
  */
 export function flattenNodes(nodes: DocTabNode[]): DocTabNode[] {
   const list: DocTabNode[] = [];
-  const traverse = (arr: DocTabNode[]) =>
-    arr.forEach((n) => {
-      list.push(n);
-      if (n.children) traverse(n.children);
-    });
-  traverse(nodes);
+  const stack: DocTabNode[] = [...nodes].reverse();
+  while (stack.length > 0) {
+    const curr = stack.pop()!;
+    list.push(curr);
+    if (curr.children && curr.children.length > 0) {
+      for (let i = curr.children.length - 1; i >= 0; i--) {
+        stack.push(curr.children[i]);
+      }
+    }
+  }
   return list;
 }
 
@@ -144,7 +165,7 @@ export function flattenNodes(nodes: DocTabNode[]): DocTabNode[] {
 export function matchesSearch(node: DocTabNode, q: string): boolean {
   if (!q) return true;
   const lq = q.toLowerCase();
-  if (node.title.toLowerCase().includes(lq) || node.content.toLowerCase().includes(lq)) {
+  if (node.title.toLowerCase().includes(lq) || (node.content && node.content.toLowerCase().includes(lq))) {
     return true;
   }
   return !!node.children?.some((c) => matchesSearch(c, q));

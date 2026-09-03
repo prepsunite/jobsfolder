@@ -89,7 +89,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, topicId]);
+  }, [isOpen, topicId, fallbackFormulas]);
 
   if (!isOpen) return null;
 

@@ -9,9 +9,9 @@ import ConsentBanner from '@/components/ConsentBanner'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0, // Always refetch — admin changes must be visible immediately
+      staleTime: 30 * 1000, // 30s default cache to prevent continuous refetches
       retry: 1,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false, // Avoid sudden network/CPU spikes on alt-tab
     },
   },
 })

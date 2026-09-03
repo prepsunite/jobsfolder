@@ -151,7 +151,7 @@ export default function ProfilePage() {
       }
       return await progressService.fetchAndSyncFromSupabase(user.email);
     },
-    staleTime: 30 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const aptitudeStats = useMemo(() => {
@@ -162,10 +162,8 @@ export default function ProfilePage() {
   const { data: bookmarkedExams = [] } = useQuery({
     queryKey: ['profile-bookmarked-exams'],
     queryFn: async () => {
-      if (user?.email && user.email !== 'guest@prepunite.com') {
-        await dataStore.hydrateBookmarksFromSupabase();
-      }
       const examIds = dataStore.getBookmarkedExamIds();
+      if (examIds.length === 0) return [];
       let allExams: any[] = [];
       try {
         allExams = await examService.getAllExams();
@@ -175,20 +173,24 @@ export default function ProfilePage() {
       if (allExams.length === 0) allExams = dataStore.getAllExams();
       return examIds.map((id) => allExams.find((e) => e.id === id)).filter(Boolean);
     },
+    staleTime: 60 * 1000,
   });
 
   // TanStack Query: Bookmarked Topic Practice Questions
   const { data: bookmarkedTopicQuestions = [] } = useQuery({
     queryKey: ['profile-bookmarked-topic-questions'],
     queryFn: async () => {
-      if (user?.email && user.email !== 'guest@prepunite.com') {
-        await dataStore.hydrateBookmarksFromSupabase();
-      }
       const questionIds = dataStore.getBookmarkedQuestionIds();
+      if (questionIds.length === 0) return [];
+
       let allTopicQuestions: TopicQuestionItem[] = [];
       try {
-        const { data: qData } = await supabase.from('topic_questions').select('*');
-        if (qData && qData.length > 0) {
+        const { data: qData, error } = await supabase
+          .from('topic_questions')
+          .select('*')
+          .in('id', questionIds);
+
+        if (!error && qData && qData.length > 0) {
           allTopicQuestions = qData.map((q) => {
             const rawCorrect = q.correct_answer;
             const resolvedLetter = typeof rawCorrect === 'number'
@@ -221,12 +223,18 @@ export default function ProfilePage() {
             };
           });
         }
-      } catch {}
-      if (allTopicQuestions.length === 0) allTopicQuestions = dataStore.getTopicQuestions();
-      return questionIds
-        .map((id) => allTopicQuestions.find((q) => q.id === id))
-        .filter(Boolean) as TopicQuestionItem[];
+      } catch (err) {
+        console.warn('[ProfilePage] Failed to fetch bookmarked questions:', err);
+      }
+      if (allTopicQuestions.length === 0) {
+        const local = dataStore.getTopicQuestions();
+        allTopicQuestions = questionIds
+          .map((id) => local.find((q) => q.id === id))
+          .filter(Boolean) as TopicQuestionItem[];
+      }
+      return allTopicQuestions;
     },
+    staleTime: 60 * 1000,
   });
 
   // TanStack Query: Bookmarked General Questions Fallback
@@ -235,15 +243,19 @@ export default function ProfilePage() {
     queryFn: async () => {
       const questionIds = dataStore.getBookmarkedQuestionIds();
       const allQuestions = dataStore.getQuestions();
-      return questionIds
-        .map((id) => allQuestions.find((q) => q.id === id))
-        .filter(Boolean) as QuestionItem[];
+      const qMap = new Map(allQuestions.map((q) => [q.id, q]));
+      return questionIds.map((id) => qMap.get(id)).filter(Boolean) as QuestionItem[];
     },
   });
 
-  // Calculate accurate total saved questions count (topic questions + any general questions)
-  const nonTopicGeneralQuestions = bookmarkedQuestions.filter(
-    (gq) => !bookmarkedTopicQuestions.some((tq) => tq.id === gq.id)
+  // Calculate accurate total saved questions count using O(1) Set lookup
+  const topicIdSet = useMemo(
+    () => new Set(bookmarkedTopicQuestions.map((tq) => tq.id)),
+    [bookmarkedTopicQuestions]
+  );
+  const nonTopicGeneralQuestions = useMemo(
+    () => bookmarkedQuestions.filter((gq) => !topicIdSet.has(gq.id)),
+    [bookmarkedQuestions, topicIdSet]
   );
   const totalQuestionsCount = bookmarkedTopicQuestions.length + nonTopicGeneralQuestions.length;
 
@@ -258,7 +270,9 @@ export default function ProfilePage() {
         const { data, error } = await supabase
           .from('experiences')
           .select('*')
+          .in('id', expIds)
           .eq('is_deleted', false);
+        if (error) throw error;
         if (data && data.length > 0) {
           allExps = data.map((e: any): ExperienceItem => ({
             id: e.id,
@@ -283,14 +297,16 @@ export default function ProfilePage() {
         console.warn('[ProfilePage] Failed to fetch live experiences from Supabase:', err);
       }
       const localExps = dataStore.getExperiences();
-      const combined = [...allExps];
+      const expMap = new Map<string, ExperienceItem>();
+      allExps.forEach((e) => expMap.set(e.id, e));
       localExps.forEach((le) => {
-        if (!combined.some((c) => c.id === le.id)) {
-          combined.push(le);
+        if (!expMap.has(le.id)) {
+          expMap.set(le.id, le);
         }
       });
-      return expIds.map((id) => combined.find((e) => e.id === id)).filter(Boolean) as ExperienceItem[];
+      return expIds.map((id) => expMap.get(id)).filter(Boolean) as ExperienceItem[];
     },
+    staleTime: 60 * 1000,
   });
 
   const getTopicDisplayName = (topicId: string) => {

@@ -8,18 +8,6 @@ export interface ExamWithCompany extends ExamItem {
   companyIndustry?: string;
 }
 
-function sanitizeFallbackNodes(nodes: any[], isPublicExam: boolean): any[] {
-  if (!Array.isArray(nodes)) return [];
-  return nodes.map(node => {
-    const isFree = isPublicExam || node.isFree === true || node.is_free === true;
-    return {
-      ...node,
-      isFree: node.isFree ?? node.is_free ?? false,
-      content: isFree ? (node.content || '') : '', // 🔒 Redact locked content on fallback
-      children: node.children ? sanitizeFallbackNodes(node.children, isPublicExam) : undefined,
-    };
-  });
-}
 
 export const examService = {
   getExamsByCompany: async (companySlug: string, userEmail?: string): Promise<ExamItem[]> => {

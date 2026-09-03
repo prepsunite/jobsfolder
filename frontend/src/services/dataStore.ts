@@ -2,12 +2,10 @@
 import { resolveTopicSlug } from './topicMap';
 import { supabase } from '@/lib/supabase';
 import {
-  computeSha256Hex,
   validateQuestionItem,
   generateQuestionFingerprint,
   parseTopicQuestionJsonItem as parseTopicQuestionJsonItemUtil,
   safeJsonParse,
-  normalizeMathText,
 } from '@/utils/questionParser';
 export { resolveTopicSlug };
 
@@ -596,7 +594,11 @@ class DataStoreManager {
 
   private setStorage<T>(key: string, value: T): void {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const serialized = JSON.stringify(value);
+      if (localStorage.getItem(key) === serialized) {
+        return; // Identical data, skip disk write and broadcast
+      }
+      localStorage.setItem(key, serialized);
       this.notifySync(key);
     } catch (e) {
       console.error(`[DataStore] Failed to write key '${key}' to localStorage:`, e);
@@ -756,10 +758,14 @@ class DataStoreManager {
           createdAt: c.created_at || new Date().toISOString(),
         }));
         const existing = this.getStorage<CompanyItem[]>('prepunite_companies', INITIAL_COMPANIES);
+        const idSet = new Set(mapped.map(m => m.id));
+        const slugSet = new Set(mapped.map(m => m.slug));
         const merged = [...mapped];
         existing.forEach(ex => {
-          if (!merged.some(m => m.id === ex.id || m.slug === ex.slug)) {
+          if (!idSet.has(ex.id) && !slugSet.has(ex.slug)) {
             merged.push(ex);
+            idSet.add(ex.id);
+            slugSet.add(ex.slug);
           }
         });
         this.setStorage('prepunite_companies', merged);
@@ -784,10 +790,12 @@ class DataStoreManager {
           isPublicExam: e.is_public_exam ?? false,
         }));
         const existing = this.getStorage<ExamItem[]>('prepunite_exams', INITIAL_EXAMS);
+        const idSet = new Set(mapped.map(m => m.id));
         const merged = [...mapped];
         existing.forEach(ex => {
-          if (!merged.some(m => m.id === ex.id)) {
+          if (!idSet.has(ex.id)) {
             merged.push(ex);
+            idSet.add(ex.id);
           }
         });
         this.setStorage('prepunite_exams', merged);
@@ -801,7 +809,8 @@ class DataStoreManager {
         .from('topic_questions')
         .select('*')
         .order('question_number', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(100);
       if (data && data.length > 0) {
         const mapped: TopicQuestionItem[] = data.map(q => {
           const rawCorrect = q.correct_answer;
@@ -827,10 +836,12 @@ class DataStoreManager {
           };
         });
         const existing = this.getStorage<TopicQuestionItem[]>('prepunite_topic_questions', INITIAL_TOPIC_QUESTIONS);
+        const idSet = new Set(mapped.map(m => m.id));
         const merged = [...mapped];
         existing.forEach(ex => {
-          if (!merged.some(m => m.id === ex.id)) {
+          if (!idSet.has(ex.id)) {
             merged.push(ex);
+            idSet.add(ex.id);
           }
         });
         merged.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
@@ -1336,20 +1347,28 @@ class DataStoreManager {
       const mergedExams = Array.from(new Set([...localExams, ...remoteExams]));
       const mergedExps = Array.from(new Set([...localExps, ...remoteExps]));
 
-      this.setStorage('prepunite_bookmarked_questions', mergedQuestions);
-      this.setStorage('prepunite_bookmarked_exams', mergedExams);
-      this.setStorage('prepunite_bookmarked_experiences', mergedExps);
+      const hasChanged = (
+        mergedQuestions.length !== localQuestions.length ||
+        mergedExams.length !== localExams.length ||
+        mergedExps.length !== localExps.length
+      );
 
-      if (
-        mergedQuestions.length !== remoteQuestions.length ||
-        mergedExams.length !== remoteExams.length ||
-        mergedExps.length !== remoteExps.length
-      ) {
-        this.syncBookmarksWithSupabase();
-      }
+      if (hasChanged) {
+        this.setStorage('prepunite_bookmarked_questions', mergedQuestions);
+        this.setStorage('prepunite_bookmarked_exams', mergedExams);
+        this.setStorage('prepunite_bookmarked_experiences', mergedExps);
 
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+        if (
+          mergedQuestions.length !== remoteQuestions.length ||
+          mergedExams.length !== remoteExams.length ||
+          mergedExps.length !== remoteExps.length
+        ) {
+          this.syncBookmarksWithSupabase();
+        }
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+        }
       }
 
       return {
@@ -1793,6 +1812,15 @@ class DataStoreManager {
 
     const existingList = this.getTopicQuestions();
     const existingFingerprints = new Set(existingList.map(q => q.fingerprint).filter(Boolean));
+    const topicMaxMap = new Map<string, number>();
+    existingList.forEach((q) => {
+      const tSlug = resolveTopicSlug(q.topicId, q.topicId);
+      const prevMax = topicMaxMap.get(tSlug) || 0;
+      if ((q.questionNumber || 0) > prevMax) {
+        topicMaxMap.set(tSlug, q.questionNumber || 0);
+      }
+    });
+    const batchTopicCounter = new Map<string, number>();
     const newItems: TopicQuestionItem[] = [];
 
     items.forEach((item, idx) => {
@@ -1829,10 +1857,10 @@ class DataStoreManager {
 
         let difficultyLevel: 1 | 2 | 3 = parsed.difficultyLevel || 2;
 
-        const topicMatches = existingList.filter(q => resolveTopicSlug(q.topicId, q.topicId) === resolvedTopicId);
-        const existingMax = topicMatches.length > 0 ? Math.max(...topicMatches.map(q => q.questionNumber || 0)) : 0;
-        const countInCurrentBatch = newItems.filter(n => n.topicId === resolvedTopicId).length;
-        const nextQNum = existingMax + countInCurrentBatch + 1;
+        const baseMax = topicMaxMap.get(resolvedTopicId) || 0;
+        const currentCount = batchTopicCounter.get(resolvedTopicId) || 0;
+        const nextQNum = baseMax + currentCount + 1;
+        batchTopicCounter.set(resolvedTopicId, currentCount + 1);
 
         const newItem: TopicQuestionItem = {
           id: parsed.id || newId,

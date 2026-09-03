@@ -28,15 +28,19 @@ export default function RootLayout() {
 
   // Instant Real-Time Data Synchronization Engine across all Tabs, Pages, and Roles
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const handleStoreUpdate = () => {
-      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
-      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
-      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
-      queryClient.invalidateQueries({ queryKey: ['live-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['live-resources'] });
-      queryClient.invalidateQueries({ queryKey: ['company'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+        queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+        queryClient.invalidateQueries({ queryKey: ['live-exams'] });
+        queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+        queryClient.invalidateQueries({ queryKey: ['live-questions'] });
+        queryClient.invalidateQueries({ queryKey: ['live-resources'] });
+        queryClient.invalidateQueries({ queryKey: ['company'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      }, 250);
     };
 
     window.addEventListener('prepunite_datastore_updated', handleStoreUpdate);
@@ -55,6 +59,7 @@ export default function RootLayout() {
     }
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       window.removeEventListener('prepunite_datastore_updated', handleStoreUpdate);
       window.removeEventListener('storage', handleStoreUpdate);
       if (bc) bc.close();

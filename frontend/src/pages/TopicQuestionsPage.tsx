@@ -24,7 +24,6 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services/dataStore';
 import { progressService, type QuestionProgressRecord } from '@/services/progress.service';
@@ -40,9 +39,7 @@ import audioEffects from '@/utils/audioEffects';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
-  const { theme } = useTheme();
   const { role, user } = useAuth();
-  const isDarkMode = theme === 'dark';
   const isAdmin = role === 'ADMIN';
 
   // Topic display name

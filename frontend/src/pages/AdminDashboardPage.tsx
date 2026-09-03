@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
   });
 
   // --- React Query: Live Registered Users from Supabase ---
-  const { data: registeredUsersList = [], isLoading: usersLoading } = useQuery({
+  const { data: registeredUsersList = [] } = useQuery({
     queryKey: ['admin-users'],
     queryFn: adminService.getRegisteredUsers,
     enabled: role === 'ADMIN',
@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
   });
 
   // --- React Query: Live Transactions from Supabase ---
-  const { data: allTransactionsList = [], isLoading: txLoading } = useQuery({
+  const { data: allTransactionsList = [] } = useQuery({
     queryKey: ['admin-transactions'],
     queryFn: adminService.getAllTransactions,
     enabled: role === 'ADMIN',

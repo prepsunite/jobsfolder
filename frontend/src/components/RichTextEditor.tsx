@@ -541,19 +541,6 @@ export default function RichTextEditor({
     e.target.value = '';
   }, [editor]);
 
-  const insertTestCase = useCallback(() => {
-    if (!editor) return;
-    const sampleCases = [
-      { title: 'Test Case 1', input: '6', output: '7000' },
-      { title: 'Test Case 2', input: '15', output: '19000' },
-      { title: 'Test Case 3', input: '5', output: 'error' },
-      { title: 'Test Case 4', input: '12', output: '15000' },
-    ];
-    editor.chain().focus().insertContent({
-      type: 'testCaseBox',
-      attrs: { cases: sampleCases },
-    }).run();
-  }, [editor]);
 
   const commitTestCase = useCallback(() => {
     if (!editor || !rawTestCaseInput.trim()) {

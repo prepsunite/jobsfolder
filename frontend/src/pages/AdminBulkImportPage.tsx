@@ -360,7 +360,10 @@ export default function AdminBulkImportPage() {
               </label>
               <select
                 value={targetTopicOverride}
-                onChange={(e) => handleParsePreview(jsonText, e.target.value)}
+                onChange={(e) => {
+                  setTargetTopicOverride(e.target.value);
+                  handleParsePreview(jsonText, e.target.value);
+                }}
                 className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-purple-500"
               >
                 <option value="AUTO">✨ Auto-Detect from JSON ("subtopic")</option>
