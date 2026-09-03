@@ -30,7 +30,36 @@ import {
   Sparkles,
   Zap,
   TrendingUp,
+  TrendingDown,
   Clock,
+  Calendar,
+  Dices,
+  Users,
+  UserCheck,
+  CreditCard,
+  Square,
+  Box,
+  Timer,
+  Percent,
+  Scale,
+  Coins,
+  Droplets,
+  Train,
+  Ship,
+  FlaskConical,
+  Trophy,
+  Table,
+  Grid,
+  Code,
+  CheckSquare,
+  CheckCircle2,
+  Tag,
+  Sliders,
+  Shapes,
+  Shuffle,
+  Binary,
+  Lightbulb,
+  Puzzle,
 } from 'lucide-react';
 
 export interface AptitudeTopic {
@@ -63,12 +92,171 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
   Sparkles,
   Zap,
   TrendingUp,
+  TrendingDown,
   Clock,
+  Calendar,
+  Dices,
+  Users,
+  UserCheck,
+  CreditCard,
+  Square,
+  Box,
+  Timer,
+  Percent,
+  Scale,
+  Coins,
+  Droplets,
+  Train,
+  Ship,
+  FlaskConical,
+  Trophy,
+  Table,
+  Grid,
+  Code,
+  CheckSquare,
+  CheckCircle2,
+  Tag,
+  Sliders,
+  Shapes,
+  Shuffle,
+  Binary,
+  Lightbulb,
+  Puzzle,
 };
 
-const getIcon = (iconName?: string) => {
+interface TopicVisualMeta {
+  icon: React.ComponentType<any>;
+  bgClass: string;
+  textClass: string;
+  borderClass: string;
+}
+
+const DEFAULT_TOPIC_VISUAL: TopicVisualMeta = {
+  icon: Folder,
+  bgClass: 'bg-amber-500/10 dark:bg-amber-500/15',
+  textClass: 'text-amber-600 dark:text-amber-400',
+  borderClass: 'border-amber-500/25',
+};
+
+const TOPIC_VISUAL_MAP: Record<string, TopicVisualMeta> = {
+  // Arithmetic Aptitude
+  'numbers': { icon: Hash, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'problems-on-numbers': { icon: Hash, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'hcf-lcm': { icon: Layers, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'decimal-fraction': { icon: Percent, bgClass: 'bg-sky-500/10 dark:bg-sky-500/15', textClass: 'text-sky-600 dark:text-sky-400', borderClass: 'border-sky-500/25' },
+  'simplification': { icon: Calculator, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'square-cube-root': { icon: Square, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'percentage': { icon: Percent, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'profit-and-loss': { icon: TrendingUp, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'ratio-and-proportion': { icon: Scale, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'partnership': { icon: Users, bgClass: 'bg-violet-500/10 dark:bg-violet-500/15', textClass: 'text-violet-600 dark:text-violet-400', borderClass: 'border-violet-500/25' },
+  'chain-rule': { icon: GitMerge, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'time-and-work': { icon: Activity, bgClass: 'bg-orange-500/10 dark:bg-orange-500/15', textClass: 'text-orange-600 dark:text-orange-400', borderClass: 'border-orange-500/25' },
+  'pipes-and-cistern': { icon: Droplets, bgClass: 'bg-cyan-500/10 dark:bg-cyan-500/15', textClass: 'text-cyan-600 dark:text-cyan-400', borderClass: 'border-cyan-500/25' },
+  'time-and-distance': { icon: Timer, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'problems-on-trains': { icon: Train, bgClass: 'bg-red-500/10 dark:bg-red-500/15', textClass: 'text-red-600 dark:text-red-400', borderClass: 'border-red-500/25' },
+  'boats-and-streams': { icon: Ship, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'alligation-or-mixture': { icon: FlaskConical, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'simple-interest': { icon: Coins, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'compound-interest': { icon: TrendingUp, bgClass: 'bg-green-500/10 dark:bg-green-500/15', textClass: 'text-green-600 dark:text-green-400', borderClass: 'border-green-500/25' },
+  'stocks-and-shares': { icon: BarChart3, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'true-discount': { icon: CreditCard, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'bankers-discount': { icon: CreditCard, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'height-and-distance': { icon: Compass, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'area': { icon: Square, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'volume-and-surface-area': { icon: Box, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'races-and-games': { icon: Trophy, bgClass: 'bg-yellow-500/10 dark:bg-yellow-500/15', textClass: 'text-yellow-600 dark:text-yellow-400', borderClass: 'border-yellow-500/25' },
+  'permutation-and-combination': { icon: Shuffle, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'probability': { icon: Dices, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'average': { icon: TrendingDown, bgClass: 'bg-sky-500/10 dark:bg-sky-500/15', textClass: 'text-sky-600 dark:text-sky-400', borderClass: 'border-sky-500/25' },
+  'problems-on-ages': { icon: UserCheck, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'calendar': { icon: Calendar, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'clock': { icon: Clock, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'odd-man-out-and-series': { icon: Sparkles, bgClass: 'bg-violet-500/10 dark:bg-violet-500/15', textClass: 'text-violet-600 dark:text-violet-400', borderClass: 'border-violet-500/25' },
+  'surds-and-indices': { icon: Binary, bgClass: 'bg-cyan-500/10 dark:bg-cyan-500/15', textClass: 'text-cyan-600 dark:text-cyan-400', borderClass: 'border-cyan-500/25' },
+  'logarithm': { icon: Binary, bgClass: 'bg-slate-500/10 dark:bg-slate-500/15', textClass: 'text-slate-600 dark:text-slate-400', borderClass: 'border-slate-500/25' },
+
+  // Data Interpretation
+  'table-charts': { icon: Table, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'bar-charts': { icon: BarChart3, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'pie-charts': { icon: PieChart, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'line-charts': { icon: TrendingUp, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'caselet-di': { icon: Square, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'radar-web-charts': { icon: Compass, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'scatter-bubble-charts': { icon: Activity, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+
+  // Logical Reasoning
+  'number-series': { icon: Hash, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'letter-and-symbol-series': { icon: Binary, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'verbal-classification': { icon: Tag, bgClass: 'bg-sky-500/10 dark:bg-sky-500/15', textClass: 'text-sky-600 dark:text-sky-400', borderClass: 'border-sky-500/25' },
+  'analogies': { icon: Shuffle, bgClass: 'bg-violet-500/10 dark:bg-violet-500/15', textClass: 'text-violet-600 dark:text-violet-400', borderClass: 'border-violet-500/25' },
+  'matching-definitions': { icon: BookOpen, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'verbal-reasoning': { icon: Brain, bgClass: 'bg-pink-500/10 dark:bg-pink-500/15', textClass: 'text-pink-600 dark:text-pink-400', borderClass: 'border-pink-500/25' },
+  'logical-games': { icon: Puzzle, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'statement-and-assumption': { icon: MessageSquare, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'statement-and-conclusion': { icon: CheckCircle2, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'cause-and-effect': { icon: GitMerge, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'essential-part': { icon: Puzzle, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'artificial-language': { icon: Code, bgClass: 'bg-cyan-500/10 dark:bg-cyan-500/15', textClass: 'text-cyan-600 dark:text-cyan-400', borderClass: 'border-cyan-500/25' },
+  'making-judgments': { icon: Scale, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'logical-problems': { icon: HelpCircle, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'analyzing-arguments': { icon: Lightbulb, bgClass: 'bg-yellow-500/10 dark:bg-yellow-500/15', textClass: 'text-yellow-600 dark:text-yellow-400', borderClass: 'border-yellow-500/25' },
+  'course-of-action': { icon: Compass, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'theme-detection': { icon: Search, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'statement-and-argument': { icon: MessageSquare, bgClass: 'bg-orange-500/10 dark:bg-orange-500/15', textClass: 'text-orange-600 dark:text-orange-400', borderClass: 'border-orange-500/25' },
+  'logical-deduction': { icon: Brain, bgClass: 'bg-violet-500/10 dark:bg-violet-500/15', textClass: 'text-violet-600 dark:text-violet-400', borderClass: 'border-violet-500/25' },
+  'logical-sequence-of-words': { icon: Layers, bgClass: 'bg-sky-500/10 dark:bg-sky-500/15', textClass: 'text-sky-600 dark:text-sky-400', borderClass: 'border-sky-500/25' },
+  'syllogisms': { icon: Brain, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'blood-relations': { icon: Users, bgClass: 'bg-red-500/10 dark:bg-red-500/15', textClass: 'text-red-600 dark:text-red-400', borderClass: 'border-red-500/25' },
+  'cubes-and-dice': { icon: Box, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'seating-arrangement': { icon: Grid, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'direction-sense': { icon: Compass, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+
+  // Verbal Ability
+  'reading-comprehension': { icon: BookOpen, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'spotting-errors': { icon: CheckSquare, bgClass: 'bg-rose-500/10 dark:bg-rose-500/15', textClass: 'text-rose-600 dark:text-rose-400', borderClass: 'border-rose-500/25' },
+  'synonyms': { icon: Tag, bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/15', textClass: 'text-emerald-600 dark:text-emerald-400', borderClass: 'border-emerald-500/25' },
+  'antonyms': { icon: Shuffle, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'spellings': { icon: CheckSquare, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+  'ordering-of-words': { icon: Layers, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'sentence-improvement': { icon: Sparkles, bgClass: 'bg-violet-500/10 dark:bg-violet-500/15', textClass: 'text-violet-600 dark:text-violet-400', borderClass: 'border-violet-500/25' },
+  'ordering-of-sentences': { icon: Layers, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'cloze-test': { icon: Sliders, bgClass: 'bg-sky-500/10 dark:bg-sky-500/15', textClass: 'text-sky-600 dark:text-sky-400', borderClass: 'border-sky-500/25' },
+
+  // Nonverbal Reasoning
+  'pattern-completion': { icon: Sparkles, bgClass: 'bg-amber-500/10 dark:bg-amber-500/15', textClass: 'text-amber-600 dark:text-amber-400', borderClass: 'border-amber-500/25' },
+  'mirror-images': { icon: Compass, bgClass: 'bg-blue-500/10 dark:bg-blue-500/15', textClass: 'text-blue-600 dark:text-blue-400', borderClass: 'border-blue-500/25' },
+  'paper-folding': { icon: Square, bgClass: 'bg-teal-500/10 dark:bg-teal-500/15', textClass: 'text-teal-600 dark:text-teal-400', borderClass: 'border-teal-500/25' },
+  'embedded-images': { icon: Eye, bgClass: 'bg-indigo-500/10 dark:bg-indigo-500/15', textClass: 'text-indigo-600 dark:text-indigo-400', borderClass: 'border-indigo-500/25' },
+  'shape-construction': { icon: Shapes, bgClass: 'bg-purple-500/10 dark:bg-purple-500/15', textClass: 'text-purple-600 dark:text-purple-400', borderClass: 'border-purple-500/25' },
+};
+
+export const getIcon = (iconName?: string) => {
   if (!iconName) return Folder;
   return ICON_MAP[iconName] || Folder;
+};
+
+const getTopicIconInfo = (topicId: string, iconName?: string): TopicVisualMeta => {
+  if (TOPIC_VISUAL_MAP[topicId]) {
+    return TOPIC_VISUAL_MAP[topicId];
+  }
+
+  if (iconName && ICON_MAP[iconName] && iconName !== 'Folder') {
+    return {
+      icon: ICON_MAP[iconName],
+      bgClass: 'bg-amber-500/10 dark:bg-amber-500/15',
+      textClass: 'text-amber-600 dark:text-amber-400',
+      borderClass: 'border-amber-500/25',
+    };
+  }
+
+  for (const [key, val] of Object.entries(TOPIC_VISUAL_MAP)) {
+    if (topicId.includes(key) || key.includes(topicId)) {
+      return val;
+    }
+  }
+
+  return DEFAULT_TOPIC_VISUAL;
 };
 
 export default function AptitudePage() {
@@ -101,7 +289,7 @@ export default function AptitudePage() {
         cluster: d.cluster,
         description: d.description,
         icon_name: d.icon_name,
-        icon: getIcon(d.icon_name),
+        icon: getTopicIconInfo(d.id, d.icon_name).icon,
         formulas: d.formulas || [],
         is_hidden: d.is_hidden
       }));
@@ -423,7 +611,8 @@ export default function AptitudePage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           {sortedTopics.map((topic) => {
-            const TopicIcon = topic.icon || Folder;
+            const visual = getTopicIconInfo(topic.id, topic.icon_name);
+            const TopicIcon = visual.icon;
             const displayCount = liveCountMap[topic.id] ?? 0;
             const isHidden = topic.is_hidden;
             const solvedCount = categoryStats.topicMastery[topic.id]?.solved ?? 0;
@@ -431,26 +620,26 @@ export default function AptitudePage() {
             return (
               <div
                 key={topic.id}
-                className={`group flex items-center justify-between p-3 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
+                className={`group flex items-center justify-between p-3 sm:p-3.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
                   isHidden
                     ? 'border-dashed border-red-300 dark:border-red-900 opacity-60'
                     : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#383838]'
-                } rounded-md transition-all duration-150 shadow-2xs`}
+                } rounded-lg transition-all duration-150 shadow-2xs`}
               >
                 {/* 1. Left: Topic Icon & Name (Navigates to questions) */}
                 <Link
                   to={`/aptitude/${categorySlug}/topic/${topic.id}`}
-                  className="flex items-center gap-2.5 min-w-0 flex-1 mr-2"
+                  className="flex items-center gap-3 min-w-0 flex-1 mr-2"
                 >
-                  <div className="w-7 h-7 rounded bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 dark:border-[#FD4A32]/30 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
-                    <TopicIcon className="w-3.5 h-3.5 text-[#FD4A32]" />
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${visual.bgClass} border ${visual.borderClass} ${visual.textClass} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs`}>
+                    <TopicIcon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
 
                   <div className="flex flex-col min-w-0">
-                    <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors truncate">
+                    <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors truncate">
                       {topic.name} {isHidden && <span className="ml-1 text-[9px] text-red-500 uppercase">(Hidden)</span>}
                     </span>
-                    <span className="text-[10px] text-gray-400 truncate">{topic.cluster}</span>
+                    <span className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400 truncate">{topic.cluster}</span>
                   </div>
                 </Link>
 
