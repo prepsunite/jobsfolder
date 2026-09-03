@@ -69,78 +69,65 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   if (variant === 'embedded') {
     return (
       <div className={`transition-colors ${className}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Donut + Counts */}
-          <div className="flex items-center gap-3.5 shrink-0">
-            <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          {/* Donut with 4/400 inside */}
+          <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
+              <circle
+                cx="35"
+                cy="35"
+                r={radius}
+                className="stroke-[#E9ECEF] dark:stroke-[#262626]"
+                strokeWidth={strokeWidth}
+                fill="none"
+              />
+              {easySolved > 0 && (
                 <circle
                   cx="35"
                   cy="35"
                   r={radius}
-                  className="stroke-[#E9ECEF] dark:stroke-[#262626]"
+                  className="stroke-emerald-500 transition-all duration-700 ease-out"
                   strokeWidth={strokeWidth}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={easyDashOffset}
+                  strokeLinecap="round"
                   fill="none"
                 />
-                {easySolved > 0 && (
-                  <circle
-                    cx="35"
-                    cy="35"
-                    r={radius}
-                    className="stroke-emerald-500 transition-all duration-700 ease-out"
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={easyDashOffset}
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                )}
-                {mediumSolved > 0 && (
-                  <circle
-                    cx="35"
-                    cy="35"
-                    r={radius}
-                    className="stroke-amber-500 transition-all duration-700 ease-out"
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={mediumDashOffset}
-                    strokeLinecap="round"
-                    fill="none"
-                    style={{ transformOrigin: 'center', transform: `rotate(${mediumRotation}deg)` }}
-                  />
-                )}
-                {hardSolved > 0 && (
-                  <circle
-                    cx="35"
-                    cy="35"
-                    r={radius}
-                    className="stroke-rose-500 transition-all duration-700 ease-out"
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={hardDashOffset}
-                    strokeLinecap="round"
-                    fill="none"
-                    style={{ transformOrigin: 'center', transform: `rotate(${hardRotation}deg)` }}
-                  />
-                )}
-              </svg>
-            </div>
-
-            <div className="space-y-0.5 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-display font-extrabold text-sm text-[#121417] dark:text-white">
-                  {totalSolved}
-                </span>
-                <span className="text-xs text-[#868E96] dark:text-[#666666]">
-                  / {totalQuestions.toLocaleString()} Solved
-                </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/5 text-[#868E96] dark:text-[#777777]">
-                  {displayPct}
-                </span>
-              </div>
-              <div className="text-[11px] font-display font-semibold text-[#868E96] dark:text-[#777777] truncate">
-                {title}
-              </div>
+              )}
+              {mediumSolved > 0 && (
+                <circle
+                  cx="35"
+                  cy="35"
+                  r={radius}
+                  className="stroke-amber-500 transition-all duration-700 ease-out"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={mediumDashOffset}
+                  strokeLinecap="round"
+                  fill="none"
+                  style={{ transformOrigin: 'center', transform: `rotate(${mediumRotation}deg)` }}
+                />
+              )}
+              {hardSolved > 0 && (
+                <circle
+                  cx="35"
+                  cy="35"
+                  r={radius}
+                  className="stroke-rose-500 transition-all duration-700 ease-out"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={hardDashOffset}
+                  strokeLinecap="round"
+                  fill="none"
+                  style={{ transformOrigin: 'center', transform: `rotate(${hardRotation}deg)` }}
+                />
+              )}
+            </svg>
+            {/* 4/400 Score Inside Donut Ring */}
+            <div className="absolute inset-0 flex items-center justify-center text-center pointer-events-none px-1">
+              <span className="font-mono font-bold text-xs text-[#121417] dark:text-white tracking-tight leading-none">
+                {totalSolved}/{totalQuestions}
+              </span>
             </div>
           </div>
 
@@ -296,17 +283,15 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
                 />
               )}
             </svg>
+            {/* 4/400 Score Inside Donut Ring */}
+            <div className="absolute inset-0 flex items-center justify-center text-center pointer-events-none px-1">
+              <span className="font-mono font-bold text-xs sm:text-sm text-[#121417] dark:text-white tracking-tight leading-none">
+                {totalSolved}/{totalQuestions}
+              </span>
+            </div>
           </div>
 
           <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="font-display font-black text-xl text-[#121417] dark:text-white">
-                {totalSolved}
-              </span>
-              <span className="text-xs text-[#868E96] dark:text-[#777777]">
-                / {totalQuestions.toLocaleString()} Solved
-              </span>
-            </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-display font-bold bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
                 {displayPct} Mastered
