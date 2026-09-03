@@ -601,7 +601,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8 animate-fadeIn pb-12">
       {/* Header Banner */}
-      <div className="relative rounded-[24px] bg-[#f6ece6] dark:bg-[#1e1f22] p-6 sm:p-8 border border-[#e2d8d2] dark:border-[#2b2d31] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="relative rounded-[24px] bg-[#F8F9FA] dark:bg-[#1e1f22] p-6 sm:p-8 border border-[#E9ECEF] dark:border-[#2b2d31] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="max-w-2xl space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/40 border border-purple-300 dark:border-purple-700 text-purple-900 dark:text-purple-300 text-[11px] font-bold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300" />
@@ -648,13 +648,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Primary Control Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto bg-[#ffffff] dark:bg-[#1e1f22] p-2 rounded-[18px] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm">
+      <div className="flex items-center gap-2 overflow-x-auto bg-[#ffffff] dark:bg-[#1e1f22] p-2 rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] shadow-sm">
         <button
           onClick={() => setAdminTab('manage-exams')}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'manage-exams'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-purple-300" />
@@ -666,7 +666,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'moderation'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
@@ -683,7 +683,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'question-reports'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
@@ -700,7 +700,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'contact-messages'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <Mail className="w-3.5 h-3.5 text-blue-400" />
@@ -717,7 +717,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'create-company'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <Building2 className="w-3.5 h-3.5 text-purple-300" />
@@ -729,7 +729,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'create-question'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <BookOpen className="w-3.5 h-3.5 text-purple-300" />
@@ -741,7 +741,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'create-resource'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <Bookmark className="w-3.5 h-3.5 text-purple-300" />
@@ -753,7 +753,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'users'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <Users className="w-3.5 h-3.5 text-purple-300" />
@@ -770,7 +770,7 @@ export default function AdminDashboardPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
             adminTab === 'metrics'
               ? 'bg-purple-900 text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
           <Activity className="w-3.5 h-3.5 text-purple-300" />
@@ -796,7 +796,7 @@ export default function AdminDashboardPage() {
                     className={`p-3.5 rounded-[18px] border text-left transition-all ${
                       isSelected
                         ? 'bg-purple-900 text-white border-purple-900 shadow-md scale-[1.02]'
-                        : 'bg-[#ffffff] dark:bg-[#1e1f22] text-[#1f1b17] dark:text-[#e3e3e3] border-[#e2d8d2] dark:border-[#2b2d31] hover:border-purple-600'
+                        : 'bg-[#ffffff] dark:bg-[#1e1f22] text-[#1f1b17] dark:text-[#e3e3e3] border-[#E9ECEF] dark:border-[#2b2d31] hover:border-purple-600'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -813,7 +813,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Active Selected Company Management Toolbar */}
-          <div className="bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#2b2d31] rounded-[24px] p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="bg-[#F8F9FA] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="space-y-0.5">
                 <span className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase tracking-wider block">Editing Company:</span>
@@ -833,7 +833,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Sub-Module CRUD Navigation Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto bg-[#ffffff] dark:bg-[#1e1f22] p-2 rounded-[18px] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm">
+          <div className="flex items-center gap-2 overflow-x-auto bg-[#ffffff] dark:bg-[#1e1f22] p-2 rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] shadow-sm">
             {[
               { id: 'exams', label: '🎓 Exam Cards & Text Editors (Shown on /questions)', count: companyExamsList.length },
               { id: 'overview', label: '🏢 Company Overview', count: 1 },
@@ -846,11 +846,11 @@ export default function AdminDashboardPage() {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                     isActive
                       ? 'bg-purple-900 text-white shadow-sm'
-                      : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31]'
+                      : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-purple-700 text-white' : 'bg-[#eae1da] dark:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3]'}`}>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-purple-700 text-white' : 'bg-[#E9ECEF] dark:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3]'}`}>
                     {tab.count}
                   </span>
                 </button>
@@ -860,8 +860,8 @@ export default function AdminDashboardPage() {
 
           {/* SECTION 1: EXAM CARDS & TEXT-BASED MARKDOWN CRUD */}
           {crudSection === 'exams' && (
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-6 shadow-sm">
-              <div className="flex items-center justify-between pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-6 shadow-sm">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
                 <div>
                   <h3 className="font-display text-lg font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
                     Exam Cards & Markdown Content for {selectedCompanySlug.toUpperCase()}
@@ -875,8 +875,8 @@ export default function AdminDashboardPage() {
               {/* Current Exam Cards List */}
               <div className="space-y-4">
                 {companyExamsList.map((exam) => (
-                  <div key={exam.id} className="p-5 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[20px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#e2d8d2] dark:border-[#2b2d31]">
+                  <div key={exam.id} className="p-5 bg-[#F8F9FA]/60 dark:bg-[#141517]/60 rounded-[20px] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
                       <div>
                         <h4 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
                           <GraduationCap className="w-5 h-5 text-[#FD4A32] dark:text-[#FD4A32]" />
@@ -903,11 +903,11 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="p-3 bg-[#ffffff] dark:bg-[#1e1f22] rounded-xl border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+                      <div className="p-3 bg-[#ffffff] dark:bg-[#1e1f22] rounded-xl border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
                         <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] block">About Exam (Syllabus & Pattern):</span>
                         <p className="text-[#444748] dark:text-[#a6adbb] line-clamp-3 font-mono text-[11px]">{exam.content}</p>
                       </div>
-                      <div className="p-3 bg-[#ffffff] dark:bg-[#1e1f22] rounded-xl border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+                      <div className="p-3 bg-[#ffffff] dark:bg-[#1e1f22] rounded-xl border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
                         <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3] block">Old Papers & PYQs:</span>
                         <p className="text-[#444748] dark:text-[#a6adbb] line-clamp-3 font-mono text-[11px]">{exam.oldPapers}</p>
                       </div>
@@ -917,7 +917,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Add New Exam Card Form */}
-              <div className="p-5 bg-[#f6ece6] dark:bg-[#141517] rounded-[22px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-4">
+              <div className="p-5 bg-[#F8F9FA] dark:bg-[#141517] rounded-[22px] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-4">
                 <h4 className="font-display text-xs font-bold uppercase tracking-wider text-[#1f1b17] dark:text-[#e3e3e3]">
                   + Add New Exam Card to {selectedCompanySlug.toUpperCase()}
                 </h4>
@@ -961,8 +961,8 @@ export default function AdminDashboardPage() {
 
           {/* SECTION 2: COMPANY OVERVIEW */}
           {crudSection === 'overview' && (
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between pb-2 border-b border-[#eae1da] dark:border-[#2b2d31]">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
                 <div>
                   <h3 className="font-display text-lg font-bold text-[#1f1b17] dark:text-[#e3e3e3]">Company Overview & Description</h3>
                   <p className="text-xs text-[#747878] dark:text-[#a6adbb]">Edit company overview text for {selectedCompanySlug.toUpperCase()}</p>
@@ -1428,8 +1428,8 @@ export default function AdminDashboardPage() {
 
       {/* 🏢 TAB 3: STREAMLINED 2-STEP COMPANY & EXAM ONBOARDING */}
       {adminTab === 'create-company' && (
-        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
-          <div className="space-y-1 pb-4 border-b border-[#eae1da] dark:border-[#2b2d31]">
+        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="space-y-1 pb-4 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-purple-700 dark:text-purple-400" />
@@ -1459,7 +1459,7 @@ export default function AdminDashboardPage() {
                       ? 'bg-purple-900 text-white border-purple-900'
                       : isDone
                       ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
-                      : 'bg-[#f6ece6] dark:bg-[#141517] text-[#747878] dark:text-[#a6adbb] border-[#e2d8d2] dark:border-[#2b2d31]'
+                      : 'bg-[#F8F9FA] dark:bg-[#141517] text-[#747878] dark:text-[#a6adbb] border-[#E9ECEF] dark:border-[#2b2d31]'
                   }`}
                 >
                   {stepLabel}
@@ -1476,28 +1476,28 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Company Name *</label>
-                    <input type="text" required placeholder="e.g. Capgemini, Cognizant, Wipro, Google..." value={companyForm.name} onChange={(e) => handleNameChange(e.target.value)} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
+                    <input type="text" required placeholder="e.g. Capgemini, Cognizant, Wipro, Google..." value={companyForm.name} onChange={(e) => handleNameChange(e.target.value)} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">URL Slug</label>
-                    <input type="text" readOnly value={companyForm.slug} className="w-full bg-[#eae1da]/60 dark:bg-[#2b2d31]/60 border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#747878] dark:text-[#a6adbb] font-mono" />
+                    <input type="text" readOnly value={companyForm.slug} className="w-full bg-[#E9ECEF]/60 dark:bg-[#2b2d31]/60 border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#747878] dark:text-[#a6adbb] font-mono" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Industry</label>
-                    <input type="text" placeholder="e.g. IT Services & Consulting" value={companyForm.industry} onChange={(e) => setCompanyForm({ ...companyForm, industry: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
+                    <input type="text" placeholder="e.g. IT Services & Consulting" value={companyForm.industry} onChange={(e) => setCompanyForm({ ...companyForm, industry: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Official Website URL</label>
-                    <input type="url" placeholder="https://..." value={companyForm.website} onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
+                    <input type="url" placeholder="https://..." value={companyForm.website} onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Logo Image URL (Optional)</label>
-                  <input type="url" placeholder="https://..." value={companyForm.logoUrl} onChange={(e) => setCompanyForm({ ...companyForm, logoUrl: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
+                  <input type="url" placeholder="https://..." value={companyForm.logoUrl} onChange={(e) => setCompanyForm({ ...companyForm, logoUrl: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Overview & Description</label>
-                  <textarea rows={3} placeholder="Describe the company recruitment process..." value={companyForm.description} onChange={(e) => setCompanyForm({ ...companyForm, description: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
+                  <textarea rows={3} placeholder="Describe the company recruitment process..." value={companyForm.description} onChange={(e) => setCompanyForm({ ...companyForm, description: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]" />
                 </div>
                 <button type="button" onClick={() => setCreationStep(2)} className="px-5 py-2.5 bg-purple-900 hover:bg-purple-800 text-white text-xs font-bold uppercase rounded-full">Next Step: Exam Card Markdown ➔</button>
               </div>
@@ -1510,26 +1510,26 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Primary Exam Title *</label>
-                    <input type="text" required placeholder="e.g. TCS NQT Placement Papers 2026" value={companyForm.examName} onChange={(e) => setCompanyForm({ ...companyForm, examName: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
+                    <input type="text" required placeholder="e.g. TCS NQT Placement Papers 2026" value={companyForm.examName} onChange={(e) => setCompanyForm({ ...companyForm, examName: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Drive Badge Name</label>
-                    <input type="text" placeholder="e.g. Official Campus Drive 2026" value={companyForm.examBadge} onChange={(e) => setCompanyForm({ ...companyForm, examBadge: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
+                    <input type="text" placeholder="e.g. Official Campus Drive 2026" value={companyForm.examBadge} onChange={(e) => setCompanyForm({ ...companyForm, examBadge: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">About Exam Markdown Text (Syllabus, Pattern & Rounds)</label>
-                  <textarea rows={4} value={companyForm.examContent} onChange={(e) => setCompanyForm({ ...companyForm, examContent: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono" />
+                  <textarea rows={4} value={companyForm.examContent} onChange={(e) => setCompanyForm({ ...companyForm, examContent: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono" />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase block">Old Papers & PYQs Markdown Text</label>
-                  <textarea rows={4} value={companyForm.oldPapersContent} onChange={(e) => setCompanyForm({ ...companyForm, oldPapersContent: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono" />
+                  <textarea rows={4} value={companyForm.oldPapersContent} onChange={(e) => setCompanyForm({ ...companyForm, oldPapersContent: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] font-mono" />
                 </div>
 
-                <div className="flex gap-3 pt-3 border-t border-[#eae1da] dark:border-[#2b2d31]">
-                  <button type="button" onClick={() => setCreationStep(1)} className="px-4 py-2.5 bg-[#f6ece6] dark:bg-[#141517] text-[#747878] dark:text-[#a6adbb] text-xs font-bold rounded-full">Back</button>
+                <div className="flex gap-3 pt-3 border-t border-[#E9ECEF] dark:border-[#2b2d31]">
+                  <button type="button" onClick={() => setCreationStep(1)} className="px-4 py-2.5 bg-[#F8F9FA] dark:bg-[#141517] text-[#747878] dark:text-[#a6adbb] text-xs font-bold rounded-full">Back</button>
                   <button type="submit" className="px-6 py-3 rounded-full bg-[#FD4A32] hover:bg-[#E0351D] text-white font-bold text-xs uppercase tracking-wider shadow-lg">
                     ✔ Publish Company & Exam Card Live
                   </button>
@@ -1542,8 +1542,8 @@ export default function AdminDashboardPage() {
 
       {/* ❓ TAB 4: ADD NEW OA QUESTION FORM */}
       {adminTab === 'create-question' && (
-        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
-          <div className="space-y-1 pb-4 border-b border-[#eae1da] dark:border-[#2b2d31]">
+        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="space-y-1 pb-4 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
             <h2 className="font-display text-xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-purple-700 dark:text-purple-400" />
               Add OA Question to Live Bank
@@ -1578,7 +1578,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. Find Longest Palindromic Substring in String"
                   value={questionForm.title}
                   onChange={(e) => setQuestionForm({ ...questionForm, title: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                 />
               </div>
 
@@ -1589,7 +1589,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. TCS NQT 2026"
                   value={questionForm.companyName}
                   onChange={(e) => setQuestionForm({ ...questionForm, companyName: e.target.value, companySlug: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-') })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                 />
               </div>
 
@@ -1598,7 +1598,7 @@ export default function AdminDashboardPage() {
                 <select
                   value={questionForm.category}
                   onChange={(e) => setQuestionForm({ ...questionForm, category: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
                 >
                   <option value="CODING">Coding</option>
                   <option value="SQL">SQL Query</option>
@@ -1613,7 +1613,7 @@ export default function AdminDashboardPage() {
                 <select
                   value={questionForm.difficulty}
                   onChange={(e) => setQuestionForm({ ...questionForm, difficulty: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
                 >
                   <option value="EASY">EASY</option>
                   <option value="MEDIUM">MEDIUM</option>
@@ -1628,7 +1628,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. Digital Tier / ASE"
                   value={questionForm.role}
                   onChange={(e) => setQuestionForm({ ...questionForm, role: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                 />
               </div>
             </div>
@@ -1641,7 +1641,7 @@ export default function AdminDashboardPage() {
                 placeholder="Describe the question problem statement..."
                 value={questionForm.problemStatement}
                 onChange={(e) => setQuestionForm({ ...questionForm, problemStatement: e.target.value })}
-                className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
               />
             </div>
 
@@ -1653,7 +1653,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. string s = babad"
                   value={questionForm.sampleInput}
                   onChange={(e) => setQuestionForm({ ...questionForm, sampleInput: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] font-mono"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] font-mono"
                 />
               </div>
 
@@ -1664,7 +1664,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. bab"
                   value={questionForm.sampleOutput}
                   onChange={(e) => setQuestionForm({ ...questionForm, sampleOutput: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] font-mono"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278] font-mono"
                 />
               </div>
             </div>
@@ -1678,8 +1678,8 @@ export default function AdminDashboardPage() {
 
       {/* 🔖 TAB 5: ADD NEW RESOURCE FORM */}
       {adminTab === 'create-resource' && (
-        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
-          <div className="space-y-1 pb-4 border-b border-[#eae1da] dark:border-[#2b2d31]">
+        <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="space-y-1 pb-4 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
             <h2 className="font-display text-xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
               <Bookmark className="w-5 h-5 text-purple-700 dark:text-purple-400" />
               Upload Resource to Vault
@@ -1714,7 +1714,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. TCS NQT Official Memory Placement Paper 2026"
                   value={resourceForm.title}
                   onChange={(e) => setResourceForm({ ...resourceForm, title: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                 />
               </div>
 
@@ -1725,7 +1725,7 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. TCS / Accenture / Infosys"
                   value={resourceForm.companyName}
                   onChange={(e) => setResourceForm({ ...resourceForm, companyName: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                 />
               </div>
 
@@ -1734,7 +1734,7 @@ export default function AdminDashboardPage() {
                 <select
                   value={resourceForm.category}
                   onChange={(e) => setResourceForm({ ...resourceForm, category: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
                 >
                   <option value="PDF">PDFs & Notes</option>
                   <option value="YOUTUBE">YouTube Playlists</option>
@@ -1751,7 +1751,7 @@ export default function AdminDashboardPage() {
                   placeholder="https://..."
                   value={resourceForm.url}
                   onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3.5 py-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                 />
               </div>
             </div>
@@ -1767,7 +1767,7 @@ export default function AdminDashboardPage() {
       {adminTab === 'users' && (
         <div className="space-y-6 animate-fadeIn">
           {/* Header & Sub-Tab Switcher */}
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] p-5 rounded-[24px] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="bg-[#ffffff] dark:bg-[#1e1f22] p-5 rounded-[24px] border border-[#E9ECEF] dark:border-[#2b2d31] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <h3 className="font-display text-lg font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
                 <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -1778,7 +1778,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 bg-[#f6ece6] dark:bg-[#141517] p-1.5 rounded-full border border-[#eae1da] dark:border-[#2b2d31] overflow-x-auto">
+            <div className="flex items-center gap-2 bg-[#F8F9FA] dark:bg-[#141517] p-1.5 rounded-full border border-[#E9ECEF] dark:border-[#2b2d31] overflow-x-auto">
               <button
                 onClick={() => setUsersSubTab('users')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
@@ -1824,7 +1824,7 @@ export default function AdminDashboardPage() {
 
           {/* SubTab 1: Registered Users */}
           {usersSubTab === 'users' && (
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
                   All Authenticated Users ({registeredUsersList.length})
@@ -1842,7 +1842,7 @@ export default function AdminDashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                      <tr className="border-b border-[#E9ECEF] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
                         <th className="pb-3 px-3">User</th>
                         <th className="pb-3 px-3">Email</th>
                         <th className="pb-3 px-3">Role</th>
@@ -1850,12 +1850,12 @@ export default function AdminDashboardPage() {
                         <th className="pb-3 px-3">User ID</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                    <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
                       {registeredUsersList.map((u: any) => (
-                        <tr key={u.id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                        <tr key={u.id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
                           <td className="py-3.5 px-3 flex items-center gap-2.5">
                             {u.avatar_url ? (
-                              <img src={u.avatar_url} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-[#eae1da] dark:border-[#2b2d31]" />
+                              <img src={u.avatar_url} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-[#E9ECEF] dark:border-[#2b2d31]" />
                             ) : (
                               <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center text-xs">
                                 {(u.name || u.email || 'U').charAt(0).toUpperCase()}
@@ -1888,7 +1888,7 @@ export default function AdminDashboardPage() {
 
           {/* SubTab 2: Payment Transactions */}
           {usersSubTab === 'transactions' && (
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
                   Razorpay &amp; Platform Payment Logs ({allTransactionsList.length})
@@ -1903,7 +1903,7 @@ export default function AdminDashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                      <tr className="border-b border-[#E9ECEF] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
                         <th className="pb-3 px-3">Customer Email</th>
                         <th className="pb-3 px-3">Plan / Item</th>
                         <th className="pb-3 px-3">Amount</th>
@@ -1912,9 +1912,9 @@ export default function AdminDashboardPage() {
                         <th className="pb-3 px-3">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                    <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
                       {allTransactionsList.map((tx: any) => (
-                        <tr key={tx.id || tx.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                        <tr key={tx.id || tx.payment_id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
                           <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{tx.user_email}</td>
                           <td className="py-3.5 px-3">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-300">
@@ -1942,7 +1942,7 @@ export default function AdminDashboardPage() {
 
           {/* SubTab 3: Paper Purchases */}
           {usersSubTab === 'purchases' && (
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
                   Active Exam Paper Unlocks ({allPurchasesList.length})
@@ -1957,7 +1957,7 @@ export default function AdminDashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                      <tr className="border-b border-[#E9ECEF] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
                         <th className="pb-3 px-3">User Email</th>
                         <th className="pb-3 px-3">Exam ID</th>
                         <th className="pb-3 px-3">Amount</th>
@@ -1965,9 +1965,9 @@ export default function AdminDashboardPage() {
                         <th className="pb-3 px-3">Expires On</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                    <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
                       {allPurchasesList.map((p: any) => (
-                        <tr key={p.id || p.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                        <tr key={p.id || p.payment_id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
                           <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{p.user_email}</td>
                           <td className="py-3.5 px-3 font-semibold text-purple-700 dark:text-purple-400">{p.exam_id}</td>
                           <td className="py-3.5 px-3 font-extrabold text-[#FD4A32] dark:text-[#FD4A32]">₹{p.amount_paid}</td>
@@ -1984,7 +1984,7 @@ export default function AdminDashboardPage() {
 
           {/* SubTab 4: Pro Subscriptions */}
           {usersSubTab === 'subscriptions' && (
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-display font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
                   Active Pro Subscriptions ({allSubscriptionsList.length})
@@ -1999,16 +1999,16 @@ export default function AdminDashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#eae1da] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
+                      <tr className="border-b border-[#E9ECEF] dark:border-[#2b2d31] text-[#747878] dark:text-[#a6adbb] uppercase tracking-wider text-[10px]">
                         <th className="pb-3 px-3">User Email</th>
                         <th className="pb-3 px-3">Plan Name</th>
                         <th className="pb-3 px-3">Status</th>
                         <th className="pb-3 px-3">Expires On</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+                    <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
                       {allSubscriptionsList.map((s: any) => (
-                        <tr key={s.id || s.payment_id} className="hover:bg-[#f6ece6]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                        <tr key={s.id || s.payment_id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
                           <td className="py-3.5 px-3 font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{s.user_email}</td>
                           <td className="py-3.5 px-3 font-semibold text-purple-700 dark:text-purple-400">{s.plan_name}</td>
                           <td className="py-3.5 px-3">
@@ -2038,7 +2038,7 @@ export default function AdminDashboardPage() {
               return (
                 <div
                   key={i}
-                  className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] p-5 flex items-center justify-between shadow-sm"
+                  className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] p-5 flex items-center justify-between shadow-sm"
                 >
                   <div className="space-y-1">
                     <span className="text-[11px] text-[#747878] dark:text-[#a6adbb] block font-bold uppercase tracking-wider">{card.label}</span>
@@ -2055,12 +2055,12 @@ export default function AdminDashboardPage() {
           {/* Detailed Platform Analytics Tables */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Target Companies & Exams Overview */}
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
               <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-purple-700 dark:text-purple-400" />
                 <span>Target Companies & Exam Distribution</span>
               </h3>
-              <div className="divide-y divide-[#eae1da] dark:divide-[#2b2d31]">
+              <div className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
                 {allCompanies.map((comp) => {
                   const compExams = allExamsGlobal.filter((e) => e.companySlug === comp.slug);
                   return (
@@ -2079,13 +2079,13 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Moderation Metrics Breakdown */}
-            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
+            <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-4 shadow-sm">
               <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#FD4A32] dark:text-[#FD4A32]" />
                 <span>Student Submissions Moderation Metrics</span>
               </h3>
               <div className="space-y-3">
-                <div className="p-4 bg-[#f6ece6] dark:bg-[#141517] rounded-[18px] border border-[#e2d8d2] dark:border-[#2b2d31] flex items-center justify-between">
+                <div className="p-4 bg-[#F8F9FA] dark:bg-[#141517] rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] block">Approved Live Experiences</span>
                     <span className="text-[11px] text-[#747878] dark:text-[#a6adbb]">Visible on /experiences</span>
@@ -2093,7 +2093,7 @@ export default function AdminDashboardPage() {
                   <span className="font-display text-xl font-black text-emerald-600 dark:text-emerald-400">{approvedExperiencesCount}</span>
                 </div>
 
-                <div className="p-4 bg-[#f6ece6] dark:bg-[#141517] rounded-[18px] border border-[#e2d8d2] dark:border-[#2b2d31] flex items-center justify-between">
+                <div className="p-4 bg-[#F8F9FA] dark:bg-[#141517] rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] block">Pending Admin Moderation</span>
                     <span className="text-[11px] text-[#747878] dark:text-[#a6adbb]">Needs approval or rejection</span>
@@ -2101,7 +2101,7 @@ export default function AdminDashboardPage() {
                   <span className="font-display text-xl font-black text-amber-600 dark:text-amber-400">{pendingExperiencesCount}</span>
                 </div>
 
-                <div className="p-4 bg-[#f6ece6] dark:bg-[#141517] rounded-[18px] border border-[#e2d8d2] dark:border-[#2b2d31] flex items-center justify-between">
+                <div className="p-4 bg-[#F8F9FA] dark:bg-[#141517] rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] block">Disapproved / Rejected Submissions</span>
                     <span className="text-[11px] text-[#747878] dark:text-[#a6adbb]">Hidden from public view</span>
@@ -2113,8 +2113,8 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* 💰 Revenue & Monetization Intelligence */}
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-5 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-6 space-y-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
@@ -2128,7 +2128,7 @@ export default function AdminDashboardPage() {
 
             {/* Breakdown Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+              <div className="p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
                 <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Single Paper Passes (₹99)</span>
                 <div className="font-display text-2xl font-black text-[#1f1b17] dark:text-[#e3e3e3]">
                   ₹{singlePaperRevenue.toLocaleString('en-IN')}
@@ -2138,7 +2138,7 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+              <div className="p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
                 <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Pro Memberships (₹299+)</span>
                 <div className="font-display text-2xl font-black text-purple-600 dark:text-purple-400">
                   ₹{proPassRevenue.toLocaleString('en-IN')}
@@ -2148,7 +2148,7 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#f6ece6] dark:bg-[#141517] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-1">
+              <div className="p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
                 <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Total Orders Logged</span>
                 <div className="font-display text-2xl font-black text-blue-600 dark:text-blue-400">
                   {allTransactionsList.length}
@@ -2169,7 +2169,7 @@ export default function AdminDashboardPage() {
                   {companyUnlocks.slice(0, 8).map(([slug, count]) => (
                     <div
                       key={slug}
-                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1a1c1e] border border-[#eae1da] dark:border-[#2b2d31] text-xs font-bold flex items-center gap-2 shadow-2xs"
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1a1c1e] border border-[#E9ECEF] dark:border-[#2b2d31] text-xs font-bold flex items-center gap-2 shadow-2xs"
                     >
                       <span className="text-[#1f1b17] dark:text-white uppercase">{slug}</span>
                       <span className="px-1.5 py-0.5 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] text-[10px]">
@@ -2187,8 +2187,8 @@ export default function AdminDashboardPage() {
       {/* ✏️ MODAL: EDIT EXAM MARKDOWN */}
       {editingExam && (
         <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-[#eae1da] dark:border-[#2b2d31]">
+          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
                 Edit Exam Card & Markdown Content
               </h3>
@@ -2205,7 +2205,7 @@ export default function AdminDashboardPage() {
                     type="text"
                     value={editingExam.name}
                     onChange={(e) => setEditingExam({ ...editingExam, name: e.target.value })}
-                    className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
+                    className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
                   />
                 </div>
                 <div className="space-y-1">
@@ -2214,7 +2214,7 @@ export default function AdminDashboardPage() {
                     type="text"
                     value={editingExam.badge}
                     onChange={(e) => setEditingExam({ ...editingExam, badge: e.target.value })}
-                    className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                    className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
                   />
                 </div>
               </div>
@@ -2233,7 +2233,7 @@ export default function AdminDashboardPage() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#eae1da] dark:border-[#2b2d31]">
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#E9ECEF] dark:border-[#2b2d31]">
               <button onClick={() => setEditingExam(null)} className="px-4 py-2 rounded-full text-xs font-bold text-[#747878] dark:text-[#a6adbb]">Cancel</button>
               <button onClick={handleSaveEditedExam} className="px-5 py-2 rounded-full bg-purple-900 text-white font-bold text-xs uppercase tracking-wider">Save Exam Changes Live</button>
             </div>

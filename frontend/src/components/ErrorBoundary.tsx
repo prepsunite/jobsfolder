@@ -32,14 +32,14 @@ export default function ErrorBoundary() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] dark:bg-[#141517] flex items-center justify-center p-6 text-[#1f1b17] dark:text-[#e3e3e3]">
-      <div className="max-w-md w-full bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] p-8 shadow-2xl space-y-6 text-center animate-fadeIn">
+    <div className="min-h-screen bg-white dark:bg-[#141517] flex items-center justify-center p-6 text-[#121417] dark:text-[#e3e3e3]">
+      <div className="max-w-md w-full bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] p-8 shadow-2xl space-y-6 text-center animate-fadeIn">
         <div className="w-16 h-16 rounded-2xl bg-purple-500/15 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto border border-purple-500/30">
           <AlertTriangle className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <h2 className="font-display text-xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
+          <h2 className="font-display text-xl font-extrabold text-[#121417] dark:text-[#e3e3e3]">
             {isChunkError ? 'App Updated' : 'Something went wrong'}
           </h2>
           <p className="text-xs text-[#747878] dark:text-[#a6adbb] leading-relaxed">
@@ -58,7 +58,7 @@ export default function ErrorBoundary() {
 
           <Link
             to="/dashboard"
-            className="px-5 py-2.5 bg-[#f6ece6] hover:bg-[#eae1da] dark:bg-[#2b2d31] dark:hover:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] rounded-full text-xs font-extrabold transition-all border border-[#eae1da] dark:border-[#383a40] flex items-center gap-2"
+            className="px-5 py-2.5 bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#2b2d31] dark:hover:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] rounded-full text-xs font-extrabold transition-all border border-[#E9ECEF] dark:border-[#383a40] flex items-center gap-2"
           >
             <Home className="w-4 h-4" />
             <span>Dashboard</span>

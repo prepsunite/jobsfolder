@@ -209,10 +209,10 @@ export default function CompaniesPage() {
       {/* ✏️ MODAL: EDIT COMPANY IN-PLACE */}
       {editingCompany && (
         <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between pb-2 border-b border-[#eae1da] dark:border-[#2b2d31]">
-              <h3 className="font-display text-lg font-bold text-[#1f1b17] dark:text-[#e3e3e3]">Edit {editingCompany.name} Profile</h3>
-              <button onClick={() => setEditingCompany(null)} className="text-[#747878] dark:text-[#6e7278] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]"><XCircle className="w-5 h-5" /></button>
+          <div className="bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
+              <h3 className="font-display text-lg font-bold text-[#121417] dark:text-[#e3e3e3]">Edit {editingCompany.name} Profile</h3>
+              <button onClick={() => setEditingCompany(null)} className="text-[#747878] dark:text-[#6e7278] hover:text-[#121417] dark:hover:text-[#e3e3e3]"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="space-y-3">
               <div className="space-y-1">
@@ -225,7 +225,7 @@ export default function CompaniesPage() {
                     const autoSlug = newName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
                     setEditingCompany({ ...editingCompany, name: newName, slug: autoSlug });
                   }}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#121417] dark:text-[#e3e3e3]"
                 />
               </div>
               <div className="space-y-1">
@@ -234,24 +234,24 @@ export default function CompaniesPage() {
                   type="text"
                   value={editingCompany.slug}
                   onChange={(e) => setEditingCompany({ ...editingCompany, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-mono text-purple-700 dark:text-purple-400"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-mono text-purple-700 dark:text-purple-400"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase block">Industry</label>
-                <input type="text" value={editingCompany.industry} onChange={(e) => setEditingCompany({ ...editingCompany, industry: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
+                <input type="text" value={editingCompany.industry} onChange={(e) => setEditingCompany({ ...editingCompany, industry: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#121417] dark:text-[#e3e3e3]" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase block">Logo Image URL</label>
-                <input type="url" value={editingCompany.logoUrl || ''} onChange={(e) => setEditingCompany({ ...editingCompany, logoUrl: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
+                <input type="url" value={editingCompany.logoUrl || ''} onChange={(e) => setEditingCompany({ ...editingCompany, logoUrl: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#121417] dark:text-[#e3e3e3]" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] dark:text-[#6e7278] uppercase block">Description Overview</label>
-                <textarea rows={3} value={editingCompany.description} onChange={(e) => setEditingCompany({ ...editingCompany, description: e.target.value })} className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]" />
+                <textarea rows={3} value={editingCompany.description} onChange={(e) => setEditingCompany({ ...editingCompany, description: e.target.value })} className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#121417] dark:text-[#e3e3e3]" />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setEditingCompany(null)} className="px-4 py-2 text-xs font-bold text-[#747878] dark:text-[#6e7278] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]">Cancel</button>
+              <button onClick={() => setEditingCompany(null)} className="px-4 py-2 text-xs font-bold text-[#747878] dark:text-[#6e7278] hover:text-[#121417] dark:hover:text-[#e3e3e3]">Cancel</button>
               <button onClick={handleSaveEditedCompany} className="px-5 py-2 bg-purple-900 text-white rounded-full text-xs font-bold uppercase tracking-wider">Save Changes</button>
             </div>
           </div>

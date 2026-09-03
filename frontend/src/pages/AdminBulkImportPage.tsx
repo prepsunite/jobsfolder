@@ -263,7 +263,7 @@ export default function AdminBulkImportPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn pb-16">
       {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#eae1da] dark:border-[#2b2d31]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
         <div>
           <div className="flex items-center gap-2 text-xs font-extrabold text-purple-600 dark:text-purple-400 mb-1 uppercase tracking-wider">
             <ShieldCheck className="w-4 h-4" />
@@ -280,7 +280,7 @@ export default function AdminBulkImportPage() {
         <div className="flex items-center gap-3 shrink-0">
           <Link
             to="/admin"
-            className="px-4 py-2 bg-[#f6ece6] dark:bg-[#2b2d31] hover:bg-[#eae1da] dark:hover:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] rounded-full text-xs font-extrabold transition-all border border-[#eae1da] dark:border-[#383a40] flex items-center gap-1.5"
+            className="px-4 py-2 bg-[#F8F9FA] dark:bg-[#2b2d31] hover:bg-[#E9ECEF] dark:hover:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] rounded-full text-xs font-extrabold transition-all border border-[#E9ECEF] dark:border-[#383a40] flex items-center gap-1.5"
           >
             <span>Admin Dashboard</span>
           </Link>
@@ -316,7 +316,7 @@ export default function AdminBulkImportPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-1.5 bg-[#f6ece6] dark:bg-[#2b2d31] hover:bg-[#eae1da] text-[#1f1b17] dark:text-[#e3e3e3] rounded-xl text-xs font-bold border border-[#eae1da] dark:border-[#383a40] flex items-center gap-1.5 transition-all"
+                className="px-3 py-1.5 bg-[#F8F9FA] dark:bg-[#2b2d31] hover:bg-[#E9ECEF] text-[#1f1b17] dark:text-[#e3e3e3] rounded-xl text-xs font-bold border border-[#E9ECEF] dark:border-[#383a40] flex items-center gap-1.5 transition-all"
               >
                 <Upload className="w-3.5 h-3.5 text-purple-500" />
                 <span>Upload .JSON File</span>
@@ -348,7 +348,7 @@ export default function AdminBulkImportPage() {
 
         {/* Right Column (1 Col): Subtopic Target Override & Quick Summary */}
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] space-y-4 shadow-xs">
+          <div className="p-5 rounded-2xl bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-4 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
               <Layers className="w-4 h-4 text-purple-500" />
               <span>Target Subtopic Routing</span>
@@ -364,7 +364,7 @@ export default function AdminBulkImportPage() {
                   setTargetTopicOverride(e.target.value);
                   handleParsePreview(jsonText, e.target.value);
                 }}
-                className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-purple-500"
+                className="w-full bg-[#F8F9FA]/60 dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-purple-500"
               >
                 <option value="AUTO">✨ Auto-Detect from JSON ("subtopic")</option>
                 <optgroup label="Override Target Topic">
@@ -437,8 +437,8 @@ export default function AdminBulkImportPage() {
 
       {/* Import Result Audit Report */}
       {importReport && (
-        <div className="p-6 rounded-[24px] bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] space-y-5 shadow-lg animate-fadeIn">
-          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+        <div className="p-6 rounded-[24px] bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-5 shadow-lg animate-fadeIn">
+          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-6 h-6 text-emerald-500" />
               <h3 className="font-display text-lg font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
@@ -540,7 +540,7 @@ export default function AdminBulkImportPage() {
                   <button
                     disabled={previewPage <= 1}
                     onClick={() => setPreviewPage(p => Math.max(1, p - 1))}
-                    className="px-3 py-1 rounded-lg bg-[#f6ece6] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#eae1da] dark:border-[#383a40]"
+                    className="px-3 py-1 rounded-lg bg-[#F8F9FA] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#E9ECEF] dark:border-[#383a40]"
                   >
                     ← Prev
                   </button>
@@ -550,7 +550,7 @@ export default function AdminBulkImportPage() {
                   <button
                     disabled={previewPage >= totalPages}
                     onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}
-                    className="px-3 py-1 rounded-lg bg-[#f6ece6] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#eae1da] dark:border-[#383a40]"
+                    className="px-3 py-1 rounded-lg bg-[#F8F9FA] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#E9ECEF] dark:border-[#383a40]"
                   >
                     Next →
                   </button>
@@ -564,7 +564,7 @@ export default function AdminBulkImportPage() {
                 return (
                   <div
                     key={globalIdx}
-                    className="p-5 rounded-2xl bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] space-y-3 shadow-2xs"
+                    className="p-5 rounded-2xl bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-3 shadow-2xs"
                   >
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
@@ -603,7 +603,7 @@ export default function AdminBulkImportPage() {
                           className={`p-2 rounded-xl text-xs font-medium border flex items-center gap-2 ${
                             opt.id === q.correctAnswer
                               ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
-                              : 'bg-[#f6ece6]/60 dark:bg-[#141517] border-[#eae1da] dark:border-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3]'
+                              : 'bg-[#F8F9FA]/60 dark:bg-[#141517] border-[#E9ECEF] dark:border-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3]'
                           }`}
                         >
                           <span className="font-bold w-4 shrink-0">{opt.id}.</span>
@@ -626,14 +626,14 @@ export default function AdminBulkImportPage() {
                   <button
                     disabled={previewPage <= 1}
                     onClick={() => setPreviewPage(p => Math.max(1, p - 1))}
-                    className="px-3 py-1 rounded-lg bg-[#f6ece6] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#eae1da] dark:border-[#383a40]"
+                    className="px-3 py-1 rounded-lg bg-[#F8F9FA] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#E9ECEF] dark:border-[#383a40]"
                   >
                     ← Prev
                   </button>
                   <button
                     disabled={previewPage >= totalPages}
                     onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}
-                    className="px-3 py-1 rounded-lg bg-[#f6ece6] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#eae1da] dark:border-[#383a40]"
+                    className="px-3 py-1 rounded-lg bg-[#F8F9FA] dark:bg-[#2b2d31] disabled:opacity-40 text-[#1f1b17] dark:text-[#e3e3e3] border border-[#E9ECEF] dark:border-[#383a40]"
                   >
                     Next →
                   </button>

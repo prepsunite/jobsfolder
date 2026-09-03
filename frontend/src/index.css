@@ -191,7 +191,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Inline code */
 .tiptap-wrapper .ProseMirror code {
-  background: #f6ece6;
+  background: #F8F9FA;
   padding: 0.1rem 0.35rem;
   border-radius: 5px;
   font-size: 0.8em;
@@ -248,8 +248,8 @@ pre code {
 .test-case-group,
 div[data-type="test-case-box"],
 div[data-type="test-case-group"] {
-  background-color: #f6ece6 !important;
-  border: 1.5px solid #eae1da !important;
+  background-color: #F8F9FA !important;
+  border: 1.5px solid #E9ECEF !important;
   border-radius: 1rem !important;
   padding: 1.25rem !important;
   margin: 1.25rem 0 !important;
@@ -273,7 +273,7 @@ div[data-type="test-case-group"] {
   letter-spacing: 0.05em !important;
   color: #FD4A32 !important;
   padding-bottom: 0.5rem !important;
-  border-bottom: 1px dashed #eae1da !important;
+  border-bottom: 1px dashed #E9ECEF !important;
 }
 
 :where(.dark, .dark *) .test-case-group-title {
@@ -284,7 +284,7 @@ div[data-type="test-case-group"] {
 .test-case-item,
 div[data-type="test-case"] {
   background-color: #ffffff !important;
-  border: 1px solid #e2d8d2 !important;
+  border: 1px solid #E9ECEF !important;
   border-radius: 0.75rem !important;
   padding: 0.875rem 1rem !important;
   display: flex !important;
@@ -363,7 +363,7 @@ pre.test-case-code {
 }
 
 /* Horizontal rule */
-.tiptap-wrapper .ProseMirror hr { border: none; border-top: 2px solid #eae1da; margin: 1.25rem 0; }
+.tiptap-wrapper .ProseMirror hr { border: none; border-top: 2px solid #E9ECEF; margin: 1.25rem 0; }
 :where(.dark, .dark *) .tiptap-wrapper .ProseMirror hr { border-top-color: #2b2d31; }
 
 /* Links */
@@ -380,9 +380,9 @@ pre.test-case-code {
 /* Tables */
 .tiptap-wrapper .ProseMirror table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; table-layout: fixed; }
 .tiptap-wrapper .ProseMirror table th,
-.tiptap-wrapper .ProseMirror table td { border: 1px solid #e2d8d2; padding: 0.45rem 0.65rem; vertical-align: top; position: relative; min-width: 60px; }
+.tiptap-wrapper .ProseMirror table td { border: 1px solid #E9ECEF; padding: 0.45rem 0.65rem; vertical-align: top; position: relative; min-width: 60px; }
 .tiptap-wrapper .ProseMirror table th {
-  background: #f6ece6;
+  background: #F8F9FA;
   font-weight: 700;
   font-size: 0.8rem;
   text-transform: uppercase;

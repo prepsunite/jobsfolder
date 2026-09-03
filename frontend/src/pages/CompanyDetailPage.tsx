@@ -532,7 +532,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs transition-all shadow-xs cursor-pointer ${
                       isDarkMode
                         ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#e3e3e3] border border-[#383a40]'
-                        : 'bg-[#ffffff] hover:bg-[#e3e8ef] text-[#1f1b17] border border-[#eae1da]'
+                        : 'bg-white hover:bg-[#F8F9FA] text-[#121417] border border-[#E9ECEF]'
                     }`}
                     title="Share this placement paper with your college batch"
                   >
@@ -548,7 +548,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                           ? 'bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
                           : isDarkMode
                           ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#e3e3e3] border border-[#383a40]'
-                          : 'bg-[#ffffff] hover:bg-[#e3e8ef] text-[#1f1b17] border border-[#eae1da]'
+                          : 'bg-white hover:bg-[#F8F9FA] text-[#121417] border border-[#E9ECEF]'
                       }`}
                       title={isBookmarked ? "Remove from profile bookmarks" : "Save exam drive to profile bookmarks"}
                     >
@@ -580,7 +580,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
               {/* 3-TAB SELECTOR & ACTIONS */}
               {!isEditing && (
-                <div className="flex items-center justify-between border-b border-[#eae1da] dark:border-[#2b2d31]">
+                <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#2b2d31]">
                   <div className="flex items-center gap-4">
                     {[
                       { id: 'aboutCompany', label: 'About Company' },
@@ -635,9 +635,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
               {/* Editable Markdown Area OR Rendered View */}
               {isAdmin && isEditing ? (
-                <div className="space-y-4 bg-[#f6ece6]/60 dark:bg-[#141517]/60 p-5 rounded-[20px] border border-[#e2d8d2] dark:border-[#383a40] animate-fadeIn">
+                <div className="space-y-4 bg-[#F8F9FA] dark:bg-[#141517]/60 p-5 rounded-[20px] border border-[#E9ECEF] dark:border-[#383a40] animate-fadeIn">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider block">
+                    <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3] uppercase tracking-wider block">
                       Edit {activeTab === 'aboutCompany' ? 'Company' : activeTab === 'aboutExam' ? 'Exam' : 'Papers'} Content (Markdown)
                     </label>
                     {activeTab !== 'aboutCompany' && (
@@ -754,9 +754,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
         {/* RIGHT SIDEBAR */}
         <aside className="lg:col-span-3 space-y-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] p-4 shadow-sm space-y-3 transition-colors">
-            <div className="flex items-center justify-between pb-2 border-b border-[#eae1da] dark:border-[#2b2d31]">
-              <h4 className="font-display text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider">
+          <div className="bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] p-4 shadow-sm space-y-3 transition-colors">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
+              <h4 className="font-display text-xs font-bold text-[#121417] dark:text-[#e3e3e3] uppercase tracking-wider">
                 Recent Questions
               </h4>
               <span className="text-[10px] font-bold text-[#E0351D] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 px-2 py-0.5 rounded-full">Live</span>
@@ -769,16 +769,16 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 { q: 'Clock Angle at 3:25', type: 'Aptitude' },
                 { q: 'Process vs Thread Memory', type: 'OS Core' },
               ].map((item, idx) => (
-                <div key={idx} className="p-2.5 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[12px] border border-[#e2d8d2] dark:border-[#383a40] space-y-1 hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 transition-all cursor-pointer">
-                  <span className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] block leading-snug">{item.q}</span>
+                <div key={idx} className="p-2.5 bg-[#F8F9FA] dark:bg-[#141517]/60 rounded-[12px] border border-[#E9ECEF] dark:border-[#383a40] space-y-1 hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 transition-all cursor-pointer">
+                  <span className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3] block leading-snug">{item.q}</span>
                   <span className="text-[10px] text-[#747878] dark:text-[#a6adbb] font-semibold">{item.type}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-[#f6ece6] dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#2b2d31] rounded-[24px] p-4 shadow-sm space-y-3 transition-colors">
-            <h4 className="font-display text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] uppercase tracking-wider pb-2 border-b border-[#e2d8d2] dark:border-[#2b2d31]">
+          <div className="bg-[#F8F9FA] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] p-4 shadow-sm space-y-3 transition-colors">
+            <h4 className="font-display text-xs font-bold text-[#121417] dark:text-[#e3e3e3] uppercase tracking-wider pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               Discover More
             </h4>
             <div className="space-y-1">
@@ -790,7 +790,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 'Pseudocode Practice',
                 'Placement Papers',
               ].map((cat, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-[10px] hover:bg-[#ffffff] dark:hover:bg-[#2b2d31] text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] transition-all cursor-pointer">
+                <div key={idx} className="flex items-center justify-between p-2 rounded-[10px] hover:bg-white dark:hover:bg-[#2b2d31] text-xs font-bold text-[#121417] dark:text-[#e3e3e3] transition-all cursor-pointer">
                   <span>{cat}</span>
                   <ChevronRight className="w-3.5 h-3.5 text-[#747878] dark:text-[#a6adbb]" />
                 </div>
@@ -804,37 +804,37 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       {/* ✏️ MODAL: EDIT COMPANY HEADER PROFILE */}
       {showEditHeaderModal && (
         <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] border border-[#eae1da] rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between pb-2 border-b border-[#eae1da]">
-              <h3 className="font-display text-lg font-bold text-[#1f1b17]">Edit Company Header Profile</h3>
-              <button onClick={() => setShowEditHeaderModal(false)} className="text-[#747878] hover:text-[#1f1b17]"><XCircle className="w-5 h-5" /></button>
+          <div className="bg-white border border-[#E9ECEF] rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF]">
+              <h3 className="font-display text-lg font-bold text-[#121417]">Edit Company Header Profile</h3>
+              <button onClick={() => setShowEditHeaderModal(false)} className="text-[#747878] hover:text-[#121417]"><XCircle className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSaveHeaderProfile} className="space-y-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] uppercase block">Company Name *</label>
-                <input type="text" required value={headerForm.name} onChange={(e) => setHeaderForm({ ...headerForm, name: e.target.value })} className="w-full bg-[#f6ece6] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17]" />
+                <input type="text" required value={headerForm.name} onChange={(e) => setHeaderForm({ ...headerForm, name: e.target.value })} className="w-full bg-[#F8F9FA] border border-[#E9ECEF] rounded-xl p-2.5 text-xs font-bold text-[#121417]" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-[#747878] uppercase block">Industry</label>
-                  <input type="text" value={headerForm.industry} onChange={(e) => setHeaderForm({ ...headerForm, industry: e.target.value })} className="w-full bg-[#f6ece6] rounded-xl p-2.5 text-xs text-[#1f1b17]" />
+                  <input type="text" value={headerForm.industry} onChange={(e) => setHeaderForm({ ...headerForm, industry: e.target.value })} className="w-full bg-[#F8F9FA] border border-[#E9ECEF] rounded-xl p-2.5 text-xs text-[#121417]" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-[#747878] uppercase block">Headquarters</label>
-                  <input type="text" value={headerForm.headquarters} onChange={(e) => setHeaderForm({ ...headerForm, headquarters: e.target.value })} className="w-full bg-[#f6ece6] rounded-xl p-2.5 text-xs text-[#1f1b17]" />
+                  <input type="text" value={headerForm.headquarters} onChange={(e) => setHeaderForm({ ...headerForm, headquarters: e.target.value })} className="w-full bg-[#F8F9FA] border border-[#E9ECEF] rounded-xl p-2.5 text-xs text-[#121417]" />
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] uppercase block">Official Website URL</label>
-                <input type="url" value={headerForm.website} onChange={(e) => setHeaderForm({ ...headerForm, website: e.target.value })} className="w-full bg-[#f6ece6] rounded-xl p-2.5 text-xs text-[#1f1b17]" />
+                <input type="url" value={headerForm.website} onChange={(e) => setHeaderForm({ ...headerForm, website: e.target.value })} className="w-full bg-[#F8F9FA] border border-[#E9ECEF] rounded-xl p-2.5 text-xs text-[#121417]" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] uppercase block">Logo Image URL</label>
-                <input type="url" value={headerForm.logoUrl} onChange={(e) => setHeaderForm({ ...headerForm, logoUrl: e.target.value })} className="w-full bg-[#f6ece6] rounded-xl p-2.5 text-xs text-[#1f1b17]" />
+                <input type="url" value={headerForm.logoUrl} onChange={(e) => setHeaderForm({ ...headerForm, logoUrl: e.target.value })} className="w-full bg-[#F8F9FA] border border-[#E9ECEF] rounded-xl p-2.5 text-xs text-[#121417]" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#747878] uppercase block">Header Short Overview</label>
-                <textarea rows={2} value={headerForm.description} onChange={(e) => setHeaderForm({ ...headerForm, description: e.target.value })} className="w-full bg-[#f6ece6] rounded-xl p-2.5 text-xs text-[#1f1b17]" />
+                <textarea rows={2} value={headerForm.description} onChange={(e) => setHeaderForm({ ...headerForm, description: e.target.value })} className="w-full bg-[#F8F9FA] border border-[#E9ECEF] rounded-xl p-2.5 text-xs text-[#121417]" />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowEditHeaderModal(false)} className="px-4 py-2 text-xs font-bold text-[#747878]">Cancel</button>
@@ -848,12 +848,12 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       {isFullscreenDoc && currentExam && (
         <div 
           className={`fixed inset-0 z-[100] flex flex-col overflow-hidden animate-fadeIn font-sans ${
-            isDarkMode ? 'bg-[#141517] text-[#e3e3e3]' : 'bg-[#f8f9fa] text-[#1f1f1f]'
+            isDarkMode ? 'bg-[#141517] text-[#e3e3e3]' : 'bg-white text-[#121417]'
           }`}
         >
           {/* Top Bar Header */}
           <div className={`flex items-center justify-between px-4 py-2 border-b shrink-0 h-16 shadow-none transition-colors ${
-            isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]' : 'bg-[#f0f4f9] border-[#e1e3e1] text-[#1f1f1f]'
+            isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]' : 'bg-white border-[#E9ECEF] text-[#121417]'
           }`}>
             <div className="flex items-center gap-3">
 
@@ -870,7 +870,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
               <div>
                 <div className="flex items-center gap-2">
-                  <span className={`font-bold text-sm ${isDarkMode ? 'text-[#f0f4f9]' : 'text-[#1f1f1f]'}`}>
+                  <span className={`font-bold text-sm ${isDarkMode ? 'text-[#f0f4f9]' : 'text-[#121417]'}`}>
                     {currentCompanyStoreItem.name} - Old Papers
                   </span>
                   <span className="text-xs text-[#747878]">•</span>
@@ -905,7 +905,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   navigate(`/companies/${slug}`);
                 }}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold text-xs transition-colors ${
-                  isDarkMode ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#f0f4f9]' : 'bg-[#e3e8ef] hover:bg-[#d5dbe4] text-[#1f1f1f]'
+                  isDarkMode ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#f0f4f9]' : 'bg-[#F8F9FA] hover:bg-[#E9ECEF] border border-[#E9ECEF] text-[#121417]'
                 }`}
               >
                 <XCircle className="w-4 h-4" />

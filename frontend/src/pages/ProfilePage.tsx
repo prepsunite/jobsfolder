@@ -694,7 +694,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#f6ece6]/50 border-[#eae1da]'
+              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <BookmarkCheck className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">
@@ -734,11 +734,11 @@ export default function ProfilePage() {
                   <div
                     key={q.id}
                     className={`p-6 rounded-[24px] border transition-all space-y-4 relative shadow-2xs ${
-                      isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]' : 'bg-[#ffffff] border-[#eae1da] text-[#1f1b17]'
+                      isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]' : 'bg-white border-[#E9ECEF] text-[#121417]'
                     }`}
                   >
                     {/* Header Row: Topic Badge + Subtopic + Question Number + Difficulty + Action Links */}
-                    <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-extrabold text-[10px] uppercase tracking-wider border border-[#FD4A32]/20 flex items-center gap-1">
                           <Layers className="w-3 h-3 text-[#FD4A32]" />
@@ -761,7 +761,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/aptitude/arithmetic-aptitude/topic/${q.topicId}`}
-                          className="px-3 py-1 bg-[#f6ece6] hover:bg-[#eae1da] dark:bg-[#2b2d31] dark:hover:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] rounded-lg text-xs font-bold transition-all border border-[#eae1da] dark:border-[#383a40] flex items-center gap-1"
+                          className="px-3 py-1 bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#2b2d31] dark:hover:bg-[#383a40] text-[#121417] dark:text-[#e3e3e3] rounded-lg text-xs font-bold transition-all border border-[#E9ECEF] dark:border-[#383a40] flex items-center gap-1"
                         >
                           <span>Practice Topic</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -778,7 +778,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Question Statement */}
-                    <p className="text-sm font-semibold leading-relaxed text-[#1f1b17] dark:text-[#e3e3e3] whitespace-pre-line">
+                    <p className="text-sm font-semibold leading-relaxed text-[#121417] dark:text-[#e3e3e3] whitespace-pre-line">
                       {q.statement}
                     </p>
 
@@ -793,7 +793,7 @@ export default function ProfilePage() {
                             className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 ${
                               isCorrect
                                 ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
-                                : 'bg-[#f6ece6]/60 dark:bg-[#141517] border-[#eae1da] dark:border-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3]'
+                                : 'bg-[#F8F9FA] dark:bg-[#141517] border-[#E9ECEF] dark:border-[#2b2d31] text-[#121417] dark:text-[#e3e3e3]'
                             }`}
                           >
                             <span className="font-bold w-5 h-5 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-[11px] shrink-0">
@@ -807,13 +807,13 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Toggle Explanation Button */}
-                    <div className="pt-2 border-t border-[#eae1da] dark:border-[#2b2d31] flex items-center justify-between">
+                    <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#2b2d31] flex items-center justify-between">
                       <button
                         onClick={() => toggleExplanation(q.id)}
                         className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
                           isExplVisible
                             ? 'bg-[#FD4A32] dark:bg-[#FD4A32] text-white dark:text-[#141517] border-[#FD4A32]'
-                            : 'bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                            : 'bg-[#F8F9FA] dark:bg-[#2b2d31] border-[#E9ECEF] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#121417] dark:hover:text-[#e3e3e3]'
                         }`}
                       >
                         <BookOpen className="w-4 h-4" />
@@ -823,7 +823,7 @@ export default function ProfilePage() {
 
                     {/* Expandable Explanation Block */}
                     {isExplVisible && (
-                      <div className="p-4 rounded-2xl bg-[#f6ece6]/70 dark:bg-[#141517]/70 border border-[#E0351D]/20 space-y-3 animate-fadeIn">
+                      <div className="p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#141517]/70 border border-[#E0351D]/20 space-y-3 animate-fadeIn">
                         {se ? (
                           <div className="space-y-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3]">
                             {/* Given Block */}
@@ -921,7 +921,7 @@ export default function ProfilePage() {
                 <div className="flex justify-center pt-4">
                   <button
                     onClick={() => setVisibleQuestionsCount((prev) => prev + 20)}
-                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#eae1da] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#e2d8d2] dark:hover:bg-[#383a40] transition-colors"
+                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#F8F9FA] dark:bg-[#2b2d31] text-[#121417] dark:text-[#e3e3e3] hover:bg-[#E9ECEF] dark:hover:bg-[#383a40] transition-colors border border-[#E9ECEF] dark:border-[#383a40]"
                   >
                     Load More Questions
                   </button>
@@ -930,7 +930,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#f6ece6]/50 border-[#eae1da]'
+              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <BookOpen className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">
@@ -964,7 +964,7 @@ export default function ProfilePage() {
                 <div
                   key={exp.id}
                   className={`p-6 rounded-[24px] border transition-all space-y-4 relative ${
-                    isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-white border-[#eae1da]'
+                    isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31]' : 'bg-white border-[#E9ECEF]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3 pr-12">
@@ -973,7 +973,7 @@ export default function ProfilePage() {
                         {(exp.companyName || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <h3 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3]">
+                        <h3 className="font-bold text-base text-[#121417] dark:text-[#e3e3e3]">
                           {exp.role || 'Interview Candidate'} @ {exp.companyName || 'Company Drive'}
                         </h3>
                         <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
@@ -1001,9 +1001,9 @@ export default function ProfilePage() {
                   </div>
 
                   {exp.rounds && exp.rounds.length > 0 && (
-                    <div className="space-y-3 pt-3 border-t border-[#eae1da] dark:border-[#2b2d31]">
+                    <div className="space-y-3 pt-3 border-t border-[#E9ECEF] dark:border-[#2b2d31]">
                       {exp.rounds.map((rd, idx) => (
-                        <div key={idx} className="p-4 bg-[#f6ece6]/60 dark:bg-[#141517]/60 rounded-[18px] border border-[#e2d8d2] dark:border-[#2b2d31] space-y-2">
+                        <div key={idx} className="p-4 bg-[#F8F9FA] dark:bg-[#141517]/60 rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-2">
                           {rd.roundTitle && !['Interview Rounds & Details', 'Interview Breakdown & Rounds Details'].includes(rd.roundTitle) && (
                             <span className="text-xs font-black text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">
                               {rd.roundTitle}
@@ -1024,7 +1024,7 @@ export default function ProfilePage() {
                 <div className="flex justify-center pt-4">
                   <button
                     onClick={() => setVisibleExperiencesCount((prev) => prev + 20)}
-                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#eae1da] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#e2d8d2] dark:hover:bg-[#383a40] transition-colors"
+                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#F8F9FA] dark:bg-[#2b2d31] text-[#121417] dark:text-[#e3e3e3] hover:bg-[#E9ECEF] dark:hover:bg-[#383a40] transition-colors border border-[#E9ECEF] dark:border-[#383a40]"
                   >
                     Load More Experiences
                   </button>
@@ -1033,7 +1033,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#f6ece6]/50 border-[#eae1da]'
+              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <Layers className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">

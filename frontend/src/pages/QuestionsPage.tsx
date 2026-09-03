@@ -155,8 +155,8 @@ export default function QuestionsPage() {
       {/* ✏️ MODAL: ADD EXAM CARD */}
       {showAddExamModal && (
         <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between pb-2 border-b border-[#eae1da] dark:border-[#2b2d31]">
+          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               <h3 className="font-display text-base font-bold text-[#1f1b17] dark:text-[#e3e3e3]">Add New Company Exam Card</h3>
               <button onClick={() => setShowAddExamModal(false)} className="text-[#747878] dark:text-[#6e7278] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]">
                 <XCircle className="w-5 h-5" />
@@ -168,7 +168,7 @@ export default function QuestionsPage() {
                 <select
                   value={newExamForm.companySlug}
                   onChange={(e) => setNewExamForm({ ...newExamForm, companySlug: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
                 >
                   {companyList.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.name} ({c.slug})</option>
@@ -184,7 +184,7 @@ export default function QuestionsPage() {
                   placeholder="e.g. TCS NQT Digital & Ninja 2026"
                   value={newExamForm.name}
                   onChange={(e) => setNewExamForm({ ...newExamForm, name: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export default function QuestionsPage() {
                   placeholder="e.g. Campus Recruitment Drive"
                   value={newExamForm.badge}
                   onChange={(e) => setNewExamForm({ ...newExamForm, badge: e.target.value })}
-                  className="w-full bg-[#f6ece6] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
                 />
               </div>
 

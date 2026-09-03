@@ -1360,17 +1360,17 @@ export default function TopicQuestionsPage() {
       {/* 📥 ADMIN BULK JSON IMPORT MODAL */}
       {showBulkModal && (
         <div className="fixed inset-0 z-50 bg-[#000000]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] max-w-3xl w-full p-6 space-y-5 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+          <div className="bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] max-w-3xl w-full p-6 space-y-5 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
                 <FileJson className="w-5 h-5" />
-                <h3 className="font-display text-lg font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <h3 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#e3e3e3]">
                   Bulk Question JSON Parser
                 </h3>
               </div>
               <button
                 onClick={() => setShowBulkModal(false)}
-                className="text-[#747878] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]"
+                className="text-[#747878] hover:text-[#121417] dark:hover:text-[#e3e3e3]"
               >
                 <XCircle className="w-5 h-5" />
               </button>
@@ -1382,7 +1382,7 @@ export default function TopicQuestionsPage() {
               </p>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   JSON Code Input (Supports <code className="text-purple-400">templateId</code>, <code className="text-purple-400">variables</code>, and Fingerprint Deduplication)
                 </label>
                 <textarea
@@ -1397,9 +1397,9 @@ export default function TopicQuestionsPage() {
 
               {/* Parser Output Status (Rich Import Report) */}
               {bulkImportResult && (
-                <div className="p-4 rounded-xl border text-xs space-y-3 bg-[#f6ece6]/60 dark:bg-[#141517] border-[#eae1da] dark:border-[#383a40]">
-                  <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-[#eae1da] dark:border-[#2b2d31]">
-                    <span className="font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] text-xs">
+                <div className="p-4 rounded-xl border text-xs space-y-3 bg-[#F8F9FA] dark:bg-[#141517] border-[#E9ECEF] dark:border-[#383a40]">
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
+                    <span className="font-extrabold text-[#121417] dark:text-[#e3e3e3] text-xs">
                       📊 Import Summary Report
                     </span>
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -1437,7 +1437,7 @@ export default function TopicQuestionsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#eae1da] dark:border-[#2b2d31]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E9ECEF] dark:border-[#2b2d31]">
                 <button
                   type="button"
                   onClick={() => setShowBulkModal(false)}
@@ -1461,17 +1461,17 @@ export default function TopicQuestionsPage() {
       {/* 🛠️ ADMIN ADD / EDIT QUESTION MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-[#000000]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] rounded-[24px] max-w-2xl w-full p-6 space-y-5 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#eae1da] dark:border-[#2b2d31]">
+          <div className="bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] max-w-2xl w-full p-6 space-y-5 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               <div className="flex items-center gap-2 text-[#FD4A32] dark:text-[#FD4A32]">
                 <Edit2 className="w-5 h-5" />
-                <h3 className="font-display text-lg font-extrabold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <h3 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#e3e3e3]">
                   {editingQuestion ? 'Edit Topic Question' : `Add Question to ${topicName}`}
                 </h3>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-[#747878] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]"
+                className="text-[#747878] hover:text-[#121417] dark:hover:text-[#e3e3e3]"
               >
                 <XCircle className="w-5 h-5" />
               </button>
@@ -1480,7 +1480,7 @@ export default function TopicQuestionsPage() {
             <form onSubmit={handleSaveQuestion} className="space-y-4">
               {/* Question Statement */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   Question Statement *
                 </label>
                 <textarea
@@ -1488,14 +1488,14 @@ export default function TopicQuestionsPage() {
                   value={formStatement}
                   onChange={(e) => setFormStatement(e.target.value)}
                   placeholder="Enter the complete question problem statement..."
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#121417] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32]"
                   required
                 />
               </div>
 
               {/* Test Cases / Sample Input & Output (Plain multiline text) */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] flex items-center justify-between">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3] flex items-center justify-between">
                   <span>Test Case / Input-Output (Plain Multiline Text)</span>
                   <span className="text-[10px] text-[#747878] font-normal">Preserves exact spacing & line breaks</span>
                 </label>
@@ -1504,19 +1504,19 @@ export default function TopicQuestionsPage() {
                   value={formTestCase}
                   onChange={(e) => setFormTestCase(e.target.value)}
                   placeholder={`Input:\n4\nA B 500 100\nC D 200 120\nA B 500 150\nA B 700 160\n\nOutput:\n0 2`}
-                  className="w-full font-mono bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32] whitespace-pre-wrap"
+                  className="w-full font-mono bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#121417] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32] whitespace-pre-wrap"
                 />
               </div>
 
               {/* Difficulty Selection */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   Question Difficulty Level
                 </label>
                 <select
                   value={formDifficulty}
                   onChange={(e) => setFormDifficulty(e.target.value as 'EASY' | 'MEDIUM' | 'HARD')}
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#121417] dark:text-[#e3e3e3]"
                 >
                   <option value="EASY">🟢 Easy (Basic concept check)</option>
                   <option value="MEDIUM">🟡 Medium (Standard problem complexity)</option>
@@ -1526,11 +1526,10 @@ export default function TopicQuestionsPage() {
 
               {/* MCQ Options Grid */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   MCQ Options
                 </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div className="flex items-center gap-2">
                     <span className="font-black text-xs w-5 text-[#FD4A32] dark:text-[#FD4A32]">A.</span>
                     <input
@@ -1538,7 +1537,7 @@ export default function TopicQuestionsPage() {
                       value={formOptionA}
                       onChange={(e) => setFormOptionA(e.target.value)}
                       placeholder="Option A text..."
-                      className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                      className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#121417] dark:text-[#e3e3e3]"
                     />
                   </div>
 
@@ -1549,7 +1548,7 @@ export default function TopicQuestionsPage() {
                       value={formOptionB}
                       onChange={(e) => setFormOptionB(e.target.value)}
                       placeholder="Option B text..."
-                      className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                      className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#121417] dark:text-[#e3e3e3]"
                     />
                   </div>
 
@@ -1560,7 +1559,7 @@ export default function TopicQuestionsPage() {
                       value={formOptionC}
                       onChange={(e) => setFormOptionC(e.target.value)}
                       placeholder="Option C text..."
-                      className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                      className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#121417] dark:text-[#e3e3e3]"
                     />
                   </div>
 
@@ -1571,7 +1570,7 @@ export default function TopicQuestionsPage() {
                       value={formOptionD}
                       onChange={(e) => setFormOptionD(e.target.value)}
                       placeholder="Option D text..."
-                      className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                      className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#121417] dark:text-[#e3e3e3]"
                     />
                   </div>
 
@@ -1582,7 +1581,7 @@ export default function TopicQuestionsPage() {
                       value={formOptionE}
                       onChange={(e) => setFormOptionE(e.target.value)}
                       placeholder="Option E text (Optional)..."
-                      className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                      className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-lg p-2 text-xs text-[#121417] dark:text-[#e3e3e3]"
                     />
                   </div>
                 </div>
@@ -1590,13 +1589,13 @@ export default function TopicQuestionsPage() {
 
               {/* Correct Answer Selection */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   Correct Answer Key
                 </label>
                 <select
                   value={formCorrect}
                   onChange={(e) => setFormCorrect(e.target.value)}
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#121417] dark:text-[#e3e3e3]"
                 >
                   <option value="A">Option A</option>
                   <option value="B">Option B</option>
@@ -1608,7 +1607,7 @@ export default function TopicQuestionsPage() {
 
               {/* Step-by-Step Explanation */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   Step-by-Step Solution & Explanation
                 </label>
                 <textarea
@@ -1616,13 +1615,13 @@ export default function TopicQuestionsPage() {
                   value={formExplanation}
                   onChange={(e) => setFormExplanation(e.target.value)}
                   placeholder="Enter step-by-step solution derivation..."
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#1f1b17] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-3 text-xs text-[#121417] dark:text-[#e3e3e3] focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
 
               {/* Formulas Used (One per line) */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]">
+                <label className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3]">
                   Formulas Used (One per line)
                 </label>
                 <textarea
@@ -1630,7 +1629,7 @@ export default function TopicQuestionsPage() {
                   value={formFormulas}
                   onChange={(e) => setFormFormulas(e.target.value)}
                   placeholder="tan(θ) = Opposite / Adjacent&#10;tan(30°) = 1/√3"
-                  className="w-full bg-[#f6ece6]/60 dark:bg-[#141517] border border-[#eae1da] dark:border-[#383a40] rounded-xl p-3 text-xs font-mono text-[#FD4A32] dark:text-[#FD4A32] focus:outline-none"
+                  className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl p-3 text-xs font-mono text-[#FD4A32] dark:text-[#FD4A32] focus:outline-none"
                 />
               </div>
 
@@ -1643,13 +1642,13 @@ export default function TopicQuestionsPage() {
                   onChange={(e) => setFormIsHidden(e.target.checked)}
                   className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
                 />
-                <label htmlFor="formIsHidden" className="text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] cursor-pointer">
+                <label htmlFor="formIsHidden" className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3] cursor-pointer">
                   Hide question from students (Keep as Admin draft)
                 </label>
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#eae1da] dark:border-[#2b2d31]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E9ECEF] dark:border-[#2b2d31]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}

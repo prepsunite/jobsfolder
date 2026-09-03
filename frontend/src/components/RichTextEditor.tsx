@@ -42,9 +42,9 @@ export interface RichTextEditorProps {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const TB = 'p-1.5 rounded-lg transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed text-[#747878] dark:text-[#a6adbb] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]';
+const TB = 'p-1.5 rounded-lg transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed text-[#747878] dark:text-[#a6adbb] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]';
 const TB_ON = 'p-1.5 rounded-lg transition-all flex-shrink-0 bg-[#FD4A32]/15 text-[#FD4A32] dark:bg-[#FD4A32]/15 dark:text-[#FD4A32]';
-const SEP = 'w-px self-stretch bg-[#e2d8d2] dark:bg-[#2b2d31] mx-0.5 flex-shrink-0';
+const SEP = 'w-px self-stretch bg-[#E9ECEF] dark:bg-[#2b2d31] mx-0.5 flex-shrink-0';
 
 const TEXT_COLORS = [
   { label: 'Red',     v: '#dc2626' }, { label: 'Orange',  v: '#ea580c' },
@@ -609,7 +609,7 @@ export default function RichTextEditor({
 
   // ── Wrapper class ─────────────────────────────────────────────────────────
   const wrapCls = [
-    'bg-white dark:bg-[#1e1f22] border border-[#eae1da] dark:border-[#2b2d31] shadow-sm flex flex-col',
+    'bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] shadow-sm flex flex-col',
     isFullscreen ? 'fixed inset-0 z-[9999] rounded-none border-0 shadow-2xl overflow-hidden' : 'rounded-[20px] overflow-hidden',
   ].join(' ');
 
@@ -645,7 +645,7 @@ export default function RichTextEditor({
     <div className={wrapCls}>
 
       {/* ── TOP BAR ─────────────────────────────────────────────────────── */}
-      <div className="bg-[#f6ece6]/80 dark:bg-[#141517]/80 border-b border-[#e2d8d2] dark:border-[#2b2d31] px-3 py-2 flex items-center justify-between gap-2 flex-wrap flex-shrink-0">
+      <div className="bg-[#F8F9FA]/80 dark:bg-[#141517]/80 border-b border-[#E9ECEF] dark:border-[#2b2d31] px-3 py-2 flex items-center justify-between gap-2 flex-wrap flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-[#FD4A32]/15 dark:bg-[#FD4A32]/15 flex items-center justify-center text-[#FD4A32] dark:text-[#FD4A32]">
             <Sparkles className="w-3 h-3" />
@@ -656,7 +656,7 @@ export default function RichTextEditor({
 
         <div className="flex items-center gap-1.5">
           {/* Mode toggle */}
-          <div className="flex items-center gap-0.5 bg-white dark:bg-[#1e1f22] border border-[#e2d8d2] dark:border-[#2b2d31] p-0.5 rounded-xl">
+          <div className="flex items-center gap-0.5 bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] p-0.5 rounded-xl">
             {([
               { k: 'write',   icon: <Edit3 className="w-3 h-3" />,  lbl: 'Edit' },
               { k: 'split',   icon: <Columns className="w-3 h-3" />, lbl: 'Split' },
@@ -679,7 +679,7 @@ export default function RichTextEditor({
 
       {/* ── LINK MODAL ──────────────────────────────────────────────────── */}
       {showLink && (
-        <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-emerald-50 dark:bg-emerald-900/10 px-4 py-2.5">
+        <div className="flex-shrink-0 border-b border-[#E9ECEF] dark:border-[#2b2d31] bg-emerald-50 dark:bg-emerald-900/10 px-4 py-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] font-extrabold text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider flex items-center gap-1 flex-shrink-0">
               <LinkIcon className="w-3 h-3" /> Link
@@ -703,7 +703,7 @@ export default function RichTextEditor({
 
       {/* ── IMAGE MODAL ─────────────────────────────────────────────────── */}
       {showImage && (
-        <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-blue-50 dark:bg-blue-900/10 px-4 py-2.5 space-y-2">
+        <div className="flex-shrink-0 border-b border-[#E9ECEF] dark:border-[#2b2d31] bg-blue-50 dark:bg-blue-900/10 px-4 py-2.5 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1 flex-shrink-0">
               <ImageIcon className="w-3 h-3" /> Image
@@ -734,7 +734,7 @@ export default function RichTextEditor({
 
       {/* ── TEST CASE MODAL ──────────────────────────────────────────────── */}
       {showTestCaseModal && (
-        <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-purple-50 dark:bg-purple-950/20 p-4 space-y-3 animate-fadeIn">
+        <div className="flex-shrink-0 border-b border-[#E9ECEF] dark:border-[#2b2d31] bg-purple-50 dark:bg-purple-950/20 p-4 space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
               <FileCode className="w-4 h-4" /> Insert Plain-Text Test Case Box (Preserves Exact Line Breaks & Spaces)
@@ -776,7 +776,7 @@ export default function RichTextEditor({
 
       {/* ── FIND & REPLACE ───────────────────────────────────────────────── */}
       {showFindReplace && (
-        <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-amber-50 dark:bg-amber-900/10 px-4 py-2.5">
+        <div className="flex-shrink-0 border-b border-[#E9ECEF] dark:border-[#2b2d31] bg-amber-50 dark:bg-amber-900/10 px-4 py-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-[11px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1 flex-shrink-0">
               <Search className="w-3 h-3" /> Find &amp; Replace
@@ -803,7 +803,7 @@ export default function RichTextEditor({
 
       {/* ── TABLE TOOLBAR (shows when cursor is inside a table) ──────────── */}
       {isTableActive && mode !== 'preview' && (
-        <div className="flex-shrink-0 border-b border-[#eae1da] dark:border-[#2b2d31] bg-indigo-50 dark:bg-indigo-900/10 px-4 py-1.5">
+        <div className="flex-shrink-0 border-b border-[#E9ECEF] dark:border-[#2b2d31] bg-indigo-50 dark:bg-indigo-900/10 px-4 py-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mr-1 flex items-center gap-1 flex-shrink-0">
               <TableIcon className="w-3 h-3" /> Table:
@@ -839,7 +839,7 @@ export default function RichTextEditor({
 
       {/* ── TOOLBAR ─────────────────────────────────────────────────────── */}
       {mode !== 'preview' && (
-        <div className="bg-white dark:bg-[#1e1f22] border-b border-[#eae1da] dark:border-[#2b2d31] px-2 py-1.5 space-y-1 flex-shrink-0">
+        <div className="bg-white dark:bg-[#1e1f22] border-b border-[#E9ECEF] dark:border-[#2b2d31] px-2 py-1.5 space-y-1 flex-shrink-0">
 
           {/* Row 1 */}
           <div className="flex items-center flex-wrap gap-0.5">
@@ -851,7 +851,7 @@ export default function RichTextEditor({
             {/* Format dropdown */}
             <div className="relative" ref={formatRef}>
               <button type="button" onClick={() => setShowFormatMenu(v => !v)}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-[#747878] dark:text-[#a6adbb] hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] transition-colors">
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-[#747878] dark:text-[#a6adbb] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] transition-colors">
                 <Type className="w-3 h-3" />
                 <span>
                   {editor.isActive('heading', { level: 1 }) ? 'H1' :
@@ -861,10 +861,10 @@ export default function RichTextEditor({
                 <ChevronDown className="w-3 h-3" />
               </button>
               {showFormatMenu && (
-                <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] rounded-xl shadow-xl z-50 py-1 overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-[#2b2d31] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl shadow-xl z-50 py-1 overflow-hidden">
                   {FORMAT_OPTS.map(o => (
                     <button key={o.lbl} type="button" onClick={o.action}
-                      className="flex items-center w-full px-3 py-2 text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#f6ece6] dark:hover:bg-[#383a40] transition-colors">
+                      className="flex items-center w-full px-3 py-2 text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#383a40] transition-colors">
                       <span className={o.cls}>{o.lbl}</span>
                     </button>
                   ))}
@@ -895,7 +895,7 @@ export default function RichTextEditor({
                 <Highlighter className="w-3.5 h-3.5" />
               </button>
               {showHlPicker && (
-                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] rounded-xl shadow-xl z-50 flex gap-1.5 flex-wrap w-[152px]">
+                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-[#2b2d31] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl shadow-xl z-50 flex gap-1.5 flex-wrap w-[152px]">
                   <span className="w-full text-[9px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Highlight</span>
                   {HL_COLORS.map(c => (
                     <button key={c.v} type="button" title={c.label} onClick={() => { editor.chain().focus().toggleHighlight({ color: c.v }).run(); setShowHlPicker(false); }}
@@ -913,7 +913,7 @@ export default function RichTextEditor({
                 <Palette className="w-3.5 h-3.5" />
               </button>
               {showColorPicker && (
-                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-[#2b2d31] border border-[#e2d8d2] dark:border-[#383a40] rounded-xl shadow-xl z-50 flex gap-1.5 flex-wrap w-[152px]">
+                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-[#2b2d31] border border-[#E9ECEF] dark:border-[#383a40] rounded-xl shadow-xl z-50 flex gap-1.5 flex-wrap w-[152px]">
                   <span className="w-full text-[9px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Text Color</span>
                   {TEXT_COLORS.map(c => (
                     <button key={c.v} type="button" title={c.label} onClick={() => { editor.chain().focus().setColor(c.v).run(); setShowColorPicker(false); }}
@@ -991,7 +991,7 @@ export default function RichTextEditor({
       {/* ── BUBBLE MENU (floating mini-toolbar on text select) ───────────── */}
       {editor && !editor.isDestroyed && editor.view && mode !== 'preview' && (
         <BubbleMenu editor={editor}
-          className="flex items-center gap-0.5 bg-[#1e1f22] dark:bg-[#f6ece6] rounded-xl p-1 shadow-2xl border border-[#383a40] dark:border-[#e2d8d2]">
+          className="flex items-center gap-0.5 bg-[#1e1f22] dark:bg-[#F8F9FA] rounded-xl p-1 shadow-2xl border border-[#383a40] dark:border-[#E9ECEF]">
           {[
             { label: 'B', title: 'Bold', active: editor.isActive('bold'), action: () => editor.chain().focus().toggleBold().run(), cls: 'font-black' },
             { label: 'I', title: 'Italic', active: editor.isActive('italic'), action: () => editor.chain().focus().toggleItalic().run(), cls: 'italic' },
@@ -1003,7 +1003,7 @@ export default function RichTextEditor({
               {b.label}
             </button>
           ))}
-          <div className="w-px self-stretch bg-[#383a40] dark:bg-[#e2d8d2] mx-0.5" />
+          <div className="w-px self-stretch bg-[#383a40] dark:bg-[#E9ECEF] mx-0.5" />
           <button type="button" title="Link" onClick={openLinkModal}
             className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editor.isActive('link') ? 'bg-[#FD4A32] text-white' : 'text-white dark:text-[#1e1f22] hover:bg-white/10 dark:hover:bg-black/10'}`}>
             <LinkIcon className="w-3 h-3" />
@@ -1014,7 +1014,7 @@ export default function RichTextEditor({
       {/* ── EDITOR BODY ──────────────────────────────────────────────────── */}
       <div className={[
         'grid flex-1 min-h-0',
-        mode === 'split' ? 'grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#eae1da] dark:divide-[#2b2d31]' : 'grid-cols-1',
+        mode === 'split' ? 'grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#E9ECEF] dark:divide-[#2b2d31]' : 'grid-cols-1',
       ].join(' ')}>
 
         {/* TipTap WYSIWYG area */}
@@ -1026,8 +1026,8 @@ export default function RichTextEditor({
 
         {/* HTML source / Preview panel */}
         {mode !== 'write' && (
-          <div className={`overflow-y-auto bg-[#f6ece6]/20 dark:bg-[#141517]/20 p-4 ${isFullscreen ? 'flex-1' : 'max-h-[600px]'}`}>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#FD4A32] dark:text-[#FD4A32] mb-3 pb-1 border-b border-[#eae1da] dark:border-[#2b2d31]">
+          <div className={`overflow-y-auto bg-[#F8F9FA]/20 dark:bg-[#141517]/20 p-4 ${isFullscreen ? 'flex-1' : 'max-h-[600px]'}`}>
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#FD4A32] dark:text-[#FD4A32] mb-3 pb-1 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
               HTML Output
             </div>
             <pre className="text-[10px] font-mono text-[#444748] dark:text-[#a6adbb] whitespace-pre-wrap break-all leading-relaxed">
@@ -1038,7 +1038,7 @@ export default function RichTextEditor({
       </div>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-[#f6ece6]/40 dark:bg-[#141517]/40 border-t border-[#eae1da] dark:border-[#2b2d31] px-3 py-1 flex items-center justify-between text-[10px] font-mono text-[#747878] dark:text-[#6e7278]">
+      <div className="flex-shrink-0 bg-[#F8F9FA]/40 dark:bg-[#141517]/40 border-t border-[#E9ECEF] dark:border-[#2b2d31] px-3 py-1 flex items-center justify-between text-[10px] font-mono text-[#747878] dark:text-[#6e7278]">
         <div className="flex items-center gap-3">
           <span>Words: <b className="text-[#1f1b17] dark:text-[#e3e3e3]">{wordCount}</b></span>
           <span>Chars: <b className="text-[#1f1b17] dark:text-[#e3e3e3]">{charCount}</b></span>
@@ -1047,7 +1047,7 @@ export default function RichTextEditor({
           {isTableActive && <span className="text-indigo-600 dark:text-indigo-400 font-bold">In Table — use toolbar above ↑</span>}
           <span className="text-[#FD4A32] dark:text-[#FD4A32] font-bold">TipTap WYSIWYG</span>
           {isFullscreen && (
-            <button type="button" onClick={() => setIsFullscreen(false)} className="px-2 py-0.5 bg-[#eae1da] dark:bg-[#2b2d31] rounded text-[10px] font-bold">Esc to exit</button>
+            <button type="button" onClick={() => setIsFullscreen(false)} className="px-2 py-0.5 bg-[#E9ECEF] dark:bg-[#2b2d31] rounded text-[10px] font-bold">Esc to exit</button>
           )}
         </div>
       </div>

@@ -56,7 +56,7 @@ export default function RootLayout() {
   // While checking Supabase session, render a clean loader
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#fff8f5] dark:bg-[#141517] flex flex-col items-center justify-center gap-3 animate-fadeIn">
+      <div className="min-h-screen bg-white dark:bg-[#141517] flex flex-col items-center justify-center gap-3 animate-fadeIn">
         <div className="w-10 h-10 border-4 border-[#FD4A32]/20 border-t-[#FD4A32] rounded-full animate-spin" />
         <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Verifying Session...</span>
       </div>

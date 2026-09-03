@@ -42,12 +42,12 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
       case 'HARD':
         return 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30';
       default:
-        return 'bg-[#f6ece6] dark:bg-[#2b2d31] text-[#444748] dark:text-[#a6adbb] border-[#e2d8d2] dark:border-[#383a40]';
+        return 'bg-[#F8F9FA] dark:bg-[#2b2d31] text-[#444748] dark:text-[#a6adbb] border-[#E9ECEF] dark:border-[#383a40]';
     }
   };
 
   return (
-    <div className="bg-[#ffffff] dark:bg-[#1e1f22] hover:bg-[#fff8f5] dark:hover:bg-[#2b2d31] border border-[#eae1da] dark:border-[#383a40] hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 rounded-[24px] p-6 transition-all duration-300 space-y-4 shadow-sm relative">
+    <div className="bg-white dark:bg-[#1e1f22] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31] border border-[#E9ECEF] dark:border-[#383a40] hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 rounded-[24px] p-6 transition-all duration-300 space-y-4 shadow-sm relative">
       {/* Top Header Bar */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2 flex-1">
@@ -115,7 +115,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition-all shadow-xs ${
               isBookmarked
                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
-                : 'bg-[#f6ece6] dark:bg-[#2b2d31] border-[#e2d8d2] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
+                : 'bg-[#F8F9FA] dark:bg-[#2b2d31] border-[#E9ECEF] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
             }`}
             title={isBookmarked ? 'Remove from profile saved questions' : 'Save question to profile'}
           >
@@ -134,7 +134,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
 
           <button
             onClick={() => setShowReportModal(true)}
-            className="p-1.5 rounded-full border border-[#e2d8d2] dark:border-[#383a40] bg-[#f6ece6] dark:bg-[#2b2d31] text-[#747878] dark:text-[#a6adbb] hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+            className="p-1.5 rounded-full border border-[#E9ECEF] dark:border-[#383a40] bg-[#F8F9FA] dark:bg-[#2b2d31] text-[#747878] dark:text-[#a6adbb] hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
             title="Report Question Issue"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
 
       {/* Description */}
       {question.description && (
-        <p className="text-xs text-[#1f1b17] dark:text-[#e3e3e3] leading-relaxed bg-[#f6ece6]/70 dark:bg-[#141517] p-4 rounded-[16px] border border-[#e2d8d2] dark:border-[#383a40] font-sans whitespace-pre-line">
+        <p className="text-xs text-[#1f1b17] dark:text-[#e3e3e3] leading-relaxed bg-[#F8F9FA] dark:bg-[#141517] p-4 rounded-[16px] border border-[#E9ECEF] dark:border-[#383a40] font-sans whitespace-pre-line">
           {question.description}
         </p>
       )}
@@ -166,7 +166,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
       {question.tags && question.tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
           {question.tags.map((tag, idx) => (
-            <span key={idx} className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#444748] bg-[#f6ece6] px-2.5 py-0.5 rounded-full border border-[#e2d8d2]">
+            <span key={idx} className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#444748] bg-[#F8F9FA] px-2.5 py-0.5 rounded-full border border-[#E9ECEF]">
               <Hash className="w-3 h-3 text-[#747878]" />
               {tag}
             </span>
@@ -176,7 +176,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
 
       {/* Expandable Solution */}
       {question.solution && (
-        <div className="pt-2 border-t border-[#eae1da]">
+        <div className="pt-2 border-t border-[#E9ECEF]">
           <button
             onClick={() => setShowSolution(!showSolution)}
             className="flex items-center gap-2 text-xs font-bold text-[#FD4A32] hover:text-[#E0351D] transition-colors"

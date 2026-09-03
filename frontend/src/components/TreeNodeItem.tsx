@@ -80,7 +80,7 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         className={`group flex items-center gap-1 py-1.5 px-2 rounded-md text-xs font-semibold cursor-pointer transition-all ${
           isSelected
             ? 'bg-purple-600/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-xs'
-            : 'text-[#585c5c] dark:text-[#a6adbb] hover:bg-[#eae1da]/60 dark:hover:bg-[#2b2d31]/60 hover:text-[#1f1b17] dark:hover:text-white'
+            : 'text-[#585c5c] dark:text-[#a6adbb] hover:bg-[#E9ECEF]/60 dark:hover:bg-[#2b2d31]/60 hover:text-[#1f1b17] dark:hover:text-white'
         }`}
       >
         {/* Expand toggle */}
