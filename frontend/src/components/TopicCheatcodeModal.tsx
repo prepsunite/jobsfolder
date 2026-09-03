@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Printer, X, Save, Edit3, Eye, Copy, Check, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, X, Save, Edit3, Eye, Copy, Check, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -120,46 +120,19 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const hasFormulas = content || extractedFormulas.length > 0;
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs animate-fadeIn print:p-0 print:bg-white print:static print:z-auto"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}
     >
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-topic-cheatcode, #printable-topic-cheatcode * {
-            visibility: visible;
-          }
-          #printable-topic-cheatcode {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white !important;
-            color: black !important;
-            padding: 24px !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
-
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-[#141414] rounded-2xl border border-[#E9ECEF] dark:border-[#242424] shadow-2xl flex flex-col overflow-hidden animate-scaleUp print:border-none print:shadow-none print:max-h-none print:w-full"
+        className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-[#141414] rounded-2xl border border-[#E9ECEF] dark:border-[#242424] shadow-2xl flex flex-col overflow-hidden animate-scaleUp"
       >
-        {/* Top Header Bar (Hidden during print) */}
-        <div className="p-4 sm:p-5 border-b border-[#E9ECEF] dark:border-[#222222] flex items-center justify-between no-print bg-[#F8F9FA]/60 dark:bg-[#111112]">
+        {/* Top Header Bar */}
+        <div className="p-4 sm:p-5 border-b border-[#E9ECEF] dark:border-[#222222] flex items-center justify-between bg-[#F8F9FA]/60 dark:bg-[#111112]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center shrink-0">
               <BookOpen className="w-4 h-4" />
@@ -183,29 +156,20 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
             {/* Copy Button */}
             {hasFormulas && (
               <button
+                type="button"
                 onClick={handleCopy}
-                className="p-2 rounded-lg text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                 title="Copy formulas to clipboard"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-              </button>
-            )}
-
-            {/* Print / Export PDF Button */}
-            {hasFormulas && (
-              <button
-                onClick={handlePrint}
-                className="px-2.5 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-                title="Print or Save as PDF"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Print (PDF)</span>
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copied ? 'Copied!' : 'Copy'}</span>
               </button>
             )}
 
             {/* Admin Edit Toggle */}
             {isAdmin && (
               <button
+                type="button"
                 onClick={() => setIsEditing(!isEditing)}
                 className={`p-2 rounded-lg transition-colors cursor-pointer ${
                   isEditing
@@ -220,6 +184,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
 
             {/* Close Button */}
             <button
+              type="button"
               onClick={onClose}
               className="p-2 rounded-lg text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer ml-1"
             >
@@ -228,21 +193,13 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
           </div>
         </div>
 
-        {/* Printable Content Container */}
-        <div id="printable-topic-cheatcode" className="p-5 sm:p-6 overflow-y-auto flex-1 font-sans">
-          {/* Print-Only Header */}
-          <div className="hidden print:block pb-4 mb-4 border-b border-gray-300">
-            <h1 className="text-xl font-bold text-black">{topicName} — Formula Cheat Sheet</h1>
-            <p className="text-xs text-gray-600 font-sans">
-              PrepUnite Placement Preparation • {categoryTitle}
-            </p>
-          </div>
-
+        {/* Content Container */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 font-sans">
           {isLoading ? (
             <div className="py-12 text-center text-xs text-[#868E96]">Loading cheatcode...</div>
           ) : isEditing ? (
             /* Admin Edit Mode */
-            <div className="space-y-3 no-print">
+            <div className="space-y-3">
               <label className="text-xs font-bold text-[#121417] dark:text-white flex items-center justify-between">
                 <span>Edit Topic Cheatcode (Markdown supported)</span>
               </label>
@@ -255,6 +212,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
               />
               <div className="flex justify-end pt-1">
                 <button
+                  type="button"
                   onClick={handleSave}
                   disabled={isSaving}
                   className="px-4 py-2 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
@@ -269,7 +227,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
             <div className="space-y-4 text-xs leading-relaxed text-[#121417] dark:text-[#E9ECEF]">
               <div
                 style={{ whiteSpace: 'pre-wrap' }}
-                className="font-mono bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] p-4 rounded-xl print:bg-transparent print:border-none print:p-0"
+                className="font-mono bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] p-4 rounded-xl"
               >
                 {content}
               </div>
@@ -307,6 +265,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
               </p>
               {isAdmin && (
                 <button
+                  type="button"
                   onClick={() => setIsEditing(true)}
                   className="mt-2 px-3 py-1.5 rounded-lg bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-display font-bold transition-all cursor-pointer border border-[#FD4A32]/20"
                 >
