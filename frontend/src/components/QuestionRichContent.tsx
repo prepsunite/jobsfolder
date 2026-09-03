@@ -17,33 +17,35 @@ export default function QuestionRichContent({
   if (!content) return null;
 
   // 1. If content contains inline SVG or raw HTML tags, render with high-fidelity direct HTML/SVG parser
-  if (content.includes('<svg') || content.includes('<img') || content.includes('<table') || content.includes('<div')) {
+  const lowerContent = content.toLowerCase();
+  if (lowerContent.includes('<svg') || lowerContent.includes('<img') || lowerContent.includes('<table') || lowerContent.includes('<div')) {
     // Convert markdown image syntax to HTML if mixed: ![alt](url) -> <img ... />
     const imgClass = isOption
       ? 'max-h-16 sm:max-h-20 w-auto max-w-full object-contain rounded border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-1 shadow-xs inline-block my-0.5'
-      : 'max-h-60 sm:max-h-72 w-auto max-w-full object-contain rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-2 shadow-xs mx-auto block my-2';
+      : 'max-h-72 sm:max-h-96 w-auto max-w-full object-contain rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-2 shadow-xs mx-auto block my-2';
 
     const processed = content.replace(
       /!\[(.*?)\]\((.*?)\)/g,
       `<img src="$2" alt="$1" class="${imgClass}" />`
     );
 
-    // Split text and HTML/SVG tags so text retains whitespace-pre-line and SVGs render as clean interactive vector elements
-    const parts = processed.split(/(<svg[\s\S]*?<\/svg>|<img[\s\S]*?>)/gi);
+    // Split text and HTML/SVG/Table tags so text retains whitespace-pre-line and SVGs render as clean interactive vector elements
+    const parts = processed.split(/(<svg[\s\S]*?<\/svg>|<img[\s\S]*?>|<table[\s\S]*?<\/table>)/gi);
 
     return (
       <div className={`question-rich-content text-inherit ${isOption ? 'inline-flex items-center gap-2 flex-wrap text-left w-full my-0' : `leading-relaxed ${className}`}`}>
         {parts.map((part, idx) => {
           if (!part) return null;
           const trimmed = part.trim();
-          if (trimmed.startsWith('<svg') || trimmed.startsWith('<img')) {
+          const lower = trimmed.toLowerCase();
+          if (lower.startsWith('<svg') || lower.startsWith('<img') || lower.startsWith('<table')) {
             return (
               <div
                 key={idx}
                 className={
                   isOption
                     ? 'my-0.5 inline-flex items-center justify-start text-left [&_svg]:max-h-14 sm:[&_svg]:max-h-16 [&_svg]:w-auto [&_svg]:h-auto [&_img]:max-h-14 sm:[&_img]:max-h-16 [&_img]:w-auto'
-                    : 'my-3 overflow-x-auto text-center flex justify-center items-center [&_svg]:max-h-60 sm:[&_svg]:max-h-72 [&_svg]:w-auto [&_svg]:h-auto [&_img]:max-h-60 sm:[&_img]:max-h-72 [&_img]:w-auto'
+                    : 'my-3 w-full overflow-x-auto flex justify-center items-center text-center [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:rounded-lg [&_img]:max-w-full [&_img]:h-auto [&_table]:w-full [&_table]:border-collapse'
                 }
                 dangerouslySetInnerHTML={{ __html: part }}
               />

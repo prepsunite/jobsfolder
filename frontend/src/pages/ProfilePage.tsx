@@ -10,6 +10,7 @@ import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
+import QuestionRichContent from '@/components/QuestionRichContent';
 import { normalizeMathText } from '@/utils/questionParser';
 import {
   User,
@@ -778,9 +779,12 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Question Statement */}
-                    <p className="text-sm font-semibold leading-relaxed text-[#121417] dark:text-[#e3e3e3] whitespace-pre-line">
-                      {q.statement}
-                    </p>
+                    <div className="pt-0.5">
+                      <QuestionRichContent
+                        content={q.statement}
+                        className="text-sm font-semibold leading-relaxed text-[#121417] dark:text-[#FFFFFF] font-sans"
+                      />
+                    </div>
 
                     {/* MCQ Options List */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -799,7 +803,7 @@ export default function ProfilePage() {
                             <span className="font-bold w-5 h-5 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-[11px] shrink-0">
                               {optId}
                             </span>
-                            <span className="flex-1">{opt.text}</span>
+                            <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
                             {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
                           </div>
                         );
@@ -852,7 +856,7 @@ export default function ProfilePage() {
                                     return (
                                       <div key={sIdx} className="leading-relaxed flex items-start gap-2">
                                         <span className="text-[#E0351D] dark:text-[#FD4A32] font-bold select-none">•</span>
-                                        <span>{stepText}</span>
+                                        <QuestionRichContent content={stepText} className="flex-1" />
                                       </div>
                                     );
                                   })}
@@ -866,9 +870,9 @@ export default function ProfilePage() {
                                 <span className="font-extrabold text-purple-700 dark:text-purple-300 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
                                   ⚡ Quick Shortcut:
                                 </span>
-                                <p className="text-[#1f1b17] dark:text-[#e3e3e3] font-semibold text-xs leading-relaxed">
-                                  {se.shortcut}
-                                </p>
+                                <div className="text-[#1f1b17] dark:text-[#e3e3e3] font-semibold text-xs leading-relaxed">
+                                  <QuestionRichContent content={se.shortcut} />
+                                </div>
                               </div>
                             )}
 
@@ -885,9 +889,9 @@ export default function ProfilePage() {
                             )}
                           </div>
                         ) : (
-                          <p className="text-xs text-[#1f1b17] dark:text-[#e3e3e3] leading-relaxed whitespace-pre-line font-sans">
-                            {q.explanation}
-                          </p>
+                          <div className="text-xs text-[#1f1b17] dark:text-[#e3e3e3] leading-relaxed font-sans">
+                            <QuestionRichContent content={q.explanation || 'No step-by-step explanation recorded for this question.'} />
+                          </div>
                         )}
                       </div>
                     )}

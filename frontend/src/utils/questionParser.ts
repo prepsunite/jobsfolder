@@ -58,9 +58,7 @@ export function toSuperscript(str: string): string {
  * - \sqrt{x} / sqrt(x) -> √(x)
  * - \theta, \pi, \pm, \le, \ge, \ne, \times, \div -> θ, π, ±, ≤, ≥, ≠, ×, ÷
  */
-export function normalizeMathText(text: string): string {
-  if (!text || typeof text !== 'string') return text || '';
-
+function normalizeMathTextRaw(text: string): string {
   let res = text;
 
   // 1. Convert HTML <sub>...</sub> and <sup>...</sup>
@@ -98,6 +96,20 @@ export function normalizeMathText(text: string): string {
   res = res.replace(/\\infty/g, '∞');
 
   return res;
+}
+
+export function normalizeMathText(text: string): string {
+  if (!text || typeof text !== 'string') return text || '';
+
+  // Preserve any SVG blocks untouched so SVG tags, attributes and styles are never corrupted
+  if (text.includes('<svg') || text.includes('<SVG')) {
+    const parts = text.split(/(<svg[\s\S]*?<\/svg>)/gi);
+    return parts
+      .map((part) => (part.toLowerCase().startsWith('<svg') ? part : normalizeMathTextRaw(part)))
+      .join('');
+  }
+
+  return normalizeMathTextRaw(text);
 }
 
 /**
