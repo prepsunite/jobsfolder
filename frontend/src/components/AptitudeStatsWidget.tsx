@@ -8,6 +8,7 @@ interface AptitudeStatsWidgetProps {
   className?: string;
   variant?: 'card' | 'embedded';
   showBadges?: boolean;
+  isLoading?: boolean;
 }
 
 export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
@@ -17,6 +18,7 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   className = '',
   variant = 'card',
   showBadges = true,
+  isLoading = false,
 }) => {
   const {
     totalQuestions,
@@ -64,6 +66,56 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
 
   const mediumRotation = totalQuestions > 0 ? (easySolved / totalQuestions) * 360 : 0;
   const hardRotation = totalQuestions > 0 ? ((easySolved + mediumSolved) / totalQuestions) * 360 : 0;
+
+  // Skeleton Loading state: prevents flashing zero / empty / wrong numbers during hydration
+  if (isLoading) {
+    if (variant === 'embedded') {
+      return (
+        <div className={`transition-colors animate-pulse ${className}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-[#242424] shrink-0" />
+            <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
+              <div className="space-y-1.5">
+                <div className="h-3 w-12 bg-gray-200 dark:bg-[#242424] rounded" />
+                <div className="h-1.5 w-full bg-gray-200 dark:bg-[#242424] rounded" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3 w-12 bg-gray-200 dark:bg-[#242424] rounded" />
+                <div className="h-1.5 w-full bg-gray-200 dark:bg-[#242424] rounded" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3 w-12 bg-gray-200 dark:bg-[#242424] rounded" />
+                <div className="h-1.5 w-full bg-gray-200 dark:bg-[#242424] rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-4 sm:p-5 shadow-xs animate-pulse ${className}`}>
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#242424]" />
+            <div className="space-y-1">
+              <div className="h-4 w-32 bg-gray-200 dark:bg-[#242424] rounded" />
+              <div className="h-3 w-48 bg-gray-200 dark:bg-[#242424] rounded" />
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-6 w-16 bg-gray-200 dark:bg-[#242424] rounded-md" />
+            <div className="h-6 w-20 bg-gray-200 dark:bg-[#242424] rounded-md" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-20 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Embedded view for Aptitude Category Banner
   if (variant === 'embedded') {

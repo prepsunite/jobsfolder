@@ -55,9 +55,40 @@ const GUEST_USER: UserProfile = {
   role: 'GUEST',
 };
 
+// Synchronously read cached user from localStorage on initialization to eliminate split-second flash
+const getInitialUser = (): UserProfile | null => {
+  try {
+    const email = localStorage.getItem('prepunite_user_email');
+    const name = localStorage.getItem('prepunite_user_name');
+    const role = (localStorage.getItem('prepunite_role') as UserRole) || 'USER';
+    const avatarUrl = localStorage.getItem('prepunite_user_avatar') || undefined;
+
+    if (email && email !== 'guest@prepunite.com') {
+      return {
+        id: email,
+        name: name || formatDisplayNameFromEmail(email, ''),
+        email,
+        role,
+        avatarUrl,
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to read cached user profile:', e);
+  }
+  return GUEST_USER;
+};
+
+const getInitialRole = (): UserRole => {
+  try {
+    const role = localStorage.getItem('prepunite_role') as UserRole;
+    if (role) return role;
+  } catch {}
+  return 'GUEST';
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRole] = useState<UserRole>('GUEST');
-  const [user, setUser] = useState<UserProfile | null>(GUEST_USER);
+  const [role, setRole] = useState<UserRole>(getInitialRole);
+  const [user, setUser] = useState<UserProfile | null>(getInitialUser);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Helper to persist profile state from Supabase database

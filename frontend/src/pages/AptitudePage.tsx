@@ -155,15 +155,28 @@ export default function AptitudePage() {
           countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
         }
       });
+
+      if (allFetchedData.length > 0) {
+        try {
+          localStorage.setItem(`prepunite_counts_cache_${categorySlug}`, JSON.stringify(countMap));
+        } catch {}
+      }
+
       return countMap;
     },
-    staleTime: 0,
+    initialData: () => {
+      try {
+        const cached = localStorage.getItem(`prepunite_counts_cache_${categorySlug}`);
+        return cached ? JSON.parse(cached) : undefined;
+      } catch { return undefined; }
+    },
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
     enabled: currentCategoryTopics.length > 0
   });
 
   // Fetch questions for this category to compute live progress stats
-  const { data: categoryQuestions = [] } = useQuery({
+  const { data: categoryQuestions = [], isLoading: isCatLoading } = useQuery({
     queryKey: ['category-questions-stats', categorySlug],
     queryFn: async () => {
       if (!currentCategoryTopics.length) return [];
@@ -199,7 +212,19 @@ export default function AptitudePage() {
         }
       }
 
+      if (allFetchedData.length > 0) {
+        try {
+          localStorage.setItem(`prepunite_cat_q_cache_${categorySlug}`, JSON.stringify(allFetchedData));
+        } catch {}
+      }
+
       return allFetchedData;
+    },
+    initialData: () => {
+      try {
+        const cached = localStorage.getItem(`prepunite_cat_q_cache_${categorySlug}`);
+        return cached ? JSON.parse(cached) : undefined;
+      } catch { return undefined; }
     },
     enabled: currentCategoryTopics.length > 0,
     staleTime: 60 * 1000,
@@ -340,6 +365,7 @@ export default function AptitudePage() {
           <div className="flex-1 lg:max-w-2xl">
             <AptitudeStatsWidget
               stats={categoryStats}
+              isLoading={isCatLoading && categoryQuestions.length === 0}
               title={`${currentCategoryInfo.title} Progress`}
               variant="embedded"
               showBadges={false}

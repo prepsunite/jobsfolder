@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const isUserPro = subData?.isPro ?? false;
 
   // Fetch all questions metadata to compute user's lifetime aptitude stats
-  const { data: allQuestionsMeta = [] } = useQuery({
+  const { data: allQuestionsMeta = [], isLoading: isMetaLoading } = useQuery({
     queryKey: ['profile-all-questions-meta'],
     queryFn: async () => {
       let allFetchedData: any[] = [];
@@ -104,7 +104,21 @@ export default function ProfilePage() {
         }
       }
 
+      if (allFetchedData.length > 0) {
+        try {
+          localStorage.setItem('prepunite_all_questions_meta_cache', JSON.stringify(allFetchedData));
+        } catch {}
+      }
+
       return allFetchedData;
+    },
+    initialData: () => {
+      try {
+        const cached = localStorage.getItem('prepunite_all_questions_meta_cache');
+        return cached ? JSON.parse(cached) : undefined;
+      } catch {
+        return undefined;
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -465,6 +479,7 @@ export default function ProfilePage() {
       {/* 🚀 LeetCode-style Aptitude Stats Widget */}
       <AptitudeStatsWidget
         stats={aptitudeStats}
+        isLoading={isMetaLoading && allQuestionsMeta.length === 0}
         title="Overall Aptitude Mastery & Progress"
         subtitle="Your lifetime question solving accuracy, difficulty distribution, and active streaks."
       />
