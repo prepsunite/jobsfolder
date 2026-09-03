@@ -243,10 +243,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const getAppOrigin = () => {
+    if (typeof window === 'undefined') return 'https://jobsfolder.vercel.app';
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return window.location.origin;
+    }
+    return 'https://jobsfolder.vercel.app';
+  };
+
   // 1-Click Google OAuth 2.0 Sign In Handler
   const signInWithGoogle = async () => {
     try {
-      const origin = window.location.origin;
+      const origin = getAppOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -272,7 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 1-Click GitHub OAuth 2.0 Sign In Handler
   const signInWithGithub = async () => {
     try {
-      const origin = window.location.origin;
+      const origin = getAppOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
@@ -308,7 +317,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Email & Password Sign Up
   const signUpWithEmail = async (email: string, password: string, fullName: string) => {
     try {
-      const origin = window.location.origin;
+      const origin = getAppOrigin();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -330,7 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Password Reset Email
   const resetPassword = async (email: string) => {
     try {
-      const origin = window.location.origin;
+      const origin = getAppOrigin();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${origin}/dashboard`,
       });

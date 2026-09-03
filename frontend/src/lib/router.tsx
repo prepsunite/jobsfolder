@@ -14,6 +14,7 @@ const ExperiencesPage = lazy(() => import('@/pages/ExperiencesPage'));
 const SubmitExperiencePage = lazy(() => import('@/pages/SubmitExperiencePage'));
 const AptitudePage = lazy(() => import('@/pages/AptitudePage'));
 const TopicQuestionsPage = lazy(() => import('@/pages/TopicQuestionsPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 const AdminBulkImportPage = lazy(() => import('@/pages/AdminBulkImportPage'));
@@ -115,13 +116,17 @@ export const router = createBrowserRouter([
         path: '/dashboard',
         element: (
           <ProtectedRoute>
-            {withSuspense(ProfilePage)}
+            {withSuspense(DashboardPage)}
           </ProtectedRoute>
         ),
       },
       {
         path: '/profile',
-        element: <Navigate to="/dashboard" replace />,
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
       },
       {
         path: '/admin',
