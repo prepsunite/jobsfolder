@@ -18,6 +18,7 @@ import {
   FileText,
   Trash2,
   ChevronRight,
+  ChevronLeft,
   CheckCircle2,
   Layers,
   BookOpen,
@@ -42,6 +43,8 @@ export default function ProfilePage() {
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
   const [deletionRequested, setDeletionRequested] = useState(false);
+  const [questionsPage, setQuestionsPage] = useState(1);
+  const QUESTIONS_PER_PAGE = 8;
 
 
   // Live Supabase subscription query for Pro Pass
@@ -185,12 +188,22 @@ export default function ProfilePage() {
 
       let allTopicQuestions: TopicQuestionItem[] = [];
       try {
-        const { data: qData, error } = await supabase
-          .from('topic_questions')
-          .select('*')
-          .in('id', questionIds);
+        const CHUNK_SIZE = 40;
+        const chunks: string[][] = [];
+        for (let i = 0; i < questionIds.length; i += CHUNK_SIZE) {
+          chunks.push(questionIds.slice(i, i + CHUNK_SIZE));
+        }
 
-        if (!error && qData && qData.length > 0) {
+        const chunkResponses = await Promise.all(
+          chunks.map((chunk) => supabase.from('topic_questions').select('*').in('id', chunk))
+        );
+
+        const qData: any[] = [];
+        for (const res of chunkResponses) {
+          if (res.data) qData.push(...res.data);
+        }
+
+        if (qData.length > 0) {
           allTopicQuestions = qData.map((q) => {
             const rawCorrect = q.correct_answer;
             const resolvedLetter = typeof rawCorrect === 'number'
@@ -259,6 +272,12 @@ export default function ProfilePage() {
   );
   const totalQuestionsCount = bookmarkedTopicQuestions.length + nonTopicGeneralQuestions.length;
 
+  const totalTopicPages = Math.max(1, Math.ceil(bookmarkedTopicQuestions.length / QUESTIONS_PER_PAGE));
+  const paginatedTopicQuestions = useMemo(() => {
+    const start = (questionsPage - 1) * QUESTIONS_PER_PAGE;
+    return bookmarkedTopicQuestions.slice(start, start + QUESTIONS_PER_PAGE);
+  }, [bookmarkedTopicQuestions, questionsPage]);
+
   // TanStack Query: Bookmarked Interview Transcripts (queries live Supabase experiences + local fallback)
   const { data: bookmarkedExperiences = [] } = useQuery({
     queryKey: ['profile-bookmarked-experiences'],
@@ -267,12 +286,26 @@ export default function ProfilePage() {
       if (expIds.length === 0) return [];
       let allExps: ExperienceItem[] = [];
       try {
-        const { data, error } = await supabase
-          .from('experiences')
-          .select('*')
-          .in('id', expIds)
-          .eq('is_deleted', false);
-        if (error) throw error;
+        const CHUNK_SIZE = 40;
+        const chunks: string[][] = [];
+        for (let i = 0; i < expIds.length; i += CHUNK_SIZE) {
+          chunks.push(expIds.slice(i, i + CHUNK_SIZE));
+        }
+
+        const chunkResponses = await Promise.all(
+          chunks.map((chunk) =>
+            supabase
+              .from('experiences')
+              .select('*')
+              .in('id', chunk)
+              .eq('is_deleted', false)
+          )
+        );
+
+        const data: any[] = [];
+        for (const res of chunkResponses) {
+          if (res.data) data.push(...res.data);
+        }
         if (data && data.length > 0) {
           allExps = data.map((e: any): ExperienceItem => ({
             id: e.id,
@@ -694,7 +727,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {totalQuestionsCount > 0 ? (
             <div className="space-y-4">
-              {bookmarkedTopicQuestions.map((q, idx) => {
+              {paginatedTopicQuestions.map((q, idx) => {
                 const subtopicName = getTopicDisplayName(q.topicId);
                 const isExplVisible = revealedExpl[q.id];
                 const se = q.structuredExplanation;
@@ -886,6 +919,38 @@ export default function ProfilePage() {
                   onDelete={() => handleRemoveQuestionBookmark(question.id)}
                 />
               ))}
+
+              {totalTopicPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-[#eae1da] dark:border-[#2b2d31]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuestionsPage((p) => Math.max(1, p - 1));
+                    }}
+                    disabled={questionsPage === 1}
+                    className="px-4 py-2 rounded-full border border-[#eae1da] dark:border-[#383a40] text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] transition-all cursor-pointer flex items-center gap-1.5 text-[#1f1b17] dark:text-[#e3e3e3]"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <span className="text-xs font-bold text-[#747878] dark:text-[#a6adbb]">
+                    Page {questionsPage} of {totalTopicPages} ({bookmarkedTopicQuestions.length} saved)
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuestionsPage((p) => Math.min(totalTopicPages, p + 1));
+                    }}
+                    disabled={questionsPage === totalTopicPages}
+                    className="px-4 py-2 rounded-full border border-[#eae1da] dark:border-[#383a40] text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f6ece6] dark:hover:bg-[#2b2d31] transition-all cursor-pointer flex items-center gap-1.5 text-[#1f1b17] dark:text-[#e3e3e3]"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${

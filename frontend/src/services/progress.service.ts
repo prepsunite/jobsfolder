@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { stableStringify } from '@/utils/questionParser';
 
 export interface QuestionProgressRecord {
   questionId: string;
@@ -51,9 +52,9 @@ function getLocalRecords(userEmail?: string): Record<string, QuestionProgressRec
 function saveLocalRecords(records: Record<string, QuestionProgressRecord>, userEmail?: string): void {
   try {
     const key = getStorageKey(userEmail);
-    const serialized = JSON.stringify(records);
+    const serialized = stableStringify(records);
     if (localStorage.getItem(key) === serialized) {
-      return; // Data unchanged, avoid unnecessary disk write
+      return; // Data unchanged (key-order independent), avoid unnecessary disk write
     }
     localStorage.setItem(key, serialized);
   } catch (e) {

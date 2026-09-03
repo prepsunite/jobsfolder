@@ -6,6 +6,7 @@ import {
   generateQuestionFingerprint,
   parseTopicQuestionJsonItem as parseTopicQuestionJsonItemUtil,
   safeJsonParse,
+  stableStringify,
 } from '@/utils/questionParser';
 export { resolveTopicSlug };
 
@@ -594,9 +595,9 @@ class DataStoreManager {
 
   private setStorage<T>(key: string, value: T): void {
     try {
-      const serialized = JSON.stringify(value);
+      const serialized = stableStringify(value);
       if (localStorage.getItem(key) === serialized) {
-        return; // Identical data, skip disk write and broadcast
+        return; // Identical data (key-order independent), skip disk write and broadcast
       }
       localStorage.setItem(key, serialized);
       this.notifySync(key);
