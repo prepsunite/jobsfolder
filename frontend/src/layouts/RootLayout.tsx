@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, User, Menu } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, User, Menu, LayoutDashboard } from 'lucide-react';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -103,9 +103,9 @@ export default function RootLayout() {
               </button>
 
               {isAuthenticated && user ? (
-                <Link to="/profile" className="pub-nav-cta">
-                  <User className="w-3.5 h-3.5" />
-                  <span>Profile</span>
+                <Link to="/dashboard" className="pub-nav-cta">
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Dashboard</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               ) : (

@@ -99,8 +99,8 @@ export default function ConsentBanner() {
         <div className="border-t border-[#F1F3F5] dark:border-[#1C1C1C] px-4 sm:px-6 py-2 max-w-7xl mx-auto">
           <p className="text-[10px] text-[#ADB5BD] dark:text-[#444444] font-sans">
             You can withdraw your consent at any time by visiting{' '}
-            <a href="/profile" className="underline hover:text-[#FD4A32] transition-colors">
-              Profile → Data &amp; Privacy
+            <a href="/dashboard" className="underline hover:text-[#FD4A32] transition-colors">
+              Dashboard → Data &amp; Privacy
             </a>. Declining may limit some features.
             Grievance Officer: <a href="mailto:prepsunite@gmail.com" className="underline hover:text-[#FD4A32] transition-colors">prepsunite@gmail.com</a>
           </p>

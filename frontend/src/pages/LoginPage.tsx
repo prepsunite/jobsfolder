@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Check,
   User,
+  LayoutDashboard,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -42,7 +43,7 @@ export default function LoginPage() {
     if (isAuthenticated && user && !authLoading) {
       const targetPath = redirectTo && redirectTo.startsWith('/')
         ? redirectTo
-        : (role === 'ADMIN' ? '/admin' : '/profile');
+        : (role === 'ADMIN' ? '/admin' : '/dashboard');
       navigate(targetPath, { replace: true });
     }
   }, [isAuthenticated, user, role, authLoading, navigate, redirectTo]);
@@ -204,11 +205,11 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <button
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/dashboard')}
                   className="w-full py-2.5 px-4 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Go to My Profile</span>
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Go to My Dashboard</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 

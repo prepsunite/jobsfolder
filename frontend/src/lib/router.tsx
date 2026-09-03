@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import RootLayout from '@/layouts/RootLayout';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -112,7 +112,7 @@ export const router = createBrowserRouter([
         element: withSuspense(TopicQuestionsPage),
       },
       {
-        path: '/profile',
+        path: '/dashboard',
         element: (
           <ProtectedRoute>
             {withSuspense(ProfilePage)}
@@ -120,12 +120,8 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: '/dashboard',
-        element: (
-          <ProtectedRoute>
-            {withSuspense(ProfilePage)}
-          </ProtectedRoute>
-        ),
+        path: '/profile',
+        element: <Navigate to="/dashboard" replace />,
       },
       {
         path: '/admin',

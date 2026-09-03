@@ -250,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/profile`,
+          redirectTo: `${origin}/dashboard`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -276,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${origin}/profile`,
+          redirectTo: `${origin}/dashboard`,
         },
       });
 
@@ -317,7 +317,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name: fullName,
             name: fullName,
           },
-          emailRedirectTo: `${origin}/profile`,
+          emailRedirectTo: `${origin}/dashboard`,
         },
       });
       if (error) throw error;
@@ -332,7 +332,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const origin = window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/profile`,
+        redirectTo: `${origin}/dashboard`,
       });
       if (error) throw error;
       return { error: null };

@@ -466,7 +466,7 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
-                  {user?.name || 'Student Profile'}
+                  {user?.name || 'Student Dashboard'}
                 </h1>
                 {isUserPro ? (
                   <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1 uppercase tracking-wider">

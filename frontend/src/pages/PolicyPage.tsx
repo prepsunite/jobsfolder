@@ -146,7 +146,7 @@ function PrivacyPolicyContent() {
         </div>
         <p>
           To exercise any of these rights, visit your{' '}
-          <Link to="/profile" className="text-[#FD4A32] underline">Profile → Data &amp; Privacy</Link>{' '}
+          <Link to="/dashboard" className="text-[#FD4A32] underline">Dashboard → Data &amp; Privacy</Link>{' '}
           page or email our Grievance Officer at{' '}
           <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a>.
           We will respond within <strong>7 working days</strong>.
