@@ -120,6 +120,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/dashboard',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '/admin',
         element: (
           <ProtectedRoute requireAdmin>

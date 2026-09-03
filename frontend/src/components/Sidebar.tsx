@@ -22,6 +22,7 @@ import {
   GitMerge,
   Terminal,
   X,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,7 +36,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
   const navLinks = [
-    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Dashboard', href: '/profile', icon: LayoutDashboard },
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
@@ -129,7 +130,9 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </span>
             {navLinks.map((link) => {
               const Icon = link.icon;
-              const isActive = location.pathname.startsWith(link.href);
+              const isActive =
+                location.pathname.startsWith(link.href) ||
+                (link.href === '/profile' && location.pathname.startsWith('/dashboard'));
               return (
                 <Link
                   key={link.name}
@@ -142,11 +145,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                      isActive
-                        ? 'text-[#FD4A32]'
-                        : 'text-[#6C757D] dark:text-[#888888] group-hover:text-[#FD4A32]'
-                    }`} />
+                    <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
                     <span>{link.name}</span>
                   </div>
                   {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
@@ -165,7 +164,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <span>Aptitude & Reasoning</span>
               <ChevronDown
                 className={`w-3 h-3 transition-transform duration-200 ${
-                  isAptitudeExpanded ? 'rotate-180 text-[#121417] dark:text-[#FFFFFF]' : 'text-[#868E96] dark:text-[#555555]'
+                  isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
                 }`}
               />
             </button>
@@ -187,11 +186,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <CatIcon className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                          isCatActive
-                            ? 'text-[#FD4A32]'
-                            : 'text-[#6C757D] dark:text-[#888888] group-hover:text-[#FD4A32]'
-                        }`} />
+                        <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
                         <span className="truncate">{cat.name}</span>
                       </div>
                     </Link>
