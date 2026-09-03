@@ -124,14 +124,6 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
                   />
                 )}
               </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="font-display font-black text-xs text-[#121417] dark:text-white leading-none">
-                  {totalSolved}
-                </span>
-                <span className="text-[7px] font-bold uppercase tracking-wider text-[#868E96] dark:text-[#777777] leading-none mt-0.5">
-                  Solved
-                </span>
-              </div>
             </div>
 
             <div className="space-y-0.5 min-w-0">
@@ -304,16 +296,6 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
                 />
               )}
             </svg>
-
-            {/* In center of ring: Hero Solved Number instead of glaring 0% */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-              <span className="font-display font-black text-sm sm:text-base text-[#121417] dark:text-white leading-none">
-                {totalSolved}
-              </span>
-              <span className="text-[7.5px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#777777] leading-none mt-0.5">
-                Solved
-              </span>
-            </div>
           </div>
 
           <div className="space-y-1 min-w-0 flex-1">
@@ -322,7 +304,7 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
                 {totalSolved}
               </span>
               <span className="text-xs text-[#868E96] dark:text-[#777777]">
-                / {totalQuestions.toLocaleString()} Total
+                / {totalQuestions.toLocaleString()} Solved
               </span>
             </div>
             <div className="flex items-center gap-2">
