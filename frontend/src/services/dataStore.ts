@@ -1,6 +1,7 @@
 // Global synchronized state manager for Admin CRUD operations visible to all users live!
 import { resolveTopicSlug } from './topicMap';
 import { supabase } from '@/lib/supabase';
+import stringify from 'fast-json-stable-stringify';
 import {
   validateQuestionItem,
   generateQuestionFingerprint,
@@ -594,7 +595,7 @@ class DataStoreManager {
 
   private setStorage<T>(key: string, value: T): void {
     try {
-      const serialized = JSON.stringify(value);
+      const serialized = stringify(value);
       if (localStorage.getItem(key) === serialized) {
         return; // Identical data, skip disk write and broadcast
       }
@@ -609,14 +610,6 @@ class DataStoreManager {
     if (typeof window !== 'undefined') {
       try {
         window.dispatchEvent(new CustomEvent('prepunite_datastore_updated', { detail: { key } }));
-      } catch {}
-
-      try {
-        if ('BroadcastChannel' in window) {
-          const bc = new BroadcastChannel('prepunite_datastore_channel');
-          bc.postMessage({ type: 'DATASTORE_UPDATED', key, timestamp: Date.now() });
-          bc.close();
-        }
       } catch {}
     }
   }

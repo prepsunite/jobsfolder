@@ -44,25 +44,10 @@ export default function RootLayout() {
     };
 
     window.addEventListener('prepunite_datastore_updated', handleStoreUpdate);
-    window.addEventListener('storage', handleStoreUpdate);
-
-    let bc: BroadcastChannel | null = null;
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
-        bc = new BroadcastChannel('prepunite_datastore_channel');
-        bc.onmessage = (event) => {
-          if (event.data?.type === 'DATASTORE_UPDATED') {
-            handleStoreUpdate();
-          }
-        };
-      } catch {}
-    }
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       window.removeEventListener('prepunite_datastore_updated', handleStoreUpdate);
-      window.removeEventListener('storage', handleStoreUpdate);
-      if (bc) bc.close();
     };
   }, [queryClient]);
 

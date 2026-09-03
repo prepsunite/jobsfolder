@@ -40,6 +40,8 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences' | 'privacy'>('exams');
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
+  const [visibleQuestionsCount, setVisibleQuestionsCount] = useState(20);
+  const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
   const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
   const [deletionRequested, setDeletionRequested] = useState(false);
 
@@ -185,12 +187,20 @@ export default function ProfilePage() {
 
       let allTopicQuestions: TopicQuestionItem[] = [];
       try {
-        const { data: qData, error } = await supabase
-          .from('topic_questions')
-          .select('*')
-          .in('id', questionIds);
+        const CHUNK_SIZE = 50;
+        let qData: any[] = [];
+        for (let i = 0; i < questionIds.length; i += CHUNK_SIZE) {
+          const chunk = questionIds.slice(i, i + CHUNK_SIZE);
+          const { data, error } = await supabase
+            .from('topic_questions')
+            .select('*')
+            .in('id', chunk);
+          if (!error && data) {
+            qData = qData.concat(data);
+          }
+        }
 
-        if (!error && qData && qData.length > 0) {
+        if (qData && qData.length > 0) {
           allTopicQuestions = qData.map((q) => {
             const rawCorrect = q.correct_answer;
             const resolvedLetter = typeof rawCorrect === 'number'
@@ -267,12 +277,20 @@ export default function ProfilePage() {
       if (expIds.length === 0) return [];
       let allExps: ExperienceItem[] = [];
       try {
-        const { data, error } = await supabase
-          .from('experiences')
-          .select('*')
-          .in('id', expIds)
-          .eq('is_deleted', false);
-        if (error) throw error;
+        const CHUNK_SIZE = 50;
+        let data: any[] = [];
+        for (let i = 0; i < expIds.length; i += CHUNK_SIZE) {
+          const chunk = expIds.slice(i, i + CHUNK_SIZE);
+          const { data: chunkData, error } = await supabase
+            .from('experiences')
+            .select('*')
+            .in('id', chunk)
+            .eq('is_deleted', false);
+          if (error) throw error;
+          if (chunkData) {
+            data = data.concat(chunkData);
+          }
+        }
         if (data && data.length > 0) {
           allExps = data.map((e: any): ExperienceItem => ({
             id: e.id,
@@ -694,7 +712,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {totalQuestionsCount > 0 ? (
             <div className="space-y-4">
-              {bookmarkedTopicQuestions.map((q, idx) => {
+              {bookmarkedTopicQuestions.slice(0, visibleQuestionsCount).map((q, idx) => {
                 const subtopicName = getTopicDisplayName(q.topicId);
                 const isExplVisible = revealedExpl[q.id];
                 const se = q.structuredExplanation;
@@ -865,7 +883,7 @@ export default function ProfilePage() {
                 );
               })}
 
-              {nonTopicGeneralQuestions.map((question) => (
+              {nonTopicGeneralQuestions.slice(0, Math.max(0, visibleQuestionsCount - bookmarkedTopicQuestions.length)).map((question) => (
                 <QuestionCard
                   key={question.id}
                   question={{
@@ -886,6 +904,17 @@ export default function ProfilePage() {
                   onDelete={() => handleRemoveQuestionBookmark(question.id)}
                 />
               ))}
+
+              {visibleQuestionsCount < totalQuestionsCount && (
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => setVisibleQuestionsCount((prev) => prev + 20)}
+                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#eae1da] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#e2d8d2] dark:hover:bg-[#383a40] transition-colors"
+                  >
+                    Load More Questions
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
@@ -919,7 +948,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {bookmarkedExperiences.length > 0 ? (
             <div className="space-y-4">
-              {bookmarkedExperiences.map((exp) => (
+              {bookmarkedExperiences.slice(0, visibleExperiencesCount).map((exp) => (
                 <div
                   key={exp.id}
                   className={`p-6 rounded-[24px] border transition-all space-y-4 relative ${
@@ -978,6 +1007,17 @@ export default function ProfilePage() {
                   )}
                 </div>
               ))}
+
+              {visibleExperiencesCount < bookmarkedExperiences.length && (
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => setVisibleExperiencesCount((prev) => prev + 20)}
+                    className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#eae1da] dark:bg-[#2b2d31] text-[#1f1b17] dark:text-[#e3e3e3] hover:bg-[#e2d8d2] dark:hover:bg-[#383a40] transition-colors"
+                  >
+                    Load More Experiences
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${

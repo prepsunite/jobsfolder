@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ConsentProvider } from '@/contexts/ConsentContext'
 import ConsentBanner from '@/components/ConsentBanner'
+import { broadcastQueryClient } from '@tanstack/query-broadcast-client-experimental'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,6 +16,13 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+if (typeof window !== 'undefined') {
+  broadcastQueryClient({
+    queryClient,
+    broadcastChannel: 'prepunite_query_broadcast_channel'
+  })
+}
 
 export default function App() {
   return (
