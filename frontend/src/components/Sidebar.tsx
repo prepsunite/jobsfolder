@@ -142,10 +142,10 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#121417] dark:text-[#FD4A32]'}`} />
                     <span>{link.name}</span>
                   </div>
-                  {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
+                  {isActive && <ChevronRight className="w-3 h-3 text-white dark:text-[#FD4A32]" />}
                 </Link>
               );
             })}
@@ -183,7 +183,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32]" />
+                        <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isCatActive ? 'text-white' : 'text-[#121417] dark:text-[#FD4A32]'}`} />
                         <span className="truncate">{cat.name}</span>
                       </div>
                     </Link>
@@ -226,7 +226,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <Link
               to="/login"
               onClick={onClose}
-              className="flex items-center justify-between p-2 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/30 text-[#FD4A32] transition-colors w-full"
+              className="flex items-center justify-between p-2 rounded-md bg-[#121417]/5 hover:bg-[#121417]/10 dark:bg-[#FD4A32]/10 dark:hover:bg-[#FD4A32]/20 border border-[#121417]/10 dark:border-[#FD4A32]/30 text-[#121417] dark:text-[#FD4A32] transition-colors w-full"
             >
               <div className="flex items-center gap-2">
                 <User className="w-3.5 h-3.5" />
@@ -238,8 +238,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] w-full">
               <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
                 <div
-                  className={`w-7 h-7 rounded-md text-white dark:text-black flex items-center justify-center font-bold text-xs shrink-0 ${
-                    role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#FD4A32] dark:bg-[#FD4A32]'
+                  className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 ${
+                    role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#121417] dark:bg-[#FD4A32]'
                   }`}
                 >
                   {role === 'ADMIN' ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}

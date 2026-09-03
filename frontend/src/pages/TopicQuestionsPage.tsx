@@ -799,7 +799,7 @@ export default function TopicQuestionsPage() {
               className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#F8F9FA] dark:bg-[#1A1A1A] hover:bg-[#E9ECEF] dark:hover:bg-[#252525] text-[#121417] dark:text-white text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] transition-all cursor-pointer shadow-2xs"
               title="Share this topic with your college batch"
             >
-              <Share2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+              <Share2 className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
               <span>Share</span>
             </button>
 
@@ -827,7 +827,7 @@ export default function TopicQuestionsPage() {
             {/* Difficulty Filter Group */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555] flex items-center gap-1">
-                <Filter className="w-3 h-3 text-[#FD4A32]" />
+                <Filter className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
                 <span>Difficulty:</span>
               </span>
               <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">

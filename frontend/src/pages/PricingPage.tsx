@@ -186,19 +186,19 @@ export default function PricingPage() {
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-4 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Access all 50+ company overviews & syllabus</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Round-wise test pattern & weightage breakdowns</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Sample memory-based preview questions</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Browse candidate interview experiences</span>
               </li>
             </ul>
@@ -257,15 +257,15 @@ export default function PricingPage() {
 
             <ul className="space-y-2 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <strong className="text-[#121417] dark:text-white">Valid for 365 Days (1 Full Year)</strong>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>All previous year question papers & memory sets</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Full step-by-step solutions & code implementations</span>
               </li>
             </ul>

@@ -185,7 +185,7 @@ function PrivacyPolicyContent() {
       <Section title="11. Grievance Officer (DPDP Act, Section 13)">
         <div className="p-4 rounded-md bg-[#FD4A32]/5 border border-[#FD4A32]/20 space-y-2">
           <p className="font-bold text-[#121417] dark:text-white text-[11px] flex items-center gap-1.5">
-            <Mail className="w-3.5 h-3.5 text-[#FD4A32]" />
+            <Mail className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
             Grievance Redressal Officer
           </p>
           <div className="text-[11px] space-y-0.5">
@@ -459,7 +459,7 @@ export default function PolicyPage({ type }: PolicyPageProps) {
       {/* Footer CTA */}
       <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-[#FD4A32]" />
+          <Mail className="w-4 h-4 text-[#121417] dark:text-[#FD4A32]" />
           <div>
             <p className="text-[11px] font-display font-bold text-[#121417] dark:text-white">Grievance Officer</p>
             <p className="text-[10px] text-[#868E96] dark:text-[#555555]">For data rights & complaints — response within 7 working days</p>

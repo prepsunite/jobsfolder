@@ -83,13 +83,13 @@ export default function ContactPage() {
         <div className="space-y-4">
           <div className="p-5 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-3">
             <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] flex items-center gap-2">
-              <MessageSquare className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
+              <MessageSquare className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
               <span>Direct Support</span>
             </h3>
 
             <div className="space-y-2.5 text-xs text-[#868E96] dark:text-[#555555] font-sans">
               <div className="flex items-start gap-2.5">
-                <Mail className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0 mt-0.5" />
+                <Mail className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Email</span>
                   <a href="mailto:prepsunite@gmail.com" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">
@@ -99,7 +99,7 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <Clock className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0 mt-0.5" />
+                <Clock className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Response Time</span>
                   <span>Within 24 hours</span>
@@ -107,7 +107,7 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] shrink-0 mt-0.5" />
+                <MapPin className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Location</span>
                   <span>India · Placement Tech Services</span>

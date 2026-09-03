@@ -536,7 +536,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     }`}
                     title="Share this placement paper with your college batch"
                   >
-                    <Share2 className="w-4 h-4 text-[#FD4A32]" />
+                    <Share2 className="w-4 h-4 text-[#121417] dark:text-[#FD4A32]" />
                     <span>Share with Batch</span>
                   </button>
 
