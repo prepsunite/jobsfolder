@@ -1185,7 +1185,7 @@ export default function TopicQuestionsPage() {
                           ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40'
                           : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
-                      title={isSaved ? 'Remove Bookmark' : 'Save Question to Profile'}
+                      title={isSaved ? 'Remove Bookmark' : 'Save Question to Dashboard'}
                     >
                       {isSaved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
                     </button>

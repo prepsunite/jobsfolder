@@ -371,7 +371,7 @@ export default function ExperiencesPage() {
                           ? 'border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32]'
                           : 'border-[#E9ECEF] dark:border-[#242424] text-[#868E96] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
-                      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this experience'}
+                      title={isBookmarked ? 'Remove from dashboard bookmarks' : 'Save experience to dashboard'}
                     >
                       {isBookmarked ? (
                         <BookmarkCheck className="w-3.5 h-3.5" />

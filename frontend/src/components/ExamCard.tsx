@@ -44,7 +44,7 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
               ? 'bg-amber-500 border-amber-600 text-white'
               : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
           }`}
-          title={isBookmarked ? 'Remove bookmark' : 'Save bookmark'}
+          title={isBookmarked ? 'Remove from dashboard bookmarks' : 'Save exam drive to dashboard'}
         >
           {isBookmarked ? (
             <BookmarkCheck className="w-3 h-3 fill-white" />

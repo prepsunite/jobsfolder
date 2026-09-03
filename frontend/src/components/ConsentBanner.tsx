@@ -53,7 +53,7 @@ export default function ConsentBanner() {
               Jobsfolder collects your <strong className="text-[#495057] dark:text-[#999999]">name, email address, and profile picture</strong> via Google
               Sign-In to authenticate your account and personalise your learning experience.
               We do <strong className="text-[#495057] dark:text-[#999999]">not</strong> sell your data. You can withdraw consent and delete your
-              account at any time from your Profile page.{' '}
+              account at any time from your Dashboard or Profile page.{' '}
               <a
                 href="/privacy-policy"
                 className="underline text-[#FD4A32] hover:text-[#e03e28] transition-colors"

@@ -253,7 +253,7 @@ export default function LoginPage() {
                   <li>• <strong className="text-[#495057] dark:text-[#777777]">Usage activity</strong> — to save bookmarks and track your progress</li>
                 </ul>
                 <p className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">
-                  We do <strong className="text-[#495057] dark:text-[#777777]">not</strong> sell or share your data with advertisers. You may withdraw consent and delete your account at any time via your Profile page.
+                  We do <strong className="text-[#495057] dark:text-[#777777]">not</strong> sell or share your data with advertisers. You may withdraw consent and delete your account at any time via your Dashboard or Profile page.
                 </p>
 
                 {/* Explicit unticked checkbox — DPDP Rule 3 */}

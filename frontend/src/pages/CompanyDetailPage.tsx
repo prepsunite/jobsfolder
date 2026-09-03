@@ -550,12 +550,12 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                           ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#e3e3e3] border border-[#383a40]'
                           : 'bg-white hover:bg-[#F8F9FA] text-[#121417] border border-[#E9ECEF]'
                       }`}
-                      title={isBookmarked ? "Remove from profile bookmarks" : "Save exam drive to profile bookmarks"}
+                      title={isBookmarked ? "Remove from dashboard bookmarks" : "Save exam drive to dashboard"}
                     >
                       {isBookmarked ? (
                         <>
                           <BookmarkCheck className="w-4 h-4 text-amber-500 fill-amber-500" />
-                          <span>Saved to Profile</span>
+                          <span>Saved to Dashboard</span>
                         </>
                       ) : (
                         <>

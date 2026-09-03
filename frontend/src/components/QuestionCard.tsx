@@ -117,7 +117,7 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
                 : 'bg-[#F8F9FA] dark:bg-[#2b2d31] border-[#E9ECEF] dark:border-[#383a40] text-[#747878] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3]'
             }`}
-            title={isBookmarked ? 'Remove from profile saved questions' : 'Save question to profile'}
+            title={isBookmarked ? 'Remove from dashboard saved questions' : 'Save question to dashboard'}
           >
             {isBookmarked ? (
               <>
