@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -66,6 +66,14 @@ export default function ExperiencesPage() {
   const [bookmarkedExpIds, setBookmarkedExpIds] = useState<string[]>(() =>
     dataStore.getBookmarkedExperienceIds()
   );
+
+  useEffect(() => {
+    const handleBookmarksChanged = () => {
+      setBookmarkedExpIds(dataStore.getBookmarkedExperienceIds());
+    };
+    window.addEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+    return () => window.removeEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+  }, []);
 
   const handleToggleBookmark = (expId: string) => {
     dataStore.toggleBookmarkExperience(expId);

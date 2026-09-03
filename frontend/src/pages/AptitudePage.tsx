@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
@@ -400,9 +400,31 @@ export default function AptitudePage() {
     staleTime: 60 * 1000,
   });
 
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const handleProgressSynced = () => {
+      queryClient.invalidateQueries({ queryKey: ['user-aptitude-progress', user?.email] });
+    };
+    window.addEventListener('prepunite_progress_synced', handleProgressSynced);
+    return () => window.removeEventListener('prepunite_progress_synced', handleProgressSynced);
+  }, [queryClient, user?.email]);
+
+  // Database-first user question progress query
+  const { data: progressRecords = {}, isLoading: isProgressLoading } = useQuery({
+    queryKey: ['user-aptitude-progress', user?.email],
+    queryFn: async () => {
+      if (!user?.email || user.email === 'guest@prepunite.com') {
+        return progressService.getAllRecords(user?.email);
+      }
+      return await progressService.fetchAndSyncFromSupabase(user.email);
+    },
+    staleTime: 30 * 1000,
+  });
+
   const categoryStats = useMemo(() => {
-    return progressService.computeStats(categoryQuestions, user?.email);
-  }, [categoryQuestions, user?.email]);
+    return progressService.computeStatsFromRecords(categoryQuestions, progressRecords);
+  }, [categoryQuestions, progressRecords]);
 
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
     'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Practice basic arithmetic problems.', icon: Calculator },
@@ -535,7 +557,7 @@ export default function AptitudePage() {
           <div className="flex-1 lg:max-w-2xl">
             <AptitudeStatsWidget
               stats={categoryStats}
-              isLoading={isCatLoading && categoryQuestions.length === 0}
+              isLoading={(isCatLoading && categoryQuestions.length === 0) || isProgressLoading}
               title={`${currentCategoryInfo.title} Progress`}
               variant="embedded"
               showBadges={false}

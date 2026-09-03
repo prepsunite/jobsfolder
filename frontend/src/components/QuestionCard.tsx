@@ -21,6 +21,11 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
 
   useEffect(() => {
     setIsBookmarked(dataStore.isQuestionBookmarked(question.id));
+    const handleChanged = () => {
+      setIsBookmarked(dataStore.isQuestionBookmarked(question.id));
+    };
+    window.addEventListener('prepunite_bookmarks_changed', handleChanged);
+    return () => window.removeEventListener('prepunite_bookmarks_changed', handleChanged);
   }, [question.id]);
 
   const handleToggleBookmark = () => {

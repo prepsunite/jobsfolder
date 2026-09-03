@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import QuestionCard from '@/components/QuestionCard';
@@ -123,14 +123,48 @@ export default function ProfilePage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Re-sync bookmarks and progress reactively whenever updated
+  useEffect(() => {
+    const handleBookmarksChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-topic-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-experiences'] });
+    };
+    const handleProgressSynced = () => {
+      queryClient.invalidateQueries({ queryKey: ['user-aptitude-progress', user?.email] });
+    };
+
+    window.addEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+    window.addEventListener('prepunite_progress_synced', handleProgressSynced);
+    return () => {
+      window.removeEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+      window.removeEventListener('prepunite_progress_synced', handleProgressSynced);
+    };
+  }, [queryClient, user?.email]);
+
+  // Database-first live user question progress query
+  const { data: progressRecords = {}, isLoading: isProgressLoading } = useQuery({
+    queryKey: ['user-aptitude-progress', user?.email],
+    queryFn: async () => {
+      if (!user?.email || user.email === 'guest@prepunite.com') {
+        return progressService.getAllRecords(user?.email);
+      }
+      return await progressService.fetchAndSyncFromSupabase(user.email);
+    },
+    staleTime: 30 * 1000,
+  });
+
   const aptitudeStats = useMemo(() => {
-    return progressService.computeStats(allQuestionsMeta, user?.email);
-  }, [allQuestionsMeta, user?.email]);
+    return progressService.computeStatsFromRecords(allQuestionsMeta, progressRecords);
+  }, [allQuestionsMeta, progressRecords]);
 
   // TanStack Query: Bookmarked Exams
   const { data: bookmarkedExams = [] } = useQuery({
     queryKey: ['profile-bookmarked-exams'],
     queryFn: async () => {
+      if (user?.email && user.email !== 'guest@prepunite.com') {
+        await dataStore.hydrateBookmarksFromSupabase();
+      }
       const examIds = dataStore.getBookmarkedExamIds();
       let allExams: any[] = [];
       try {
@@ -147,6 +181,9 @@ export default function ProfilePage() {
   const { data: bookmarkedTopicQuestions = [] } = useQuery({
     queryKey: ['profile-bookmarked-topic-questions'],
     queryFn: async () => {
+      if (user?.email && user.email !== 'guest@prepunite.com') {
+        await dataStore.hydrateBookmarksFromSupabase();
+      }
       const questionIds = dataStore.getBookmarkedQuestionIds();
       let allTopicQuestions: TopicQuestionItem[] = [];
       try {
@@ -479,7 +516,7 @@ export default function ProfilePage() {
       {/* 🚀 LeetCode-style Aptitude Stats Widget */}
       <AptitudeStatsWidget
         stats={aptitudeStats}
-        isLoading={isMetaLoading && allQuestionsMeta.length === 0}
+        isLoading={(isMetaLoading && allQuestionsMeta.length === 0) || isProgressLoading}
         title="Overall Aptitude Mastery & Progress"
         subtitle="Your lifetime question solving accuracy, difficulty distribution, and active streaks."
       />

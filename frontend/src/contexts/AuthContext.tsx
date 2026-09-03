@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { dataStore } from '@/services/dataStore';
+import { progressService } from '@/services/progress.service';
 
 export type UserRole = 'GUEST' | 'USER' | 'ADMIN';
 
@@ -185,6 +187,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (email) {
             await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
+            dataStore.hydrateBookmarksFromSupabase(userMeta);
+            progressService.fetchAndSyncFromSupabase(email);
+            progressService.migrateGuestProgress(email);
           }
 
           if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
@@ -213,6 +218,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (email) {
           await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
+          dataStore.hydrateBookmarksFromSupabase(userMeta);
+          progressService.fetchAndSyncFromSupabase(email);
+          progressService.migrateGuestProgress(email);
         }
 
         if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {

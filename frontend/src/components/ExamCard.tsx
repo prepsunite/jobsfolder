@@ -19,6 +19,11 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
 
   useEffect(() => {
     setIsBookmarked(dataStore.isExamBookmarked(exam.id));
+    const handleChanged = () => {
+      setIsBookmarked(dataStore.isExamBookmarked(exam.id));
+    };
+    window.addEventListener('prepunite_bookmarks_changed', handleChanged);
+    return () => window.removeEventListener('prepunite_bookmarks_changed', handleChanged);
   }, [exam.id]);
 
   const handleToggleBookmark = (e: React.MouseEvent) => {

@@ -76,13 +76,22 @@ export default function TopicQuestionsPage() {
     setIsMuted(next);
   };
 
-  // Hydrate user progress from Supabase on mount / when user changes
+  // Hydrate user progress and bookmarks from Supabase on mount / when user changes
   useEffect(() => {
-    if (user?.email) {
-      progressService.hydrateFromSupabase(user.email).then(() => {
-        setProgressRecords(progressService.getAllRecords(user.email));
+    if (user?.email && user.email !== 'guest@prepunite.com') {
+      progressService.fetchAndSyncFromSupabase(user.email).then((records) => {
+        setProgressRecords(records);
+      });
+      dataStore.hydrateBookmarksFromSupabase().then(() => {
+        setSavedQuestionIds(dataStore.getBookmarkedQuestionIds());
       });
     }
+
+    const handleBookmarksChanged = () => {
+      setSavedQuestionIds(dataStore.getBookmarkedQuestionIds());
+    };
+    window.addEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+    return () => window.removeEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
   }, [user?.email]);
 
   // Admin Single Question Modal State

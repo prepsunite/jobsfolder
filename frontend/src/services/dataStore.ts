@@ -1276,7 +1276,97 @@ class DataStoreManager {
 
 
 
-  // --- BOOKMARKS ---
+  // --- BOOKMARKS (DATABASE-BACKED WITH LOCAL CACHE) ---
+  private syncBookmarksTimeout: any = null;
+
+  async syncBookmarksWithSupabase(): Promise<void> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const questions = this.getBookmarkedQuestionIds();
+      const exams = this.getBookmarkedExamIds();
+      const experiences = this.getBookmarkedExperienceIds();
+
+      if (this.syncBookmarksTimeout) clearTimeout(this.syncBookmarksTimeout);
+      this.syncBookmarksTimeout = setTimeout(async () => {
+        try {
+          await supabase.auth.updateUser({
+            data: {
+              bookmarked_questions: questions,
+              bookmarked_exams: exams,
+              bookmarked_experiences: experiences,
+            },
+          });
+        } catch (e) {
+          console.warn('[dataStore] Supabase bookmarks sync notice:', e);
+        }
+      }, 400);
+    } catch (err) {
+      console.warn('[dataStore] Failed to check auth session for bookmark sync:', err);
+    }
+  }
+
+  async hydrateBookmarksFromSupabase(userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
+    try {
+      let meta = userMetadata;
+      if (!meta) {
+        const { data: { session } } = await supabase.auth.getSession();
+        meta = session?.user?.user_metadata;
+      }
+
+      if (!meta) {
+        return {
+          questions: this.getBookmarkedQuestionIds(),
+          exams: this.getBookmarkedExamIds(),
+          experiences: this.getBookmarkedExperienceIds(),
+        };
+      }
+
+      const remoteQuestions: string[] = Array.isArray(meta.bookmarked_questions) ? meta.bookmarked_questions : [];
+      const remoteExams: string[] = Array.isArray(meta.bookmarked_exams) ? meta.bookmarked_exams : [];
+      const remoteExps: string[] = Array.isArray(meta.bookmarked_experiences) ? meta.bookmarked_experiences : [];
+
+      const localQuestions = this.getBookmarkedQuestionIds();
+      const localExams = this.getBookmarkedExamIds();
+      const localExps = this.getBookmarkedExperienceIds();
+
+      // Union: preserve any items saved locally + all items saved in Supabase
+      const mergedQuestions = Array.from(new Set([...localQuestions, ...remoteQuestions]));
+      const mergedExams = Array.from(new Set([...localExams, ...remoteExams]));
+      const mergedExps = Array.from(new Set([...localExps, ...remoteExps]));
+
+      this.setStorage('prepunite_bookmarked_questions', mergedQuestions);
+      this.setStorage('prepunite_bookmarked_exams', mergedExams);
+      this.setStorage('prepunite_bookmarked_experiences', mergedExps);
+
+      if (
+        mergedQuestions.length !== remoteQuestions.length ||
+        mergedExams.length !== remoteExams.length ||
+        mergedExps.length !== remoteExps.length
+      ) {
+        this.syncBookmarksWithSupabase();
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+      }
+
+      return {
+        questions: mergedQuestions,
+        exams: mergedExams,
+        experiences: mergedExps,
+      };
+    } catch (e) {
+      console.warn('[dataStore] Hydrate bookmarks notice:', e);
+      return {
+        questions: this.getBookmarkedQuestionIds(),
+        exams: this.getBookmarkedExamIds(),
+        experiences: this.getBookmarkedExperienceIds(),
+      };
+    }
+  }
+
   getBookmarkedExamIds(): string[] {
     return this.getStorage<string[]>('prepunite_bookmarked_exams', []);
   }
@@ -1297,6 +1387,10 @@ class DataStoreManager {
       isBookmarked = true;
     }
     this.setStorage('prepunite_bookmarked_exams', updated);
+    this.syncBookmarksWithSupabase();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+    }
     return isBookmarked;
   }
 
@@ -1321,6 +1415,10 @@ class DataStoreManager {
       isBookmarked = true;
     }
     this.setStorage('prepunite_bookmarked_questions', updated);
+    this.syncBookmarksWithSupabase();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+    }
     return isBookmarked;
   }
 
@@ -1345,6 +1443,10 @@ class DataStoreManager {
       isBookmarked = true;
     }
     this.setStorage('prepunite_bookmarked_experiences', updated);
+    this.syncBookmarksWithSupabase();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+    }
     return isBookmarked;
   }
 

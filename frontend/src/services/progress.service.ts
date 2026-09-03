@@ -161,6 +161,10 @@ export const progressService = {
     localMap[questionId] = updatedRecord;
     saveLocalRecords(localMap, userEmail);
 
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite_progress_synced', { detail: { email: userEmail } }));
+    }
+
     // Sync with Supabase asynchronously for logged-in users
     if (userEmail && userEmail !== 'guest@prepunite.com') {
       try {
@@ -233,16 +237,13 @@ export const progressService = {
   },
 
   /**
-   * Aggregate high-level LeetCode-style statistics from question list and user progress
+   * Aggregate high-level LeetCode-style statistics directly from an in-memory or query records map
    */
-  computeStats: (
+  computeStatsFromRecords: (
     allQuestions: { id: string; difficulty?: string; difficultyLevel?: number; topicId?: string; topic_id?: string }[],
-    userEmail?: string
+    recordsMap: Record<string, QuestionProgressRecord>
   ): ProgressSummaryStats => {
-    const recordsMap = getLocalRecords(userEmail);
-    const recordsList = Object.values(recordsMap);
-
-    // Build fast lookup set of question IDs for the current scope (category, topic, or all)
+    const recordsList = Object.values(recordsMap || {});
     const questionIdSet = new Set(allQuestions.map((q) => q.id));
 
     let easyTotal = 0;
@@ -275,7 +276,6 @@ export const progressService = {
       topicMastery[tId].total++;
     });
 
-    // Only process records that belong to the current questions scope!
     recordsList.forEach((r) => {
       if (questionIdSet.size > 0 && !questionIdSet.has(r.questionId)) {
         return;
@@ -290,7 +290,6 @@ export const progressService = {
 
       if (r.isSolved) {
         totalSolved++;
-        // Strict first-try validation: must be marked firstTryCorrect, zero wrong attempts, and not revealed beforehand
         if (r.firstTryCorrect && (r.wrongAttempts || 0) === 0 && !r.isRevealed) {
           firstTryCount++;
         }
@@ -313,20 +312,16 @@ export const progressService = {
       entry.percentage = entry.total > 0 ? Math.round((entry.solved / entry.total) * 100) : 0;
     });
 
-    // Submissions: total correct picks (totalSolved) + total wrong picks (totalWrongAttempts)
     const totalSubmissions = totalSolved + totalWrongAttempts;
 
-    // Accurate Submission Accuracy: correct selections / total submissions
     const accuracyRate = totalSubmissions > 0
       ? Math.round((totalSolved / totalSubmissions) * 1000) / 10
       : 0;
 
-    // Accurate 1st Try Accuracy: questions solved on 1st attempt / total questions attempted
     const firstTryAccuracyRate = totalAttempted > 0
       ? Math.round((firstTryCount / totalAttempted) * 1000) / 10
       : 0;
     
-    // Active daily practice streak across all solved activities
     const streakDays = computeStreak(recordsList.filter((r) => r.isSolved));
 
     return {
@@ -347,25 +342,60 @@ export const progressService = {
   },
 
   /**
-   * Sync remote records from Supabase on initial login
+   * Aggregate high-level LeetCode-style statistics from question list and user progress
    */
-  hydrateFromSupabase: async (userEmail: string): Promise<void> => {
-    if (!userEmail || userEmail === 'guest@prepunite.com') return;
+  computeStats: (
+    allQuestions: { id: string; difficulty?: string; difficultyLevel?: number; topicId?: string; topic_id?: string }[],
+    userEmail?: string
+  ): ProgressSummaryStats => {
+    const recordsMap = getLocalRecords(userEmail);
+    return progressService.computeStatsFromRecords(allQuestions, recordsMap);
+  },
+
+  /**
+   * Fetch all records from Supabase database, sync to localStorage, and return full records map
+   */
+  fetchAndSyncFromSupabase: async (userEmail?: string): Promise<Record<string, QuestionProgressRecord>> => {
+    if (!userEmail || userEmail === 'guest@prepunite.com') {
+      return getLocalRecords(userEmail);
+    }
+
+    const normalized = userEmail.trim().toLowerCase();
+    const localMap = getLocalRecords(normalized);
 
     try {
-      const { data, error } = await supabase
-        .from('user_question_progress')
-        .select('*')
-        .eq('user_email', userEmail.trim().toLowerCase());
+      let allRows: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
 
-      if (!error && data && data.length > 0) {
-        const localMap = getLocalRecords(userEmail);
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('user_question_progress')
+          .select('*')
+          .eq('user_email', normalized)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-        data.forEach((row: any) => {
+        if (error) {
+          console.warn('[progressService] Supabase fetch notice:', error.message);
+          hasMore = false;
+        } else if (data && data.length > 0) {
+          allRows = allRows.concat(data);
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      if (allRows.length > 0) {
+        allRows.forEach((row: any) => {
           const wrongAttempts = row.wrong_attempts || 0;
           const isSolved = row.is_solved || false;
           const isRevealed = row.is_revealed || false;
-          // Clean legacy records: question can only be firstTryCorrect if solved, not revealed, and has 0 wrong attempts
           const firstTryCorrect = isSolved && !isRevealed && wrongAttempts === 0 && Boolean(row.first_try_correct);
 
           localMap[row.question_id] = {
@@ -384,10 +414,79 @@ export const progressService = {
           };
         });
 
-        saveLocalRecords(localMap, userEmail);
+        saveLocalRecords(localMap, normalized);
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite_progress_synced', { detail: { email: normalized } }));
+      }
+
+      return localMap;
+    } catch (err) {
+      console.warn('[progressService] fetchAndSyncFromSupabase notice:', err);
+      return localMap;
+    }
+  },
+
+  /**
+   * Sync remote records from Supabase on initial login
+   */
+  hydrateFromSupabase: async (userEmail: string): Promise<void> => {
+    await progressService.fetchAndSyncFromSupabase(userEmail);
+  },
+
+  /**
+   * Automatically migrate any practice questions solved as guest to the user's permanent Supabase account
+   */
+  migrateGuestProgress: async (userEmail: string): Promise<void> => {
+    if (!userEmail || userEmail === 'guest@prepunite.com') return;
+
+    try {
+      const guestRecords = getLocalRecords('guest@prepunite.com');
+      const guestKeys = Object.keys(guestRecords);
+      if (guestKeys.length === 0) return;
+
+      const normalized = userEmail.trim().toLowerCase();
+      const userRecords = getLocalRecords(normalized);
+
+      for (const qId of guestKeys) {
+        const gRec = guestRecords[qId];
+        if (!userRecords[qId]) {
+          userRecords[qId] = gRec;
+          try {
+            await supabase.from('user_question_progress').upsert(
+              {
+                user_email: normalized,
+                question_id: gRec.questionId,
+                topic_id: gRec.topicId,
+                category_slug: gRec.categorySlug || null,
+                difficulty: gRec.difficulty,
+                selected_option: gRec.selectedOption,
+                correct_option: gRec.correctOption,
+                wrong_attempts: gRec.wrongAttempts,
+                is_solved: gRec.isSolved,
+                is_revealed: gRec.isRevealed,
+                first_try_correct: gRec.firstTryCorrect,
+                completed_at: gRec.completedAt || null,
+                last_attempted_at: gRec.lastAttemptedAt || new Date().toISOString(),
+              },
+              { onConflict: 'user_email,question_id' }
+            );
+          } catch (e) {
+            console.warn('[progressService] Guest migration upsert notice:', e);
+          }
+        }
+      }
+
+      saveLocalRecords(userRecords, normalized);
+      localStorage.removeItem(getStorageKey('guest@prepunite.com'));
+      localStorage.removeItem(getStorageKey('guest'));
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite_progress_synced', { detail: { email: normalized } }));
       }
     } catch (err) {
-      console.warn('[progressService] Hydration notice:', err);
+      console.warn('[progressService] migrateGuestProgress notice:', err);
     }
   },
 };
