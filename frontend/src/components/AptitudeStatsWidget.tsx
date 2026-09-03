@@ -21,6 +21,7 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
   const {
     totalQuestions,
     totalSolved,
+    totalAttempted = 0,
     easySolved,
     easyTotal,
     mediumSolved,
@@ -199,12 +200,16 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
             </div>
             <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Accuracy:</span>
-              <span className="font-extrabold text-[#121417] dark:text-white">{accuracyRate > 0 ? `${accuracyRate}%` : '—'}</span>
+              <span className="font-extrabold text-[#121417] dark:text-white">
+                {totalAttempted > 0 ? `${accuracyRate}%` : '—'}
+              </span>
             </div>
-            {firstTryAccuracyRate > 0 && (
+            {totalAttempted > 0 && (
               <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
                 <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">1st Try:</span>
-                <span className="font-extrabold text-[#121417] dark:text-white">{firstTryAccuracyRate}%</span>
+                <span className="font-extrabold text-[#121417] dark:text-white">
+                  {firstTryAccuracyRate}%
+                </span>
               </div>
             )}
           </div>

@@ -129,12 +129,15 @@ export const progressService = {
       if (!isSolved) {
         isSolved = true;
         completedAt = nowIso;
-        if (wrongAttempts === 0) {
+        if (wrongAttempts === 0 && !existing?.isRevealed) {
           firstTryCorrect = true;
+        } else {
+          firstTryCorrect = false;
         }
       }
     } else {
       // Wrong option chosen
+      firstTryCorrect = false;
       if (!isSolved) {
         wrongAttempts += 1;
       }
@@ -194,6 +197,9 @@ export const progressService = {
     const localMap = getLocalRecords(userEmail);
     if (localMap[questionId]) {
       localMap[questionId].isRevealed = true;
+      if (!localMap[questionId].isSolved) {
+        localMap[questionId].firstTryCorrect = false;
+      }
       saveLocalRecords(localMap, userEmail);
 
       if (userEmail && userEmail !== 'guest@prepunite.com') {
@@ -275,12 +281,19 @@ export const progressService = {
         return;
       }
 
-      totalAttempted++;
-      totalWrongAttempts += r.wrongAttempts;
+      const hasAttempt = r.isSolved || (r.wrongAttempts || 0) > 0 || Boolean(r.selectedOption);
+      if (hasAttempt) {
+        totalAttempted++;
+      }
+
+      totalWrongAttempts += (r.wrongAttempts || 0);
 
       if (r.isSolved) {
         totalSolved++;
-        if (r.firstTryCorrect) firstTryCount++;
+        // Strict first-try validation: must be marked firstTryCorrect, zero wrong attempts, and not revealed beforehand
+        if (r.firstTryCorrect && (r.wrongAttempts || 0) === 0 && !r.isRevealed) {
+          firstTryCount++;
+        }
 
         const diff = (r.difficulty || 'MEDIUM').toUpperCase();
         if (diff === 'EASY') easySolved++;
@@ -300,9 +313,18 @@ export const progressService = {
       entry.percentage = entry.total > 0 ? Math.round((entry.solved / entry.total) * 100) : 0;
     });
 
+    // Submissions: total correct picks (totalSolved) + total wrong picks (totalWrongAttempts)
     const totalSubmissions = totalSolved + totalWrongAttempts;
-    const accuracyRate = totalSubmissions > 0 ? Math.round((totalSolved / totalSubmissions) * 1000) / 10 : 0;
-    const firstTryAccuracyRate = totalSolved > 0 ? Math.round((firstTryCount / totalSolved) * 1000) / 10 : 0;
+
+    // Accurate Submission Accuracy: correct selections / total submissions
+    const accuracyRate = totalSubmissions > 0
+      ? Math.round((totalSolved / totalSubmissions) * 1000) / 10
+      : 0;
+
+    // Accurate 1st Try Accuracy: questions solved on 1st attempt / total questions attempted
+    const firstTryAccuracyRate = totalAttempted > 0
+      ? Math.round((firstTryCount / totalAttempted) * 1000) / 10
+      : 0;
     
     // Active daily practice streak across all solved activities
     const streakDays = computeStreak(recordsList.filter((r) => r.isSolved));
@@ -340,6 +362,12 @@ export const progressService = {
         const localMap = getLocalRecords(userEmail);
 
         data.forEach((row: any) => {
+          const wrongAttempts = row.wrong_attempts || 0;
+          const isSolved = row.is_solved || false;
+          const isRevealed = row.is_revealed || false;
+          // Clean legacy records: question can only be firstTryCorrect if solved, not revealed, and has 0 wrong attempts
+          const firstTryCorrect = isSolved && !isRevealed && wrongAttempts === 0 && Boolean(row.first_try_correct);
+
           localMap[row.question_id] = {
             questionId: row.question_id,
             topicId: row.topic_id,
@@ -347,10 +375,10 @@ export const progressService = {
             difficulty: row.difficulty || 'MEDIUM',
             selectedOption: row.selected_option,
             correctOption: row.correct_option,
-            wrongAttempts: row.wrong_attempts || 0,
-            isSolved: row.is_solved || false,
-            isRevealed: row.is_revealed || false,
-            firstTryCorrect: row.first_try_correct || false,
+            wrongAttempts,
+            isSolved,
+            isRevealed,
+            firstTryCorrect,
             completedAt: row.completed_at,
             lastAttemptedAt: row.last_attempted_at,
           };
