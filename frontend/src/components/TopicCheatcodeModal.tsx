@@ -134,15 +134,15 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
         {/* Top Header Bar */}
         <div className="p-4 sm:p-5 border-b border-[#E9ECEF] dark:border-[#222222] flex items-center justify-between bg-[#F8F9FA]/60 dark:bg-[#111112]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#F1F3F5] dark:bg-[#FD4A32]/10 border border-[#E9ECEF] dark:border-transparent text-[#121417] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
-              <BookOpen className="w-4 h-4 text-[#121417] dark:text-[#FD4A32]" />
+            <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
+              <BookOpen className="w-4 h-4 text-[#FD4A32]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-display font-extrabold text-sm sm:text-base text-[#121417] dark:text-white">
                   {topicName}
                 </h3>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/5 dark:bg-[#FD4A32]/10 text-[#121417] dark:text-[#FD4A32] border border-[#E9ECEF] dark:border-[#FD4A32]/20">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
                   Cheatcode
                 </span>
               </div>
@@ -236,7 +236,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
             /* Extracted / Question-level Formulas */
             <div className="space-y-3">
               <div className="flex items-center gap-2 pb-1">
-                <Sparkles className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
+                <Sparkles className="w-3.5 h-3.5 text-[#FD4A32]" />
                 <span className="text-xs font-display font-bold text-[#121417] dark:text-white">
                   Exam Tested Formulas & Rules
                 </span>

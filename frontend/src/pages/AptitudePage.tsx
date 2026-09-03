@@ -542,8 +542,8 @@ export default function AptitudePage() {
       <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1 sm:max-w-md shrink-0">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/5 dark:bg-[#FD4A32]/10 text-[#121417] dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
-              <MainIcon className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
+              <MainIcon className="w-3 h-3 text-[#FD4A32]" />
               <span>Aptitude Topic Directory</span>
             </div>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
@@ -626,7 +626,7 @@ export default function AptitudePage() {
                 className={`group flex items-center justify-between p-3 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
                   isHidden
                     ? 'border-dashed border-red-300 dark:border-red-900 opacity-60'
-                    : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#383838]'
+                    : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/50 dark:hover:border-[#FD4A32]/50'
                 } rounded-lg transition-all duration-150 shadow-2xs`}
               >
                 {/* 1. Left: Topic Icon & Name (Navigates to questions) */}
@@ -634,8 +634,8 @@ export default function AptitudePage() {
                   to={`/aptitude/${categorySlug}/topic/${topic.id}`}
                   className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#F1F3F5] dark:bg-[#FD4A32]/10 border border-[#E9ECEF] dark:border-[#FD4A32]/30 text-[#121417] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
-                    <TopicIcon className="w-4 h-4 text-[#121417] dark:text-[#FD4A32]" />
+                  <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 dark:border-[#FD4A32]/30 text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                    <TopicIcon className="w-4 h-4 text-[#FD4A32]" />
                   </div>
 
                   <div className="flex flex-col min-w-0">
@@ -655,10 +655,10 @@ export default function AptitudePage() {
                       e.stopPropagation();
                       setSelectedCheatcodeTopic(topic);
                     }}
-                    className="flex items-center gap-1 text-[10px] font-display font-bold text-[#121417] dark:text-[#FD4A32] bg-[#F1F3F5] dark:bg-[#FD4A32]/10 hover:bg-[#E9ECEF] dark:hover:bg-[#FD4A32]/20 px-2 py-1 rounded border border-[#E9ECEF] dark:border-[#FD4A32]/25 transition-colors cursor-pointer shadow-2xs"
+                    className="flex items-center gap-1 text-[10px] font-display font-bold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 px-2 py-1 rounded border border-[#FD4A32]/25 transition-all cursor-pointer shadow-2xs"
                     title={`Open ${topic.name} Cheatcode & Formulas`}
                   >
-                    <BookOpen className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
+                    <BookOpen className="w-3 h-3 text-[#FD4A32]" />
                     <span>Cheatcode</span>
                   </button>
 

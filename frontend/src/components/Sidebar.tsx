@@ -135,17 +135,21 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   key={link.name}
                   to={link.href}
                   onClick={onClose}
-                  className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                  className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                     isActive
-                      ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                      ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
                       : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#121417] dark:text-[#FD4A32]'}`} />
+                    <Icon className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                      isActive
+                        ? 'text-[#FD4A32]'
+                        : 'text-[#6C757D] dark:text-[#888888] group-hover:text-[#FD4A32]'
+                    }`} />
                     <span>{link.name}</span>
                   </div>
-                  {isActive && <ChevronRight className="w-3 h-3 text-white dark:text-[#FD4A32]" />}
+                  {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
                 </Link>
               );
             })}
@@ -176,14 +180,18 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                       key={cat.name}
                       to={`/aptitude/${cat.slug}`}
                       onClick={onClose}
-                      className={`flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                         isCatActive
                           ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
                           : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isCatActive ? 'text-white' : 'text-[#121417] dark:text-[#FD4A32]'}`} />
+                        <CatIcon className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                          isCatActive
+                            ? 'text-[#FD4A32]'
+                            : 'text-[#6C757D] dark:text-[#888888] group-hover:text-[#FD4A32]'
+                        }`} />
                         <span className="truncate">{cat.name}</span>
                       </div>
                     </Link>
@@ -226,11 +234,11 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <Link
               to="/login"
               onClick={onClose}
-              className="flex items-center justify-between p-2 rounded-md bg-[#121417]/5 hover:bg-[#121417]/10 dark:bg-[#FD4A32]/10 dark:hover:bg-[#FD4A32]/20 border border-[#121417]/10 dark:border-[#FD4A32]/30 text-[#121417] dark:text-[#FD4A32] transition-colors w-full"
+              className="flex items-center justify-between p-2 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/25 text-[#FD4A32] transition-colors w-full font-bold text-xs"
             >
               <div className="flex items-center gap-2">
                 <User className="w-3.5 h-3.5" />
-                <span className="font-bold text-xs">Sign In / Register</span>
+                <span>Sign In / Register</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -238,8 +246,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] w-full">
               <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
                 <div
-                  className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 ${
-                    role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#121417] dark:bg-[#FD4A32]'
+                  className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
+                    role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#FD4A32]'
                   }`}
                 >
                   {role === 'ADMIN' ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}

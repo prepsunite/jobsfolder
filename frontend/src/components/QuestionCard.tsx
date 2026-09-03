@@ -61,12 +61,12 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
             {question.companyName && (
               <Link
                 to={`/companies/${question.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}/oldpapers`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#121417] dark:text-[#FD4A32] bg-[#F1F3F5] hover:bg-[#E9ECEF] dark:bg-[#FD4A32]/20 dark:hover:bg-[#FD4A32]/40 px-3 py-0.5 rounded-full border border-[#E9ECEF] dark:border-[#FD4A32]/30 transition-all"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 px-3 py-0.5 rounded-full border border-[#FD4A32]/25 transition-all"
                 title={`Open ${question.companyName} Old Papers Dashboard`}
               >
-                <Building2 className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
+                <Building2 className="w-3 h-3 text-[#FD4A32]" />
                 <span>{question.companyName} Old Papers</span>
-                <ExternalLink className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
+                <ExternalLink className="w-3 h-3 text-[#FD4A32]" />
               </Link>
             )}
             {question.frequency > 1 && (

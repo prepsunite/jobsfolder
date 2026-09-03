@@ -709,7 +709,7 @@ export default function TopicQuestionsPage() {
       <div className="flex items-center justify-between">
         <Link
           to={`/aptitude/${categorySlug}`}
-          className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#121417] dark:text-[#FD4A32] hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#999999] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
           <span>Back to Topic Directory</span>
@@ -731,7 +731,7 @@ export default function TopicQuestionsPage() {
       <div className="p-5 sm:p-6 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-[9px] font-display font-bold text-[#121417] dark:text-[#FD4A32] uppercase tracking-wider block">
+            <span className="text-[9px] font-display font-bold text-[#FD4A32] uppercase tracking-wider block">
               Quantitative Aptitude • {topicName}
             </span>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -806,13 +806,13 @@ export default function TopicQuestionsPage() {
             <button
               type="button"
               onClick={() => setShowCheatcodeModal(true)}
-              className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#F1F3F5] hover:bg-[#E9ECEF] dark:bg-[#FD4A32]/10 dark:hover:bg-[#FD4A32]/20 text-[#121417] dark:text-[#FD4A32] text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#FD4A32]/20 transition-all cursor-pointer shadow-2xs"
+              className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/25 transition-all cursor-pointer shadow-2xs"
             >
-              <BookOpen className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
+              <BookOpen className="w-3.5 h-3.5 text-[#FD4A32]" />
               <span>Cheatcode</span>
             </button>
             
-            <div className="px-2.5 py-1 rounded-md bg-[#F1F3F5] dark:bg-[#FD4A32]/10 text-[#121417] dark:text-[#FD4A32] text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#FD4A32]/20">
+            <div className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/25">
               {filteredQuestions.length} Problems
             </div>
           </div>
@@ -1035,7 +1035,7 @@ export default function TopicQuestionsPage() {
                     )}
 
                     {/* Question Number Badge (Permanent ID) */}
-                    <span className="px-2 py-0.5 rounded bg-[#F1F3F5] text-[#121417] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#E9ECEF] dark:border-[#FD4A32]/30">
+                    <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
                       Question #{q.permanentNumber}
                     </span>
 
@@ -1215,8 +1215,8 @@ export default function TopicQuestionsPage() {
                 {/* STEP-BY-STEP EXPLANATION ACCORDION (Enhanced for structured JSON) */}
                 {isExplVisible && (
                   <div className="p-4 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-3 animate-fadeIn">
-                    <div className="flex items-center gap-2 text-xs font-display font-bold text-[#121417] dark:text-[#FD4A32]">
-                      <Zap className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
+                    <div className="flex items-center gap-2 text-xs font-display font-bold text-[#FD4A32]">
+                      <Zap className="w-3.5 h-3.5 text-[#FD4A32]" />
                       <span>Correct Answer: Option ({q.correctAnswer})</span>
                     </div>
 
@@ -1248,7 +1248,7 @@ export default function TopicQuestionsPage() {
                                 const stepText = typeof st === 'string' ? st : (st.text || (st as any).content || st.formula || st.title || '');
                                 return (
                                   <div key={sIdx} className="leading-relaxed flex items-start gap-2">
-                                    <span className="text-[#121417] dark:text-[#FD4A32] font-bold select-none">•</span>
+                                    <span className="text-[#FD4A32] font-bold select-none">•</span>
                                     <QuestionRichContent content={stepText} className="flex-1" />
                                   </div>
                                 );
@@ -1260,7 +1260,7 @@ export default function TopicQuestionsPage() {
                         {/* Quick Shortcut / Trick Box */}
                         {se.shortcut && (
                           <div className="p-2.5 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] space-y-0.5">
-                            <span className="font-display font-bold text-[#121417] dark:text-[#FD4A32] flex items-center gap-1 text-[10px] uppercase tracking-wider">
+                            <span className="font-display font-bold text-[#FD4A32] flex items-center gap-1 text-[10px] uppercase tracking-wider">
                               ⚡ Quick Shortcut:
                             </span>
                             <div className="text-[#121417] dark:text-[#FFFFFF] font-medium text-xs leading-relaxed font-sans">
@@ -1272,10 +1272,10 @@ export default function TopicQuestionsPage() {
                         {/* Final Answer */}
                         {se.finalAnswer && (
                           <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
-                            <span className="font-display font-bold text-xs text-[#121417] dark:text-[#FD4A32]">
+                            <span className="font-display font-bold text-xs text-[#FD4A32]">
                               Final Answer:
                             </span>
-                            <span className="font-bold bg-[#F1F3F5] text-[#121417] dark:bg-[#FD4A32]/15 dark:text-[#FD4A32] px-2 py-0.5 rounded text-xs font-mono">
+                            <span className="font-bold bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/25 px-2 py-0.5 rounded text-xs font-mono">
                               {se.finalAnswer}
                             </span>
                           </div>
@@ -1293,7 +1293,7 @@ export default function TopicQuestionsPage() {
                             </span>
                             <div className="flex flex-wrap gap-1.5">
                               {q.formulasUsed.map((f, i) => (
-                                <span key={i} className="text-[10px] font-mono font-bold bg-white dark:bg-[#141414] px-2 py-0.5 rounded border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FD4A32]">
+                                <span key={i} className="text-[10px] font-mono font-bold bg-white dark:bg-[#141414] px-2 py-0.5 rounded border border-[#FD4A32]/30 text-[#FD4A32]">
                                   {f}
                                 </span>
                               ))}

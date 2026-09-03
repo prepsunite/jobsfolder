@@ -228,8 +228,8 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
       {/* 1. Header Bar: Icon + Title + Subtitle + Clean Monospace Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#F1F3F5] dark:bg-[#FD4A32]/10 border border-[#E9ECEF] dark:border-transparent text-[#121417] dark:text-[#FD4A32] flex items-center justify-center shrink-0">
-            <Brain className="w-4 h-4 text-[#121417] dark:text-[#FD4A32]" />
+          <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
+            <Brain className="w-4 h-4 text-[#FD4A32]" />
           </div>
           <div>
             <h3 className="font-display font-bold text-sm text-[#121417] dark:text-white tracking-tight">
