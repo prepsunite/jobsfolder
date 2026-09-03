@@ -572,49 +572,49 @@ export default function ProfilePage() {
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setActiveTab('exams')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'exams'
                 ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                 : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5" />
+            <Building2 className={`w-3.5 h-3.5 transition-colors ${activeTab === 'exams' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
             <span>Saved Exams ({bookmarkedExams.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('questions')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'questions'
                 ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                 : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
+            <BookOpen className={`w-3.5 h-3.5 transition-colors ${activeTab === 'questions' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
             <span>Saved Questions ({totalQuestionsCount})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('experiences')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'experiences'
                 ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                 : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className={`w-3.5 h-3.5 transition-colors ${activeTab === 'experiences' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
             <span>Saved Transcripts ({bookmarkedExperiences.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('privacy')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
               activeTab === 'privacy'
                 ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                 : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5" />
+            <ShieldCheck className={`w-3.5 h-3.5 transition-colors ${activeTab === 'privacy' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
             <span>Data & Privacy</span>
           </button>
         </div>
@@ -682,10 +682,10 @@ export default function ProfilePage() {
 
                     <Link
                       to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
-                      className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#121417]"
+                      className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
                       title="Open Old Papers Fullscreen Dashboard"
                     >
-                      <FileText className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32]" />
+                      <FileText className="w-3.5 h-3.5 text-[#FD4A32]" />
                       <span>Papers</span>
                     </Link>
                   </div>
@@ -741,7 +741,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-extrabold text-[10px] uppercase tracking-wider border border-[#FD4A32]/20 flex items-center gap-1">
-                          <Layers className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
+                          <Layers className="w-3 h-3 text-[#FD4A32]" />
                           <span>Arithmetic Aptitude</span>
                         </span>
 

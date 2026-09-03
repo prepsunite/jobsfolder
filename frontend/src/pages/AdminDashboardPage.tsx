@@ -575,9 +575,9 @@ export default function AdminDashboardPage() {
   const statCards = [
     { label: 'Gross Revenue', value: totalGrossRevenue > 0 ? `₹${totalGrossRevenue.toLocaleString('en-IN')}` : '₹0', icon: IndianRupee, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
     { label: 'Registered Students', value: stats.totalUsers, icon: Users, color: 'text-[#0284c7] dark:text-[#38bdf8] bg-[#38bdf8]/15 border-[#38bdf8]/30' },
-    { label: 'Target Companies', value: stats.totalCompanies, icon: Building2, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
+    { label: 'Target Companies', value: stats.totalCompanies, icon: Building2, color: 'text-[#FD4A32] bg-[#FD4A32]/10 border-[#FD4A32]/25' },
     { label: 'Live Exam Cards', value: allExamsCount, icon: GraduationCap, color: 'text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-800' },
-    { label: 'OA Questions', value: stats.totalQuestions, icon: BookOpen, color: 'text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 border-[#E0351D]/20 dark:border-[#FD4A32]/20' },
+    { label: 'OA Questions', value: stats.totalQuestions, icon: BookOpen, color: 'text-[#FD4A32] bg-[#FD4A32]/10 border-[#FD4A32]/25' },
     { label: 'Pending Approvals', value: pendingExperiencesCount, icon: Clock, color: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/30' },
     { label: 'Question Reports', value: openReportsCount, icon: AlertTriangle, color: 'text-rose-700 dark:text-rose-400 bg-rose-500/10 border-rose-500/30' },
     { label: 'Approved Exp.', value: approvedExperiencesCount, icon: ThumbsUp, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
@@ -657,7 +657,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 text-purple-300" />
+          <Layers className={`w-3.5 h-3.5 ${adminTab === 'manage-exams' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Company & Exam Modules</span>
         </button>
 
@@ -669,7 +669,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+          <ShieldCheck className={`w-3.5 h-3.5 ${adminTab === 'moderation' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Experiences Queue</span>
           {pendingExperiencesCount > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-black font-extrabold">
@@ -686,7 +686,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+          <AlertTriangle className={`w-3.5 h-3.5 ${adminTab === 'question-reports' ? 'text-rose-200' : 'text-rose-600 dark:text-rose-400'}`} />
           <span>Question Reports</span>
           {openReportsCount > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-extrabold">
@@ -703,7 +703,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <Mail className="w-3.5 h-3.5 text-blue-400" />
+          <Mail className={`w-3.5 h-3.5 ${adminTab === 'contact-messages' ? 'text-blue-200' : 'text-blue-600 dark:text-blue-400'}`} />
           <span>Contact Inquiries</span>
           {newContactsCount > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500 text-white font-extrabold">
@@ -720,7 +720,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <Building2 className="w-3.5 h-3.5 text-purple-300" />
+          <Building2 className={`w-3.5 h-3.5 ${adminTab === 'create-company' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Add Company & Exam Card</span>
         </button>
 
@@ -732,7 +732,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <BookOpen className="w-3.5 h-3.5 text-purple-300" />
+          <BookOpen className={`w-3.5 h-3.5 ${adminTab === 'create-question' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Add OA Question</span>
         </button>
 
@@ -744,7 +744,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <Bookmark className="w-3.5 h-3.5 text-purple-300" />
+          <Bookmark className={`w-3.5 h-3.5 ${adminTab === 'create-resource' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Add Resource</span>
         </button>
 
@@ -756,7 +756,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <Users className="w-3.5 h-3.5 text-purple-300" />
+          <Users className={`w-3.5 h-3.5 ${adminTab === 'users' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Users &amp; Purchases</span>
           {registeredUsersList.length > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-extrabold">
@@ -773,7 +773,7 @@ export default function AdminDashboardPage() {
               : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
           }`}
         >
-          <Activity className="w-3.5 h-3.5 text-purple-300" />
+          <Activity className={`w-3.5 h-3.5 ${adminTab === 'metrics' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Platform Metrics</span>
         </button>
       </div>
