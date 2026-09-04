@@ -23,6 +23,10 @@ import {
   Terminal,
   X,
   LayoutDashboard,
+  Users,
+  FileText,
+  Settings,
+  GraduationCap,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,8 +38,19 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, role, isTpoAdmin, logout } = useAuth();
   const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
+  const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin;
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
+  // TPO Institutional Modules (Strictly for College Placement Officers)
+  const tpoNavLinks = [
+    { name: 'Dashboard Overview', href: '/tpo', icon: LayoutDashboard, exact: true },
+    { name: 'Students & Batches', href: '/tpo/students', icon: Users },
+    { name: 'Mock Exams (CRT)', href: '/tpo/exams', icon: FileText },
+    { name: 'Placement Analytics', href: '/tpo/analytics', icon: BarChart3 },
+    { name: 'College Settings', href: '/tpo/settings', icon: Settings },
+  ];
+
+  // Consumer Student Navigation
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
@@ -77,7 +92,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         <div className="p-4 space-y-4 overflow-y-auto custom-scrollbar flex-1">
           {/* Brand Logo with Mobile Close Button */}
           <div className="flex items-center justify-between">
-            <Link to="/" onClick={onClose} className="flex items-center gap-2.5 group">
+            <Link to={isTpo ? "/tpo" : "/"} onClick={onClose} className="flex items-center gap-2.5 group">
               <img
                 src="/favicon.svg"
                 alt="PrepUnite Logo"
@@ -138,156 +153,181 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </span>
           </div>
 
-          {/* TPO Quick Access Banner (Prominent placement for Institutional Coordinators) */}
-          {(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin && (
-            <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-500/30 dark:border-amber-500/20 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                    <Building2 className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-display font-extrabold text-[#121417] dark:text-white block truncate">
-                      {user?.collegeName || 'Campus Partner'}
-                    </span>
-                    <span className="text-[8px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
-                      Placement Portal
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <Link
-                to="/tpo"
-                onClick={onClose}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[11px] font-display font-bold shadow-2xs transition-colors"
-              >
-                <span>Launch TPO Portal</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          )}
-
-          {/* Main Navigation Links */}
-          <nav className="space-y-0.5">
-            <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
-              Menu
-            </span>
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = location.pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  onClick={onClose}
-                  className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
-                      : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
-                    <span>{link.name}</span>
-                  </div>
-                  {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Collapsible Aptitude Categories */}
-          <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
-            <button
-              type="button"
-              onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
-              className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
-            >
-              <span>Aptitude & Reasoning</span>
-              <ChevronDown
-                className={`w-3 h-3 transition-transform duration-200 ${
-                  isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
-                }`}
-              />
-            </button>
-
-            {isAptitudeExpanded && (
-              <div className="space-y-0.5 pt-1.5 animate-fadeIn">
-                {aptitudeCategories.map((cat) => {
-                  const CatIcon = cat.icon;
-                  const isCatActive = location.pathname.startsWith(`/aptitude/${cat.slug}`);
+          {/* CONDITIONAL NAVIGATION: TPO Coordinators vs Students/Admins */}
+          {isTpo ? (
+            /* TPO INSTITUTIONAL WORKSPACE MODULES (Strictly for College Placement Officers) */
+            <div className="space-y-4">
+              <nav className="space-y-1">
+                <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                  Placement Modules
+                </span>
+                {tpoNavLinks.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = link.exact
+                    ? location.pathname === link.href
+                    : location.pathname.startsWith(link.href);
                   return (
                     <Link
-                      key={cat.name}
-                      to={`/aptitude/${cat.slug}`}
+                      key={link.name}
+                      to={link.href}
                       onClick={onClose}
-                      className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                        isCatActive
-                          ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                      className={`group flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold transition-all ${
+                        isActive
+                          ? 'bg-[#FD4A32] text-white shadow-xs font-bold'
                           : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
-                        <span className="truncate">{cat.name}</span>
+                      <div className="flex items-center gap-2.5">
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#FD4A32]'} transition-transform group-hover:scale-110`} />
+                        <span>{link.name}</span>
                       </div>
+                      {isActive && <ChevronRight className="w-3 h-3 text-white" />}
                     </Link>
                   );
                 })}
+              </nav>
+
+              {/* College Info & Capacity Badge */}
+              <div className="p-3 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold uppercase text-[#868E96] dark:text-[#555555]">
+                    Institutional CRT
+                  </span>
+                  <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
+                    Authorized
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                  <span className="font-bold text-[#121417] dark:text-white truncate">
+                    {user?.collegeName || 'Campus Partner'}
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Admin Control Panel Section */}
-          {isAdmin && (
-            <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
-              <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
-                Control Center
-              </span>
-              <Link
-                to="/admin"
-                onClick={onClose}
-                className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                  location.pathname.startsWith('/admin')
-                    ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                    : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                  <span>Admin Panel</span>
-                </div>
-                <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
-                  Admin
+              {/* Support & Platform Links for Placement Officers */}
+              <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-0.5">
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
+                  Platform &amp; Help
                 </span>
-              </Link>
+                <Link
+                  to="/about"
+                  onClick={onClose}
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
+                >
+                  <Info className="w-3.5 h-3.5 text-[#868E96]" />
+                  <span>About Jobsfolder</span>
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={onClose}
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#868E96]" />
+                  <span>Contact Support</span>
+                </Link>
+              </div>
             </div>
-          )}
+          ) : (
+            /* STUDENT & PLATFORM ADMIN WORKSPACE */
+            <>
+              {/* Main Navigation Links */}
+              <nav className="space-y-0.5">
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
+                  Menu
+                </span>
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = location.pathname.startsWith(link.href);
+                  return (
+                    <Link
+                      key={link.name}
+                      to={link.href}
+                      onClick={onClose}
+                      className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        isActive
+                          ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
+                          : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                        <span>{link.name}</span>
+                      </div>
+                      {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
+                    </Link>
+                  );
+                })}
+              </nav>
 
-          {/* TPO CRT Control Link — Strictly for college TPO coordinators, NOT PrepUnite Admins */}
-          {(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin && (
-            <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
-              <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
-                Institutional CRT
-              </span>
-              <Link
-                to="/tpo"
-                onClick={onClose}
-                className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                  location.pathname.startsWith('/tpo')
-                    ? 'bg-orange-500/10 dark:bg-orange-500/30 text-[#FD4A32] border border-[#FD4A32]/30'
-                    : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
-                  <span>TPO Portal</span>
+              {/* Collapsible Aptitude Categories */}
+              <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+                <button
+                  type="button"
+                  onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
+                  className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
+                >
+                  <span>Aptitude & Reasoning</span>
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform duration-200 ${
+                      isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
+                    }`}
+                  />
+                </button>
+
+                {isAptitudeExpanded && (
+                  <div className="space-y-0.5 pt-1.5 animate-fadeIn">
+                    {aptitudeCategories.map((cat) => {
+                      const CatIcon = cat.icon;
+                      const isCatActive = location.pathname.startsWith(`/aptitude/${cat.slug}`);
+                      return (
+                        <Link
+                          key={cat.name}
+                          to={`/aptitude/${cat.slug}`}
+                          onClick={onClose}
+                          className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                            isCatActive
+                              ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                              : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                            <span className="truncate">{cat.name}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Admin Control Panel Section */}
+              {isAdmin && (
+                <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                  <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                    Control Center
+                  </span>
+                  <Link
+                    to="/admin"
+                    onClick={onClose}
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                      location.pathname.startsWith('/admin')
+                        ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <span>Admin Panel</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                      Admin
+                    </span>
+                  </Link>
                 </div>
-                <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950 text-[#FD4A32]">
-                  TPO
-                </span>
-              </Link>
-            </div>
+              )}
+            </>
           )}
         </div>
 

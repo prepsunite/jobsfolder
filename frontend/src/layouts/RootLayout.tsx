@@ -102,9 +102,12 @@ export default function RootLayout() {
               </button>
 
               {isAuthenticated && user ? (
-                <Link to="/dashboard" className="pub-nav-cta">
+                <Link
+                  to={(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin ? "/tpo" : "/dashboard"}
+                  className="pub-nav-cta"
+                >
                   <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>Dashboard</span>
+                  <span>{(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin ? "TPO Dashboard" : "Dashboard"}</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               ) : (

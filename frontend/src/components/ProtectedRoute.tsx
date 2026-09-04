@@ -14,7 +14,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false,
   requireTpo = false,
 }) => {
-  const { user, isAuthenticated, isAdmin, isTpoAdmin, isLoading } = useAuth();
+  const { user, role, isAuthenticated, isAdmin, isTpoAdmin, isLoading } = useAuth();
   const location = useLocation();
 
   const isEffectiveAdmin = isAdmin || isSuperAdminEmail(user?.email);
@@ -34,6 +34,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Not logged in -> Redirect to login with return path
   if (!isAuthenticated) {
     return <Navigate to={`/login?redirectTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  // TPO Coordinator Guard: TPOs do not use student dashboard — redirect directly to TPO dashboard
+  if ((role === 'TPO_ADMIN' || isTpoAdmin) && !isEffectiveAdmin && location.pathname === '/dashboard') {
+    return <Navigate to="/tpo" replace />;
   }
 
   // Requires Admin role but user is not admin

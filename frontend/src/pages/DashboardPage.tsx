@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import QuestionCard from '@/components/QuestionCard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +34,13 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, role, isTpoAdmin, isAdmin } = useAuth();
+
+  // TPO Coordinators do not use student dashboard — redirect directly to TPO dashboard
+  if ((role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin) {
+    return <Navigate to="/tpo" replace />;
+  }
+
   const queryClient = useQueryClient();
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';

@@ -41,13 +41,18 @@ export default function LoginPage() {
   // Automatically navigate away from /login when authenticated
   useEffect(() => {
     if (isAuthenticated && user && !authLoading) {
-      let defaultPath = '/dashboard';
       if (role === 'ADMIN') {
-        defaultPath = '/admin';
-      } else if (role === 'TPO_ADMIN' || user.isTpoAdmin) {
-        defaultPath = '/tpo';
+        const targetPath = redirectTo && redirectTo.startsWith('/admin') ? redirectTo : '/admin';
+        navigate(targetPath, { replace: true });
+        return;
+      }
+      if (role === 'TPO_ADMIN' || user.isTpoAdmin) {
+        const targetPath = redirectTo && redirectTo.startsWith('/tpo') ? redirectTo : '/tpo';
+        navigate(targetPath, { replace: true });
+        return;
       }
 
+      const defaultPath = '/dashboard';
       const targetPath = redirectTo && redirectTo.startsWith('/')
         ? redirectTo
         : defaultPath;
@@ -212,11 +217,21 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => {
+                    if (role === 'ADMIN') navigate('/admin');
+                    else if (role === 'TPO_ADMIN' || user?.isTpoAdmin) navigate('/tpo');
+                    else navigate('/dashboard');
+                  }}
                   className="w-full py-2.5 px-4 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>Go to My Dashboard</span>
+                  <span>
+                    {role === 'ADMIN'
+                      ? 'Go to Admin Console'
+                      : role === 'TPO_ADMIN' || user?.isTpoAdmin
+                      ? 'Launch TPO Dashboard'
+                      : 'Go to My Dashboard'}
+                  </span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 
