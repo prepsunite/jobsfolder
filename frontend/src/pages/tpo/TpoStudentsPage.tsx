@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { CollegeStudent } from '@/types/tpo';
 import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
+import AddStudentModal from '@/components/tpo/AddStudentModal';
 
 export default function TpoStudentsPage() {
   const { collegeId, currentCollege } = useOutletContext<{
@@ -33,16 +34,7 @@ export default function TpoStudentsPage() {
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [batchYearFilter, setBatchYearFilter] = useState<number | undefined>(undefined);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
-  // Single Student Addition State
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
-  const [newStudentName, setNewStudentName] = useState('');
-  const [newStudentEmail, setNewStudentEmail] = useState('');
-  const [newStudentRoll, setNewStudentRoll] = useState('');
-  const [newStudentDept, setNewStudentDept] = useState('CSE');
-  const [newStudentBatch, setNewStudentBatch] = useState<number>(2026);
-  const [isAddingStudent, setIsAddingStudent] = useState(false);
-  const [addStudentError, setAddStudentError] = useState<string | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
   // Fetch Students
@@ -81,46 +73,6 @@ export default function TpoStudentsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Add Single Student
-  const handleAddStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStudentEmail.trim() || !newStudentName.trim()) {
-      setAddStudentError('Student Name and Email are required.');
-      return;
-    }
-
-    setIsAddingStudent(true);
-    setAddStudentError(null);
-    try {
-      const res = await tpoService.addSingleStudent(collegeId, {
-        name: newStudentName.trim(),
-        email: newStudentEmail.trim(),
-        roll_number: newStudentRoll.trim() || undefined,
-        department: newStudentDept,
-        batch_year: newStudentBatch,
-      });
-
-      if (!res.success) {
-        setAddStudentError(res.error || 'Failed to enroll student.');
-        return;
-      }
-
-      setNewStudentName('');
-      setNewStudentEmail('');
-      setNewStudentRoll('');
-      setIsAddStudentModalOpen(false);
-      setActionSuccessMsg(
-        `Successfully enrolled ${newStudentName}! Campus Pro Pass has been activated with 100% unlocked access to all papers, blueprints, and tests.`
-      );
-      setTimeout(() => setActionSuccessMsg(null), 6000);
-      refetch();
-    } catch (err: any) {
-      setAddStudentError(err.message || 'An error occurred.');
-    } finally {
-      setIsAddingStudent(false);
-    }
   };
 
   // Remove Single Student
@@ -165,10 +117,7 @@ export default function TpoStudentsPage() {
           </button>
 
           <button
-            onClick={() => {
-              setAddStudentError(null);
-              setIsAddStudentModalOpen(true);
-            }}
+            onClick={() => setIsAddStudentModalOpen(true)}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] hover:border-[#FD4A32] text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors shadow-2xs"
           >
             <Plus className="w-4 h-4 text-[#FD4A32]" />
@@ -344,143 +293,19 @@ export default function TpoStudentsPage() {
       </div>
 
       {/* MODAL 1: Add Single Student */}
-      {isAddStudentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-slate-700 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[#FD4A32]" /> Enroll Student
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Activate full Pro Pass access for a {currentCollege.name} student
-                </p>
-              </div>
-              <button
-                onClick={() => setIsAddStudentModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            {addStudentError && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{addStudentError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleAddStudent} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Student Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newStudentName}
-                  onChange={e => setNewStudentName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Student Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={newStudentEmail}
-                  onChange={e => setNewStudentEmail(e.target.value)}
-                  placeholder="e.g. rahul.sharma@example.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-mono"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  When this student signs into PrepUnite, they will automatically have 100% unlocked access without any paywall.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Roll Number (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={newStudentRoll}
-                    onChange={e => setNewStudentRoll(e.target.value)}
-                    placeholder="e.g. 22B91A0501"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    value={newStudentDept}
-                    onChange={e => setNewStudentDept(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-semibold"
-                  >
-                    <option value="CSE">CSE</option>
-                    <option value="IT">IT</option>
-                    <option value="ECE">ECE</option>
-                    <option value="EEE">EEE</option>
-                    <option value="MECH">MECH</option>
-                    <option value="CIVIL">CIVIL</option>
-                    <option value="AI/ML">AI / ML</option>
-                    <option value="DATA SCIENCE">Data Science</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Passout Graduation Batch *
-                </label>
-                <select
-                  value={newStudentBatch}
-                  onChange={e => setNewStudentBatch(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-semibold"
-                >
-                  <option value={2025}>2025</option>
-                  <option value={2026}>2026</option>
-                  <option value={2027}>2027</option>
-                  <option value={2028}>2028</option>
-                </select>
-              </div>
-
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddStudentModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isAddingStudent}
-                  className="flex-1 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider shadow-md flex items-center justify-center gap-2"
-                >
-                  {isAddingStudent ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Enrolling...
-                    </>
-                  ) : (
-                    'Enroll & Activate Pro'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddStudentModal
+        isOpen={isAddStudentModalOpen}
+        onClose={() => setIsAddStudentModalOpen(false)}
+        collegeId={collegeId}
+        collegeName={currentCollege.name}
+        onSuccess={(name) => {
+          setActionSuccessMsg(
+            `Successfully enrolled ${name}! Campus Pro Pass has been activated with 100% unlocked access to all papers, company blueprints, and tests.`
+          );
+          setTimeout(() => setActionSuccessMsg(null), 6000);
+          refetch();
+        }}
+      />
 
       {/* MODAL 2: Bulk Import Modal */}
       <BulkStudentImportModal

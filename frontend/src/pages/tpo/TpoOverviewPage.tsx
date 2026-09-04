@@ -19,6 +19,7 @@ import {
 import type { MockExam } from '@/types/tpo';
 import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
+import AddStudentModal from '@/components/tpo/AddStudentModal';
 
 export default function TpoOverviewPage() {
   const { collegeId, currentCollege, stats } = useOutletContext<{
@@ -27,6 +28,7 @@ export default function TpoOverviewPage() {
     stats: any;
   }>();
 
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateExamOpen, setIsCreateExamOpen] = useState(false);
 
@@ -60,11 +62,18 @@ export default function TpoOverviewPage() {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
           <button
+            onClick={() => setIsAddStudentOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] hover:border-[#FD4A32] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-2xs"
+          >
+            <Plus className="w-4 h-4 text-[#FD4A32]" />
+            Add Student
+          </button>
+          <button
             onClick={() => setIsImportOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all"
           >
             <Upload className="w-4 h-4 text-[#FD4A32]" />
-            Bulk Import Students
+            Bulk Import (CSV)
           </button>
           <button
             onClick={() => setIsCreateExamOpen(true)}
@@ -245,6 +254,17 @@ export default function TpoOverviewPage() {
       </div>
 
       {/* Modals */}
+      <AddStudentModal
+        isOpen={isAddStudentOpen}
+        onClose={() => setIsAddStudentOpen(false)}
+        collegeId={collegeId}
+        collegeName={currentCollege.name}
+        onSuccess={(studentName) => {
+          setIsAddStudentOpen(false);
+          refetch();
+        }}
+      />
+
       <BulkStudentImportModal
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
