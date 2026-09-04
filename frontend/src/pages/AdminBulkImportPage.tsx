@@ -11,7 +11,7 @@ import {
   FileCode,
   Layers
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { supabase } from '@/lib/supabase';
 import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services/dataStore';
@@ -20,7 +20,7 @@ import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
 
 export default function AdminBulkImportPage() {
-  const { role } = useAuth();
+  const { user } = useAuth();
   
   const { data: dbTopics } = useQuery({
     queryKey: ['admin-aptitude-topics'],
@@ -45,7 +45,7 @@ export default function AdminBulkImportPage() {
   const PREVIEW_PAGE_SIZE = 15;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  if (role !== 'ADMIN') {
+  if (!isSuperAdminEmail(user?.email)) {
     return <NotFoundPage />;
   }
 

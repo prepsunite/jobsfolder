@@ -61,6 +61,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const SUPER_ADMIN_EMAILS: string[] = [
   'venkatmukala9@gmail.com',
   'venkat.mukala9@gmail.com',
+  'venkatmukala3@gmail.com',
+  'venkat.mukala3@gmail.com',
   'prepsunite@gmail.com',
 ];
 
@@ -76,7 +78,11 @@ export function isSuperAdminEmail(email?: string | null): boolean {
     const normalizedEmail = `${normalizedUser}@${domain}`;
 
     // Exact matches for primary PrepUnite Super Admins only
-    if (normalizedEmail === 'venkatmukala9@gmail.com' || normalizedEmail === 'prepsunite@gmail.com') {
+    if (
+      normalizedEmail === 'venkatmukala9@gmail.com' ||
+      normalizedEmail === 'venkatmukala3@gmail.com' ||
+      normalizedEmail === 'prepsunite@gmail.com'
+    ) {
       return true;
     }
 
@@ -109,29 +115,37 @@ const getInitialUser = (): UserProfile | null => {
     const avatarUrl = localStorage.getItem('prepunite_user_avatar') || undefined;
 
     if (email && email !== 'guest@prepunite.com') {
-      // 1. TPO Coordinator Check FIRST: If authorized as TPO, role is strictly TPO_ADMIN
-      const tpoAuth = tpoService.findTpoAuthByEmail(email);
-      if (tpoAuth || role === 'TPO_ADMIN') {
-        const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
-        const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
-        role = 'TPO_ADMIN';
-        localStorage.setItem('prepunite_role', 'TPO_ADMIN');
-        return {
-          id: email,
-          name: name || formatDisplayNameFromEmail(email, ''),
-          email,
-          role: 'TPO_ADMIN',
-          isTpoAdmin: true,
-          collegeId,
-          collegeName,
-          avatarUrl,
-        };
-      }
+      const isSuper = isSuperAdminEmail(email);
 
-      // 2. 🛡️ Super Admin Protection: Never allow cached 'USER' to demote true super admin
-      if (isSuperAdminEmail(email)) {
+      // 1. 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN
+      if (isSuper) {
         role = 'ADMIN';
         localStorage.setItem('prepunite_role', 'ADMIN');
+      } else {
+        // 🔒 SANITIZE: Any non-super-admin cached as ADMIN is immediately demoted to USER!
+        if (role === 'ADMIN') {
+          role = 'USER';
+          localStorage.setItem('prepunite_role', 'USER');
+        }
+
+        // 2. TPO Coordinator Check: If authorized as TPO, role is strictly TPO_ADMIN
+        const tpoAuth = tpoService.findTpoAuthByEmail(email);
+        if (tpoAuth || role === 'TPO_ADMIN') {
+          const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
+          const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
+          role = 'TPO_ADMIN';
+          localStorage.setItem('prepunite_role', 'TPO_ADMIN');
+          return {
+            id: email,
+            name: name || formatDisplayNameFromEmail(email, ''),
+            email,
+            role: 'TPO_ADMIN',
+            isTpoAdmin: true,
+            collegeId,
+            collegeName,
+            avatarUrl,
+          };
+        }
       }
 
       const studentInfo = tpoService.getStudentEntitlementInfo(email);
@@ -156,16 +170,16 @@ const getInitialRole = (): UserRole => {
   try {
     const email = localStorage.getItem('prepunite_user_email');
     const cachedRole = localStorage.getItem('prepunite_role') as UserRole;
-    if (cachedRole === 'TPO_ADMIN') return 'TPO_ADMIN';
     if (email) {
-      if (tpoService.findTpoAuthByEmail(email)) {
-        return 'TPO_ADMIN';
-      }
       if (isSuperAdminEmail(email)) {
         return 'ADMIN';
       }
+      if (tpoService.findTpoAuthByEmail(email) || cachedRole === 'TPO_ADMIN') {
+        return 'TPO_ADMIN';
+      }
+      return 'USER';
     }
-    if (cachedRole) return cachedRole;
+    if (cachedRole && cachedRole !== 'ADMIN') return cachedRole;
   } catch {}
   return 'GUEST';
 };
@@ -190,9 +204,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isTpoAdmin?: boolean;
     }
   ) => {
+    // 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN. No exceptions!
+    const isSuperAdmin = isSuperAdminEmail(email);
     // 🛡️ TPO Protection: If authorized as TPO, role is strictly TPO_ADMIN, NEVER ADMIN
-    const isTpo = assignedRole === 'TPO_ADMIN' || Boolean(collegeData?.isTpoAdmin) || Boolean(tpoService.findTpoAuthByEmail(email));
-    const finalRole: UserRole = isTpo ? 'TPO_ADMIN' : isSuperAdminEmail(email) ? 'ADMIN' : assignedRole;
+    const isTpo = !isSuperAdmin && (assignedRole === 'TPO_ADMIN' || Boolean(collegeData?.isTpoAdmin) || Boolean(tpoService.findTpoAuthByEmail(email)));
+    const finalRole: UserRole = isSuperAdmin ? 'ADMIN' : isTpo ? 'TPO_ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
     const newProfile: UserProfile = {
@@ -232,15 +248,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     rawName: string,
     rawAvatar?: string,
-    appRole?: string
+    _appRole?: string
   ) => {
     try {
-      // 1. Check pre-authorized TPO records first (with resilient async cloud sync)
-      const tpoAuth = await tpoService.findTpoAuthByEmailAsync(email);
-      const isDbTpo = Boolean(tpoAuth);
+      // 1. Check Super Admin strictly by whitelist email
+      const isMasterAdmin = isSuperAdminEmail(email);
 
-      // 2. Check Super Admin: strictly PrepUnite owners, and NEVER an authorized TPO
-      const isMasterAdmin = !isDbTpo && isSuperAdminEmail(email);
+      // 2. Check pre-authorized TPO records (NEVER an authorized super admin)
+      const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(email) : null;
+      const isDbTpo = Boolean(tpoAuth);
 
       // Safe, single-table query on baseline columns that ALWAYS exist in public.profiles
       const { data: dbProfile, error: profileError } = await supabase
@@ -255,17 +271,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Check database role column
       const dbRole = dbProfile?.role ? String(dbProfile.role).toLowerCase() : undefined;
-      const isDbAdmin = !isDbTpo && (isMasterAdmin || dbRole === 'admin' || appRole === 'admin');
 
+      // 🛡️ ROLE HIERARCHY ENFORCEMENT:
+      // ONLY whitelisted emails can EVER be ADMIN.
+      // TPO coordinators get TPO_ADMIN.
+      // ALL other users, students, etc. get strictly USER.
       let assignedRole: UserRole = 'USER';
-      if (isDbTpo) assignedRole = 'TPO_ADMIN';
-      else if (isDbAdmin) assignedRole = 'ADMIN';
+      if (isMasterAdmin) {
+        assignedRole = 'ADMIN';
+      } else if (isDbTpo) {
+        assignedRole = 'TPO_ADMIN';
+      } else {
+        assignedRole = 'USER';
+      }
 
       const finalName = dbProfile?.name || rawName;
       const finalAvatar = dbProfile?.avatar_url || rawAvatar;
 
       // 🛡️ Automatic Database Self-Healing:
-      // If user is a Super Admin and database row has role !== 'admin'
+      // 1. If user is a verified Super Admin, ensure database row has role === 'admin'
       if (isMasterAdmin && userId) {
         if (!dbProfile || dbRole !== 'admin') {
           try {
@@ -282,24 +306,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn('[syncProfileWithSupabase] Admin self-heal notice:', healErr);
           }
         }
-      } else if (isDbTpo && userId && dbRole === 'admin') {
-        // Demote from admin to user in DB if they were previously marked admin in profiles
+      } else if (!isMasterAdmin && userId && dbRole === 'admin') {
+        // 2. If user is NOT a whitelisted Super Admin but has role === 'admin' in profiles,
+        // IMMEDIATELY DEMOTE THEM TO 'user' in the database!
         try {
           await supabase.from('profiles').update({
             role: 'user',
             updated_at: new Date().toISOString(),
           }).eq('id', userId);
+          console.log(`[syncProfileWithSupabase] 🔒 Non-whitelisted user (${email}) stripped of admin role in database.`);
         } catch (demoteErr) {
-          console.warn('[syncProfileWithSupabase] TPO DB demote notice:', demoteErr);
+          console.warn('[syncProfileWithSupabase] Admin strip notice:', demoteErr);
         }
       } else if (!dbProfile && !profileError && userId && email) {
-        // Only insert if row genuinely does NOT exist and no query error occurred
+        // 3. New profile row creation for regular users
         try {
           await supabase.from('profiles').upsert({
             id: userId,
             email: email,
             name: finalName || email.split('@')[0],
-            role: 'user', // keep DB role constraint valid ('user')
+            role: 'user', // strictly 'user'
             avatar_url: finalAvatar,
           }, { onConflict: 'id' });
         } catch (uErr) {
@@ -320,16 +346,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
-      const fallbackTpo = tpoService.findTpoAuthByEmail(email);
+      const isMasterAdmin = isSuperAdminEmail(email);
+      const fallbackTpo = !isMasterAdmin ? tpoService.findTpoAuthByEmail(email) : null;
       const isFallbackTpo = Boolean(fallbackTpo);
-      const isMasterAdmin = !isFallbackTpo && isSuperAdminEmail(email);
       const fallbackStudentInfo = !isFallbackTpo ? tpoService.getStudentEntitlementInfo(email) : null;
 
       applyUserProfile(
         email,
         rawName,
         rawAvatar,
-        isFallbackTpo ? 'TPO_ADMIN' : isMasterAdmin ? 'ADMIN' : 'USER',
+        isMasterAdmin ? 'ADMIN' : isFallbackTpo ? 'TPO_ADMIN' : 'USER',
         fallbackTpo ? {
           collegeId: fallbackTpo.college_id,
           collegeName: fallbackTpo.college_name,
@@ -542,15 +568,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const currentTpoAuth = tpoService.findTpoAuthByEmail(user?.email);
-  const isEffectiveTpo = Boolean(currentTpoAuth) || role === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin);
-  const isEffectiveAdmin = !isEffectiveTpo && (role === 'ADMIN' || isSuperAdminEmail(user?.email));
-  const effectiveRole: UserRole = isEffectiveTpo ? 'TPO_ADMIN' : isEffectiveAdmin ? 'ADMIN' : (role || 'USER');
+  const isEffectiveAdmin = isSuperAdminEmail(user?.email);
+  const currentTpoAuth = !isEffectiveAdmin ? tpoService.findTpoAuthByEmail(user?.email) : null;
+  const isEffectiveTpo = !isEffectiveAdmin && (Boolean(currentTpoAuth) || role === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin));
+  const effectiveRole: UserRole = isEffectiveAdmin ? 'ADMIN' : isEffectiveTpo ? 'TPO_ADMIN' : (role === 'GUEST' ? 'GUEST' : 'USER');
 
   return (
     <AuthContext.Provider
       value={{
-        user: user ? { ...user, role: isEffectiveTpo ? 'TPO_ADMIN' : isEffectiveAdmin ? 'ADMIN' : user.role, isTpoAdmin: isEffectiveTpo } : null,
+        user: user ? { ...user, role: effectiveRole, isTpoAdmin: isEffectiveTpo } : null,
         role: effectiveRole,
         isAuthenticated: effectiveRole !== 'GUEST',
         isAdmin: isEffectiveAdmin,

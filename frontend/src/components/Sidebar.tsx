@@ -39,7 +39,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen = false, onClose, collegeName, collegeCode }: SidebarProps) {
   const location = useLocation();
   const { user, role, isTpoAdmin, logout } = useAuth();
-  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
+  const isAdmin = isSuperAdminEmail(user?.email);
   const isTpoRoute = location.pathname.startsWith('/tpo');
   const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) || (isAdmin && isTpoRoute);
 

@@ -17,7 +17,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, role, isAuthenticated, isAdmin, isTpoAdmin, isLoading } = useAuth();
   const location = useLocation();
 
-  const isEffectiveAdmin = isAdmin || isSuperAdminEmail(user?.email);
+  const isEffectiveAdmin = isSuperAdminEmail(user?.email);
 
   // Show clean spinner during initial Supabase auth handshake
   if (isLoading) {

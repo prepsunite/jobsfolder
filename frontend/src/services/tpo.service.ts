@@ -1045,21 +1045,25 @@ export const tpoService = {
         importedCount++;
       }
 
-      // Safe background sync to Supabase profiles
+      // Safe background sync to Supabase profiles - strictly enforce role: 'user'
       try {
-        await supabase
+        const { data: existingProf } = await supabase
           .from('profiles')
-          .upsert({
-            email: cleanEmail,
-            name: student.name.trim(),
-            role: 'user',
-            college_id: effectiveCollegeId,
-            roll_number: student.roll_number?.trim() || null,
-            department: student.department?.trim().toUpperCase() || null,
-            batch_year: Number(student.batch_year) || null,
-          }, { onConflict: 'email' });
+          .select('id, role')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+        if (existingProf && existingProf.role !== 'user') {
+          await supabase
+            .from('profiles')
+            .update({
+              role: 'user',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingProf.id);
+        }
       } catch (err: any) {
-        // Safe notice: column college_id might not exist in Supabase yet
+        // Safe notice
       }
 
       // Provision full student Pro entitlement
@@ -1314,18 +1318,26 @@ export const tpoService = {
     }
     saveLocalStudents(effectiveCollegeId, localStudents);
 
-    // Sync to Supabase profiles
+    // Sync to Supabase profiles - strictly enforce role: 'user'
     try {
-      await supabase.from('profiles').upsert({
-        email: cleanEmail,
-        name: studentData.name.trim(),
-        role: 'user',
-        college_id: effectiveCollegeId,
-        roll_number: studentData.roll_number?.trim() || null,
-        department: studentData.department?.trim().toUpperCase() || null,
-        batch_year: studentData.batch_year || null,
-      }, { onConflict: 'email' });
-    } catch {}
+      const { data: existingProf } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (existingProf && existingProf.role !== 'user') {
+        await supabase
+          .from('profiles')
+          .update({
+            role: 'user',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingProf.id);
+      }
+    } catch (profErr) {
+      console.warn('Notice ensuring student role in profiles:', profErr);
+    }
 
     // Provision Pro subscription in Supabase & local cache
     await this.provisionStudentEntitlement(college, cleanEmail, studentData.name.trim());

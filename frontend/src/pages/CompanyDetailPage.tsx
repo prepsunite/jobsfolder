@@ -44,8 +44,8 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const [searchParams, setSearchParams] = useSearchParams();
   const urlExamId = searchParams.get('examId');
   const navigate = useNavigate();
-  const { role, user } = useAuth();
-  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
+  const { user } = useAuth();
+  const isAdmin = isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
 
   const isDirectOldPapersUrl = !!isOldPapersRoute || (typeof window !== 'undefined' && window.location.pathname.endsWith('/oldpapers'));

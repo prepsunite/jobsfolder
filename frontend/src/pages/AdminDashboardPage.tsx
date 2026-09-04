@@ -42,8 +42,8 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
-  const { user, role } = useAuth();
-  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
+  const { user } = useAuth();
+  const isAdmin = isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
 
   const [adminTab, setAdminTab] = useState<
