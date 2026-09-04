@@ -9,7 +9,7 @@ import { experienceService } from '@/services/experience.service';
 import { dataStore, type CompanyItem, type ExamItem, type ExperienceItem } from '@/services/dataStore';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
 import { feedbackService } from '@/services/feedback.service';
@@ -601,6 +601,11 @@ export default function AdminDashboardPage() {
     if (contactFilter === 'ALL') return true;
     return c.status === contactFilter;
   });
+
+  // 🛡️ Defense-in-Depth Super Admin Protection
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="space-y-8 animate-fadeIn pb-12">

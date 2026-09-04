@@ -128,11 +128,11 @@ const getInitialUser = (): UserProfile | null => {
           localStorage.setItem('prepunite_role', 'USER');
         }
 
-        // 2. TPO Coordinator Check: If authorized as TPO, role is strictly TPO_ADMIN
+        // 2. TPO Coordinator Check: STRICTLY require verified TPO authorization record
         const tpoAuth = tpoService.findTpoAuthByEmail(email);
-        if (tpoAuth || role === 'TPO_ADMIN') {
-          const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
-          const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
+        if (tpoAuth) {
+          const collegeId = tpoAuth.college_id || localStorage.getItem('prepunite_college_id') || undefined;
+          const collegeName = tpoAuth.college_name || localStorage.getItem('prepunite_college_name') || undefined;
           role = 'TPO_ADMIN';
           localStorage.setItem('prepunite_role', 'TPO_ADMIN');
           return {
@@ -145,6 +145,12 @@ const getInitialUser = (): UserProfile | null => {
             collegeName,
             avatarUrl,
           };
+        } else {
+          // 🔒 SANITIZE: Any non-TPO user cached or manipulated as TPO_ADMIN is immediately demoted to USER!
+          if (role === 'TPO_ADMIN') {
+            role = 'USER';
+            localStorage.setItem('prepunite_role', 'USER');
+          }
         }
       }
 
@@ -174,12 +180,12 @@ const getInitialRole = (): UserRole => {
       if (isSuperAdminEmail(email)) {
         return 'ADMIN';
       }
-      if (tpoService.findTpoAuthByEmail(email) || cachedRole === 'TPO_ADMIN') {
+      if (tpoService.findTpoAuthByEmail(email)) {
         return 'TPO_ADMIN';
       }
       return 'USER';
     }
-    if (cachedRole && cachedRole !== 'ADMIN') return cachedRole;
+    if (cachedRole && cachedRole !== 'ADMIN' && cachedRole !== 'TPO_ADMIN') return cachedRole;
   } catch {}
   return 'GUEST';
 };
@@ -206,8 +212,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     // 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN. No exceptions!
     const isSuperAdmin = isSuperAdminEmail(email);
-    // 🛡️ TPO Protection: If authorized as TPO, role is strictly TPO_ADMIN, NEVER ADMIN
-    const isTpo = !isSuperAdmin && (assignedRole === 'TPO_ADMIN' || Boolean(collegeData?.isTpoAdmin) || Boolean(tpoService.findTpoAuthByEmail(email)));
+    // 🛡️ TPO Protection: STRICTLY require verified TPO authorization, NEVER self-declared or ADMIN
+    const verifiedTpoAuth = !isSuperAdmin ? tpoService.findTpoAuthByEmail(email) : null;
+    const isTpo = !isSuperAdmin && (Boolean(verifiedTpoAuth) || (assignedRole === 'TPO_ADMIN' && Boolean(collegeData?.isTpoAdmin)));
     const finalRole: UserRole = isSuperAdmin ? 'ADMIN' : isTpo ? 'TPO_ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
@@ -577,7 +584,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isEffectiveAdmin = isSuperAdminEmail(user?.email);
   const currentTpoAuth = !isEffectiveAdmin ? tpoService.findTpoAuthByEmail(user?.email) : null;
-  const isEffectiveTpo = !isEffectiveAdmin && (Boolean(currentTpoAuth) || role === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin));
+  const isEffectiveTpo = !isEffectiveAdmin && Boolean(currentTpoAuth);
   const effectiveRole: UserRole = isEffectiveAdmin ? 'ADMIN' : isEffectiveTpo ? 'TPO_ADMIN' : (role === 'GUEST' ? 'GUEST' : 'USER');
 
   return (

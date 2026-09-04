@@ -16,8 +16,9 @@ import {
   Loader2,
   ShieldAlert,
   Award,
+  Building2,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { tpoService } from '@/services/tpo.service';
 import type {
   MockExam,
@@ -29,7 +30,7 @@ import type {
 
 export default function MockExamTestPage() {
   const { examId } = useParams<{ examId: string }>();
-  const { user } = useAuth();
+  const { user, isAdmin, isTpoAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Test Lifecycle: 'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'
@@ -41,6 +42,26 @@ export default function MockExamTestPage() {
     queryFn: () => (examId ? tpoService.getMockExamById(examId) : null),
     enabled: !!examId,
   });
+
+  // Fetch College Details if exam belongs to an institution
+  const { data: examCollege } = useQuery({
+    queryKey: ['candidate-exam-college', exam?.college_id],
+    queryFn: () => (exam?.college_id ? tpoService.getCollegeDetails(exam.college_id) : null),
+    enabled: !!exam?.college_id,
+  });
+
+  // 🛡️ Candidate Institutional Enrollment Verification
+  const isSuperAdmin = isAdmin || isSuperAdminEmail(user?.email);
+  const studentEntitlement = tpoService.getStudentEntitlementInfo(user?.email);
+  const userCollegeId =
+    user?.collegeId ||
+    studentEntitlement?.collegeId ||
+    (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
+    '';
+  const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
+  const isCollegeTpo = isTpoAdmin && (userCollegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
+  const isEnrolledStudent = Boolean(exam?.college_id && userCollegeId === exam.college_id);
+  const isAuthorizedCandidate = !exam?.college_id || isSuperAdmin || isCollegeTpo || isEnrolledStudent;
 
   // Fetch Existing Candidate Attempt
   const { data: existingAttempt } = useQuery<StudentExamAttempt | null>({
@@ -156,6 +177,11 @@ export default function MockExamTestPage() {
   // 2. Start Exam Handler
   const handleStartExam = async (forceFresh = false) => {
     if (!exam || !user) return;
+
+    if (!isAuthorizedCandidate) {
+      alert(`Access Restricted: This assessment is reserved exclusively for students of ${examCollege?.name || exam.college_id}.`);
+      return;
+    }
 
     try {
       // Enter Fullscreen if required
@@ -387,6 +413,53 @@ export default function MockExamTestPage() {
         <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold">Exam Not Found</h2>
           <p className="text-xs text-gray-500 mt-1">Please check the link provided by your college TPO.</p>
+        </div>
+      );
+    }
+
+    // 🛡️ Candidate Institutional Enrollment Guard: Restrict access to students of this college
+    if (!isAuthorizedCandidate && exam) {
+      const institutionName = examCollege?.name || exam.college_id;
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0f1013] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-lg bg-white dark:bg-[#18191c] rounded-3xl p-6 sm:p-8 border border-rose-200 dark:border-rose-900/50 shadow-xl text-center space-y-5">
+            <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-[11px] font-bold uppercase tracking-wider">
+                <Building2 className="w-3.5 h-3.5" />
+                Institutional Drive Restricted
+              </div>
+              <h2 className="font-display text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                Access Restricted to {institutionName}
+              </h2>
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-md mx-auto">
+                This mock placement assessment (<strong>{exam.title}</strong>) was commissioned exclusively for verified students enrolled under <strong>{institutionName}</strong>.
+              </p>
+              <div className="p-3 bg-gray-50 dark:bg-[#202226] rounded-xl text-[11px] text-gray-500 dark:text-gray-400 text-left space-y-1">
+                <div>Account: <strong className="text-gray-800 dark:text-gray-200">{user?.email}</strong></div>
+                <div>Campus Status: <span className="text-rose-600 dark:text-rose-400 font-bold">Not enrolled in {institutionName}</span></div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-200 dark:border-gray-800">
+                  If you are a student of this campus, please ask your College TPO to add your email to the placement roster.
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                Return to Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/contact')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Contact Support
+              </button>
+            </div>
+          </div>
         </div>
       );
     }

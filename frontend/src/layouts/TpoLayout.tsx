@@ -42,41 +42,53 @@ export default function TpoLayout() {
     return '';
   };
 
-  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(getInitialCollegeId);
+  const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
+  const authorizedCollegeId = tpoAuth?.college_id || user?.collegeId || (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') || '';
 
-  // Keep selectedCollegeId synchronized when user or colleges list loads
+  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(() => {
+    if (isAdmin) {
+      return getInitialCollegeId();
+    }
+    return authorizedCollegeId;
+  });
+
+  // Keep selectedCollegeId synchronized for Super Admins when user or colleges list loads
   useEffect(() => {
-    if (!selectedCollegeId) {
-      const cached = typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : null;
-      const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
-      if (user?.collegeId) {
-        setSelectedCollegeId(user.collegeId);
-      } else if (cached) {
-        setSelectedCollegeId(cached);
-      } else if (tpoAuth?.college_id) {
-        setSelectedCollegeId(tpoAuth.college_id);
-      } else if (allColleges.length > 0 && allColleges[0]?.id) {
-        setSelectedCollegeId(allColleges[0].id);
+    if (isAdmin) {
+      if (!selectedCollegeId) {
+        const cached = typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : null;
+        if (user?.collegeId) {
+          setSelectedCollegeId(user.collegeId);
+        } else if (cached) {
+          setSelectedCollegeId(cached);
+        } else if (tpoAuth?.college_id) {
+          setSelectedCollegeId(tpoAuth.college_id);
+        } else if (allColleges.length > 0 && allColleges[0]?.id) {
+          setSelectedCollegeId(allColleges[0].id);
+        }
+      }
+    } else {
+      // Non-admin TPOs are strictly locked to their authorized college
+      if (authorizedCollegeId && selectedCollegeId !== authorizedCollegeId) {
+        setSelectedCollegeId(authorizedCollegeId);
       }
     }
-  }, [user?.collegeId, user?.email, allColleges, selectedCollegeId]);
+  }, [isAdmin, user?.collegeId, user?.email, allColleges, selectedCollegeId, authorizedCollegeId, tpoAuth?.college_id]);
 
-  const effectiveCollegeId =
-    selectedCollegeId ||
-    user?.collegeId ||
-    (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
-    tpoService.findTpoAuthByEmail(user?.email)?.college_id ||
-    (allColleges[0]?.id ?? '');
+  // 🛡️ Cross-Tenant Security Invariant: Non-admin TPOs are strictly restricted to their authorized institution
+  const effectiveCollegeId = isAdmin
+    ? (selectedCollegeId || authorizedCollegeId || allColleges[0]?.id || '')
+    : authorizedCollegeId;
 
   const currentCollege: College = allColleges.find(c => c.id === effectiveCollegeId) || {
     id: effectiveCollegeId,
-    name: user?.collegeName || 'Engineering College',
-    code: 'CRT',
-    slug: 'crt',
+    name: tpoAuth?.college_name || user?.collegeName || 'Engineering College',
+    code: tpoAuth?.college_code || 'CRT',
+    slug: (effectiveCollegeId || 'crt').replace(/^col-/, ''),
     contract_status: 'ACTIVE',
     valid_until: '2027-12-31T00:00:00Z',
     created_at: new Date().toISOString(),
-    max_licenses: 1000,
+    max_licenses: tpoAuth?.max_licenses || 1000,
   };
 
   const { data: stats } = useQuery({

@@ -13,14 +13,16 @@ import {
   Award,
   Users,
   Share2,
+  ShieldAlert,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
-
+import { useAuth } from '@/contexts/AuthContext';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 
 export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
   const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
+  const { isAdmin } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
@@ -99,6 +101,31 @@ export default function TpoExamDetailPage() {
         <h3 className="font-bold text-slate-800 dark:text-slate-200">Exam Not Found</h3>
         <Link to="/tpo/exams" className="text-xs text-[#FD4A32] font-bold">
           ← Back to Mock Exams
+        </Link>
+      </div>
+    );
+  }
+
+  // 🛡️ Cross-Tenant Isolation: A non-admin TPO cannot inspect another college's assessment or students
+  if (!isAdmin && exam.college_id && collegeId && exam.college_id !== collegeId) {
+    return (
+      <div className="p-8 text-center space-y-4 bg-white dark:bg-[#111827] rounded-3xl border border-rose-200 dark:border-rose-900/40">
+        <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="font-display font-extrabold text-lg text-rose-600 dark:text-rose-400">
+            Institutional Access Restricted
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            This examination was created by and belongs to another campus institution. Your coordinator account only has permission to view assessments and candidates belonging to {currentCollege.name}.
+          </p>
+        </div>
+        <Link
+          to="/tpo/exams"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+        >
+          ← Return to Your Mock Exams
         </Link>
       </div>
     );
