@@ -26,6 +26,11 @@ export default function AddStudentModal({
   collegeName,
   onSuccess,
 }: AddStudentModalProps) {
+  const effectiveCollegeId =
+    collegeId?.trim() ||
+    (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
+    '';
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [rollNumber, setRollNumber] = useState('');
@@ -36,9 +41,9 @@ export default function AddStudentModal({
 
   // Fetch real-time college quota stats
   const { data: stats } = useQuery({
-    queryKey: ['tpo-stats', collegeId],
-    queryFn: () => tpoService.getTpoStats(collegeId),
-    enabled: isOpen && !!collegeId,
+    queryKey: ['tpo-stats', effectiveCollegeId],
+    queryFn: () => tpoService.getTpoStats(effectiveCollegeId),
+    enabled: isOpen && !!effectiveCollegeId,
   });
 
   const maxLicenses = stats?.maxLicenses || 1000;
@@ -66,7 +71,7 @@ export default function AddStudentModal({
     setErrorMessage(null);
 
     try {
-      const res = await tpoService.addSingleStudent(collegeId, {
+      const res = await tpoService.addSingleStudent(effectiveCollegeId, {
         name: name.trim(),
         email: email.trim(),
         roll_number: rollNumber.trim() || undefined,

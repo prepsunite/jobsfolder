@@ -31,6 +31,11 @@ export default function BulkStudentImportModal({
   collegeName,
   onSuccess,
 }: BulkStudentImportModalProps) {
+  const effectiveCollegeId =
+    collegeId?.trim() ||
+    (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
+    '';
+
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<BulkStudentRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -44,9 +49,9 @@ export default function BulkStudentImportModal({
 
   // Fetch real-time college quota stats
   const { data: stats } = useQuery({
-    queryKey: ['tpo-stats', collegeId],
-    queryFn: () => tpoService.getTpoStats(collegeId),
-    enabled: isOpen && !!collegeId,
+    queryKey: ['tpo-stats', effectiveCollegeId],
+    queryFn: () => tpoService.getTpoStats(effectiveCollegeId),
+    enabled: isOpen && !!effectiveCollegeId,
   });
 
   const maxLicenses = stats?.maxLicenses || 1000;
@@ -140,7 +145,7 @@ export default function BulkStudentImportModal({
     setIsProcessing(true);
     setImportError(null);
     try {
-      const res = await tpoService.bulkImportStudents(collegeId, validRows);
+      const res = await tpoService.bulkImportStudents(effectiveCollegeId, validRows);
       setImportResult(res);
       onSuccess();
     } catch (err: any) {
