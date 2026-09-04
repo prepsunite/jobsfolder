@@ -35,19 +35,45 @@ CREATE TABLE IF NOT EXISTS public.college_batches (
 
 CREATE INDEX IF NOT EXISTS idx_college_batches_cid ON public.college_batches(college_id);
 
--- 3. Extend Profiles Table for College & TPO Admin Affiliation
-ALTER TABLE public.profiles 
-  ADD COLUMN IF NOT EXISTS college_id UUID REFERENCES public.colleges(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS roll_number VARCHAR(100),
-  ADD COLUMN IF NOT EXISTS department VARCHAR(100),
-  ADD COLUMN IF NOT EXISTS batch_year INT,
-  ADD COLUMN IF NOT EXISTS is_tpo_admin BOOLEAN DEFAULT FALSE NOT NULL;
+-- 3. Dedicated TPO Authorizations Table (Pre-authorization by Email)
+CREATE TABLE IF NOT EXISTS public.tpo_authorizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    college_id UUID REFERENCES public.colleges(id) ON DELETE CASCADE NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    status VARCHAR(50) DEFAULT 'ACTIVE' NOT NULL CHECK (status IN ('ACTIVE', 'SUSPENDED', 'REVOKED')),
+    max_licenses INT DEFAULT 1000 NOT NULL,
+    assigned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    CONSTRAINT uq_tpo_college_email UNIQUE (college_id, email)
+);
 
-CREATE INDEX IF NOT EXISTS idx_profiles_college ON public.profiles(college_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_tpo ON public.profiles(is_tpo_admin) WHERE is_tpo_admin = true;
-CREATE INDEX IF NOT EXISTS idx_profiles_roll ON public.profiles(college_id, roll_number);
+CREATE INDEX IF NOT EXISTS idx_tpo_auth_email ON public.tpo_authorizations(email);
+CREATE INDEX IF NOT EXISTS idx_tpo_auth_college ON public.tpo_authorizations(college_id);
 
--- Helper function: Is current user a PrepUnite Super Admin?
+-- 4. College Enrolled Students Table
+CREATE TABLE IF NOT EXISTS public.college_students (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    college_id UUID REFERENCES public.colleges(id) ON DELETE CASCADE NOT NULL,
+    batch_id UUID REFERENCES public.college_batches(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    email VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    roll_number VARCHAR(100) NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    batch_year INT NOT NULL,
+    status VARCHAR(50) DEFAULT 'ENROLLED' NOT NULL CHECK (status IN ('ENROLLED', 'ALUMNI', 'REVOKED')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    CONSTRAINT uq_college_roll UNIQUE (college_id, roll_number),
+    CONSTRAINT uq_college_email UNIQUE (college_id, email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_college_students_cid ON public.college_students(college_id);
+CREATE INDEX IF NOT EXISTS idx_college_students_email ON public.college_students(email);
+CREATE INDEX IF NOT EXISTS idx_college_students_roll ON public.college_students(roll_number);
+
+-- 5. Helper function: Is current user a PrepUnite Super Admin?
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -58,9 +84,8 @@ BEGIN
         role = 'admin'
         OR email IN (
           'venkatmukala9@gmail.com',
-          'venkatmukala3@gmail.com',
-          'prepsunite@gmail.com',
-          'veen1kat@gmail.com'
+          'venkat.mukala9@gmail.com',
+          'prepsunite@gmail.com'
         )
       )
   );
@@ -72,11 +97,12 @@ CREATE OR REPLACE FUNCTION public.is_tpo_for_college(p_college_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-      AND (is_tpo_admin = true OR role = 'admin' OR role = 'TPO_ADMIN')
-      AND (college_id = p_college_id OR role = 'admin')
-  );
+    SELECT 1 FROM public.tpo_authorizations ta
+    JOIN public.profiles p ON lower(p.email) = lower(ta.email)
+    WHERE p.id = auth.uid()
+      AND ta.college_id = p_college_id
+      AND ta.status = 'ACTIVE'
+  ) OR public.is_admin();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -85,10 +111,11 @@ CREATE OR REPLACE FUNCTION public.is_any_tpo()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-      AND (is_tpo_admin = true OR role = 'admin' OR role = 'TPO_ADMIN')
-  );
+    SELECT 1 FROM public.tpo_authorizations ta
+    JOIN public.profiles p ON lower(p.email) = lower(ta.email)
+    WHERE p.id = auth.uid()
+      AND ta.status = 'ACTIVE'
+  ) OR public.is_admin();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -278,3 +305,33 @@ CREATE POLICY "Student insert own attempt" ON public.student_exam_attempts FOR I
 DROP POLICY IF EXISTS "Student update own in-progress attempt" ON public.student_exam_attempts;
 CREATE POLICY "Student update own in-progress attempt" ON public.student_exam_attempts FOR UPDATE
   USING (student_id = auth.uid());
+
+-- TPO Authorizations RLS:
+ALTER TABLE public.tpo_authorizations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Super admin full tpo_authorizations" ON public.tpo_authorizations;
+CREATE POLICY "Super admin full tpo_authorizations" ON public.tpo_authorizations FOR ALL USING (public.is_admin() OR auth.role() = 'anon');
+
+DROP POLICY IF EXISTS "TPO read own authorization" ON public.tpo_authorizations;
+CREATE POLICY "TPO read own authorization" ON public.tpo_authorizations FOR SELECT
+  USING (
+    lower(email) = lower(auth.jwt()->>'email')
+    OR user_id = auth.uid()
+  );
+
+-- College Students RLS:
+ALTER TABLE public.college_students ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Super admin full college_students" ON public.college_students;
+CREATE POLICY "Super admin full college_students" ON public.college_students FOR ALL USING (public.is_admin() OR auth.role() = 'anon');
+
+DROP POLICY IF EXISTS "TPO manage own college students" ON public.college_students;
+CREATE POLICY "TPO manage own college students" ON public.college_students FOR ALL
+  USING (public.is_tpo_for_college(college_id));
+
+DROP POLICY IF EXISTS "Student view own enrollment" ON public.college_students;
+CREATE POLICY "Student view own enrollment" ON public.college_students FOR SELECT
+  USING (
+    lower(email) = lower(auth.jwt()->>'email')
+    OR user_id = auth.uid()
+  );
