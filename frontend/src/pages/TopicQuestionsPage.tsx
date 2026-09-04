@@ -217,6 +217,8 @@ export default function TopicQuestionsPage() {
     if (isCorrect) {
       audioEffects.playSuccessChime();
       audioEffects.triggerHaptic('success');
+      // Auto-open solution when user answers correctly
+      setRevealedExpl(prev => ({ ...prev, [q.id]: true }));
     } else {
       audioEffects.playErrorBuzz();
       audioEffects.triggerHaptic('error');
@@ -246,7 +248,8 @@ export default function TopicQuestionsPage() {
 
   const handleToggleReveal = (qId: string) => {
     setRevealedExpl(prev => {
-      const nextState = !prev[qId];
+      const isCurrentlyVisible = prev[qId] !== undefined ? prev[qId] : false;
+      const nextState = !isCurrentlyVisible;
       if (nextState) {
         progressService.markRevealed(qId, user?.email);
       }
@@ -989,7 +992,7 @@ export default function TopicQuestionsPage() {
             .map((q, idx, arr) => {
             const prog = progressRecords[q.id];
             const isSolved = prog?.isSolved ?? false;
-            const isExplVisible = !!revealedExpl[q.id] || (prog?.isRevealed ?? false);
+            const isExplVisible = revealedExpl[q.id] !== undefined ? revealedExpl[q.id] : false;
             const isSaved = savedQuestionIds.includes(q.id);
             const se = q.structuredExplanation;
             const wrongOptions = wrongPicks[q.id] || [];
@@ -1165,16 +1168,16 @@ export default function TopicQuestionsPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleToggleReveal(q.id)}
-                      className={`px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                         isExplVisible
                           ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white'
                           : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                       title={isExplVisible ? 'Hide Solution' : 'Show Answer & Detailed Solution'}
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      {isExplVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       <span className="text-[10px] uppercase tracking-wider">
-                        {isExplVisible ? 'Hide Solution' : 'Show Answer & Solution'}
+                        {isExplVisible ? 'Hide Solution' : (isSolved ? 'View Solution' : 'Show Answer & Solution')}
                       </span>
                     </button>
 
