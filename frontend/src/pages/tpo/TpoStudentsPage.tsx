@@ -32,6 +32,8 @@ export default function TpoStudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [batchYearFilter, setBatchYearFilter] = useState<number | undefined>(undefined);
+  const currentYear = new Date().getFullYear();
+  const batchYears = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
@@ -177,26 +179,19 @@ export default function TpoStudentsPage() {
             >
               All Batches
             </button>
-            <button
-              onClick={() => setBatchYearFilter(2026)}
-              className={`px-3 py-1 rounded-lg transition-all ${
-                batchYearFilter === 2026
-                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              2026
-            </button>
-            <button
-              onClick={() => setBatchYearFilter(2027)}
-              className={`px-3 py-1 rounded-lg transition-all ${
-                batchYearFilter === 2027
-                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              2027
-            </button>
+            {batchYears.map(yr => (
+              <button
+                key={yr}
+                onClick={() => setBatchYearFilter(yr)}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  batchYearFilter === yr
+                    ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {yr}
+              </button>
+            ))}
           </div>
 
           {/* Department Select */}

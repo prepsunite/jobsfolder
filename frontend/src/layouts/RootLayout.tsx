@@ -141,10 +141,10 @@ export default function RootLayout() {
                 PrepUnite's placement intelligence platform for engineering students preparing for India's top campus recruiters.
               </p>
               <div className="pub-footer-social">
-                <span className="pub-footer-social-btn">X</span>
-                <span className="pub-footer-social-btn">in</span>
-                <span className="pub-footer-social-btn">▶</span>
-                <span className="pub-footer-social-btn">ig</span>
+                <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on X">X</a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on LinkedIn">in</a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Subscribe on YouTube">▶</a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on Instagram">ig</a>
               </div>
             </div>
 

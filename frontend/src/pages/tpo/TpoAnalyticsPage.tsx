@@ -20,12 +20,10 @@ export default function TpoAnalyticsPage() {
   const total = stats?.totalStudents || 0;
   const avg = stats?.avgCollegeScore || 0;
 
-  // Derive dynamic tier distributions based on average college benchmark
-  const tier1Ratio = total > 0 ? (avg >= 70 ? 0.45 : avg >= 50 ? 0.30 : 0.15) : 0;
-  const tier2Ratio = total > 0 ? (avg >= 70 ? 0.40 : avg >= 50 ? 0.45 : 0.35) : 0;
-  const tier1Count = Math.round(total * tier1Ratio);
-  const tier2Count = Math.round(total * tier2Ratio);
-  const tier3Count = Math.max(0, total - tier1Count - tier2Count);
+  // Real placement readiness tier counts computed from actual student attempt results
+  const tier1Count = stats?.tierCounts?.tier1 ?? 0;
+  const tier2Count = stats?.tierCounts?.tier2 ?? 0;
+  const tier3Count = stats?.tierCounts?.tier3 ?? total;
 
   // Generate real NIRF / NAAC Institutional Placement Intelligence Report CSV
   const handleDownloadReport = () => {

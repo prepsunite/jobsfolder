@@ -923,16 +923,32 @@ export const tpoService = {
   ): Promise<CollegeStudent[]> {
     let list: CollegeStudent[] = [];
 
+    // 1. Try dedicated college_students table first (multi-device institutional roster)
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, name, roll_number, department, batch_year, college_id, is_tpo_admin, role, created_at')
+      const { data: csData, error: csErr } = await supabase
+        .from('college_students')
+        .select('*')
         .eq('college_id', collegeId)
-        .neq('role', 'TPO_ADMIN')
         .order('created_at', { ascending: false });
 
-      if (!error && data) list = data;
+      if (!csErr && csData && csData.length > 0) {
+        list = csData;
+      }
     } catch {}
+
+    // 2. Fallback to profiles table if college_students is empty
+    if (list.length === 0) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, email, name, roll_number, department, batch_year, college_id, is_tpo_admin, role, created_at')
+          .eq('college_id', collegeId)
+          .neq('role', 'TPO_ADMIN')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) list = data;
+      } catch {}
+    }
 
     // Merge with local students
     const local = getLocalStudents(collegeId);
@@ -1048,7 +1064,23 @@ export const tpoService = {
         importedCount++;
       }
 
-      // Safe background sync to Supabase profiles - strictly enforce role: 'user'
+      // Safe background sync to Supabase college_students & profiles
+      try {
+        await supabase.from('college_students').upsert({
+          id: studentRecord.id,
+          email: cleanEmail,
+          name: student.name.trim(),
+          college_id: effectiveCollegeId,
+          college_name: college.name,
+          roll_number: student.roll_number?.trim() || null,
+          department: student.department?.trim().toUpperCase() || 'CSE',
+          batch_year: Number(student.batch_year) || 2026,
+          is_tpo_admin: false,
+          role: 'USER',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'college_id,email' });
+      } catch {}
+
       try {
         const { data: existingProf } = await supabase
           .from('profiles')
@@ -1056,17 +1088,21 @@ export const tpoService = {
           .eq('email', cleanEmail)
           .maybeSingle();
 
-        if (existingProf && existingProf.role !== 'user') {
+        if (existingProf) {
           await supabase
             .from('profiles')
             .update({
               role: 'user',
+              college_id: effectiveCollegeId,
+              roll_number: student.roll_number?.trim() || null,
+              department: student.department?.trim().toUpperCase() || null,
+              batch_year: Number(student.batch_year) || null,
               updated_at: new Date().toISOString(),
             })
             .eq('id', existingProf.id);
         }
       } catch (err: any) {
-        // Safe notice
+        // Safe notice: column might not exist yet before migration
       }
 
       // Provision full student Pro entitlement
@@ -1321,7 +1357,24 @@ export const tpoService = {
     }
     saveLocalStudents(effectiveCollegeId, localStudents);
 
-    // Sync to Supabase profiles - strictly enforce role: 'user'
+    // 1. Cloud sync to Supabase college_students table
+    try {
+      await supabase.from('college_students').upsert({
+        id: studentRecord.id,
+        email: cleanEmail,
+        name: studentData.name.trim(),
+        college_id: effectiveCollegeId,
+        college_name: college.name,
+        roll_number: studentData.roll_number?.trim() || null,
+        department: studentData.department?.trim().toUpperCase() || 'CSE',
+        batch_year: studentData.batch_year || 2026,
+        is_tpo_admin: false,
+        role: 'USER',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'college_id,email' });
+    } catch {}
+
+    // 2. Cloud sync to Supabase profiles - strictly enforce role: 'user'
     try {
       const { data: existingProf } = await supabase
         .from('profiles')
@@ -1329,11 +1382,15 @@ export const tpoService = {
         .eq('email', cleanEmail)
         .maybeSingle();
 
-      if (existingProf && existingProf.role !== 'user') {
+      if (existingProf) {
         await supabase
           .from('profiles')
           .update({
             role: 'user',
+            college_id: effectiveCollegeId,
+            roll_number: studentData.roll_number?.trim() || null,
+            department: studentData.department?.trim().toUpperCase() || null,
+            batch_year: studentData.batch_year || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', existingProf.id);
@@ -1356,7 +1413,16 @@ export const tpoService = {
     const filtered = localStudents.filter(s => s.email.toLowerCase() !== cleanEmail);
     saveLocalStudents(collegeId, filtered);
 
-    // 2. Clear college_id in Supabase profiles
+    // 2. Remove from Supabase college_students table
+    try {
+      await supabase
+        .from('college_students')
+        .delete()
+        .eq('college_id', collegeId)
+        .eq('email', cleanEmail);
+    } catch {}
+
+    // 3. Clear college_id in Supabase profiles
     try {
       await supabase
         .from('profiles')
@@ -1365,7 +1431,7 @@ export const tpoService = {
         .eq('college_id', collegeId);
     } catch {}
 
-    // 3. Revoke student entitlement in user_subscriptions & cache
+    // 4. Revoke student entitlement in user_subscriptions & cache
     await this.revokeStudentEntitlement(collegeId, cleanEmail);
 
     return true;
@@ -1408,6 +1474,26 @@ export const tpoService = {
         ? Math.round(allAttempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / totalAttempts)
         : totalStudents > 0 ? 76 : 0;
 
+    // Compute real placement readiness tiers from actual student attempts
+    let tier1Count = 0;
+    let tier2Count = 0;
+    let tier3Count = 0;
+
+    if (allAttempts.length > 0) {
+      allAttempts.forEach(a => {
+        const pct = a.percentage || 0;
+        if (pct >= 70) tier1Count++;
+        else if (pct >= 50) tier2Count++;
+        else tier3Count++;
+      });
+      // Any enrolled students who haven't attempted an exam are placed in Tier 3 (Remediation Needed)
+      if (totalStudents > allAttempts.length) {
+        tier3Count += (totalStudents - allAttempts.length);
+      }
+    } else if (totalStudents > 0) {
+      tier3Count = totalStudents;
+    }
+
     // Group students by department
     const deptMap: Record<string, number> = {};
     students.forEach(s => {
@@ -1428,6 +1514,11 @@ export const tpoService = {
       totalAttempts,
       avgCollegeScore,
       departments,
+      tierCounts: {
+        tier1: tier1Count,
+        tier2: tier2Count,
+        tier3: tier3Count,
+      },
     };
   },
 

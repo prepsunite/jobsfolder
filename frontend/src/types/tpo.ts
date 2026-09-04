@@ -143,4 +143,5 @@ export interface TpoDashboardStats {
   totalAttempts: number;
   avgCollegeScore: number;
   departments: { department: string; studentCount: number; avgScore: number }[];
+  tierCounts?: { tier1: number; tier2: number; tier3: number };
 }

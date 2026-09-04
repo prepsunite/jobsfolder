@@ -67,6 +67,7 @@ export default function MockExamTestPage() {
 
   // Anti-Cheat Proctoring State
   const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
+  const tabSwitchCountRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [proctorEvents, setProctorEvents] = useState<ProctorEvent[]>([]);
   const [isMalpracticeTerminated, setIsMalpracticeTerminated] = useState<boolean>(false);
@@ -95,7 +96,7 @@ export default function MockExamTestPage() {
     attemptId,
     responses,
     timeSpent: timeSpentSeconds,
-    tabSwitches: tabSwitchCount,
+    tabSwitches: tabSwitchCountRef.current,
     events: proctorEvents,
   };
 
@@ -111,12 +112,16 @@ export default function MockExamTestPage() {
       setAttemptId(existingAttempt.id);
       setFinalGradedAttempt(existingAttempt);
       setResponses(existingAttempt.responses || {});
-      setTabSwitchCount(existingAttempt.tab_switch_count || 0);
+      const count = existingAttempt.tab_switch_count || 0;
+      tabSwitchCountRef.current = count;
+      setTabSwitchCount(count);
       setTestPhase('SUBMITTED');
     } else if (existingAttempt.status === 'IN_PROGRESS' && testPhase === 'INSTRUCTIONS') {
       setAttemptId(existingAttempt.id);
       setResponses(existingAttempt.responses || {});
-      setTabSwitchCount(existingAttempt.tab_switch_count || 0);
+      const count = existingAttempt.tab_switch_count || 0;
+      tabSwitchCountRef.current = count;
+      setTabSwitchCount(count);
       setProctorEvents(existingAttempt.proctor_events || []);
       const totalSec = (exam?.duration_minutes || 90) * 60;
       const spent = existingAttempt.time_spent_seconds || 0;
@@ -269,7 +274,8 @@ export default function MockExamTestPage() {
 
     const handleViolation = (type: ProctorEvent['type']) => {
       const maxAllowed = exam.max_tab_switches_allowed || 3;
-      const nextCount = tabSwitchCount + 1;
+      tabSwitchCountRef.current += 1;
+      const nextCount = tabSwitchCountRef.current;
       setTabSwitchCount(nextCount);
 
       const newEvent: ProctorEvent = {
