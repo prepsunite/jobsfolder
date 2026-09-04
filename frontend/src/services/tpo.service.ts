@@ -1126,7 +1126,8 @@ export const tpoService = {
     const cleanEmail = email.trim().toLowerCase();
     const validUntil = college.valid_until || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
     const planName = `Campus Pro Pass (${college.name})`;
-    const paymentId = `B2B_CAMPUS_${college.id}_${cleanEmail.replace(/[^a-z0-9]/g, '')}`;
+    const sanitizedEmail = cleanEmail.replace(/[^a-z0-9]/g, '').slice(0, 48);
+    const paymentId = `B2B_CAMPUS_${college.id}_${sanitizedEmail}`;
 
     // 1. Supabase public.user_subscriptions upsert (RPC with SECURITY DEFINER + direct fallback)
     try {
@@ -1142,6 +1143,9 @@ export const tpoService = {
           .from('user_subscriptions')
           .select('id, expires_at')
           .eq('user_email', cleanEmail)
+          .ilike('payment_id', `B2B_CAMPUS_${college.id}%`)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (existingSub) {

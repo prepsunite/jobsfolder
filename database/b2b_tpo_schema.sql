@@ -348,6 +348,7 @@ CREATE POLICY "Student view own enrollment" ON public.college_students FOR SELEC
 -- ====================================================================
 
 ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.user_subscriptions ALTER COLUMN payment_id TYPE VARCHAR(255);
 
 DROP POLICY IF EXISTS "TPO coordinator manage college student subscriptions" ON public.user_subscriptions;
 CREATE POLICY "TPO coordinator manage college student subscriptions"

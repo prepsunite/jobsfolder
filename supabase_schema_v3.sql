@@ -370,6 +370,7 @@ CREATE POLICY "Admin full access transactions"
 
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.user_subscriptions ALTER COLUMN payment_id TYPE VARCHAR(255);
 
 DROP POLICY IF EXISTS "User reads own subscription" ON public.user_subscriptions;
 CREATE POLICY "User reads own subscription"
