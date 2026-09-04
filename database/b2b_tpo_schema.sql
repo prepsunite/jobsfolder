@@ -47,6 +47,26 @@ CREATE INDEX IF NOT EXISTS idx_profiles_college ON public.profiles(college_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_tpo ON public.profiles(is_tpo_admin) WHERE is_tpo_admin = true;
 CREATE INDEX IF NOT EXISTS idx_profiles_roll ON public.profiles(college_id, roll_number);
 
+-- Helper function: Is current user a PrepUnite Super Admin?
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+      AND (
+        role = 'admin'
+        OR email IN (
+          'venkatmukala9@gmail.com',
+          'venkatmukala3@gmail.com',
+          'prepsunite@gmail.com',
+          'veen1kat@gmail.com'
+        )
+      )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Helper function: Is user a TPO admin for a specific college?
 CREATE OR REPLACE FUNCTION public.is_tpo_for_college(p_college_id UUID)
 RETURNS BOOLEAN AS $$

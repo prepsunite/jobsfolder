@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
 import { progressService } from '@/services/progress.service';
+import { tpoService } from '@/services/tpo.service';
 
 export type UserRole = 'GUEST' | 'USER' | 'ADMIN' | 'TPO_ADMIN';
 
@@ -115,6 +116,23 @@ const getInitialUser = (): UserProfile | null => {
       if (isSuperAdminEmail(email)) {
         role = 'ADMIN';
         localStorage.setItem('prepunite_role', 'ADMIN');
+      } else {
+        // Check if user was authorized as TPO Coordinator by PrepUnite Admin
+        const tpoAuth = tpoService.findTpoAuthByEmail(email);
+        if (tpoAuth) {
+          role = 'TPO_ADMIN';
+          localStorage.setItem('prepunite_role', 'TPO_ADMIN');
+          return {
+            id: email,
+            name: name || formatDisplayNameFromEmail(email, ''),
+            email,
+            role: 'TPO_ADMIN',
+            isTpoAdmin: true,
+            collegeId: tpoAuth.college_id,
+            collegeName: tpoAuth.college_name,
+            avatarUrl,
+          };
+        }
       }
 
       return {
@@ -136,6 +154,9 @@ const getInitialRole = (): UserRole => {
     const email = localStorage.getItem('prepunite_user_email');
     if (email && isSuperAdminEmail(email)) {
       return 'ADMIN';
+    }
+    if (email && tpoService.findTpoAuthByEmail(email)) {
+      return 'TPO_ADMIN';
     }
     const role = localStorage.getItem('prepunite_role') as UserRole;
     if (role) return role;
@@ -217,7 +238,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check database role column
       const dbRole = dbProfile?.role ? String(dbProfile.role).toLowerCase() : undefined;
       const isDbAdmin = isMasterAdmin || dbRole === 'admin' || appRole === 'admin';
-      const isDbTpo = !isDbAdmin && dbRole === 'tpo_admin';
+      
+      // Check pre-authorized TPO records registered by PrepUnite Admin
+      const tpoAuth = !isDbAdmin ? tpoService.findTpoAuthByEmail(email) : undefined;
+      const isDbTpo = !isDbAdmin && (dbRole === 'tpo_admin' || Boolean(tpoAuth));
 
       let assignedRole: UserRole = 'USER';
       if (isDbAdmin) assignedRole = 'ADMIN';
@@ -262,10 +286,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      applyUserProfile(email, finalName, finalAvatar, assignedRole);
+      applyUserProfile(email, finalName, finalAvatar, assignedRole, {
+        collegeId: tpoAuth?.college_id,
+        collegeName: tpoAuth?.college_name,
+        isTpoAdmin: Boolean(isDbTpo),
+      });
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
-      applyUserProfile(email, rawName, rawAvatar, isMasterAdmin ? 'ADMIN' : 'USER');
+      const fallbackTpo = !isMasterAdmin ? tpoService.findTpoAuthByEmail(email) : undefined;
+      applyUserProfile(
+        email,
+        rawName,
+        rawAvatar,
+        isMasterAdmin ? 'ADMIN' : fallbackTpo ? 'TPO_ADMIN' : 'USER',
+        fallbackTpo ? {
+          collegeId: fallbackTpo.college_id,
+          collegeName: fallbackTpo.college_name,
+          isTpoAdmin: true,
+        } : undefined
+      );
     }
   };
 
@@ -468,15 +507,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const effectiveRole: UserRole = isSuperAdminEmail(user?.email) ? 'ADMIN' : role;
   const isEffectiveAdmin = effectiveRole === 'ADMIN' || isSuperAdminEmail(user?.email);
+  const isEffectiveTpo = !isEffectiveAdmin && (effectiveRole === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin) || Boolean(tpoService.findTpoAuthByEmail(user?.email)));
 
   return (
     <AuthContext.Provider
       value={{
-        user: user ? { ...user, role: isSuperAdminEmail(user.email) ? 'ADMIN' : user.role } : null,
+        user: user ? { ...user, role: isSuperAdminEmail(user.email) ? 'ADMIN' : isEffectiveTpo ? 'TPO_ADMIN' : user.role } : null,
         role: effectiveRole,
         isAuthenticated: effectiveRole !== 'GUEST',
         isAdmin: isEffectiveAdmin,
-        isTpoAdmin: effectiveRole === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin),
+        isTpoAdmin: isEffectiveTpo,
         isGuest: effectiveRole === 'GUEST',
         isLoading,
         signInWithGoogle,

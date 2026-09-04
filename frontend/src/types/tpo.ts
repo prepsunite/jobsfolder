@@ -23,6 +23,17 @@ export interface CollegeBatch {
   created_at: string;
 }
 
+export interface TpoAuthorizationRecord {
+  id: string;
+  email: string;
+  college_id: string;
+  college_name: string;
+  college_code: string;
+  max_licenses: number;
+  assigned_at: string;
+  status: 'ACTIVE' | 'SUSPENDED';
+}
+
 export interface CollegeStudent {
   id: string;
   email: string;
@@ -31,6 +42,8 @@ export interface CollegeStudent {
   department?: string;
   batch_year?: number;
   college_id?: string;
+  college_name?: string;
+  max_licenses?: number;
   is_tpo_admin?: boolean;
   role?: string;
   created_at?: string;
@@ -58,6 +71,7 @@ export interface MockExam {
   show_results_immediately: boolean;
   target_departments: string[];
   target_batch_year?: number;
+  is_deleted?: boolean;
   created_at?: string;
   sections?: MockExamSection[];
 }

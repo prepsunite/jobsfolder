@@ -35,6 +35,7 @@ export default function CollegesTpoManager() {
   const [newCollegeCode, setNewCollegeCode] = useState('');
   const [newCollegeCity, setNewCollegeCity] = useState('');
   const [newCollegeLicenses, setNewCollegeLicenses] = useState(1500);
+  const [newCollegeTpoEmail, setNewCollegeTpoEmail] = useState('');
   const [isAddingCollege, setIsAddingCollege] = useState(false);
 
   // Assign TPO State
@@ -71,7 +72,7 @@ export default function CollegesTpoManager() {
 
     setIsAddingCollege(true);
     try {
-      await tpoService.createCollege({
+      const created = await tpoService.createCollege({
         name: newCollegeName.trim(),
         code: newCollegeCode.trim().toUpperCase(),
         slug: newCollegeCode.trim().toLowerCase(),
@@ -81,12 +82,22 @@ export default function CollegesTpoManager() {
         valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       });
 
+      if (newCollegeTpoEmail.trim()) {
+        await tpoService.assignTpoAdmin(newCollegeTpoEmail.trim(), created.id);
+      }
+
       setNewCollegeName('');
       setNewCollegeCode('');
       setNewCollegeCity('');
+      setNewCollegeTpoEmail('');
       setIsAddCollegeModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
-      setStatusMessage({ text: `Partner College successfully registered with ${newCollegeLicenses} student seats!` });
+      queryClient.invalidateQueries({ queryKey: ['admin-tpo-admins'] });
+      setStatusMessage({
+        text: `Partner College successfully registered with ${newCollegeLicenses} student seats${
+          newCollegeTpoEmail.trim() ? ` and ${newCollegeTpoEmail.trim()} authorized as TPO Coordinator` : ''
+        }!`,
+      });
     } catch (err: any) {
       setStatusMessage({ text: `Failed to create college: ${err.message}`, isError: true });
     } finally {
@@ -484,13 +495,14 @@ export default function CollegesTpoManager() {
                 <tr>
                   <th className="p-3">Email Address</th>
                   <th className="p-3">Campus</th>
+                  <th className="p-3">Seat Quota</th>
                   <th className="p-3 text-right">Revoke</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {tpoAdmins.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="p-6 text-center text-slate-400">
+                    <td colSpan={4} className="p-6 text-center text-slate-400">
                       No TPO coordinators assigned.
                     </td>
                   </tr>
@@ -499,6 +511,11 @@ export default function CollegesTpoManager() {
                     <tr key={admin.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                       <td className="p-3 font-semibold text-slate-900 dark:text-white">{admin.email}</td>
                       <td className="p-3 font-bold text-[#FD4A32]">{admin.college_name || 'Unassigned'}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                          {admin.max_licenses || 1000} Max Seats
+                        </span>
+                      </td>
                       <td className="p-3 text-right">
                         <button
                           onClick={() => handleRevoke(admin.id, admin.email)}
@@ -639,6 +656,22 @@ export default function CollegesTpoManager() {
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
                   How many students this college has paid for. The system will enforce this cap strictly.
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Primary TPO Coordinator Email (Optional)
+                </label>
+                <input
+                  type="email"
+                  value={newCollegeTpoEmail}
+                  onChange={e => setNewCollegeTpoEmail(e.target.value)}
+                  placeholder="e.g. placements@cbit.ac.in (or faculty gmail)"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-mono text-xs"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  When this person signs in, they will automatically receive TPO Portal access with the allocated {newCollegeLicenses} student seats.
                 </p>
               </div>
 

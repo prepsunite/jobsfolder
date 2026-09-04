@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Upload,
   FileSpreadsheet,
@@ -9,6 +10,8 @@ import {
   Loader2,
   X,
   Users,
+  ShieldAlert,
+  GraduationCap,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import type { BulkStudentRow } from '@/types/tpo';
@@ -31,12 +34,24 @@ export default function BulkStudentImportModal({
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<BulkStudentRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<{
     importedCount: number;
     updatedCount: number;
     errors: string[];
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Fetch real-time college quota stats
+  const { data: stats } = useQuery({
+    queryKey: ['tpo-stats', collegeId],
+    queryFn: () => tpoService.getTpoStats(collegeId),
+    enabled: isOpen && !!collegeId,
+  });
+
+  const maxLicenses = stats?.maxLicenses || 1000;
+  const currentEnrolled = stats?.totalStudents || 0;
+  const remainingSeats = Math.max(0, maxLicenses - currentEnrolled);
 
   if (!isOpen) return null;
 
@@ -66,6 +81,7 @@ export default function BulkStudentImportModal({
 
     setFile(selectedFile);
     setImportResult(null);
+    setImportError(null);
 
     const reader = new FileReader();
     reader.onload = event => {
@@ -122,12 +138,13 @@ export default function BulkStudentImportModal({
     if (validRows.length === 0) return;
 
     setIsProcessing(true);
+    setImportError(null);
     try {
       const res = await tpoService.bulkImportStudents(collegeId, validRows);
       setImportResult(res);
       onSuccess();
     } catch (err: any) {
-      alert(`Import failed: ${err.message}`);
+      setImportError(err.message || 'Import failed. Please check institutional capacity.');
     } finally {
       setIsProcessing(false);
     }
@@ -135,6 +152,7 @@ export default function BulkStudentImportModal({
 
   const validCount = parsedRows.filter(r => r.isValid).length;
   const invalidCount = parsedRows.length - validCount;
+  const isOverQuota = validCount > remainingSeats;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
@@ -166,6 +184,55 @@ export default function BulkStudentImportModal({
         {/* Modal Content */}
         <div className="p-6 space-y-6 overflow-y-auto flex-1">
           
+          {/* Institutional Seat Capacity Bar */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#151618] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-bold text-slate-900 dark:text-white block">
+                  Enrolled Students: <span className="font-mono text-[#FD4A32]">{currentEnrolled}</span> / {maxLicenses} Max Seats
+                </span>
+                <span className="text-slate-400 text-[11px]">
+                  {remainingSeats > 0 ? `${remainingSeats} student seat(s) currently available` : 'Zero seats available (Quota Full)'}
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                Admin-Controlled Quota
+              </span>
+            </div>
+          </div>
+
+          {/* Critical Quota Exceeded Alert */}
+          {isOverQuota && (
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-3 text-xs text-rose-700 dark:text-rose-400 animate-fadeIn">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold">Student Seat Limit Exceeded</h4>
+                <p className="leading-relaxed">
+                  Your CSV file contains <strong>{validCount}</strong> valid students, but your college is only licensed for <strong>{remainingSeats}</strong> more seat(s) (Capacity: {maxLicenses} students).
+                </p>
+                <p className="text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium">
+                  Please trim your CSV file or contact your PrepUnite Account Administrator to expand your institutional student quota.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Import Error Notice */}
+          {importError && (
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-3 text-xs text-rose-700 dark:text-rose-400 animate-fadeIn">
+              <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold">Import Blocked</h4>
+                <p className="leading-relaxed">{importError}</p>
+              </div>
+            </div>
+          )}
+
           {/* Template Download Box */}
           <div className="p-4 rounded-xl bg-orange-50/60 dark:bg-[#FD4A32]/5 border border-orange-200/60 dark:border-[#FD4A32]/20 flex items-center justify-between">
             <div className="space-y-1">
@@ -299,13 +366,18 @@ export default function BulkStudentImportModal({
           {!importResult && (
             <button
               onClick={handleCommitImport}
-              disabled={validCount === 0 || isProcessing}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20"
+              disabled={validCount === 0 || isProcessing || isOverQuota}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Provisioning Accounts...
+                </>
+              ) : isOverQuota ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" />
+                  Quota Exceeded ({validCount} &gt; {remainingSeats})
                 </>
               ) : (
                 <>
