@@ -20,9 +20,8 @@ const PUBLIC_ROUTES = [
 
 export default function RootLayout() {
   const location = useLocation();
-  const { user, role, isAuthenticated, isLoading } = useAuth();
+  const { user, role, isAdmin, isAuthenticated, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const isAdmin = role === 'ADMIN';
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

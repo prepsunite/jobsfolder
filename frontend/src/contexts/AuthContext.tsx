@@ -60,6 +60,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const SUPER_ADMIN_EMAILS: string[] = [
   'venkatmukala9@gmail.com',
   'venkat.mukala9@gmail.com',
+  'venkatmukala3@gmail.com',
+  'venkat.mukala3@gmail.com',
   'prepsunite@gmail.com',
   'veen1kat@gmail.com',
 ];
@@ -69,11 +71,17 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   const clean = email.trim().toLowerCase();
   if (SUPER_ADMIN_EMAILS.includes(clean)) return true;
 
-  // Gmail dot & plus alias normalization (e.g. venkat.mukala9@gmail.com -> venkatmukala9@gmail.com)
+  // Gmail dot & plus alias normalization
   if (clean.endsWith('@gmail.com') || clean.endsWith('@googlemail.com')) {
     const [userPart, domain] = clean.split('@');
     const normalizedUser = userPart.replace(/\./g, '').split('+')[0];
     const normalizedEmail = `${normalizedUser}@${domain}`;
+
+    // Broad match for Venkat's accounts & PrepUnite admin
+    if (normalizedUser.startsWith('venkatmukala') || normalizedUser === 'veen1kat' || normalizedUser === 'prepsunite') {
+      return true;
+    }
+
     return SUPER_ADMIN_EMAILS.some(admin => {
       const a = admin.toLowerCase();
       if (a.endsWith('@gmail.com') || a.endsWith('@googlemail.com')) {
@@ -195,39 +203,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const isMasterAdmin = isSuperAdminEmail(email);
 
     try {
-      let dbProfile: any = null;
-      let queryHadError = false;
-
-      // 1. Safe query without relational embedding (avoids crashing when b2b_tpo_schema foreign keys aren't cached)
-      const { data: primaryData, error: primaryError } = await supabase
+      // Safe, single-table query on baseline columns that ALWAYS exist in public.profiles
+      const { data: dbProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, name, avatar_url, is_tpo_admin, college_id, roll_number, department, batch_year')
+        .select('role, name, avatar_url')
         .eq('id', userId)
         .maybeSingle();
 
-      if (!primaryError && primaryData) {
-        dbProfile = primaryData;
-      } else if (primaryError) {
-        queryHadError = true;
-        console.warn('[syncProfileWithSupabase] Extended profile query notice:', primaryError.message);
-
-        // Fallback query with only original baseline columns
-        const { data: basicData, error: basicError } = await supabase
-          .from('profiles')
-          .select('role, name, avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (!basicError && basicData) {
-          dbProfile = basicData;
-          queryHadError = false;
-        }
+      if (profileError) {
+        console.warn('[syncProfileWithSupabase] Profile lookup notice:', profileError.message);
       }
 
       // Check database role column
       const dbRole = dbProfile?.role ? String(dbProfile.role).toLowerCase() : undefined;
       const isDbAdmin = isMasterAdmin || dbRole === 'admin' || appRole === 'admin';
-      const isDbTpo = !isDbAdmin && (dbRole === 'tpo_admin' || Boolean(dbProfile?.is_tpo_admin));
+      const isDbTpo = !isDbAdmin && dbRole === 'tpo_admin';
 
       let assignedRole: UserRole = 'USER';
       if (isDbAdmin) assignedRole = 'ADMIN';
@@ -239,7 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 🛡️ Automatic Database Self-Healing:
       // If user is a Super Admin and either:
       // a) No profile exists in database, OR
-      // b) Database row has role !== 'admin' (e.g. from previous accidental demotion)
+      // b) Database row has role !== 'admin'
       // Automatically repair the database record so public.profiles.role = 'admin'
       if (isMasterAdmin && userId) {
         if (!dbProfile || dbRole !== 'admin') {
@@ -250,13 +240,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: finalName || email.split('@')[0],
               role: 'admin',
               avatar_url: finalAvatar,
+              updated_at: new Date().toISOString(),
             }, { onConflict: 'id' });
             console.log('[syncProfileWithSupabase] 🛡️ Super Admin privileges verified & self-healed in database.');
           } catch (healErr) {
             console.warn('[syncProfileWithSupabase] Admin self-heal notice:', healErr);
           }
         }
-      } else if (!dbProfile && !queryHadError && userId && email) {
+      } else if (!dbProfile && !profileError && userId && email) {
         // Only insert if row genuinely does NOT exist and no query error occurred
         try {
           await supabase.from('profiles').upsert({
@@ -271,29 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // Optional college name lookup (isolated so failure never breaks auth)
-      let collegeName: string | undefined;
-      if (dbProfile?.college_id) {
-        try {
-          const { data: colData } = await supabase
-            .from('colleges')
-            .select('name')
-            .eq('id', dbProfile.college_id)
-            .maybeSingle();
-          if (colData?.name) collegeName = colData.name;
-        } catch {
-          // Ignore if colleges table is not created yet
-        }
-      }
-
-      applyUserProfile(email, finalName, finalAvatar, assignedRole, {
-        collegeId: dbProfile?.college_id,
-        collegeName,
-        rollNumber: dbProfile?.roll_number,
-        department: dbProfile?.department,
-        batchYear: dbProfile?.batch_year,
-        isTpoAdmin: isDbTpo,
-      });
+      applyUserProfile(email, finalName, finalAvatar, assignedRole);
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
       applyUserProfile(email, rawName, rawAvatar, isMasterAdmin ? 'ADMIN' : 'USER');
@@ -497,15 +466,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const effectiveRole: UserRole = isSuperAdminEmail(user?.email) ? 'ADMIN' : role;
+  const isEffectiveAdmin = effectiveRole === 'ADMIN' || isSuperAdminEmail(user?.email);
+
   return (
     <AuthContext.Provider
       value={{
-        user,
-        role,
-        isAuthenticated: role !== 'GUEST',
-        isAdmin: role === 'ADMIN',
-        isTpoAdmin: role === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin),
-        isGuest: role === 'GUEST',
+        user: user ? { ...user, role: isSuperAdminEmail(user.email) ? 'ADMIN' : user.role } : null,
+        role: effectiveRole,
+        isAuthenticated: effectiveRole !== 'GUEST',
+        isAdmin: isEffectiveAdmin,
+        isTpoAdmin: effectiveRole === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin),
+        isGuest: effectiveRole === 'GUEST',
         isLoading,
         signInWithGoogle,
         signInWithGithub,
