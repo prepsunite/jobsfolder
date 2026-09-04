@@ -369,6 +369,7 @@ CREATE POLICY "Admin full access transactions"
   ON public.transactions FOR ALL USING (public.is_admin());
 
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
 DROP POLICY IF EXISTS "User reads own subscription" ON public.user_subscriptions;
 CREATE POLICY "User reads own subscription"
@@ -389,7 +390,7 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
         SELECT 1 FROM public.tpo_authorizations ta
         WHERE lower(ta.email) = lower(auth.jwt()->>'email')
           AND ta.status = 'ACTIVE'
-          AND 'B2B_CAMPUS_' || ta.college_id = public.user_subscriptions.payment_id
+          AND public.user_subscriptions.payment_id LIKE 'B2B_CAMPUS_' || ta.college_id || '%'
       )
     )
   );
@@ -723,7 +724,7 @@ DECLARE
 BEGIN
   v_clean_email := lower(trim(p_email));
   v_plan_name := 'Campus Pro Pass (' || coalesce(p_college_name, 'Partner College') || ')';
-  v_payment_id := 'B2B_CAMPUS_' || p_college_id;
+  v_payment_id := 'B2B_CAMPUS_' || p_college_id || '_' || md5(v_clean_email);
 
   INSERT INTO public.user_subscriptions (
     user_email,
@@ -740,8 +741,9 @@ BEGIN
     p_valid_until,
     NOW()
   )
-  ON CONFLICT (payment_id, user_email)
+  ON CONFLICT (payment_id)
   DO UPDATE SET
+    user_email = EXCLUDED.user_email,
     plan_name = EXCLUDED.plan_name,
     status = 'ACTIVE',
     expires_at = EXCLUDED.expires_at,

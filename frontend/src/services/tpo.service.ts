@@ -1126,7 +1126,7 @@ export const tpoService = {
     const cleanEmail = email.trim().toLowerCase();
     const validUntil = college.valid_until || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
     const planName = `Campus Pro Pass (${college.name})`;
-    const paymentId = `B2B_CAMPUS_${college.id}`;
+    const paymentId = `B2B_CAMPUS_${college.id}_${cleanEmail.replace(/[^a-z0-9]/g, '')}`;
 
     // 1. Supabase public.user_subscriptions upsert (RPC with SECURITY DEFINER + direct fallback)
     try {
