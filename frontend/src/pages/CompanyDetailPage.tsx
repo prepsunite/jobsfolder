@@ -7,7 +7,7 @@ import { examService } from '@/services/exam.service';
 import { dataStore, type ExamItem } from '@/services/dataStore';
 import { PaperService } from '@/services/paper.service';
 import { supabasePaymentService } from '@/services/supabasePaymentService';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -45,7 +45,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const urlExamId = searchParams.get('examId');
   const navigate = useNavigate();
   const { role, user } = useAuth();
-  const isAdmin = role === 'ADMIN';
+  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
 
   const isDirectOldPapersUrl = !!isOldPapersRoute || (typeof window !== 'undefined' && window.location.pathname.endsWith('/oldpapers'));

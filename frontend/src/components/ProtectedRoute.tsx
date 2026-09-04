@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -14,8 +14,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false,
   requireTpo = false,
 }) => {
-  const { isAuthenticated, isAdmin, isTpoAdmin, isLoading } = useAuth();
+  const { user, isAuthenticated, isAdmin, isTpoAdmin, isLoading } = useAuth();
   const location = useLocation();
+
+  const isEffectiveAdmin = isAdmin || isSuperAdminEmail(user?.email);
 
   // Show clean spinner during initial Supabase auth handshake
   if (isLoading) {
@@ -35,7 +37,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Requires Admin role but user is not admin
-  if (requireAdmin && !isAdmin) {
+  if (requireAdmin && !isEffectiveAdmin) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center space-y-4 animate-fadeIn">
         <div className="w-12 h-12 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
@@ -60,7 +62,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Requires TPO role but user is neither TPO nor Super Admin
-  if (requireTpo && !isTpoAdmin && !isAdmin) {
+  if (requireTpo && !isTpoAdmin && !isEffectiveAdmin) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center space-y-4 animate-fadeIn">
         <div className="w-12 h-12 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import {
   Building2,
   BookOpen,
@@ -33,6 +33,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, role, isTpoAdmin, logout } = useAuth();
+  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
   const navLinks = [
@@ -87,7 +88,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   Prep<span className="text-[#FD4A32]">Unite</span>
                 </span>
                 <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
-                  {role === 'ADMIN' ? 'Admin Portal' : role === 'USER' ? 'Student Workspace' : 'Guest Mode'}
+                  {isAdmin ? 'Admin Portal' : role === 'USER' ? 'Student Workspace' : 'Guest Mode'}
                 </span>
               </div>
             </Link>
@@ -107,7 +108,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <div className="flex items-center gap-2">
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  role === 'ADMIN'
+                  isAdmin
                     ? 'bg-purple-500 animate-pulse'
                     : role === 'USER'
                     ? 'bg-emerald-500'
@@ -115,7 +116,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 }`}
               />
               <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
-                {role === 'ADMIN' ? 'Admin Active' : role === 'USER' ? 'Student Mode' : 'Guest Preview'}
+                {isAdmin ? 'Admin Active' : role === 'USER' ? 'Student Mode' : 'Guest Preview'}
               </span>
             </div>
             <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase">
@@ -195,7 +196,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           </div>
 
           {/* Admin Control Panel Section */}
-          {role === 'ADMIN' && (
+          {isAdmin && (
             <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
               <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
                 Control Center
@@ -221,7 +222,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           )}
 
           {/* TPO CRT Control Link */}
-          {(role === 'TPO_ADMIN' || isTpoAdmin || role === 'ADMIN') && (
+          {(role === 'TPO_ADMIN' || isTpoAdmin || isAdmin) && (
             <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
               <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
                 Institutional CRT
@@ -266,17 +267,17 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
                 <div
                   className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
-                    role === 'ADMIN' ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#FD4A32]'
+                    isAdmin ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#FD4A32]'
                   }`}
                 >
-                  {role === 'ADMIN' ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                  {isAdmin ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                 </div>
                 <div className="min-w-0">
                   <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">
                     {user?.name || 'Workspace Account'}
                   </span>
                   <span className="text-[9px] font-medium text-[#868E96] dark:text-[#555555] block truncate">
-                    {role === 'ADMIN' ? 'Administrator' : (user?.email || 'Active Account')}
+                    {isAdmin ? 'Administrator' : (user?.email || 'Active Account')}
                   </span>
                 </div>
               </Link>

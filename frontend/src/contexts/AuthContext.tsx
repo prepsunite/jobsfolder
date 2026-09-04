@@ -57,6 +57,36 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const SUPER_ADMIN_EMAILS: string[] = [
+  'venkatmukala9@gmail.com',
+  'venkat.mukala9@gmail.com',
+  'prepsunite@gmail.com',
+  'veen1kat@gmail.com',
+];
+
+export function isSuperAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+  if (SUPER_ADMIN_EMAILS.includes(clean)) return true;
+
+  // Gmail dot & plus alias normalization (e.g. venkat.mukala9@gmail.com -> venkatmukala9@gmail.com)
+  if (clean.endsWith('@gmail.com') || clean.endsWith('@googlemail.com')) {
+    const [userPart, domain] = clean.split('@');
+    const normalizedUser = userPart.replace(/\./g, '').split('+')[0];
+    const normalizedEmail = `${normalizedUser}@${domain}`;
+    return SUPER_ADMIN_EMAILS.some(admin => {
+      const a = admin.toLowerCase();
+      if (a.endsWith('@gmail.com') || a.endsWith('@googlemail.com')) {
+        const [aUser, aDomain] = a.split('@');
+        return `${aUser.replace(/\./g, '').split('+')[0]}@${aDomain}` === normalizedEmail;
+      }
+      return a === normalizedEmail;
+    });
+  }
+
+  return false;
+}
+
 const GUEST_USER: UserProfile = {
   id: 'guest',
   name: 'Guest Explorer',
@@ -69,10 +99,16 @@ const getInitialUser = (): UserProfile | null => {
   try {
     const email = localStorage.getItem('prepunite_user_email');
     const name = localStorage.getItem('prepunite_user_name');
-    const role = (localStorage.getItem('prepunite_role') as UserRole) || 'USER';
+    let role = (localStorage.getItem('prepunite_role') as UserRole) || 'USER';
     const avatarUrl = localStorage.getItem('prepunite_user_avatar') || undefined;
 
     if (email && email !== 'guest@prepunite.com') {
+      // 🛡️ Super Admin Protection: Never allow cached 'USER' to demote super admin email
+      if (isSuperAdminEmail(email)) {
+        role = 'ADMIN';
+        localStorage.setItem('prepunite_role', 'ADMIN');
+      }
+
       return {
         id: email,
         name: name || formatDisplayNameFromEmail(email, ''),
@@ -89,6 +125,10 @@ const getInitialUser = (): UserProfile | null => {
 
 const getInitialRole = (): UserRole => {
   try {
+    const email = localStorage.getItem('prepunite_user_email');
+    if (email && isSuperAdminEmail(email)) {
+      return 'ADMIN';
+    }
     const role = localStorage.getItem('prepunite_role') as UserRole;
     if (role) return role;
   } catch {}
@@ -115,15 +155,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isTpoAdmin?: boolean;
     }
   ) => {
+    // 🛡️ Master Admin Protection: super admin email ALWAYS overrides assignedRole to ADMIN
+    const finalRole: UserRole = isSuperAdminEmail(email) ? 'ADMIN' : assignedRole;
     const name = formatDisplayNameFromEmail(email, nameInput);
 
     const newProfile: UserProfile = {
       id: email,
       name,
       email,
-      role: assignedRole,
+      role: finalRole,
       avatarUrl,
-      isTpoAdmin: assignedRole === 'TPO_ADMIN' || Boolean(collegeData?.isTpoAdmin),
+      isTpoAdmin: finalRole === 'TPO_ADMIN' || Boolean(collegeData?.isTpoAdmin),
       collegeId: collegeData?.collegeId,
       collegeName: collegeData?.collegeName,
       rollNumber: collegeData?.rollNumber,
@@ -132,8 +174,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setUser(newProfile);
-    setRole(assignedRole);
-    localStorage.setItem('prepunite_role', assignedRole);
+    setRole(finalRole);
+    localStorage.setItem('prepunite_role', finalRole);
     localStorage.setItem('prepunite_user_email', email);
     localStorage.setItem('prepunite_user_name', name);
     if (avatarUrl) {
@@ -150,21 +192,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     rawAvatar?: string,
     appRole?: string
   ) => {
+    const isMasterAdmin = isSuperAdminEmail(email);
+
     try {
-      const { data: dbProfile, error } = await supabase
+      let dbProfile: any = null;
+      let queryHadError = false;
+
+      // 1. Safe query without relational embedding (avoids crashing when b2b_tpo_schema foreign keys aren't cached)
+      const { data: primaryData, error: primaryError } = await supabase
         .from('profiles')
-        .select('role, name, avatar_url, is_tpo_admin, college_id, roll_number, department, batch_year, colleges(name)')
+        .select('role, name, avatar_url, is_tpo_admin, college_id, roll_number, department, batch_year')
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) {
-        console.warn('[syncProfileWithSupabase] Profile lookup notice:', error.message);
+      if (!primaryError && primaryData) {
+        dbProfile = primaryData;
+      } else if (primaryError) {
+        queryHadError = true;
+        console.warn('[syncProfileWithSupabase] Extended profile query notice:', primaryError.message);
+
+        // Fallback query with only original baseline columns
+        const { data: basicData, error: basicError } = await supabase
+          .from('profiles')
+          .select('role, name, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (!basicError && basicData) {
+          dbProfile = basicData;
+          queryHadError = false;
+        }
       }
 
-      // Check database role column as source of truth
+      // Check database role column
       const dbRole = dbProfile?.role ? String(dbProfile.role).toLowerCase() : undefined;
-      const isDbAdmin = dbRole === 'admin' || appRole === 'admin';
-      const isDbTpo = dbRole === 'tpo_admin' || Boolean(dbProfile?.is_tpo_admin);
+      const isDbAdmin = isMasterAdmin || dbRole === 'admin' || appRole === 'admin';
+      const isDbTpo = !isDbAdmin && (dbRole === 'tpo_admin' || Boolean(dbProfile?.is_tpo_admin));
 
       let assignedRole: UserRole = 'USER';
       if (isDbAdmin) assignedRole = 'ADMIN';
@@ -173,23 +236,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const finalName = dbProfile?.name || rawName;
       const finalAvatar = dbProfile?.avatar_url || rawAvatar;
 
-      if (!dbProfile && userId && email) {
+      // 🛡️ Automatic Database Self-Healing:
+      // If user is a Super Admin and either:
+      // a) No profile exists in database, OR
+      // b) Database row has role !== 'admin' (e.g. from previous accidental demotion)
+      // Automatically repair the database record so public.profiles.role = 'admin'
+      if (isMasterAdmin && userId) {
+        if (!dbProfile || dbRole !== 'admin') {
+          try {
+            await supabase.from('profiles').upsert({
+              id: userId,
+              email: email,
+              name: finalName || email.split('@')[0],
+              role: 'admin',
+              avatar_url: finalAvatar,
+            }, { onConflict: 'id' });
+            console.log('[syncProfileWithSupabase] 🛡️ Super Admin privileges verified & self-healed in database.');
+          } catch (healErr) {
+            console.warn('[syncProfileWithSupabase] Admin self-heal notice:', healErr);
+          }
+        }
+      } else if (!dbProfile && !queryHadError && userId && email) {
+        // Only insert if row genuinely does NOT exist and no query error occurred
         try {
           await supabase.from('profiles').upsert({
             id: userId,
             email: email,
             name: finalName || email.split('@')[0],
-            role: isDbAdmin ? 'admin' : (isDbTpo ? 'TPO_ADMIN' : 'user'),
+            role: isDbTpo ? 'tpo_admin' : 'user',
             avatar_url: finalAvatar,
-          });
+          }, { onConflict: 'id' });
         } catch (uErr) {
           console.warn('[syncProfileWithSupabase] Profile creation notice:', uErr);
         }
       }
 
+      // Optional college name lookup (isolated so failure never breaks auth)
+      let collegeName: string | undefined;
+      if (dbProfile?.college_id) {
+        try {
+          const { data: colData } = await supabase
+            .from('colleges')
+            .select('name')
+            .eq('id', dbProfile.college_id)
+            .maybeSingle();
+          if (colData?.name) collegeName = colData.name;
+        } catch {
+          // Ignore if colleges table is not created yet
+        }
+      }
+
       applyUserProfile(email, finalName, finalAvatar, assignedRole, {
         collegeId: dbProfile?.college_id,
-        collegeName: (dbProfile as any)?.colleges?.name,
+        collegeName,
         rollNumber: dbProfile?.roll_number,
         department: dbProfile?.department,
         batchYear: dbProfile?.batch_year,
@@ -197,7 +296,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
-      applyUserProfile(email, rawName, rawAvatar, 'USER');
+      applyUserProfile(email, rawName, rawAvatar, isMasterAdmin ? 'ADMIN' : 'USER');
     }
   };
 
@@ -338,7 +437,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       if (data?.user?.email) {
         const name = data.user.user_metadata?.full_name || email.split('@')[0];
-        applyUserProfile(email, name);
+        const assignedRole: UserRole = isSuperAdminEmail(email) ? 'ADMIN' : 'USER';
+        applyUserProfile(email, name, undefined, assignedRole);
       }
       return { error: null, data };
     } catch (err: any) {

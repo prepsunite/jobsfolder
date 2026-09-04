@@ -7,7 +7,7 @@ import { examService } from '@/services/exam.service';
 import { questionService } from '@/services/question.service';
 import { experienceService } from '@/services/experience.service';
 import { dataStore, type CompanyItem, type ExamItem, type ExperienceItem } from '@/services/dataStore';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { Link } from 'react-router';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -41,7 +41,8 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
 
   const [adminTab, setAdminTab] = useState<
@@ -81,7 +82,7 @@ export default function AdminDashboardPage() {
         createdAt: c.createdAt || new Date().toISOString(),
       }));
     },
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -89,7 +90,7 @@ export default function AdminDashboardPage() {
   const { data: companyExamsList = [] } = useQuery<ExamItem[]>({
     queryKey: ['live-exams', selectedCompanySlug],
     queryFn: () => examService.getExamsByCompany(selectedCompanySlug),
-    enabled: role === 'ADMIN' && !!selectedCompanySlug,
+    enabled: isAdmin && !!selectedCompanySlug,
     staleTime: 0,
   });
 
@@ -105,7 +106,7 @@ export default function AdminDashboardPage() {
       if (error) throw error;
       return data || [];
     },
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
   const experiencesList: ExperienceItem[] = (experiencesPage || []).map((e: any) => {
@@ -153,7 +154,7 @@ export default function AdminDashboardPage() {
   const { data: questionReportsList = [], isLoading: reportsLoading } = useQuery<QuestionReport[]>({
     queryKey: ['admin-question-reports'],
     queryFn: () => feedbackService.getQuestionReports('ALL'),
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -161,7 +162,7 @@ export default function AdminDashboardPage() {
   const { data: contactMessagesList = [], isLoading: contactLoading } = useQuery<ContactMessage[]>({
     queryKey: ['admin-contact-messages'],
     queryFn: () => feedbackService.getContactMessages('ALL'),
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -169,7 +170,7 @@ export default function AdminDashboardPage() {
   const { data: allExamsGlobal = [] } = useQuery({
     queryKey: ['live-all-exams'],
     queryFn: () => examService.getAllExams(),
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -177,7 +178,7 @@ export default function AdminDashboardPage() {
   const { data: registeredUsersList = [] } = useQuery({
     queryKey: ['admin-users'],
     queryFn: adminService.getRegisteredUsers,
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -185,7 +186,7 @@ export default function AdminDashboardPage() {
   const { data: allTransactionsList = [] } = useQuery({
     queryKey: ['admin-transactions'],
     queryFn: adminService.getAllTransactions,
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -193,7 +194,7 @@ export default function AdminDashboardPage() {
   const { data: allPurchasesList = [] } = useQuery({
     queryKey: ['admin-purchases'],
     queryFn: adminService.getAllPaperPurchases,
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -201,7 +202,7 @@ export default function AdminDashboardPage() {
   const { data: allSubscriptionsList = [] } = useQuery({
     queryKey: ['admin-subscriptions'],
     queryFn: adminService.getAllSubscriptions,
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     staleTime: 0,
   });
 
@@ -305,7 +306,7 @@ export default function AdminDashboardPage() {
   const { data } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: adminService.getDashboardStats,
-    enabled: role === 'ADMIN',
+    enabled: isAdmin,
     retry: 1,
   });
 
@@ -552,7 +553,7 @@ export default function AdminDashboardPage() {
   };
 
   // 🛡️ STRICT ADMIN ACCESS PROTECTION: NON-ADMINS GET A 404 PAGE
-  if (role !== 'ADMIN') {
+  if (!isAdmin) {
     return <NotFoundPage />;
   }
 
