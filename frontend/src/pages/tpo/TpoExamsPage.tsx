@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
 import {
   FileText,
@@ -22,6 +22,7 @@ export default function TpoExamsPage() {
     collegeId: string;
     currentCollege: any;
   }>();
+  const queryClient = useQueryClient();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'UPCOMING'>('ALL');
@@ -166,6 +167,7 @@ export default function TpoExamsPage() {
         collegeId={collegeId}
         onSuccess={() => {
           setIsCreateModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           refetch();
         }}
       />

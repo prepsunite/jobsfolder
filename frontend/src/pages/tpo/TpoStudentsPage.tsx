@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOutletContext } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
 import {
   Users,
@@ -29,6 +29,7 @@ export default function TpoStudentsPage() {
     collegeId: string;
     currentCollege: any;
   }>();
+  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
@@ -86,6 +87,7 @@ export default function TpoStudentsPage() {
       await tpoService.removeStudent(collegeId, studentEmail);
       setActionSuccessMsg(`Removed ${studentName} from campus roster and freed up 1 license seat.`);
       setTimeout(() => setActionSuccessMsg(null), 5000);
+      queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
       refetch();
     } catch (err: any) {
       alert(`Failed to remove student: ${err.message}`);
@@ -303,6 +305,7 @@ export default function TpoStudentsPage() {
             `Successfully enrolled ${name}! Campus Pro Pass has been activated with 100% unlocked access to all papers, company blueprints, and tests.`
           );
           setTimeout(() => setActionSuccessMsg(null), 6000);
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           refetch();
         }}
       />
@@ -317,6 +320,7 @@ export default function TpoStudentsPage() {
           setIsImportModalOpen(false);
           setActionSuccessMsg('Batch roster imported! All uploaded students have been provisioned with Campus Pro Pass.');
           setTimeout(() => setActionSuccessMsg(null), 6000);
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           refetch();
         }}
       />

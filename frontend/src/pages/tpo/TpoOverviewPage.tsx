@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
 import {
   Users,
@@ -27,6 +27,7 @@ export default function TpoOverviewPage() {
     currentCollege: any;
     stats: any;
   }>();
+  const queryClient = useQueryClient();
 
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -261,6 +262,8 @@ export default function TpoOverviewPage() {
         collegeName={currentCollege.name}
         onSuccess={(studentName) => {
           setIsAddStudentOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
           refetch();
         }}
       />
@@ -272,6 +275,8 @@ export default function TpoOverviewPage() {
         collegeName={currentCollege.name}
         onSuccess={() => {
           setIsImportOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
           refetch();
         }}
       />
@@ -282,6 +287,8 @@ export default function TpoOverviewPage() {
         collegeId={collegeId}
         onSuccess={() => {
           setIsCreateExamOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
           refetch();
         }}
       />

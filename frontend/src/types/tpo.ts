@@ -123,6 +123,7 @@ export interface StudentExamAttempt {
     roll_number?: string;
     department?: string;
   };
+  updated_at?: string;
 }
 
 export interface BulkStudentRow {

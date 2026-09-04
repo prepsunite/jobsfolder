@@ -71,8 +71,16 @@ export default function TpoSettingsPage() {
 
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 space-y-1">
             <div className="text-[11px] font-bold text-slate-400 uppercase">Package Validity</div>
-            <div className="text-xl font-black text-slate-900 dark:text-white">Annual Pass</div>
-            <p className="text-[10px] text-slate-400">Valid for 2025–2026 Academic Year</p>
+            <div className="text-xl font-black text-slate-900 dark:text-white">
+              {currentCollege.valid_until
+                ? new Date(currentCollege.valid_until).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : 'Annual Pass'}
+            </div>
+            <p className="text-[10px] text-slate-400">Institutional Access Window</p>
           </div>
         </div>
 

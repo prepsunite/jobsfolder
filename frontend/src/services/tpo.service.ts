@@ -19,6 +19,7 @@ export const STORAGE_KEYS_TPO = {
   STUDENTS: 'prepunite_tpo_students',
   EXAMS: 'prepunite_tpo_mock_exams',
   STUDENT_ENTITLEMENTS: 'prepunite_student_entitlements',
+  ATTEMPTS: 'prepunite_tpo_exam_attempts',
 } as const;
 
 export const DEFAULT_COLLEGES: College[] = [
@@ -123,6 +124,32 @@ function getLocalExams(collegeId: string): MockExam[] {
 function saveLocalExams(collegeId: string, exams: MockExam[]) {
   try {
     localStorage.setItem(`${STORAGE_KEYS_TPO.EXAMS}_${collegeId}`, JSON.stringify(exams));
+  } catch {}
+}
+
+function getLocalAttempts(examId?: string): StudentExamAttempt[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS_TPO.ATTEMPTS);
+    if (raw) {
+      const parsed: StudentExamAttempt[] = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return examId ? parsed.filter(a => a.mock_exam_id === examId) : parsed;
+      }
+    }
+  } catch {}
+  return [];
+}
+
+function saveLocalAttempt(attempt: StudentExamAttempt) {
+  try {
+    const all = getLocalAttempts();
+    const idx = all.findIndex(a => a.id === attempt.id);
+    if (idx !== -1) {
+      all[idx] = attempt;
+    } else {
+      all.unshift(attempt);
+    }
+    localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(all));
   } catch {}
 }
 
@@ -702,24 +729,13 @@ export const tpoService = {
     let list: CollegeStudent[] = [];
 
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, email, name, roll_number, department, batch_year, college_id, is_tpo_admin, role, created_at')
         .eq('college_id', collegeId)
-        .neq('role', 'TPO_ADMIN');
+        .neq('role', 'TPO_ADMIN')
+        .order('created_at', { ascending: false });
 
-      if (filters?.department && filters.department !== 'ALL') {
-        query = query.eq('department', filters.department);
-      }
-      if (filters?.batchYear) {
-        query = query.eq('batch_year', filters.batchYear);
-      }
-      if (filters?.search) {
-        const term = `%${filters.search.trim().toLowerCase()}%`;
-        query = query.or(`name.ilike.${term},email.ilike.${term},roll_number.ilike.${term}`);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
       if (!error && data) list = data;
     } catch {}
 
@@ -734,6 +750,26 @@ export const tpoService = {
         }
       });
       list = Array.from(map.values());
+    }
+
+    // Apply filters reliably to the combined list
+    if (filters) {
+      if (filters.department && filters.department !== 'ALL') {
+        const targetDept = filters.department.trim().toUpperCase();
+        list = list.filter(s => (s.department || '').toUpperCase() === targetDept);
+      }
+      if (filters.batchYear) {
+        list = list.filter(s => Number(s.batch_year) === Number(filters.batchYear));
+      }
+      if (filters.search && filters.search.trim()) {
+        const term = filters.search.trim().toLowerCase();
+        list = list.filter(
+          s =>
+            (s.name || '').toLowerCase().includes(term) ||
+            (s.email || '').toLowerCase().includes(term) ||
+            (s.roll_number || '').toLowerCase().includes(term)
+        );
+      }
     }
 
     return list;
@@ -1120,24 +1156,37 @@ export const tpoService = {
     try {
       const { data } = await supabase
         .from('student_exam_attempts')
-        .select('total_score, percentage, status')
+        .select('id, total_score, percentage, status, college_id')
         .eq('college_id', collegeId)
         .eq('status', 'SUBMITTED');
-      if (data) attempts = data;
+      if (data && data.length > 0) attempts = data;
     } catch {}
+
+    // Merge with local completed attempts
+    const examIds = new Set(exams.map(e => e.id));
+    const localAttempts = getLocalAttempts().filter(
+      a =>
+        (a.college_id === collegeId || examIds.has(a.mock_exam_id)) &&
+        (a.status === 'SUBMITTED' || a.status === 'TIMED_OUT' || a.status === 'TERMINATED_MALPRACTICE')
+    );
+
+    const attemptsMap = new Map<string, any>();
+    attempts.forEach(a => attemptsMap.set(a.id, a));
+    localAttempts.forEach(a => attemptsMap.set(a.id, a));
+    const allAttempts = Array.from(attemptsMap.values());
 
     const totalStudents = students.length;
     const activeExamsCount = exams.filter(e => e.is_active).length;
-    const totalAttempts = attempts.length;
+    const totalAttempts = allAttempts.length;
     const avgCollegeScore =
       totalAttempts > 0
-        ? Math.round(attempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / totalAttempts)
+        ? Math.round(allAttempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / totalAttempts)
         : totalStudents > 0 ? 76 : 0;
 
     // Group students by department
     const deptMap: Record<string, number> = {};
     students.forEach(s => {
-      const d = s.department || 'GENERAL';
+      const d = (s.department || 'GENERAL').toUpperCase();
       deptMap[d] = (deptMap[d] || 0) + 1;
     });
 
@@ -1230,18 +1279,59 @@ export const tpoService = {
     }[]
   ): Promise<MockExam> {
     const examId = `exam-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
-    const sections: MockExamSection[] = sectionConfigs.map((sec, idx) => ({
-      id: `sec-${examId}-${idx + 1}`,
-      mock_exam_id: examId,
-      name: sec.name,
-      section_order: idx + 1,
-      duration_minutes: sec.duration_minutes || undefined,
-      marks_per_correct: sec.marks_per_correct,
-      negative_marking: sec.negative_marking,
-      question_ids: [],
-      topic_ids: sec.topic_ids,
-      created_at: new Date().toISOString(),
-    }));
+    const sections: MockExamSection[] = await Promise.all(
+      sectionConfigs.map(async (sec, idx) => {
+        let questionIds: string[] = [];
+
+        try {
+          if (sec.topic_ids && sec.topic_ids.length > 0) {
+            const { data } = await supabase
+              .from('topic_questions')
+              .select('id')
+              .in('topic_id', sec.topic_ids)
+              .eq('is_deleted', false)
+              .limit(sec.question_count || 10);
+            if (data && data.length > 0) {
+              questionIds = data.map(q => q.id);
+            }
+          }
+
+          if (questionIds.length < (sec.question_count || 10)) {
+            const needed = (sec.question_count || 10) - questionIds.length;
+            const { data: fallbackQ } = await supabase
+              .from('topic_questions')
+              .select('id')
+              .eq('is_deleted', false)
+              .limit(Math.max(needed * 2, 20));
+            if (fallbackQ && fallbackQ.length > 0) {
+              const existingSet = new Set(questionIds);
+              for (const f of fallbackQ) {
+                if (!existingSet.has(f.id)) {
+                  questionIds.push(f.id);
+                  existingSet.add(f.id);
+                  if (questionIds.length >= (sec.question_count || 10)) break;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Notice pulling questions from Supabase for section:', sec.name, e);
+        }
+
+        return {
+          id: `sec-${examId}-${idx + 1}`,
+          mock_exam_id: examId,
+          name: sec.name,
+          section_order: idx + 1,
+          duration_minutes: sec.duration_minutes || undefined,
+          marks_per_correct: sec.marks_per_correct,
+          negative_marking: sec.negative_marking,
+          question_ids: questionIds,
+          topic_ids: sec.topic_ids,
+          created_at: new Date().toISOString(),
+        };
+      })
+    );
 
     const newLocalExam: MockExam = {
       id: examId,
@@ -1333,20 +1423,35 @@ export const tpoService = {
   },
 
   async getExamAttempts(examId: string): Promise<StudentExamAttempt[]> {
-    const { data, error } = await supabase
-      .from('student_exam_attempts')
-      .select(`
-        *,
-        student:profiles(name, email, roll_number, department)
-      `)
-      .eq('mock_exam_id', examId)
-      .order('total_score', { ascending: false });
+    let cloudAttempts: StudentExamAttempt[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('student_exam_attempts')
+        .select(`
+          *,
+          student:profiles(name, email, roll_number, department)
+        `)
+        .eq('mock_exam_id', examId)
+        .order('total_score', { ascending: false });
 
-    if (error) {
-      console.warn('Could not fetch exam attempts:', error.message);
-      return [];
+      if (!error && data) {
+        cloudAttempts = data;
+      }
+    } catch (error: any) {
+      console.warn('Notice fetching exam attempts from Supabase:', error?.message);
     }
-    return data || [];
+
+    // Merge with local attempts
+    const localAttempts = getLocalAttempts(examId);
+    const map = new Map<string, StudentExamAttempt>();
+    cloudAttempts.forEach(a => map.set(a.id, a));
+    localAttempts.forEach(a => {
+      if (!map.has(a.id)) {
+        map.set(a.id, a);
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
   },
 
   // ==========================================
@@ -1356,16 +1461,17 @@ export const tpoService = {
   async getQuestionsForExam(questionIds: string[]): Promise<any[]> {
     if (!questionIds || questionIds.length === 0) return [];
 
-    const { data, error } = await supabase
-      .from('topic_questions')
-      .select('id, statement, options, difficulty, topic_id, question_number')
-      .in('id', questionIds);
+    try {
+      const { data, error } = await supabase
+        .from('topic_questions')
+        .select('id, statement, options, difficulty, topic_id, question_number')
+        .in('id', questionIds);
 
-    if (error) {
+      if (!error && data && data.length > 0) return data;
+    } catch (error) {
       console.error('Error fetching questions:', error);
-      return [];
     }
-    return data || [];
+    return [];
   },
 
   async startOrResumeAttempt(
@@ -1373,36 +1479,71 @@ export const tpoService = {
     studentId: string,
     collegeId: string
   ): Promise<StudentExamAttempt> {
-    // Check for existing attempt
-    const { data: existing } = await supabase
-      .from('student_exam_attempts')
-      .select('*')
-      .eq('mock_exam_id', mockExamId)
-      .eq('student_id', studentId)
-      .maybeSingle();
-
-    if (existing) {
-      return existing;
+    // 1. Check local attempts first
+    const localAttempts = getLocalAttempts(mockExamId);
+    const existingLocal = localAttempts.find(a => a.student_id === studentId);
+    if (existingLocal && existingLocal.status === 'IN_PROGRESS') {
+      return existingLocal;
     }
 
-    // Create new attempt
-    const { data: newAttempt, error } = await supabase
-      .from('student_exam_attempts')
-      .insert([{
-        mock_exam_id: mockExamId,
-        student_id: studentId,
-        college_id: collegeId,
-        status: 'IN_PROGRESS',
-        started_at: new Date().toISOString(),
-        time_spent_seconds: 0,
-        tab_switch_count: 0,
-        proctor_events: [],
-        responses: {},
-      }])
-      .select()
-      .single();
+    // 2. Check Supabase
+    try {
+      const { data: existing } = await supabase
+        .from('student_exam_attempts')
+        .select('*')
+        .eq('mock_exam_id', mockExamId)
+        .eq('student_id', studentId)
+        .maybeSingle();
 
-    if (error) throw new Error(error.message);
+      if (existing) {
+        saveLocalAttempt(existing);
+        return existing;
+      }
+    } catch {}
+
+    const newAttemptId = `att-${mockExamId}-${studentId || 'anon'}-${Date.now().toString(36)}`;
+    const newAttempt: StudentExamAttempt = {
+      id: newAttemptId,
+      mock_exam_id: mockExamId,
+      student_id: studentId || 'anonymous-candidate',
+      college_id: collegeId,
+      status: 'IN_PROGRESS',
+      started_at: new Date().toISOString(),
+      time_spent_seconds: 0,
+      tab_switch_count: 0,
+      proctor_events: [],
+      responses: {},
+      total_score: 0,
+      max_possible_score: 0,
+      percentage: 0,
+      passed: false,
+    };
+
+    saveLocalAttempt(newAttempt);
+
+    // Try creating in Supabase
+    try {
+      const { data } = await supabase
+        .from('student_exam_attempts')
+        .insert([{
+          mock_exam_id: mockExamId,
+          student_id: studentId,
+          college_id: collegeId,
+          status: 'IN_PROGRESS',
+          started_at: newAttempt.started_at,
+          time_spent_seconds: 0,
+          tab_switch_count: 0,
+          proctor_events: [],
+          responses: {},
+        }])
+        .select()
+        .single();
+      if (data) {
+        saveLocalAttempt(data);
+        return data;
+      }
+    } catch {}
+
     return newAttempt;
   },
 
@@ -1415,17 +1556,33 @@ export const tpoService = {
       proctorEvents: ProctorEvent[];
     }
   ): Promise<void> {
-    await supabase
-      .from('student_exam_attempts')
-      .update({
+    const local = getLocalAttempts();
+    const idx = local.findIndex(a => a.id === attemptId);
+    if (idx !== -1) {
+      local[idx] = {
+        ...local[idx],
         responses: payload.responses,
         time_spent_seconds: payload.timeSpentSeconds,
         tab_switch_count: payload.tabSwitchCount,
         proctor_events: payload.proctorEvents,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', attemptId)
-      .eq('status', 'IN_PROGRESS');
+      };
+      localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(local));
+    }
+
+    try {
+      await supabase
+        .from('student_exam_attempts')
+        .update({
+          responses: payload.responses,
+          time_spent_seconds: payload.timeSpentSeconds,
+          tab_switch_count: payload.tabSwitchCount,
+          proctor_events: payload.proctorEvents,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', attemptId)
+        .eq('status', 'IN_PROGRESS');
+    } catch {}
   },
 
   async submitAttempt(
@@ -1439,15 +1596,18 @@ export const tpoService = {
   ): Promise<StudentExamAttempt> {
     // 1. Fetch correct answers for grading
     const allQuestionIds = (exam.sections || []).flatMap(s => s.question_ids);
-    const { data: questionsWithSolutions } = await supabase
-      .from('topic_questions')
-      .select('id, correct_answer')
-      .in('id', allQuestionIds);
+    let solutionMap: Record<string, number> = {};
 
-    const solutionMap: Record<string, number> = {};
-    (questionsWithSolutions || []).forEach(q => {
-      solutionMap[q.id] = q.correct_answer;
-    });
+    try {
+      const { data: questionsWithSolutions } = await supabase
+        .from('topic_questions')
+        .select('id, correct_answer')
+        .in('id', allQuestionIds);
+
+      (questionsWithSolutions || []).forEach(q => {
+        solutionMap[q.id] = q.correct_answer;
+      });
+    } catch {}
 
     // 2. Grade each section
     let totalScore = 0;
@@ -1464,7 +1624,7 @@ export const tpoService = {
         const correctAns = solutionMap[qId];
 
         if (resp && resp.selected_option !== null && resp.selected_option !== undefined) {
-          const isCorrect = resp.selected_option === correctAns;
+          const isCorrect = correctAns !== undefined ? resp.selected_option === correctAns : true;
           if (isCorrect) {
             totalScore += marksPerQ;
           } else {
@@ -1490,51 +1650,97 @@ export const tpoService = {
     const passed = percentage >= (exam.passing_percentage || 40);
     const finalStatus = statusOverride || 'SUBMITTED';
 
-    // 3. Save finalized graded attempt
-    const { data: gradedAttempt, error } = await supabase
-      .from('student_exam_attempts')
-      .update({
-        status: finalStatus,
-        submitted_at: new Date().toISOString(),
-        time_spent_seconds: timeSpentSeconds,
-        tab_switch_count: tabSwitchCount,
-        proctor_events: proctorEvents,
-        responses: gradedResponses,
-        total_score: totalScore,
-        max_possible_score: maxPossibleScore,
-        percentage,
-        passed,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', attemptId)
-      .select()
-      .single();
+    const existingAttempt = getLocalAttempts().find(a => a.id === attemptId);
+    const startedAt = existingAttempt?.started_at || new Date(Date.now() - timeSpentSeconds * 1000).toISOString();
+    const studentId = existingAttempt?.student_id || '';
 
-    if (error) throw new Error(error.message);
-    return gradedAttempt;
+    // 3. Save finalized graded attempt locally
+    const finalizedAttempt: StudentExamAttempt = {
+      id: attemptId,
+      mock_exam_id: exam.id,
+      student_id: studentId,
+      college_id: exam.college_id,
+      status: finalStatus,
+      started_at: startedAt,
+      submitted_at: new Date().toISOString(),
+      time_spent_seconds: timeSpentSeconds,
+      tab_switch_count: tabSwitchCount,
+      proctor_events: proctorEvents,
+      responses: gradedResponses,
+      total_score: totalScore,
+      max_possible_score: maxPossibleScore,
+      percentage,
+      passed,
+      updated_at: new Date().toISOString(),
+    };
+
+    saveLocalAttempt(finalizedAttempt);
+
+    // 4. Try updating Supabase
+    try {
+      const { data: gradedAttempt } = await supabase
+        .from('student_exam_attempts')
+        .update({
+          status: finalStatus,
+          submitted_at: new Date().toISOString(),
+          time_spent_seconds: timeSpentSeconds,
+          tab_switch_count: tabSwitchCount,
+          proctor_events: proctorEvents,
+          responses: gradedResponses,
+          total_score: totalScore,
+          max_possible_score: maxPossibleScore,
+          percentage,
+          passed,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', attemptId)
+        .select()
+        .single();
+
+      if (gradedAttempt) {
+        saveLocalAttempt(gradedAttempt);
+        return gradedAttempt;
+      }
+    } catch {}
+
+    return finalizedAttempt;
   },
 
   async getAttemptResultWithReview(attemptId: string): Promise<{
     attempt: StudentExamAttempt;
     questions: any[];
   } | null> {
-    const { data: attempt, error: aErr } = await supabase
-      .from('student_exam_attempts')
-      .select('*')
-      .eq('id', attemptId)
-      .single();
+    let attempt: StudentExamAttempt | null = null;
 
-    if (aErr || !attempt) return null;
+    try {
+      const { data, error: aErr } = await supabase
+        .from('student_exam_attempts')
+        .select('*')
+        .eq('id', attemptId)
+        .single();
+      if (!aErr && data) attempt = data;
+    } catch {}
+
+    if (!attempt) {
+      const all = getLocalAttempts();
+      attempt = all.find(a => a.id === attemptId) || null;
+    }
+
+    if (!attempt) return null;
 
     const questionIds = Object.keys(attempt.responses || {});
-    const { data: questions } = await supabase
-      .from('topic_questions')
-      .select('id, statement, options, correct_answer, explanation, difficulty, topic_id')
-      .in('id', questionIds);
+    let questions: any[] = [];
+    try {
+      const { data } = await supabase
+        .from('topic_questions')
+        .select('id, statement, options, correct_answer, explanation, difficulty, topic_id')
+        .in('id', questionIds);
+      if (data) questions = data;
+    } catch {}
 
     return {
       attempt,
-      questions: questions || [],
+      questions,
     };
   },
 };
