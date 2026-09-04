@@ -31,20 +31,42 @@ export default function TpoLayout() {
     queryFn: () => tpoService.getAllColleges(),
   });
 
-  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(user?.collegeId || '');
+  const getInitialCollegeId = (): string => {
+    if (user?.collegeId) return user.collegeId;
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('prepunite_college_id');
+      if (cached) return cached;
+    }
+    const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
+    if (tpoAuth?.college_id) return tpoAuth.college_id;
+    return '';
+  };
+
+  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(getInitialCollegeId);
 
   // Keep selectedCollegeId synchronized when user or colleges list loads
   useEffect(() => {
     if (!selectedCollegeId) {
+      const cached = typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : null;
+      const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
       if (user?.collegeId) {
         setSelectedCollegeId(user.collegeId);
+      } else if (cached) {
+        setSelectedCollegeId(cached);
+      } else if (tpoAuth?.college_id) {
+        setSelectedCollegeId(tpoAuth.college_id);
       } else if (allColleges.length > 0 && allColleges[0]?.id) {
         setSelectedCollegeId(allColleges[0].id);
       }
     }
-  }, [user?.collegeId, allColleges, selectedCollegeId]);
+  }, [user?.collegeId, user?.email, allColleges, selectedCollegeId]);
 
-  const effectiveCollegeId = selectedCollegeId || user?.collegeId || (allColleges[0]?.id ?? '');
+  const effectiveCollegeId =
+    selectedCollegeId ||
+    user?.collegeId ||
+    (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
+    tpoService.findTpoAuthByEmail(user?.email)?.college_id ||
+    (allColleges[0]?.id ?? '');
 
   const currentCollege: College = allColleges.find(c => c.id === effectiveCollegeId) || {
     id: effectiveCollegeId,

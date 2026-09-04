@@ -317,17 +317,18 @@ export const tpoService = {
 
   async getAllCollegesWithUsage(): Promise<(College & { enrolled_count: number; tpo_email?: string; active_exams_count: number })[]> {
     const colleges = await this.getAllColleges();
-    const tpoAuths = getLocalTpoAuths();
+    const tpoAdmins = await this.getTpoAdmins();
 
-    // Try to fetch Supabase profiles and exams for usage counts
-    let profiles: any[] = [];
+    // Fetch active college student subscriptions and exams from Supabase
+    let subscriptions: any[] = [];
     let exams: any[] = [];
 
     try {
-      const { data: pData } = await supabase
-        .from('profiles')
-        .select('college_id, is_tpo_admin, role, email');
-      if (pData) profiles = pData;
+      const { data: sData } = await supabase
+        .from('user_subscriptions')
+        .select('user_email, plan_name, is_active')
+        .eq('is_active', true);
+      if (sData) subscriptions = sData;
     } catch {}
 
     try {
@@ -339,16 +340,18 @@ export const tpoService = {
     } catch {}
 
     return colleges.map(c => {
-      // Find assigned TPO email from local auths or Supabase profiles
-      const auth = tpoAuths.find(a => a.college_id === c.id);
-      const dbTpo = profiles.find(p => p.college_id === c.id && (p.is_tpo_admin || p.role === 'TPO_ADMIN'));
-      const tpoEmail = auth?.email || dbTpo?.email;
+      // 1. Find assigned TPO email from resolved TPO admins
+      const assignedTpo = tpoAdmins.find(a => a.college_id === c.id);
+      const tpoEmail = assignedTpo?.email;
 
-      // Count enrolled students (from Supabase or local student store)
-      const dbCount = profiles.filter(p => p.college_id === c.id && !p.is_tpo_admin && p.role !== 'TPO_ADMIN').length;
+      // 2. Count enrolled students from Supabase subscriptions and local storage
+      const subCount = subscriptions.filter(s =>
+        s.plan_name && (s.plan_name.includes(c.name) || (c.code && s.plan_name.includes(c.code)))
+      ).length;
       const localStudents = getLocalStudents(c.id);
-      const enrolledCount = Math.max(dbCount, localStudents.length);
+      const enrolledCount = Math.max(subCount, localStudents.length);
 
+      // 3. Count active exams
       const activeExamsCount = exams.filter(e => e.college_id === c.id).length;
 
       return {

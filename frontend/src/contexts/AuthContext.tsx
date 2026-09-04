@@ -505,9 +505,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (error) throw error;
       if (data?.user?.email) {
-        const name = data.user.user_metadata?.full_name || email.split('@')[0];
-        const assignedRole: UserRole = isSuperAdminEmail(email) ? 'ADMIN' : 'USER';
-        applyUserProfile(email, name, undefined, assignedRole);
+        const cleanEmail = email.trim().toLowerCase();
+        const isMasterAdmin = isSuperAdminEmail(cleanEmail);
+        const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(cleanEmail) : null;
+        const name = data.user.user_metadata?.full_name || cleanEmail.split('@')[0];
+        const assignedRole: UserRole = isMasterAdmin ? 'ADMIN' : tpoAuth ? 'TPO_ADMIN' : 'USER';
+        applyUserProfile(cleanEmail, name, undefined, assignedRole, tpoAuth ? {
+          collegeId: tpoAuth.college_id,
+          collegeName: tpoAuth.college_name,
+          isTpoAdmin: true,
+        } : undefined);
       }
       return { error: null, data };
     } catch (err: any) {

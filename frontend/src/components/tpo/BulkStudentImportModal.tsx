@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import type { BulkStudentRow } from '@/types/tpo';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BulkStudentImportModalProps {
   isOpen: boolean;
@@ -31,9 +32,12 @@ export default function BulkStudentImportModal({
   collegeName,
   onSuccess,
 }: BulkStudentImportModalProps) {
+  const { user } = useAuth();
   const effectiveCollegeId =
     collegeId?.trim() ||
+    user?.collegeId ||
     (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
+    tpoService.findTpoAuthByEmail(user?.email)?.college_id ||
     '';
 
   const [file, setFile] = useState<File | null>(null);

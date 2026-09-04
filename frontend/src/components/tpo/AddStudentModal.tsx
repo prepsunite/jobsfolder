@@ -10,6 +10,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -26,16 +27,22 @@ export default function AddStudentModal({
   collegeName,
   onSuccess,
 }: AddStudentModalProps) {
+  const { user } = useAuth();
   const effectiveCollegeId =
     collegeId?.trim() ||
+    user?.collegeId ||
     (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
+    tpoService.findTpoAuthByEmail(user?.email)?.college_id ||
     '';
+
+  const currentYear = new Date().getFullYear();
+  const batchYears = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2, currentYear + 3, currentYear + 4];
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [department, setDepartment] = useState('CSE');
-  const [batchYear, setBatchYear] = useState<number>(2026);
+  const [batchYear, setBatchYear] = useState<number>(currentYear);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -89,7 +96,7 @@ export default function AddStudentModal({
       setEmail('');
       setRollNumber('');
       setDepartment('CSE');
-      setBatchYear(2026);
+      setBatchYear(currentYear);
       onSuccess(addedName);
       onClose();
     } catch (err: any) {
@@ -227,10 +234,9 @@ export default function AddStudentModal({
               onChange={e => setBatchYear(Number(e.target.value))}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-semibold"
             >
-              <option value={2025}>2025</option>
-              <option value={2026}>2026</option>
-              <option value={2027}>2027</option>
-              <option value={2028}>2028</option>
+              {batchYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
             </select>
           </div>
 
