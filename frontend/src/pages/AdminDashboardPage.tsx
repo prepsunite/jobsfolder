@@ -14,6 +14,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
 import { feedbackService } from '@/services/feedback.service';
 import type { QuestionReport, ContactMessage, ReportStatus, ContactMessageStatus } from '@/types/feedback';
+import CollegesTpoManager from '@/components/admin/CollegesTpoManager';
 import {
   Building2,
   BookOpen,
@@ -36,6 +37,7 @@ import {
   Mail,
   IndianRupee,
   CreditCard,
+  UserCheck,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -43,7 +45,7 @@ export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
 
   const [adminTab, setAdminTab] = useState<
-    'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'question-reports' | 'contact-messages' | 'users' | 'metrics'
+    'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'question-reports' | 'contact-messages' | 'users' | 'metrics' | 'colleges-tpo'
   >('manage-exams');
   const [selectedCompanySlug, setSelectedCompanySlug] = useState('tcs');
   const [usersSubTab, setUsersSubTab] = useState<'users' | 'transactions' | 'purchases' | 'subscriptions'>('users');
@@ -763,6 +765,18 @@ export default function AdminDashboardPage() {
               {registeredUsersList.length}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setAdminTab('colleges-tpo')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+            adminTab === 'colleges-tpo'
+              ? 'bg-[#FD4A32] text-white shadow-sm'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
+          }`}
+        >
+          <Building2 className={`w-3.5 h-3.5 ${adminTab === 'colleges-tpo' ? 'text-white' : 'text-[#FD4A32]'}`} />
+          <span>Colleges &amp; TPO Admins</span>
         </button>
 
         <button
@@ -2184,7 +2198,12 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ✏️ MODAL: EDIT EXAM MARKDOWN */}
+      {/* TAB 7: COLLEGES & TPO ADMINS MANAGEMENT */}
+      {adminTab === 'colleges-tpo' && (
+        <CollegesTpoManager />
+      )}
+
+      {/* 📝 MODAL: EDIT EXAM MARKDOWN */}
       {editingExam && (
         <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[28px] max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto">

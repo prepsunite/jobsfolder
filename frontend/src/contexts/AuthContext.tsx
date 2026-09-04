@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
 import { progressService } from '@/services/progress.service';
 
-export type UserRole = 'GUEST' | 'USER' | 'ADMIN';
+export type UserRole = 'GUEST' | 'USER' | 'ADMIN' | 'TPO_ADMIN';
 
 export function formatDisplayNameFromEmail(email: string, rawName?: string): string {
   if (rawName && rawName.trim() && !['User', 'Demo Student', 'Student', 'GUEST'].includes(rawName.trim())) {
@@ -31,6 +31,12 @@ export interface UserProfile {
   role: UserRole;
   avatarUrl?: string;
   targetCompany?: string;
+  isTpoAdmin?: boolean;
+  collegeId?: string;
+  collegeName?: string;
+  rollNumber?: string;
+  department?: string;
+  batchYear?: number;
 }
 
 interface AuthContextType {
@@ -38,6 +44,7 @@ interface AuthContextType {
   role: UserRole;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isTpoAdmin: boolean;
   isGuest: boolean;
   isLoading: boolean;
   signInWithGoogle: () => Promise<{ error: string | null }>;
@@ -98,9 +105,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     nameInput: string,
     avatarUrl?: string,
-    isConfirmedAdmin: boolean = false
+    assignedRole: UserRole = 'USER',
+    collegeData?: {
+      collegeId?: string;
+      collegeName?: string;
+      rollNumber?: string;
+      department?: string;
+      batchYear?: number;
+      isTpoAdmin?: boolean;
+    }
   ) => {
-    const assignedRole: UserRole = isConfirmedAdmin ? 'ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
     const newProfile: UserProfile = {
@@ -109,6 +123,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       role: assignedRole,
       avatarUrl,
+      isTpoAdmin: assignedRole === 'TPO_ADMIN' || Boolean(collegeData?.isTpoAdmin),
+      collegeId: collegeData?.collegeId,
+      collegeName: collegeData?.collegeName,
+      rollNumber: collegeData?.rollNumber,
+      department: collegeData?.department,
+      batchYear: collegeData?.batchYear,
     };
 
     setUser(newProfile);
@@ -122,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newProfile;
   };
 
-  // Standard Database `public.profiles` Table Sync — role is strictly driven by the database table
+  // Standard Database `public.profiles` Table Sync - role is strictly driven by the database table
   const syncProfileWithSupabase = async (
     userId: string,
     email: string,
@@ -133,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: dbProfile, error } = await supabase
         .from('profiles')
-        .select('role, name, avatar_url')
+        .select('role, name, avatar_url, is_tpo_admin, college_id, roll_number, department, batch_year, colleges(name)')
         .eq('id', userId)
         .maybeSingle();
 
@@ -144,6 +164,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check database role column as source of truth
       const dbRole = dbProfile?.role ? String(dbProfile.role).toLowerCase() : undefined;
       const isDbAdmin = dbRole === 'admin' || appRole === 'admin';
+      const isDbTpo = dbRole === 'tpo_admin' || Boolean(dbProfile?.is_tpo_admin);
+
+      let assignedRole: UserRole = 'USER';
+      if (isDbAdmin) assignedRole = 'ADMIN';
+      else if (isDbTpo) assignedRole = 'TPO_ADMIN';
 
       const finalName = dbProfile?.name || rawName;
       const finalAvatar = dbProfile?.avatar_url || rawAvatar;
@@ -154,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: userId,
             email: email,
             name: finalName || email.split('@')[0],
-            role: isDbAdmin ? 'admin' : 'user',
+            role: isDbAdmin ? 'admin' : (isDbTpo ? 'TPO_ADMIN' : 'user'),
             avatar_url: finalAvatar,
           });
         } catch (uErr) {
@@ -162,10 +187,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      applyUserProfile(email, finalName, finalAvatar, isDbAdmin);
+      applyUserProfile(email, finalName, finalAvatar, assignedRole, {
+        collegeId: dbProfile?.college_id,
+        collegeName: (dbProfile as any)?.colleges?.name,
+        rollNumber: dbProfile?.roll_number,
+        department: dbProfile?.department,
+        batchYear: dbProfile?.batch_year,
+        isTpoAdmin: isDbTpo,
+      });
     } catch (err) {
       console.warn('[syncProfileWithSupabase] Fallback profile resolution:', err);
-      applyUserProfile(email, rawName, rawAvatar, false);
+      applyUserProfile(email, rawName, rawAvatar, 'USER');
     }
   };
 
@@ -372,6 +404,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role,
         isAuthenticated: role !== 'GUEST',
         isAdmin: role === 'ADMIN',
+        isTpoAdmin: role === 'TPO_ADMIN' || Boolean(user?.isTpoAdmin),
         isGuest: role === 'GUEST',
         isLoading,
         signInWithGoogle,

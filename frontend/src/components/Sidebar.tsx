@@ -32,7 +32,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const location = useLocation();
-  const { user, role, logout } = useAuth();
+  const { user, role, isTpoAdmin, logout } = useAuth();
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
   const navLinks = [
@@ -215,6 +215,32 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 </div>
                 <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
                   Admin
+                </span>
+              </Link>
+            </div>
+          )}
+
+          {/* TPO CRT Control Link */}
+          {(role === 'TPO_ADMIN' || isTpoAdmin || role === 'ADMIN') && (
+            <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+              <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
+                Institutional CRT
+              </span>
+              <Link
+                to="/tpo"
+                onClick={onClose}
+                className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                  location.pathname.startsWith('/tpo')
+                    ? 'bg-orange-500/10 dark:bg-orange-500/30 text-[#FD4A32] border border-[#FD4A32]/30'
+                    : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+                  <span>TPO Portal</span>
+                </div>
+                <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950 text-[#FD4A32]">
+                  TPO
                 </span>
               </Link>
             </div>

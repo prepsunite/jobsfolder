@@ -41,9 +41,16 @@ export default function LoginPage() {
   // Automatically navigate away from /login when authenticated
   useEffect(() => {
     if (isAuthenticated && user && !authLoading) {
+      let defaultPath = '/dashboard';
+      if (role === 'ADMIN') {
+        defaultPath = '/admin';
+      } else if (role === 'TPO_ADMIN' || user.isTpoAdmin) {
+        defaultPath = '/tpo';
+      }
+
       const targetPath = redirectTo && redirectTo.startsWith('/')
         ? redirectTo
-        : (role === 'ADMIN' ? '/admin' : '/dashboard');
+        : defaultPath;
       navigate(targetPath, { replace: true });
     }
   }, [isAuthenticated, user, role, authLoading, navigate, redirectTo]);

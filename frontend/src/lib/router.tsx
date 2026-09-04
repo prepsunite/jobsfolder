@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import RootLayout from '@/layouts/RootLayout';
+import TpoLayout from '@/layouts/TpoLayout';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -18,6 +19,16 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 const AdminBulkImportPage = lazy(() => import('@/pages/AdminBulkImportPage'));
+
+// Dedicated TPO Portal Pages
+const TpoOverviewPage = lazy(() => import('@/pages/tpo/TpoOverviewPage'));
+const TpoStudentsPage = lazy(() => import('@/pages/tpo/TpoStudentsPage'));
+const TpoExamsPage = lazy(() => import('@/pages/tpo/TpoExamsPage'));
+const TpoExamDetailPage = lazy(() => import('@/pages/tpo/TpoExamDetailPage'));
+const TpoAnalyticsPage = lazy(() => import('@/pages/tpo/TpoAnalyticsPage'));
+const TpoSettingsPage = lazy(() => import('@/pages/tpo/TpoSettingsPage'));
+
+const MockExamTestPage = lazy(() => import('@/pages/MockExamTestPage'));
 
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
@@ -145,8 +156,52 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/exam/:examId',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(MockExamTestPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '*',
         element: <NotFoundPage />,
+      },
+    ],
+  },
+  // 2. Dedicated Enterprise TPO Placement Portal (Isolated from Consumer Student Layout)
+  {
+    path: '/tpo',
+    element: (
+      <ProtectedRoute requireTpo>
+        <TpoLayout />
+      </ProtectedRoute>
+    ),
+    errorElement: <ErrorBoundary />,
+    children: [
+      {
+        index: true,
+        element: withSuspense(TpoOverviewPage),
+      },
+      {
+        path: 'students',
+        element: withSuspense(TpoStudentsPage),
+      },
+      {
+        path: 'exams',
+        element: withSuspense(TpoExamsPage),
+      },
+      {
+        path: 'exams/:examId',
+        element: withSuspense(TpoExamDetailPage),
+      },
+      {
+        path: 'analytics',
+        element: withSuspense(TpoAnalyticsPage),
+      },
+      {
+        path: 'settings',
+        element: withSuspense(TpoSettingsPage),
       },
     ],
   },
