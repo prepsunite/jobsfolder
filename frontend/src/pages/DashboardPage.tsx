@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
 import { progressService } from '@/services/progress.service';
+import { tpoService } from '@/services/tpo.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
@@ -73,6 +74,17 @@ export default function DashboardPage() {
           return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
         }
       } catch {}
+
+      // Fallback for institutional college student
+      if (tpoService.isStudentEntitled(user.email)) {
+        const info = tpoService.getStudentEntitlementInfo(user.email);
+        return {
+          isPro: true,
+          planName: info?.collegeName ? `Campus Pro Pass (${info.collegeName})` : 'Campus Pro Pass',
+          expiresAt: info?.expiresAt,
+        };
+      }
+
       return { isPro: false, planName: 'Free Tier' };
     },
     enabled: !!user?.email,

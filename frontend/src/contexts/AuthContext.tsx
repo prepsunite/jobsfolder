@@ -134,12 +134,16 @@ const getInitialUser = (): UserProfile | null => {
         localStorage.setItem('prepunite_role', 'ADMIN');
       }
 
+      const studentInfo = tpoService.getStudentEntitlementInfo(email);
+
       return {
         id: email,
         name: name || formatDisplayNameFromEmail(email, ''),
         email,
         role,
         avatarUrl,
+        collegeId: studentInfo?.collegeId || localStorage.getItem('prepunite_college_id') || undefined,
+        collegeName: studentInfo?.collegeName || localStorage.getItem('prepunite_college_name') || undefined,
       };
     }
   } catch (e) {
@@ -303,9 +307,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      const studentInfo = !isDbTpo ? tpoService.getStudentEntitlementInfo(email) : null;
+      const anyProfile = dbProfile as any;
+
       applyUserProfile(email, finalName, finalAvatar, assignedRole, {
-        collegeId: tpoAuth?.college_id,
-        collegeName: tpoAuth?.college_name,
+        collegeId: tpoAuth?.college_id || studentInfo?.collegeId || anyProfile?.college_id,
+        collegeName: tpoAuth?.college_name || studentInfo?.collegeName,
+        department: anyProfile?.department,
+        rollNumber: anyProfile?.roll_number,
+        batchYear: anyProfile?.batch_year,
         isTpoAdmin: isDbTpo,
       });
     } catch (err) {
@@ -313,6 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const fallbackTpo = tpoService.findTpoAuthByEmail(email);
       const isFallbackTpo = Boolean(fallbackTpo);
       const isMasterAdmin = !isFallbackTpo && isSuperAdminEmail(email);
+      const fallbackStudentInfo = !isFallbackTpo ? tpoService.getStudentEntitlementInfo(email) : null;
 
       applyUserProfile(
         email,
@@ -323,6 +334,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           collegeId: fallbackTpo.college_id,
           collegeName: fallbackTpo.college_name,
           isTpoAdmin: true,
+        } : fallbackStudentInfo ? {
+          collegeId: fallbackStudentInfo.collegeId,
+          collegeName: fallbackStudentInfo.collegeName,
+          isTpoAdmin: false,
         } : undefined
       );
     }

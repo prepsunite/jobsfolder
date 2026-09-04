@@ -18,6 +18,7 @@ export const STORAGE_KEYS_TPO = {
   TPO_AUTH: 'prepunite_tpo_authorizations',
   STUDENTS: 'prepunite_tpo_students',
   EXAMS: 'prepunite_tpo_mock_exams',
+  STUDENT_ENTITLEMENTS: 'prepunite_student_entitlements',
 } as const;
 
 export const DEFAULT_COLLEGES: College[] = [
@@ -331,6 +332,78 @@ export const tpoService = {
         .eq('id', collegeId);
     } catch (e) {
       console.warn('Notice updating contract status in Supabase:', e);
+    }
+
+    return true;
+  },
+
+  async updateCollegeValidity(
+    collegeId: string,
+    validUntilIso: string,
+    contractStatus?: 'ACTIVE' | 'PILOT' | 'EXPIRED' | 'SUSPENDED',
+    syncStudents: boolean = true
+  ): Promise<boolean> {
+    const local = getLocalColleges();
+    const idx = local.findIndex(c => c.id === collegeId);
+    let targetCollegeName = 'Partner College';
+    if (idx !== -1) {
+      local[idx].valid_until = validUntilIso;
+      if (contractStatus) {
+        local[idx].contract_status = contractStatus;
+      }
+      local[idx].updated_at = new Date().toISOString();
+      targetCollegeName = local[idx].name;
+      saveLocalColleges(local);
+    }
+
+    try {
+      const updates: any = {
+        valid_until: validUntilIso,
+        updated_at: new Date().toISOString(),
+      };
+      if (contractStatus) {
+        updates.contract_status = contractStatus;
+      }
+      await supabase
+        .from('colleges')
+        .update(updates)
+        .eq('id', collegeId);
+    } catch (e) {
+      console.warn('Notice updating college validity in Supabase:', e);
+    }
+
+    // Synchronize all enrolled students' subscriptions & entitlements
+    if (syncStudents) {
+      const students = await this.getCollegeStudents(collegeId);
+      const isStillActive = (!contractStatus || contractStatus === 'ACTIVE' || contractStatus === 'PILOT') && new Date(validUntilIso) > new Date();
+      const statusValue = isStillActive ? 'ACTIVE' : 'EXPIRED';
+
+      for (const student of students) {
+        const cleanEmail = student.email.trim().toLowerCase();
+        try {
+          await supabase
+            .from('user_subscriptions')
+            .update({
+              expires_at: validUntilIso,
+              status: statusValue,
+            })
+            .eq('user_email', cleanEmail)
+            .ilike('payment_id', `B2B_CAMPUS_${collegeId}%`);
+        } catch {}
+
+        // Update local entitlement cache
+        try {
+          const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+          const entitlements = raw ? JSON.parse(raw) : {};
+          entitlements[cleanEmail] = {
+            collegeId,
+            collegeName: targetCollegeName,
+            expiresAt: validUntilIso,
+            isExpired: !isStillActive,
+          };
+          localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(entitlements));
+        } catch {}
+      }
     }
 
     return true;
@@ -751,11 +824,290 @@ export const tpoService = {
       } catch (err: any) {
         // Safe notice: column college_id might not exist in Supabase yet
       }
+
+      // Provision full student Pro entitlement
+      try {
+        await this.provisionStudentEntitlement(college, cleanEmail, student.name.trim());
+      } catch (e) {
+        console.warn('Notice provisioning pro pass for imported student:', e);
+      }
     }
 
     saveLocalStudents(collegeId, Array.from(localMap.values()));
 
     return { importedCount, updatedCount, errors };
+  },
+
+  // ==========================================
+  // STUDENT ENTITLEMENT & PRO PASS PROVISIONING
+  // ==========================================
+
+  async provisionStudentEntitlement(college: College, email: string, name?: string): Promise<boolean> {
+    const cleanEmail = email.trim().toLowerCase();
+    const validUntil = college.valid_until || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    const planName = `Campus Pro Pass (${college.name})`;
+    const paymentId = `B2B_CAMPUS_${college.id}`;
+
+    // 1. Supabase public.user_subscriptions upsert
+    try {
+      const { data: existingSub } = await supabase
+        .from('user_subscriptions')
+        .select('id, expires_at')
+        .eq('user_email', cleanEmail)
+        .maybeSingle();
+
+      if (existingSub) {
+        await supabase
+          .from('user_subscriptions')
+          .update({
+            status: 'ACTIVE',
+            plan_name: planName,
+            payment_id: paymentId,
+            expires_at: validUntil,
+          })
+          .eq('id', existingSub.id);
+      } else {
+        await supabase
+          .from('user_subscriptions')
+          .insert([{
+            user_email: cleanEmail,
+            plan_name: planName,
+            payment_id: paymentId,
+            status: 'ACTIVE',
+            expires_at: validUntil,
+            created_at: new Date().toISOString(),
+          }]);
+      }
+    } catch (err) {
+      console.warn('[provisionStudentEntitlement] Notice syncing subscription to Supabase:', err);
+    }
+
+    // 2. Cache locally in prepunite_student_entitlements
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+      const entitlements: Record<string, { collegeId: string; collegeName: string; expiresAt: string }> = raw ? JSON.parse(raw) : {};
+      entitlements[cleanEmail] = {
+        collegeId: college.id,
+        collegeName: college.name,
+        expiresAt: validUntil,
+      };
+      localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(entitlements));
+    } catch {}
+
+    return true;
+  },
+
+  async revokeStudentEntitlement(collegeId: string, email: string): Promise<boolean> {
+    const cleanEmail = email.trim().toLowerCase();
+    try {
+      await supabase
+        .from('user_subscriptions')
+        .update({
+          status: 'EXPIRED',
+          expires_at: new Date(0).toISOString(),
+        })
+        .eq('user_email', cleanEmail)
+        .ilike('payment_id', `B2B_CAMPUS_${collegeId}%`);
+    } catch (err) {
+      console.warn('[revokeStudentEntitlement] Notice revoking subscription:', err);
+    }
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+      if (raw) {
+        const entitlements = JSON.parse(raw);
+        delete entitlements[cleanEmail];
+        localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(entitlements));
+      }
+    } catch {}
+
+    return true;
+  },
+
+  isStudentEntitled(email?: string | null): boolean {
+    if (!email) return false;
+    const clean = email.trim().toLowerCase();
+
+    // 1. Check local entitlements cache
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+      if (raw) {
+        const entitlements = JSON.parse(raw);
+        const item = entitlements[clean];
+        if (item && !item.isExpired) {
+          if (!item.expiresAt || new Date(item.expiresAt) > new Date()) {
+            return true;
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Check all active colleges rosters
+    try {
+      const colleges = getLocalColleges();
+      for (const col of colleges) {
+        if (col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') {
+          if (new Date(col.valid_until) > new Date()) {
+            const students = getLocalStudents(col.id);
+            if (students.some(s => s.email.toLowerCase() === clean)) {
+              return true;
+            }
+          }
+        }
+      }
+    } catch {}
+
+    return false;
+  },
+
+  getStudentEntitlementInfo(email?: string | null): {
+    isEntitled: boolean;
+    collegeId?: string;
+    collegeName?: string;
+    expiresAt?: string;
+  } | null {
+    if (!email) return null;
+    const clean = email.trim().toLowerCase();
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+      if (raw) {
+        const entitlements = JSON.parse(raw);
+        const item = entitlements[clean];
+        if (item && !item.isExpired && (!item.expiresAt || new Date(item.expiresAt) > new Date())) {
+          return {
+            isEntitled: true,
+            collegeId: item.collegeId,
+            collegeName: item.collegeName,
+            expiresAt: item.expiresAt,
+          };
+        }
+      }
+    } catch {}
+
+    try {
+      const colleges = getLocalColleges();
+      for (const col of colleges) {
+        if (col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') {
+          if (new Date(col.valid_until) > new Date()) {
+            const students = getLocalStudents(col.id);
+            const found = students.find(s => s.email.toLowerCase() === clean);
+            if (found) {
+              return {
+                isEntitled: true,
+                collegeId: col.id,
+                collegeName: col.name,
+                expiresAt: col.valid_until,
+              };
+            }
+          }
+        }
+      }
+    } catch {}
+
+    return null;
+  },
+
+  async addSingleStudent(
+    collegeId: string,
+    studentData: {
+      name: string;
+      email: string;
+      roll_number?: string;
+      department?: string;
+      batch_year?: number;
+    }
+  ): Promise<{ success: boolean; student?: CollegeStudent; error?: string }> {
+    const college = await this.getCollegeDetails(collegeId);
+    if (!college) {
+      return { success: false, error: 'College record not found.' };
+    }
+
+    const maxLicenses = college.max_licenses || 1000;
+    const contractStatus = college.contract_status || 'ACTIVE';
+
+    if (contractStatus === 'EXPIRED' || contractStatus === 'SUSPENDED') {
+      return {
+        success: false,
+        error: `Institutional contract for "${college.name}" is currently ${contractStatus}. Student provisioning is paused. Please contact PrepUnite.`,
+      };
+    }
+
+    const currentStudents = await this.getCollegeStudents(collegeId);
+    const cleanEmail = studentData.email.trim().toLowerCase();
+    const alreadyExists = currentStudents.some(s => s.email.toLowerCase() === cleanEmail);
+
+    if (!alreadyExists && currentStudents.length >= maxLicenses) {
+      return {
+        success: false,
+        error: `Seat Limit Exceeded! Your institution has paid for ${maxLicenses} student licenses and all seats are filled. Please contact PrepUnite to upgrade capacity.`,
+      };
+    }
+
+    const localStudents = getLocalStudents(collegeId);
+    const existingIdx = localStudents.findIndex(s => s.email.toLowerCase() === cleanEmail);
+
+    const studentRecord: CollegeStudent = {
+      id: existingIdx !== -1 ? localStudents[existingIdx].id : `stu-${cleanEmail.replace(/[^a-z0-9]/g, '-')}`,
+      email: cleanEmail,
+      name: studentData.name.trim(),
+      college_id: collegeId,
+      college_name: college.name,
+      roll_number: studentData.roll_number?.trim() || undefined,
+      department: studentData.department?.trim().toUpperCase() || 'CSE',
+      batch_year: studentData.batch_year || 2026,
+      is_tpo_admin: false,
+      role: 'USER',
+      created_at: existingIdx !== -1 ? localStudents[existingIdx].created_at : new Date().toISOString(),
+    };
+
+    if (existingIdx !== -1) {
+      localStudents[existingIdx] = studentRecord;
+    } else {
+      localStudents.unshift(studentRecord);
+    }
+    saveLocalStudents(collegeId, localStudents);
+
+    // Sync to Supabase profiles
+    try {
+      await supabase.from('profiles').upsert({
+        email: cleanEmail,
+        name: studentData.name.trim(),
+        role: 'user',
+        college_id: collegeId,
+        roll_number: studentData.roll_number?.trim() || null,
+        department: studentData.department?.trim().toUpperCase() || null,
+        batch_year: studentData.batch_year || null,
+      }, { onConflict: 'email' });
+    } catch {}
+
+    // Provision Pro subscription in Supabase & local cache
+    await this.provisionStudentEntitlement(college, cleanEmail, studentData.name.trim());
+
+    return { success: true, student: studentRecord };
+  },
+
+  async removeStudent(collegeId: string, studentEmail: string): Promise<boolean> {
+    const cleanEmail = studentEmail.trim().toLowerCase();
+
+    // 1. Remove from local storage
+    const localStudents = getLocalStudents(collegeId);
+    const filtered = localStudents.filter(s => s.email.toLowerCase() !== cleanEmail);
+    saveLocalStudents(collegeId, filtered);
+
+    // 2. Clear college_id in Supabase profiles
+    try {
+      await supabase
+        .from('profiles')
+        .update({ college_id: null })
+        .eq('email', cleanEmail)
+        .eq('college_id', collegeId);
+    } catch {}
+
+    // 3. Revoke student entitlement in user_subscriptions & cache
+    await this.revokeStudentEntitlement(collegeId, cleanEmail);
+
+    return true;
   },
 
   async getTpoStats(collegeId: string): Promise<TpoDashboardStats> {

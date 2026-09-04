@@ -1,4 +1,5 @@
 import { supabase, type SupabaseTransaction } from '@/lib/supabase';
+import { tpoService } from '@/services/tpo.service';
 
 export type CheckoutItemType = 'SINGLE_PAPER' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'MONTHLY_PASS';
 
@@ -49,7 +50,7 @@ export class SupabasePaymentService {
     const normalizedEmail = userEmail.toLowerCase().trim();
 
     try {
-      // 1. Check active subscription (Monthly / Quarterly / Yearly)
+      // 1. Check active subscription (Monthly / Quarterly / Yearly / Campus Pro Pass)
       const { data: activeSub, error: subError } = await supabase
         .from('user_subscriptions')
         .select('id')
@@ -60,7 +61,12 @@ export class SupabasePaymentService {
 
       if (!subError && activeSub) return true;
 
-      // 2. Check single paper purchase (must not be expired)
+      // 2. Check institutional college student entitlement (Campus Pro Pass fallback)
+      if (tpoService.isStudentEntitled(normalizedEmail)) {
+        return true;
+      }
+
+      // 3. Check single paper purchase (must not be expired)
       if (examId) {
         const { data: purchase, error: purchaseError } = await supabase
           .from('user_paper_purchases')
@@ -76,7 +82,10 @@ export class SupabasePaymentService {
       return false;
     } catch (err) {
       console.warn('[SupabasePaymentService.verifyEntitlementOnSupabase] Entitlement check exception:', err);
-      // Strictly fail-closed: never grant access on network/database error
+      // Institutional student fallback even on database/network error
+      if (tpoService.isStudentEntitled(normalizedEmail)) {
+        return true;
+      }
       return false;
     }
   }
