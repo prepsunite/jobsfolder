@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
+import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import {
   Users,
   Search,
@@ -25,10 +26,7 @@ import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
 import AddStudentModal from '@/components/tpo/AddStudentModal';
 
 export default function TpoStudentsPage() {
-  const { collegeId, currentCollege } = useOutletContext<{
-    collegeId: string;
-    currentCollege: any;
-  }>();
+  const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,6 +72,7 @@ export default function TpoStudentsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Remove Single Student
@@ -270,13 +269,27 @@ export default function TpoStudentsPage() {
                     {s.batch_year || 2026}
                   </td>
                   <td className="p-4">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      Pro Access Active
-                    </span>
-                    <span className="block text-[10px] text-slate-400 mt-0.5">
-                      All OA papers & mocks unlocked
-                    </span>
+                    {tpoService.isStudentEntitled(s.email) ? (
+                      <div>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          Pro Access Active
+                        </span>
+                        <span className="block text-[10px] text-slate-400 mt-0.5">
+                          All OA papers &amp; mocks unlocked
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shadow-2xs">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                          Provisioning / Inactive
+                        </span>
+                        <span className="block text-[10px] text-slate-400 mt-0.5">
+                          Syncing campus pass
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="p-4 text-right">
                     <button

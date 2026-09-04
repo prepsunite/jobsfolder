@@ -17,16 +17,13 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import type { MockExam } from '@/types/tpo';
+import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
 import AddStudentModal from '@/components/tpo/AddStudentModal';
 
 export default function TpoOverviewPage() {
-  const { collegeId, currentCollege, stats } = useOutletContext<{
-    collegeId: string;
-    currentCollege: any;
-    stats: any;
-  }>();
+  const { collegeId, currentCollege, stats } = useOutletContext<TpoOutletContext>();
   const queryClient = useQueryClient();
 
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
@@ -34,7 +31,7 @@ export default function TpoOverviewPage() {
   const [isCreateExamOpen, setIsCreateExamOpen] = useState(false);
 
   // Fetch recent mock exams
-  const { data: mockExams = [], refetch } = useQuery<MockExam[]>({
+  const { data: mockExams = [] } = useQuery<MockExam[]>({
     queryKey: ['tpo-mock-exams', collegeId],
     queryFn: () => tpoService.getMockExamsForCollege(collegeId),
     enabled: !!collegeId,
@@ -260,11 +257,10 @@ export default function TpoOverviewPage() {
         onClose={() => setIsAddStudentOpen(false)}
         collegeId={collegeId}
         collegeName={currentCollege.name}
-        onSuccess={(studentName) => {
+        onSuccess={() => {
           setIsAddStudentOpen(false);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
-          refetch();
         }}
       />
 
@@ -277,7 +273,6 @@ export default function TpoOverviewPage() {
           setIsImportOpen(false);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
-          refetch();
         }}
       />
 
@@ -289,7 +284,6 @@ export default function TpoOverviewPage() {
           setIsCreateExamOpen(false);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
-          refetch();
         }}
       />
 

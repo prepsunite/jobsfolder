@@ -269,24 +269,22 @@ export default function MockExamTestPage() {
 
     const handleViolation = (type: ProctorEvent['type']) => {
       const maxAllowed = exam.max_tab_switches_allowed || 3;
-      setTabSwitchCount(prevCount => {
-        const nextCount = prevCount + 1;
-        const newEvent: ProctorEvent = {
-          timestamp: new Date().toISOString(),
-          type,
-          details: `Violation ${nextCount} of ${maxAllowed}`,
-        };
-        setProctorEvents(prev => [...prev, newEvent]);
+      const nextCount = tabSwitchCount + 1;
+      setTabSwitchCount(nextCount);
 
-        if (nextCount >= maxAllowed) {
-          setIsMalpracticeTerminated(true);
-          handleFinalSubmit('TERMINATED_MALPRACTICE');
-        } else {
-          setShowWarningModal(true);
-        }
+      const newEvent: ProctorEvent = {
+        timestamp: new Date().toISOString(),
+        type,
+        details: `Violation ${nextCount} of ${maxAllowed}`,
+      };
+      setProctorEvents(prev => [...prev, newEvent]);
 
-        return nextCount;
-      });
+      if (nextCount >= maxAllowed) {
+        setIsMalpracticeTerminated(true);
+        handleFinalSubmit('TERMINATED_MALPRACTICE');
+      } else {
+        setShowWarningModal(true);
+      }
     };
 
     const handleVisibilityChange = () => {
@@ -812,19 +810,33 @@ export default function MockExamTestPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-[#0f1012] p-4 sm:p-8 flex items-center justify-center animate-fadeIn">
         <div className="bg-white dark:bg-[#151618] border border-gray-200 dark:border-[#25262a] max-w-xl w-full rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-6">
           
-          <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center mx-auto">
-            <Award className="w-8 h-8" />
-          </div>
+          {finalGradedAttempt?.status === 'TERMINATED_MALPRACTICE' ? (
+            <div className="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-600 flex items-center justify-center mx-auto">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center mx-auto">
+              <Award className="w-8 h-8" />
+            </div>
+          )}
 
           <div className="space-y-1">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-              Assessment Submitted
-            </span>
+            {finalGradedAttempt?.status === 'TERMINATED_MALPRACTICE' ? (
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                Disqualified for Proctoring Violations
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                Assessment Submitted
+              </span>
+            )}
             <h2 className="text-2xl font-black text-gray-900 dark:text-white">
               {exam?.title}
             </h2>
             <p className="text-xs text-gray-500">
-              Your test session has been recorded and submitted to your college Placement Cell.
+              {finalGradedAttempt?.status === 'TERMINATED_MALPRACTICE'
+                ? 'Your assessment was auto-submitted due to exceeding allowed window/tab switch limits.'
+                : 'Your test session has been recorded and submitted to your college Placement Cell.'}
             </p>
           </div>
 
@@ -846,16 +858,30 @@ export default function MockExamTestPage() {
               <div className="text-[11px] font-semibold text-gray-500 uppercase">Result</div>
               <div
                 className={`text-lg font-black mt-1 ${
-                  finalGradedAttempt?.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  finalGradedAttempt?.status === 'TERMINATED_MALPRACTICE'
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : finalGradedAttempt?.passed
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
-                {finalGradedAttempt?.passed ? 'CLEARED' : 'NEEDS PREP'}
+                {finalGradedAttempt?.status === 'TERMINATED_MALPRACTICE'
+                  ? 'DISQUALIFIED'
+                  : finalGradedAttempt?.passed
+                  ? 'CLEARED'
+                  : 'NEEDS PREP'}
               </div>
             </div>
           </div>
 
           {/* Anti-Cheat Summary */}
-          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-xl text-xs text-blue-800 dark:text-blue-300">
+          <div
+            className={`p-3 rounded-xl text-xs border ${
+              tabSwitchCount > 0
+                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300'
+                : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/50 text-blue-800 dark:text-blue-300'
+            }`}
+          >
             {tabSwitchCount === 0 ? (
               <span className="font-semibold flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -868,13 +894,19 @@ export default function MockExamTestPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-1">
-            <button
-              onClick={() => setShowReviewAnswers(prev => !prev)}
-              className="flex-1 py-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-wider transition-all border border-blue-200 dark:border-blue-800 flex items-center justify-center gap-1.5"
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>{showReviewAnswers ? 'Hide Answer Key' : 'Review Questions & Solutions'}</span>
-            </button>
+            {exam?.show_results_immediately !== false ? (
+              <button
+                onClick={() => setShowReviewAnswers(prev => !prev)}
+                className="flex-1 py-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-wider transition-all border border-blue-200 dark:border-blue-800 flex items-center justify-center gap-1.5"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>{showReviewAnswers ? 'Hide Answer Key' : 'Review Questions & Solutions'}</span>
+              </button>
+            ) : (
+              <div className="flex-1 py-3 rounded-2xl bg-gray-100 dark:bg-slate-800/50 text-gray-500 text-xs font-semibold flex items-center justify-center gap-1.5">
+                <span>Solutions scheduled for release by TPO after drive closes</span>
+              </div>
+            )}
 
             <button
               onClick={() => {

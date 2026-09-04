@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
 import Sidebar from '@/components/Sidebar';
+import type { College, TpoDashboardStats } from '@/types/tpo';
 import {
   Building2,
   Users,
@@ -12,6 +13,12 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+
+export interface TpoOutletContext {
+  collegeId: string;
+  currentCollege: College;
+  stats?: TpoDashboardStats;
+}
 
 export default function TpoLayout() {
   const { user, isAdmin } = useAuth();
@@ -25,12 +32,28 @@ export default function TpoLayout() {
   });
 
   const [selectedCollegeId, setSelectedCollegeId] = useState<string>(user?.collegeId || '');
+
+  // Keep selectedCollegeId synchronized when user or colleges list loads
+  useEffect(() => {
+    if (!selectedCollegeId) {
+      if (user?.collegeId) {
+        setSelectedCollegeId(user.collegeId);
+      } else if (allColleges.length > 0 && allColleges[0]?.id) {
+        setSelectedCollegeId(allColleges[0].id);
+      }
+    }
+  }, [user?.collegeId, allColleges, selectedCollegeId]);
+
   const effectiveCollegeId = selectedCollegeId || user?.collegeId || (allColleges[0]?.id ?? '');
 
-  const currentCollege = allColleges.find(c => c.id === effectiveCollegeId) || {
+  const currentCollege: College = allColleges.find(c => c.id === effectiveCollegeId) || {
     id: effectiveCollegeId,
     name: user?.collegeName || 'Engineering College',
     code: 'CRT',
+    slug: 'crt',
+    contract_status: 'ACTIVE',
+    valid_until: '2027-12-31T00:00:00Z',
+    created_at: new Date().toISOString(),
     max_licenses: 1000,
   };
 

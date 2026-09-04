@@ -16,12 +16,11 @@ import {
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 
+import type { TpoOutletContext } from '@/layouts/TpoLayout';
+
 export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
-  const { collegeId, currentCollege } = useOutletContext<{
-    collegeId: string;
-    currentCollege: any;
-  }>();
+  const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
@@ -80,6 +79,7 @@ export default function TpoExamDetailPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const copyExamLink = () => {
@@ -221,11 +221,12 @@ export default function TpoExamDetailPage() {
                 </td>
               </tr>
             ) : (
-              filteredAttempts.map((att, idx) => {
+              filteredAttempts.map((att) => {
+                const globalRank = attempts.findIndex(a => a.id === att.id) + 1;
                 const s = att.student || { name: 'Student', email: '', roll_number: '—', department: 'CSE' };
                 return (
                   <tr key={att.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-black text-slate-400">#{idx + 1}</td>
+                    <td className="p-4 font-black text-slate-400">#{globalRank}</td>
                     <td className="p-4 font-mono font-bold text-slate-900 dark:text-white">
                       {s.roll_number || '—'}
                     </td>

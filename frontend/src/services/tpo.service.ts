@@ -745,7 +745,7 @@ export const tpoService = {
       const map = new Map<string, CollegeStudent>();
       list.forEach(s => map.set(s.email.toLowerCase(), s));
       local.forEach(s => {
-        if (!map.has(s.email.toLowerCase())) {
+        if (!map.has(s.email.toLowerCase()) && !s.is_tpo_admin && s.role !== 'TPO_ADMIN') {
           map.set(s.email.toLowerCase(), s);
         }
       });
@@ -1212,6 +1212,9 @@ export const tpoService = {
 
   async getMockExamsForCollege(collegeId: string): Promise<MockExam[]> {
     const local = getLocalExams(collegeId);
+    const map = new Map<string, MockExam>();
+    local.forEach(e => map.set(e.id, e));
+
     try {
       const { data, error } = await supabase
         .from('mock_exams')
@@ -1224,15 +1227,38 @@ export const tpoService = {
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        const map = new Map<string, MockExam>();
-        local.forEach(e => map.set(e.id, e));
         data.forEach(e => map.set(e.id, e));
-        return Array.from(map.values());
       }
     } catch (error: any) {
-      console.warn('Could not fetch mock exams from Supabase, using local fallback:', error?.message);
+      console.warn('Could not fetch mock exams from Supabase, using cloud sync fallback:', error?.message);
     }
-    return local;
+
+    // Cloud resilience: Fetch exams stored in contact_messages for cross-device support
+    try {
+      const { data: cloudExams } = await supabase
+        .from('contact_messages')
+        .select('message, status')
+        .like('subject', `B2B_EXAM:${collegeId}:%`)
+        .neq('status', 'DELETED')
+        .order('created_at', { ascending: false });
+
+      if (cloudExams && cloudExams.length > 0) {
+        cloudExams.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message) as MockExam;
+            if (parsed && parsed.id && !map.has(parsed.id)) {
+              map.set(parsed.id, parsed);
+            }
+          } catch {}
+        });
+      }
+    } catch (err) {
+      console.warn('Notice reading cloud exam messages:', err);
+    }
+
+    const merged = Array.from(map.values()).filter(e => !e.is_deleted);
+    saveLocalExams(collegeId, merged);
+    return merged;
   },
 
   async getMockExamById(examId: string): Promise<MockExam | null> {
@@ -1247,9 +1273,7 @@ export const tpoService = {
         .single();
 
       if (!error && data) return data;
-    } catch (error) {
-      console.warn('Could not fetch mock exam from Supabase:', error);
-    }
+    } catch (error) {}
 
     // Try finding in local colleges
     const colleges = await this.getAllColleges();
@@ -1258,6 +1282,22 @@ export const tpoService = {
       const found = exams.find(e => e.id === examId);
       if (found) return found;
     }
+
+    // Try finding in cloud contact_messages
+    try {
+      const { data: cloudMsg } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .like('subject', `B2B_EXAM:%:${examId}`)
+        .neq('status', 'DELETED')
+        .limit(1)
+        .maybeSingle();
+
+      if (cloudMsg && cloudMsg.message) {
+        const parsed = JSON.parse(cloudMsg.message) as MockExam;
+        if (parsed && parsed.id) return parsed;
+      }
+    } catch {}
 
     return null;
   },
@@ -1359,12 +1399,25 @@ export const tpoService = {
       created_at: new Date().toISOString(),
     };
 
-    // Save locally immediately
+    // 1. Save locally immediately
     const currentLocal = getLocalExams(examData.college_id);
     currentLocal.unshift(newLocalExam);
     saveLocalExams(examData.college_id, currentLocal);
 
-    // Attempt Supabase insert
+    // 2. Cloud multi-device backup to contact_messages (available across any student device)
+    try {
+      await supabase.from('contact_messages').insert({
+        name: `Exam: ${newLocalExam.title}`,
+        email: 'tpo@prepunite.com',
+        subject: `B2B_EXAM:${examData.college_id}:${examId}`,
+        message: JSON.stringify(newLocalExam),
+        status: 'ACTIVE',
+      });
+    } catch (syncErr) {
+      console.warn('Notice backing up exam to cloud message:', syncErr);
+    }
+
+    // 3. Attempt Supabase mock_exams table insert
     try {
       const { data: newExam, error: examErr } = await supabase
         .from('mock_exams')
@@ -1396,7 +1449,6 @@ export const tpoService = {
         newLocalExam.id = newExam.id;
         currentLocal[0].id = newExam.id;
         saveLocalExams(examData.college_id, currentLocal);
-        return newExam;
       }
     } catch (err: any) {
       console.warn('Notice inserting mock exam in Supabase:', err);
@@ -1411,6 +1463,13 @@ export const tpoService = {
       const filtered = local.filter(e => e.id !== examId);
       saveLocalExams(collegeId, filtered);
     }
+
+    try {
+      await supabase
+        .from('contact_messages')
+        .update({ status: 'DELETED' })
+        .like('subject', `B2B_EXAM:%:${examId}`);
+    } catch {}
 
     try {
       await supabase
@@ -1441,7 +1500,6 @@ export const tpoService = {
       console.warn('Notice fetching exam attempts from Supabase:', error?.message);
     }
 
-    // Merge with local attempts
     const localAttempts = getLocalAttempts(examId);
     const map = new Map<string, StudentExamAttempt>();
     cloudAttempts.forEach(a => map.set(a.id, a));
@@ -1451,7 +1509,48 @@ export const tpoService = {
       }
     });
 
-    return Array.from(map.values()).sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
+    // Cloud resilience: Fetch attempts logged via contact_messages
+    try {
+      const { data: cloudMsgs } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .like('subject', `B2B_ATTEMPT:${examId}:%`)
+        .order('created_at', { ascending: false });
+
+      if (cloudMsgs && cloudMsgs.length > 0) {
+        cloudMsgs.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message) as StudentExamAttempt;
+            if (parsed && parsed.id && !map.has(parsed.id)) {
+              map.set(parsed.id, parsed);
+            }
+          } catch {}
+        });
+      }
+    } catch {}
+
+    const allAttempts = Array.from(map.values());
+
+    // Enrich any attempt missing student metadata
+    const enriched = allAttempts.map(att => {
+      if (!att.student || !att.student.name || att.student.name === 'Student') {
+        const studentId = att.student_id || '';
+        const namePart = studentId.includes('@') ? studentId.split('@')[0].replace(/[._-]/g, ' ') : studentId;
+        const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        return {
+          ...att,
+          student: {
+            name: att.student?.name && att.student.name !== 'Student' ? att.student.name : displayName,
+            email: att.student?.email || (studentId.includes('@') ? studentId : ''),
+            roll_number: att.student?.roll_number || '—',
+            department: att.student?.department || 'CSE',
+          },
+        };
+      }
+      return att;
+    });
+
+    return enriched.sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
   },
 
   // ==========================================
@@ -1676,7 +1775,21 @@ export const tpoService = {
 
     saveLocalAttempt(finalizedAttempt);
 
-    // 4. Try updating Supabase
+    // Resilient cloud backup to contact_messages (ensures TPO on another device sees attempt)
+    try {
+      const cleanSid = (studentId || 'anon').toLowerCase();
+      await supabase.from('contact_messages').insert({
+        name: `Candidate Attempt: ${cleanSid}`,
+        email: cleanSid.includes('@') ? cleanSid : 'student@prepunite.com',
+        subject: `B2B_ATTEMPT:${exam.id}:${cleanSid}`,
+        message: JSON.stringify(finalizedAttempt),
+        status: finalStatus,
+      });
+    } catch (cloudErr) {
+      console.warn('Notice saving attempt to cloud messages:', cloudErr);
+    }
+
+    // 4. Try updating Supabase student_exam_attempts table if it exists
     try {
       const { data: gradedAttempt } = await supabase
         .from('student_exam_attempts')
@@ -1758,7 +1871,7 @@ export const tpoService = {
     );
     if (localFound) return localFound;
 
-    // 2. Check Supabase
+    // 2. Check Supabase table
     try {
       const { data, error } = await supabase
         .from('student_exam_attempts')
@@ -1772,6 +1885,25 @@ export const tpoService = {
       if (!error && data) {
         saveLocalAttempt(data);
         return data;
+      }
+    } catch {}
+
+    // 3. Check cloud messages
+    try {
+      const { data: cloudMsg } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .eq('subject', `B2B_ATTEMPT:${mockExamId}:${cleanId}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cloudMsg && cloudMsg.message) {
+        const parsed = JSON.parse(cloudMsg.message) as StudentExamAttempt;
+        if (parsed && parsed.id) {
+          saveLocalAttempt(parsed);
+          return parsed;
+        }
       }
     } catch {}
 
@@ -1862,6 +1994,29 @@ export const tpoService = {
         studentAttempts.forEach(a => attemptMap.set(a.id, a));
         cloudAttempts.forEach(a => attemptMap.set(a.id, a));
         studentAttempts = Array.from(attemptMap.values());
+      }
+    } catch {}
+
+    // Cloud resilience: Fetch attempts logged via contact_messages
+    try {
+      const { data: cloudMsgs } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .like('subject', `B2B_ATTEMPT:%:${cleanEmail}`)
+        .order('created_at', { ascending: false });
+
+      if (cloudMsgs && cloudMsgs.length > 0) {
+        const map = new Map<string, StudentExamAttempt>();
+        studentAttempts.forEach(a => map.set(a.id, a));
+        cloudMsgs.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message) as StudentExamAttempt;
+            if (parsed && parsed.id && !map.has(parsed.id)) {
+              map.set(parsed.id, parsed);
+            }
+          } catch {}
+        });
+        studentAttempts = Array.from(map.values());
       }
     } catch {}
 
