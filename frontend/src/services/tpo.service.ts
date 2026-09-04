@@ -1128,35 +1128,44 @@ export const tpoService = {
     const planName = `Campus Pro Pass (${college.name})`;
     const paymentId = `B2B_CAMPUS_${college.id}`;
 
-    // 1. Supabase public.user_subscriptions upsert
+    // 1. Supabase public.user_subscriptions upsert (RPC with SECURITY DEFINER + direct fallback)
     try {
-      const { data: existingSub } = await supabase
-        .from('user_subscriptions')
-        .select('id, expires_at')
-        .eq('user_email', cleanEmail)
-        .maybeSingle();
+      const { error: rpcErr } = await supabase.rpc('provision_campus_student_subscription', {
+        p_email: cleanEmail,
+        p_college_id: college.id,
+        p_college_name: college.name,
+        p_valid_until: validUntil,
+      });
 
-      if (existingSub) {
-        await supabase
+      if (rpcErr) {
+        const { data: existingSub } = await supabase
           .from('user_subscriptions')
-          .update({
-            status: 'ACTIVE',
-            plan_name: planName,
-            payment_id: paymentId,
-            expires_at: validUntil,
-          })
-          .eq('id', existingSub.id);
-      } else {
-        await supabase
-          .from('user_subscriptions')
-          .insert([{
-            user_email: cleanEmail,
-            plan_name: planName,
-            payment_id: paymentId,
-            status: 'ACTIVE',
-            expires_at: validUntil,
-            created_at: new Date().toISOString(),
-          }]);
+          .select('id, expires_at')
+          .eq('user_email', cleanEmail)
+          .maybeSingle();
+
+        if (existingSub) {
+          await supabase
+            .from('user_subscriptions')
+            .update({
+              status: 'ACTIVE',
+              plan_name: planName,
+              payment_id: paymentId,
+              expires_at: validUntil,
+            })
+            .eq('id', existingSub.id);
+        } else {
+          await supabase
+            .from('user_subscriptions')
+            .insert([{
+              user_email: cleanEmail,
+              plan_name: planName,
+              payment_id: paymentId,
+              status: 'ACTIVE',
+              expires_at: validUntil,
+              created_at: new Date().toISOString(),
+            }]);
+        }
       }
     } catch (err) {
       console.warn('[provisionStudentEntitlement] Notice syncing subscription to Supabase:', err);

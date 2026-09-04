@@ -89,6 +89,7 @@ export default function MockExamTestPage() {
   // Anti-Cheat Proctoring State
   const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
   const tabSwitchCountRef = useRef<number>(0);
+  const lastViolationTimeRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [proctorEvents, setProctorEvents] = useState<ProctorEvent[]>([]);
   const [isMalpracticeTerminated, setIsMalpracticeTerminated] = useState<boolean>(false);
@@ -299,6 +300,13 @@ export default function MockExamTestPage() {
     if (testPhase !== 'IN_PROGRESS' || !exam?.enable_tab_switch_detection) return;
 
     const handleViolation = (type: ProctorEvent['type']) => {
+      const now = Date.now();
+      // 🛡️ Debounce Guard: Ignore concurrent window.blur, visibilitychange, or fullscreen events within 1,500ms
+      if (now - lastViolationTimeRef.current < 1500) {
+        return;
+      }
+      lastViolationTimeRef.current = now;
+
       const maxAllowed = exam.max_tab_switches_allowed || 3;
       tabSwitchCountRef.current += 1;
       const nextCount = tabSwitchCountRef.current;

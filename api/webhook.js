@@ -9,6 +9,20 @@ function safeTimingEqual(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+async function getRawBody(readable) {
+  const chunks = [];
+  for await (const chunk of readable) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).send('Method not allowed');
@@ -27,10 +41,20 @@ export default async function handler(req, res) {
       return res.status(400).send('Missing webhook signature');
     }
 
-    const rawPayload = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+    let rawBuffer;
+    if (Buffer.isBuffer(req.body)) {
+      rawBuffer = req.body;
+    } else if (typeof req.body === 'string') {
+      rawBuffer = Buffer.from(req.body, 'utf8');
+    } else if (req.rawBody && Buffer.isBuffer(req.rawBody)) {
+      rawBuffer = req.rawBody;
+    } else {
+      rawBuffer = await getRawBody(req);
+    }
+
     const expectedSig = crypto
       .createHmac('sha256', webhookSecret)
-      .update(rawPayload)
+      .update(rawBuffer)
       .digest('hex');
 
     if (!safeTimingEqual(expectedSig, signature)) {
@@ -38,7 +62,13 @@ export default async function handler(req, res) {
       return res.status(400).send('Invalid webhook signature');
     }
 
-    const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    let event;
+    try {
+      event = JSON.parse(rawBuffer.toString('utf8'));
+    } catch (parseErr) {
+      console.error('[api/webhook] Failed to parse JSON event:', parseErr.message);
+      return res.status(400).send('Invalid JSON payload');
+    }
     if (event?.event === 'payment.captured') {
       const payment = event.payload?.payment?.entity;
       if (payment) {

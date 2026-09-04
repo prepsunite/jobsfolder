@@ -27,6 +27,7 @@ export interface InterviewExperience {
 export interface SubmitExperienceRequest {
   companyId: string;
   role: string;
+  studentName?: string;
   college?: string;
   year?: number;
   difficulty?: QuestionDifficulty;

@@ -188,7 +188,7 @@ export const experienceService = {
   submitExperience: async (req: SubmitExperienceRequest): Promise<InterviewExperience> => {
     const payload = {
       company_slug: (req.companyId || 'tcs').toLowerCase(),
-      student_name: 'Student Explorer',
+      student_name: req.isAnonymous ? 'Anonymous Candidate' : (req.studentName?.trim() || 'Student Explorer'),
       role_title: req.role || 'Software Engineer',
       college: req.college || 'Engineering College',
       year: req.year || 2026,

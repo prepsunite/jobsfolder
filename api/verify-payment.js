@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // 3. Authenticate user from JWT token if available, fallback to body email
+    // 3. Authenticate user strictly from JWT token (Prevents unauthenticated body email tampering)
     let verifiedEmail = null;
     const authHeader = req.headers.authorization || req.headers.Authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -88,12 +88,11 @@ export default async function handler(req, res) {
       }
     }
 
-    if (!verifiedEmail && bodyEmail && typeof bodyEmail === 'string' && bodyEmail.includes('@')) {
-      verifiedEmail = bodyEmail.toLowerCase().trim();
-    }
-
     if (!verifiedEmail) {
-      return res.status(400).json({ success: false, error: 'A valid user email or authorization session is required for payment verification.' });
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required. An active login session is required to verify payments.',
+      });
     }
 
     const normalizedItemType = itemType.toUpperCase();

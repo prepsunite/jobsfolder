@@ -3,11 +3,13 @@ import { useNavigate, Link } from 'react-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { experienceService } from '@/services/experience.service';
 import { companyService } from '@/services/company.service';
+import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Sparkles, Send, CheckCircle2 } from 'lucide-react';
 import type { QuestionDifficulty } from '@/types/question';
 
 export default function SubmitExperiencePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
   const [companyId, setCompanyId] = useState('');
@@ -51,6 +53,7 @@ export default function SubmitExperiencePage() {
     submitMutation.mutate({
       companyId,
       role,
+      studentName: user?.name || '',
       college,
       year: Number(year),
       difficulty,

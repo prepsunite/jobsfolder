@@ -53,19 +53,40 @@ export default async function handler(req, res) {
       hasAccess = !!accessGranted;
     }
 
-    // 3. Fetch Paper Tab Nodes from Database
+    // 3. Fetch Paper Tab Nodes from Database (with fallback to exams.paper_tabs)
+    let rawNodes = [];
     const { data: nodes, error } = await supabaseAdmin
       .from('paper_tab_nodes')
       .select('*')
       .eq('exam_id', examId)
       .order('sort_order', { ascending: true });
 
-    if (error) {
-      throw error;
+    if (!error && nodes && nodes.length > 0) {
+      rawNodes = nodes;
+    } else {
+      // Fallback: Check if exam has paper_tabs stored directly as JSON column
+      const { data: examData } = await supabaseAdmin
+        .from('exams')
+        .select('paper_tabs')
+        .eq('id', examId)
+        .maybeSingle();
+
+      if (examData?.paper_tabs && Array.isArray(examData.paper_tabs)) {
+        rawNodes = examData.paper_tabs.map((tab, idx) => ({
+          id: tab.id || `tab-${idx}`,
+          exam_id: examId,
+          title: tab.title,
+          emoji: tab.emoji || '📄',
+          content: tab.content || '',
+          parent_id: tab.parentId || null,
+          sort_order: idx,
+          is_free: idx === 0,
+        }));
+      }
     }
 
     // 4. Security Payload Redaction: If unpaid and not free, set content: null
-    const sanitizedNodes = (nodes || []).map((node) => {
+    const sanitizedNodes = rawNodes.map((node) => {
       const isFreeTab = node.is_free === true || node.isFree === true;
       if (!hasAccess && !isFreeTab) {
         return { ...node, content: null }; // 🔒 Zero text/HTML shipped to client!

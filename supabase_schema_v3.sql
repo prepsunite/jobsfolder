@@ -21,6 +21,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user' NOT NULL;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS college_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_tpo_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS roll_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS department TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS batch_year INTEGER;
 
 -- 3. Dynamic RLS Admin Validation Function
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -374,6 +379,21 @@ DROP POLICY IF EXISTS "Admin full access subscriptions" ON public.user_subscript
 CREATE POLICY "Admin full access subscriptions"
   ON public.user_subscriptions FOR ALL USING (public.is_admin());
 
+DROP POLICY IF EXISTS "TPO coordinator manage college student subscriptions" ON public.user_subscriptions;
+CREATE POLICY "TPO coordinator manage college student subscriptions"
+  ON public.user_subscriptions FOR ALL
+  USING (
+    payment_id LIKE 'B2B_CAMPUS_%' AND (
+      public.is_admin() OR
+      EXISTS (
+        SELECT 1 FROM public.tpo_authorizations ta
+        WHERE lower(ta.email) = lower(auth.jwt()->>'email')
+          AND ta.status = 'ACTIVE'
+          AND 'B2B_CAMPUS_' || ta.college_id = public.user_subscriptions.payment_id
+      )
+    )
+  );
+
 ALTER TABLE public.user_paper_purchases ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "User reads own paper purchases" ON public.user_paper_purchases;
@@ -644,4 +664,91 @@ BEGIN
   ORDER BY e.created_at DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================
+-- 23. Dedicated User Bookmarks Table (Prevents JWT Bloat & HTTP 431)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.user_bookmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_email VARCHAR(255) NOT NULL,
+  item_type VARCHAR(50) NOT NULL, -- 'QUESTION', 'EXAM', 'EXPERIENCE'
+  item_id VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  CONSTRAINT uq_user_item_bookmark UNIQUE (user_email, item_type, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_bookmarks_lookup ON public.user_bookmarks(user_email, item_type);
+
+ALTER TABLE public.user_bookmarks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users read own bookmarks" ON public.user_bookmarks;
+CREATE POLICY "Users read own bookmarks" ON public.user_bookmarks FOR SELECT
+  USING (
+    user_email = (SELECT email FROM public.profiles WHERE id = auth.uid())
+    OR user_id = auth.uid()
+  );
+
+DROP POLICY IF EXISTS "Users insert own bookmarks" ON public.user_bookmarks;
+CREATE POLICY "Users insert own bookmarks" ON public.user_bookmarks FOR INSERT
+  WITH CHECK (
+    user_email = (SELECT email FROM public.profiles WHERE id = auth.uid())
+    OR user_id = auth.uid()
+  );
+
+DROP POLICY IF EXISTS "Users delete own bookmarks" ON public.user_bookmarks;
+CREATE POLICY "Users delete own bookmarks" ON public.user_bookmarks FOR DELETE
+  USING (
+    user_email = (SELECT email FROM public.profiles WHERE id = auth.uid())
+    OR user_id = auth.uid()
+  );
+
+-- ============================================================
+-- 24. Atomic Campus Student Subscription Provisioning RPC
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.provision_campus_student_subscription(
+  p_email TEXT,
+  p_college_id TEXT,
+  p_college_name TEXT,
+  p_valid_until TIMESTAMPTZ
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_clean_email TEXT;
+  v_plan_name TEXT;
+  v_payment_id TEXT;
+BEGIN
+  v_clean_email := lower(trim(p_email));
+  v_plan_name := 'Campus Pro Pass (' || coalesce(p_college_name, 'Partner College') || ')';
+  v_payment_id := 'B2B_CAMPUS_' || p_college_id;
+
+  INSERT INTO public.user_subscriptions (
+    user_email,
+    plan_name,
+    payment_id,
+    status,
+    expires_at,
+    updated_at
+  ) VALUES (
+    v_clean_email,
+    v_plan_name,
+    v_payment_id,
+    'ACTIVE',
+    p_valid_until,
+    NOW()
+  )
+  ON CONFLICT (payment_id, user_email)
+  DO UPDATE SET
+    plan_name = EXCLUDED.plan_name,
+    status = 'ACTIVE',
+    expires_at = EXCLUDED.expires_at,
+    updated_at = NOW();
+
+  RETURN jsonb_build_object('success', true, 'email', v_clean_email);
+END;
+$$;
+
 

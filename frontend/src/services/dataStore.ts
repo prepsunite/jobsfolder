@@ -1295,11 +1295,16 @@ class DataStoreManager {
       if (this.syncBookmarksTimeout) clearTimeout(this.syncBookmarksTimeout);
       this.syncBookmarksTimeout = setTimeout(async () => {
         try {
+          // 🛡️ JWT Size Protection: Cap recent bookmarks in user_metadata to prevent HTTP 431 Request Header Too Large
+          const safeQuestions = questions.slice(0, 30);
+          const safeExams = exams.slice(0, 20);
+          const safeExperiences = experiences.slice(0, 20);
+
           await supabase.auth.updateUser({
             data: {
-              bookmarked_questions: questions,
-              bookmarked_exams: exams,
-              bookmarked_experiences: experiences,
+              bookmarked_questions: safeQuestions,
+              bookmarked_exams: safeExams,
+              bookmarked_experiences: safeExperiences,
             },
           });
         } catch (e) {

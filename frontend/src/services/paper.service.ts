@@ -47,12 +47,32 @@ export class PaperService {
         .eq('id', examId);
 
       if (error) {
-        console.error('[PaperService.savePaperTabNodes] Supabase error:', error);
-        throw error;
+        console.error('[PaperService.savePaperTabNodes] Supabase error on exams update:', error);
       }
     } catch (err) {
-      console.error('[PaperService.savePaperTabNodes] Failed:', err);
+      console.error('[PaperService.savePaperTabNodes] Failed exams update:', err);
     }
+
+    // 🛡️ Storage Sync: Also synchronize rows into paper_tab_nodes relational table
+    try {
+      if (tabs.length > 0) {
+        const rows = tabs.map((t, idx) => ({
+          id: t.id,
+          exam_id: examId,
+          title: t.title,
+          emoji: t.emoji || '📄',
+          content: t.content || '',
+          parent_id: (t as any).parentId || null,
+          sort_order: idx,
+          is_deleted: false,
+          updated_at: new Date().toISOString(),
+        }));
+        await supabase.from('paper_tab_nodes').upsert(rows, { onConflict: 'id' });
+      }
+    } catch (syncErr) {
+      console.warn('[PaperService.savePaperTabNodes] paper_tab_nodes sync notice:', syncErr);
+    }
+
     dataStore.updateExam(examId, { paperTabs: tabs });
   }
 }
