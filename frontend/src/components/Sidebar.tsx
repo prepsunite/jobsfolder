@@ -32,13 +32,18 @@ import {
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  collegeName?: string;
+  collegeCode?: string;
 }
 
-export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen = false, onClose, collegeName, collegeCode }: SidebarProps) {
   const location = useLocation();
   const { user, role, isTpoAdmin, logout } = useAuth();
   const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
-  const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin;
+  const isTpoRoute = location.pathname.startsWith('/tpo');
+  const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) || (isAdmin && isTpoRoute);
+
+  const displayCollegeName = collegeName || user?.collegeName || 'Institutional';
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
   // TPO Institutional Modules (Strictly for College Placement Officers)
@@ -104,9 +109,9 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 </span>
                 <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
                   {isAdmin
-                    ? 'Admin Portal'
+                    ? (isTpoRoute ? `${displayCollegeName} CRT` : 'Admin Portal')
                     : (role === 'TPO_ADMIN' || isTpoAdmin)
-                    ? `${user?.collegeName || 'Institutional'} CRT`
+                    ? `${displayCollegeName} CRT`
                     : role === 'USER'
                     ? 'Student Workspace'
                     : 'Guest Mode'}
@@ -140,7 +145,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               />
               <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
                 {isAdmin
-                  ? 'Admin Active'
+                  ? (isTpoRoute ? 'TPO Portal (Admin View)' : 'Admin Active')
                   : (role === 'TPO_ADMIN' || isTpoAdmin)
                   ? 'TPO Coordinator'
                   : role === 'USER'
@@ -149,7 +154,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               </span>
             </div>
             <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase">
-              {(role === 'TPO_ADMIN' || isTpoAdmin) ? 'TPO' : '2026'}
+              {(role === 'TPO_ADMIN' || isTpoAdmin || isTpoRoute) ? 'TPO' : '2026'}
             </span>
           </div>
 
@@ -200,7 +205,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 <div className="flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-[#FD4A32] shrink-0" />
                   <span className="font-bold text-[#121417] dark:text-white truncate">
-                    {user?.collegeName || 'Campus Partner'}
+                    {displayCollegeName}
                   </span>
                 </div>
               </div>
@@ -227,6 +232,28 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   <span>Contact Support</span>
                 </Link>
               </div>
+
+              {/* Admin Quick Return for Super Admins */}
+              {isAdmin && (
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                  <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                    Control Center
+                  </span>
+                  <Link
+                    to="/admin"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <span>Back to Admin Panel</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                      Admin
+                    </span>
+                  </Link>
+                </div>
+              )}
             </div>
           ) : (
             /* STUDENT & PLATFORM ADMIN WORKSPACE */
