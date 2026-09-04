@@ -221,8 +221,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </div>
           )}
 
-          {/* TPO CRT Control Link */}
-          {(role === 'TPO_ADMIN' || isTpoAdmin || isAdmin) && (
+          {/* TPO CRT Control Link — Strictly for college TPO coordinators, NOT PrepUnite Admins */}
+          {(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin && (
             <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
               <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
                 Institutional CRT

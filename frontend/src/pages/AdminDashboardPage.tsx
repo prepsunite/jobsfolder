@@ -619,6 +619,17 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setAdminTab('colleges-tpo')}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0 ${
+              adminTab === 'colleges-tpo'
+                ? 'bg-[#FD4A32] text-white ring-2 ring-[#FD4A32]/40'
+                : 'bg-orange-600 hover:bg-orange-500 text-white'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Colleges &amp; TPOs</span>
+          </button>
           <Link
             to="/admin/bulk-import"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
@@ -661,7 +672,19 @@ export default function AdminDashboardPage() {
           }`}
         >
           <Layers className={`w-3.5 h-3.5 ${adminTab === 'manage-exams' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
-          <span>Company & Exam Modules</span>
+          <span>Company &amp; Exam Modules</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('colleges-tpo')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+            adminTab === 'colleges-tpo'
+              ? 'bg-[#FD4A32] text-white shadow-sm'
+              : 'text-[#FD4A32] hover:bg-orange-50 dark:hover:bg-orange-950/30'
+          }`}
+        >
+          <Building2 className={`w-3.5 h-3.5 ${adminTab === 'colleges-tpo' ? 'text-white' : 'text-[#FD4A32]'}`} />
+          <span className="font-extrabold">Colleges &amp; TPO Admins</span>
         </button>
 
         <button
@@ -766,18 +789,6 @@ export default function AdminDashboardPage() {
               {registeredUsersList.length}
             </span>
           )}
-        </button>
-
-        <button
-          onClick={() => setAdminTab('colleges-tpo')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-            adminTab === 'colleges-tpo'
-              ? 'bg-[#FD4A32] text-white shadow-sm'
-              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
-          }`}
-        >
-          <Building2 className={`w-3.5 h-3.5 ${adminTab === 'colleges-tpo' ? 'text-white' : 'text-[#FD4A32]'}`} />
-          <span>Colleges &amp; TPO Admins</span>
         </button>
 
         <button
