@@ -111,7 +111,9 @@ const getInitialUser = (): UserProfile | null => {
     if (email && email !== 'guest@prepunite.com') {
       // 1. TPO Coordinator Check FIRST: If authorized as TPO, role is strictly TPO_ADMIN
       const tpoAuth = tpoService.findTpoAuthByEmail(email);
-      if (tpoAuth) {
+      if (tpoAuth || role === 'TPO_ADMIN') {
+        const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
+        const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
         role = 'TPO_ADMIN';
         localStorage.setItem('prepunite_role', 'TPO_ADMIN');
         return {
@@ -120,8 +122,8 @@ const getInitialUser = (): UserProfile | null => {
           email,
           role: 'TPO_ADMIN',
           isTpoAdmin: true,
-          collegeId: tpoAuth.college_id,
-          collegeName: tpoAuth.college_name,
+          collegeId,
+          collegeName,
           avatarUrl,
         };
       }
@@ -149,6 +151,8 @@ const getInitialUser = (): UserProfile | null => {
 const getInitialRole = (): UserRole => {
   try {
     const email = localStorage.getItem('prepunite_user_email');
+    const cachedRole = localStorage.getItem('prepunite_role') as UserRole;
+    if (cachedRole === 'TPO_ADMIN') return 'TPO_ADMIN';
     if (email) {
       if (tpoService.findTpoAuthByEmail(email)) {
         return 'TPO_ADMIN';
@@ -157,8 +161,7 @@ const getInitialRole = (): UserRole => {
         return 'ADMIN';
       }
     }
-    const role = localStorage.getItem('prepunite_role') as UserRole;
-    if (role) return role;
+    if (cachedRole) return cachedRole;
   } catch {}
   return 'GUEST';
 };
@@ -209,6 +212,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('prepunite_user_name', name);
     if (avatarUrl) {
       localStorage.setItem('prepunite_user_avatar', avatarUrl);
+    }
+    if (collegeData?.collegeId) {
+      localStorage.setItem('prepunite_college_id', collegeData.collegeId);
+    }
+    if (collegeData?.collegeName) {
+      localStorage.setItem('prepunite_college_name', collegeData.collegeName);
     }
     return newProfile;
   };
@@ -513,6 +522,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('prepunite_user_email');
       localStorage.removeItem('prepunite_user_name');
       localStorage.removeItem('prepunite_user_avatar');
+      localStorage.removeItem('prepunite_college_id');
+      localStorage.removeItem('prepunite_college_name');
     }
   };
 

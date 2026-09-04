@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, User, Menu, LayoutDashboard } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, User, Menu, LayoutDashboard, Building2 } from 'lucide-react';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -20,7 +20,7 @@ const PUBLIC_ROUTES = [
 
 export default function RootLayout() {
   const location = useLocation();
-  const { user, role, isAdmin, isAuthenticated, isLoading } = useAuth();
+  const { user, role, isAdmin, isTpoAdmin, isAuthenticated, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -263,6 +263,28 @@ export default function RootLayout() {
               </Link>
               <Link to="/admin/bulk-import" className="hover:text-emerald-300 font-display font-bold flex items-center gap-1">
                 <Plus className="w-3.5 h-3.5" /> Bulk Import
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Top TPO Header Bar when TPO Coordinator is Logged In */}
+        {(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin && (
+          <div className="bg-[#18120c] dark:bg-[#120d08] text-amber-200 py-2 px-6 border-b border-amber-500/30 text-xs font-semibold flex items-center justify-between gap-4 shadow-sm sticky top-0 z-30">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#FD4A32]" />
+              <span className="font-display font-bold uppercase tracking-wider text-[10px]">
+                TPO Coordinator Active — {user?.collegeName || 'Institutional Campus'} ({user?.email})
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs">
+              <Link
+                to="/tpo"
+                className="px-3 py-1 rounded bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[10px] font-display font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-xs"
+              >
+                <span>Launch TPO Portal</span>
+                <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>

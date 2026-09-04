@@ -88,7 +88,13 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   Prep<span className="text-[#FD4A32]">Unite</span>
                 </span>
                 <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
-                  {isAdmin ? 'Admin Portal' : role === 'USER' ? 'Student Workspace' : 'Guest Mode'}
+                  {isAdmin
+                    ? 'Admin Portal'
+                    : (role === 'TPO_ADMIN' || isTpoAdmin)
+                    ? `${user?.collegeName || 'Institutional'} CRT`
+                    : role === 'USER'
+                    ? 'Student Workspace'
+                    : 'Guest Mode'}
                 </span>
               </div>
             </Link>
@@ -110,19 +116,56 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 className={`w-1.5 h-1.5 rounded-full ${
                   isAdmin
                     ? 'bg-purple-500 animate-pulse'
+                    : (role === 'TPO_ADMIN' || isTpoAdmin)
+                    ? 'bg-amber-500 animate-pulse'
                     : role === 'USER'
                     ? 'bg-emerald-500'
                     : 'bg-[#FD4A32]'
                 }`}
               />
               <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
-                {isAdmin ? 'Admin Active' : role === 'USER' ? 'Student Mode' : 'Guest Preview'}
+                {isAdmin
+                  ? 'Admin Active'
+                  : (role === 'TPO_ADMIN' || isTpoAdmin)
+                  ? 'TPO Coordinator'
+                  : role === 'USER'
+                  ? 'Student Mode'
+                  : 'Guest Preview'}
               </span>
             </div>
             <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase">
-              2026
+              {(role === 'TPO_ADMIN' || isTpoAdmin) ? 'TPO' : '2026'}
             </span>
           </div>
+
+          {/* TPO Quick Access Banner (Prominent placement for Institutional Coordinators) */}
+          {(role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin && (
+            <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-500/30 dark:border-amber-500/20 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                    <Building2 className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-display font-extrabold text-[#121417] dark:text-white block truncate">
+                      {user?.collegeName || 'Campus Partner'}
+                    </span>
+                    <span className="text-[8px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
+                      Placement Portal
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Link
+                to="/tpo"
+                onClick={onClose}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[11px] font-display font-bold shadow-2xs transition-colors"
+              >
+                <span>Launch TPO Portal</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
 
           {/* Main Navigation Links */}
           <nav className="space-y-0.5">
@@ -267,17 +310,31 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
                 <div
                   className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
-                    isAdmin ? 'bg-purple-600 dark:bg-purple-400' : 'bg-[#FD4A32]'
+                    isAdmin
+                      ? 'bg-purple-600 dark:bg-purple-400'
+                      : (role === 'TPO_ADMIN' || isTpoAdmin)
+                      ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
+                      : 'bg-[#FD4A32]'
                   }`}
                 >
-                  {isAdmin ? <KeyRound className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                  {isAdmin ? (
+                    <KeyRound className="w-3.5 h-3.5" />
+                  ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
+                    <Building2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <User className="w-3.5 h-3.5" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">
                     {user?.name || 'Workspace Account'}
                   </span>
                   <span className="text-[9px] font-medium text-[#868E96] dark:text-[#555555] block truncate">
-                    {isAdmin ? 'Administrator' : (user?.email || 'Active Account')}
+                    {isAdmin
+                      ? 'Administrator'
+                      : (role === 'TPO_ADMIN' || isTpoAdmin)
+                      ? user?.collegeName ? `${user.collegeName} (TPO)` : 'TPO Coordinator'
+                      : (user?.email || 'Active Account')}
                   </span>
                 </div>
               </Link>

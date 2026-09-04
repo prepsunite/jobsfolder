@@ -16,10 +16,11 @@ import {
   LogOut,
   CheckCircle2,
   Calendar,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user, role, logout } = useAuth();
+  const { user, role, isAdmin, isTpoAdmin, logout } = useAuth();
   const { themeMode, setThemeMode } = useTheme();
   const isUserPro = role === 'ADMIN';
 
@@ -81,7 +82,17 @@ export default function ProfilePage() {
                 <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-white tracking-tight">
                   {user?.name || 'Student Profile'}
                 </h1>
-                {isUserPro ? (
+                {isAdmin ? (
+                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1 uppercase tracking-wider">
+                    <ShieldCheck className="w-3 h-3 text-purple-500" />
+                    <span>Admin Privileges</span>
+                  </span>
+                ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
+                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 flex items-center gap-1 uppercase tracking-wider">
+                    <Building2 className="w-3 h-3 text-amber-500" />
+                    <span>TPO Coordinator ({user?.collegeName || 'Institutional CRT'})</span>
+                  </span>
+                ) : isUserPro ? (
                   <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1 uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 text-purple-500" />
                     <span>Pro Pass</span>
@@ -142,6 +153,32 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* TPO Institutional Portal Card (Direct access from Profile) */}
+      {(role === 'TPO_ADMIN' || isTpoAdmin) && (
+        <div className="p-5 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00] text-white flex items-center justify-center font-bold shadow-md shadow-orange-500/20 shrink-0">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-display text-sm font-extrabold text-[#121417] dark:text-white">
+                Institutional TPO Portal Active
+              </h3>
+              <p className="text-xs text-[#868E96] dark:text-slate-400 mt-0.5">
+                Manage student licenses, batches, and CRT mock exams for <strong className="text-[#FD4A32] dark:text-orange-400">{user?.collegeName || 'Campus Partner'}</strong>.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/tpo"
+            className="px-4 py-2.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03e28] text-white text-xs font-display font-extrabold shadow-sm transition-all shrink-0 flex items-center gap-2 group cursor-pointer"
+          >
+            <span>Launch TPO Portal</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Profile Details & Career Goals Form */}
       <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-5">
