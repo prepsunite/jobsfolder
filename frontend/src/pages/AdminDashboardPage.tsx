@@ -15,6 +15,7 @@ import ContentRenderer from '@/components/ContentRenderer';
 import { feedbackService } from '@/services/feedback.service';
 import type { QuestionReport, ContactMessage, ReportStatus, ContactMessageStatus } from '@/types/feedback';
 import CollegesTpoManager from '@/components/admin/CollegesTpoManager';
+import { tpoService } from '@/services/tpo.service';
 import {
   Building2,
   BookOpen,
@@ -1877,34 +1878,46 @@ export default function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
-                      {registeredUsersList.map((u: any) => (
-                        <tr key={u.id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
-                          <td className="py-3.5 px-3 flex items-center gap-2.5">
-                            {u.avatar_url ? (
-                              <img src={u.avatar_url} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-[#E9ECEF] dark:border-[#2b2d31]" />
-                            ) : (
-                              <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center text-xs">
-                                {(u.name || u.email || 'U').charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{u.name || 'Student'}</span>
-                          </td>
-                          <td className="py-3.5 px-3 text-[#444748] dark:text-[#a6adbb] font-medium">{u.email}</td>
-                          <td className="py-3.5 px-3">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                              u.role === 'admin'
-                                ? 'bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300 dark:border-purple-700'
-                                : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
-                            }`}>
-                              {u.role || 'user'}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-3 text-[#747878] dark:text-[#a6adbb]">
-                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="py-3.5 px-3 text-[10px] font-mono text-[#747878] dark:text-[#a6adbb]">{u.id}</td>
-                        </tr>
-                      ))}
+                      {registeredUsersList.map((u: any) => {
+                        const tpoInfo = tpoService.findTpoAuthByEmail(u.email);
+                        const isSuper = isSuperAdminEmail(u.email) && !tpoInfo;
+                        const isTpo = Boolean(tpoInfo);
+
+                        return (
+                          <tr key={u.id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
+                            <td className="py-3.5 px-3 flex items-center gap-2.5">
+                              {u.avatar_url ? (
+                                <img src={u.avatar_url} alt={u.name} className="w-7 h-7 rounded-full object-cover border border-[#E9ECEF] dark:border-[#2b2d31]" />
+                              ) : (
+                                <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center text-xs">
+                                  {(u.name || u.email || 'U').charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{u.name || 'Student'}</span>
+                            </td>
+                            <td className="py-3.5 px-3 text-[#444748] dark:text-[#a6adbb] font-medium">{u.email}</td>
+                            <td className="py-3.5 px-3">
+                              {isTpo ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-orange-100 text-[#FD4A32] dark:bg-orange-950/50 dark:text-orange-300 border border-orange-300 dark:border-orange-700">
+                                  TPO ({tpoInfo?.college_code || 'CRT'})
+                                </span>
+                              ) : isSuper || u.role === 'admin' ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300 dark:border-purple-700">
+                                  Admin
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                                  Student
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-3 text-[#747878] dark:text-[#a6adbb]">
+                              {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="py-3.5 px-3 text-[10px] font-mono text-[#747878] dark:text-[#a6adbb]">{u.id}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

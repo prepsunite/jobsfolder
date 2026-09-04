@@ -122,6 +122,7 @@ export default function CollegesTpoManager() {
         setTpoEmail('');
         queryClient.invalidateQueries({ queryKey: ['admin-tpo-admins'] });
         queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       } else {
         setStatusMessage({ text: res.message, isError: true });
       }
@@ -170,9 +171,10 @@ export default function CollegesTpoManager() {
     if (!confirm(`Revoke TPO Admin privileges for ${email}?`)) return;
 
     try {
-      await tpoService.revokeTpoAdmin(userId);
+      await tpoService.revokeTpoAdmin(email || userId);
       queryClient.invalidateQueries({ queryKey: ['admin-tpo-admins'] });
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setStatusMessage({ text: `Revoked TPO access for ${email}` });
     } catch (err: any) {
       setStatusMessage({ text: `Failed to revoke: ${err.message}`, isError: true });

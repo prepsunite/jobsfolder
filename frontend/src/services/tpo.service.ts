@@ -138,6 +138,7 @@ export const tpoService = {
 
     // Check exact or normalized match
     return auths.find(a => {
+      if (a.status !== 'ACTIVE') return false;
       const aEmail = a.email.toLowerCase();
       if (aEmail === clean) return true;
       if (clean.endsWith('@gmail.com') && aEmail.endsWith('@gmail.com')) {
@@ -147,6 +148,67 @@ export const tpoService = {
       }
       return false;
     });
+  },
+
+  // Asynchronously query Supabase cloud records (with local cache fallback)
+  async findTpoAuthByEmailAsync(email?: string | null): Promise<TpoAuthorizationRecord | undefined> {
+    if (!email) return undefined;
+    const clean = email.trim().toLowerCase();
+    const local = this.findTpoAuthByEmail(clean);
+    if (local) return local;
+
+    try {
+      // 1. Try public.tpo_authorizations table if created
+      const { data: directData } = await supabase
+        .from('tpo_authorizations')
+        .select('*')
+        .eq('email', clean)
+        .eq('status', 'ACTIVE')
+        .maybeSingle();
+
+      if (directData) {
+        const record: TpoAuthorizationRecord = {
+          id: directData.id,
+          email: directData.email,
+          college_id: directData.college_id,
+          college_name: directData.college_name,
+          college_code: directData.college_code,
+          max_licenses: directData.max_licenses,
+          assigned_at: directData.created_at || directData.assigned_at,
+          status: 'ACTIVE',
+        };
+        const auths = getLocalTpoAuths().filter(a => a.email.toLowerCase() !== clean);
+        auths.push(record);
+        saveLocalTpoAuths(auths);
+        return record;
+      }
+    } catch {}
+
+    try {
+      // 2. Resilient cloud sync fallback: contact_messages with subject B2B_TPO_AUTH:cleanEmail
+      const { data: cloudMsg } = await supabase
+        .from('contact_messages')
+        .select('id, message, status')
+        .eq('subject', `B2B_TPO_AUTH:${clean}`)
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cloudMsg && cloudMsg.message) {
+        const record = JSON.parse(cloudMsg.message) as TpoAuthorizationRecord;
+        if (record && record.email) {
+          const auths = getLocalTpoAuths().filter(a => a.email.toLowerCase() !== clean);
+          auths.push(record);
+          saveLocalTpoAuths(auths);
+          return record;
+        }
+      }
+    } catch (e) {
+      console.warn('Notice querying cloud TPO authorizations:', e);
+    }
+
+    return undefined;
   },
 
   async getAllColleges(): Promise<College[]> {
@@ -325,13 +387,12 @@ export const tpoService = {
   },
 
   async getTpoAdmins(): Promise<(CollegeStudent & { college_name?: string; max_licenses?: number })[]> {
-    const auths = getLocalTpoAuths();
     const colleges = await this.getAllColleges();
-
     const results: (CollegeStudent & { college_name?: string; max_licenses?: number })[] = [];
 
-    // Map local pre-authorized records
-    auths.forEach(a => {
+    // 1. Local authorizations
+    const localAuths = getLocalTpoAuths();
+    localAuths.filter(a => a.status === 'ACTIVE').forEach(a => {
       const col = colleges.find(c => c.id === a.college_id);
       results.push({
         id: a.id,
@@ -346,23 +407,34 @@ export const tpoService = {
       });
     });
 
-    // Also check Supabase profiles
+    // 2. Cloud-synced authorizations from Supabase
     try {
-      const { data: dbTpos } = await supabase
-        .from('profiles')
-        .select('id, email, name, college_id, role, is_tpo_admin, created_at')
-        .or('is_tpo_admin.eq.true,role.eq.TPO_ADMIN');
+      const { data: cloudMsgs } = await supabase
+        .from('contact_messages')
+        .select('id, email, message, status, created_at')
+        .like('subject', 'B2B_TPO_AUTH:%')
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false });
 
-      if (dbTpos) {
-        dbTpos.forEach(p => {
-          if (!results.some(r => r.email.toLowerCase() === p.email?.toLowerCase())) {
-            const col = colleges.find(c => c.id === p.college_id);
-            results.push({
-              ...p,
-              college_name: col?.name || 'Assigned College',
-              max_licenses: col?.max_licenses || 1000,
-            });
-          }
+      if (cloudMsgs) {
+        cloudMsgs.forEach(msg => {
+          try {
+            const parsed = JSON.parse(msg.message) as TpoAuthorizationRecord;
+            if (parsed && parsed.email && !results.some(r => r.email.toLowerCase() === parsed.email.toLowerCase())) {
+              const col = colleges.find(c => c.id === parsed.college_id);
+              results.push({
+                id: parsed.id || msg.id,
+                email: parsed.email,
+                name: `TPO Coordinator (${parsed.college_code || col?.code || 'CRT'})`,
+                college_id: parsed.college_id,
+                college_name: parsed.college_name || col?.name || 'Partner College',
+                max_licenses: parsed.max_licenses || col?.max_licenses || 1000,
+                is_tpo_admin: true,
+                role: 'TPO_ADMIN',
+                created_at: parsed.assigned_at || msg.created_at,
+              });
+            }
+          } catch {}
         });
       }
     } catch {}
@@ -401,47 +473,77 @@ export const tpoService = {
     }
     saveLocalTpoAuths(auths);
 
-    // 2. Attempt to update Supabase profile if the user account already exists
+    // 2. Cloud Sync to Supabase for multi-device/multi-browser availability
+    try {
+      // Deactivate any previous records for this email
+      await supabase
+        .from('contact_messages')
+        .update({ status: 'ARCHIVED' })
+        .eq('subject', `B2B_TPO_AUTH:${cleanEmail}`);
+
+      // Insert fresh active authorization
+      await supabase.from('contact_messages').insert({
+        name: 'TPO Coordinator',
+        email: cleanEmail,
+        subject: `B2B_TPO_AUTH:${cleanEmail}`,
+        message: JSON.stringify(record),
+        status: 'ACTIVE',
+      });
+    } catch (syncErr) {
+      console.warn('Notice syncing TPO auth to cloud:', syncErr);
+    }
+
+    // 3. Demote from 'admin' in Supabase profiles if this user previously had admin role
+    // This guarantees an authorized TPO Coordinator NEVER becomes a PrepUnite platform admin!
     try {
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, role')
         .eq('email', cleanEmail)
         .maybeSingle();
 
-      if (existingProfile) {
+      if (existingProfile && existingProfile.role === 'admin') {
         await supabase
           .from('profiles')
           .update({
-            role: 'TPO_ADMIN',
-            college_id: collegeId,
+            role: 'user',
+            updated_at: new Date().toISOString(),
           })
           .eq('id', existingProfile.id);
+        console.log(`[assignTpoAdmin] Demoted ${cleanEmail} from platform admin to user/TPO in DB.`);
       }
     } catch (err) {
-      console.warn('Notice elevating profile in Supabase:', err);
+      console.warn('Notice ensuring non-admin DB role for TPO:', err);
     }
 
     return {
       success: true,
-      message: `Authorized ${cleanEmail} as TPO for ${targetCollege.name}. Their student capacity is locked to ${targetCollege.max_licenses} seats.`,
+      message: `Authorized ${cleanEmail} as TPO Coordinator for ${targetCollege.name}. Their student capacity is locked to ${targetCollege.max_licenses} seats.`,
     };
   },
 
   async revokeTpoAdmin(identifier: string): Promise<boolean> {
+    const clean = identifier.trim().toLowerCase();
+
     // 1. Remove from local authorizations
     const auths = getLocalTpoAuths();
-    const filtered = auths.filter(a => a.id !== identifier && a.email.toLowerCase() !== identifier.toLowerCase());
+    const filtered = auths.filter(a => a.id !== clean && a.email.toLowerCase() !== clean);
     saveLocalTpoAuths(filtered);
 
-    // 2. Attempt Supabase profile demotion
+    // 2. Cloud sync revocation in Supabase
+    try {
+      await supabase
+        .from('contact_messages')
+        .update({ status: 'REVOKED' })
+        .or(`email.eq.${clean},subject.eq.B2B_TPO_AUTH:${clean}`);
+    } catch {}
+
+    // 3. Ensure profile in Supabase is role 'user'
     try {
       await supabase
         .from('profiles')
-        .update({
-          role: 'user',
-        })
-        .or(`id.eq.${identifier},email.eq.${identifier}`);
+        .update({ role: 'user' })
+        .or(`id.eq.${clean},email.eq.${clean}`);
     } catch {}
 
     return true;

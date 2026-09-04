@@ -31,7 +31,7 @@ export interface TpoAuthorizationRecord {
   college_code: string;
   max_licenses: number;
   assigned_at: string;
-  status: 'ACTIVE' | 'SUSPENDED';
+  status: 'ACTIVE' | 'SUSPENDED' | 'REVOKED';
 }
 
 export interface CollegeStudent {
