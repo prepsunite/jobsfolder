@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
-import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import {
   Folder,
   Calculator,
@@ -247,7 +246,6 @@ export default function AptitudePage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
-  const [selectedCheatcodeTopic, setSelectedCheatcodeTopic] = useState<AptitudeTopic | null>(null);
 
   // New Admin UI states
   const [isEditing, setIsEditing] = useState(false);
@@ -648,20 +646,6 @@ export default function AptitudePage() {
 
                 {/* 2. Right: Action Buttons & Navigation */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {/* Topic-Specific Cheatcode Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedCheatcodeTopic(topic);
-                    }}
-                    className="flex items-center gap-1 text-[10px] font-display font-bold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 px-2 py-1 rounded border border-[#FD4A32]/25 transition-all cursor-pointer shadow-2xs"
-                    title={`Open ${topic.name} Cheatcode & Formulas`}
-                  >
-                    <BookOpen className="w-3 h-3 text-[#FD4A32]" />
-                    <span>Cheatcode</span>
-                  </button>
-
                   {solvedCount > 0 && (
                     <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                       {solvedCount} Solved
@@ -742,18 +726,6 @@ export default function AptitudePage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* 📖 Topic Specific Cheatcode & Formula Sheet Modal */}
-      {selectedCheatcodeTopic && (
-        <TopicCheatcodeModal
-          isOpen={!!selectedCheatcodeTopic}
-          onClose={() => setSelectedCheatcodeTopic(null)}
-          topicId={selectedCheatcodeTopic.id}
-          topicName={selectedCheatcodeTopic.name}
-          categoryTitle={currentCategoryInfo.title}
-          fallbackFormulas={selectedCheatcodeTopic.formulas}
-        />
       )}
     </div>
   );
