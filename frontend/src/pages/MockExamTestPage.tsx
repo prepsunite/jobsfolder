@@ -42,11 +42,22 @@ export default function MockExamTestPage() {
     enabled: !!examId,
   });
 
+  // Fetch Existing Candidate Attempt
+  const { data: existingAttempt } = useQuery<StudentExamAttempt | null>({
+    queryKey: ['candidate-existing-attempt', examId, user?.email || user?.id],
+    queryFn: () =>
+      examId && (user?.email || user?.id)
+        ? tpoService.getStudentAttemptForExam(examId, user?.email || user?.id || '')
+        : null,
+    enabled: !!examId && !!(user?.email || user?.id),
+  });
+
   // State
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsMap, setQuestionsMap] = useState<Record<string, any>>({});
   const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [showReviewAnswers, setShowReviewAnswers] = useState(false);
 
   // Responses Map: { [questionId]: { selected_option: number | null, marked_review: boolean, time_spent_sec: number } }
   const [responses, setResponses] = useState<Record<string, StudentExamResponse>>({});
@@ -88,6 +99,32 @@ export default function MockExamTestPage() {
     events: proctorEvents,
   };
 
+  // Automatically restore completed attempt or in-progress session on load
+  useEffect(() => {
+    if (!existingAttempt) return;
+
+    if (
+      existingAttempt.status === 'SUBMITTED' ||
+      existingAttempt.status === 'TIMED_OUT' ||
+      existingAttempt.status === 'TERMINATED_MALPRACTICE'
+    ) {
+      setAttemptId(existingAttempt.id);
+      setFinalGradedAttempt(existingAttempt);
+      setResponses(existingAttempt.responses || {});
+      setTabSwitchCount(existingAttempt.tab_switch_count || 0);
+      setTestPhase('SUBMITTED');
+    } else if (existingAttempt.status === 'IN_PROGRESS' && testPhase === 'INSTRUCTIONS') {
+      setAttemptId(existingAttempt.id);
+      setResponses(existingAttempt.responses || {});
+      setTabSwitchCount(existingAttempt.tab_switch_count || 0);
+      setProctorEvents(existingAttempt.proctor_events || []);
+      const totalSec = (exam?.duration_minutes || 90) * 60;
+      const spent = existingAttempt.time_spent_seconds || 0;
+      setTimeSpentSeconds(spent);
+      setTimeRemainingSeconds(Math.max(0, totalSec - spent));
+    }
+  }, [existingAttempt, exam]);
+
   // 1. Fetch Questions for this Exam
   useEffect(() => {
     if (!exam || !exam.sections) return;
@@ -112,7 +149,7 @@ export default function MockExamTestPage() {
   const currentQuestion = questionsMap[currentQuestionId];
 
   // 2. Start Exam Handler
-  const handleStartExam = async () => {
+  const handleStartExam = async (forceFresh = false) => {
     if (!exam || !user) return;
 
     try {
@@ -125,15 +162,30 @@ export default function MockExamTestPage() {
         }
       }
 
-      // Initialize attempt in Supabase
+      if (forceFresh) {
+        setResponses({});
+        setProctorEvents([]);
+        setTabSwitchCount(0);
+        setTimeSpentSeconds(0);
+        setTimeRemainingSeconds(exam.duration_minutes * 60);
+      }
+
+      // Initialize or resume attempt in Supabase & local storage
+      const candidateIdentifier = user.email || user.id;
       const attempt = await tpoService.startOrResumeAttempt(
         exam.id,
-        user.id,
+        candidateIdentifier,
         exam.college_id
       );
 
       setAttemptId(attempt.id);
-      setTimeRemainingSeconds(exam.duration_minutes * 60);
+      if (!forceFresh && attempt.time_spent_seconds) {
+        setTimeSpentSeconds(attempt.time_spent_seconds);
+        setTimeRemainingSeconds(Math.max(0, exam.duration_minutes * 60 - attempt.time_spent_seconds));
+        if (attempt.responses) setResponses(attempt.responses);
+      } else {
+        setTimeRemainingSeconds(exam.duration_minutes * 60);
+      }
       setTestPhase('IN_PROGRESS');
     } catch (err: any) {
       alert(`Could not start exam: ${err.message}`);
@@ -390,8 +442,15 @@ export default function MockExamTestPage() {
             </div>
           </div>
 
+          {existingAttempt?.status === 'IN_PROGRESS' && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between">
+              <span>You have a saved test session in progress.</span>
+              <span className="font-mono font-bold">{formatTime(timeRemainingSeconds)} remaining</span>
+            </div>
+          )}
+
           <button
-            onClick={handleStartExam}
+            onClick={() => handleStartExam(false)}
             disabled={questionsLoading}
             className="w-full py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-sm uppercase tracking-wider transition-all shadow-lg shadow-[#FD4A32]/25 flex items-center justify-center gap-2"
           >
@@ -399,6 +458,11 @@ export default function MockExamTestPage() {
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Preparing Question Palette...
+              </>
+            ) : existingAttempt?.status === 'IN_PROGRESS' ? (
+              <>
+                <Clock className="w-4 h-4" />
+                Resume In-Progress Exam ({formatTime(timeRemainingSeconds)})
               </>
             ) : (
               <>
@@ -802,9 +866,125 @@ export default function MockExamTestPage() {
             )}
           </div>
 
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-1">
+            <button
+              onClick={() => setShowReviewAnswers(prev => !prev)}
+              className="flex-1 py-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-wider transition-all border border-blue-200 dark:border-blue-800 flex items-center justify-center gap-1.5"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>{showReviewAnswers ? 'Hide Answer Key' : 'Review Questions & Solutions'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (confirm('Retake this assessment for practice? This will start a fresh session.')) {
+                  handleStartExam(true);
+                }
+              }}
+              className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Retake Exam (Practice)</span>
+            </button>
+          </div>
+
+          {/* Question Review Section */}
+          {showReviewAnswers && (
+            <div className="text-left space-y-4 pt-4 border-t border-gray-200 dark:border-[#25262a] max-h-96 overflow-y-auto pr-1">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-black uppercase tracking-wider text-gray-500">
+                  Detailed Solution Key
+                </h4>
+                <span className="text-[11px] text-gray-400">
+                  {Object.keys(responses).length} responses logged
+                </span>
+              </div>
+
+              {exam?.sections?.flatMap(s => s.question_ids).map((qId, idx) => {
+                const q = questionsMap[qId];
+                if (!q) return null;
+                const studentResp = (finalGradedAttempt?.responses || responses)[qId];
+                const selectedOpt = studentResp?.selected_option;
+                const isCorrect = studentResp?.is_correct;
+                const rawCorrect = q.correct_answer;
+                const correctOptIdx =
+                  typeof rawCorrect === 'number'
+                    ? rawCorrect
+                    : typeof rawCorrect === 'string' && ['0', '1', '2', '3'].includes(rawCorrect)
+                    ? Number(rawCorrect)
+                    : ['A', 'B', 'C', 'D'].indexOf(String(rawCorrect).toUpperCase());
+
+                return (
+                  <div
+                    key={qId}
+                    className="p-4 rounded-2xl bg-gray-50 dark:bg-[#1a1b1e] border border-gray-200 dark:border-[#2e3035] space-y-2.5 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-500">Question {idx + 1}</span>
+                      {selectedOpt === null || selectedOpt === undefined ? (
+                        <span className="px-2 py-0.5 rounded-full bg-gray-200 dark:bg-[#2b2d31] text-gray-600 dark:text-gray-300 text-[10px] font-bold">
+                          Unanswered
+                        </span>
+                      ) : isCorrect ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Correct
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 text-[10px] font-bold flex items-center gap-1">
+                          <XCircle className="w-3 h-3 text-rose-500" /> Incorrect
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line leading-relaxed font-sans">
+                      {q.statement}
+                    </p>
+
+                    <div className="space-y-1.5 pt-1">
+                      {(q.options || []).map((optText: string, oIdx: number) => {
+                        const isStudentChoice = selectedOpt === oIdx;
+                        const isThisCorrect = correctOptIdx === oIdx;
+
+                        let optClasses = 'border-gray-200 dark:border-[#2e3035] bg-white dark:bg-[#202225] text-gray-700 dark:text-gray-300';
+                        if (isThisCorrect) {
+                          optClasses = 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold';
+                        } else if (isStudentChoice && !isCorrect) {
+                          optClasses = 'border-rose-300 dark:border-rose-800 bg-rose-50/80 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 font-semibold';
+                        }
+
+                        return (
+                          <div
+                            key={oIdx}
+                            className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${optClasses}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold shrink-0">{String.fromCharCode(65 + oIdx)}.</span>
+                              <span>{optText}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] font-bold uppercase shrink-0">
+                              {isThisCorrect && <span className="text-emerald-600 dark:text-emerald-400">Correct Answer</span>}
+                              {isStudentChoice && !isThisCorrect && <span className="text-rose-600 dark:text-rose-400">Your Choice</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {q.explanation && (
+                      <div className="p-2.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 text-blue-900 dark:text-blue-200 text-[11px] leading-relaxed">
+                        <strong>Explanation:</strong> {q.explanation}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <button
             onClick={() => navigate('/dashboard')}
-            className="w-full py-3 rounded-2xl bg-[#121417] dark:bg-white text-white dark:text-black font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all"
+            className="w-full py-3.5 rounded-2xl bg-[#121417] dark:bg-white text-white dark:text-black font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all shadow-md"
           >
             Return to Student Dashboard
           </button>

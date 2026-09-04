@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { MockExam } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
+import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
 
 export default function TpoExamsPage() {
   const { collegeId, currentCollege } = useOutletContext<{
@@ -25,6 +26,7 @@ export default function TpoExamsPage() {
   const queryClient = useQueryClient();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'UPCOMING'>('ALL');
 
   const {
@@ -147,11 +149,12 @@ export default function TpoExamsPage() {
                   Leaderboard & Analytics →
                 </Link>
                 <button
-                  onClick={() => copyExamLink(exam.id)}
-                  title="Copy Candidate Test Link"
-                  className="p-2.5 rounded-xl bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] transition-colors"
+                  onClick={() => setSelectedShareExam(exam)}
+                  title="Share with Students via WhatsApp, Link & Email"
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-bold transition-colors shrink-0"
                 >
                   <Share2 className="w-4 h-4" />
+                  <span>Share</span>
                 </button>
               </div>
 
@@ -170,6 +173,14 @@ export default function TpoExamsPage() {
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           refetch();
         }}
+      />
+
+      {/* Share with Students Modal */}
+      <ShareMockExamModal
+        isOpen={!!selectedShareExam}
+        onClose={() => setSelectedShareExam(null)}
+        exam={selectedShareExam}
+        collegeName={currentCollege?.name}
       />
 
     </div>

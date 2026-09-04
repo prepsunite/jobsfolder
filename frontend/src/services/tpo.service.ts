@@ -1743,4 +1743,144 @@ export const tpoService = {
       questions,
     };
   },
+
+  async getStudentAttemptForExam(
+    mockExamId: string,
+    studentIdOrEmail: string
+  ): Promise<StudentExamAttempt | null> {
+    if (!mockExamId || !studentIdOrEmail) return null;
+    const cleanId = studentIdOrEmail.trim().toLowerCase();
+
+    // 1. Check local attempts first
+    const localAttempts = getLocalAttempts(mockExamId);
+    const localFound = localAttempts.find(
+      a => a.student_id === studentIdOrEmail || a.student_id?.toLowerCase() === cleanId
+    );
+    if (localFound) return localFound;
+
+    // 2. Check Supabase
+    try {
+      const { data, error } = await supabase
+        .from('student_exam_attempts')
+        .select('*')
+        .eq('mock_exam_id', mockExamId)
+        .or(`student_id.eq.${studentIdOrEmail},student_id.eq.${cleanId}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        saveLocalAttempt(data);
+        return data;
+      }
+    } catch {}
+
+    return null;
+  },
+
+  async getStudentMockExams(
+    studentEmail: string,
+    studentCollegeId?: string
+  ): Promise<{
+    college: { id: string; name: string; code?: string } | null;
+    exams: Array<MockExam & { attempt?: StudentExamAttempt | null }>;
+  }> {
+    if (!studentEmail) {
+      return { college: null, exams: [] };
+    }
+    const cleanEmail = studentEmail.trim().toLowerCase();
+
+    // 1. Resolve college
+    let resolvedCollegeId = studentCollegeId;
+    let resolvedCollegeName = '';
+    let resolvedCollegeCode = '';
+
+    if (!resolvedCollegeId) {
+      const entitlement = this.getStudentEntitlementInfo(cleanEmail);
+      if (entitlement?.collegeId) {
+        resolvedCollegeId = entitlement.collegeId;
+        resolvedCollegeName = entitlement.collegeName || '';
+      }
+    }
+
+    if (!resolvedCollegeId) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('college_id')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (profile?.college_id) {
+          resolvedCollegeId = profile.college_id;
+        }
+      } catch {}
+    }
+
+    if (!resolvedCollegeId) {
+      // Check local students across all colleges
+      const allColleges = await this.getAllColleges();
+      for (const col of allColleges) {
+        const localStudents = getLocalStudents(col.id);
+        if (localStudents.some(s => s.email.toLowerCase() === cleanEmail)) {
+          resolvedCollegeId = col.id;
+          resolvedCollegeName = col.name;
+          resolvedCollegeCode = col.code;
+          break;
+        }
+      }
+    }
+
+    if (!resolvedCollegeId) {
+      return { college: null, exams: [] };
+    }
+
+    if (!resolvedCollegeName) {
+      const colDetails = await this.getCollegeDetails(resolvedCollegeId);
+      if (colDetails) {
+        resolvedCollegeName = colDetails.name;
+        resolvedCollegeCode = colDetails.code;
+      }
+    }
+
+    // 2. Fetch mock exams for this college
+    const exams = await this.getMockExamsForCollege(resolvedCollegeId);
+
+    // 3. Fetch all attempts by this student
+    let studentAttempts: StudentExamAttempt[] = [];
+    const localAll = getLocalAttempts().filter(
+      a => a.student_id === cleanEmail || a.student_id?.toLowerCase() === cleanEmail
+    );
+    studentAttempts = [...localAll];
+
+    try {
+      const { data: cloudAttempts } = await supabase
+        .from('student_exam_attempts')
+        .select('*')
+        .or(`student_id.eq.${cleanEmail},student_id.eq.${studentEmail}`);
+      if (cloudAttempts && cloudAttempts.length > 0) {
+        const attemptMap = new Map<string, StudentExamAttempt>();
+        studentAttempts.forEach(a => attemptMap.set(a.id, a));
+        cloudAttempts.forEach(a => attemptMap.set(a.id, a));
+        studentAttempts = Array.from(attemptMap.values());
+      }
+    } catch {}
+
+    // Map attempts to exams
+    const annotatedExams = exams.map(exam => {
+      const attempt = studentAttempts.find(a => a.mock_exam_id === exam.id) || null;
+      return {
+        ...exam,
+        attempt,
+      };
+    });
+
+    return {
+      college: {
+        id: resolvedCollegeId,
+        name: resolvedCollegeName || 'Partner Institution',
+        code: resolvedCollegeCode || 'CRT',
+      },
+      exams: annotatedExams,
+    };
+  },
 };
