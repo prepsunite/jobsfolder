@@ -80,8 +80,8 @@ export default async function handler(req, res) {
         .from('college_students')
         .select('id')
         .eq('college_id', collegeId)
-        .eq('user_id', user.id)
-        .eq('status', 'ENROLLED')
+        .or(`email.ilike.${userEmail},user_id.eq.${user.id}`)
+        .in('status', ['ACTIVE', 'ENROLLED'])
         .maybeSingle();
       if (studentRecord) return true;
 
