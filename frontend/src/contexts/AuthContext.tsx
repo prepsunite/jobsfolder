@@ -48,8 +48,8 @@ interface AuthContextType {
   isTpoAdmin: boolean;
   isGuest: boolean;
   isLoading: boolean;
-  signInWithGoogle: () => Promise<{ error: string | null }>;
-  signInWithGithub: () => Promise<{ error: string | null }>;
+  signInWithGoogle: (customRedirect?: string) => Promise<{ error: string | null }>;
+  signInWithGithub: (customRedirect?: string) => Promise<{ error: string | null }>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null; data?: any }>;
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: string | null; data?: any }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
@@ -486,7 +486,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
 
           if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
-            window.history.replaceState(null, '', window.location.pathname);
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('code');
+              url.hash = '';
+              const cleanUrl = url.pathname + (url.search ? url.search : '');
+              window.history.replaceState(null, '', cleanUrl);
+            } catch {
+              window.history.replaceState(null, '', window.location.pathname);
+            }
           }
         }
       } catch (err) {
@@ -517,7 +525,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
-          window.history.replaceState(null, '', window.location.pathname);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('code');
+            url.hash = '';
+            const cleanUrl = url.pathname + (url.search ? url.search : '');
+            window.history.replaceState(null, '', cleanUrl);
+          } catch {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(GUEST_USER);
@@ -537,22 +553,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const getAppOrigin = () => {
-    if (typeof window === 'undefined') return 'https://jobsfolder.vercel.app';
-    const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
+    if (typeof window !== 'undefined' && window.location.origin) {
       return window.location.origin;
     }
-    return 'https://jobsfolder.vercel.app';
+    return 'https://prepunite.com';
   };
 
   // 1-Click Google OAuth 2.0 Sign In Handler
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (customRedirect?: string) => {
     try {
       const origin = getAppOrigin();
+      let targetPath = customRedirect;
+      if (!targetPath && typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        targetPath = params.get('redirectTo') || undefined;
+      }
+      const redirectUrl = targetPath && targetPath.startsWith('/')
+        ? `${origin}${targetPath}`
+        : `${origin}/dashboard`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/dashboard`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -572,13 +595,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 1-Click GitHub OAuth 2.0 Sign In Handler
-  const signInWithGithub = async () => {
+  const signInWithGithub = async (customRedirect?: string) => {
     try {
       const origin = getAppOrigin();
+      let targetPath = customRedirect;
+      if (!targetPath && typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        targetPath = params.get('redirectTo') || undefined;
+      }
+      const redirectUrl = targetPath && targetPath.startsWith('/')
+        ? `${origin}${targetPath}`
+        : `${origin}/dashboard`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${origin}/dashboard`,
+          redirectTo: redirectUrl,
         },
       });
 

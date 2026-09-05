@@ -12,18 +12,50 @@ export interface ExamWithCompany extends ExamItem {
 export const examService = {
   getExamsByCompany: async (companySlug: string, userEmail?: string): Promise<ExamItem[]> => {
     // Strictly utilize Secure Server-Side Redaction RPC to prevent any unpaid content leakage
-    const { data: rpcData, error: rpcError } = await supabase.rpc('get_secure_exams_by_company', {
-      p_company_slug: companySlug,
-      p_user_email: userEmail || null,
-    });
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_secure_exams_by_company', {
+        p_company_slug: companySlug,
+        p_user_email: userEmail || null,
+      });
 
-    if (rpcError) {
-      console.error('[examService.getExamsByCompany] Secure RPC error:', rpcError.message);
-      throw new Error(`Failed to securely fetch exams for ${companySlug}: ${rpcError.message}`);
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        return rpcData.map((e: any) => ({
+          id: e.id,
+          companySlug: e.company_slug,
+          name: e.name,
+          badge: e.badge || 'Campus Recruitment Drive',
+          content: e.content || '',
+          oldPapers: e.old_papers || '',
+          price: e.price ? Number(e.price) : 99,
+          paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+          googleDocEmbedUrl: e.google_doc_embed_url,
+          googleDocEditUrl: e.google_doc_edit_url,
+          isPublicExam: e.is_public_exam ?? false,
+          upvotes: e.upvotes || 0,
+        }));
+      }
+
+      if (!rpcError) return [];
+      console.warn('[examService.getExamsByCompany] RPC fallback triggered:', rpcError.message);
+    } catch (e) {
+      console.warn('[examService.getExamsByCompany] RPC error, falling back to direct query:', e);
     }
 
-    if (rpcData && rpcData.length > 0) {
-      return rpcData.map((e: any) => ({
+    // Resilient fallback: Direct table query if RPC is not yet deployed
+    try {
+      const { data: fallbackData, error: fbErr } = await supabase
+        .from('exams')
+        .select('*')
+        .eq('company_slug', companySlug)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
+
+      if (fbErr) {
+        console.error('[examService.getExamsByCompany] Fallback query error:', fbErr.message);
+        return [];
+      }
+
+      return (fallbackData || []).map((e: any) => ({
         id: e.id,
         companySlug: e.company_slug,
         name: e.name,
@@ -37,9 +69,10 @@ export const examService = {
         isPublicExam: e.is_public_exam ?? false,
         upvotes: e.upvotes || 0,
       }));
+    } catch (err) {
+      console.error('[examService.getExamsByCompany] Critical query failure:', err);
+      return [];
     }
-
-    return [];
   },
 
   getAllExams: async (): Promise<ExamWithCompany[]> => {

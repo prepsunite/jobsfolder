@@ -199,14 +199,21 @@ export default function MockExamTestPage() {
     if (allQIds.length === 0) return;
 
     setQuestionsLoading(true);
-    tpoService.getQuestionsForExam(allQIds).then(questions => {
-      const map: Record<string, any> = {};
-      questions.forEach(q => {
-        map[q.id] = q;
+    tpoService
+      .getQuestionsForExam(allQIds)
+      .then(questions => {
+        const map: Record<string, any> = {};
+        (questions || []).forEach(q => {
+          map[q.id] = q;
+        });
+        setQuestionsMap(map);
+      })
+      .catch(err => {
+        console.error('Failed to load questions:', err);
+      })
+      .finally(() => {
+        setQuestionsLoading(false);
       });
-      setQuestionsMap(map);
-      setQuestionsLoading(false);
-    });
   }, [exam]);
 
   // 1b. Fetch Full Solutions & Explanations post-submission (Zero answers during active test)
@@ -257,6 +264,8 @@ export default function MockExamTestPage() {
         }
       }
 
+      isSubmittingRef.current = false;
+
       if (forceFresh) {
         setResponses({});
         setProctorEvents([]);
@@ -288,19 +297,29 @@ export default function MockExamTestPage() {
   };
 
   // 3. Finalize & Submit Attempt
+  const isSubmittingRef = useRef(false);
   const handleFinalSubmit = useCallback(
     async (statusOverride?: 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT') => {
-      if (!exam || !attemptId) return;
+      const aId = syncRef.current.attemptId;
+      if (!exam || !aId || isSubmittingRef.current) return;
 
+      isSubmittingRef.current = true;
       setIsSubmitting(true);
       try {
+        const {
+          responses: currentResponses,
+          timeSpent: currentTimeSpent,
+          tabSwitches: currentTabSwitches,
+          events: currentEvents,
+        } = syncRef.current;
+
         const graded = await tpoService.submitAttempt(
-          attemptId,
+          aId,
           exam,
-          responses,
-          timeSpentSeconds,
-          proctorEvents,
-          tabSwitchCount,
+          currentResponses,
+          currentTimeSpent,
+          currentEvents,
+          currentTabSwitches,
           statusOverride
         );
 
@@ -314,12 +333,13 @@ export default function MockExamTestPage() {
         setTestPhase('SUBMITTED');
       } catch (err: any) {
         alert(`Submission error: ${err.message}`);
+        isSubmittingRef.current = false;
       } finally {
         setIsSubmitting(false);
         setShowSubmitConfirm(false);
       }
     },
-    [exam, attemptId, responses, timeSpentSeconds, proctorEvents, tabSwitchCount]
+    [exam]
   );
 
   // 4. Timer Countdown & Auto-Sync Hook
@@ -330,7 +350,9 @@ export default function MockExamTestPage() {
       setTimeRemainingSeconds(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          handleFinalSubmit('TIMED_OUT');
+          setTimeout(() => {
+            handleFinalSubmit('TIMED_OUT');
+          }, 0);
           return 0;
         }
         return prev - 1;

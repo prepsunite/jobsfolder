@@ -1,30 +1,103 @@
 -- ====================================================================
--- PrepUnite (Jobsfolder): Complete Security Audit Hardening Patches
--- Resolves all 14 Critical, High, and Medium Audit Findings
--- Safe, Idempotent, Zero Data-Loss Migration for Supabase SQL Editor
+-- PrepUnite (Jobsfolder): Complete Security Audit Hardening Master Patch
+-- Resolves All Critical, High, and Medium Architectural & Security Findings
+-- Completely Self-Contained, Safe, and Idempotent for Supabase SQL Editor
 -- ====================================================================
 
 -- --------------------------------------------------------------------
--- 1. [ISSUE 1] ELIMINATE auth.role() = 'anon' RLS BYPASSES
+-- 0. CORE SECURITY DEFINER FUNCTIONS (PREREQUISITES)
+-- --------------------------------------------------------------------
+
+-- 0.1 Super Admin Verification Function
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+      AND (
+        LOWER(role) = 'admin'
+        OR LOWER(email) IN (
+          'venkatmukala9@gmail.com',
+          'venkat.mukala9@gmail.com',
+          'prepsunite@gmail.com',
+          'veen1kat@gmail.com'
+        )
+      )
+  );
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role;
+
+-- 0.2 TPO for Specific College Check (Explicit TEXT comparison)
+CREATE OR REPLACE FUNCTION public.is_tpo_for_college(p_college_id TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.tpo_authorizations ta
+    JOIN public.profiles p ON lower(p.email) = lower(ta.email)
+    WHERE p.id = auth.uid()
+      AND ta.college_id::TEXT = p_college_id::TEXT
+      AND ta.status = 'ACTIVE'
+  ) OR public.is_admin();
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.is_tpo_for_college(TEXT) TO anon, authenticated, service_role;
+
+-- 0.3 Any TPO Coordinator Check
+CREATE OR REPLACE FUNCTION public.is_any_tpo()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.tpo_authorizations ta
+    JOIN public.profiles p ON lower(p.email) = lower(ta.email)
+    WHERE p.id = auth.uid()
+      AND ta.status = 'ACTIVE'
+  ) OR public.is_admin();
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.is_any_tpo() TO anon, authenticated, service_role;
+
+-- --------------------------------------------------------------------
+-- 1. ELIMINATE auth.role() = 'anon' RLS BYPASSES & LOCK DOWN TABLES
 -- --------------------------------------------------------------------
 
 -- 1.1 Secure public.colleges
+ALTER TABLE public.colleges ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Super admin full colleges" ON public.colleges;
+DROP POLICY IF EXISTS "Allow student read colleges" ON public.colleges;
+DROP POLICY IF EXISTS "Allow public read active colleges" ON public.colleges;
+DROP POLICY IF EXISTS "Allow authenticated full colleges" ON public.colleges;
+
 CREATE POLICY "Super admin full colleges" ON public.colleges FOR ALL 
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
-DROP POLICY IF EXISTS "Allow student read colleges" ON public.colleges;
 CREATE POLICY "Allow student read colleges" ON public.colleges FOR SELECT
   USING (true);
 
 -- 1.2 Secure public.tpo_authorizations
+ALTER TABLE public.tpo_authorizations ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Super admin full tpo_authorizations" ON public.tpo_authorizations;
+DROP POLICY IF EXISTS "TPO read own authorizations" ON public.tpo_authorizations;
+DROP POLICY IF EXISTS "Allow public read tpo_authorizations" ON public.tpo_authorizations;
+
 CREATE POLICY "Super admin full tpo_authorizations" ON public.tpo_authorizations FOR ALL 
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
-DROP POLICY IF EXISTS "TPO read own authorizations" ON public.tpo_authorizations;
 CREATE POLICY "TPO read own authorizations" ON public.tpo_authorizations FOR SELECT
   USING (
     public.is_admin() OR
@@ -33,17 +106,20 @@ CREATE POLICY "TPO read own authorizations" ON public.tpo_authorizations FOR SEL
   );
 
 -- 1.3 Secure public.college_students
+ALTER TABLE public.college_students ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Super admin full college_students" ON public.college_students;
+DROP POLICY IF EXISTS "TPO manage college students" ON public.college_students;
+DROP POLICY IF EXISTS "Student read own profile" ON public.college_students;
+DROP POLICY IF EXISTS "Allow public read college_students" ON public.college_students;
+
 CREATE POLICY "Super admin full college_students" ON public.college_students FOR ALL 
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
-DROP POLICY IF EXISTS "TPO manage college students" ON public.college_students;
 CREATE POLICY "TPO manage college students" ON public.college_students FOR ALL
   USING (public.is_tpo_for_college(college_id::TEXT))
   WITH CHECK (public.is_tpo_for_college(college_id::TEXT));
 
-DROP POLICY IF EXISTS "Student read own profile" ON public.college_students;
 CREATE POLICY "Student read own profile" ON public.college_students FOR SELECT
   USING (
     lower(email) = lower(auth.jwt()->>'email') OR
@@ -51,7 +127,15 @@ CREATE POLICY "Student read own profile" ON public.college_students FOR SELECT
   );
 
 -- 1.4 Secure public.user_subscriptions
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Super admin full subscriptions" ON public.user_subscriptions;
 DROP POLICY IF EXISTS "TPO coordinator manage college student subscriptions" ON public.user_subscriptions;
+DROP POLICY IF EXISTS "Users read own subscriptions" ON public.user_subscriptions;
+
+CREATE POLICY "Super admin full subscriptions" ON public.user_subscriptions FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
 CREATE POLICY "TPO coordinator manage college student subscriptions"
   ON public.user_subscriptions FOR ALL
   USING (
@@ -77,16 +161,78 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
     )
   );
 
--- 1.5 Secure public.mock_exams
+CREATE POLICY "Users read own subscriptions" ON public.user_subscriptions FOR SELECT
+  USING (
+    lower(user_email) = lower(auth.jwt()->>'email')
+    OR public.is_admin()
+  );
+
+-- 1.5 Secure public.user_paper_purchases
+ALTER TABLE public.user_paper_purchases ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Super admin full paper purchases" ON public.user_paper_purchases;
+DROP POLICY IF EXISTS "Users read own paper purchases" ON public.user_paper_purchases;
+
+CREATE POLICY "Super admin full paper purchases" ON public.user_paper_purchases FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY "Users read own paper purchases" ON public.user_paper_purchases FOR SELECT
+  USING (
+    lower(user_email) = lower(auth.jwt()->>'email')
+    OR public.is_admin()
+  );
+
+-- 1.6 Secure public.transactions
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Super admin full transactions" ON public.transactions;
+DROP POLICY IF EXISTS "Users read own transactions" ON public.transactions;
+
+CREATE POLICY "Super admin full transactions" ON public.transactions FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY "Users read own transactions" ON public.transactions FOR SELECT
+  USING (
+    lower(user_email) = lower(auth.jwt()->>'email')
+    OR public.is_admin()
+  );
+
+-- 1.7 Secure public.profiles
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public profile view" ON public.profiles;
+DROP POLICY IF EXISTS "Users update self info non-role" ON public.profiles;
+DROP POLICY IF EXISTS "Users insert self profile as user" ON public.profiles;
+DROP POLICY IF EXISTS "Admin full profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow insert/update profiles" ON public.profiles;
+
+CREATE POLICY "Public profile view" ON public.profiles FOR SELECT USING (true);
+
+CREATE POLICY "Users insert self profile as user" ON public.profiles FOR INSERT
+  WITH CHECK (
+    id = auth.uid() AND (COALESCE(LOWER(role), 'user') = 'user' OR public.is_admin())
+  );
+
+CREATE POLICY "Users update self info non-role" ON public.profiles FOR UPDATE
+  USING (id = auth.uid() OR public.is_admin())
+  WITH CHECK (
+    (id = auth.uid() AND role = (SELECT role FROM public.profiles WHERE id = auth.uid()))
+    OR public.is_admin()
+  );
+
+CREATE POLICY "Admin full profiles" ON public.profiles FOR ALL USING (public.is_admin());
+
+-- 1.8 Secure public.mock_exams
+ALTER TABLE public.mock_exams ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Super admin full mock exams" ON public.mock_exams;
+DROP POLICY IF EXISTS "TPO manage own mock exams" ON public.mock_exams;
+DROP POLICY IF EXISTS "Students read active college exams" ON public.mock_exams;
+
 CREATE POLICY "Super admin full mock exams" ON public.mock_exams FOR ALL USING (public.is_admin());
 
-DROP POLICY IF EXISTS "TPO manage own mock exams" ON public.mock_exams;
 CREATE POLICY "TPO manage own mock exams" ON public.mock_exams FOR ALL
   USING (public.is_tpo_for_college(college_id::TEXT))
   WITH CHECK (public.is_tpo_for_college(college_id::TEXT));
 
-DROP POLICY IF EXISTS "Students read active college exams" ON public.mock_exams;
 CREATE POLICY "Students read active college exams" ON public.mock_exams FOR SELECT
   USING (
     is_deleted = false
@@ -100,11 +246,14 @@ CREATE POLICY "Students read active college exams" ON public.mock_exams FOR SELE
     )
   );
 
--- 1.6 Secure public.mock_exam_sections
+-- 1.9 Secure public.mock_exam_sections
+ALTER TABLE public.mock_exam_sections ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Super admin full sections" ON public.mock_exam_sections;
+DROP POLICY IF EXISTS "TPO manage sections" ON public.mock_exam_sections;
+DROP POLICY IF EXISTS "Students read sections of their exams" ON public.mock_exam_sections;
+
 CREATE POLICY "Super admin full sections" ON public.mock_exam_sections FOR ALL USING (public.is_admin());
 
-DROP POLICY IF EXISTS "TPO manage sections" ON public.mock_exam_sections;
 CREATE POLICY "TPO manage sections" ON public.mock_exam_sections FOR ALL
   USING (
     public.is_admin() OR
@@ -115,7 +264,6 @@ CREATE POLICY "TPO manage sections" ON public.mock_exam_sections FOR ALL
     )
   );
 
-DROP POLICY IF EXISTS "Students read sections of their exams" ON public.mock_exam_sections;
 CREATE POLICY "Students read sections of their exams" ON public.mock_exam_sections FOR SELECT
   USING (
     public.is_admin() OR
@@ -131,8 +279,73 @@ CREATE POLICY "Students read sections of their exams" ON public.mock_exam_sectio
     )
   );
 
+-- 1.10 Lock Down student_exam_attempts RLS Policies
+ALTER TABLE public.student_exam_attempts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Student manage own attempts" ON public.student_exam_attempts;
+DROP POLICY IF EXISTS "Student select own attempts" ON public.student_exam_attempts;
+DROP POLICY IF EXISTS "Student insert own in_progress attempt" ON public.student_exam_attempts;
+DROP POLICY IF EXISTS "Student update in_progress attempt responses" ON public.student_exam_attempts;
+
+CREATE POLICY "Student select own attempts" ON public.student_exam_attempts 
+  FOR SELECT
+  USING (
+    student_id::TEXT = auth.uid()::TEXT
+    OR student_id::TEXT = lower(auth.jwt()->>'email')
+    OR student_email = lower(auth.jwt()->>'email')
+    OR public.is_admin()
+    OR public.is_tpo_for_college(college_id::TEXT)
+  );
+
+CREATE POLICY "Student insert own in_progress attempt" ON public.student_exam_attempts 
+  FOR INSERT
+  WITH CHECK (
+    (student_id::TEXT = auth.uid()::TEXT OR student_id::TEXT = lower(auth.jwt()->>'email') OR public.is_admin())
+    AND status = 'IN_PROGRESS'
+    AND COALESCE(total_score, 0) = 0
+  );
+
+CREATE POLICY "Student update in_progress attempt responses" ON public.student_exam_attempts 
+  FOR UPDATE
+  USING (
+    (student_id::TEXT = auth.uid()::TEXT OR student_id::TEXT = lower(auth.jwt()->>'email') OR public.is_admin())
+    AND status = 'IN_PROGRESS'
+  )
+  WITH CHECK (
+    (student_id::TEXT = auth.uid()::TEXT OR student_id::TEXT = lower(auth.jwt()->>'email') OR public.is_admin())
+    AND status = 'IN_PROGRESS'
+    AND COALESCE(total_score, 0) = 0
+  );
+
+-- 1.11 Multi-Tenant Shadow Sync Leakage Fix on contact_messages
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public select B2B exam messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Admin full access contact messages" ON public.contact_messages;
+CREATE POLICY "Admin full access contact messages" ON public.contact_messages
+  FOR ALL USING (public.is_admin());
+
+-- 1.12 Secure public.paper_tab_nodes (Prevent Unpaid Full Content Scraping)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'paper_tab_nodes') THEN
+    EXECUTE 'ALTER TABLE public.paper_tab_nodes ENABLE ROW LEVEL SECURITY;';
+    EXECUTE 'DROP POLICY IF EXISTS "Public select paper nodes" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Allow select" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Allow public read access to paper_tab_nodes" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Admin write paper nodes" ON public.paper_tab_nodes;';
+
+    EXECUTE 'CREATE POLICY "Admin write paper nodes" ON public.paper_tab_nodes FOR ALL USING (public.is_admin());';
+    EXECUTE 'CREATE POLICY "Secure select paper nodes" ON public.paper_tab_nodes FOR SELECT USING (
+      is_deleted = false AND (
+        is_free = true OR public.is_admin() OR (
+          auth.jwt()->>''email'' IS NOT NULL AND public.check_user_paper_access(LOWER(auth.jwt()->>''email''), exam_id::TEXT)
+        )
+      )
+    );';
+  END IF;
+END $$;
+
 -- --------------------------------------------------------------------
--- 2. [ISSUE 2] SECURE EXAM QUESTION RETRIEVAL (STRIP ANSWERS & EXPLANATIONS)
+-- 2. SAFE EXAM QUESTION RETRIEVAL (STRIP ANSWERS & EXPLANATIONS)
 -- --------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.get_safe_mock_exam_questions(p_question_ids TEXT[])
@@ -143,7 +356,10 @@ RETURNS TABLE (
     difficulty VARCHAR,
     topic_id VARCHAR,
     question_number INT
-) LANGUAGE plpgsql SECURITY DEFINER AS $$
+) LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
     RETURN QUERY
     SELECT 
@@ -161,57 +377,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_safe_mock_exam_questions(TEXT[]) TO anon, authenticated, service_role;
 
 -- --------------------------------------------------------------------
--- 3. [ISSUE 3] LOCK DOWN student_exam_attempts RLS POLICIES
--- --------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Student manage own attempts" ON public.student_exam_attempts;
-DROP POLICY IF EXISTS "Student select own attempts" ON public.student_exam_attempts;
-DROP POLICY IF EXISTS "Student insert own in_progress attempt" ON public.student_exam_attempts;
-DROP POLICY IF EXISTS "Student update in_progress attempt responses" ON public.student_exam_attempts;
-
--- 3.1 Students can view their own attempts
-CREATE POLICY "Student select own attempts" ON public.student_exam_attempts 
-  FOR SELECT
-  USING (
-    student_id::TEXT = auth.uid()::TEXT
-    OR student_id::TEXT = lower(auth.jwt()->>'email')
-    OR student_email = lower(auth.jwt()->>'email')
-    OR public.is_admin()
-  );
-
--- 3.2 Students can insert a new IN_PROGRESS attempt
-CREATE POLICY "Student insert own in_progress attempt" ON public.student_exam_attempts 
-  FOR INSERT
-  WITH CHECK (
-    (student_id::TEXT = auth.uid()::TEXT OR student_id::TEXT = lower(auth.jwt()->>'email') OR public.is_admin())
-    AND status = 'IN_PROGRESS'
-    AND COALESCE(total_score, 0) = 0
-  );
-
--- 3.3 Students can only update responses and time spent during active test (NOT score, percentage, passed, or status)
-CREATE POLICY "Student update in_progress attempt responses" ON public.student_exam_attempts 
-  FOR UPDATE
-  USING (
-    (student_id::TEXT = auth.uid()::TEXT OR student_id::TEXT = lower(auth.jwt()->>'email') OR public.is_admin())
-    AND status = 'IN_PROGRESS'
-  )
-  WITH CHECK (
-    (student_id::TEXT = auth.uid()::TEXT OR student_id::TEXT = lower(auth.jwt()->>'email') OR public.is_admin())
-    AND status = 'IN_PROGRESS'
-    AND COALESCE(total_score, 0) = 0
-  );
-
--- --------------------------------------------------------------------
--- 4. [ISSUE 5] MULTI-TENANT SHADOW SYNC LEAKAGE FIX ON contact_messages
--- --------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Public select B2B exam messages" ON public.contact_messages;
-DROP POLICY IF EXISTS "Admin full access contact messages" ON public.contact_messages;
-CREATE POLICY "Admin full access contact messages" ON public.contact_messages
-  FOR ALL USING (public.is_admin());
-
--- --------------------------------------------------------------------
--- 5. [ISSUE 6] ANTI-TAMPER PROCTORING & SERVER-SIDE GRADING RPC
+-- 3. ANTI-TAMPER PROCTORING & SERVER-SIDE GRADING RPC
 -- --------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.submit_and_grade_mock_attempt(
@@ -225,6 +391,7 @@ CREATE OR REPLACE FUNCTION public.submit_and_grade_mock_attempt(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_attempt RECORD;
@@ -332,10 +499,22 @@ BEGIN
 
                     v_item_resp := p_responses->v_q_id;
 
-                    IF v_item_resp IS NOT NULL AND (v_item_resp->>'selected_option') IS NOT NULL AND (v_item_resp->>'selected_option') != 'null' THEN
+                    IF v_item_resp IS NOT NULL 
+                       AND (v_item_resp->>'selected_option') IS NOT NULL 
+                       AND (v_item_resp->>'selected_option') != 'null' 
+                       AND (v_item_resp->>'selected_option') != '' 
+                       AND (v_item_resp->>'selected_option') ~ '^-?\d+$' THEN
                         v_student_selected := (v_item_resp->>'selected_option')::INT;
-                        v_marked_review := COALESCE((v_item_resp->>'marked_for_review')::BOOLEAN, false);
-                        v_time_spent := COALESCE((v_item_resp->>'time_spent_seconds')::INT, 0);
+                        v_marked_review := COALESCE(
+                            (v_item_resp->>'marked_for_review')::BOOLEAN,
+                            (v_item_resp->>'marked_review')::BOOLEAN,
+                            false
+                        );
+                        v_time_spent := COALESCE(
+                            (v_item_resp->>'time_spent_seconds')::INT,
+                            (v_item_resp->>'time_spent_sec')::INT,
+                            0
+                        );
 
                         IF v_correct_ans >= 0 AND v_student_selected = v_correct_ans THEN
                             v_is_correct := true;
@@ -352,7 +531,9 @@ BEGIN
                                 'selected_option', v_student_selected,
                                 'is_correct', v_is_correct,
                                 'marked_for_review', v_marked_review,
+                                'marked_review', v_marked_review,
                                 'time_spent_seconds', v_time_spent,
+                                'time_spent_sec', v_time_spent,
                                 'correct_answer', v_correct_ans
                             )
                         );
@@ -402,11 +583,15 @@ $$;
 GRANT EXECUTE ON FUNCTION public.submit_and_grade_mock_attempt(TEXT, JSONB, INT, JSONB, INT, TEXT) TO anon, authenticated, service_role;
 
 -- --------------------------------------------------------------------
--- 6. [ISSUE 8] DATABASE TRIGGER TO CASCADE colleges.valid_until TO SUBSCRIPTIONS
+-- 4. DATABASE TRIGGER TO CASCADE colleges.valid_until TO SUBSCRIPTIONS
 -- --------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.cascade_college_validity_update()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     v_status TEXT;
 BEGIN
@@ -427,7 +612,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_cascade_college_validity ON public.colleges;
 CREATE TRIGGER trg_cascade_college_validity
@@ -436,11 +621,15 @@ FOR EACH ROW
 EXECUTE FUNCTION public.cascade_college_validity_update();
 
 -- --------------------------------------------------------------------
--- 7. [ISSUE 9] FIX SEAT CAP RACE CONDITION & UNBLOCK EXISTING STUDENT UPDATES
+-- 5. FIX SEAT CAP RACE CONDITION & UNBLOCK EXISTING STUDENT UPDATES
 -- --------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.check_college_seat_cap()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     current_count INT;
     max_allowed INT;
@@ -497,16 +686,17 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_enforce_college_seat_cap ON public.college_students;
 CREATE TRIGGER trg_enforce_college_seat_cap
 BEFORE INSERT OR UPDATE OF status, college_id ON public.college_students
 FOR EACH ROW
 EXECUTE FUNCTION public.check_college_seat_cap();
+GRANT EXECUTE ON FUNCTION public.check_college_seat_cap() TO anon, authenticated, service_role;
 
 -- --------------------------------------------------------------------
--- 8. [ISSUE 11] SECURE POST-SUBMISSION SOLUTION REVIEW RPC
+-- 6. SECURE POST-SUBMISSION SOLUTION REVIEW RPC
 -- --------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.get_mock_exam_attempt_solutions(
@@ -515,6 +705,7 @@ CREATE OR REPLACE FUNCTION public.get_mock_exam_attempt_solutions(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_attempt RECORD;
@@ -609,7 +800,315 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_mock_exam_attempt_solutions(TEXT) TO anon, authenticated, service_role;
 
 -- --------------------------------------------------------------------
--- 9. [ISSUE 14] SERVER-SIDE COLLEGE USAGE AGGREGATION RPC
+-- 7. LIVE STUDENT COLLEGE ENTITLEMENT CHECK RPC
+-- --------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.check_student_college_entitlement(
+    p_email TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_clean_email TEXT;
+    v_student RECORD;
+BEGIN
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN jsonb_build_object('is_entitled', false, 'reason', 'No email provided');
+    END IF;
+
+    v_clean_email := lower(trim(p_email));
+
+    SELECT 
+        cs.id AS student_id,
+        cs.college_id,
+        cs.name,
+        cs.roll_number,
+        cs.department,
+        cs.batch_year,
+        c.name AS college_name,
+        c.code AS college_code,
+        c.contract_status,
+        c.valid_until
+    INTO v_student
+    FROM public.college_students cs
+    JOIN public.colleges c ON c.id::TEXT = cs.college_id::TEXT
+    WHERE lower(trim(cs.email)) = v_clean_email
+      AND cs.status = 'ACTIVE'
+      AND c.is_deleted = false
+    ORDER BY cs.created_at DESC
+    LIMIT 1;
+
+    IF v_student IS NULL THEN
+        RETURN jsonb_build_object('is_entitled', false, 'reason', 'Not enrolled in any college roster');
+    END IF;
+
+    IF v_student.contract_status NOT IN ('ACTIVE', 'PILOT') OR (v_student.valid_until IS NOT NULL AND v_student.valid_until <= NOW()) THEN
+        RETURN jsonb_build_object(
+            'is_entitled', false,
+            'is_expired', true,
+            'college_id', v_student.college_id,
+            'college_name', v_student.college_name,
+            'valid_until', v_student.valid_until,
+            'contract_status', v_student.contract_status,
+            'reason', 'Institutional contract expired or suspended'
+        );
+    END IF;
+
+    RETURN jsonb_build_object(
+        'is_entitled', true,
+        'is_expired', false,
+        'student_id', v_student.student_id,
+        'college_id', v_student.college_id,
+        'college_name', v_student.college_name,
+        'college_code', v_student.college_code,
+        'valid_until', v_student.valid_until,
+        'contract_status', v_student.contract_status,
+        'department', v_student.department,
+        'roll_number', v_student.roll_number,
+        'batch_year', v_student.batch_year
+    );
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.check_student_college_entitlement(TEXT) TO anon, authenticated, service_role;
+
+-- --------------------------------------------------------------------
+-- 8. CAMPUS PRO PASS PROVISIONING RPC
+-- --------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.provision_campus_student_subscription(
+  p_email TEXT,
+  p_college_id TEXT,
+  p_college_name TEXT,
+  p_valid_until TIMESTAMPTZ
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_clean_email TEXT;
+  v_plan_name TEXT;
+  v_payment_id TEXT;
+BEGIN
+  v_clean_email := lower(trim(p_email));
+  v_plan_name := 'Campus Pro Pass (' || coalesce(p_college_name, 'Partner College') || ')';
+  v_payment_id := 'B2B_CAMPUS_' || p_college_id || '_' || md5(v_clean_email);
+
+  INSERT INTO public.user_subscriptions (
+    user_email,
+    plan_name,
+    payment_id,
+    status,
+    expires_at,
+    updated_at
+  ) VALUES (
+    v_clean_email,
+    v_plan_name,
+    v_payment_id,
+    'ACTIVE',
+    p_valid_until,
+    NOW()
+  )
+  ON CONFLICT (payment_id)
+  DO UPDATE SET
+    user_email = EXCLUDED.user_email,
+    plan_name = EXCLUDED.plan_name,
+    status = 'ACTIVE',
+    expires_at = EXCLUDED.expires_at,
+    updated_at = NOW();
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'email', v_clean_email,
+    'payment_id', v_payment_id,
+    'expires_at', p_valid_until
+  );
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.provision_campus_student_subscription(TEXT, TEXT, TEXT, TIMESTAMPTZ) TO anon, authenticated, service_role;
+
+-- --------------------------------------------------------------------
+-- 9. UNIFIED PAPER & CAMPUS PASS ENTITLEMENT CHECK RPC
+-- --------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.check_user_paper_access(
+    p_user_email VARCHAR,
+    p_exam_id VARCHAR
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_has_pass BOOLEAN := FALSE;
+    v_has_paper BOOLEAN := FALSE;
+    v_clean_email VARCHAR;
+    v_college_entitlement JSONB;
+BEGIN
+    IF p_user_email IS NULL OR p_user_email = '' THEN
+        RETURN FALSE;
+    END IF;
+
+    v_clean_email := LOWER(TRIM(p_user_email));
+
+    -- 1. Check Super Admin Whitelist
+    IF v_clean_email IN (
+        'venkatmukala9@gmail.com',
+        'venkat.mukala9@gmail.com',
+        'prepsunite@gmail.com',
+        'veen1kat@gmail.com'
+    ) THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 2. Check institutional college pass entitlement
+    SELECT public.check_student_college_entitlement(v_clean_email) INTO v_college_entitlement;
+    IF v_college_entitlement IS NOT NULL AND (v_college_entitlement->>'is_entitled')::boolean = true THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 3. Check consumer active subscription (Monthly / Quarterly / Yearly)
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_subscriptions
+        WHERE LOWER(user_email) = v_clean_email
+          AND status = 'ACTIVE'
+          AND expires_at > NOW()
+    ) INTO v_has_pass;
+
+    IF v_has_pass THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 4. Check individual paper purchase
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_paper_purchases
+        WHERE LOWER(user_email) = v_clean_email
+          AND exam_id = p_exam_id
+          AND expires_at > NOW()
+    ) INTO v_has_paper;
+
+    RETURN v_has_paper;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.check_user_paper_access(VARCHAR, VARCHAR) TO anon, authenticated, service_role;
+
+-- --------------------------------------------------------------------
+-- 10. RECURSIVE PAPER NODES REDACTION FUNCTION & SECURE EXAMS RPC
+-- --------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.redact_paper_nodes(
+  p_nodes JSONB,
+  p_has_access BOOLEAN,
+  p_is_public BOOLEAN DEFAULT FALSE
+) RETURNS JSONB AS $$
+DECLARE
+  v_node JSONB;
+  v_result JSONB := '[]'::jsonb;
+  v_children JSONB;
+  v_is_free BOOLEAN;
+BEGIN
+  IF p_nodes IS NULL OR jsonb_array_length(p_nodes) = 0 THEN
+    RETURN '[]'::jsonb;
+  END IF;
+
+  IF p_has_access OR p_is_public THEN
+    RETURN p_nodes;
+  END IF;
+
+  FOR v_node IN SELECT * FROM jsonb_array_elements(p_nodes) LOOP
+    v_is_free := COALESCE((v_node->>'isFree')::boolean, (v_node->>'is_free')::boolean, false);
+    
+    IF v_node ? 'children' AND jsonb_array_length(v_node->'children') > 0 THEN
+      v_children := public.redact_paper_nodes(v_node->'children', p_has_access, p_is_public);
+      v_node := jsonb_set(v_node, '{children}', v_children);
+    END IF;
+
+    IF NOT v_is_free THEN
+      v_node := jsonb_set(v_node, '{content}', 'null'::jsonb);
+    END IF;
+
+    v_result := v_result || jsonb_build_array(v_node);
+  END LOOP;
+
+  RETURN v_result;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION public.get_secure_exams_by_company(
+  p_company_slug TEXT,
+  p_user_email TEXT DEFAULT NULL
+) RETURNS TABLE (
+  id TEXT,
+  company_id UUID,
+  company_slug VARCHAR,
+  name VARCHAR,
+  badge VARCHAR,
+  content TEXT,
+  old_papers TEXT,
+  price NUMERIC,
+  paper_tabs JSONB,
+  google_doc_embed_url TEXT,
+  google_doc_edit_url TEXT,
+  upvotes INT,
+  is_public_exam BOOLEAN,
+  has_user_access BOOLEAN,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_is_admin BOOLEAN := FALSE;
+  v_effective_email TEXT := NULL;
+  v_jwt_email TEXT;
+BEGIN
+  v_is_admin := public.is_admin();
+
+  v_jwt_email := auth.jwt() ->> 'email';
+  IF v_jwt_email IS NOT NULL AND v_jwt_email != '' THEN
+    v_effective_email := LOWER(TRIM(v_jwt_email));
+  ELSIF v_is_admin AND p_user_email IS NOT NULL THEN
+    v_effective_email := LOWER(TRIM(p_user_email));
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    e.id::TEXT,
+    e.company_id,
+    e.company_slug,
+    e.name,
+    e.badge,
+    e.content,
+    e.old_papers,
+    e.price,
+    public.redact_paper_nodes(
+      e.paper_tabs, 
+      v_is_admin OR (v_effective_email IS NOT NULL AND public.check_user_paper_access(v_effective_email, e.id::TEXT)),
+      COALESCE(e.is_public_exam, false)
+    ) AS paper_tabs,
+    e.google_doc_embed_url,
+    e.google_doc_edit_url,
+    e.upvotes,
+    COALESCE(e.is_public_exam, false) AS is_public_exam,
+    (v_is_admin OR COALESCE(e.is_public_exam, false) OR (v_effective_email IS NOT NULL AND public.check_user_paper_access(v_effective_email, e.id::TEXT))) AS has_user_access,
+    e.created_at,
+    e.updated_at
+  FROM public.exams e
+  WHERE e.company_slug = p_company_slug
+    AND e.is_deleted = false
+  ORDER BY e.created_at DESC;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.get_secure_exams_by_company(TEXT, TEXT) TO anon, authenticated, service_role;
+
+-- --------------------------------------------------------------------
+-- 11. SERVER-SIDE COLLEGE USAGE AGGREGATION RPC
 -- --------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.get_colleges_usage_summary()
@@ -617,7 +1116,9 @@ RETURNS TABLE (
     college_id TEXT,
     enrolled_count BIGINT,
     active_exams_count BIGINT
-) LANGUAGE sql STABLE SECURITY DEFINER AS $$
+) LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
     SELECT 
         c.id AS college_id,
         COUNT(DISTINCT cs.id) AS enrolled_count,
@@ -628,3 +1129,25 @@ RETURNS TABLE (
     GROUP BY c.id;
 $$;
 GRANT EXECUTE ON FUNCTION public.get_colleges_usage_summary() TO anon, authenticated, service_role;
+
+-- --------------------------------------------------------------------
+-- 12. EXPERIENCE UPVOTES RPC (SUPPORTS TEXT AND UUID IDS)
+-- --------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.increment_experience_upvotes(p_experience_id TEXT)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_new_count INT;
+BEGIN
+  UPDATE public.experiences
+  SET upvotes = COALESCE(upvotes, 0) + 1
+  WHERE id::TEXT = p_experience_id::TEXT
+  RETURNING upvotes INTO v_new_count;
+  RETURN COALESCE(v_new_count, 0);
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.increment_experience_upvotes(TEXT) TO anon, authenticated, service_role;

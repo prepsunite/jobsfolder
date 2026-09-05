@@ -67,7 +67,7 @@ export default function LoginPage() {
       // User has ticked the checkbox — record explicit consent in ConsentContext
       // This syncs the status across the app (Profile page, banner, etc.)
       acceptConsent();
-      const res = await signInWithGoogle();
+      const res = await signInWithGoogle(redirectTo || undefined);
       if (res?.error) {
         setErrorMessage(res.error);
       }
