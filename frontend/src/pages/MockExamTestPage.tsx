@@ -209,6 +209,29 @@ export default function MockExamTestPage() {
     });
   }, [exam]);
 
+  // 1b. Fetch Full Solutions & Explanations post-submission (Zero answers during active test)
+  useEffect(() => {
+    if (testPhase !== 'SUBMITTED' || !attemptId) return;
+
+    tpoService.getAttemptResultWithReview(attemptId).then(res => {
+      if (res && res.questions && res.questions.length > 0) {
+        setQuestionsMap(prev => {
+          const updated = { ...prev };
+          res.questions.forEach((q: any) => {
+            updated[q.id] = {
+              ...(updated[q.id] || {}),
+              ...q,
+            };
+          });
+          return updated;
+        });
+        if (res.attempt) {
+          setFinalGradedAttempt(prev => (prev ? { ...prev, ...res.attempt } : res.attempt));
+        }
+      }
+    });
+  }, [testPhase, attemptId]);
+
   // Current Section & its Questions
   const currentSection: MockExamSection | undefined = exam?.sections?.[currentSectionIndex];
   const currentSectionQIds = currentSection?.question_ids || [];

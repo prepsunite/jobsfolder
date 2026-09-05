@@ -152,6 +152,16 @@ function saveLocalAttempt(attempt: StudentExamAttempt) {
   } catch {}
 }
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      return { Authorization: `Bearer ${session.access_token}` };
+    }
+  } catch {}
+  return {};
+}
+
 export const tpoService = {
   // ==========================================
   // 1. SUPER ADMIN: College & TPO Management
@@ -307,7 +317,7 @@ export const tpoService = {
                 slug: parsed.college_id.replace(/^col-/, ''),
                 contract_status: 'ACTIVE',
                 max_licenses: parsed.max_licenses || 1500,
-                valid_until: (parsed as any).valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                valid_until: (parsed as any).valid_until || new Date(0).toISOString(),
                 created_at: parsed.assigned_at || new Date().toISOString(),
               });
             }
@@ -325,7 +335,7 @@ export const tpoService = {
       } else {
         const locTime = loc.updated_at ? new Date(loc.updated_at).getTime() : 0;
         const existTime = existing.updated_at ? new Date(existing.updated_at).getTime() : 0;
-        if (locTime >= existTime) {
+        if (locTime > existTime) {
           map.set(loc.id, { ...existing, ...loc });
         }
       }
@@ -337,6 +347,30 @@ export const tpoService = {
   },
 
   async getAllCollegesWithUsage(): Promise<(College & { enrolled_count: number; tpo_email?: string; active_exams_count: number })[]> {
+    // 🛡️ 1. Try server-side aggregation RPC (O(1) request / high performance)
+    try {
+      const { data: summaryData, error: rpcErr } = await supabase.rpc('get_colleges_usage_summary');
+      if (!rpcErr && summaryData && summaryData.length > 0) {
+        return summaryData.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          code: row.code || 'CRT',
+          slug: row.id.replace(/^col-/, ''),
+          city: row.city || '',
+          state: row.state || '',
+          contract_status: row.contract_status || 'ACTIVE',
+          max_licenses: row.max_licenses || 1500,
+          valid_until: row.valid_until || new Date(0).toISOString(),
+          created_at: row.created_at || new Date().toISOString(),
+          enrolled_count: Number(row.enrolled_count || 0),
+          active_exams_count: Number(row.active_exams_count || 0),
+          tpo_email: row.tpo_email || undefined,
+        }));
+      }
+    } catch (rpcError) {
+      console.warn('RPC get_colleges_usage_summary notice, falling back to mapped scan:', rpcError);
+    }
+
     const colleges = await this.getAllColleges();
     const tpoAdmins = await this.getTpoAdmins();
 
@@ -1020,7 +1054,7 @@ export const tpoService = {
         slug: authRecord.college_id.replace(/^col-/, ''),
         contract_status: 'ACTIVE',
         max_licenses: authRecord.max_licenses || 1500,
-        valid_until: (authRecord as any).valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        valid_until: (authRecord as any).valid_until || new Date(0).toISOString(),
         created_at: authRecord.assigned_at || new Date().toISOString(),
       };
       local.push(synthesized);
@@ -1048,7 +1082,7 @@ export const tpoService = {
                 slug: parsed.college_id.replace(/^col-/, ''),
                 contract_status: 'ACTIVE',
                 max_licenses: parsed.max_licenses || 1500,
-                valid_until: (parsed as any).valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                valid_until: (parsed as any).valid_until || new Date(0).toISOString(),
                 created_at: parsed.assigned_at || new Date().toISOString(),
               };
               local.push(synthesized);
@@ -1072,7 +1106,7 @@ export const tpoService = {
           slug: collegeId.replace(/^col-/, ''),
           contract_status: 'ACTIVE',
           max_licenses: 1500,
-          valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          valid_until: new Date(0).toISOString(),
           created_at: new Date().toISOString(),
         };
         local.push(synthesized);
@@ -1090,7 +1124,7 @@ export const tpoService = {
         slug: collegeId.replace(/^col-/, ''),
         contract_status: 'ACTIVE',
         max_licenses: 1500,
-        valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        valid_until: new Date(0).toISOString(),
         created_at: new Date().toISOString(),
       };
       local.push(synthesized);
@@ -1179,8 +1213,7 @@ export const tpoService = {
       effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
     }
     if (!effectiveCollegeId) {
-      const allColleges = await this.getAllColleges();
-      if (allColleges.length > 0) effectiveCollegeId = allColleges[0].id;
+      throw new Error('Institutional Error: College ID is required to onboard students. Please select or log into your institution.');
     }
 
     // 1. Fetch current college license capacity and contract status (hybrid Supabase / local)
@@ -1661,8 +1694,7 @@ export const tpoService = {
       effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
     }
     if (!effectiveCollegeId) {
-      const allColleges = await this.getAllColleges();
-      if (allColleges.length > 0) effectiveCollegeId = allColleges[0].id;
+      return { success: false, error: 'Institutional Error: College ID is required to onboard students. Please select or log into your institution.' };
     }
 
     const college = await this.getCollegeDetails(effectiveCollegeId);
@@ -1961,7 +1993,10 @@ export const tpoService = {
 
     // Serverless API fetch (bypasses RLS, ensuring cross-device support across all student/TPO browsers)
     try {
-      const res = await fetch(`/api/campus-exams?collegeId=${encodeURIComponent(collegeId)}`);
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch(`/api/campus-exams?collegeId=${encodeURIComponent(collegeId)}`, {
+        headers: authHeaders,
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.exams && Array.isArray(json.exams)) {
@@ -1995,7 +2030,10 @@ export const tpoService = {
 
     // Try finding via /api/campus-exams
     try {
-      const res = await fetch(`/api/campus-exams?examId=${encodeURIComponent(examId)}`);
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch(`/api/campus-exams?examId=${encodeURIComponent(examId)}`, {
+        headers: authHeaders,
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.exam) return json.exam as MockExam;
@@ -2133,9 +2171,13 @@ export const tpoService = {
 
     // 2. Cloud multi-device backup to contact_messages and serverless API
     try {
+      const authHeaders = await getAuthHeaders();
       await fetch('/api/campus-exams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
         body: JSON.stringify({ exam: newLocalExam }),
       });
     } catch {}
@@ -2295,6 +2337,18 @@ export const tpoService = {
   async getQuestionsForExam(questionIds: string[]): Promise<any[]> {
     if (!questionIds || questionIds.length === 0) return [];
 
+    // 🛡️ 1. Secure RPC (Strips correct_answer and explanation to prevent DevTools cheating)
+    try {
+      const { data, error } = await supabase.rpc('get_safe_mock_exam_questions', {
+        p_question_ids: questionIds,
+      });
+
+      if (!error && data && data.length > 0) return data;
+    } catch (rpcErr) {
+      console.warn('RPC get_safe_mock_exam_questions notice, falling back to direct query:', rpcErr);
+    }
+
+    // 2. Direct query fallback
     try {
       const { data, error } = await supabase
         .from('topic_questions')
@@ -2595,6 +2649,44 @@ export const tpoService = {
     attempt: StudentExamAttempt;
     questions: any[];
   } | null> {
+    if (!attemptId) return null;
+
+    // 🛡️ 1. Secure RPC: Only releases full solution key & explanations if attempt is SUBMITTED/GRADED
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_mock_exam_attempt_solutions', {
+        p_attempt_id: attemptId,
+      });
+
+      if (!rpcErr && rpcData && rpcData.questions && rpcData.questions.length > 0) {
+        const attempt: StudentExamAttempt = {
+          id: rpcData.attempt_id,
+          mock_exam_id: rpcData.mock_exam_id,
+          student_id: rpcData.student_id,
+          college_id: rpcData.college_id,
+          status: rpcData.status,
+          started_at: rpcData.started_at,
+          submitted_at: rpcData.submitted_at,
+          time_spent_seconds: rpcData.time_spent_seconds,
+          total_score: Number(rpcData.total_score || 0),
+          max_possible_score: Number(rpcData.max_possible_score || 100),
+          percentage: Number(rpcData.percentage || 0),
+          passed: Boolean(rpcData.passed),
+          tab_switch_count: Number(rpcData.tab_switch_count || 0),
+          proctor_events: rpcData.proctor_events || [],
+          responses: rpcData.responses || {},
+        };
+
+        saveLocalAttempt(attempt);
+        return {
+          attempt,
+          questions: rpcData.questions,
+        };
+      }
+    } catch (rpcError) {
+      console.warn('RPC get_mock_exam_attempt_solutions notice, falling back to direct query:', rpcError);
+    }
+
+    // 2. Direct query fallback
     let attempt: StudentExamAttempt | null = null;
 
     try {

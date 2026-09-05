@@ -328,7 +328,7 @@ CREATE POLICY "TPO view college attempts" ON public.student_exam_attempts FOR SE
 ALTER TABLE public.tpo_authorizations ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Super admin full tpo_authorizations" ON public.tpo_authorizations;
-CREATE POLICY "Super admin full tpo_authorizations" ON public.tpo_authorizations FOR ALL USING (public.is_admin() OR auth.role() = 'anon');
+CREATE POLICY "Super admin full tpo_authorizations" ON public.tpo_authorizations FOR ALL USING (public.is_admin());
 
 DROP POLICY IF EXISTS "TPO read own authorization" ON public.tpo_authorizations;
 CREATE POLICY "TPO read own authorization" ON public.tpo_authorizations FOR SELECT
@@ -341,7 +341,7 @@ CREATE POLICY "TPO read own authorization" ON public.tpo_authorizations FOR SELE
 ALTER TABLE public.college_students ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Super admin full college_students" ON public.college_students;
-CREATE POLICY "Super admin full college_students" ON public.college_students FOR ALL USING (public.is_admin() OR auth.role() = 'anon');
+CREATE POLICY "Super admin full college_students" ON public.college_students FOR ALL USING (public.is_admin());
 
 DROP POLICY IF EXISTS "TPO manage own college students" ON public.college_students;
 CREATE POLICY "TPO manage own college students" ON public.college_students FOR ALL
@@ -367,7 +367,6 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
   USING (
     payment_id LIKE 'B2B_CAMPUS_%' AND (
       public.is_admin() OR
-      auth.role() = 'anon' OR
       EXISTS (
         SELECT 1 FROM public.tpo_authorizations ta
         WHERE lower(ta.email) = lower(auth.jwt()->>'email')
@@ -379,7 +378,6 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
   WITH CHECK (
     payment_id LIKE 'B2B_CAMPUS_%' AND (
       public.is_admin() OR
-      auth.role() = 'anon' OR
       EXISTS (
         SELECT 1 FROM public.tpo_authorizations ta
         WHERE lower(ta.email) = lower(auth.jwt()->>'email')

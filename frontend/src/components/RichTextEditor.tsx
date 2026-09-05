@@ -138,10 +138,18 @@ const ResizableImage = Image.extend({
       container.appendChild(img);
       container.appendChild(bar);
 
-      container.addEventListener('mouseenter', () => { bar.style.opacity = '1'; });
-      container.addEventListener('mouseleave', () => { bar.style.opacity = '0'; });
+      const onMouseEnter = () => { bar.style.opacity = '1'; };
+      const onMouseLeave = () => { bar.style.opacity = '0'; };
+      container.addEventListener('mouseenter', onMouseEnter);
+      container.addEventListener('mouseleave', onMouseLeave);
 
-      return { dom: container };
+      return {
+        dom: container,
+        destroy() {
+          container.removeEventListener('mouseenter', onMouseEnter);
+          container.removeEventListener('mouseleave', onMouseLeave);
+        },
+      };
     };
   },
 });
