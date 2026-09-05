@@ -567,13 +567,13 @@ export default function AdminDashboardPage() {
   const newContactsCount = contactMessagesList.filter(c => c.status === 'NEW').length;
 
   const stats = data || {
-    totalUsers: 142,
+    totalUsers: registeredUsersList.length || 0,
     totalCompanies: allCompanies.length,
     totalQuestions: dataStore.getQuestions().length,
     totalExperiences: experiencesList.length,
     pendingApprovals: pendingExperiencesCount,
-    totalResources: dataStore.getResources().length,
-    totalRoadmaps: 8,
+    totalResources: companyExamsList.length || 0,
+    totalRoadmaps: 0,
   };
 
   const statCards = [

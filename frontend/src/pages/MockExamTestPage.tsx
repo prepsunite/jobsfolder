@@ -93,13 +93,13 @@ export default function MockExamTestPage() {
 
       return false;
     },
-    enabled: !!user?.email && !!exam?.college_id && !userCollegeId,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!user?.email && !!exam?.college_id,
+    staleTime: 60 * 1000,
   });
 
-  const isCollegeTpo = isTpoAdmin && (userCollegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
+  const isCollegeTpo = isTpoAdmin && (user?.collegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
   const isEnrolledStudent = Boolean(
-    exam?.college_id && (userCollegeId === exam.college_id || dbEnrollmentVerified)
+    exam?.college_id && (dbEnrollmentVerified || user?.collegeId === exam.college_id)
   );
   const isAuthorizedCandidate = !exam?.college_id || isSuperAdmin || isCollegeTpo || isEnrolledStudent;
 

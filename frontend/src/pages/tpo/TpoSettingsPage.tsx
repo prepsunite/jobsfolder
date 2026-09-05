@@ -54,7 +54,7 @@ export default function TpoSettingsPage() {
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 space-y-1">
             <div className="text-[11px] font-bold text-slate-400 uppercase">Licenses Enrolled</div>
             <div className="text-xl font-black text-slate-900 dark:text-white">
-              {stats?.totalStudents || 0} / {stats?.maxLicenses || 1000}
+              {stats?.totalStudents || 0} / {currentCollege.max_licenses || stats?.maxLicenses || 1500}
             </div>
             <p className="text-[10px] text-emerald-600 font-semibold">Active CRT Accounts</p>
           </div>

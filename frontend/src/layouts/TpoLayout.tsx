@@ -81,13 +81,20 @@ export default function TpoLayout() {
     ? (selectedCollegeId || authorizedCollegeId || allColleges[0]?.id || '')
     : authorizedCollegeId;
 
-  const currentCollege: College = allColleges.find(c => c.id === effectiveCollegeId) || {
+  // Query real-time college details directly from Supabase
+  const { data: dbCollegeDetails } = useQuery({
+    queryKey: ['tpo-college-details', effectiveCollegeId],
+    queryFn: () => (effectiveCollegeId ? tpoService.getCollegeDetails(effectiveCollegeId) : null),
+    enabled: !!effectiveCollegeId,
+  });
+
+  const currentCollege: College = dbCollegeDetails || allColleges.find(c => c.id === effectiveCollegeId) || {
     id: effectiveCollegeId,
     name: tpoAuth?.college_name || user?.collegeName || 'Engineering College',
     code: tpoAuth?.college_code || 'CRT',
     slug: (effectiveCollegeId || 'crt').replace(/^col-/, ''),
     contract_status: 'ACTIVE',
-    valid_until: '2027-12-31T00:00:00Z',
+    valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
     created_at: new Date().toISOString(),
     max_licenses: tpoAuth?.max_licenses || 1500,
   };

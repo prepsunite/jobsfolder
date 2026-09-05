@@ -53,7 +53,7 @@ export default function AddStudentModal({
     enabled: isOpen && !!effectiveCollegeId,
   });
 
-  const maxLicenses = stats?.maxLicenses || 1000;
+  const maxLicenses = stats?.maxLicenses || 1500;
   const currentEnrolled = stats?.totalStudents || 0;
   const remainingSeats = Math.max(0, maxLicenses - currentEnrolled);
   const isQuotaFull = remainingSeats <= 0;

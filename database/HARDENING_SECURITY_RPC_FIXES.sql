@@ -11,7 +11,7 @@
 -- --------------------------------------------------------------------
 -- 0. Defensive Schema Preparation (Prevent "column does not exist" errors)
 -- --------------------------------------------------------------------
-ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1000;
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1500;
 ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS contract_status VARCHAR(50) DEFAULT 'ACTIVE';
 ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS valid_until TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
 ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
@@ -336,10 +336,71 @@ END;
 $$;
 
 -- --------------------------------------------------------------------
+-- 3.5 Unified Paper & Campus Pass Entitlement Check RPC
+-- --------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.check_user_paper_access(
+    p_user_email VARCHAR,
+    p_exam_id VARCHAR
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_has_pass BOOLEAN := FALSE;
+    v_has_paper BOOLEAN := FALSE;
+    v_clean_email VARCHAR;
+    v_college_entitlement JSONB;
+BEGIN
+    IF p_user_email IS NULL OR p_user_email = '' THEN
+        RETURN FALSE;
+    END IF;
+
+    v_clean_email := LOWER(TRIM(p_user_email));
+
+    -- 1. Check Super Admin Whitelist
+    IF v_clean_email IN (
+        'venkatmukala9@gmail.com',
+        'venkat.mukala9@gmail.com',
+        'venkatmukala3@gmail.com',
+        'venkat.mukala3@gmail.com',
+        'prepsunite@gmail.com'
+    ) THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 2. Check institutional college pass entitlement
+    SELECT public.check_student_college_entitlement(v_clean_email) INTO v_college_entitlement;
+    IF v_college_entitlement IS NOT NULL AND (v_college_entitlement->>'is_entitled')::boolean = true THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 3. Check consumer active subscription (Monthly / Quarterly / Yearly)
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_subscriptions
+        WHERE LOWER(user_email) = v_clean_email
+          AND status = 'ACTIVE'
+          AND expires_at > NOW()
+    ) INTO v_has_pass;
+
+    IF v_has_pass THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 4. Check individual paper purchase
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_paper_purchases
+        WHERE LOWER(user_email) = v_clean_email
+          AND exam_id = p_exam_id
+          AND expires_at > NOW()
+    ) INTO v_has_paper;
+
+    RETURN v_has_paper;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- --------------------------------------------------------------------
 -- 4. Permissions Grant
 -- --------------------------------------------------------------------
 GRANT EXECUTE ON FUNCTION public.check_college_seat_cap() TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.check_student_college_entitlement(TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.submit_and_grade_mock_attempt(TEXT, JSONB, INT, JSONB, INT, TEXT) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.check_user_paper_access(VARCHAR, VARCHAR) TO anon, authenticated, service_role;
 
 SELECT 'PrepUnite B2B Hardening & Anti-Cheat SQL Applied Successfully!' AS status;

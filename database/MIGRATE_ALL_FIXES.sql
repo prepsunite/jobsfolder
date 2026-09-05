@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.tpo_authorizations (
     email VARCHAR(255) NOT NULL,
     user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     status VARCHAR(50) DEFAULT 'ACTIVE' NOT NULL,
-    max_licenses INT DEFAULT 1000 NOT NULL,
+    max_licenses INT DEFAULT 1500 NOT NULL,
     assigned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS public.tpo_authorizations (
 ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
-ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1000;
+ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1500;
 ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.tpo_authorizations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS public.colleges (
     city VARCHAR(100),
     state VARCHAR(100),
     contract_status VARCHAR(50) DEFAULT 'ACTIVE' NOT NULL,
-    max_licenses INT DEFAULT 1000 NOT NULL,
+    max_licenses INT DEFAULT 1500 NOT NULL,
     valid_until TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year') NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -802,6 +802,64 @@ BEGIN
 END;
 $$;
 
+-- 8.4 Unified Paper & Campus Pass Entitlement Check RPC
+CREATE OR REPLACE FUNCTION public.check_user_paper_access(
+    p_user_email VARCHAR,
+    p_exam_id VARCHAR
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_has_pass BOOLEAN := FALSE;
+    v_has_paper BOOLEAN := FALSE;
+    v_clean_email VARCHAR;
+    v_college_entitlement JSONB;
+BEGIN
+    IF p_user_email IS NULL OR p_user_email = '' THEN
+        RETURN FALSE;
+    END IF;
+
+    v_clean_email := LOWER(TRIM(p_user_email));
+
+    -- 1. Check Super Admin Whitelist
+    IF v_clean_email IN (
+        'venkatmukala9@gmail.com',
+        'venkat.mukala9@gmail.com',
+        'venkatmukala3@gmail.com',
+        'venkat.mukala3@gmail.com',
+        'prepsunite@gmail.com'
+    ) THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 2. Check institutional college pass entitlement
+    SELECT public.check_student_college_entitlement(v_clean_email) INTO v_college_entitlement;
+    IF v_college_entitlement IS NOT NULL AND (v_college_entitlement->>'is_entitled')::boolean = true THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 3. Check consumer active subscription (Monthly / Quarterly / Yearly)
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_subscriptions
+        WHERE LOWER(user_email) = v_clean_email
+          AND status = 'ACTIVE'
+          AND expires_at > NOW()
+    ) INTO v_has_pass;
+
+    IF v_has_pass THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 4. Check individual paper purchase
+    SELECT EXISTS (
+        SELECT 1 FROM public.user_paper_purchases
+        WHERE LOWER(user_email) = v_clean_email
+          AND exam_id = p_exam_id
+          AND expires_at > NOW()
+    ) INTO v_has_paper;
+
+    RETURN v_has_paper;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- --------------------------------------------------------------------
 -- STEP 9: Grant Necessary Permissions to Authenticated & Anon Roles
 -- --------------------------------------------------------------------
@@ -813,6 +871,7 @@ GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.check_college_seat_cap() TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.check_student_college_entitlement(TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.submit_and_grade_mock_attempt(TEXT, JSONB, INT, JSONB, INT, TEXT) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.check_user_paper_access(VARCHAR, VARCHAR) TO anon, authenticated, service_role;
 
 -- Verification notification
 DO $$

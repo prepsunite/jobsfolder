@@ -30,7 +30,7 @@ export default function CollegesTpoManager() {
   // Modal / Edit States
   const [isAddCollegeModalOpen, setIsAddCollegeModalOpen] = useState(false);
   const [editingLicenseCollege, setEditingLicenseCollege] = useState<{ id: string; name: string; currentCap: number } | null>(null);
-  const [newCapValue, setNewCapValue] = useState<number>(1000);
+  const [newCapValue, setNewCapValue] = useState<number>(1500);
 
   // Validity Extension Modal State
   const [editingValidityCollege, setEditingValidityCollege] = useState<{

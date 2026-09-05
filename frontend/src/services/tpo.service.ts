@@ -55,13 +55,12 @@ function getLocalColleges(): College[] {
     const raw = localStorage.getItem(STORAGE_KEYS_TPO.COLLEGES);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
     console.warn('Failed to parse local colleges store:', e);
   }
-  localStorage.setItem(STORAGE_KEYS_TPO.COLLEGES, JSON.stringify(DEFAULT_COLLEGES));
-  return DEFAULT_COLLEGES;
+  return [];
 }
 
 function saveLocalColleges(colleges: College[]) {
@@ -242,11 +241,9 @@ export const tpoService = {
   },
 
   async getAllColleges(): Promise<College[]> {
-    const local = getLocalColleges();
     const map = new Map<string, College>();
-    local.forEach(c => map.set(c.id, c));
 
-    // 1. Try Supabase colleges table (if schema exists)
+    // 1. Try Supabase colleges table (Primary source of truth)
     try {
       const { data, error } = await supabase
         .from('colleges')
@@ -301,7 +298,7 @@ export const tpoService = {
                 slug: parsed.college_id.replace(/^col-/, ''),
                 contract_status: 'ACTIVE',
                 max_licenses: parsed.max_licenses || 1500,
-                valid_until: '2028-12-31T00:00:00Z',
+                valid_until: (parsed as any).valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                 created_at: parsed.assigned_at || new Date().toISOString(),
               });
             }
@@ -309,6 +306,12 @@ export const tpoService = {
         });
       }
     } catch {}
+
+    // 4. Fallback to local storage ONLY if cloud/database has returned nothing
+    if (map.size === 0) {
+      const local = getLocalColleges();
+      local.forEach(c => map.set(c.id, c));
+    }
 
     const all = Array.from(map.values());
     saveLocalColleges(all);
@@ -786,12 +789,7 @@ export const tpoService = {
   async getCollegeDetails(collegeId: string): Promise<College | null> {
     if (!collegeId) return null;
 
-    // 1. Try local storage first
-    const local = getLocalColleges();
-    const foundLocal = local.find(c => c.id === collegeId);
-    if (foundLocal) return foundLocal;
-
-    // 2. Try Supabase colleges table (if schema exists)
+    // 1. Primary Source of Truth: Supabase colleges table
     try {
       const { data, error } = await supabase
         .from('colleges')
@@ -800,13 +798,16 @@ export const tpoService = {
         .maybeSingle();
 
       if (!error && data) {
-        local.push(data);
-        saveLocalColleges(local);
+        const local = getLocalColleges();
+        const updatedLocal = local.filter(c => c.id !== collegeId).concat(data);
+        saveLocalColleges(updatedLocal);
         return data;
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Error fetching college details from Supabase:', err);
+    }
 
-    // 3. Try finding in cloud contact_messages (B2B_COLLEGE:collegeId)
+    // 2. Try finding in cloud contact_messages (B2B_COLLEGE:collegeId)
     try {
       const { data: colMsg } = await supabase
         .from('contact_messages')
@@ -819,12 +820,18 @@ export const tpoService = {
       if (colMsg && colMsg.message) {
         const parsed = JSON.parse(colMsg.message) as College;
         if (parsed && parsed.id) {
-          local.push(parsed);
-          saveLocalColleges(local);
+          const local = getLocalColleges();
+          const updatedLocal = local.filter(c => c.id !== collegeId).concat(parsed);
+          saveLocalColleges(updatedLocal);
           return parsed;
         }
       }
     } catch {}
+
+    // 3. Try local storage cache
+    const local = getLocalColleges();
+    const foundLocal = local.find(c => c.id === collegeId);
+    if (foundLocal) return foundLocal;
 
     // 4. Try finding from local TPO authorizations
     const tpoAuths = getLocalTpoAuths();
@@ -836,8 +843,8 @@ export const tpoService = {
         code: authRecord.college_code || 'CRT',
         slug: authRecord.college_id.replace(/^col-/, ''),
         contract_status: 'ACTIVE',
-        max_licenses: authRecord.max_licenses || 1000,
-        valid_until: '2028-12-31T00:00:00Z',
+        max_licenses: authRecord.max_licenses || 1500,
+        valid_until: (authRecord as any).valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: authRecord.assigned_at || new Date().toISOString(),
       };
       local.push(synthesized);
@@ -865,7 +872,7 @@ export const tpoService = {
                 slug: parsed.college_id.replace(/^col-/, ''),
                 contract_status: 'ACTIVE',
                 max_licenses: parsed.max_licenses || 1500,
-                valid_until: '2028-12-31T00:00:00Z',
+                valid_until: (parsed as any).valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                 created_at: parsed.assigned_at || new Date().toISOString(),
               };
               local.push(synthesized);
@@ -889,7 +896,7 @@ export const tpoService = {
           slug: collegeId.replace(/^col-/, ''),
           contract_status: 'ACTIVE',
           max_licenses: 1500,
-          valid_until: '2028-12-31T00:00:00Z',
+          valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           created_at: new Date().toISOString(),
         };
         local.push(synthesized);
@@ -907,7 +914,7 @@ export const tpoService = {
         slug: collegeId.replace(/^col-/, ''),
         contract_status: 'ACTIVE',
         max_licenses: 1500,
-        valid_until: '2028-12-31T00:00:00Z',
+        valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
       };
       local.push(synthesized);
@@ -1571,7 +1578,7 @@ export const tpoService = {
 
   async getTpoStats(collegeId: string): Promise<TpoDashboardStats> {
     const college = await this.getCollegeDetails(collegeId);
-    const maxLicenses = college?.max_licenses || 1000;
+    const maxLicenses = college?.max_licenses || 1500;
     const students = await this.getCollegeStudents(collegeId);
     const exams = await this.getMockExamsForCollege(collegeId);
 
@@ -1579,7 +1586,7 @@ export const tpoService = {
     try {
       const { data } = await supabase
         .from('student_exam_attempts')
-        .select('id, total_score, percentage, status, college_id')
+        .select('id, student_id, student_email, total_score, percentage, status, college_id')
         .eq('college_id', collegeId)
         .eq('status', 'SUBMITTED');
       if (data && data.length > 0) attempts = data;
@@ -1604,7 +1611,7 @@ export const tpoService = {
     const avgCollegeScore =
       totalAttempts > 0
         ? Math.round(allAttempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / totalAttempts)
-        : totalStudents > 0 ? 76 : 0;
+        : 0;
 
     // Compute real placement readiness tiers from actual student attempts
     let tier1Count = 0;
@@ -1626,17 +1633,43 @@ export const tpoService = {
       tier3Count = totalStudents;
     }
 
-    // Group students by department
-    const deptMap: Record<string, number> = {};
+    // Map students for department resolution
+    const studentDeptMap = new Map<string, string>();
     students.forEach(s => {
-      const d = (s.department || 'GENERAL').toUpperCase();
-      deptMap[d] = (deptMap[d] || 0) + 1;
+      const dept = (s.department || 'GENERAL').toUpperCase();
+      if (s.id) studentDeptMap.set(s.id, dept);
+      if (s.email) studentDeptMap.set(s.email.toLowerCase(), dept);
     });
 
-    const departments = Object.entries(deptMap).map(([department, studentCount]) => ({
+    // Group students and attempts by department to calculate true per-department averages
+    const deptDataMap: Record<string, { studentCount: number; scoreSum: number; attemptsCount: number }> = {};
+    students.forEach(s => {
+      const d = (s.department || 'GENERAL').toUpperCase();
+      if (!deptDataMap[d]) deptDataMap[d] = { studentCount: 0, scoreSum: 0, attemptsCount: 0 };
+      deptDataMap[d].studentCount++;
+    });
+
+    allAttempts.forEach(a => {
+      const studentEmail = (a.student?.email || a.student_email || '').toLowerCase();
+      const studentId = a.student_id;
+      const dept = (
+        (studentId && studentDeptMap.get(studentId)) ||
+        (studentEmail && studentDeptMap.get(studentEmail)) ||
+        a.student?.department ||
+        'GENERAL'
+      ).toUpperCase();
+
+      if (!deptDataMap[dept]) {
+        deptDataMap[dept] = { studentCount: 0, scoreSum: 0, attemptsCount: 0 };
+      }
+      deptDataMap[dept].scoreSum += (a.percentage || 0);
+      deptDataMap[dept].attemptsCount++;
+    });
+
+    const departments = Object.entries(deptDataMap).map(([department, data]) => ({
       department,
-      studentCount,
-      avgScore: avgCollegeScore,
+      studentCount: data.studentCount,
+      avgScore: data.attemptsCount > 0 ? Math.round(data.scoreSum / data.attemptsCount) : (totalAttempts > 0 ? avgCollegeScore : 0),
     }));
 
     return {

@@ -5,12 +5,14 @@ import type { AdminDashboardStats } from '@/types/admin';
 export const adminService = {
   getDashboardStats: async (): Promise<AdminDashboardStats> => {
     try {
-      const [compRes, questRes, expRes, pendRes, usersRes] = await Promise.all([
+      const [compRes, questRes, expRes, pendRes, usersRes, colRes, examsRes] = await Promise.all([
         supabase.from('companies').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
         supabase.from('topic_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
         supabase.from('experiences').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
         supabase.from('experiences').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'PENDING'),
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('colleges').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
+        supabase.from('mock_exams').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
       ]);
 
       return {
@@ -19,8 +21,8 @@ export const adminService = {
         totalExperiences: expRes.count ?? dataStore.getExperiences().length,
         pendingApprovals: pendRes.count ?? dataStore.getExperiences().filter(e => e.status === 'PENDING').length,
         totalUsers: usersRes.count ?? 0,
-        totalResources: 45,
-        totalRoadmaps: 12,
+        totalResources: examsRes.count ?? dataStore.getResources().length,
+        totalRoadmaps: colRes.count ?? 0,
       };
     } catch {
       return {
@@ -29,8 +31,8 @@ export const adminService = {
         totalExperiences: dataStore.getExperiences().length,
         pendingApprovals: dataStore.getExperiences().filter(e => e.status === 'PENDING').length,
         totalUsers: 0,
-        totalResources: 45,
-        totalRoadmaps: 12,
+        totalResources: dataStore.getResources().length,
+        totalRoadmaps: 0,
       };
     }
   },
