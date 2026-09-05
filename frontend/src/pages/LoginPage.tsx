@@ -11,7 +11,6 @@ import {
   Star,
   AlertCircle,
   Check,
-  User,
   LayoutDashboard,
 } from 'lucide-react';
 

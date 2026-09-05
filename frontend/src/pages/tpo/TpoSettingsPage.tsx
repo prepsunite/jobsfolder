@@ -2,16 +2,7 @@ import React from 'react';
 import { useOutletContext } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
-import {
-  Building2,
-  ShieldCheck,
-  GraduationCap,
-  Calendar,
-  CheckCircle2,
-  Key,
-  Users,
-  Mail,
-} from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 export default function TpoSettingsPage() {
   const { currentCollege, stats } = useOutletContext<TpoOutletContext>();

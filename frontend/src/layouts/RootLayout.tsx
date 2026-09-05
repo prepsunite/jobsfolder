@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, User, Menu, LayoutDashboard, Building2 } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, LayoutDashboard, Building2 } from 'lucide-react';
 
 const PUBLIC_ROUTES = [
   '/',

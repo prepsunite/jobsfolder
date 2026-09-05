@@ -3,19 +3,14 @@ import {
   X,
   Sparkles,
   ShieldCheck,
-  Clock,
-  Layers,
   CheckCircle2,
-  AlertCircle,
   Plus,
   Trash2,
   Loader2,
-  Calendar,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { MockExam } from '@/types/tpo';
 
 interface CreateMockExamModalProps {
   isOpen: boolean;
@@ -69,12 +64,12 @@ export default function CreateMockExamModal({
   // Form State
   const [title, setTitle] = useState('');
   const [targetCompany, setTargetCompany] = useState('TCS NQT');
-  const [description, setDescription] = useState('');
-  const [instructions, setInstructions] = useState(
+  const [description] = useState('');
+  const [instructions] = useState(
     '1. Test must be taken in Fullscreen Mode.\n2. Switching tabs or minimizing browser will be flagged by proctor.\n3. Test will auto-submit when the countdown expires.'
   );
   const [durationMinutes, setDurationMinutes] = useState(90);
-  const [passingPercentage, setPassingPercentage] = useState(40);
+  const [passingPercentage] = useState(40);
   const [startTime, setStartTime] = useState(new Date().toISOString().slice(0, 16));
   const [endTime, setEndTime] = useState(
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
@@ -85,7 +80,7 @@ export default function CreateMockExamModal({
   const [maxTabSwitchesAllowed, setMaxTabSwitchesAllowed] = useState(3);
   const [enableFullscreenLock, setEnableFullscreenLock] = useState(true);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
-  const [shuffleOptions, setShuffleOptions] = useState(true);
+  const [shuffleOptions] = useState(true);
   const [showResultsImmediately, setShowResultsImmediately] = useState(true);
 
   // Target Filter

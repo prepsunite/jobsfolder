@@ -7,7 +7,6 @@ import {
   AlertCircle,
   Users,
   ShieldCheck,
-  CheckCircle2,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import { useAuth } from '@/contexts/AuthContext';

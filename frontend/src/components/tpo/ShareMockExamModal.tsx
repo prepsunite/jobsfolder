@@ -8,8 +8,6 @@ import {
   MessageCircle,
   Mail,
   Clock,
-  ShieldCheck,
-  Building2,
   Sparkles,
 } from 'lucide-react';
 import type { MockExam } from '@/types/tpo';

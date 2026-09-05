@@ -38,11 +38,6 @@ import {
 export default function DashboardPage() {
   const { user, role, isTpoAdmin, isAdmin } = useAuth();
 
-  // TPO Coordinators do not use student dashboard — redirect directly to TPO dashboard
-  if ((role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin) {
-    return <Navigate to="/tpo" replace />;
-  }
-
   const queryClient = useQueryClient();
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';
@@ -498,6 +493,11 @@ export default function DashboardPage() {
       alert('Account deletion request registered. An email confirmation has been logged for our Grievance Officer.');
     }
   };
+
+  // TPO Coordinators do not use student dashboard — redirect directly to TPO dashboard
+  if ((role === 'TPO_ADMIN' || isTpoAdmin) && !isAdmin) {
+    return <Navigate to="/tpo" replace />;
+  }
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto">

@@ -9,12 +9,8 @@ import {
   TrendingUp,
   Plus,
   Upload,
-  ArrowRight,
   Clock,
-  Award,
   ChevronRight,
-  BarChart3,
-  ExternalLink,
 } from 'lucide-react';
 import type { MockExam } from '@/types/tpo';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';

@@ -1,28 +1,20 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Building2,
   ShieldCheck,
   UserPlus,
   Trash2,
   CheckCircle2,
-  AlertCircle,
   Loader2,
-  ExternalLink,
-  Users,
   Plus,
   Calendar,
   Edit2,
   Sliders,
-  Award,
-  Lock,
   PauseCircle,
-  PlayCircle,
   Clock,
-  Sparkles,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
-import type { College, CollegeStudent } from '@/types/tpo';
+import type { CollegeStudent } from '@/types/tpo';
 
 export default function CollegesTpoManager() {
   const queryClient = useQueryClient();
@@ -67,7 +59,7 @@ export default function CollegesTpoManager() {
   });
 
   // Query: TPO Admins
-  const { data: tpoAdmins = [], isLoading: tpoLoading } = useQuery<(CollegeStudent & { college_name?: string })[]>({
+  const { data: tpoAdmins = [] } = useQuery<(CollegeStudent & { college_name?: string })[]>({
     queryKey: ['admin-tpo-admins'],
     queryFn: () => tpoService.getTpoAdmins(),
   });

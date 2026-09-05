@@ -2,15 +2,11 @@ import React from 'react';
 import { useOutletContext } from 'react-router';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import {
-  BarChart3,
   TrendingUp,
   Award,
-  Users,
-  CheckCircle2,
   AlertTriangle,
   Download,
   GraduationCap,
-  Sparkles,
 } from 'lucide-react';
 
 export default function TpoAnalyticsPage() {

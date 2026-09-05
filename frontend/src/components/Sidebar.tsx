@@ -43,7 +43,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const isTpoRoute = location.pathname.startsWith('/tpo');
   const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) || (isAdmin && isTpoRoute);
 
-  const displayCollegeName = collegeName || user?.collegeName || 'Institutional';
+  const displayCollegeName = collegeName || (collegeCode ? `${collegeCode}` : '') || user?.collegeName || 'Institutional';
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
 
   // TPO Institutional Modules (Strictly for College Placement Officers)

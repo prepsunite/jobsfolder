@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 import RootLayout from '@/layouts/RootLayout';
 import TpoLayout from '@/layouts/TpoLayout';
 import HomePage from '@/pages/HomePage';

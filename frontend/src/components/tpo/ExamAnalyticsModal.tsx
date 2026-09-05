@@ -6,10 +6,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Clock,
   Search,
-  Award,
-  Users,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';

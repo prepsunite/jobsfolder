@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type {
   College,
-  CollegeBatch,
   CollegeStudent,
   MockExam,
   MockExamSection,
@@ -456,7 +455,7 @@ export const tpoService = {
         .from('tpo_authorizations')
         .update({ max_licenses: maxLicenses, updated_at: new Date().toISOString() })
         .eq('college_id', collegeId);
-    } catch (e) {}
+    } catch {}
 
     // 5. Cloud resilience: Update contact_messages B2B_COLLEGE backup
     try {
@@ -720,7 +719,7 @@ export const tpoService = {
         message: JSON.stringify(newCollege),
         status: 'ACTIVE',
       });
-    } catch (e) {}
+    } catch {}
 
     // Try Supabase insert
     try {
@@ -1319,7 +1318,7 @@ export const tpoService = {
             })
             .eq('id', existingProf.id);
         }
-      } catch (err: any) {
+      } catch {
         // Safe notice: column might not exist yet before migration
       }
 
@@ -1340,7 +1339,7 @@ export const tpoService = {
   // STUDENT ENTITLEMENT & PRO PASS PROVISIONING
   // ==========================================
 
-  async provisionStudentEntitlement(college: College, email: string, name?: string): Promise<boolean> {
+  async provisionStudentEntitlement(college: College, email: string, _name?: string): Promise<boolean> {
     const cleanEmail = email.trim().toLowerCase();
     let validUntil: string = college.valid_until || '';
     if (!validUntil) {
@@ -1356,7 +1355,7 @@ export const tpoService = {
 
     // 1. Supabase public.user_subscriptions upsert (RPC with SECURITY DEFINER + direct fallback)
     try {
-      const { error: rpcErr } = await supabase.rpc('provision_campus_student_subscription', {
+      await supabase.rpc('provision_campus_student_subscription', {
         p_email: cleanEmail,
         p_college_id: college.id,
         p_college_name: college.name,
@@ -2027,7 +2026,7 @@ export const tpoService = {
         .single();
 
       if (!error && data) return data;
-    } catch (error) {}
+    } catch {}
 
     // Try finding via /api/campus-exams
     try {

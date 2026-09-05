@@ -38,7 +38,6 @@ import {
   Mail,
   IndianRupee,
   CreditCard,
-  UserCheck,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {

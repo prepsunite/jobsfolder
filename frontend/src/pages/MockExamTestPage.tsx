@@ -99,7 +99,7 @@ export default function MockExamTestPage() {
 
   const isCollegeTpo = isTpoAdmin && (user?.collegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
   const isEnrolledStudent = Boolean(
-    exam?.college_id && (dbEnrollmentVerified || user?.collegeId === exam.college_id)
+    exam?.college_id && (dbEnrollmentVerified || userCollegeId === exam.college_id)
   );
   const isAuthorizedCandidate = !exam?.college_id || isSuperAdmin || isCollegeTpo || isEnrolledStudent;
 
@@ -132,7 +132,6 @@ export default function MockExamTestPage() {
   const lastViolationTimeRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [proctorEvents, setProctorEvents] = useState<ProctorEvent[]>([]);
-  const [isMalpracticeTerminated, setIsMalpracticeTerminated] = useState<boolean>(false);
 
   // Submission Modal & Final Result
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
@@ -190,7 +189,7 @@ export default function MockExamTestPage() {
       setTimeSpentSeconds(spent);
       setTimeRemainingSeconds(Math.max(0, totalSec - spent));
     }
-  }, [existingAttempt, exam]);
+  }, [existingAttempt, exam, testPhase]);
 
   // 1. Fetch Questions for this Exam
   useEffect(() => {
@@ -405,7 +404,6 @@ export default function MockExamTestPage() {
       setProctorEvents(prev => [...prev, newEvent]);
 
       if (nextCount >= maxAllowed) {
-        setIsMalpracticeTerminated(true);
         handleFinalSubmit('TERMINATED_MALPRACTICE');
       } else {
         setShowWarningModal(true);

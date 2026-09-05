@@ -9,9 +9,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Clock,
-  Award,
-  Users,
   Share2,
   ShieldAlert,
 } from 'lucide-react';
