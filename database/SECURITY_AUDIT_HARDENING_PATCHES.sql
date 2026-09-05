@@ -5,6 +5,70 @@
 -- ====================================================================
 
 -- --------------------------------------------------------------------
+-- 0. DEFENSIVE SCHEMA PREPARATION (PREVENT "COLUMN DOES NOT EXIST" ERRORS)
+-- --------------------------------------------------------------------
+DO $$
+BEGIN
+  -- Defensive check on paper_tab_nodes
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'paper_tab_nodes') THEN
+    ALTER TABLE public.paper_tab_nodes ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT FALSE;
+    UPDATE public.paper_tab_nodes SET is_free = true WHERE sort_order = 0 AND (is_free IS NULL OR is_free = false);
+  END IF;
+
+  -- Defensive check on colleges
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'colleges') THEN
+    ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1500;
+    ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS contract_status VARCHAR(50) DEFAULT 'ACTIVE';
+    ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS valid_until TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
+    ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+  END IF;
+
+  -- Defensive check on college_students
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'college_students') THEN
+    ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
+    ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS roll_number VARCHAR(100);
+    ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS department VARCHAR(100);
+    ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS batch_year INT;
+  END IF;
+
+  -- Defensive check on student_exam_attempts
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'student_exam_attempts') THEN
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'IN_PROGRESS';
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS time_spent_seconds INT DEFAULT 0;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS total_score DECIMAL(6, 2) DEFAULT 0.00;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS max_possible_score DECIMAL(6, 2) DEFAULT 100.00;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS percentage DECIMAL(5, 2) DEFAULT 0.00;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS passed BOOLEAN DEFAULT FALSE;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS tab_switch_count INT DEFAULT 0;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS proctor_events JSONB DEFAULT '[]'::jsonb;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS responses JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS student_email VARCHAR(255);
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP WITH TIME ZONE;
+    ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+  END IF;
+
+  -- Defensive check on mock_exam_sections
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'mock_exam_sections') THEN
+    ALTER TABLE public.mock_exam_sections ADD COLUMN IF NOT EXISTS section_order INT DEFAULT 1;
+    ALTER TABLE public.mock_exam_sections ADD COLUMN IF NOT EXISTS marks_per_correct DECIMAL(4, 2) DEFAULT 1.00;
+    ALTER TABLE public.mock_exam_sections ADD COLUMN IF NOT EXISTS negative_marking DECIMAL(4, 2) DEFAULT 0.00;
+  END IF;
+
+  -- Defensive check on mock_exams
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'mock_exams') THEN
+    ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS enable_tab_switch_detection BOOLEAN DEFAULT TRUE;
+    ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS max_tab_switches_allowed INT DEFAULT 3;
+    ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS passing_percentage DECIMAL(5, 2) DEFAULT 40.00;
+  END IF;
+
+  -- Defensive check on user_subscriptions
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_subscriptions') THEN
+    ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS payment_id VARCHAR(255);
+    ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+  END IF;
+END $$;
+
+-- --------------------------------------------------------------------
 -- 0. CORE SECURITY DEFINER FUNCTIONS (PREREQUISITES)
 -- --------------------------------------------------------------------
 
@@ -327,6 +391,7 @@ CREATE POLICY "Admin full access contact messages" ON public.contact_messages
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'paper_tab_nodes') THEN
+    EXECUTE 'ALTER TABLE public.paper_tab_nodes ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT FALSE;';
     EXECUTE 'ALTER TABLE public.paper_tab_nodes ENABLE ROW LEVEL SECURITY;';
     EXECUTE 'DROP POLICY IF EXISTS "Public select paper nodes" ON public.paper_tab_nodes;';
     EXECUTE 'DROP POLICY IF EXISTS "Allow select" ON public.paper_tab_nodes;';

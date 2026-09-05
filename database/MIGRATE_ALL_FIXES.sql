@@ -113,6 +113,15 @@ ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS student_email 
 ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
+-- 2.9 Paper Tab Nodes Defensive Alters
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'paper_tab_nodes') THEN
+    ALTER TABLE public.paper_tab_nodes ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT FALSE;
+    UPDATE public.paper_tab_nodes SET is_free = true WHERE sort_order = 0 AND (is_free IS NULL OR is_free = false);
+  END IF;
+END $$;
+
 -- --------------------------------------------------------------------
 -- STEP 3: Create Missing Master & Institutional Tables
 -- --------------------------------------------------------------------
@@ -573,6 +582,28 @@ DROP POLICY IF EXISTS "Admin full access contact messages" ON public.contact_mes
 CREATE POLICY "Admin full access contact messages"
   ON public.contact_messages FOR ALL
   USING (public.is_admin());
+
+-- 6.11 Secure paper_tab_nodes RLS (Prevent Unpaid Full Content Scraping)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'paper_tab_nodes') THEN
+    EXECUTE 'ALTER TABLE public.paper_tab_nodes ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT FALSE;';
+    EXECUTE 'ALTER TABLE public.paper_tab_nodes ENABLE ROW LEVEL SECURITY;';
+    EXECUTE 'DROP POLICY IF EXISTS "Public select paper nodes" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Allow select" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Allow public read access to paper_tab_nodes" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Admin write paper nodes" ON public.paper_tab_nodes;';
+
+    EXECUTE 'CREATE POLICY "Admin write paper nodes" ON public.paper_tab_nodes FOR ALL USING (public.is_admin());';
+    EXECUTE 'CREATE POLICY "Secure select paper nodes" ON public.paper_tab_nodes FOR SELECT USING (
+      is_deleted = false AND (
+        is_free = true OR public.is_admin() OR (
+          auth.jwt()->>''email'' IS NOT NULL AND public.check_user_paper_access(LOWER(auth.jwt()->>''email''), exam_id::TEXT)
+        )
+      )
+    );';
+  END IF;
+END $$;
 
 -- --------------------------------------------------------------------
 -- STEP 8: Hard-Locked Institutional Security & Anti-Cheat RPC Engine

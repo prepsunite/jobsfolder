@@ -81,7 +81,15 @@ column_checks AS (
         ('user_subscriptions', 'payment_id'),
         ('student_exam_attempts', 'student_email'),
         ('student_exam_attempts', 'proctor_events'),
-        ('student_exam_attempts', 'tab_switch_count')
+        ('student_exam_attempts', 'tab_switch_count'),
+        ('student_exam_attempts', 'max_possible_score'),
+        ('student_exam_attempts', 'percentage'),
+        ('student_exam_attempts', 'passed'),
+        ('mock_exam_sections', 'section_order'),
+        ('mock_exam_sections', 'marks_per_correct'),
+        ('mock_exams', 'enable_tab_switch_detection'),
+        ('mock_exams', 'max_tab_switches_allowed'),
+        ('paper_tab_nodes', 'is_free')
     ) AS c(tbl, col)
 ),
 
@@ -106,7 +114,7 @@ function_checks AS (
                 WHERE n.nspname = 'public' 
                   AND p.proname = f.func_name
             ) THEN 'RPC function is live in Postgres'
-            ELSE 'Needs CREATE FUNCTION from MIGRATE_ALL_FIXES.sql'
+            ELSE 'Needs CREATE FUNCTION from SECURITY_AUDIT_HARDENING_PATCHES.sql'
         END AS details
     FROM (VALUES 
         ('is_admin'),
@@ -116,7 +124,11 @@ function_checks AS (
         ('check_college_seat_cap'),
         ('check_student_college_entitlement'),
         ('submit_and_grade_mock_attempt'),
-        ('check_user_paper_access')
+        ('check_user_paper_access'),
+        ('get_safe_mock_exam_questions'),
+        ('get_mock_exam_attempt_solutions'),
+        ('get_secure_exams_by_company'),
+        ('get_colleges_usage_summary')
     ) AS f(func_name)
 ),
 
@@ -141,14 +153,16 @@ policy_checks AS (
                   AND tablename = pol.tbl 
                   AND policyname = pol.policy_name
             ) THEN 'Policy active'
-            ELSE 'Needs CREATE POLICY from MIGRATE_ALL_FIXES.sql'
+            ELSE 'Needs CREATE POLICY from SECURITY_AUDIT_HARDENING_PATCHES.sql'
         END AS details
     FROM (VALUES 
         ('user_subscriptions', 'TPO coordinator manage college student subscriptions'),
         ('colleges', 'Super admin full colleges'),
-        ('student_exam_attempts', 'Super admin full attempts'),
-        ('student_exam_attempts', 'Student manage own attempts'),
-        ('student_exam_attempts', 'TPO view college attempts')
+        ('student_exam_attempts', 'Student select own attempts'),
+        ('student_exam_attempts', 'Student insert own in_progress attempt'),
+        ('student_exam_attempts', 'Student update in_progress attempt responses'),
+        ('paper_tab_nodes', 'Secure select paper nodes'),
+        ('contact_messages', 'Admin full access contact messages')
     ) AS pol(tbl, policy_name)
 )
 
