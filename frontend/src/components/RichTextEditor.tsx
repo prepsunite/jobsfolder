@@ -223,6 +223,13 @@ export const TestCaseBox = TipTapNode.create({
   },
 });
 
+// ─── Safe Table Extension (Prevents ProseMirror tableEditing null.cached crash on unmount/refresh) ───
+const SafeTable = Table.extend({
+  addProseMirrorPlugins() {
+    return [];
+  },
+});
+
 export function parseChatGPTToCases(text: string): Array<{ title: string; input: string; output: string }> {
   if (!text?.trim()) return [];
 
@@ -263,7 +270,7 @@ export function parseChatGPTToCases(text: string): Array<{ title: string; input:
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function RichTextEditor({
+function RichTextEditorInner({
   value,
   onChange,
   placeholder = 'Start writing — paste from Docs, drag images, use the toolbar…',
@@ -333,7 +340,7 @@ export default function RichTextEditor({
       HTMLAttributes: { class: 'tiptap-link', rel: 'noopener noreferrer' },
     }),
     ResizableImage.configure({ inline: false, allowBase64: true }),
-    Table.configure({ resizable: false }),
+    SafeTable.configure({ resizable: false }),
     TableRow,
     TableHeader,
     TableCell,
@@ -439,7 +446,7 @@ export default function RichTextEditor({
 
   // Sync value changes from parent (e.g. switching exam in DocumentExplorer)
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
     if (editor.isFocused) return; // Do not overwrite while user is actively editing/focused
     const currentHTML = editor.getHTML();
     if (currentHTML === value) return;
@@ -638,7 +645,7 @@ export default function RichTextEditor({
     { lbl: 'Heading 3', cls: 'text-sm font-semibold', action: () => { editor.chain().focus().toggleHeading({ level: 3 }).run(); setShowFormatMenu(false); } },
   ];
 
-  const isTableActive = !editor.isDestroyed && editor.isActive('table');
+  const isTableActive = Boolean(editor && !editor.isDestroyed && editor.isActive?.('table'));
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -1054,3 +1061,53 @@ export default function RichTextEditor({
     </div>
   );
 }
+
+// ─── Error Boundary to prevent any ProseMirror / TipTap crash from breaking the whole page ───
+class RichTextErrorBoundary extends React.Component<
+  RichTextEditorProps,
+  { hasError: boolean; error: any }
+> {
+  constructor(props: RichTextEditorProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.warn('[RichTextEditor] Render error caught by editor boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[20px] p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs text-[#747878] dark:text-[#a6adbb]">
+            <span className="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <span>⚠️</span> Editor recovery mode
+            </span>
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-2.5 py-1 bg-gray-100 dark:bg-[#2b2d31] hover:bg-gray-200 dark:hover:bg-[#383a40] text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold transition-colors"
+            >
+              Reload Editor
+            </button>
+          </div>
+          <textarea
+            value={this.props.value}
+            onChange={(e) => this.props.onChange(e.target.value)}
+            placeholder={this.props.placeholder}
+            style={{ minHeight: this.props.minHeight || '320px' }}
+            className="w-full p-3 font-mono text-sm bg-transparent border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FD4A32] text-[#1f1b17] dark:text-[#e3e3e3]"
+          />
+        </div>
+      );
+    }
+    return <RichTextEditorInner {...this.props} />;
+  }
+}
+
+export default RichTextErrorBoundary;

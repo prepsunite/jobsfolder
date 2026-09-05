@@ -270,8 +270,17 @@ export const tpoService = {
         colMsgs.forEach(m => {
           try {
             const parsed = JSON.parse(m.message) as College;
-            if (parsed && parsed.id && !map.has(parsed.id)) {
-              map.set(parsed.id, parsed);
+            if (parsed && parsed.id) {
+              const existing = map.get(parsed.id);
+              if (!existing) {
+                map.set(parsed.id, parsed);
+              } else {
+                const parsedTime = parsed.updated_at ? new Date(parsed.updated_at).getTime() : 0;
+                const existTime = existing.updated_at ? new Date(existing.updated_at).getTime() : 0;
+                if (parsedTime > existTime) {
+                  map.set(parsed.id, { ...existing, ...parsed });
+                }
+              }
             }
           } catch {}
         });
@@ -307,11 +316,20 @@ export const tpoService = {
       }
     } catch {}
 
-    // 4. Fallback to local storage ONLY if cloud/database has returned nothing
-    if (map.size === 0) {
-      const local = getLocalColleges();
-      local.forEach(c => map.set(c.id, c));
-    }
+    // 4. Merge local storage: If local storage has newer updated_at timestamp, preserve local edits!
+    const local = getLocalColleges();
+    local.forEach(loc => {
+      const existing = map.get(loc.id);
+      if (!existing) {
+        map.set(loc.id, loc);
+      } else {
+        const locTime = loc.updated_at ? new Date(loc.updated_at).getTime() : 0;
+        const existTime = existing.updated_at ? new Date(existing.updated_at).getTime() : 0;
+        if (locTime >= existTime) {
+          map.set(loc.id, { ...existing, ...loc });
+        }
+      }
+    });
 
     const all = Array.from(map.values());
     saveLocalColleges(all);
@@ -370,30 +388,95 @@ export const tpoService = {
   async updateCollegeLicenseLimit(collegeId: string, maxLicenses: number): Promise<boolean> {
     // 1. Update in local store
     const local = getLocalColleges();
-    const idx = local.findIndex(c => c.id === collegeId);
+    const idx = local.findIndex(c => c.id === collegeId || (c.code && c.code === collegeId));
+    let updatedCol: College | null = null;
     if (idx !== -1) {
       local[idx].max_licenses = maxLicenses;
       local[idx].updated_at = new Date().toISOString();
+      updatedCol = local[idx];
       saveLocalColleges(local);
     }
 
     // 2. Update in TPO auths
     const auths = getLocalTpoAuths();
     auths.forEach(a => {
-      if (a.college_id === collegeId) {
+      if (a.college_id === collegeId || a.college_code === collegeId) {
         a.max_licenses = maxLicenses;
       }
     });
     saveLocalTpoAuths(auths);
 
-    // 3. Attempt Supabase update
+    // 3. Attempt Supabase update on colleges table
     try {
       await supabase
         .from('colleges')
         .update({ max_licenses: maxLicenses, updated_at: new Date().toISOString() })
-        .eq('id', collegeId);
+        .or(`id.eq.${collegeId},code.eq.${collegeId}`);
     } catch (e) {
       console.warn('Notice updating college capacity in Supabase:', e);
+    }
+
+    // 4. Update in public.tpo_authorizations table if exists
+    try {
+      await supabase
+        .from('tpo_authorizations')
+        .update({ max_licenses: maxLicenses, updated_at: new Date().toISOString() })
+        .eq('college_id', collegeId);
+    } catch (e) {}
+
+    // 5. Cloud resilience: Update contact_messages B2B_COLLEGE backup
+    try {
+      const { data: colMsg } = await supabase
+        .from('contact_messages')
+        .select('id, message')
+        .eq('subject', `B2B_COLLEGE:${collegeId}`)
+        .maybeSingle();
+
+      if (colMsg) {
+        try {
+          const parsed = JSON.parse(colMsg.message);
+          parsed.max_licenses = maxLicenses;
+          parsed.updated_at = new Date().toISOString();
+          await supabase
+            .from('contact_messages')
+            .update({ message: JSON.stringify(parsed), status: 'ACTIVE' })
+            .eq('id', colMsg.id);
+        } catch {}
+      } else if (updatedCol) {
+        await supabase
+          .from('contact_messages')
+          .insert({
+            name: `College: ${updatedCol.name}`,
+            email: 'admin@prepunite.com',
+            subject: `B2B_COLLEGE:${collegeId}`,
+            message: JSON.stringify(updatedCol),
+            status: 'ACTIVE',
+          });
+      }
+
+      // Also sync any B2B_TPO_AUTH messages for this college
+      const { data: tpoMsgs } = await supabase
+        .from('contact_messages')
+        .select('id, message')
+        .like('subject', 'B2B_TPO_AUTH:%')
+        .eq('status', 'ACTIVE');
+
+      if (tpoMsgs && tpoMsgs.length > 0) {
+        for (const tm of tpoMsgs) {
+          try {
+            const parsed = JSON.parse(tm.message);
+            if (parsed && (parsed.college_id === collegeId || parsed.college_code === collegeId)) {
+              parsed.max_licenses = maxLicenses;
+              await supabase
+                .from('contact_messages')
+                .update({ message: JSON.stringify(parsed) })
+                .eq('id', tm.id);
+            }
+          } catch {}
+        }
+      }
+    } catch (e) {
+      console.warn('Notice syncing college capacity to contact_messages:', e);
     }
 
     return true;
@@ -404,10 +487,12 @@ export const tpoService = {
     status: 'ACTIVE' | 'PILOT' | 'EXPIRED' | 'SUSPENDED'
   ): Promise<boolean> {
     const local = getLocalColleges();
-    const idx = local.findIndex(c => c.id === collegeId);
+    const idx = local.findIndex(c => c.id === collegeId || (c.code && c.code === collegeId));
+    let updatedCol: College | null = null;
     if (idx !== -1) {
       local[idx].contract_status = status;
       local[idx].updated_at = new Date().toISOString();
+      updatedCol = local[idx];
       saveLocalColleges(local);
     }
 
@@ -415,10 +500,30 @@ export const tpoService = {
       await supabase
         .from('colleges')
         .update({ contract_status: status, updated_at: new Date().toISOString() })
-        .eq('id', collegeId);
+        .or(`id.eq.${collegeId},code.eq.${collegeId}`);
     } catch (e) {
       console.warn('Notice updating contract status in Supabase:', e);
     }
+
+    try {
+      if (updatedCol) {
+        const { data: colMsg } = await supabase
+          .from('contact_messages')
+          .select('id, message')
+          .eq('subject', `B2B_COLLEGE:${collegeId}`)
+          .maybeSingle();
+
+        if (colMsg) {
+          const parsed = JSON.parse(colMsg.message);
+          parsed.contract_status = status;
+          parsed.updated_at = new Date().toISOString();
+          await supabase
+            .from('contact_messages')
+            .update({ message: JSON.stringify(parsed) })
+            .eq('id', colMsg.id);
+        }
+      }
+    } catch {}
 
     return true;
   },
@@ -430,8 +535,9 @@ export const tpoService = {
     syncStudents: boolean = true
   ): Promise<boolean> {
     const local = getLocalColleges();
-    const idx = local.findIndex(c => c.id === collegeId);
+    const idx = local.findIndex(c => c.id === collegeId || (c.code && c.code === collegeId));
     let targetCollegeName = 'Partner College';
+    let updatedCol: College | null = null;
     if (idx !== -1) {
       local[idx].valid_until = validUntilIso;
       if (contractStatus) {
@@ -439,6 +545,7 @@ export const tpoService = {
       }
       local[idx].updated_at = new Date().toISOString();
       targetCollegeName = local[idx].name;
+      updatedCol = local[idx];
       saveLocalColleges(local);
     }
 
@@ -453,10 +560,31 @@ export const tpoService = {
       await supabase
         .from('colleges')
         .update(updates)
-        .eq('id', collegeId);
+        .or(`id.eq.${collegeId},code.eq.${collegeId}`);
     } catch (e) {
       console.warn('Notice updating college validity in Supabase:', e);
     }
+
+    try {
+      if (updatedCol) {
+        const { data: colMsg } = await supabase
+          .from('contact_messages')
+          .select('id, message')
+          .eq('subject', `B2B_COLLEGE:${collegeId}`)
+          .maybeSingle();
+
+        if (colMsg) {
+          const parsed = JSON.parse(colMsg.message);
+          parsed.valid_until = validUntilIso;
+          if (contractStatus) parsed.contract_status = contractStatus;
+          parsed.updated_at = new Date().toISOString();
+          await supabase
+            .from('contact_messages')
+            .update({ message: JSON.stringify(parsed) })
+            .eq('id', colMsg.id);
+        }
+      }
+    } catch {}
 
     // Synchronize all enrolled students' subscriptions & entitlements
     if (syncStudents) {

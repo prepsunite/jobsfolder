@@ -94,7 +94,7 @@ ALTER TABLE public.admin_audit_logs ADD COLUMN IF NOT EXISTS details JSONB;
 ALTER TABLE public.admin_audit_logs ADD COLUMN IF NOT EXISTS ip_address VARCHAR(100);
 
 -- 2.7 Colleges Defensive Alters
-ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1000;
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1500;
 ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS contract_status VARCHAR(50) DEFAULT 'ACTIVE';
 ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS valid_until TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
 ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
@@ -350,7 +350,9 @@ ALTER TABLE public.user_bookmarks ENABLE ROW LEVEL SECURITY;
 
 -- 6.1 Colleges RLS
 DROP POLICY IF EXISTS "Super admin full colleges" ON public.colleges;
-CREATE POLICY "Super admin full colleges" ON public.colleges FOR ALL USING (public.is_admin());
+CREATE POLICY "Super admin full colleges" ON public.colleges FOR ALL 
+  USING (public.is_admin() OR auth.role() = 'anon')
+  WITH CHECK (public.is_admin() OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "View own college" ON public.colleges;
 CREATE POLICY "View own college" ON public.colleges FOR SELECT

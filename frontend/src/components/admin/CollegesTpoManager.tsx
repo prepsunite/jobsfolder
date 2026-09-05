@@ -353,7 +353,7 @@ export default function CollegesTpoManager() {
             </div>
           ) : (
             colleges.map(college => {
-              const cap = college.max_licenses || 1000;
+              const cap = college.max_licenses || 1500;
               const used = college.enrolled_count || 0;
               const percent = Math.min(100, Math.round((used / cap) * 100));
               const isSuspended = college.contract_status === 'SUSPENDED';
@@ -664,7 +664,7 @@ export default function CollegesTpoManager() {
                       <td className="p-3 font-bold text-[#FD4A32]">{admin.college_name || 'Unassigned'}</td>
                       <td className="p-3">
                         <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                          {admin.max_licenses || 1000} Max Seats
+                          {admin.max_licenses || 1500} Max Seats
                         </span>
                       </td>
                       <td className="p-3 text-right">
@@ -708,7 +708,7 @@ export default function CollegesTpoManager() {
                 min="100"
                 step="100"
                 value={newCapValue}
-                onChange={e => setNewCapValue(parseInt(e.target.value) || 100)}
+                onChange={e => setNewCapValue(parseInt(e.target.value) || 0)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-[#151618] text-base font-black text-slate-900 dark:text-white font-mono"
               />
               <p className="text-[11px] text-slate-400 leading-relaxed">
