@@ -94,6 +94,25 @@ ALTER TABLE public.admin_audit_logs ADD COLUMN IF NOT EXISTS target_table VARCHA
 ALTER TABLE public.admin_audit_logs ADD COLUMN IF NOT EXISTS details JSONB;
 ALTER TABLE public.admin_audit_logs ADD COLUMN IF NOT EXISTS ip_address VARCHAR(100);
 
+-- 2.7 Colleges Defensive Alters
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1000;
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS contract_status VARCHAR(50) DEFAULT 'ACTIVE';
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS valid_until TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+
+-- 2.8 Student Exam Attempts Defensive Alters
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'IN_PROGRESS';
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS time_spent_seconds INT DEFAULT 0;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS total_score DECIMAL(6, 2) DEFAULT 0.00;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS max_possible_score DECIMAL(6, 2) DEFAULT 100.00;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS percentage DECIMAL(5, 2) DEFAULT 0.00;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS passed BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS tab_switch_count INT DEFAULT 0;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS proctor_events JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS responses JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
 -- --------------------------------------------------------------------
 -- STEP 3: Create Missing Master & Institutional Tables
 -- --------------------------------------------------------------------
@@ -508,7 +527,7 @@ CREATE OR REPLACE FUNCTION public.check_college_seat_cap()
 RETURNS TRIGGER AS $$
 DECLARE
     current_count INT;
-    max_allowed INT;
+    max_allowed INT := 1500;
 BEGIN
     SELECT COUNT(*) INTO current_count 
     FROM public.college_students 
@@ -518,6 +537,8 @@ BEGIN
     SELECT COALESCE(max_licenses, 1500) INTO max_allowed
     FROM public.colleges
     WHERE id::TEXT = NEW.college_id::TEXT;
+
+    max_allowed := COALESCE(max_allowed, 1500);
 
     IF current_count >= max_allowed THEN
         RAISE EXCEPTION 'Seat quota exceeded! Maximum allowed seats for this college is %', max_allowed;

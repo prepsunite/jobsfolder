@@ -9,13 +9,38 @@
 -- ====================================================================
 
 -- --------------------------------------------------------------------
+-- 0. Defensive Schema Preparation (Prevent "column does not exist" errors)
+-- --------------------------------------------------------------------
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS max_licenses INT DEFAULT 1000;
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS contract_status VARCHAR(50) DEFAULT 'ACTIVE';
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS valid_until TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '1 year');
+ALTER TABLE public.colleges ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
+ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS roll_number VARCHAR(100);
+ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS department VARCHAR(100);
+ALTER TABLE public.college_students ADD COLUMN IF NOT EXISTS batch_year INT;
+
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'IN_PROGRESS';
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS time_spent_seconds INT DEFAULT 0;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS total_score DECIMAL(6, 2) DEFAULT 0.00;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS max_possible_score DECIMAL(6, 2) DEFAULT 100.00;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS percentage DECIMAL(5, 2) DEFAULT 0.00;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS passed BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS tab_switch_count INT DEFAULT 0;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS proctor_events JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS responses JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.student_exam_attempts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+-- --------------------------------------------------------------------
 -- 1. Database-Level Seat Cap Enforcement Trigger
 -- --------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.check_college_seat_cap()
 RETURNS TRIGGER AS $$
 DECLARE
     current_count INT;
-    max_allowed INT;
+    max_allowed INT := 1500;
 BEGIN
     -- Count active students currently enrolled in this college
     SELECT COUNT(*) INTO current_count 
@@ -27,6 +52,8 @@ BEGIN
     SELECT COALESCE(max_licenses, 1500) INTO max_allowed
     FROM public.colleges
     WHERE id::TEXT = NEW.college_id::TEXT;
+
+    max_allowed := COALESCE(max_allowed, 1500);
 
     IF current_count >= max_allowed THEN
         RAISE EXCEPTION 'Seat quota exceeded! Maximum allowed seats for this college is %', max_allowed;
