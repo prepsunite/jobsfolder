@@ -206,15 +206,16 @@ export default function CollegesTpoManager() {
     }
   };
 
-  const handleQuickAddDays = (days: number) => {
+  const handleSetValidityFromToday = (days: number) => {
     const base = new Date();
     base.setDate(base.getDate() + days);
     setNewValidityDate(base.toISOString().split('T')[0]);
   };
 
-  const handleQuickAddMonths = (months: number) => {
-    const base = new Date();
-    base.setMonth(base.getMonth() + months);
+  const handleExtendCurrentValidity = (days: number) => {
+    const current = editingValidityCollege?.currentValidity ? new Date(editingValidityCollege.currentValidity) : new Date();
+    const base = current > new Date() ? current : new Date();
+    base.setDate(base.getDate() + days);
     setNewValidityDate(base.toISOString().split('T')[0]);
   };
 
@@ -936,24 +937,54 @@ export default function CollegesTpoManager() {
               </div>
 
               {/* Quick Extension Buttons */}
+              {/* Quick Presets: Set from Today */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Quick Extend Duration:
-                </label>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">
+                    Set Fixed Duration (From Today):
+                  </label>
+                  <span className="text-[10px] text-[#FD4A32] font-semibold">Strict validity limit</span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
                   {[
-                    { label: '+1 Day', days: 1 },
-                    { label: '+30 Days', days: 30 },
-                    { label: '+3 Mos', months: 3 },
-                    { label: '+6 Mos', months: 6 },
-                    { label: '+1 Year', months: 12 },
-                    { label: '+2 Years', months: 24 },
+                    { label: '1 Day', days: 1 },
+                    { label: '30 Days', days: 30 },
+                    { label: '6 Mos', days: 183 },
+                    { label: '1 Year', days: 365 },
+                    { label: '2 Years', days: 730 },
                   ].map(b => (
                     <button
                       key={b.label}
                       type="button"
-                      onClick={() => (b.days ? handleQuickAddDays(b.days) : handleQuickAddMonths(b.months!))}
+                      onClick={() => handleSetValidityFromToday(b.days)}
                       className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-bold text-[11px] text-slate-800 dark:text-slate-200 hover:border-[#FD4A32] hover:text-[#FD4A32] transition-colors"
+                    >
+                      {b.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Extend: Add to Existing Date */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">
+                    Extend Existing Expiry:
+                  </label>
+                  <span className="text-[10px] text-emerald-600 font-semibold">+ time onto current</span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { label: '+7 Days', days: 7 },
+                    { label: '+30 Days', days: 30 },
+                    { label: '+6 Mos', days: 183 },
+                    { label: '+1 Year', days: 365 },
+                  ].map(b => (
+                    <button
+                      key={b.label}
+                      type="button"
+                      onClick={() => handleExtendCurrentValidity(b.days)}
+                      className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-bold text-[11px] text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:text-emerald-600 transition-colors"
                     >
                       {b.label}
                     </button>

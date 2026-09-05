@@ -1419,7 +1419,7 @@ export const tpoService = {
         if (item && !item.isExpired) {
           const col = getLocalColleges().find(c => c.id === item.collegeId);
           const isColActive = !col || ((col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') && (!col.valid_until || new Date(col.valid_until) > new Date()));
-          const effectiveExpiry = item.expiresAt || col?.valid_until;
+          const effectiveExpiry = col?.valid_until || item.expiresAt;
           const isUnexpired = effectiveExpiry ? new Date(effectiveExpiry) > new Date() : false;
 
           if (isColActive && isUnexpired) {
