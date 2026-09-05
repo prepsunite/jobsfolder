@@ -57,16 +57,43 @@ export default function DashboardPage() {
 
   // Live Supabase subscription query for Pro Pass
   const { data: subData } = useQuery({
-    queryKey: ['user-subscription', user?.email],
+    queryKey: ['user-subscription', user?.email, user?.collegeId],
     queryFn: async () => {
       if (!user?.email) return { isPro: false, planName: 'Free Tier' };
+      const cleanEmail = user.email.trim().toLowerCase();
+
+      // 1. FIRST PRIORITY: Institutional College Student Verification
+      // If student is enrolled in a college or was granted a campus pass, access is strictly bound to the college contract!
+      const liveInfo = await tpoService.verifyStudentEntitlementLive(cleanEmail);
+      if (liveInfo?.isEntitled) {
+        return {
+          isPro: true,
+          planName: liveInfo.collegeName ? `Campus Pro Pass (${liveInfo.collegeName})` : 'Campus Pro Pass',
+          expiresAt: liveInfo.expiresAt,
+          collegeId: liveInfo.collegeId,
+        };
+      }
+
+      // If student belongs to a college whose contract has expired or suspended, show Free Tier
+      if (user.collegeId || liveInfo?.collegeId) {
+        const colId = user.collegeId || liveInfo?.collegeId;
+        const col = colId ? await tpoService.getCollegeDetails(colId) : null;
+        const isColExpired = col ? (!col.valid_until || new Date(col.valid_until) <= new Date() || col.contract_status === 'EXPIRED' || col.contract_status === 'SUSPENDED') : true;
+        if (isColExpired) {
+          return { isPro: false, planName: 'Free Tier', isExpired: true, collegeId: colId };
+        }
+      }
+
+      // 2. SECOND PRIORITY: Personal retail paid plan (B2C: Monthly/Quarterly/Yearly)
+      // Only check user_subscriptions for individual consumer plans (exclude any B2B campus plans)
       try {
         const { data } = await supabase
           .from('user_subscriptions')
           .select('*')
-          .eq('user_email', user.email)
+          .eq('user_email', cleanEmail)
           .eq('status', 'ACTIVE')
           .gt('expires_at', new Date().toISOString())
+          .not('payment_id', 'ilike', 'B2B_CAMPUS_%')
           .order('expires_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -75,16 +102,6 @@ export default function DashboardPage() {
           return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
         }
       } catch {}
-
-      // Live verification for institutional college student
-      const liveInfo = await tpoService.verifyStudentEntitlementLive(user.email);
-      if (liveInfo?.isEntitled) {
-        return {
-          isPro: true,
-          planName: liveInfo.collegeName ? `Campus Pro Pass (${liveInfo.collegeName})` : 'Campus Pro Pass',
-          expiresAt: liveInfo.expiresAt,
-        };
-      }
 
       return { isPro: false, planName: 'Free Tier' };
     },

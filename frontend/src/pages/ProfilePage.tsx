@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { supabase } from '@/lib/supabase';
+import { tpoService } from '@/services/tpo.service';
 import {
   User,
   Mail,
@@ -22,7 +25,58 @@ import {
 export default function ProfilePage() {
   const { user, role, isAdmin, isTpoAdmin, logout } = useAuth();
   const { themeMode, setThemeMode } = useTheme();
-  const isUserPro = role === 'ADMIN';
+  const { data: subData } = useQuery({
+    queryKey: ['profile-user-subscription', user?.email, user?.collegeId],
+    queryFn: async () => {
+      if (!user?.email) return { isPro: false, planName: 'Free Tier' };
+      const cleanEmail = user.email.trim().toLowerCase();
+
+      // 1. Institutional Student Verification
+      const liveInfo = await tpoService.verifyStudentEntitlementLive(cleanEmail);
+      if (liveInfo?.isEntitled) {
+        return {
+          isPro: true,
+          planName: liveInfo.collegeName ? `Campus Pro Pass (${liveInfo.collegeName})` : 'Campus Pro Pass',
+          expiresAt: liveInfo.expiresAt,
+          collegeId: liveInfo.collegeId,
+          collegeName: liveInfo.collegeName,
+        };
+      }
+
+      // If student belongs to an expired college
+      if (user.collegeId || liveInfo?.collegeId) {
+        const colId = user.collegeId || liveInfo?.collegeId;
+        const col = colId ? await tpoService.getCollegeDetails(colId) : null;
+        const isColExpired = col ? (!col.valid_until || new Date(col.valid_until) <= new Date() || col.contract_status === 'EXPIRED' || col.contract_status === 'SUSPENDED') : true;
+        if (isColExpired) {
+          return { isPro: false, planName: 'Free Tier', isExpired: true, collegeId: colId };
+        }
+      }
+
+      // 2. Personal retail B2C plan
+      try {
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_email', cleanEmail)
+          .eq('status', 'ACTIVE')
+          .gt('expires_at', new Date().toISOString())
+          .not('payment_id', 'ilike', 'B2B_CAMPUS_%')
+          .order('expires_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
+        }
+      } catch {}
+
+      return { isPro: false, planName: 'Free Tier' };
+    },
+    enabled: !!user?.email,
+  });
+
+  const isUserPro = isAdmin || (subData?.isPro ?? false);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -95,11 +149,16 @@ export default function ProfilePage() {
                 ) : isUserPro ? (
                   <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1 uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span>Pro Pass</span>
+                    <span>
+                      {subData?.planName || 'Pro Pass'}
+                      {subData?.expiresAt
+                        ? ` (${Math.max(0, Math.ceil((new Date(subData.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left)`
+                        : ''}
+                    </span>
                   </span>
                 ) : (
                   <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25 uppercase tracking-wider">
-                    Free Tier
+                    {subData?.isExpired ? 'Free Tier (Campus Pass Expired)' : 'Free Tier'}
                   </span>
                 )}
               </div>

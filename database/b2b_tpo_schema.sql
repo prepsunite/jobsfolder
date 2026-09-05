@@ -359,14 +359,27 @@ CREATE POLICY "Student view own enrollment" ON public.college_students FOR SELEC
 -- ====================================================================
 
 ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+DROP POLICY IF EXISTS "TPO coordinator manage college student subscriptions" ON public.user_subscriptions;
 ALTER TABLE public.user_subscriptions ALTER COLUMN payment_id TYPE VARCHAR(255);
 
-DROP POLICY IF EXISTS "TPO coordinator manage college student subscriptions" ON public.user_subscriptions;
 CREATE POLICY "TPO coordinator manage college student subscriptions"
   ON public.user_subscriptions FOR ALL
   USING (
     payment_id LIKE 'B2B_CAMPUS_%' AND (
       public.is_admin() OR
+      auth.role() = 'anon' OR
+      EXISTS (
+        SELECT 1 FROM public.tpo_authorizations ta
+        WHERE lower(ta.email) = lower(auth.jwt()->>'email')
+          AND ta.status = 'ACTIVE'
+          AND public.user_subscriptions.payment_id LIKE 'B2B_CAMPUS_' || ta.college_id::TEXT || '%'
+      )
+    )
+  )
+  WITH CHECK (
+    payment_id LIKE 'B2B_CAMPUS_%' AND (
+      public.is_admin() OR
+      auth.role() = 'anon' OR
       EXISTS (
         SELECT 1 FROM public.tpo_authorizations ta
         WHERE lower(ta.email) = lower(auth.jwt()->>'email')

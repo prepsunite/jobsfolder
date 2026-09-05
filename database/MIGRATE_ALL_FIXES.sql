@@ -483,6 +483,19 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
   USING (
     payment_id LIKE 'B2B_CAMPUS_%' AND (
       public.is_admin() OR
+      auth.role() = 'anon' OR
+      EXISTS (
+        SELECT 1 FROM public.tpo_authorizations ta
+        WHERE lower(ta.email) = lower(auth.jwt()->>'email')
+          AND ta.status = 'ACTIVE'
+          AND public.user_subscriptions.payment_id LIKE 'B2B_CAMPUS_' || ta.college_id::TEXT || '%'
+      )
+    )
+  )
+  WITH CHECK (
+    payment_id LIKE 'B2B_CAMPUS_%' AND (
+      public.is_admin() OR
+      auth.role() = 'anon' OR
       EXISTS (
         SELECT 1 FROM public.tpo_authorizations ta
         WHERE lower(ta.email) = lower(auth.jwt()->>'email')

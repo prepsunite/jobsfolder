@@ -50,7 +50,7 @@ export default function CollegesTpoManager() {
   const [newCollegeCity, setNewCollegeCity] = useState('');
   const [newCollegeLicenses, setNewCollegeLicenses] = useState(1500);
   const [newCollegeTpoEmail, setNewCollegeTpoEmail] = useState('');
-  const [newCollegeDurationPreset, setNewCollegeDurationPreset] = useState<'30D' | '6M' | '1Y' | '2Y' | '3Y' | 'CUSTOM'>('1Y');
+  const [newCollegeDurationPreset, setNewCollegeDurationPreset] = useState<'1D' | '30D' | '6M' | '1Y' | '2Y' | '3Y' | 'CUSTOM'>('1Y');
   const [newCollegeCustomDate, setNewCollegeCustomDate] = useState<string>('');
   const [isAddingCollege, setIsAddingCollege] = useState(false);
 
@@ -89,7 +89,9 @@ export default function CollegesTpoManager() {
     setIsAddingCollege(true);
     try {
       let validUntilIso = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      if (newCollegeDurationPreset === '30D') {
+      if (newCollegeDurationPreset === '1D') {
+        validUntilIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      } else if (newCollegeDurationPreset === '30D') {
         validUntilIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       } else if (newCollegeDurationPreset === '6M') {
         validUntilIso = new Date(Date.now() + 183 * 24 * 60 * 60 * 1000).toISOString();
@@ -814,6 +816,7 @@ export default function CollegesTpoManager() {
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
                   <span>Student Access Validity Duration *</span>
                   <span className="text-[11px] text-[#FD4A32] font-semibold">
+                    {newCollegeDurationPreset === '1D' && '1 Day Evaluation Pass'}
                     {newCollegeDurationPreset === '30D' && '30 Days Pilot Drive Access'}
                     {newCollegeDurationPreset === '6M' && '6 Months Access'}
                     {newCollegeDurationPreset === '1Y' && '1 Year Standard Access'}
@@ -824,8 +827,9 @@ export default function CollegesTpoManager() {
                 </label>
                 
                 {/* Preset duration buttons */}
-                <div className="grid grid-cols-6 gap-1.5 mb-2">
+                <div className="grid grid-cols-7 gap-1.5 mb-2">
                   {[
+                    { id: '1D', label: '1 Day' },
                     { id: '30D', label: '30 Days' },
                     { id: '6M', label: '6 Mos' },
                     { id: '1Y', label: '1 Year' },
@@ -936,8 +940,9 @@ export default function CollegesTpoManager() {
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Quick Extend Duration:
                 </label>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-6 gap-2">
                   {[
+                    { label: '+1 Day', days: 1 },
                     { label: '+30 Days', days: 30 },
                     { label: '+3 Mos', months: 3 },
                     { label: '+6 Mos', months: 6 },

@@ -588,10 +588,25 @@ export const tpoService = {
 
     // Synchronize all enrolled students' subscriptions & entitlements
     if (syncStudents) {
-      const students = await this.getCollegeStudents(collegeId);
       const isStillActive = (!contractStatus || contractStatus === 'ACTIVE' || contractStatus === 'PILOT') && new Date(validUntilIso) > new Date();
       const statusValue = isStillActive ? 'ACTIVE' : 'EXPIRED';
 
+      // 1. Bulk update all user_subscriptions for this college
+      try {
+        await supabase
+          .from('user_subscriptions')
+          .update({
+            expires_at: validUntilIso,
+            status: statusValue,
+            updated_at: new Date().toISOString(),
+          })
+          .ilike('payment_id', `B2B_CAMPUS_${collegeId}%`);
+      } catch (e) {
+        console.warn('Notice updating college user_subscriptions in bulk:', e);
+      }
+
+      // 2. Fetch all student emails for this college from database and local storage
+      const students = await this.getCollegeStudents(collegeId);
       for (const student of students) {
         const cleanEmail = student.email.trim().toLowerCase();
         try {
@@ -600,9 +615,10 @@ export const tpoService = {
             .update({
               expires_at: validUntilIso,
               status: statusValue,
+              updated_at: new Date().toISOString(),
             })
             .eq('user_email', cleanEmail)
-            .ilike('payment_id', `B2B_CAMPUS_${collegeId}%`);
+            .ilike('payment_id', `B2B_CAMPUS_%`);
         } catch {}
 
         // Update local entitlement cache
@@ -1260,7 +1276,7 @@ export const tpoService = {
 
   async provisionStudentEntitlement(college: College, email: string, name?: string): Promise<boolean> {
     const cleanEmail = email.trim().toLowerCase();
-    const validUntil = college.valid_until || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    const validUntil = college.valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     const planName = `Campus Pro Pass (${college.name})`;
     const sanitizedEmail = cleanEmail.replace(/[^a-z0-9]/g, '').slice(0, 48);
     const paymentId = `B2B_CAMPUS_${college.id}_${sanitizedEmail}`;
@@ -1274,38 +1290,36 @@ export const tpoService = {
         p_valid_until: validUntil,
       });
 
-      if (rpcErr) {
-        const { data: existingSub } = await supabase
-          .from('user_subscriptions')
-          .select('id, expires_at')
-          .eq('user_email', cleanEmail)
-          .ilike('payment_id', `B2B_CAMPUS_${college.id}%`)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      // Also ensure direct update of ANY existing rows for this student to prevent duplicate stale rows
+      const { data: existingRows } = await supabase
+        .from('user_subscriptions')
+        .select('id')
+        .eq('user_email', cleanEmail)
+        .ilike('payment_id', `B2B_CAMPUS_%`);
 
-        if (existingSub) {
-          await supabase
-            .from('user_subscriptions')
-            .update({
-              status: 'ACTIVE',
-              plan_name: planName,
-              payment_id: paymentId,
-              expires_at: validUntil,
-            })
-            .eq('id', existingSub.id);
-        } else {
-          await supabase
-            .from('user_subscriptions')
-            .insert([{
-              user_email: cleanEmail,
-              plan_name: planName,
-              payment_id: paymentId,
-              status: 'ACTIVE',
-              expires_at: validUntil,
-              created_at: new Date().toISOString(),
-            }]);
-        }
+      if (existingRows && existingRows.length > 0) {
+        await supabase
+          .from('user_subscriptions')
+          .update({
+            status: 'ACTIVE',
+            plan_name: planName,
+            payment_id: paymentId,
+            expires_at: validUntil,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_email', cleanEmail)
+          .ilike('payment_id', `B2B_CAMPUS_%`);
+      } else {
+        await supabase
+          .from('user_subscriptions')
+          .insert([{
+            user_email: cleanEmail,
+            plan_name: planName,
+            payment_id: paymentId,
+            status: 'ACTIVE',
+            expires_at: validUntil,
+            created_at: new Date().toISOString(),
+          }]);
       }
     } catch (err) {
       console.warn('[provisionStudentEntitlement] Notice syncing subscription to Supabase:', err);
@@ -1411,7 +1425,7 @@ export const tpoService = {
         if (item && !item.isExpired) {
           const col = getLocalColleges().find(c => c.id === item.collegeId);
           const isColActive = !col || ((col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') && (!col.valid_until || new Date(col.valid_until) > new Date()));
-          const effectiveExpiry = item.expiresAt || col?.valid_until;
+          const effectiveExpiry = col?.valid_until || item.expiresAt;
           const isUnexpired = effectiveExpiry ? new Date(effectiveExpiry) > new Date() : false;
 
           if (isColActive && isUnexpired) {
@@ -1515,36 +1529,74 @@ export const tpoService = {
       console.warn('[tpoService.verifyStudentEntitlementLive] RPC notice:', e);
     }
 
-    // 2. Direct Supabase Query Fallback
+    // 2. Direct Supabase Query Fallback (Resolves college from college_students or B2B subscriptions)
     try {
+      let targetCollegeId: string | null = null;
       const { data: student } = await supabase
         .from('college_students')
-        .select(`
-          college_id,
-          status,
-          colleges:colleges (
-            id,
-            name,
-            contract_status,
-            valid_until
-          )
-        `)
+        .select('college_id, status')
         .eq('email', clean)
         .eq('status', 'ACTIVE')
         .maybeSingle();
 
-      if (student && student.colleges) {
-        const col: any = Array.isArray(student.colleges) ? student.colleges[0] : student.colleges;
-        const isColActive = col && ['ACTIVE', 'PILOT'].includes(col.contract_status) && (!col.valid_until || new Date(col.valid_until) > new Date());
-        if (isColActive) {
-          const info = {
-            isEntitled: true,
-            collegeId: col.id,
-            collegeName: col.name || 'Partner College',
-            expiresAt: col.valid_until,
-          };
-          this.cacheStudentEntitlement(clean, info);
-          return info;
+      if (student?.college_id) {
+        targetCollegeId = student.college_id;
+      }
+
+      // If not in college_students, check user_subscriptions for any B2B Campus pass
+      if (!targetCollegeId) {
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('payment_id')
+          .eq('user_email', clean)
+          .ilike('payment_id', 'B2B_CAMPUS_%')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (sub?.payment_id) {
+          const rawCid = sub.payment_id.replace(/^B2B_CAMPUS_/, '');
+          const parts = rawCid.split('_');
+          targetCollegeId = parts.length > 1 && parts[parts.length - 1].length >= 16
+            ? parts.slice(0, -1).join('_')
+            : rawCid;
+        }
+      }
+
+      if (targetCollegeId) {
+        // Fetch the REAL college record from colleges table or contact_messages cloud resilience
+        const col = await this.getCollegeDetails(targetCollegeId);
+        if (col) {
+          const isColActive = ['ACTIVE', 'PILOT'].includes(col.contract_status) && (!col.valid_until || new Date(col.valid_until) > new Date());
+          if (isColActive) {
+            const info = {
+              isEntitled: true,
+              collegeId: col.id,
+              collegeName: col.name || 'Partner College',
+              expiresAt: col.valid_until,
+            };
+            this.cacheStudentEntitlement(clean, info);
+            return info;
+          } else {
+            // College contract is expired or suspended! Student has NO active campus pro pass
+            try {
+              const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed[clean]) {
+                  parsed[clean].isExpired = true;
+                  parsed[clean].expiresAt = col.valid_until;
+                  localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(parsed));
+                }
+              }
+            } catch {}
+            return {
+              isEntitled: false,
+              collegeId: col.id,
+              collegeName: col.name,
+              expiresAt: col.valid_until,
+            };
+          }
         }
       }
     } catch (e) {
