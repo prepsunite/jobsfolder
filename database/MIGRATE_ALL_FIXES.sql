@@ -240,7 +240,11 @@ CREATE INDEX IF NOT EXISTS idx_user_bookmarks_lookup ON public.user_bookmarks(us
 
 -- 4.1 Admin Check
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
@@ -256,11 +260,15 @@ BEGIN
       )
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 4.2 TPO for Specific College Check (Explicit TEXT comparison)
 CREATE OR REPLACE FUNCTION public.is_tpo_for_college(p_college_id TEXT)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.tpo_authorizations ta
@@ -270,11 +278,15 @@ BEGIN
       AND ta.status = 'ACTIVE'
   ) OR public.is_admin();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 4.3 ANY TPO Check
 CREATE OR REPLACE FUNCTION public.is_any_tpo()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.tpo_authorizations ta
@@ -283,7 +295,7 @@ BEGIN
       AND ta.status = 'ACTIVE'
   ) OR public.is_admin();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 4.4 Campus Student Subscription Provisioning RPC
 CREATE OR REPLACE FUNCTION public.provision_campus_student_subscription(
@@ -295,6 +307,7 @@ CREATE OR REPLACE FUNCTION public.provision_campus_student_subscription(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_clean_email TEXT;
@@ -567,7 +580,11 @@ CREATE POLICY "Admin full access contact messages"
 
 -- 8.1 Database-Level Seat Cap Enforcement Trigger (Thread-safe FOR UPDATE row lock)
 CREATE OR REPLACE FUNCTION public.check_college_seat_cap()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     current_count INT;
     max_allowed INT;
@@ -624,7 +641,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_enforce_college_seat_cap ON public.college_students;
 CREATE TRIGGER trg_enforce_college_seat_cap
@@ -639,6 +656,7 @@ CREATE OR REPLACE FUNCTION public.check_student_college_entitlement(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_clean_email TEXT;
@@ -699,6 +717,7 @@ END;
 $$;
 
 -- 8.3 Server-Side Mock Exam Grading RPC (Prevents DevTools Score Manipulation & Answer Leakage)
+-- 8.3 Server-Side Mock Exam Grading RPC (Prevents DevTools Score Manipulation & Answer Leakage)
 CREATE OR REPLACE FUNCTION public.submit_and_grade_mock_attempt(
     p_attempt_id TEXT,
     p_responses JSONB,
@@ -710,6 +729,7 @@ CREATE OR REPLACE FUNCTION public.submit_and_grade_mock_attempt(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_attempt RECORD;
@@ -817,10 +837,22 @@ BEGIN
 
                     v_item_resp := p_responses->v_q_id;
 
-                    IF v_item_resp IS NOT NULL AND (v_item_resp->>'selected_option') IS NOT NULL AND (v_item_resp->>'selected_option') != 'null' THEN
+                    IF v_item_resp IS NOT NULL 
+                       AND (v_item_resp->>'selected_option') IS NOT NULL 
+                       AND (v_item_resp->>'selected_option') != 'null' 
+                       AND (v_item_resp->>'selected_option') != '' 
+                       AND (v_item_resp->>'selected_option') ~ '^-?\d+$' THEN
                         v_student_selected := (v_item_resp->>'selected_option')::INT;
-                        v_marked_review := COALESCE((v_item_resp->>'marked_for_review')::BOOLEAN, false);
-                        v_time_spent := COALESCE((v_item_resp->>'time_spent_seconds')::INT, 0);
+                        v_marked_review := COALESCE(
+                            (v_item_resp->>'marked_for_review')::BOOLEAN,
+                            (v_item_resp->>'marked_review')::BOOLEAN,
+                            false
+                        );
+                        v_time_spent := COALESCE(
+                            (v_item_resp->>'time_spent_seconds')::INT,
+                            (v_item_resp->>'time_spent_sec')::INT,
+                            0
+                        );
 
                         IF v_correct_ans >= 0 AND v_student_selected = v_correct_ans THEN
                             v_is_correct := true;
@@ -837,7 +869,9 @@ BEGIN
                                 'selected_option', v_student_selected,
                                 'is_correct', v_is_correct,
                                 'marked_for_review', v_marked_review,
+                                'marked_review', v_marked_review,
                                 'time_spent_seconds', v_time_spent,
+                                'time_spent_sec', v_time_spent,
                                 'correct_answer', v_correct_ans
                             )
                         );
@@ -889,7 +923,11 @@ $$;
 CREATE OR REPLACE FUNCTION public.check_user_paper_access(
     p_user_email VARCHAR,
     p_exam_id VARCHAR
-) RETURNS BOOLEAN AS $$
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     v_has_pass BOOLEAN := FALSE;
     v_has_paper BOOLEAN := FALSE;
@@ -941,11 +979,15 @@ BEGIN
 
     RETURN v_has_paper;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 8.5 Database Trigger to Cascade colleges.valid_until to user_subscriptions
 CREATE OR REPLACE FUNCTION public.cascade_college_validity_update()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     v_status TEXT;
 BEGIN
@@ -966,7 +1008,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_cascade_college_validity ON public.colleges;
 CREATE TRIGGER trg_cascade_college_validity
@@ -983,7 +1025,10 @@ RETURNS TABLE (
     difficulty VARCHAR,
     topic_id VARCHAR,
     question_number INT
-) LANGUAGE plpgsql SECURITY DEFINER AS $$
+) LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
     RETURN QUERY
     SELECT 
@@ -1006,6 +1051,7 @@ CREATE OR REPLACE FUNCTION public.get_mock_exam_attempt_solutions(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_attempt RECORD;
@@ -1102,7 +1148,11 @@ RETURNS TABLE (
     college_id TEXT,
     enrolled_count BIGINT,
     active_exams_count BIGINT
-) LANGUAGE sql STABLE SECURITY DEFINER AS $$
+) LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
     SELECT 
         c.id AS college_id,
         COUNT(DISTINCT cs.id) AS enrolled_count,
