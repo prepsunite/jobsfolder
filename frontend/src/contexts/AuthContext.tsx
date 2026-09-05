@@ -208,6 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       department?: string;
       batchYear?: number;
       isTpoAdmin?: boolean;
+      expiresAt?: string;
     }
   ) => {
     // 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN. No exceptions!
@@ -245,11 +246,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const raw = localStorage.getItem('prepunite_student_entitlements');
         const entitlements = raw ? JSON.parse(raw) : {};
-        entitlements[email.trim().toLowerCase()] = {
+        const cleanEmail = email.trim().toLowerCase();
+        const existingInfo = entitlements[cleanEmail];
+        const resolvedExpiry =
+          collegeData.expiresAt ||
+          existingInfo?.expiresAt ||
+          new Date(0).toISOString();
+        const isStillActive = resolvedExpiry ? new Date(resolvedExpiry) > new Date() : false;
+
+        entitlements[cleanEmail] = {
           collegeId: collegeData.collegeId,
-          collegeName: collegeData.collegeName || 'Campus Placement Partner',
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          isExpired: false,
+          collegeName: collegeData.collegeName || existingInfo?.collegeName || 'Campus Placement Partner',
+          expiresAt: resolvedExpiry,
+          isExpired: !isStillActive,
         };
         localStorage.setItem('prepunite_student_entitlements', JSON.stringify(entitlements));
       } catch {}

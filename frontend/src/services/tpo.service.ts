@@ -1236,12 +1236,13 @@ export const tpoService = {
     const currentStudents = await this.getCollegeStudents(effectiveCollegeId);
     const currentEnrolled = currentStudents.length;
 
-    const validNewCount = students.filter(s => s.isValid).length;
+    const existingEmails = new Set(currentStudents.map(s => s.email.toLowerCase()));
+    const trulyNewCount = students.filter(s => s.isValid && !existingEmails.has(s.email.toLowerCase())).length;
     const remainingSeats = Math.max(0, maxLicenses - currentEnrolled);
 
-    if (currentEnrolled + validNewCount > maxLicenses) {
+    if (currentEnrolled + trulyNewCount > maxLicenses) {
       throw new Error(
-        `Seat Limit Exceeded! Your institution has paid for ${maxLicenses} student licenses. Currently enrolled: ${currentEnrolled}. You only have ${remainingSeats} seat(s) remaining, but tried to import ${validNewCount} students. Please contact PrepUnite Admin to increase your student capacity.`
+        `Seat Limit Exceeded! Your institution has paid for ${maxLicenses} student licenses. Currently enrolled: ${currentEnrolled}. You only have ${remainingSeats} seat(s) remaining, but tried to import ${trulyNewCount} new student(s). Please contact PrepUnite Admin to increase your student capacity.`
       );
     }
 
@@ -1347,7 +1348,7 @@ export const tpoService = {
       validUntil = freshCol?.valid_until || '';
     }
     if (!validUntil) {
-      validUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      validUntil = new Date(0).toISOString();
     }
     const planName = `Campus Pro Pass (${college.name})`;
     const sanitizedEmail = cleanEmail.replace(/[^a-z0-9]/g, '').slice(0, 48);
@@ -2657,7 +2658,13 @@ export const tpoService = {
         p_attempt_id: attemptId,
       });
 
-      if (!rpcErr && rpcData && rpcData.questions && rpcData.questions.length > 0) {
+      const questionsList: any[] = rpcData?.questions
+        ? Array.isArray(rpcData.questions)
+          ? rpcData.questions
+          : Object.values(rpcData.questions)
+        : [];
+
+      if (!rpcErr && rpcData && questionsList.length > 0) {
         const attempt: StudentExamAttempt = {
           id: rpcData.attempt_id,
           mock_exam_id: rpcData.mock_exam_id,
@@ -2673,13 +2680,13 @@ export const tpoService = {
           passed: Boolean(rpcData.passed),
           tab_switch_count: Number(rpcData.tab_switch_count || 0),
           proctor_events: rpcData.proctor_events || [],
-          responses: rpcData.responses || {},
+          responses: rpcData.responses || rpcData.student_responses || {},
         };
 
         saveLocalAttempt(attempt);
         return {
           attempt,
-          questions: rpcData.questions,
+          questions: questionsList,
         };
       }
     } catch (rpcError) {

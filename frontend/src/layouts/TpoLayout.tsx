@@ -93,8 +93,8 @@ export default function TpoLayout() {
     name: tpoAuth?.college_name || user?.collegeName || 'Engineering College',
     code: tpoAuth?.college_code || 'CRT',
     slug: (effectiveCollegeId || 'crt').replace(/^col-/, ''),
-    contract_status: 'ACTIVE',
-    valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+    contract_status: 'EXPIRED',
+    valid_until: new Date(0).toISOString(),
     created_at: new Date().toISOString(),
     max_licenses: tpoAuth?.max_licenses || 1500,
   };

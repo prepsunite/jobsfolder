@@ -77,6 +77,60 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
     )
   );
 
+-- 1.5 Secure public.mock_exams
+DROP POLICY IF EXISTS "Super admin full mock exams" ON public.mock_exams;
+CREATE POLICY "Super admin full mock exams" ON public.mock_exams FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS "TPO manage own mock exams" ON public.mock_exams;
+CREATE POLICY "TPO manage own mock exams" ON public.mock_exams FOR ALL
+  USING (public.is_tpo_for_college(college_id::TEXT))
+  WITH CHECK (public.is_tpo_for_college(college_id::TEXT));
+
+DROP POLICY IF EXISTS "Students read active college exams" ON public.mock_exams;
+CREATE POLICY "Students read active college exams" ON public.mock_exams FOR SELECT
+  USING (
+    is_deleted = false
+    AND is_active = true
+    AND (
+      public.is_admin()
+      OR college_id::TEXT = (SELECT college_id::TEXT FROM public.profiles WHERE id = auth.uid())
+      OR college_id::TEXT IN (
+        SELECT college_id::TEXT FROM public.college_students WHERE lower(email) = lower(auth.jwt()->>'email')
+      )
+    )
+  );
+
+-- 1.6 Secure public.mock_exam_sections
+DROP POLICY IF EXISTS "Super admin full sections" ON public.mock_exam_sections;
+CREATE POLICY "Super admin full sections" ON public.mock_exam_sections FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS "TPO manage sections" ON public.mock_exam_sections;
+CREATE POLICY "TPO manage sections" ON public.mock_exam_sections FOR ALL
+  USING (
+    public.is_admin() OR
+    EXISTS (
+      SELECT 1 FROM public.mock_exams me
+      WHERE me.id::TEXT = mock_exam_sections.mock_exam_id::TEXT
+        AND public.is_tpo_for_college(me.college_id::TEXT)
+    )
+  );
+
+DROP POLICY IF EXISTS "Students read sections of their exams" ON public.mock_exam_sections;
+CREATE POLICY "Students read sections of their exams" ON public.mock_exam_sections FOR SELECT
+  USING (
+    public.is_admin() OR
+    EXISTS (
+      SELECT 1 FROM public.mock_exams me
+      WHERE me.id::TEXT = mock_exam_sections.mock_exam_id::TEXT
+        AND (
+          me.college_id::TEXT = (SELECT college_id::TEXT FROM public.profiles WHERE id = auth.uid())
+          OR me.college_id::TEXT IN (
+            SELECT college_id::TEXT FROM public.college_students WHERE lower(email) = lower(auth.jwt()->>'email')
+          )
+        )
+    )
+  );
+
 -- --------------------------------------------------------------------
 -- 2. [ISSUE 2] SECURE EXAM QUESTION RETRIEVAL (STRIP ANSWERS & EXPLANATIONS)
 -- --------------------------------------------------------------------
@@ -199,22 +253,25 @@ BEGIN
     WHERE id::TEXT = p_attempt_id::TEXT;
 
     IF v_attempt IS NULL THEN
-        INSERT INTO public.student_exam_attempts (
-            id,
-            mock_exam_id,
-            student_id,
-            college_id,
-            status,
-            started_at
-        ) VALUES (
-            p_attempt_id,
-            'unknown-exam',
-            COALESCE(auth.uid()::TEXT, 'anonymous'),
-            'unknown-college',
-            'IN_PROGRESS',
-            NOW()
-        );
-        SELECT * INTO v_attempt FROM public.student_exam_attempts WHERE id::TEXT = p_attempt_id::TEXT;
+        RAISE EXCEPTION 'Attempt with id % was not found.', p_attempt_id;
+    END IF;
+
+    -- 🛡️ Caller Authorization Guard:
+    -- Verify caller owns this attempt, is authorized TPO, or is super admin
+    IF NOT (
+        public.is_admin() OR
+        public.is_tpo_for_college(v_attempt.college_id::TEXT) OR
+        v_attempt.student_id::TEXT = COALESCE(auth.uid()::TEXT, '') OR
+        v_attempt.student_id::TEXT = lower(COALESCE(auth.jwt()->>'email', '')) OR
+        lower(COALESCE(v_attempt.student_email, '')) = lower(COALESCE(auth.jwt()->>'email', ''))
+    ) THEN
+        RAISE EXCEPTION 'Unauthorized: You are not permitted to submit this exam attempt.';
+    END IF;
+
+    -- 🛡️ Idempotency & Finality Guard:
+    -- Prevent re-submitting an already finalized attempt
+    IF v_attempt.status IN ('SUBMITTED', 'GRADED', 'TERMINATED_MALPRACTICE') AND NOT public.is_admin() THEN
+        RAISE EXCEPTION 'This attempt has already been submitted and finalized.';
     END IF;
 
     -- Anti-Tamper: Take the maximum between incoming and stored counters or proctor event count
@@ -389,14 +446,31 @@ DECLARE
     max_allowed INT;
     is_existing_student BOOLEAN;
 BEGIN
-    -- Check if this student email is already enrolled for this college
+    -- If updating and status is NOT becoming ACTIVE, no seat is consumed
+    IF TG_OP = 'UPDATE' THEN
+        IF NEW.status != 'ACTIVE' THEN
+            RETURN NEW;
+        END IF;
+        IF OLD.status = 'ACTIVE' AND OLD.college_id = NEW.college_id THEN
+            RETURN NEW;
+        END IF;
+    END IF;
+
+    -- If inserting with status other than ACTIVE, do not count against seat quota
+    IF TG_OP = 'INSERT' AND NEW.status != 'ACTIVE' THEN
+        RETURN NEW;
+    END IF;
+
+    -- Check if student already has an ACTIVE seat for this college (handles re-insert / upsert)
     SELECT EXISTS (
         SELECT 1 FROM public.college_students 
         WHERE college_id::TEXT = NEW.college_id::TEXT 
           AND lower(email) = lower(NEW.email)
+          AND status = 'ACTIVE'
+          AND (TG_OP = 'INSERT' OR id != NEW.id)
     ) INTO is_existing_student;
 
-    -- If this is an update to an existing student, allow without incrementing seat count
+    -- If already an active seat holder, allow update without error
     IF is_existing_student THEN
         RETURN NEW;
     END IF;
@@ -425,6 +499,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_enforce_college_seat_cap ON public.college_students;
+CREATE TRIGGER trg_enforce_college_seat_cap
+BEFORE INSERT OR UPDATE OF status, college_id ON public.college_students
+FOR EACH ROW
+EXECUTE FUNCTION public.check_college_seat_cap();
+
 -- --------------------------------------------------------------------
 -- 8. [ISSUE 11] SECURE POST-SUBMISSION SOLUTION REVIEW RPC
 -- --------------------------------------------------------------------
@@ -442,7 +522,7 @@ DECLARE
     v_section RECORD;
     v_q_id TEXT;
     v_q RECORD;
-    v_questions JSONB := '{}'::jsonb;
+    v_questions JSONB := '[]'::jsonb;
 BEGIN
     SELECT * INTO v_attempt 
     FROM public.student_exam_attempts 
@@ -461,9 +541,9 @@ BEGIN
     IF NOT (
         public.is_admin() OR
         public.is_tpo_for_college(v_attempt.college_id::TEXT) OR
-        v_attempt.student_id::TEXT = auth.uid()::TEXT OR
-        v_attempt.student_id::TEXT = lower(auth.jwt()->>'email') OR
-        v_attempt.student_email = lower(auth.jwt()->>'email')
+        v_attempt.student_id::TEXT = COALESCE(auth.uid()::TEXT, '') OR
+        v_attempt.student_id::TEXT = lower(COALESCE(auth.jwt()->>'email', '')) OR
+        lower(COALESCE(v_attempt.student_email, '')) = lower(COALESCE(auth.jwt()->>'email', ''))
     ) THEN
         RAISE EXCEPTION 'Access denied to this attempt review';
     END IF;
@@ -489,19 +569,15 @@ BEGIN
                     WHERE id::TEXT = v_q_id;
 
                     IF v_q IS NOT NULL THEN
-                        v_questions := jsonb_set(
-                            v_questions,
-                            ARRAY[v_q_id],
-                            jsonb_build_object(
-                                'id', v_q.id,
-                                'statement', v_q.statement,
-                                'options', v_q.options,
-                                'difficulty', v_q.difficulty,
-                                'topic_id', v_q.topic_id,
-                                'question_number', v_q.question_number,
-                                'correct_answer', v_q.correct_answer,
-                                'explanation', v_q.explanation
-                            )
+                        v_questions := v_questions || jsonb_build_object(
+                            'id', v_q.id,
+                            'statement', v_q.statement,
+                            'options', v_q.options,
+                            'difficulty', v_q.difficulty,
+                            'topic_id', v_q.topic_id,
+                            'question_number', v_q.question_number,
+                            'correct_answer', v_q.correct_answer,
+                            'explanation', v_q.explanation
                         );
                     END IF;
                 END LOOP;
@@ -511,11 +587,20 @@ BEGIN
 
     RETURN jsonb_build_object(
         'attempt_id', p_attempt_id,
+        'mock_exam_id', v_attempt.mock_exam_id,
+        'student_id', v_attempt.student_id,
+        'college_id', v_attempt.college_id,
         'status', v_attempt.status,
+        'started_at', v_attempt.started_at,
+        'submitted_at', v_attempt.submitted_at,
+        'time_spent_seconds', v_attempt.time_spent_seconds,
         'total_score', v_attempt.total_score,
         'max_possible_score', v_attempt.max_possible_score,
         'percentage', v_attempt.percentage,
         'passed', v_attempt.passed,
+        'tab_switch_count', v_attempt.tab_switch_count,
+        'proctor_events', v_attempt.proctor_events,
+        'responses', v_attempt.responses,
         'student_responses', v_attempt.responses,
         'questions', v_questions
     );
