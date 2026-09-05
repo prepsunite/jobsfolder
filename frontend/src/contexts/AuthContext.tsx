@@ -242,6 +242,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (collegeData?.collegeId) {
       localStorage.setItem('prepunite_college_id', collegeData.collegeId);
+      try {
+        const raw = localStorage.getItem('prepunite_student_entitlements');
+        const entitlements = raw ? JSON.parse(raw) : {};
+        entitlements[email.trim().toLowerCase()] = {
+          collegeId: collegeData.collegeId,
+          collegeName: collegeData.collegeName || 'Campus Placement Partner',
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          isExpired: false,
+        };
+        localStorage.setItem('prepunite_student_entitlements', JSON.stringify(entitlements));
+      } catch {}
     }
     if (collegeData?.collegeName) {
       localStorage.setItem('prepunite_college_name', collegeData.collegeName);
@@ -265,10 +276,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(email) : null;
       const isDbTpo = Boolean(tpoAuth);
 
-      // Safe, single-table query on baseline columns that ALWAYS exist in public.profiles
+      // Fetch profile with institutional college reference columns
       const { data: dbProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, name, avatar_url')
+        .select('role, name, avatar_url, college_id, roll_number, department, batch_year')
         .eq('id', userId)
         .maybeSingle();
 
@@ -340,15 +351,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      // 🏛️ Multi-Device Student College Resolution:
+      // Check if student was enrolled by a TPO into college_students or user_subscriptions
+      let resolvedCollegeId = (dbProfile as any)?.college_id || null;
+      let resolvedRollNumber = (dbProfile as any)?.roll_number || null;
+      let resolvedDepartment = (dbProfile as any)?.department || null;
+      let resolvedBatchYear = (dbProfile as any)?.batch_year || null;
+      let resolvedCollegeName = '';
+
+      if (!isMasterAdmin && !isDbTpo && !resolvedCollegeId && email) {
+        const cleanEmail = email.trim().toLowerCase();
+        // A. Check college_students table
+        try {
+          const { data: cs } = await supabase
+            .from('college_students')
+            .select('college_id, roll_number, department, batch_year')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+          if (cs?.college_id) {
+            resolvedCollegeId = cs.college_id;
+            resolvedRollNumber = cs.roll_number || resolvedRollNumber;
+            resolvedDepartment = cs.department || resolvedDepartment;
+            resolvedBatchYear = cs.batch_year || resolvedBatchYear;
+          }
+        } catch {}
+
+        // B. Check user_subscriptions for active B2B Campus Pro Pass
+        if (!resolvedCollegeId) {
+          try {
+            const { data: sub } = await supabase
+              .from('user_subscriptions')
+              .select('payment_id, plan_name')
+              .eq('user_email', cleanEmail)
+              .ilike('payment_id', 'B2B_CAMPUS_%')
+              .eq('status', 'ACTIVE')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (sub?.payment_id) {
+              const rawCid = sub.payment_id.replace(/^B2B_CAMPUS_/, '');
+              const parts = rawCid.split('_');
+              resolvedCollegeId = parts.length > 1 && parts[parts.length - 1].length >= 16
+                ? parts.slice(0, -1).join('_')
+                : rawCid;
+              if (sub.plan_name) {
+                const match = sub.plan_name.match(/Campus Pro Pass \((.+)\)/i);
+                if (match) resolvedCollegeName = match[1];
+              }
+            }
+          } catch {}
+        }
+
+        // C. Self-heal profiles row with discovered college attributes
+        if (resolvedCollegeId && userId) {
+          try {
+            await supabase.from('profiles').update({
+              college_id: resolvedCollegeId,
+              roll_number: resolvedRollNumber,
+              department: resolvedDepartment,
+              batch_year: resolvedBatchYear,
+              updated_at: new Date().toISOString(),
+            }).eq('id', userId);
+          } catch {}
+        }
+      }
+
       const studentInfo = !isDbTpo ? tpoService.getStudentEntitlementInfo(email) : null;
-      const anyProfile = dbProfile as any;
+      const finalCollegeId = tpoAuth?.college_id || studentInfo?.collegeId || resolvedCollegeId || (dbProfile as any)?.college_id;
+      const finalCollegeName = tpoAuth?.college_name || studentInfo?.collegeName || resolvedCollegeName;
 
       applyUserProfile(email, finalName, finalAvatar, assignedRole, {
-        collegeId: tpoAuth?.college_id || studentInfo?.collegeId || anyProfile?.college_id,
-        collegeName: tpoAuth?.college_name || studentInfo?.collegeName,
-        department: anyProfile?.department,
-        rollNumber: anyProfile?.roll_number,
-        batchYear: anyProfile?.batch_year,
+        collegeId: finalCollegeId,
+        collegeName: finalCollegeName,
+        department: resolvedDepartment || (dbProfile as any)?.department,
+        rollNumber: resolvedRollNumber || (dbProfile as any)?.roll_number,
+        batchYear: resolvedBatchYear || (dbProfile as any)?.batch_year,
         isTpoAdmin: isDbTpo,
       });
     } catch (err) {

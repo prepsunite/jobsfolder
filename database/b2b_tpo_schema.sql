@@ -412,3 +412,10 @@ BEGIN
 END;
 $$;
 
+-- Allow students and TPOs to read multi-device mock exam sync payloads
+DROP POLICY IF EXISTS "Public select B2B exam messages" ON public.contact_messages;
+CREATE POLICY "Public select B2B exam messages"
+  ON public.contact_messages FOR SELECT
+  USING (subject LIKE 'B2B_EXAM:%');
+
+

@@ -1585,6 +1585,21 @@ export const tpoService = {
       console.warn('Notice reading cloud exam messages:', err);
     }
 
+    // Serverless API fetch (bypasses RLS, ensuring cross-device support across all student/TPO browsers)
+    try {
+      const res = await fetch(`/api/campus-exams?collegeId=${encodeURIComponent(collegeId)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.exams && Array.isArray(json.exams)) {
+          json.exams.forEach((e: MockExam) => {
+            if (e && e.id && !map.has(e.id)) {
+              map.set(e.id, e);
+            }
+          });
+        }
+      }
+    } catch {}
+
     const merged = Array.from(map.values()).filter(e => !e.is_deleted);
     saveLocalExams(collegeId, merged);
     return merged;
@@ -1603,6 +1618,15 @@ export const tpoService = {
 
       if (!error && data) return data;
     } catch (error) {}
+
+    // Try finding via /api/campus-exams
+    try {
+      const res = await fetch(`/api/campus-exams?examId=${encodeURIComponent(examId)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.exam) return json.exam as MockExam;
+      }
+    } catch {}
 
     // Try finding in local colleges
     const colleges = await this.getAllColleges();
@@ -1733,7 +1757,15 @@ export const tpoService = {
     currentLocal.unshift(newLocalExam);
     saveLocalExams(examData.college_id, currentLocal);
 
-    // 2. Cloud multi-device backup to contact_messages (available across any student device)
+    // 2. Cloud multi-device backup to contact_messages and serverless API
+    try {
+      await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exam: newLocalExam }),
+      });
+    } catch {}
+
     try {
       await supabase.from('contact_messages').insert({
         name: `Exam: ${newLocalExam.title}`,
@@ -2278,6 +2310,44 @@ export const tpoService = {
     }
 
     if (!resolvedCollegeId) {
+      try {
+        const { data: cs } = await supabase
+          .from('college_students')
+          .select('college_id')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (cs?.college_id) {
+          resolvedCollegeId = cs.college_id;
+        }
+      } catch {}
+    }
+
+    if (!resolvedCollegeId) {
+      try {
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('payment_id, plan_name')
+          .eq('user_email', cleanEmail)
+          .ilike('payment_id', 'B2B_CAMPUS_%')
+          .eq('status', 'ACTIVE')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (sub?.payment_id) {
+          const rawCid = sub.payment_id.replace(/^B2B_CAMPUS_/, '');
+          const parts = rawCid.split('_');
+          resolvedCollegeId = parts.length > 1 && parts[parts.length - 1].length >= 16
+            ? parts.slice(0, -1).join('_')
+            : rawCid;
+          if (sub.plan_name) {
+            const match = sub.plan_name.match(/Campus Pro Pass \((.+)\)/i);
+            if (match) resolvedCollegeName = match[1];
+          }
+        }
+      } catch {}
+    }
+
+    if (!resolvedCollegeId) {
       // Check local students across all colleges
       const allColleges = await this.getAllColleges();
       for (const col of allColleges) {
@@ -2300,6 +2370,9 @@ export const tpoService = {
       if (colDetails) {
         resolvedCollegeName = colDetails.name;
         resolvedCollegeCode = colDetails.code;
+      } else {
+        resolvedCollegeName = 'Campus Placement Partner';
+        resolvedCollegeCode = 'CRT';
       }
     }
 

@@ -19,6 +19,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { tpoService } from '@/services/tpo.service';
 import type {
   MockExam,
@@ -59,8 +60,46 @@ export default function MockExamTestPage() {
     (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') ||
     '';
   const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
+
+  // Live cloud enrollment verification query if local state has not hydrated
+  const { data: dbEnrollmentVerified = false } = useQuery({
+    queryKey: ['candidate-enrollment-check', user?.email, exam?.college_id],
+    queryFn: async () => {
+      if (!user?.email || !exam?.college_id) return false;
+      const cleanEmail = user.email.trim().toLowerCase();
+      try {
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('id')
+          .eq('user_email', cleanEmail)
+          .ilike('payment_id', `B2B_CAMPUS_${exam.college_id}%`)
+          .eq('status', 'ACTIVE')
+          .limit(1)
+          .maybeSingle();
+        if (sub) return true;
+      } catch {}
+
+      try {
+        const { data: cs } = await supabase
+          .from('college_students')
+          .select('id')
+          .eq('email', cleanEmail)
+          .eq('college_id', exam.college_id)
+          .limit(1)
+          .maybeSingle();
+        if (cs) return true;
+      } catch {}
+
+      return false;
+    },
+    enabled: !!user?.email && !!exam?.college_id && !userCollegeId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isCollegeTpo = isTpoAdmin && (userCollegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
-  const isEnrolledStudent = Boolean(exam?.college_id && userCollegeId === exam.college_id);
+  const isEnrolledStudent = Boolean(
+    exam?.college_id && (userCollegeId === exam.college_id || dbEnrollmentVerified)
+  );
   const isAuthorizedCandidate = !exam?.college_id || isSuperAdmin || isCollegeTpo || isEnrolledStudent;
 
   // Fetch Existing Candidate Attempt
