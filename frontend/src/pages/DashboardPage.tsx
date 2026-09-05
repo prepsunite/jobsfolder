@@ -76,13 +76,13 @@ export default function DashboardPage() {
         }
       } catch {}
 
-      // Fallback for institutional college student
-      if (tpoService.isStudentEntitled(user.email)) {
-        const info = tpoService.getStudentEntitlementInfo(user.email);
+      // Live verification for institutional college student
+      const liveInfo = await tpoService.verifyStudentEntitlementLive(user.email);
+      if (liveInfo?.isEntitled) {
         return {
           isPro: true,
-          planName: info?.collegeName ? `Campus Pro Pass (${info.collegeName})` : 'Campus Pro Pass',
-          expiresAt: info?.expiresAt,
+          planName: liveInfo.collegeName ? `Campus Pro Pass (${liveInfo.collegeName})` : 'Campus Pro Pass',
+          expiresAt: liveInfo.expiresAt,
         };
       }
 

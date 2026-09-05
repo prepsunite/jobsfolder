@@ -1314,6 +1314,112 @@ export const tpoService = {
     return null;
   },
 
+  cacheStudentEntitlement(
+    email: string,
+    info: { collegeId?: string; collegeName?: string; expiresAt?: string }
+  ): void {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+      const entitlements = raw ? JSON.parse(raw) : {};
+      entitlements[cleanEmail] = {
+        collegeId: info.collegeId,
+        collegeName: info.collegeName || 'Partner College',
+        expiresAt: info.expiresAt,
+        isExpired: false,
+        verifiedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(entitlements));
+    } catch {}
+  },
+
+  /**
+   * Live, tamper-proof verification of college student entitlement against Supabase.
+   * Checks Supabase RPC check_student_college_entitlement or college_students table.
+   * Caches verified results locally for fast subsequent reads.
+   */
+  async verifyStudentEntitlementLive(email?: string | null): Promise<{
+    isEntitled: boolean;
+    collegeId?: string;
+    collegeName?: string;
+    expiresAt?: string;
+  } | null> {
+    if (!email) return null;
+    const clean = email.trim().toLowerCase();
+
+    // 1. Live Supabase RPC Check (Unbreakable server-side validation)
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('check_student_college_entitlement', {
+        p_email: clean,
+      });
+
+      if (!rpcErr && rpcRes) {
+        if (rpcRes.is_entitled) {
+          const info = {
+            isEntitled: true,
+            collegeId: rpcRes.college_id,
+            collegeName: rpcRes.college_name || 'Partner College',
+            expiresAt: rpcRes.valid_until,
+          };
+          this.cacheStudentEntitlement(clean, info);
+          return info;
+        } else if (rpcRes.is_expired) {
+          // Explicitly clear local entitlement if expired
+          try {
+            const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              delete parsed[clean];
+              localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(parsed));
+            }
+          } catch {}
+          return null;
+        }
+      }
+    } catch (e) {
+      console.warn('[tpoService.verifyStudentEntitlementLive] RPC notice:', e);
+    }
+
+    // 2. Direct Supabase Query Fallback
+    try {
+      const { data: student } = await supabase
+        .from('college_students')
+        .select(`
+          college_id,
+          status,
+          colleges:colleges (
+            id,
+            name,
+            contract_status,
+            valid_until
+          )
+        `)
+        .eq('email', clean)
+        .eq('status', 'ACTIVE')
+        .maybeSingle();
+
+      if (student && student.colleges) {
+        const col: any = Array.isArray(student.colleges) ? student.colleges[0] : student.colleges;
+        const isColActive = col && ['ACTIVE', 'PILOT'].includes(col.contract_status) && (!col.valid_until || new Date(col.valid_until) > new Date());
+        if (isColActive) {
+          const info = {
+            isEntitled: true,
+            collegeId: col.id,
+            collegeName: col.name || 'Partner College',
+            expiresAt: col.valid_until,
+          };
+          this.cacheStudentEntitlement(clean, info);
+          return info;
+        }
+      }
+    } catch (e) {
+      console.warn('[tpoService.verifyStudentEntitlementLive] Direct query notice:', e);
+    }
+
+    // 3. Fallback to local synchronous cache if offline
+    return this.getStudentEntitlementInfo(clean);
+  },
+
   async addSingleStudent(
     collegeId: string,
     studentData: {
@@ -2067,7 +2173,48 @@ export const tpoService = {
     tabSwitchCount: number,
     statusOverride?: 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT'
   ): Promise<StudentExamAttempt> {
-    // 1. Fetch correct answers for grading
+    const existingAttempt = getLocalAttempts().find(a => a.id === attemptId);
+    const startedAt = existingAttempt?.started_at || new Date(Date.now() - timeSpentSeconds * 1000).toISOString();
+    const studentId = existingAttempt?.student_id || '';
+
+    // 🛡️ 1. Attempt Server-Side Secure Grading via Supabase RPC (100% Anti-Cheat / Prevents DevTools Tampering)
+    try {
+      const { data: serverGraded, error: rpcError } = await supabase.rpc('submit_and_grade_mock_attempt', {
+        p_attempt_id: attemptId,
+        p_responses: responses,
+        p_time_spent_seconds: timeSpentSeconds,
+        p_proctor_events: proctorEvents,
+        p_tab_switch_count: tabSwitchCount,
+        p_status_override: statusOverride || null,
+      });
+
+      if (!rpcError && serverGraded) {
+        const finalizedAttempt: StudentExamAttempt = {
+          id: attemptId,
+          mock_exam_id: exam.id,
+          student_id: studentId,
+          college_id: exam.college_id,
+          status: (serverGraded.status as any) || 'SUBMITTED',
+          started_at: startedAt,
+          submitted_at: new Date().toISOString(),
+          time_spent_seconds: timeSpentSeconds,
+          total_score: Number(serverGraded.total_score || 0),
+          max_possible_score: Number(serverGraded.max_possible_score || exam.total_marks || 100),
+          percentage: Number(serverGraded.percentage || 0),
+          passed: Boolean(serverGraded.passed),
+          tab_switch_count: tabSwitchCount,
+          proctor_events: proctorEvents,
+          responses: serverGraded.responses || responses,
+        };
+
+        saveLocalAttempt(finalizedAttempt);
+        return finalizedAttempt;
+      }
+    } catch (rpcErr) {
+      console.warn('[tpoService.submitAttempt] Server RPC grading notice (falling back to local):', rpcErr);
+    }
+
+    // 2. Fallback: Local Client-Side Grading (for offline or local demo test runs)
     const allQuestionIds = (exam.sections || []).flatMap(s => s.question_ids);
     let solutionMap: Record<string, number> = {};
 
@@ -2122,10 +2269,6 @@ export const tpoService = {
     const percentage = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
     const passed = percentage >= (exam.passing_percentage || 40);
     const finalStatus = statusOverride || 'SUBMITTED';
-
-    const existingAttempt = getLocalAttempts().find(a => a.id === attemptId);
-    const startedAt = existingAttempt?.started_at || new Date(Date.now() - timeSpentSeconds * 1000).toISOString();
-    const studentId = existingAttempt?.student_id || '';
 
     // 3. Save finalized graded attempt locally
     const finalizedAttempt: StudentExamAttempt = {

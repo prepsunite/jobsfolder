@@ -61,8 +61,9 @@ export class SupabasePaymentService {
 
       if (!subError && activeSub) return true;
 
-      // 2. Check institutional college student entitlement (Campus Pro Pass fallback)
-      if (tpoService.isStudentEntitled(normalizedEmail)) {
+      // 2. Check institutional college student entitlement (Campus Pro Pass live check)
+      const liveEntitlement = await tpoService.verifyStudentEntitlementLive(normalizedEmail);
+      if (liveEntitlement?.isEntitled) {
         return true;
       }
 
@@ -83,7 +84,8 @@ export class SupabasePaymentService {
     } catch (err) {
       console.warn('[SupabasePaymentService.verifyEntitlementOnSupabase] Entitlement check exception:', err);
       // Institutional student fallback even on database/network error
-      if (tpoService.isStudentEntitled(normalizedEmail)) {
+      const liveEntitlement = await tpoService.verifyStudentEntitlementLive(normalizedEmail);
+      if (liveEntitlement?.isEntitled) {
         return true;
       }
       return false;
