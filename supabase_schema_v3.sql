@@ -391,7 +391,7 @@ CREATE POLICY "TPO coordinator manage college student subscriptions"
         SELECT 1 FROM public.tpo_authorizations ta
         WHERE lower(ta.email) = lower(auth.jwt()->>'email')
           AND ta.status = 'ACTIVE'
-          AND public.user_subscriptions.payment_id LIKE 'B2B_CAMPUS_' || ta.college_id || '%'
+          AND public.user_subscriptions.payment_id LIKE 'B2B_CAMPUS_' || ta.college_id::TEXT || '%'
       )
     )
   );
