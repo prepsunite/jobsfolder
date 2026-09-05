@@ -83,7 +83,6 @@ CREATE INDEX IF NOT EXISTS idx_college_students_roll ON public.college_students(
 
 -- 2.4 User Subscriptions Table
 ALTER TABLE public.user_subscriptions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
-ALTER TABLE public.user_subscriptions ALTER COLUMN payment_id TYPE VARCHAR(255);
 
 -- 2.5 User Paper Purchases Table
 ALTER TABLE public.user_paper_purchases ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
