@@ -549,42 +549,66 @@ export const tpoService = {
       saveLocalColleges(local);
     }
 
-    try {
-      const updates: any = {
-        valid_until: validUntilIso,
-        updated_at: new Date().toISOString(),
-      };
-      if (contractStatus) {
-        updates.contract_status = contractStatus;
-      }
-      await supabase
-        .from('colleges')
-        .update(updates)
-        .or(`id.eq.${collegeId},code.eq.${collegeId}`);
-    } catch (e) {
-      console.warn('Notice updating college validity in Supabase:', e);
+    const effectiveCol = updatedCol || (await this.getCollegeDetails(collegeId));
+    if (effectiveCol) {
+      targetCollegeName = effectiveCol.name;
     }
 
+    // 1. Direct UPSERT into public.colleges table so Postgres RPCs immediately see the new validity
     try {
-      if (updatedCol) {
-        const { data: colMsg } = await supabase
-          .from('contact_messages')
-          .select('id, message')
-          .eq('subject', `B2B_COLLEGE:${collegeId}`)
-          .maybeSingle();
-
-        if (colMsg) {
-          const parsed = JSON.parse(colMsg.message);
-          parsed.valid_until = validUntilIso;
-          if (contractStatus) parsed.contract_status = contractStatus;
-          parsed.updated_at = new Date().toISOString();
-          await supabase
-            .from('contact_messages')
-            .update({ message: JSON.stringify(parsed) })
-            .eq('id', colMsg.id);
-        }
+      if (effectiveCol) {
+        await supabase
+          .from('colleges')
+          .upsert([{
+            id: effectiveCol.id,
+            name: effectiveCol.name,
+            code: effectiveCol.code,
+            slug: effectiveCol.slug || effectiveCol.id.replace(/^col-/, ''),
+            contract_status: contractStatus || effectiveCol.contract_status || 'ACTIVE',
+            max_licenses: effectiveCol.max_licenses || 1500,
+            valid_until: validUntilIso,
+            updated_at: new Date().toISOString(),
+          }], { onConflict: 'id' });
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Notice upserting college validity in Supabase:', e);
+    }
+
+    // 2. Cloud resilience: Update contact_messages B2B_COLLEGE record
+    try {
+      const { data: colMsg } = await supabase
+        .from('contact_messages')
+        .select('id, message')
+        .eq('subject', `B2B_COLLEGE:${collegeId}`)
+        .maybeSingle();
+
+      if (colMsg) {
+        const parsed = JSON.parse(colMsg.message);
+        parsed.valid_until = validUntilIso;
+        if (contractStatus) parsed.contract_status = contractStatus;
+        parsed.updated_at = new Date().toISOString();
+        targetCollegeName = parsed.name || targetCollegeName;
+        await supabase
+          .from('contact_messages')
+          .update({ message: JSON.stringify(parsed) })
+          .eq('id', colMsg.id);
+      } else if (effectiveCol) {
+        await supabase.from('contact_messages').insert({
+          name: `College: ${effectiveCol.name}`,
+          email: 'admin@prepunite.com',
+          subject: `B2B_COLLEGE:${collegeId}`,
+          message: JSON.stringify({
+            ...effectiveCol,
+            valid_until: validUntilIso,
+            contract_status: contractStatus || effectiveCol.contract_status || 'ACTIVE',
+            updated_at: new Date().toISOString(),
+          }),
+          status: 'ACTIVE',
+        });
+      }
+    } catch (e) {
+      console.warn('Notice updating contact_messages validity:', e);
+    }
 
     // Synchronize all enrolled students' subscriptions & entitlements
     if (syncStudents) {
@@ -668,14 +692,22 @@ export const tpoService = {
     try {
       const { data } = await supabase
         .from('colleges')
-        .insert([{
-          ...college,
+        .upsert([{
+          id: newCollege.id,
+          name: newCollege.name,
+          code: newCollege.code,
           slug,
-        }])
+          city: newCollege.city,
+          state: newCollege.state,
+          contract_status: newCollege.contract_status,
+          max_licenses: newCollege.max_licenses,
+          valid_until: newCollege.valid_until,
+          created_at: newCollege.created_at,
+          updated_at: new Date().toISOString(),
+        }], { onConflict: 'id' })
         .select()
-        .single();
+        .maybeSingle();
       if (data) {
-        // Replace temp ID with Supabase UUID if available
         newCollege.id = data.id;
         local[0].id = data.id;
         saveLocalColleges(local);
@@ -1276,7 +1308,14 @@ export const tpoService = {
 
   async provisionStudentEntitlement(college: College, email: string, name?: string): Promise<boolean> {
     const cleanEmail = email.trim().toLowerCase();
-    const validUntil = college.valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    let validUntil: string = college.valid_until || '';
+    if (!validUntil) {
+      const freshCol = await this.getCollegeDetails(college.id);
+      validUntil = freshCol?.valid_until || '';
+    }
+    if (!validUntil) {
+      validUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    }
     const planName = `Campus Pro Pass (${college.name})`;
     const sanitizedEmail = cleanEmail.replace(/[^a-z0-9]/g, '').slice(0, 48);
     const paymentId = `B2B_CAMPUS_${college.id}_${sanitizedEmail}`;

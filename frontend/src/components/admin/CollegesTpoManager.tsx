@@ -207,13 +207,13 @@ export default function CollegesTpoManager() {
   };
 
   const handleQuickAddDays = (days: number) => {
-    const base = newValidityDate ? new Date(newValidityDate) : new Date();
+    const base = new Date();
     base.setDate(base.getDate() + days);
     setNewValidityDate(base.toISOString().split('T')[0]);
   };
 
   const handleQuickAddMonths = (months: number) => {
-    const base = newValidityDate ? new Date(newValidityDate) : new Date();
+    const base = new Date();
     base.setMonth(base.getMonth() + months);
     setNewValidityDate(base.toISOString().split('T')[0]);
   };
