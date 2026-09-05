@@ -1586,7 +1586,7 @@ export const tpoService = {
     try {
       const { data } = await supabase
         .from('student_exam_attempts')
-        .select('id, student_id, student_email, total_score, percentage, status, college_id')
+        .select('id, student_id, total_score, percentage, status, college_id')
         .eq('college_id', collegeId)
         .eq('status', 'SUBMITTED');
       if (data && data.length > 0) attempts = data;
@@ -1638,7 +1638,10 @@ export const tpoService = {
     students.forEach(s => {
       const dept = (s.department || 'GENERAL').toUpperCase();
       if (s.id) studentDeptMap.set(s.id, dept);
-      if (s.email) studentDeptMap.set(s.email.toLowerCase(), dept);
+      if (s.email) {
+        studentDeptMap.set(s.email.toLowerCase(), dept);
+        studentDeptMap.set(s.email, dept);
+      }
     });
 
     // Group students and attempts by department to calculate true per-department averages
@@ -1650,11 +1653,11 @@ export const tpoService = {
     });
 
     allAttempts.forEach(a => {
-      const studentEmail = (a.student?.email || a.student_email || '').toLowerCase();
-      const studentId = a.student_id;
+      const rawId = (a.student_id || a.student?.email || '').trim();
+      const lowerId = rawId.toLowerCase();
       const dept = (
-        (studentId && studentDeptMap.get(studentId)) ||
-        (studentEmail && studentDeptMap.get(studentEmail)) ||
+        studentDeptMap.get(rawId) ||
+        studentDeptMap.get(lowerId) ||
         a.student?.department ||
         'GENERAL'
       ).toUpperCase();
