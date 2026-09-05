@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { normalizeQuestionOptions } from '@/utils/questionParser';
 import type {
   College,
   CollegeStudent,
@@ -2337,13 +2338,18 @@ export const tpoService = {
   async getQuestionsForExam(questionIds: string[]): Promise<any[]> {
     if (!questionIds || questionIds.length === 0) return [];
 
+    const normalizeQuestion = (q: any) => ({
+      ...q,
+      options: normalizeQuestionOptions(q.options),
+    });
+
     // 🛡️ 1. Secure RPC (Strips correct_answer and explanation to prevent DevTools cheating)
     try {
       const { data, error } = await supabase.rpc('get_safe_mock_exam_questions', {
         p_question_ids: questionIds,
       });
 
-      if (!error && data && data.length > 0) return data;
+      if (!error && data && data.length > 0) return data.map(normalizeQuestion);
     } catch (rpcErr) {
       console.warn('RPC get_safe_mock_exam_questions notice, falling back to direct query:', rpcErr);
     }
@@ -2355,7 +2361,7 @@ export const tpoService = {
         .select('id, statement, options, difficulty, topic_id, question_number')
         .in('id', questionIds);
 
-      if (!error && data && data.length > 0) return data;
+      if (!error && data && data.length > 0) return data.map(normalizeQuestion);
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
@@ -2685,7 +2691,10 @@ export const tpoService = {
         saveLocalAttempt(attempt);
         return {
           attempt,
-          questions: questionsList,
+          questions: questionsList.map((q: any) => ({
+            ...q,
+            options: normalizeQuestionOptions(q.options),
+          })),
         };
       }
     } catch (rpcError) {
@@ -2718,7 +2727,12 @@ export const tpoService = {
         .from('topic_questions')
         .select('id, statement, options, correct_answer, explanation, difficulty, topic_id')
         .in('id', questionIds);
-      if (data) questions = data;
+      if (data) {
+        questions = data.map((q: any) => ({
+          ...q,
+          options: normalizeQuestionOptions(q.options),
+        }));
+      }
     } catch {}
 
     return {

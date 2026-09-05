@@ -21,6 +21,8 @@ import {
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { tpoService } from '@/services/tpo.service';
+import { normalizeQuestionOptions } from '@/utils/questionParser';
+import QuestionRichContent from '@/components/QuestionRichContent';
 import type {
   MockExam,
   MockExamSection,
@@ -203,7 +205,10 @@ export default function MockExamTestPage() {
       .then(questions => {
         const map: Record<string, any> = {};
         (questions || []).forEach(q => {
-          map[q.id] = q;
+          map[q.id] = {
+            ...q,
+            options: normalizeQuestionOptions(q.options),
+          };
         });
         setQuestionsMap(map);
       })
@@ -227,6 +232,7 @@ export default function MockExamTestPage() {
             updated[q.id] = {
               ...(updated[q.id] || {}),
               ...q,
+              options: normalizeQuestionOptions(q.options),
             };
           });
           return updated;
@@ -817,17 +823,17 @@ export default function MockExamTestPage() {
                 </div>
 
                 {/* Statement */}
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-line font-sans">
-                  {currentQuestion.statement}
+                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
+                  <QuestionRichContent content={currentQuestion.statement} />
                 </div>
 
                 {/* Options List */}
                 <div className="space-y-3 pt-2">
-                  {(currentQuestion.options || []).map((optText: string, oIdx: number) => {
+                  {normalizeQuestionOptions(currentQuestion.options).map((opt, oIdx: number) => {
                     const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
                     return (
                       <div
-                        key={oIdx}
+                        key={opt.key || oIdx}
                         onClick={() => handleSelectOption(oIdx)}
                         className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-xs ${
                           isSelected
@@ -842,9 +848,9 @@ export default function MockExamTestPage() {
                               : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
                           }`}
                         >
-                          {String.fromCharCode(65 + oIdx)}
+                          {opt.key || String.fromCharCode(65 + oIdx)}
                         </div>
-                        <span className="mt-0.5">{optText}</span>
+                        <QuestionRichContent content={opt.text} isOption={true} className="mt-0.5 leading-relaxed flex-1 font-sans" />
                       </div>
                     );
                   })}
@@ -1139,14 +1145,16 @@ export default function MockExamTestPage() {
                       )}
                     </div>
 
-                    <p className="font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line leading-relaxed font-sans">
-                      {q.statement}
-                    </p>
+                    <div className="font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
+                      <QuestionRichContent content={q.statement} />
+                    </div>
 
                     <div className="space-y-1.5 pt-1">
-                      {(q.options || []).map((optText: string, oIdx: number) => {
+                      {normalizeQuestionOptions(q.options).map((opt, oIdx: number) => {
                         const isStudentChoice = selectedOpt === oIdx;
-                        const isThisCorrect = correctOptIdx === oIdx;
+                        const isThisCorrect =
+                          correctOptIdx === oIdx ||
+                          (typeof rawCorrect === 'string' && rawCorrect.toUpperCase() === opt.key);
 
                         let optClasses = 'border-gray-200 dark:border-[#2e3035] bg-white dark:bg-[#202225] text-gray-700 dark:text-gray-300';
                         if (isThisCorrect) {
@@ -1157,12 +1165,12 @@ export default function MockExamTestPage() {
 
                         return (
                           <div
-                            key={oIdx}
+                            key={opt.key || oIdx}
                             className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${optClasses}`}
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold shrink-0">{String.fromCharCode(65 + oIdx)}.</span>
-                              <span>{optText}</span>
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="font-bold shrink-0">{opt.key || String.fromCharCode(65 + oIdx)}.</span>
+                              <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
                             </div>
                             <div className="flex items-center gap-1 text-[10px] font-bold uppercase shrink-0">
                               {isThisCorrect && <span className="text-emerald-600 dark:text-emerald-400">Correct Answer</span>}

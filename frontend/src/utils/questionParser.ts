@@ -210,6 +210,67 @@ export function generateQuestionFingerprint(item: Partial<TopicQuestionItem>, ra
   return computeSha256Hex(`RAW:${Date.now()}-${Math.random()}`);
 }
 
+export interface NormalizedQuestionOption {
+  key: string;
+  text: string;
+}
+
+/**
+ * Universal Question Options Normalizer
+ * Robustly parses and converts options in any format (JSON string, array of objects,
+ * array of strings, keyed dictionary object, or double-serialized JSON) into a guaranteed safe
+ * array of { key: string, text: string }. Never throws.
+ */
+export function normalizeQuestionOptions(raw: any): NormalizedQuestionOption[] {
+  if (!raw) return [];
+  let data = raw;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+      if (typeof data === 'string') {
+        data = JSON.parse(data);
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item, idx) => {
+      const defaultKey = String.fromCharCode(65 + idx);
+      if (item && typeof item === 'object') {
+        return {
+          key: String(item.key || item.id || defaultKey).toUpperCase(),
+          text: String(item.text ?? item.value ?? item.label ?? item.title ?? ''),
+        };
+      }
+      return {
+        key: defaultKey,
+        text: String(item ?? ''),
+      };
+    });
+  }
+
+  if (data && typeof data === 'object') {
+    return Object.entries(data).map(([k, v], idx) => {
+      const defaultKey = String.fromCharCode(65 + idx);
+      if (v && typeof v === 'object') {
+        const item: any = v;
+        return {
+          key: String(item.key || item.id || k || defaultKey).toUpperCase(),
+          text: String(item.text ?? item.value ?? item.label ?? ''),
+        };
+      }
+      return {
+        key: String(k || defaultKey).toUpperCase(),
+        text: String(v ?? ''),
+      };
+    });
+  }
+
+  return [];
+}
+
 /**
  * Robust parser for raw JSON input representing a topic question item.
  */
@@ -221,18 +282,12 @@ export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): P
   const statement = normalizeMathText(rawStatement);
 
   const keys = ['A', 'B', 'C', 'D', 'E', 'F'];
-  let parsedOptions: QuestionOption[] = [];
-  if (Array.isArray(raw.options)) {
-    parsedOptions = raw.options.map((opt: any, idx: number) => {
-      const optionId = (opt && typeof opt === 'object' && (opt.id || opt.key)) || keys[idx] || `${idx + 1}`;
-      const optionText = typeof opt === 'string' ? opt : (opt?.text || String(opt));
-      return {
-        id: String(optionId).toUpperCase(),
-        key: String(optionId).toUpperCase(),
-        text: normalizeMathText(optionText),
-      };
-    });
-  }
+  const normalizedOpts = normalizeQuestionOptions(raw.options);
+  const parsedOptions: QuestionOption[] = normalizedOpts.map((opt) => ({
+    id: opt.key,
+    key: opt.key,
+    text: normalizeMathText(opt.text),
+  }));
 
   let correctAnswer = 'A';
   if (typeof raw.correctOption === 'number') {
