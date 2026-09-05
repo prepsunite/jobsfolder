@@ -1836,11 +1836,19 @@ export const tpoService = {
 
     let attempts: any[] = [];
     try {
-      const { data } = await supabase
+      const examIds = exams.map(e => e.id);
+      let query = supabase
         .from('student_exam_attempts')
-        .select('id, student_id, total_score, percentage, status, college_id')
-        .eq('college_id', collegeId)
-        .eq('status', 'SUBMITTED');
+        .select('id, student_id, student_email, mock_exam_id, total_score, percentage, status, college_id')
+        .in('status', ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE']);
+
+      if (examIds.length > 0) {
+        query = query.or(`college_id.eq.${collegeId},mock_exam_id.in.(${examIds.map(id => `"${id}"`).join(',')})`);
+      } else {
+        query = query.eq('college_id', collegeId);
+      }
+
+      const { data } = await query;
       if (data && data.length > 0) attempts = data;
     } catch {}
 
@@ -1952,18 +1960,32 @@ export const tpoService = {
     local.forEach(e => map.set(e.id, e));
 
     try {
-      const { data, error } = await supabase
+      const { data: dbExams, error: examErr } = await supabase
         .from('mock_exams')
-        .select(`
-          *,
-          sections:mock_exam_sections(*)
-        `)
+        .select('*')
         .eq('college_id', collegeId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        data.forEach(e => map.set(e.id, e));
+      if (!examErr && dbExams && dbExams.length > 0) {
+        const examIds = dbExams.map(e => e.id);
+        const { data: dbSections } = await supabase
+          .from('mock_exam_sections')
+          .select('*')
+          .in('mock_exam_id', examIds)
+          .order('section_order', { ascending: true });
+
+        const secMap = new Map<string, MockExamSection[]>();
+        (dbSections || []).forEach(s => {
+          if (!secMap.has(s.mock_exam_id)) secMap.set(s.mock_exam_id, []);
+          secMap.get(s.mock_exam_id)!.push(s);
+        });
+
+        dbExams.forEach(e => {
+          const eSections = secMap.get(e.id) || e.sections || [];
+          eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
+          map.set(e.id, { ...e, sections: eSections });
+        });
       }
     } catch (error: any) {
       console.warn('Could not fetch mock exams from Supabase, using cloud sync fallback:', error?.message);
@@ -2017,16 +2039,25 @@ export const tpoService = {
 
   async getMockExamById(examId: string): Promise<MockExam | null> {
     try {
-      const { data, error } = await supabase
+      const { data: examData, error: examErr } = await supabase
         .from('mock_exams')
-        .select(`
-          *,
-          sections:mock_exam_sections(*)
-        `)
+        .select('*')
         .eq('id', examId)
-        .single();
+        .maybeSingle();
 
-      if (!error && data) return data;
+      if (!examErr && examData) {
+        const { data: secData } = await supabase
+          .from('mock_exam_sections')
+          .select('*')
+          .eq('mock_exam_id', examId)
+          .order('section_order', { ascending: true });
+
+        const sections = (secData || []).sort((a: any, b: any) => (a.section_order || 0) - (b.section_order || 0));
+        return {
+          ...examData,
+          sections: sections.length > 0 ? sections : examData.sections || [],
+        };
+      }
     } catch {}
 
     // Try finding via /api/campus-exams
@@ -2085,59 +2116,69 @@ export const tpoService = {
     }[]
   ): Promise<MockExam> {
     const examId = `exam-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
-    const sections: MockExamSection[] = await Promise.all(
-      sectionConfigs.map(async (sec, idx) => {
-        let questionIds: string[] = [];
+    const usedQuestionIds = new Set<string>();
+    const sections: MockExamSection[] = [];
 
-        try {
-          if (sec.topic_ids && sec.topic_ids.length > 0) {
-            const { data } = await supabase
-              .from('topic_questions')
-              .select('id')
-              .in('topic_id', sec.topic_ids)
-              .eq('is_deleted', false)
-              .limit(sec.question_count || 10);
-            if (data && data.length > 0) {
-              questionIds = data.map(q => q.id);
-            }
-          }
+    for (let idx = 0; idx < sectionConfigs.length; idx++) {
+      const sec = sectionConfigs[idx];
+      const neededCount = Math.max(1, sec.question_count || 10);
+      const questionIds: string[] = [];
 
-          if (questionIds.length < (sec.question_count || 10)) {
-            const needed = (sec.question_count || 10) - questionIds.length;
-            const { data: fallbackQ } = await supabase
-              .from('topic_questions')
-              .select('id')
-              .eq('is_deleted', false)
-              .limit(Math.max(needed * 2, 20));
-            if (fallbackQ && fallbackQ.length > 0) {
-              const existingSet = new Set(questionIds);
-              for (const f of fallbackQ) {
-                if (!existingSet.has(f.id)) {
-                  questionIds.push(f.id);
-                  existingSet.add(f.id);
-                  if (questionIds.length >= (sec.question_count || 10)) break;
-                }
+      try {
+        if (sec.topic_ids && sec.topic_ids.length > 0) {
+          const { data } = await supabase
+            .from('topic_questions')
+            .select('id')
+            .in('topic_id', sec.topic_ids)
+            .eq('is_deleted', false)
+            .limit(neededCount * 3);
+
+          if (data && data.length > 0) {
+            for (const q of data) {
+              if (!usedQuestionIds.has(q.id)) {
+                questionIds.push(q.id);
+                usedQuestionIds.add(q.id);
+                if (questionIds.length >= neededCount) break;
               }
             }
           }
-        } catch (e) {
-          console.warn('Notice pulling questions from Supabase for section:', sec.name, e);
         }
 
-        return {
-          id: `sec-${examId}-${idx + 1}`,
-          mock_exam_id: examId,
-          name: sec.name,
-          section_order: idx + 1,
-          duration_minutes: sec.duration_minutes || undefined,
-          marks_per_correct: sec.marks_per_correct,
-          negative_marking: sec.negative_marking,
-          question_ids: questionIds,
-          topic_ids: sec.topic_ids,
-          created_at: new Date().toISOString(),
-        };
-      })
-    );
+        if (questionIds.length < neededCount) {
+          const stillNeeded = neededCount - questionIds.length;
+          const { data: fallbackQ } = await supabase
+            .from('topic_questions')
+            .select('id')
+            .eq('is_deleted', false)
+            .limit(Math.max(stillNeeded * 4, 50));
+
+          if (fallbackQ && fallbackQ.length > 0) {
+            for (const f of fallbackQ) {
+              if (!usedQuestionIds.has(f.id)) {
+                questionIds.push(f.id);
+                usedQuestionIds.add(f.id);
+                if (questionIds.length >= neededCount) break;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Notice pulling questions from Supabase for section:', sec.name, e);
+      }
+
+      sections.push({
+        id: `sec-${examId}-${idx + 1}`,
+        mock_exam_id: examId,
+        name: sec.name,
+        section_order: idx + 1,
+        duration_minutes: sec.duration_minutes || undefined,
+        marks_per_correct: sec.marks_per_correct,
+        negative_marking: sec.negative_marking,
+        question_ids: questionIds,
+        topic_ids: sec.topic_ids,
+        created_at: new Date().toISOString(),
+      });
+    }
 
     const newLocalExam: MockExam = {
       id: examId,
@@ -2195,11 +2236,12 @@ export const tpoService = {
       console.warn('Notice backing up exam to cloud message:', syncErr);
     }
 
-    // 3. Attempt Supabase mock_exams table insert
+    // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
     try {
       const { data: newExam, error: examErr } = await supabase
         .from('mock_exams')
-        .insert([{
+        .upsert([{
+          id: examId,
           college_id: examData.college_id,
           title: examData.title,
           target_company: examData.target_company,
@@ -2224,9 +2266,20 @@ export const tpoService = {
         .single();
 
       if (!examErr && newExam) {
-        newLocalExam.id = newExam.id;
-        currentLocal[0].id = newExam.id;
-        saveLocalExams(examData.college_id, currentLocal);
+        if (sections.length > 0) {
+          const secRows = sections.map(s => ({
+            id: s.id,
+            mock_exam_id: examId,
+            name: s.name,
+            section_order: s.section_order,
+            duration_minutes: s.duration_minutes || null,
+            marks_per_correct: s.marks_per_correct,
+            negative_marking: s.negative_marking,
+            question_ids: s.question_ids,
+            topic_ids: s.topic_ids,
+          }));
+          await supabase.from('mock_exam_sections').upsert(secRows);
+        }
       }
     } catch (err: any) {
       console.warn('Notice inserting mock exam in Supabase:', err);
@@ -2261,13 +2314,12 @@ export const tpoService = {
 
   async getExamAttempts(examId: string): Promise<StudentExamAttempt[]> {
     let cloudAttempts: StudentExamAttempt[] = [];
+
+    // 1. Direct query from Supabase student_exam_attempts without invalid relationship joins
     try {
       const { data, error } = await supabase
         .from('student_exam_attempts')
-        .select(`
-          *,
-          student:profiles(name, email, roll_number, department)
-        `)
+        .select('*')
         .eq('mock_exam_id', examId)
         .order('total_score', { ascending: false });
 
@@ -2277,6 +2329,24 @@ export const tpoService = {
     } catch (error: any) {
       console.warn('Notice fetching exam attempts from Supabase:', error?.message);
     }
+
+    // 2. Query /api/campus-exams?action=attempts (bypasses RLS with verified TPO token and attaches profiles)
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch(`/api/campus-exams?action=attempts&examId=${encodeURIComponent(examId)}`, {
+        headers: authHeaders,
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.attempts && Array.isArray(json.attempts)) {
+          json.attempts.forEach((a: StudentExamAttempt) => {
+            if (a && a.id && !cloudAttempts.some(c => c.id === a.id)) {
+              cloudAttempts.push(a);
+            }
+          });
+        }
+      }
+    } catch {}
 
     const localAttempts = getLocalAttempts(examId);
     const map = new Map<string, StudentExamAttempt>();
@@ -2309,26 +2379,56 @@ export const tpoService = {
 
     const allAttempts = Array.from(map.values());
 
-    // Enrich any attempt missing student metadata
-    const enriched = allAttempts.map(att => {
-      if (!att.student || !att.student.name || att.student.name === 'Student') {
-        const studentId = att.student_id || '';
-        const namePart = studentId.includes('@') ? studentId.split('@')[0].replace(/[._-]/g, ' ') : studentId;
-        const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        return {
-          ...att,
-          student: {
-            name: att.student?.name && att.student.name !== 'Student' ? att.student.name : displayName,
-            email: att.student?.email || (studentId.includes('@') ? studentId : ''),
-            roll_number: att.student?.roll_number || '—',
-            department: att.student?.department || 'CSE',
-          },
-        };
-      }
-      return att;
-    });
+    // Batch enrich student profiles if not already present
+    const needEnrichment = allAttempts.filter(a => !a.student || !a.student.name || a.student.name === 'Student');
+    if (needEnrichment.length > 0) {
+      const studentEmails = Array.from(new Set(needEnrichment.map(a => a.student_email || a.student_id).filter(Boolean)));
+      const studentIds = Array.from(new Set(needEnrichment.map(a => a.student_id).filter(Boolean)));
 
-    return enriched.sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
+      const profMap = new Map<string, any>();
+      const csMap = new Map<string, any>();
+
+      try {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, name, email, roll_number, department')
+          .or(`id.in.(${studentIds.map(i => `"${i}"`).join(',')}),email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+        (profs || []).forEach(p => {
+          if (p.id) profMap.set(p.id.toLowerCase(), p);
+          if (p.email) profMap.set(p.email.toLowerCase(), p);
+        });
+      } catch {}
+
+      try {
+        const { data: cs } = await supabase
+          .from('college_students')
+          .select('email, user_id, roll_number, department, full_name')
+          .or(`email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+        (cs || []).forEach(c => {
+          if (c.user_id) csMap.set(c.user_id.toLowerCase(), c);
+          if (c.email) csMap.set(c.email.toLowerCase(), c);
+        });
+      } catch {}
+
+      needEnrichment.forEach(att => {
+        const sid = (att.student_id || '').toLowerCase();
+        const semail = (att.student_email || sid).toLowerCase();
+        const prof = profMap.get(sid) || profMap.get(semail);
+        const cs = csMap.get(sid) || csMap.get(semail);
+
+        const namePart = sid.includes('@') ? sid.split('@')[0].replace(/[._-]/g, ' ') : sid;
+        const fallbackName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : 'Candidate';
+
+        att.student = {
+          name: cs?.full_name || prof?.name || (att.student?.name && att.student.name !== 'Student' ? att.student.name : fallbackName),
+          email: att.student_email || prof?.email || (sid.includes('@') ? sid : ''),
+          roll_number: cs?.roll_number || prof?.roll_number || att.student?.roll_number || '—',
+          department: cs?.department || prof?.department || att.student?.department || 'CSE',
+        };
+      });
+    }
+
+    return allAttempts.sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
   },
 
   // ==========================================
@@ -2373,9 +2473,14 @@ export const tpoService = {
     studentId: string,
     collegeId: string
   ): Promise<StudentExamAttempt> {
+    const cleanStudentId = (studentId || '').trim().toLowerCase();
+    const studentEmail = cleanStudentId.includes('@') ? cleanStudentId : undefined;
+
     // 1. Check local attempts first
     const localAttempts = getLocalAttempts(mockExamId);
-    const existingLocal = localAttempts.find(a => a.student_id === studentId);
+    const existingLocal = localAttempts.find(
+      a => a.student_id === studentId || a.student_id?.toLowerCase() === cleanStudentId
+    );
     if (existingLocal && existingLocal.status === 'IN_PROGRESS') {
       return existingLocal;
     }
@@ -2386,7 +2491,7 @@ export const tpoService = {
         .from('student_exam_attempts')
         .select('*')
         .eq('mock_exam_id', mockExamId)
-        .eq('student_id', studentId)
+        .or(`student_id.eq.${studentId},student_id.eq.${cleanStudentId}`)
         .maybeSingle();
 
       if (existing) {
@@ -2395,11 +2500,12 @@ export const tpoService = {
       }
     } catch {}
 
-    const newAttemptId = `att-${mockExamId}-${studentId || 'anon'}-${Date.now().toString(36)}`;
+    const newAttemptId = `att-${mockExamId}-${cleanStudentId || 'anon'}-${Date.now().toString(36)}`;
     const newAttempt: StudentExamAttempt = {
       id: newAttemptId,
       mock_exam_id: mockExamId,
-      student_id: studentId || 'anonymous-candidate',
+      student_id: cleanStudentId || studentId || 'anonymous-candidate',
+      student_email: studentEmail,
       college_id: collegeId,
       status: 'IN_PROGRESS',
       started_at: new Date().toISOString(),
@@ -2420,12 +2526,15 @@ export const tpoService = {
       const { data } = await supabase
         .from('student_exam_attempts')
         .insert([{
+          id: newAttemptId,
           mock_exam_id: mockExamId,
-          student_id: studentId,
-          college_id: collegeId,
+          student_id: cleanStudentId || studentId,
+          student_email: studentEmail,
+          college_id: collegeId || 'unknown_college',
           status: 'IN_PROGRESS',
           started_at: newAttempt.started_at,
           time_spent_seconds: 0,
+          total_score: 0,
           tab_switch_count: 0,
           proctor_events: [],
           responses: {},
@@ -2436,7 +2545,9 @@ export const tpoService = {
         saveLocalAttempt(data);
         return data;
       }
-    } catch {}
+    } catch (insertErr) {
+      console.warn('Notice creating attempt in Supabase:', insertErr);
+    }
 
     return newAttempt;
   },
@@ -2648,6 +2759,31 @@ export const tpoService = {
       }
     } catch {}
 
+    // 5. Serverless API persistence guarantee (/api/campus-exams)
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          action: 'submit-attempt',
+          attempt: finalizedAttempt,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.attempt) {
+          saveLocalAttempt(json.attempt);
+          return json.attempt;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Notice saving attempt via /api/campus-exams:', apiErr);
+    }
+
     return finalizedAttempt;
   },
 
@@ -2761,7 +2897,7 @@ export const tpoService = {
         .from('student_exam_attempts')
         .select('*')
         .eq('mock_exam_id', mockExamId)
-        .or(`student_id.eq.${studentIdOrEmail},student_id.eq.${cleanId}`)
+        .or(`student_id.eq.${studentIdOrEmail},student_id.eq.${cleanId},student_email.eq.${cleanId}`)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();

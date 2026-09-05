@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -193,10 +193,15 @@ export default function MockExamTestPage() {
     }
   }, [existingAttempt, exam, testPhase]);
 
+  // Deterministically sort sections by section_order ASC
+  const sections = useMemo(() => {
+    return [...(exam?.sections || [])].sort((a, b) => (a.section_order || 0) - (b.section_order || 0));
+  }, [exam?.sections]);
+
   // 1. Fetch Questions for this Exam
   useEffect(() => {
-    if (!exam || !exam.sections) return;
-    const allQIds = exam.sections.flatMap(s => s.question_ids);
+    if (!exam || sections.length === 0) return;
+    const allQIds = sections.flatMap(s => s.question_ids);
     if (allQIds.length === 0) return;
 
     setQuestionsLoading(true);
@@ -218,7 +223,7 @@ export default function MockExamTestPage() {
       .finally(() => {
         setQuestionsLoading(false);
       });
-  }, [exam]);
+  }, [exam, sections]);
 
   // 1b. Fetch Full Solutions & Explanations post-submission (Zero answers during active test)
   useEffect(() => {
@@ -245,7 +250,7 @@ export default function MockExamTestPage() {
   }, [testPhase, attemptId]);
 
   // Current Section & its Questions
-  const currentSection: MockExamSection | undefined = exam?.sections?.[currentSectionIndex];
+  const currentSection: MockExamSection | undefined = sections[currentSectionIndex];
   const currentSectionQIds = currentSection?.question_ids || [];
   const currentQuestionId = currentSectionQIds[currentQuestionIndex];
   const currentQuestion = questionsMap[currentQuestionId];
@@ -561,7 +566,7 @@ export default function MockExamTestPage() {
       );
     }
 
-    const totalQuestions = (exam.sections || []).reduce((acc, s) => acc + s.question_ids.length, 0);
+    const totalQuestions = (sections || []).reduce((acc, s) => acc + s.question_ids.length, 0);
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0f1012] p-4 sm:p-8 flex items-center justify-center animate-fadeIn">
@@ -655,11 +660,11 @@ export default function MockExamTestPage() {
   // VIEW 2: ACTIVE TEST ENVIRONMENT
   // ==========================================
   if (testPhase === 'IN_PROGRESS') {
-    const isLastSection = currentSectionIndex === (exam?.sections?.length || 1) - 1;
+    const isLastSection = currentSectionIndex === (sections.length || 1) - 1;
     const isLastQuestionInSection = currentQuestionIndex === currentSectionQIds.length - 1;
 
-    const totalAnsweredCount = Object.values(responses).filter(r => r.selected_option !== null).length;
-    const allExamQIds = (exam?.sections || []).flatMap(s => s.question_ids);
+    const totalAnsweredCount = Object.values(responses).filter(r => r.selected_option !== null && r.selected_option !== undefined).length;
+    const allExamQIds = sections.flatMap(s => s.question_ids);
 
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-[#0f1012] text-gray-900 dark:text-white flex flex-col select-none">
@@ -718,14 +723,14 @@ export default function MockExamTestPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSubmitConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-[#383a40] text-xs font-bold text-gray-700 dark:text-gray-300"
+                  className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-[#383a40] text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer"
                 >
                   Back to Test
                 </button>
                 <button
                   onClick={() => handleFinalSubmit('SUBMITTED')}
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider"
+                  className="flex-1 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
                 >
                   {isSubmitting ? 'Grading...' : 'Yes, Submit'}
                 </button>
@@ -735,8 +740,8 @@ export default function MockExamTestPage() {
         )}
 
         {/* Top Sticky Test Bar */}
-        <div className="sticky top-0 z-20 bg-white dark:bg-[#151618] border-b border-gray-200 dark:border-[#25262a] px-4 py-3 flex items-center justify-between shadow-sm">
-          <div>
+        <div className="sticky top-0 z-20 bg-white dark:bg-[#151618] border-b border-gray-200 dark:border-[#25262a] px-4 py-3 flex items-center justify-between shadow-sm gap-2">
+          <div className="min-w-0 shrink-0">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#FD4A32]">
               {exam?.target_company}
             </span>
@@ -745,24 +750,39 @@ export default function MockExamTestPage() {
             </h2>
           </div>
 
-          {/* Section Selector Tabs */}
-          <div className="hidden md:flex items-center gap-2">
-            {(exam?.sections || []).map((sec, idx) => (
-              <button
-                key={sec.id || idx}
-                onClick={() => {
-                  setCurrentSectionIndex(idx);
-                  setCurrentQuestionIndex(0);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  currentSectionIndex === idx
-                    ? 'bg-[#FD4A32] text-white'
-                    : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200'
-                }`}
-              >
-                {sec.name} ({sec.question_ids.length})
-              </button>
-            ))}
+          {/* Responsive Section Selector Tabs (visible on mobile and desktop) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[48vw] sm:max-w-md md:max-w-xl py-1 no-scrollbar">
+            {sections.map((sec, idx) => {
+              const secAnswered = sec.question_ids.filter(
+                qId => responses[qId]?.selected_option !== null && responses[qId]?.selected_option !== undefined
+              ).length;
+              const isCurrent = currentSectionIndex === idx;
+              return (
+                <button
+                  key={sec.id || idx}
+                  onClick={() => {
+                    setCurrentSectionIndex(idx);
+                    setCurrentQuestionIndex(0);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                    isCurrent
+                      ? 'bg-[#FD4A32] text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#282a2e]'
+                  }`}
+                >
+                  <span className="truncate max-w-[110px] sm:max-w-[150px]">{sec.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isCurrent
+                        ? 'bg-white/25 text-white'
+                        : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    {secAnswered}/{sec.question_ids.length}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Timer & Finish Button */}
@@ -882,9 +902,18 @@ export default function MockExamTestPage() {
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
-                      disabled={currentQuestionIndex === 0}
-                      className="px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-[#383a40] disabled:opacity-40 text-xs font-bold text-gray-700 dark:text-gray-300"
+                      onClick={() => {
+                        if (currentQuestionIndex > 0) {
+                          setCurrentQuestionIndex(prev => prev - 1);
+                        } else if (currentSectionIndex > 0) {
+                          const prevSec = sections[currentSectionIndex - 1];
+                          const prevQCount = prevSec?.question_ids?.length || 1;
+                          setCurrentSectionIndex(prev => prev - 1);
+                          setCurrentQuestionIndex(Math.max(0, prevQCount - 1));
+                        }
+                      }}
+                      disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                      className="px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-[#383a40] disabled:opacity-40 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202225] transition-all cursor-pointer disabled:cursor-not-allowed"
                     >
                       <ArrowLeft className="w-3.5 h-3.5 inline mr-1" />
                       Prev
@@ -901,10 +930,24 @@ export default function MockExamTestPage() {
                           setShowSubmitConfirm(true);
                         }
                       }}
-                      className="px-4 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold transition-all flex items-center gap-1"
+                      className="px-4 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-sm"
                     >
-                      {isLastQuestionInSection && isLastSection ? 'Review & Finish' : 'Next'}
-                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      {isLastQuestionInSection && !isLastSection ? (
+                        <>
+                          Next Section: {sections[currentSectionIndex + 1]?.name || `Section ${currentSectionIndex + 2}`}
+                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </>
+                      ) : isLastQuestionInSection && isLastSection ? (
+                        <>
+                          Review & Submit
+                          <Send className="w-3.5 h-3.5 ml-1" />
+                        </>
+                      ) : (
+                        <>
+                          Next
+                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -922,8 +965,50 @@ export default function MockExamTestPage() {
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                 Question Status Palette
               </h4>
-              <p className="text-[11px] text-gray-400">{currentSection?.name}</p>
+              <p className="text-[11px] text-[#FD4A32] font-semibold">{currentSection?.name}</p>
             </div>
+
+            {/* Interactive Section Switcher within Palette */}
+            {sections.length > 1 && (
+              <div className="space-y-1.5 pb-3 border-b border-gray-100 dark:border-[#25262a]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Select Section
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  {sections.map((sec, idx) => {
+                    const secAns = sec.question_ids.filter(
+                      qId => responses[qId]?.selected_option !== null && responses[qId]?.selected_option !== undefined
+                    ).length;
+                    const isCur = currentSectionIndex === idx;
+                    return (
+                      <button
+                        key={sec.id || idx}
+                        onClick={() => {
+                          setCurrentSectionIndex(idx);
+                          setCurrentQuestionIndex(0);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                          isCur
+                            ? 'bg-[#FD4A32] text-white shadow-sm'
+                            : 'bg-gray-50 dark:bg-[#1c1e22] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#25272c]'
+                        }`}
+                      >
+                        <span className="truncate mr-2">{sec.name}</span>
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold shrink-0 ${
+                            isCur
+                              ? 'bg-white/25 text-white'
+                              : 'bg-gray-200 dark:bg-[#2d3035] text-gray-600 dark:text-gray-300'
+                          }`}
+                        >
+                          {secAns}/{sec.question_ids.length}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Legend */}
             <div className="grid grid-cols-2 gap-2 text-[10px] font-semibold text-gray-500">
@@ -1109,7 +1194,7 @@ export default function MockExamTestPage() {
                 </span>
               </div>
 
-              {exam?.sections?.flatMap(s => s.question_ids).map((qId, idx) => {
+              {sections.flatMap(s => s.question_ids).map((qId, idx) => {
                 const q = questionsMap[qId];
                 if (!q) return null;
                 const studentResp = (finalGradedAttempt?.responses || responses)[qId];

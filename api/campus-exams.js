@@ -100,9 +100,103 @@ export default async function handler(req, res) {
     }
   }
 
-  // GET: Fetch exams
+  // GET: Fetch exams or exam attempts
   if (req.method === 'GET') {
-    const { collegeId, examId } = req.query;
+    const { collegeId, examId, action } = req.query;
+
+    // Action: Get all attempts for an assessment with enriched student metadata
+    if (action === 'attempts') {
+      if (!examId) {
+        return res.status(400).json({ error: 'Missing examId query parameter for attempts' });
+      }
+
+      try {
+        let examCollegeId = collegeId;
+        if (!examCollegeId) {
+          const { data: ex } = await supabaseAdmin
+            .from('mock_exams')
+            .select('college_id')
+            .eq('id', examId)
+            .maybeSingle();
+          if (ex?.college_id) examCollegeId = ex.college_id;
+        }
+
+        const canAccess = isSuperAdmin || (examCollegeId ? await isTpoForCollege(examCollegeId) : false);
+        if (!canAccess) {
+          return res.status(403).json({ error: 'Forbidden: Caller is not authorized to inspect attempts for this assessment.' });
+        }
+
+        const { data: attempts, error: attErr } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .select('*')
+          .eq('mock_exam_id', examId)
+          .order('total_score', { ascending: false });
+
+        if (attErr) {
+          return res.status(500).json({ error: attErr.message });
+        }
+
+        const allAttempts = attempts || [];
+        if (allAttempts.length > 0) {
+          const studentEmails = Array.from(new Set(allAttempts.map(a => a.student_email || a.student_id).filter(Boolean)));
+          const studentIds = Array.from(new Set(allAttempts.map(a => a.student_id).filter(Boolean)));
+
+          let profiles = [];
+          try {
+            const { data: profs } = await supabaseAdmin
+              .from('profiles')
+              .select('id, name, email, roll_number, department')
+              .or(`id.in.(${studentIds.map(i => `"${i}"`).join(',')}),email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+            if (profs) profiles = profs;
+          } catch {}
+
+          let collegeStudents = [];
+          try {
+            const { data: cs } = await supabaseAdmin
+              .from('college_students')
+              .select('email, user_id, roll_number, department, full_name')
+              .or(`email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+            if (cs) collegeStudents = cs;
+          } catch {}
+
+          const profileMap = new Map();
+          profiles.forEach(p => {
+            if (p.id) profileMap.set(p.id.toLowerCase(), p);
+            if (p.email) profileMap.set(p.email.toLowerCase(), p);
+          });
+
+          const csMap = new Map();
+          collegeStudents.forEach(c => {
+            if (c.user_id) csMap.set(c.user_id.toLowerCase(), c);
+            if (c.email) csMap.set(c.email.toLowerCase(), c);
+          });
+
+          const enriched = allAttempts.map(att => {
+            const sid = (att.student_id || '').toLowerCase();
+            const semail = (att.student_email || sid).toLowerCase();
+            const prof = profileMap.get(sid) || profileMap.get(semail);
+            const cs = csMap.get(sid) || csMap.get(semail);
+
+            return {
+              ...att,
+              student: {
+                name: cs?.full_name || prof?.name || att.student_email || 'Candidate',
+                email: att.student_email || prof?.email || (sid.includes('@') ? sid : ''),
+                roll_number: cs?.roll_number || prof?.roll_number || '—',
+                department: cs?.department || prof?.department || 'General',
+              },
+            };
+          });
+
+          return res.status(200).json({ success: true, attempts: enriched });
+        }
+
+        return res.status(200).json({ success: true, attempts: [] });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
     if (!collegeId && !examId) {
       return res.status(400).json({ error: 'Missing collegeId or examId query parameter' });
     }
@@ -119,11 +213,11 @@ export default async function handler(req, res) {
       const exams = [];
       const seenIds = new Set();
 
-      // 1. Try fetching from public.mock_exams table
+      // 1. Try fetching from public.mock_exams and public.mock_exam_sections without join (avoids HTTP 400 relationship errors)
       try {
         let query = supabaseAdmin
           .from('mock_exams')
-          .select('*, sections:mock_exam_sections(*)')
+          .select('*')
           .eq('is_deleted', false);
 
         if (examId) query = query.eq('id', examId);
@@ -131,10 +225,28 @@ export default async function handler(req, res) {
 
         const { data: dbExams, error: dbErr } = await query;
         if (!dbErr && dbExams && dbExams.length > 0) {
+          const dbExamIds = dbExams.map(e => e.id);
+          const { data: dbSections } = await supabaseAdmin
+            .from('mock_exam_sections')
+            .select('*')
+            .in('mock_exam_id', dbExamIds)
+            .order('section_order', { ascending: true });
+
+          const sectionsByExam = new Map();
+          (dbSections || []).forEach(s => {
+            if (!sectionsByExam.has(s.mock_exam_id)) {
+              sectionsByExam.set(s.mock_exam_id, []);
+            }
+            sectionsByExam.get(s.mock_exam_id).push(s);
+          });
+
           dbExams.forEach(e => {
             if (!seenIds.has(e.id)) {
               seenIds.add(e.id);
-              exams.push(e);
+              exams.push({
+                ...e,
+                sections: sectionsByExam.get(e.id) || e.sections || [],
+              });
             }
           });
         }
@@ -191,10 +303,66 @@ export default async function handler(req, res) {
     }
   }
 
-  // POST: Create or update an exam
+  // POST: Create or update an exam OR submit student attempt
   if (req.method === 'POST') {
     try {
-      const { exam } = req.body || {};
+      const { action, attempt, exam } = req.body || {};
+
+      // Action 1: Candidate submit attempt
+      if (action === 'submit-attempt') {
+        if (!attempt || !attempt.id || !attempt.mock_exam_id) {
+          return res.status(400).json({ error: 'Missing valid attempt payload with id and mock_exam_id' });
+        }
+
+        const callerEmail = userEmail;
+        const callerId = user.id;
+        const attemptStudentId = (attempt.student_id || '').toLowerCase();
+        const attemptEmail = (attempt.student_email || '').toLowerCase();
+
+        const isOwner = callerId === attemptStudentId ||
+                        callerEmail === attemptStudentId ||
+                        callerEmail === attemptEmail ||
+                        isSuperAdmin;
+
+        if (!isOwner) {
+          return res.status(403).json({ error: 'Forbidden: You cannot submit an attempt on behalf of another candidate.' });
+        }
+
+        const attemptRow = {
+          id: attempt.id,
+          mock_exam_id: attempt.mock_exam_id,
+          student_id: attempt.student_id || userEmail,
+          student_email: attempt.student_email || userEmail,
+          college_id: attempt.college_id || 'unknown_college',
+          status: attempt.status || 'SUBMITTED',
+          started_at: attempt.started_at || new Date().toISOString(),
+          submitted_at: attempt.submitted_at || new Date().toISOString(),
+          time_spent_seconds: attempt.time_spent_seconds || 0,
+          total_score: Number(attempt.total_score || 0),
+          max_possible_score: Number(attempt.max_possible_score || 100),
+          percentage: Number(attempt.percentage || 0),
+          passed: Boolean(attempt.passed),
+          tab_switch_count: attempt.tab_switch_count || 0,
+          proctor_events: attempt.proctor_events || [],
+          responses: attempt.responses || {},
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: savedAttempt, error: saveErr } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .upsert(attemptRow, { onConflict: 'id' })
+          .select()
+          .single();
+
+        if (saveErr) {
+          console.error('[api/campus-exams] Failed to upsert student_exam_attempts:', saveErr);
+          return res.status(200).json({ success: true, attempt: attemptRow, warning: saveErr.message });
+        }
+
+        return res.status(200).json({ success: true, attempt: savedAttempt });
+      }
+
+      // Action 2: Create or update mock exam
       if (!exam || !exam.id || !exam.college_id) {
         return res.status(400).json({ error: 'Missing valid exam payload with id and college_id' });
       }

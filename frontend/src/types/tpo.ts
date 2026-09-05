@@ -86,6 +86,7 @@ export interface MockExamSection {
   negative_marking: number;
   question_ids: string[];
   topic_ids: string[];
+  created_at?: string;
 }
 
 export interface ProctorEvent {
@@ -105,6 +106,7 @@ export interface StudentExamAttempt {
   id: string;
   mock_exam_id: string;
   student_id: string;
+  student_email?: string;
   college_id: string;
   status: 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT';
   started_at: string;
