@@ -74,6 +74,7 @@ export default function MockExamTestPage() {
           .eq('user_email', cleanEmail)
           .ilike('payment_id', `B2B_CAMPUS_${exam.college_id}%`)
           .eq('status', 'ACTIVE')
+          .gt('expires_at', new Date().toISOString())
           .limit(1)
           .maybeSingle();
         if (sub) return true;

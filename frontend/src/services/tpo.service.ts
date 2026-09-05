@@ -326,8 +326,9 @@ export const tpoService = {
     try {
       const { data: sData } = await supabase
         .from('user_subscriptions')
-        .select('user_email, plan_name, is_active')
-        .eq('is_active', true);
+        .select('user_email, plan_name, status, expires_at')
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', new Date().toISOString());
       if (sData) subscriptions = sData;
     } catch {}
 
@@ -1221,26 +1222,31 @@ export const tpoService = {
     if (!email) return false;
     const clean = email.trim().toLowerCase();
 
-    // 1. Check local entitlements cache
+    // 1. Check local entitlements cache (must have future expiresAt and active college)
     try {
       const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
       if (raw) {
         const entitlements = JSON.parse(raw);
         const item = entitlements[clean];
         if (item && !item.isExpired) {
-          if (!item.expiresAt || new Date(item.expiresAt) > new Date()) {
+          const col = getLocalColleges().find(c => c.id === item.collegeId);
+          const isColActive = !col || ((col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') && (!col.valid_until || new Date(col.valid_until) > new Date()));
+          const effectiveExpiry = item.expiresAt || col?.valid_until;
+          const isUnexpired = effectiveExpiry ? new Date(effectiveExpiry) > new Date() : false;
+
+          if (isColActive && isUnexpired) {
             return true;
           }
         }
       }
     } catch {}
 
-    // 2. Check all active colleges rosters
+    // 2. Check all active colleges rosters (must be unexpired)
     try {
       const colleges = getLocalColleges();
       for (const col of colleges) {
         if (col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') {
-          if (new Date(col.valid_until) > new Date()) {
+          if (col.valid_until && new Date(col.valid_until) > new Date()) {
             const students = getLocalStudents(col.id);
             if (students.some(s => s.email.toLowerCase() === clean)) {
               return true;
@@ -1267,13 +1273,20 @@ export const tpoService = {
       if (raw) {
         const entitlements = JSON.parse(raw);
         const item = entitlements[clean];
-        if (item && !item.isExpired && (!item.expiresAt || new Date(item.expiresAt) > new Date())) {
-          return {
-            isEntitled: true,
-            collegeId: item.collegeId,
-            collegeName: item.collegeName,
-            expiresAt: item.expiresAt,
-          };
+        if (item && !item.isExpired) {
+          const col = getLocalColleges().find(c => c.id === item.collegeId);
+          const isColActive = !col || ((col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') && (!col.valid_until || new Date(col.valid_until) > new Date()));
+          const effectiveExpiry = item.expiresAt || col?.valid_until;
+          const isUnexpired = effectiveExpiry ? new Date(effectiveExpiry) > new Date() : false;
+
+          if (isColActive && isUnexpired) {
+            return {
+              isEntitled: true,
+              collegeId: item.collegeId,
+              collegeName: item.collegeName || col?.name || 'Partner College',
+              expiresAt: effectiveExpiry,
+            };
+          }
         }
       }
     } catch {}
@@ -1282,7 +1295,7 @@ export const tpoService = {
       const colleges = getLocalColleges();
       for (const col of colleges) {
         if (col.contract_status === 'ACTIVE' || col.contract_status === 'PILOT') {
-          if (new Date(col.valid_until) > new Date()) {
+          if (col.valid_until && new Date(col.valid_until) > new Date()) {
             const students = getLocalStudents(col.id);
             const found = students.find(s => s.email.toLowerCase() === clean);
             if (found) {

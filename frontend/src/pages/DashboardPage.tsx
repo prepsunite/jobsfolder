@@ -618,10 +618,22 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Campus Pro Pass Active</span>
-              </span>
+              {isUserPro ? (
+                <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>
+                    Campus Pro Pass Active
+                    {subData?.expiresAt
+                      ? ` (${Math.max(0, Math.ceil((new Date(subData.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left)`
+                      : ''}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Campus Pass Expired (Free Tier)</span>
+                </span>
+              )}
             </div>
           </div>
 

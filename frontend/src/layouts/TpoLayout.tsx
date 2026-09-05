@@ -12,6 +12,7 @@ import {
   Menu,
   Sun,
   Moon,
+  Clock,
 } from 'lucide-react';
 
 export interface TpoOutletContext {
@@ -88,8 +89,17 @@ export default function TpoLayout() {
     contract_status: 'ACTIVE',
     valid_until: '2027-12-31T00:00:00Z',
     created_at: new Date().toISOString(),
-    max_licenses: tpoAuth?.max_licenses || 1000,
+    max_licenses: tpoAuth?.max_licenses || 1500,
   };
+
+  const totalCap = currentCollege.max_licenses || tpoAuth?.max_licenses || 1500;
+  const validUntilDate = currentCollege.valid_until ? new Date(currentCollege.valid_until) : null;
+  const now = new Date();
+  const daysLeft = validUntilDate
+    ? Math.ceil((validUntilDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isContractExpired = validUntilDate ? daysLeft <= 0 : false;
+  const isContractExpiringSoon = daysLeft > 0 && daysLeft <= 7;
 
   const { data: stats } = useQuery({
     queryKey: ['tpo-stats', effectiveCollegeId],
@@ -170,11 +180,30 @@ export default function TpoLayout() {
               </div>
             )}
 
+            {/* Contract Validity & Remaining Days Badge */}
+            <div
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
+                isContractExpired
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                  : isContractExpiringSoon
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              }`}
+              title={`Institutional package valid until ${validUntilDate ? validUntilDate.toLocaleDateString() : 'Continuous'}`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>
+                {isContractExpired
+                  ? 'Access Expired'
+                  : `${daysLeft}d Access Left`}
+              </span>
+            </div>
+
             {/* Seat Capacity Badge */}
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-300">
               <Users className="w-3.5 h-3.5 text-[#FD4A32]" />
               <span>
-                {stats?.totalStudents || 0} / {currentCollege.max_licenses || 1000} Seats Enrolled
+                {stats?.totalStudents || 0} / {totalCap} Seats Enrolled
               </span>
             </div>
 

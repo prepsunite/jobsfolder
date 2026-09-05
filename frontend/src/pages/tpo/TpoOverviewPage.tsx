@@ -37,6 +37,19 @@ export default function TpoOverviewPage() {
     enabled: !!collegeId,
   });
 
+  const maxLicenses = currentCollege.max_licenses || stats?.maxLicenses || 1500;
+  const enrolledCount = stats?.totalStudents || 0;
+  const freeSeats = Math.max(0, maxLicenses - enrolledCount);
+  const percentUsed = Math.min(100, Math.round((enrolledCount / maxLicenses) * 100));
+
+  const validUntilDate = currentCollege.valid_until ? new Date(currentCollege.valid_until) : null;
+  const now = new Date();
+  const daysLeft = validUntilDate
+    ? Math.ceil((validUntilDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isContractExpired = validUntilDate ? daysLeft <= 0 : false;
+  const isContractExpiringSoon = daysLeft > 0 && daysLeft <= 7;
+
   return (
     <div className="space-y-8 animate-fadeIn">
       
@@ -83,6 +96,65 @@ export default function TpoOverviewPage() {
         </div>
       </div>
 
+      {/* 1b. Institutional License Package & Validity Banner */}
+      <div className="bg-white dark:bg-[#111827] rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            isContractExpired
+              ? 'bg-rose-500/10 text-rose-500'
+              : 'bg-emerald-500/10 text-emerald-500'
+          }`}>
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Institutional License Package
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                isContractExpired
+                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+                  : isContractExpiringSoon
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+              }`}>
+                {isContractExpired
+                  ? 'Expired'
+                  : isContractExpiringSoon
+                  ? `Expiring Soon (${daysLeft}d left)`
+                  : `${daysLeft} Days Active`}
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 font-medium">
+              Valid until{' '}
+              <strong className="font-mono text-slate-900 dark:text-white">
+                {validUntilDate
+                  ? validUntilDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'Continuous'}
+              </strong>
+              {' '}• Enrolled students receive full Campus Pro Pass access during this window.
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full md:w-80 shrink-0 space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-500 font-semibold">Seat Capacity:</span>
+            <strong className="font-mono text-slate-900 dark:text-white">
+              {enrolledCount} / {maxLicenses} Seats ({freeSeats} free)
+            </strong>
+          </div>
+          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                percentUsed >= 100 ? 'bg-rose-500' : percentUsed >= 85 ? 'bg-amber-500' : 'bg-[#FD4A32]'
+              }`}
+              style={{ width: `${percentUsed}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* 2. Key Performance Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Enrolled Students */}
@@ -92,14 +164,14 @@ export default function TpoOverviewPage() {
             <Users className="w-4 h-4 text-[#FD4A32]" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-            {stats?.totalStudents || 0}
-            <span className="text-xs font-normal text-slate-400 ml-1.5">/ {stats?.maxLicenses || 1000} capacity</span>
+            {enrolledCount}
+            <span className="text-xs font-normal text-slate-400 ml-1.5">/ {maxLicenses} capacity</span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
             <div
               className="bg-[#FD4A32] h-full rounded-full transition-all"
               style={{
-                width: `${Math.min(100, Math.round(((stats?.totalStudents || 0) / (stats?.maxLicenses || 1000)) * 100))}%`,
+                width: `${percentUsed}%`,
               }}
             />
           </div>

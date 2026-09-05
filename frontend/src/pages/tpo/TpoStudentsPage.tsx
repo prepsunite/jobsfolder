@@ -20,6 +20,7 @@ import {
   Loader2,
   Sparkles,
   AlertCircle,
+  Clock,
 } from 'lucide-react';
 import type { CollegeStudent } from '@/types/tpo';
 import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
@@ -149,6 +150,65 @@ export default function TpoStudentsPage() {
           </button>
         </div>
       )}
+
+      {/* License Capacity & Expiry Progress Card */}
+      {(() => {
+        const maxLicenses = currentCollege.max_licenses || 1500;
+        const enrolledCount = students.length;
+        const freeSeats = Math.max(0, maxLicenses - enrolledCount);
+        const percentUsed = Math.min(100, Math.round((enrolledCount / maxLicenses) * 100));
+        const validUntilDate = currentCollege.valid_until ? new Date(currentCollege.valid_until) : null;
+        const daysLeft = validUntilDate
+          ? Math.ceil((validUntilDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          : 0;
+
+        return (
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    Institutional Seat Capacity
+                  </span>
+                  <span
+                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                      freeSeats === 0
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                    }`}
+                  >
+                    {freeSeats === 0 ? 'Capacity Full' : `${freeSeats} Seats Remaining`}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {enrolledCount} of {maxLicenses} allocated student licenses enrolled • Each student is automatically provisioned with Campus Pro Pass.
+                </p>
+              </div>
+            </div>
+
+            <div className="w-full md:w-72 space-y-1.5 shrink-0">
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-orange-500" />
+                  <span>{daysLeft > 0 ? `${daysLeft} days remaining` : 'Access Expired'}</span>
+                </span>
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{percentUsed}% utilized</span>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    percentUsed >= 100 ? 'bg-rose-500' : percentUsed >= 85 ? 'bg-amber-500' : 'bg-[#FD4A32]'
+                  }`}
+                  style={{ width: `${percentUsed}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filter & Search Toolbar */}
       <div className="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
