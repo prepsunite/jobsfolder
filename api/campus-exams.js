@@ -58,6 +58,7 @@ export default async function handler(req, res) {
     if (isSuperAdmin) return true;
     if (!collegeId) return false;
     try {
+      // 1. Check direct active authorization in tpo_authorizations
       const { data: authRecord } = await supabaseAdmin
         .from('tpo_authorizations')
         .select('id')
@@ -65,7 +66,68 @@ export default async function handler(req, res) {
         .ilike('email', userEmail)
         .eq('status', 'ACTIVE')
         .maybeSingle();
-      return !!authRecord;
+      if (authRecord) return true;
+
+      // 2. Check if student record in this college is marked as is_tpo_admin or role = 'TPO'
+      const { data: csRecord } = await supabaseAdmin
+        .from('college_students')
+        .select('id, is_tpo_admin, role')
+        .eq('college_id', collegeId)
+        .or(`email.ilike.${userEmail},user_id.eq.${user.id}`)
+        .maybeSingle();
+      if (csRecord && (csRecord.is_tpo_admin === true || csRecord.is_tpo_admin === 'true' || csRecord.role === 'TPO')) {
+        // Auto-provision in tpo_authorizations for future direct RLS consistency
+        try {
+          await supabaseAdmin.from('tpo_authorizations').upsert({
+            college_id: collegeId,
+            email: userEmail,
+            user_id: user.id,
+            status: 'ACTIVE',
+            created_by: userEmail,
+          }, { onConflict: 'college_id,email' });
+        } catch {}
+        return true;
+      }
+
+      // 3. Check user profile for college assignment or admin/tpo role
+      const { data: profRecord } = await supabaseAdmin
+        .from('profiles')
+        .select('role, college_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profRecord && (profRecord.college_id === collegeId || profRecord.role === 'admin' || profRecord.role === 'tpo')) {
+        try {
+          await supabaseAdmin.from('tpo_authorizations').upsert({
+            college_id: collegeId,
+            email: userEmail,
+            user_id: user.id,
+            status: 'ACTIVE',
+            created_by: userEmail,
+          }, { onConflict: 'college_id,email' });
+        } catch {}
+        return true;
+      }
+
+      // 4. Check college contact_email
+      const { data: colRecord } = await supabaseAdmin
+        .from('colleges')
+        .select('id, contact_email')
+        .eq('id', collegeId)
+        .maybeSingle();
+      if (colRecord && colRecord.contact_email && colRecord.contact_email.toLowerCase() === userEmail) {
+        try {
+          await supabaseAdmin.from('tpo_authorizations').upsert({
+            college_id: collegeId,
+            email: userEmail,
+            user_id: user.id,
+            status: 'ACTIVE',
+            created_by: userEmail,
+          }, { onConflict: 'college_id,email' });
+        } catch {}
+        return true;
+      }
+
+      return false;
     } catch {
       return false;
     }
@@ -104,6 +166,35 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { collegeId, examId, action } = req.query;
 
+    // Action: Get all Exam Templates (patterns managed by Admin)
+    if (action === 'templates') {
+      try {
+        const { data: msgs } = await supabaseAdmin
+          .from('contact_messages')
+          .select('message, subject, status')
+          .like('subject', 'B2B_TEMPLATE:%')
+          .neq('status', 'DELETED')
+          .order('created_at', { ascending: false });
+
+        const templates = [];
+        const seenIds = new Set();
+        if (msgs && msgs.length > 0) {
+          for (const m of msgs) {
+            try {
+              const parsed = JSON.parse(m.message);
+              if (parsed && parsed.id && !seenIds.has(parsed.id)) {
+                seenIds.add(parsed.id);
+                templates.push(parsed);
+              }
+            } catch {}
+          }
+        }
+        return res.status(200).json({ success: true, templates });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
     // Action: Get all attempts for an assessment with enriched student metadata
     if (action === 'attempts') {
       if (!examId) {
@@ -137,6 +228,31 @@ export default async function handler(req, res) {
         }
 
         const allAttempts = attempts || [];
+        const seenAttemptIds = new Set(allAttempts.map(a => a.id));
+
+        // Cloud sync fallback: check contact_messages for any attempts not yet in relational table
+        try {
+          const { data: cloudMsgs } = await supabaseAdmin
+            .from('contact_messages')
+            .select('message')
+            .like('subject', `B2B_ATTEMPT:${examId}:%`)
+            .neq('status', 'DELETED')
+            .order('created_at', { ascending: false });
+
+          if (cloudMsgs && cloudMsgs.length > 0) {
+            for (const m of cloudMsgs) {
+              try {
+                const parsed = JSON.parse(m.message);
+                if (parsed && parsed.id && !seenAttemptIds.has(parsed.id)) {
+                  seenAttemptIds.add(parsed.id);
+                  allAttempts.push(parsed);
+                  // Backfill into student_exam_attempts
+                  supabaseAdmin.from('student_exam_attempts').upsert(parsed, { onConflict: 'id' }).catch(() => {});
+                }
+              } catch {}
+            }
+          }
+        } catch {}
         if (allAttempts.length > 0) {
           const studentEmails = Array.from(new Set(allAttempts.map(a => a.student_email || a.student_id).filter(Boolean)));
           const studentIds = Array.from(new Set(allAttempts.map(a => a.student_id).filter(Boolean)));
@@ -308,6 +424,99 @@ export default async function handler(req, res) {
     try {
       const { action, attempt, exam } = req.body || {};
 
+      // Action 0a: Super Admin save / customize exam template pattern
+      if (action === 'save-template') {
+        const { template } = req.body || {};
+        if (!template || !template.id || !template.name) {
+          return res.status(400).json({ error: 'Missing valid template payload with id and name' });
+        }
+        if (!isSuperAdmin) {
+          return res.status(403).json({ error: 'Forbidden: Only Super Admins can configure global exam templates.' });
+        }
+
+        try {
+          await supabaseAdmin.from('contact_messages').insert({
+            name: `Template: ${template.name}`,
+            email: userEmail,
+            subject: `B2B_TEMPLATE:${template.id}`,
+            message: JSON.stringify(template),
+            status: 'ACTIVE',
+          });
+        } catch (tErr) {
+          console.error('[api/campus-exams] Failed to save template:', tErr);
+          return res.status(500).json({ error: 'Failed to persist template.' });
+        }
+
+        return res.status(200).json({ success: true, template });
+      }
+
+      // Action 0b: Super Admin delete exam template
+      if (action === 'delete-template') {
+        const { templateId } = req.body || {};
+        if (!templateId) {
+          return res.status(400).json({ error: 'Missing templateId parameter' });
+        }
+        if (!isSuperAdmin) {
+          return res.status(403).json({ error: 'Forbidden: Only Super Admins can delete exam templates.' });
+        }
+
+        try {
+          await supabaseAdmin
+            .from('contact_messages')
+            .update({ status: 'DELETED' })
+            .eq('subject', `B2B_TEMPLATE:${templateId}`);
+        } catch (tErr) {
+          console.error('[api/campus-exams] Failed to delete template:', tErr);
+        }
+
+        return res.status(200).json({ success: true, templateId });
+      }
+
+      // Action 0c: Candidate start or resume exam attempt (resilient Supabase creation)
+      if (action === 'start-attempt') {
+        if (!attempt || !attempt.id || !attempt.mock_exam_id) {
+          return res.status(400).json({ error: 'Missing valid attempt payload with id and mock_exam_id' });
+        }
+
+        const cleanEmail = (attempt.student_email || userEmail || '').toLowerCase();
+        const startRow = {
+          id: attempt.id,
+          mock_exam_id: attempt.mock_exam_id,
+          student_id: attempt.student_id || user.id || cleanEmail,
+          student_email: cleanEmail,
+          college_id: attempt.college_id || 'unknown_college',
+          status: 'IN_PROGRESS',
+          started_at: attempt.started_at || new Date().toISOString(),
+          time_spent_seconds: attempt.time_spent_seconds || 0,
+          total_score: 0,
+          max_possible_score: attempt.max_possible_score || 0,
+          percentage: 0,
+          passed: false,
+          tab_switch_count: 0,
+          proctor_events: attempt.proctor_events || [],
+          responses: attempt.responses || {},
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: saved, error: saveErr } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .upsert(startRow, { onConflict: 'id' })
+          .select()
+          .single();
+
+        try {
+          await supabaseAdmin.from('contact_messages').insert({
+            name: `Candidate Start: ${cleanEmail}`,
+            email: cleanEmail.includes('@') ? cleanEmail : 'student@prepunite.com',
+            subject: `B2B_ATTEMPT:${startRow.mock_exam_id}:${startRow.id}`,
+            message: JSON.stringify(startRow),
+            status: 'IN_PROGRESS',
+          });
+        } catch {}
+
+        return res.status(200).json({ success: true, attempt: saved || startRow });
+      }
+
       // Action 1: Candidate submit attempt
       if (action === 'submit-attempt') {
         if (!attempt || !attempt.id || !attempt.mock_exam_id) {
@@ -331,7 +540,7 @@ export default async function handler(req, res) {
         const attemptRow = {
           id: attempt.id,
           mock_exam_id: attempt.mock_exam_id,
-          student_id: attempt.student_id || userEmail,
+          student_id: attempt.student_id || user.id || userEmail,
           student_email: attempt.student_email || userEmail,
           college_id: attempt.college_id || 'unknown_college',
           status: attempt.status || 'SUBMITTED',
@@ -354,12 +563,25 @@ export default async function handler(req, res) {
           .select()
           .single();
 
+        // Immutable cloud backup to contact_messages
+        try {
+          await supabaseAdmin.from('contact_messages').insert({
+            name: `Candidate Submit: ${attemptRow.student_email}`,
+            email: attemptRow.student_email.includes('@') ? attemptRow.student_email : 'student@prepunite.com',
+            subject: `B2B_ATTEMPT:${attemptRow.mock_exam_id}:${attemptRow.id}`,
+            message: JSON.stringify(attemptRow),
+            status: attemptRow.status,
+          });
+        } catch (msgErr) {
+          console.warn('[api/campus-exams] Backup notice:', msgErr);
+        }
+
         if (saveErr) {
-          console.error('[api/campus-exams] Failed to upsert student_exam_attempts:', saveErr);
+          console.error('[api/campus-exams] Notice upserting student_exam_attempts:', saveErr);
           return res.status(200).json({ success: true, attempt: attemptRow, warning: saveErr.message });
         }
 
-        return res.status(200).json({ success: true, attempt: savedAttempt });
+        return res.status(200).json({ success: true, attempt: savedAttempt || attemptRow });
       }
 
       // Action 2: Create or update mock exam

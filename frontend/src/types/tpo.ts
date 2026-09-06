@@ -147,3 +147,33 @@ export interface TpoDashboardStats {
   departments: { department: string; studentCount: number; avgScore: number }[];
   tierCounts?: { tier1: number; tier2: number; tier3: number };
 }
+
+export interface TemplateSectionDraft {
+  name: string;
+  question_count: number;
+  marks_per_correct: number;
+  negative_marking: number;
+  duration_minutes?: number;
+  topic_ids?: string[];
+  category?: 'arithmetic-aptitude' | 'logical-reasoning' | 'verbal-reasoning' | 'data-interpretation' | 'all';
+}
+
+export interface MockExamTemplate {
+  id: string;
+  name: string;
+  target_company: string;
+  badge?: string;
+  description?: string;
+  duration_minutes: number;
+  passing_percentage: number;
+  enable_fullscreen_lock?: boolean;
+  enable_tab_switch_detection?: boolean;
+  max_tab_switches_allowed?: number;
+  shuffle_questions?: boolean;
+  shuffle_options?: boolean;
+  show_results_immediately?: boolean;
+  sections: TemplateSectionDraft[];
+  is_default?: boolean;
+  updated_at?: string;
+}
+

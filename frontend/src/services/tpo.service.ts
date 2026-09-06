@@ -11,6 +11,8 @@ import type {
   ProctorEvent,
   StudentExamResponse,
   TpoAuthorizationRecord,
+  MockExamTemplate,
+  TemplateSectionDraft,
 } from '@/types/tpo';
 
 export const STORAGE_KEYS_TPO = {
@@ -20,7 +22,308 @@ export const STORAGE_KEYS_TPO = {
   EXAMS: 'prepunite_tpo_mock_exams',
   STUDENT_ENTITLEMENTS: 'prepunite_student_entitlements',
   ATTEMPTS: 'prepunite_tpo_exam_attempts',
+  TEMPLATES: 'prepunite_tpo_exam_templates',
 } as const;
+
+export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
+  {
+    id: 'tmpl-tcs-nqt-2026',
+    name: 'TCS NQT 2026 Campus Drive Pattern',
+    target_company: 'TCS NQT',
+    badge: 'High Hiring Volume',
+    description: 'Official multi-section placement assessment matching the latest TCS NQT National Qualifier test blueprint.',
+    duration_minutes: 80,
+    passing_percentage: 45,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Numerical Ability & Advanced Quant',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        duration_minutes: 30,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'time-and-work', 'time-and-distance', 'problems-on-trains', 'hcf-lcm', 'simplification'],
+      },
+      {
+        name: 'Reasoning Ability & Logical Deduction',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        duration_minutes: 30,
+        category: 'logical-reasoning',
+        topic_ids: ['calendar', 'data-interpretation'],
+      },
+      {
+        name: 'Verbal Ability & Reading Comprehension',
+        question_count: 15,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        duration_minutes: 20,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-accenture-cognitive',
+    name: 'Accenture Discovery Cognitive Assessment',
+    target_company: 'Accenture',
+    badge: 'Industry Standard',
+    description: 'Triple-module cognitive and critical reasoning evaluation designed for Accenture Campus Placement Drives.',
+    duration_minutes: 90,
+    passing_percentage: 40,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Critical Thinking & Problem Solving',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'logical-reasoning',
+        topic_ids: [],
+      },
+      {
+        name: 'Abstract Reasoning & Numerical Logic',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'average', 'time-and-work', 'simplification'],
+      },
+      {
+        name: 'English Communication & Verbal Skills',
+        question_count: 15,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-infosys-springboard',
+    name: 'Infosys Springboard Assessment',
+    target_company: 'Infosys',
+    badge: 'Tier-1 Benchmark',
+    description: 'Structured 50-question placement assessment aligned with Infosys System Engineer and Specialist Programmer drives.',
+    duration_minutes: 75,
+    passing_percentage: 50,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Mathematical Ability & Quantitative Aptitude',
+        question_count: 15,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'time-and-work', 'area', 'surds-indices'],
+      },
+      {
+        name: 'Reasoning Ability & Analytical Logic',
+        question_count: 15,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'logical-reasoning',
+        topic_ids: [],
+      },
+      {
+        name: 'Verbal Ability & Reading Comprehension',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-cognizant-genc',
+    name: 'Cognizant GenC / Elevate Assessment',
+    target_company: 'Cognizant GenC',
+    badge: 'GenC & Next',
+    description: 'Comprehensive 60-question pattern covering Quantitative, Analytical, and Verbal proficiency for Cognizant recruitment.',
+    duration_minutes: 90,
+    passing_percentage: 40,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Quantitative Aptitude',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'hcf-lcm', 'decimal-fraction', 'time-and-distance'],
+      },
+      {
+        name: 'Analytical & Logical Reasoning',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'logical-reasoning',
+        topic_ids: [],
+      },
+      {
+        name: 'Verbal Ability & Grammar',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-wipro-elite',
+    name: 'Wipro Elite NLTH Drive',
+    target_company: 'Wipro Turbo',
+    badge: 'National Level',
+    description: 'Wipro National Level Talent Hunt test model with balanced Quant, Logical, and Verbal components.',
+    duration_minutes: 60,
+    passing_percentage: 45,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Quantitative Aptitude',
+        question_count: 16,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'average', 'time-and-work'],
+      },
+      {
+        name: 'Logical Reasoning',
+        question_count: 14,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'logical-reasoning',
+        topic_ids: [],
+      },
+      {
+        name: 'Verbal Ability',
+        question_count: 22,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-capgemini-excellence',
+    name: 'Capgemini Excellence Drive',
+    target_company: 'Capgemini',
+    badge: 'Core Campus',
+    description: 'Triple-module assessment: Numerical Ability, Analytical Logic, and English Communication.',
+    duration_minutes: 60,
+    passing_percentage: 40,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Numerical Ability',
+        question_count: 16,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'simplification', 'percentage'],
+      },
+      {
+        name: 'Analytical Reasoning & Logic',
+        question_count: 16,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'logical-reasoning',
+        topic_ids: [],
+      },
+      {
+        name: 'English Communication',
+        question_count: 16,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-general-crt',
+    name: 'Comprehensive CRT Aptitude Grand Mock',
+    target_company: 'General CRT Aptitude',
+    badge: 'All-Rounder',
+    description: 'Universal 60-question campus placement benchmark covering Quantitative, Logical Reasoning, and Verbal Ability.',
+    duration_minutes: 90,
+    passing_percentage: 40,
+    enable_fullscreen_lock: true,
+    enable_tab_switch_detection: true,
+    max_tab_switches_allowed: 3,
+    shuffle_questions: true,
+    shuffle_options: true,
+    show_results_immediately: true,
+    is_default: true,
+    sections: [
+      {
+        name: 'Quantitative Aptitude',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['numbers', 'average', 'time-and-work', 'time-and-distance', 'hcf-lcm'],
+      },
+      {
+        name: 'Logical Reasoning & DI',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'logical-reasoning',
+        topic_ids: ['calendar', 'data-interpretation'],
+      },
+      {
+        name: 'Verbal Ability & Reading Comprehension',
+        question_count: 20,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        category: 'verbal-reasoning',
+        topic_ids: [],
+      },
+    ],
+  },
+];
 
 export const DEFAULT_COLLEGES: College[] = [
   {
@@ -2099,6 +2402,185 @@ export const tpoService = {
     return null;
   },
 
+  // ==========================================
+  // EXAM TEMPLATES (Admin Pattern Management & 1-Click Launch)
+  // ==========================================
+
+  /**
+   * Fetches all Exam Templates (combines built-in defaults, local storage, and Admin custom cloud patterns)
+   */
+  async getExamTemplates(): Promise<MockExamTemplate[]> {
+    const templatesMap = new Map<string, MockExamTemplate>();
+
+    // 1. Built-in defaults
+    DEFAULT_EXAM_TEMPLATES.forEach(t => templatesMap.set(t.id, t));
+
+    // 2. Local storage cache
+    try {
+      const cached = localStorage.getItem(STORAGE_KEYS_TPO.TEMPLATES);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((t: MockExamTemplate) => {
+            if (t && t.id) templatesMap.set(t.id, t);
+          });
+        }
+      }
+    } catch {}
+
+    // 3. Cloud Admin custom templates from /api/campus-exams?action=templates
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams?action=templates', {
+        headers: authHeaders,
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.templates && Array.isArray(json.templates)) {
+          json.templates.forEach((t: MockExamTemplate) => {
+            if (t && t.id) templatesMap.set(t.id, t);
+          });
+        }
+      }
+    } catch {}
+
+    const all = Array.from(templatesMap.values());
+    try {
+      localStorage.setItem(STORAGE_KEYS_TPO.TEMPLATES, JSON.stringify(all));
+    } catch {}
+    return all;
+  },
+
+  /**
+   * Super Admin saves / creates / edits an exam template pattern
+   */
+  async saveExamTemplate(template: MockExamTemplate): Promise<MockExamTemplate> {
+    const updated: MockExamTemplate = {
+      ...template,
+      updated_at: new Date().toISOString(),
+    };
+
+    // 1. Update local cache
+    try {
+      const current = await this.getExamTemplates();
+      const idx = current.findIndex(t => t.id === updated.id);
+      if (idx >= 0) current[idx] = updated;
+      else current.unshift(updated);
+      localStorage.setItem(STORAGE_KEYS_TPO.TEMPLATES, JSON.stringify(current));
+    } catch {}
+
+    // 2. Persist to cloud via API
+    try {
+      const authHeaders = await getAuthHeaders();
+      await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          action: 'save-template',
+          template: updated,
+        }),
+      });
+    } catch (e) {
+      console.warn('Notice saving template to server:', e);
+    }
+
+    return updated;
+  },
+
+  /**
+   * Super Admin deletes a custom exam template pattern
+   */
+  async deleteExamTemplate(templateId: string): Promise<boolean> {
+    // 1. Update local cache
+    try {
+      const current = (await this.getExamTemplates()).filter(t => t.id !== templateId);
+      localStorage.setItem(STORAGE_KEYS_TPO.TEMPLATES, JSON.stringify(current));
+    } catch {}
+
+    // 2. Update cloud via API
+    try {
+      const authHeaders = await getAuthHeaders();
+      await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          action: 'delete-template',
+          templateId,
+        }),
+      });
+    } catch (e) {
+      console.warn('Notice deleting template from server:', e);
+    }
+
+    return true;
+  },
+
+  /**
+   * 1-Click Launch: Creates a mock exam directly from an Admin Exam Template pattern.
+   * Automatically pools questions, creates sections, and publishes to campus.
+   */
+  async createExamFromTemplate(
+    collegeId: string,
+    template: MockExamTemplate,
+    overrides?: {
+      title?: string;
+      target_departments?: string[];
+      target_batch_year?: number;
+      start_time?: string;
+      end_time?: string;
+      passing_percentage?: number;
+    }
+  ): Promise<MockExam> {
+    const now = new Date();
+    const startTime = overrides?.start_time || now.toISOString();
+    const endTime = overrides?.end_time || new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const title = overrides?.title || `${template.name} - Drive ${now.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+
+    const totalQuestions = template.sections.reduce((acc, s) => acc + (Number(s.question_count) || 0), 0);
+    const totalMarks = template.sections.reduce(
+      (acc, s) => acc + (Number(s.question_count) || 0) * (Number(s.marks_per_correct) || 1),
+      0
+    );
+
+    return this.createMockExam(
+      {
+        college_id: collegeId,
+        title,
+        target_company: template.target_company,
+        description: template.description || `Assessment pattern based on ${template.name}.`,
+        instructions: '1. Test must be taken in Fullscreen Mode.\n2. Switching tabs or minimizing browser will be flagged by proctor.\n3. Test will auto-submit when the countdown expires.',
+        duration_minutes: template.duration_minutes,
+        total_marks: totalMarks,
+        passing_percentage: overrides?.passing_percentage || template.passing_percentage,
+        start_time: startTime,
+        end_time: endTime,
+        is_active: true,
+        enable_tab_switch_detection: template.enable_tab_switch_detection ?? true,
+        max_tab_switches_allowed: template.max_tab_switches_allowed ?? 3,
+        enable_fullscreen_lock: template.enable_fullscreen_lock ?? true,
+        shuffle_questions: template.shuffle_questions ?? true,
+        shuffle_options: template.shuffle_options ?? true,
+        show_results_immediately: template.show_results_immediately ?? true,
+        target_departments: overrides?.target_departments || [],
+        target_batch_year: overrides?.target_batch_year || 2026,
+      },
+      template.sections.map(s => ({
+        name: s.name,
+        question_count: s.question_count,
+        marks_per_correct: s.marks_per_correct,
+        negative_marking: s.negative_marking,
+        duration_minutes: s.duration_minutes,
+        topic_ids: s.topic_ids || [],
+      }))
+    );
+  },
+
   /**
    * TPOs create mock exams by selecting topics & question counts.
    * Questions are strictly queried from `topic_questions` without any write operations to the question bank.
@@ -2471,10 +2953,11 @@ export const tpoService = {
   async startOrResumeAttempt(
     mockExamId: string,
     studentId: string,
-    collegeId: string
+    collegeId: string,
+    email?: string
   ): Promise<StudentExamAttempt> {
     const cleanStudentId = (studentId || '').trim().toLowerCase();
-    const studentEmail = cleanStudentId.includes('@') ? cleanStudentId : undefined;
+    const studentEmail = email || (cleanStudentId.includes('@') ? cleanStudentId : undefined);
 
     // 1. Check local attempts first
     const localAttempts = getLocalAttempts(mockExamId);
@@ -2521,7 +3004,32 @@ export const tpoService = {
 
     saveLocalAttempt(newAttempt);
 
-    // Try creating in Supabase
+    // 1. Serverless API persistence guarantee (service-role upsert in Supabase)
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          action: 'start-attempt',
+          attempt: newAttempt,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.attempt) {
+          saveLocalAttempt(json.attempt);
+          return json.attempt;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Notice starting attempt via /api/campus-exams:', apiErr);
+    }
+
+    // 2. Client-side fallback insert in Supabase
     try {
       const { data } = await supabase
         .from('student_exam_attempts')
@@ -2755,11 +3263,10 @@ export const tpoService = {
 
       if (gradedAttempt) {
         saveLocalAttempt(gradedAttempt);
-        return gradedAttempt;
       }
     } catch {}
 
-    // 5. Serverless API persistence guarantee (/api/campus-exams)
+    // 5. Serverless API persistence guarantee (/api/campus-exams with service-role upsert)
     try {
       const authHeaders = await getAuthHeaders();
       const res = await fetch('/api/campus-exams', {

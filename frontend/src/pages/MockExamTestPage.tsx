@@ -289,7 +289,8 @@ export default function MockExamTestPage() {
       const attempt = await tpoService.startOrResumeAttempt(
         exam.id,
         candidateIdentifier,
-        exam.college_id
+        exam.college_id,
+        user.email || undefined
       );
 
       setAttemptId(attempt.id);
