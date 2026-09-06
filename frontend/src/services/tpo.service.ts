@@ -2236,47 +2236,95 @@ export const tpoService = {
             .filter(Boolean)
         )
       );
-      const studentIds = Array.from(new Set(allAttempts.map(a => a.student_id || '').filter(Boolean)));
+      const studentIds = Array.from(new Set(allAttempts.map(a => (a.student_id || '').toLowerCase()).filter(Boolean)));
 
       const profMap = new Map<string, any>();
       const csMap = new Map<string, any>();
 
-      try {
-        const { data: profs } = await supabase
-          .from('profiles')
-          .select('id, name, email, roll_number, department')
-          .or(`id.in.(${studentIds.map(i => `"${i}"`).join(',')}),email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
-        (profs || []).forEach(p => {
-          if (p.id) profMap.set(p.id.toLowerCase(), p);
-          if (p.email) profMap.set(p.email.toLowerCase(), p);
+      // 1. Seed csMap from local storage students for this college
+      if (collegeId) {
+        const localStudents = getLocalStudents(collegeId);
+        localStudents.forEach(s => {
+          if (s.email) csMap.set(s.email.toLowerCase(), s);
+          if (s.id) csMap.set(s.id.toLowerCase(), s);
+          if (s.user_id) csMap.set(s.user_id.toLowerCase(), s);
         });
-      } catch {}
+      }
+
+      // 2. Query profiles safely (validate UUID format so PostgreSQL never throws 22P02)
+      const isUUID = (str: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const validUuids = studentIds.filter(isUUID);
+      const validEmails = Array.from(
+        new Set([...studentEmails, ...studentIds.filter(id => id.includes('@'))])
+      );
 
       try {
-        const { data: cs } = await supabase
-          .from('college_students')
-          .select('email, user_id, roll_number, department, full_name, name')
-          .eq('college_id', collegeId);
-        (cs || []).forEach(c => {
-          if (c.user_id) csMap.set(c.user_id.toLowerCase(), c);
-          if (c.email) csMap.set(c.email.toLowerCase(), c);
-        });
+        let profQuery = supabase.from('profiles').select('id, name, email, roll_number, department');
+        if (validUuids.length > 0 && validEmails.length > 0) {
+          profQuery = profQuery.or(`id.in.(${validUuids.join(',')}),email.in.(${validEmails.join(',')})`);
+        } else if (validUuids.length > 0) {
+          profQuery = profQuery.in('id', validUuids);
+        } else if (validEmails.length > 0) {
+          profQuery = profQuery.in('email', validEmails);
+        }
+        if (validUuids.length > 0 || validEmails.length > 0) {
+          const { data: profs } = await profQuery;
+          (profs || []).forEach(p => {
+            if (p.id) profMap.set(p.id.toLowerCase(), p);
+            if (p.email) profMap.set(p.email.toLowerCase(), p);
+          });
+        }
+      } catch {}
+
+      // 3. Query college_students safely (USE 'name' - DO NOT SELECT 'full_name'!)
+      try {
+        let csQuery = supabase.from('college_students').select('email, user_id, roll_number, department, name');
+        if (collegeId) {
+          csQuery = csQuery.eq('college_id', collegeId);
+        } else if (validEmails.length > 0) {
+          csQuery = csQuery.in('email', validEmails);
+        }
+        if (collegeId || validEmails.length > 0) {
+          const { data: cs } = await csQuery;
+          (cs || []).forEach(c => {
+            if (c.user_id) csMap.set(c.user_id.toLowerCase(), c);
+            if (c.email) csMap.set(c.email.toLowerCase(), c);
+          });
+        }
       } catch {}
 
       allAttempts.forEach(att => {
         const sid = (att.student_id || '').toLowerCase();
         const semail = (att.student_email || (sid.includes('@') ? sid : '')).toLowerCase();
         const prof = profMap.get(sid) || profMap.get(semail);
-        const cs = csMap.get(sid) || csMap.get(semail);
+        const cs = csMap.get(semail) || csMap.get(sid);
 
         const namePart = semail ? semail.split('@')[0].replace(/[._-]/g, ' ') : sid;
         const fallbackName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : 'Candidate';
 
+        const resolvedRoll =
+          cs?.roll_number ||
+          prof?.roll_number ||
+          (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '—');
+        const resolvedDept =
+          cs?.department ||
+          prof?.department ||
+          (att.student?.department && att.student.department !== 'CSE' && att.student.department !== 'General'
+            ? att.student.department
+            : (cs?.department || prof?.department || 'General'));
+        const resolvedName =
+          cs?.name ||
+          prof?.name ||
+          (att.student?.name && att.student.name !== 'Student' && att.student.name !== 'Candidate'
+            ? att.student.name
+            : fallbackName);
+
         att.student = {
-          name: cs?.full_name || cs?.name || prof?.name || (att.student?.name && att.student.name !== 'Student' ? att.student.name : fallbackName),
+          name: resolvedName,
           email: att.student_email || prof?.email || (semail.includes('@') ? semail : ''),
-          roll_number: cs?.roll_number || prof?.roll_number || att.student?.roll_number || '—',
-          department: cs?.department || prof?.department || att.student?.department || 'General',
+          roll_number: resolvedRoll,
+          department: resolvedDept,
         };
 
         const matchingExam = examMap.get(att.mock_exam_id);
@@ -2972,7 +3020,7 @@ export const tpoService = {
     return true;
   },
 
-  async getExamAttempts(examId: string): Promise<StudentExamAttempt[]> {
+  async getExamAttempts(examId: string, explicitCollegeId?: string): Promise<StudentExamAttempt[]> {
     let cloudAttempts: StudentExamAttempt[] = [];
 
     // 1. Direct query from Supabase student_exam_attempts without invalid relationship joins
@@ -2994,7 +3042,7 @@ export const tpoService = {
     try {
       const authHeaders = await getAuthHeaders();
       const storedCid = typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') || '' : '';
-      const res = await fetch(`/api/campus-exams?action=attempts&examId=${encodeURIComponent(examId)}&collegeId=${encodeURIComponent(storedCid)}`, {
+      const res = await fetch(`/api/campus-exams?action=attempts&examId=${encodeURIComponent(examId)}&collegeId=${encodeURIComponent(explicitCollegeId || storedCid)}`, {
         headers: authHeaders,
       });
       if (res.ok) {
@@ -3040,54 +3088,135 @@ export const tpoService = {
 
     const allAttempts = Array.from(map.values());
 
-    // Batch enrich student profiles if not already present
-    const needEnrichment = allAttempts.filter(a => !a.student || !a.student.name || a.student.name === 'Student');
-    if (needEnrichment.length > 0) {
-      const studentEmails = Array.from(new Set(needEnrichment.map(a => a.student_email || a.student_id).filter(Boolean)));
-      const studentIds = Array.from(new Set(needEnrichment.map(a => a.student_id).filter(Boolean)));
+    // Resolve collegeId
+    let collegeId = explicitCollegeId || '';
+    if (!collegeId) {
+      const attemptWithCid = allAttempts.find(a => a.college_id);
+      if (attemptWithCid) {
+        collegeId = attemptWithCid.college_id;
+      } else if (typeof window !== 'undefined') {
+        collegeId = localStorage.getItem('prepunite_college_id') || '';
+      }
+    }
 
-      const profMap = new Map<string, any>();
-      const csMap = new Map<string, any>();
+    // Batch enrich student profiles & roll numbers across all candidate attempts
+    const studentEmails = Array.from(
+      new Set(
+        allAttempts
+          .map(a => (a.student_email || (a.student_id?.includes('@') ? a.student_id : '')).toLowerCase())
+          .filter(Boolean)
+      )
+    );
+    const studentIds = Array.from(new Set(allAttempts.map(a => (a.student_id || '').toLowerCase()).filter(Boolean)));
 
-      try {
-        const { data: profs } = await supabase
-          .from('profiles')
-          .select('id, name, email, roll_number, department')
-          .or(`id.in.(${studentIds.map(i => `"${i}"`).join(',')}),email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+    const profMap = new Map<string, any>();
+    const csMap = new Map<string, any>();
+
+    // 1. Seed csMap from local storage students for this college
+    if (collegeId) {
+      const localStudents = getLocalStudents(collegeId);
+      localStudents.forEach(s => {
+        if (s.email) csMap.set(s.email.toLowerCase(), s);
+        if (s.id) csMap.set(s.id.toLowerCase(), s);
+        if (s.user_id) csMap.set(s.user_id.toLowerCase(), s);
+      });
+    }
+
+    // 2. Query profiles safely (validate UUID format so PostgreSQL never throws 22P02)
+    const isUUID = (str: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    const validUuids = studentIds.filter(isUUID);
+    const validEmails = Array.from(
+      new Set([...studentEmails, ...studentIds.filter(id => id.includes('@'))])
+    );
+
+    try {
+      let profQuery = supabase.from('profiles').select('id, name, email, roll_number, department');
+      if (validUuids.length > 0 && validEmails.length > 0) {
+        profQuery = profQuery.or(`id.in.(${validUuids.join(',')}),email.in.(${validEmails.join(',')})`);
+      } else if (validUuids.length > 0) {
+        profQuery = profQuery.in('id', validUuids);
+      } else if (validEmails.length > 0) {
+        profQuery = profQuery.in('email', validEmails);
+      }
+      if (validUuids.length > 0 || validEmails.length > 0) {
+        const { data: profs } = await profQuery;
         (profs || []).forEach(p => {
           if (p.id) profMap.set(p.id.toLowerCase(), p);
           if (p.email) profMap.set(p.email.toLowerCase(), p);
         });
-      } catch {}
+      }
+    } catch {}
 
-      try {
-        const { data: cs } = await supabase
-          .from('college_students')
-          .select('email, user_id, roll_number, department, full_name')
-          .or(`email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+    // 3. Query college_students safely (USE 'name' - DO NOT SELECT 'full_name'!)
+    try {
+      let csQuery = supabase.from('college_students').select('email, user_id, roll_number, department, name');
+      if (collegeId) {
+        csQuery = csQuery.eq('college_id', collegeId);
+      } else if (validEmails.length > 0) {
+        csQuery = csQuery.in('email', validEmails);
+      }
+      if (collegeId || validEmails.length > 0) {
+        const { data: cs } = await csQuery;
         (cs || []).forEach(c => {
           if (c.user_id) csMap.set(c.user_id.toLowerCase(), c);
           if (c.email) csMap.set(c.email.toLowerCase(), c);
         });
-      } catch {}
+      }
+    } catch {}
 
-      needEnrichment.forEach(att => {
-        const sid = (att.student_id || '').toLowerCase();
-        const semail = (att.student_email || sid).toLowerCase();
-        const prof = profMap.get(sid) || profMap.get(semail);
-        const cs = csMap.get(sid) || csMap.get(semail);
+    // 4. Enrich every attempt with authentic candidate profile data
+    allAttempts.forEach(att => {
+      const sid = (att.student_id || '').toLowerCase();
+      const semail = (att.student_email || (sid.includes('@') ? sid : '')).toLowerCase();
+      const prof = profMap.get(sid) || profMap.get(semail);
+      const cs = csMap.get(semail) || csMap.get(sid);
 
-        const namePart = sid.includes('@') ? sid.split('@')[0].replace(/[._-]/g, ' ') : sid;
-        const fallbackName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : 'Candidate';
+      const namePart = semail ? semail.split('@')[0].replace(/[._-]/g, ' ') : sid;
+      const fallbackName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : 'Candidate';
 
-        att.student = {
-          name: cs?.full_name || prof?.name || (att.student?.name && att.student.name !== 'Student' ? att.student.name : fallbackName),
-          email: att.student_email || prof?.email || (sid.includes('@') ? sid : ''),
-          roll_number: cs?.roll_number || prof?.roll_number || att.student?.roll_number || '—',
-          department: cs?.department || prof?.department || att.student?.department || 'CSE',
-        };
+      const resolvedRoll =
+        cs?.roll_number ||
+        prof?.roll_number ||
+        (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '—');
+      const resolvedDept =
+        cs?.department ||
+        prof?.department ||
+        (att.student?.department && att.student.department !== 'CSE' && att.student.department !== 'General'
+          ? att.student.department
+          : (cs?.department || prof?.department || 'CSE'));
+      const resolvedName =
+        cs?.name ||
+        prof?.name ||
+        (att.student?.name && att.student.name !== 'Student' && att.student.name !== 'Candidate'
+          ? att.student.name
+          : fallbackName);
+
+      att.student = {
+        name: resolvedName,
+        email: att.student_email || prof?.email || (semail.includes('@') ? semail : ''),
+        roll_number: resolvedRoll,
+        department: resolvedDept,
+      };
+    });
+
+    // 5. Self-heal local storage attempt cache if roll numbers were resolved
+    try {
+      const local = getLocalAttempts();
+      let updatedLocal = false;
+      allAttempts.forEach(att => {
+        const matchIdx = local.findIndex(l => l.id === att.id);
+        if (matchIdx !== -1) {
+          if (local[matchIdx].student?.roll_number !== att.student?.roll_number) {
+            local[matchIdx].student = att.student;
+            updatedLocal = true;
+          }
+        }
       });
-    }
+      if (updatedLocal) {
+        localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(local));
+      }
+    } catch {}
 
     allAttempts.forEach(att => {
       if (typeof att.percentage !== 'number' || isNaN(att.percentage)) {
@@ -3735,12 +3864,33 @@ export const tpoService = {
       console.warn('[tpoService.submitAttempt] Server RPC grading notice (falling back to local calculation):', rpcErr);
     }
 
-    // 3. Create finalized attempt with full result_summary
+    // 3. Create finalized attempt with full result_summary & student profile
+    let candidateStudent = existingAttempt?.student;
+    if (!candidateStudent || !candidateStudent.roll_number || candidateStudent.roll_number === '—') {
+      const cleanSid = (studentId || '').toLowerCase();
+      const cleanEmail = (existingAttempt?.student_email || (cleanSid.includes('@') ? cleanSid : '')).toLowerCase();
+      if (exam.college_id) {
+        const localStu = getLocalStudents(exam.college_id).find(
+          s => s.email.toLowerCase() === cleanEmail || s.id.toLowerCase() === cleanSid
+        );
+        if (localStu) {
+          candidateStudent = {
+            name: localStu.name,
+            email: localStu.email,
+            roll_number: localStu.roll_number || '—',
+            department: localStu.department || 'CSE',
+          };
+        }
+      }
+    }
+
     const finalizedAttempt: StudentExamAttempt = {
       id: attemptId,
       mock_exam_id: exam.id,
       student_id: studentId,
+      student_email: existingAttempt?.student_email || (studentId.includes('@') ? studentId : undefined),
       college_id: exam.college_id,
+      student: candidateStudent,
       status: finalStatus,
       started_at: startedAt,
       submitted_at: new Date().toISOString(),

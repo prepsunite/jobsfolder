@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
@@ -17,7 +17,7 @@ import {
   Award,
   AlertCircle,
 } from 'lucide-react';
-import type { MockExam, StudentExamAttempt } from '@/types/tpo';
+import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 
@@ -39,14 +39,60 @@ export default function TpoExamDetailPage() {
 
   // Fetch Attempts / Results
   const { data: attempts = [], isLoading: attemptsLoading } = useQuery<StudentExamAttempt[]>({
-    queryKey: ['tpo-exam-attempts', examId],
-    queryFn: () => (examId ? tpoService.getExamAttempts(examId) : []),
+    queryKey: ['tpo-exam-attempts', examId, collegeId],
+    queryFn: () => (examId ? tpoService.getExamAttempts(examId, collegeId) : []),
     enabled: !!examId,
   });
 
+  // Fetch College Students for live roster correlation & roll number guarantee
+  const { data: collegeStudents = [] } = useQuery<CollegeStudent[]>({
+    queryKey: ['tpo-students', collegeId],
+    queryFn: () => (collegeId ? tpoService.getCollegeStudents(collegeId) : []),
+    enabled: !!collegeId,
+  });
+
+  // Fast candidate lookup by email / user_id
+  const studentLookup = useMemo(() => {
+    const map = new Map<string, CollegeStudent>();
+    collegeStudents.forEach(s => {
+      if (s.email) map.set(s.email.toLowerCase(), s);
+      if (s.id) map.set(s.id.toLowerCase(), s);
+      if (s.user_id) map.set(s.user_id.toLowerCase(), s);
+    });
+    return map;
+  }, [collegeStudents]);
+
+  // Robust candidate profile resolver
+  const resolveStudent = (att: StudentExamAttempt) => {
+    const s = att.student || { name: 'Student', email: '', roll_number: '—', department: 'CSE' };
+    const email = (s.email || att.student_email || (att.student_id?.includes('@') ? att.student_id : '')).toLowerCase();
+    const sid = (att.student_id || '').toLowerCase();
+    const matched = studentLookup.get(email) || studentLookup.get(sid);
+
+    const roll_number =
+      s.roll_number && s.roll_number !== '—'
+        ? s.roll_number
+        : (matched?.roll_number || '—');
+    const name =
+      s.name && s.name !== 'Student' && s.name !== 'Candidate'
+        ? s.name
+        : (matched?.name || s.name || 'Candidate');
+    const department =
+      s.department && s.department !== 'CSE' && s.department !== 'General'
+        ? s.department
+        : (matched?.department || s.department || 'CSE');
+
+    return {
+      name,
+      email: email || s.email,
+      roll_number,
+      department,
+    };
+  };
+
   // Filter attempts
   const filteredAttempts = attempts.filter(att => {
-    const student = att.student || { name: '', email: '', roll_number: '', department: '' };
+    const student = resolveStudent(att);
     const matchesSearch =
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -71,7 +117,7 @@ export default function TpoExamDetailPage() {
       'Rank,Roll Number,Student Name,Email,Department,Score,Max Score,Percentage,Result,Placement Tier,Attempted Questions,Total Questions,Accuracy,Tab Switches,Status\n';
     const rows = attempts
       .map((a, idx) => {
-        const s = a.student || { name: 'Student', email: '', roll_number: '', department: 'CSE' };
+        const s = resolveStudent(a);
         const pct = a.percentage || 0;
         const res = a.result_summary;
         const tier = a.status === 'TERMINATED_MALPRACTICE' ? 'Malpractice / Disqualified' : (res?.tier_label || (pct >= 70 ? 'Tier 1: Day-1 Ready' : pct >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed'));
@@ -261,7 +307,7 @@ export default function TpoExamDetailPage() {
             ) : (
               filteredAttempts.map((att) => {
                 const globalRank = attempts.findIndex(a => a.id === att.id) + 1;
-                const s = att.student || { name: 'Student', email: '', roll_number: '—', department: 'CSE' };
+                const s = resolveStudent(att);
                 return (
                   <tr key={att.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-4 font-black text-slate-400">#{globalRank}</td>
@@ -344,27 +390,32 @@ export default function TpoExamDetailPage() {
             <div className="bg-white dark:bg-[#151618] border border-slate-200 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
               
               {/* Modal Header */}
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#1a1b1e]">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#FD4A32]">
-                    Candidate Placement Performance Scorecard
-                  </span>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                    {selectedAttempt.student?.name || 'Candidate Scorecard'}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Roll: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.roll_number || '—'}</strong> • 
-                    Dept: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.department || 'General'}</strong> • 
-                    Email: {selectedAttempt.student?.email || selectedAttempt.student_email || selectedAttempt.student_id}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedAttempt(null)}
-                  className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              {(() => {
+                const selStudent = resolveStudent(selectedAttempt);
+                return (
+                  <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#1a1b1e]">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#FD4A32]">
+                        Candidate Placement Performance Scorecard
+                      </span>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                        {selStudent.name || 'Candidate Scorecard'}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Roll: <strong className="text-slate-800 dark:text-slate-200">{selStudent.roll_number || '—'}</strong> • 
+                        Dept: <strong className="text-slate-800 dark:text-slate-200">{selStudent.department || 'General'}</strong> • 
+                        Email: {selStudent.email || selectedAttempt.student_email || selectedAttempt.student_id}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedAttempt(null)}
+                      className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto space-y-6 text-xs">

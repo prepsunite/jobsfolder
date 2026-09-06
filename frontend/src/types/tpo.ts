@@ -38,6 +38,7 @@ export interface CollegeStudent {
   id: string;
   email: string;
   name: string;
+  user_id?: string | null;
   roll_number?: string;
   department?: string;
   batch_year?: number;
