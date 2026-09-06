@@ -189,7 +189,16 @@ export default function MockExamTestPage() {
       setTestPhase('SUBMITTED');
     } else if (existingAttempt.status === 'IN_PROGRESS' && testPhase === 'INSTRUCTIONS') {
       setAttemptId(existingAttempt.id);
-      setResponses(existingAttempt.responses || {});
+      let recoveredResponses = existingAttempt.responses || {};
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          const cached = localStorage.getItem(`prepunite_active_responses_${examId}`);
+          if (cached) {
+            recoveredResponses = { ...recoveredResponses, ...JSON.parse(cached) };
+          }
+        } catch {}
+      }
+      setResponses(recoveredResponses);
       const count = existingAttempt.tab_switch_count || 0;
       tabSwitchCountRef.current = count;
       setTabSwitchCount(count);
@@ -199,7 +208,7 @@ export default function MockExamTestPage() {
       setTimeSpentSeconds(spent);
       setTimeRemainingSeconds(Math.max(0, totalSec - spent));
     }
-  }, [existingAttempt, exam, testPhase]);
+  }, [existingAttempt, exam, testPhase, examId]);
 
   // Deterministically sort sections by section_order ASC
   const sections = useMemo(() => {
@@ -348,6 +357,12 @@ export default function MockExamTestPage() {
           } catch {}
         }
 
+        if (typeof window !== 'undefined' && exam?.id) {
+          try {
+            localStorage.removeItem(`prepunite_active_responses_${exam.id}`);
+          } catch {}
+        }
+
         setFinalGradedAttempt(graded);
         setTestPhase('SUBMITTED');
       } catch (err: any) {
@@ -470,41 +485,65 @@ export default function MockExamTestPage() {
     return `${displayMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Response Update Handlers
+  // Response Update Handlers with Instant Zero-Data-Loss Local Persistence
   const handleSelectOption = (optionIndex: number) => {
     if (!currentQuestionId) return;
-    setResponses(prev => ({
-      ...prev,
-      [currentQuestionId]: {
-        selected_option: optionIndex,
-        marked_review: prev[currentQuestionId]?.marked_review || false,
-        time_spent_sec: (prev[currentQuestionId]?.time_spent_sec || 0) + 1,
-      },
-    }));
+    setResponses(prev => {
+      const updated = {
+        ...prev,
+        [currentQuestionId]: {
+          selected_option: optionIndex,
+          marked_review: prev[currentQuestionId]?.marked_review || false,
+          time_spent_sec: (prev[currentQuestionId]?.time_spent_sec || 0) + 1,
+        },
+      };
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
   };
 
   const handleClearResponse = () => {
     if (!currentQuestionId) return;
-    setResponses(prev => ({
-      ...prev,
-      [currentQuestionId]: {
-        selected_option: null,
-        marked_review: prev[currentQuestionId]?.marked_review || false,
-        time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
-      },
-    }));
+    setResponses(prev => {
+      const updated = {
+        ...prev,
+        [currentQuestionId]: {
+          selected_option: null,
+          marked_review: prev[currentQuestionId]?.marked_review || false,
+          time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
+        },
+      };
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
   };
 
   const handleToggleReview = () => {
     if (!currentQuestionId) return;
-    setResponses(prev => ({
-      ...prev,
-      [currentQuestionId]: {
-        selected_option: prev[currentQuestionId]?.selected_option ?? null,
-        marked_review: !prev[currentQuestionId]?.marked_review,
-        time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
-      },
-    }));
+    setResponses(prev => {
+      const updated = {
+        ...prev,
+        [currentQuestionId]: {
+          selected_option: prev[currentQuestionId]?.selected_option ?? null,
+          marked_review: !prev[currentQuestionId]?.marked_review,
+          time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
+        },
+      };
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
   };
 
   // ==========================================
@@ -812,7 +851,12 @@ export default function MockExamTestPage() {
           </div>
 
           {/* Timer & Finish Button */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Live Autosave Indicator */}
+            <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Autosaved</span>
+            </div>
             <div
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-xs font-black tracking-wider ${
                 timeRemainingSeconds < 300

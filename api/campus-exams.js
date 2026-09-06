@@ -127,6 +127,17 @@ export default async function handler(req, res) {
         return true;
       }
 
+      // 5. Check cloud contact_messages for B2B_TPO_AUTH
+      const { data: tpoMsg } = await supabaseAdmin
+        .from('contact_messages')
+        .select('subject, message')
+        .eq('subject', `B2B_TPO_AUTH:${userEmail}`)
+        .eq('status', 'ACTIVE')
+        .maybeSingle();
+      if (tpoMsg) {
+        return true;
+      }
+
       return false;
     } catch {
       return false;
@@ -209,10 +220,27 @@ export default async function handler(req, res) {
             .select('college_id')
             .eq('id', examId)
             .maybeSingle();
-          if (ex?.college_id) examCollegeId = ex.college_id;
+          if (ex?.college_id) {
+            examCollegeId = ex.college_id;
+          } else {
+            // Check contact_messages cloud backup
+            const { data: cloudExam } = await supabaseAdmin
+              .from('contact_messages')
+              .select('subject')
+              .like('subject', `B2B_EXAM:%:${examId}`)
+              .limit(1)
+              .maybeSingle();
+            if (cloudExam?.subject) {
+              const parts = cloudExam.subject.split(':');
+              if (parts.length >= 2) examCollegeId = parts[1];
+            }
+          }
         }
 
-        const canAccess = isSuperAdmin || (examCollegeId ? await isTpoForCollege(examCollegeId) : false);
+        const canAccess =
+          isSuperAdmin ||
+          (examCollegeId ? await isTpoForCollege(examCollegeId) : false) ||
+          (await isTpoForCollege(user?.college_id || ''));
         if (!canAccess) {
           return res.status(403).json({ error: 'Forbidden: Caller is not authorized to inspect attempts for this assessment.' });
         }

@@ -2166,6 +2166,29 @@ export const tpoService = {
     const attemptsMap = new Map<string, any>();
     attempts.forEach(a => attemptsMap.set(a.id, a));
     localAttempts.forEach(a => attemptsMap.set(a.id, a));
+
+    // Cloud resilience: Fetch attempts logged via contact_messages
+    try {
+      const { data: cloudMsgs } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .like('subject', `B2B_ATTEMPT:%`)
+        .order('created_at', { ascending: false });
+
+      if (cloudMsgs && cloudMsgs.length > 0) {
+        cloudMsgs.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message);
+            if (parsed && parsed.id && !attemptsMap.has(parsed.id)) {
+              if (parsed.college_id === collegeId || examIds.has(parsed.mock_exam_id)) {
+                attemptsMap.set(parsed.id, parsed);
+              }
+            }
+          } catch {}
+        });
+      }
+    } catch {}
+
     const allAttempts = Array.from(attemptsMap.values());
 
     const totalStudents = students.length;
@@ -2817,7 +2840,8 @@ export const tpoService = {
     // 2. Query /api/campus-exams?action=attempts (bypasses RLS with verified TPO token and attaches profiles)
     try {
       const authHeaders = await getAuthHeaders();
-      const res = await fetch(`/api/campus-exams?action=attempts&examId=${encodeURIComponent(examId)}`, {
+      const storedCid = typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') || '' : '';
+      const res = await fetch(`/api/campus-exams?action=attempts&examId=${encodeURIComponent(examId)}&collegeId=${encodeURIComponent(storedCid)}`, {
         headers: authHeaders,
       });
       if (res.ok) {

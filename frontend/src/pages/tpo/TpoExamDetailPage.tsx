@@ -11,6 +11,10 @@ import {
   AlertTriangle,
   Share2,
   ShieldAlert,
+  Eye,
+  X,
+  Clock,
+  Award,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +27,7 @@ export default function TpoExamDetailPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
 
   // Fetch Exam Metadata
   const { data: exam, isLoading: examLoading } = useQuery<MockExam | null>({
@@ -229,18 +234,19 @@ export default function TpoExamDetailPage() {
               <th className="p-4">Percentage</th>
               <th className="p-4">Tab Violations</th>
               <th className="p-4">Result</th>
+              <th className="p-4 text-right">Inspection</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {attemptsLoading ? (
               <tr>
-                <td colSpan={8} className="p-12 text-center text-slate-400">
+                <td colSpan={9} className="p-12 text-center text-slate-400">
                   Loading candidate attempts...
                 </td>
               </tr>
             ) : filteredAttempts.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-12 text-center text-slate-400">
+                <td colSpan={9} className="p-12 text-center text-slate-400">
                   No candidate submissions recorded for this test drive yet.
                 </td>
               </tr>
@@ -296,6 +302,16 @@ export default function TpoExamDetailPage() {
                         </span>
                       )}
                     </td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={() => setSelectedAttempt(att)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                        title="View Detailed Student Scorecard & Responses"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Inspect</span>
+                      </button>
+                    </td>
                   </tr>
                 );
               })
@@ -303,6 +319,169 @@ export default function TpoExamDetailPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Candidate Detailed Scorecard & Response Audit Modal */}
+      {selectedAttempt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-[#151618] border border-slate-200 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#1a1b1e]">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#FD4A32]">
+                  Candidate Assessment Audit
+                </span>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  {selectedAttempt.student?.name || 'Candidate Scorecard'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Roll: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.roll_number || '—'}</strong> • 
+                  Dept: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.department || 'General'}</strong> • 
+                  Email: {selectedAttempt.student?.email || selectedAttempt.student_email || selectedAttempt.student_id}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedAttempt(null)}
+                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs">
+              {/* Scorecard KPIs */}
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Score</div>
+                  <div className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                    {selectedAttempt.total_score} / {selectedAttempt.max_possible_score}
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Percentage</div>
+                  <div className={`text-xl font-black mt-1 ${selectedAttempt.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {selectedAttempt.percentage}%
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Time Taken</div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white mt-1.5 flex items-center justify-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{Math.round((selectedAttempt.time_spent_seconds || 0) / 60)} mins</span>
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Proctoring</div>
+                  <div className="text-xs font-black mt-1.5">
+                    {selectedAttempt.tab_switch_count === 0 ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">0 Violations</span>
+                    ) : (
+                      <span className="text-amber-600 dark:text-amber-400 font-bold">{selectedAttempt.tab_switch_count} Tab Switches</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section-Wise Performance Breakdown */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Sectional Performance Breakdown
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {(exam.sections || []).map((sec, sIdx) => {
+                    const secQIds = sec.question_ids || [];
+                    const answeredInSec = secQIds.filter(qId => {
+                      const r = (selectedAttempt.responses || {})[qId];
+                      return r && r.selected_option !== null && r.selected_option !== undefined;
+                    });
+                    const correctInSec = secQIds.filter(qId => {
+                      const r = (selectedAttempt.responses || {})[qId];
+                      return r && r.is_correct;
+                    });
+
+                    return (
+                      <div key={sec.id || sIdx} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <div className="font-bold text-slate-900 dark:text-white text-xs truncate">{sec.name}</div>
+                        <div className="text-[11px] text-slate-500">
+                          Answered: <strong className="text-slate-800 dark:text-slate-200">{answeredInSec.length}/{secQIds.length}</strong>
+                        </div>
+                        <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                          Correct: {correctInSec.length}/{secQIds.length}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Question Responses Matrix */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Question Response Audit Log
+                </h4>
+                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden max-h-64 overflow-y-auto">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-slate-50 dark:bg-slate-800/90 text-slate-500 font-bold sticky top-0 border-b border-slate-200 dark:border-slate-700">
+                      <tr>
+                        <th className="p-3">Q#</th>
+                        <th className="p-3">Candidate Choice</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3">Time Spent</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {(exam.sections || []).flatMap(s => s.question_ids).map((qId, idx) => {
+                        const r = (selectedAttempt.responses || {})[qId];
+                        const hasAnswered = r && r.selected_option !== null && r.selected_option !== undefined;
+                        const isCorrect = r && r.is_correct;
+                        const optionLabel = hasAnswered ? String.fromCharCode(65 + Number(r.selected_option)) : '—';
+
+                        return (
+                          <tr key={qId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                            <td className="p-3 font-bold text-slate-400">Question {idx + 1}</td>
+                            <td className="p-3 font-mono font-bold">
+                              {hasAnswered ? `Option ${optionLabel}` : <span className="text-slate-400">Unanswered</span>}
+                            </td>
+                            <td className="p-3">
+                              {!hasAnswered ? (
+                                <span className="text-slate-400">Skipped</span>
+                              ) : isCorrect ? (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Correct
+                                </span>
+                              ) : (
+                                <span className="text-rose-500 font-bold flex items-center gap-1">
+                                  <XCircle className="w-3.5 h-3.5" /> Incorrect
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3 font-mono text-slate-500">
+                              {r?.time_spent_sec ? `${r.time_spent_sec}s` : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#1a1b1e] flex justify-end">
+              <button
+                onClick={() => setSelectedAttempt(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Close Audit
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

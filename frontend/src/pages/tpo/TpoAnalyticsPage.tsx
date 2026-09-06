@@ -1,16 +1,29 @@
 import React from 'react';
-import { useOutletContext } from 'react-router';
+import { useOutletContext, Link } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
+import { tpoService } from '@/services/tpo.service';
+import type { MockExam } from '@/types/tpo';
 import {
   TrendingUp,
   Award,
   AlertTriangle,
   Download,
   GraduationCap,
+  FileText,
+  ChevronRight,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function TpoAnalyticsPage() {
-  const { currentCollege, stats } = useOutletContext<TpoOutletContext>();
+  const { collegeId, currentCollege, stats } = useOutletContext<TpoOutletContext>();
+
+  const { data: mockExams = [], isLoading: isLoadingExams } = useQuery<MockExam[]>({
+    queryKey: ['tpo-mock-exams', collegeId],
+    queryFn: () => tpoService.getMockExamsForCollege(collegeId),
+    enabled: !!collegeId,
+  });
 
   const departments = stats?.departments || [];
   const total = stats?.totalStudents || 0;
@@ -169,6 +182,110 @@ export default function TpoAnalyticsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Assessment Drive Performance History */}
+      <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              Assessment Drive Performance History
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Detailed candidate scores, question-by-question analytics, and proctoring audit logs for each drive
+            </p>
+          </div>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 self-start sm:self-auto">
+            {mockExams.length} Total Drives
+          </span>
+        </div>
+
+        {isLoadingExams ? (
+          <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
+            Loading assessment drives...
+          </div>
+        ) : mockExams.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-400 space-y-3">
+            <FileText className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+            <p>No assessment drives scheduled or completed yet.</p>
+            <Link
+              to="/tpo/exams"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FD4A32] hover:underline"
+            >
+              Configure an Assessment Drive <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
+                  <th className="pb-3 pr-4">Drive Title / Category</th>
+                  <th className="pb-3 px-4">Pattern / Sections</th>
+                  <th className="pb-3 px-4">Duration</th>
+                  <th className="pb-3 px-4">Proctoring</th>
+                  <th className="pb-3 px-4">Status</th>
+                  <th className="pb-3 pl-4 text-right">Analytics &amp; Scorecards</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {mockExams.map(exam => {
+                  const totalQ = exam.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || 0;
+                  const isProctored = exam.enable_fullscreen_lock || exam.enable_tab_switch_detection;
+                  return (
+                    <tr key={exam.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="py-4 pr-4">
+                        <div className="font-bold text-slate-900 dark:text-white">
+                          {exam.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                          {exam.target_company || 'Company Assessment'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 font-medium">
+                        {exam.sections?.length || 0} Sections ({totalQ} Questions)
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          {exam.duration_minutes} mins
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        {isProctored ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                            Strict Proctor
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">Standard</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {exam.is_active ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            <CheckCircle2 className="w-3 h-3" /> Live
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                            Completed / Inactive
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 pl-4 text-right">
+                        <Link
+                          to={`/tpo/exams/${exam.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer"
+                        >
+                          View Results <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
