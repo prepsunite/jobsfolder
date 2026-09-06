@@ -62,6 +62,15 @@ export default function RootLayout() {
     );
   }
 
+  // Standalone Distraction-Free Exam Taking Mode (Zero Website Sidebar, Header, or Menu)
+  if (location.pathname.startsWith('/exam/')) {
+    return (
+      <div className="min-h-screen w-full bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] font-sans selection:bg-[#FD4A32] selection:text-white">
+        <Outlet />
+      </div>
+    );
+  }
+
   if (isPublicRoute) {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">

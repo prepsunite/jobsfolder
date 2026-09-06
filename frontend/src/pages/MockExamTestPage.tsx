@@ -672,7 +672,7 @@ export default function MockExamTestPage() {
     const allExamQIds = sections.flatMap(s => s.question_ids);
 
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-[#0f1012] text-gray-900 dark:text-white flex flex-col select-none">
+      <div className="fixed inset-0 z-40 bg-gray-100 dark:bg-[#0f1012] text-gray-900 dark:text-white flex flex-col select-none overflow-hidden">
         
         {/* Anti-Cheat Tab Switch Warning Modal */}
         {showWarningModal && (

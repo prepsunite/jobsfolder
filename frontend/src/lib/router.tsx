@@ -156,14 +156,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: '/exam/:examId',
-        element: (
-          <ProtectedRoute>
-            {withSuspense(MockExamTestPage)}
-          </ProtectedRoute>
-        ),
-      },
-      {
         path: '*',
         element: <NotFoundPage />,
       },
@@ -204,5 +196,15 @@ export const router = createBrowserRouter([
         element: withSuspense(TpoSettingsPage),
       },
     ],
+  },
+  // 3. Isolated Distraction-Free Standardized Examination Engine (Zero Dashboard/Menus/Chrome)
+  {
+    path: '/exam/:examId',
+    element: (
+      <ProtectedRoute>
+        {withSuspense(MockExamTestPage)}
+      </ProtectedRoute>
+    ),
+    errorElement: <ErrorBoundary />,
   },
 ]);

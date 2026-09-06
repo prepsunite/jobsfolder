@@ -25,8 +25,9 @@ import { useConsent } from '@/contexts/ConsentContext';
 export default function ConsentBanner() {
   const { hasResponded, acceptConsent, declineConsent } = useConsent();
 
-  // Don't render once the user has responded
+  // Don't render once the user has responded or when candidate is taking an exam
   if (hasResponded) return null;
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/exam/')) return null;
 
   return (
     <div
