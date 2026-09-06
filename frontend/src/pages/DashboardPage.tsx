@@ -33,6 +33,8 @@ import {
   Download,
   AlertTriangle,
   Clock,
+  Award,
+  TrendingUp,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -118,6 +120,16 @@ export default function DashboardPage() {
 
   const enrolledCollege = campusExamsData?.college;
   const campusExams = campusExamsData?.exams || [];
+
+  const completedCampusAttempts = useMemo(
+    () => campusExams.filter(e => e.attempt && e.attempt.status === 'SUBMITTED'),
+    [campusExams]
+  );
+  const avgCampusScore = useMemo(() => {
+    if (completedCampusAttempts.length === 0) return null;
+    const sum = completedCampusAttempts.reduce((acc, e) => acc + (e.attempt?.percentage || 0), 0);
+    return Math.round(sum / completedCampusAttempts.length);
+  }, [completedCampusAttempts]);
 
   // Fetch all questions metadata to compute user's lifetime aptitude stats
   const { data: allQuestionsMeta = [], isLoading: isMetaLoading } = useQuery({
@@ -653,6 +665,61 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+
+          {/* Student Placement Readiness Intelligence Bar */}
+          {campusExams.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-white/70 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] text-center">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                  Assigned Drives
+                </span>
+                <span className="text-sm font-black text-gray-900 dark:text-white">
+                  {campusExams.length} Mock Drives
+                </span>
+              </div>
+
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                  Completed
+                </span>
+                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                  {completedCampusAttempts.length} / {campusExams.length}
+                </span>
+              </div>
+
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                  Campus Mock Avg
+                </span>
+                <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                  {avgCampusScore !== null ? `${avgCampusScore}%` : 'Pending Attempt'}
+                </span>
+              </div>
+
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                  Placement Readiness
+                </span>
+                {avgCampusScore !== null ? (
+                  avgCampusScore >= 70 ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      <Award className="w-3 h-3 text-emerald-500" /> Day-1 Ready
+                    </span>
+                  ) : avgCampusScore >= 50 ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                      <TrendingUp className="w-3 h-3 text-blue-500" /> Near Ready
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                      <AlertTriangle className="w-3 h-3 text-rose-500" /> Remedial Prep
+                    </span>
+                  )
+                ) : (
+                  <span className="text-[11px] font-bold text-gray-400">Not Attempted</span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Drives List / Grid */}
           {isCampusExamsLoading ? (

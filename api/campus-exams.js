@@ -536,7 +536,7 @@ export default async function handler(req, res) {
           await supabaseAdmin.from('contact_messages').insert({
             name: `Candidate Start: ${cleanEmail}`,
             email: cleanEmail.includes('@') ? cleanEmail : 'student@prepunite.com',
-            subject: `B2B_ATTEMPT:${startRow.mock_exam_id}:${startRow.id}`,
+            subject: `B2B_ATTEMPT:${startRow.mock_exam_id}:${cleanEmail || startRow.id}`,
             message: JSON.stringify(startRow),
             status: 'IN_PROGRESS',
           });
@@ -593,10 +593,11 @@ export default async function handler(req, res) {
 
         // Immutable cloud backup to contact_messages
         try {
+          const studentIdentifier = (attemptRow.student_email || attemptRow.student_id || attemptRow.id).toLowerCase();
           await supabaseAdmin.from('contact_messages').insert({
             name: `Candidate Submit: ${attemptRow.student_email}`,
             email: attemptRow.student_email.includes('@') ? attemptRow.student_email : 'student@prepunite.com',
-            subject: `B2B_ATTEMPT:${attemptRow.mock_exam_id}:${attemptRow.id}`,
+            subject: `B2B_ATTEMPT:${attemptRow.mock_exam_id}:${studentIdentifier}`,
             message: JSON.stringify(attemptRow),
             status: attemptRow.status,
           });

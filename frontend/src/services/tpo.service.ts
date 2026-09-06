@@ -3603,19 +3603,26 @@ export const tpoService = {
 
     // 3. Check cloud messages
     try {
-      const { data: cloudMsg } = await supabase
+      const { data: cloudMsgs } = await supabase
         .from('contact_messages')
         .select('message')
-        .eq('subject', `B2B_ATTEMPT:${mockExamId}:${cleanId}`)
+        .or(`subject.eq.B2B_ATTEMPT:${mockExamId}:${cleanId},subject.like.B2B_ATTEMPT:${mockExamId}:%,email.eq.${cleanId}`)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(5);
 
-      if (cloudMsg && cloudMsg.message) {
-        const parsed = JSON.parse(cloudMsg.message) as StudentExamAttempt;
-        if (parsed && parsed.id) {
-          saveLocalAttempt(parsed);
-          return parsed;
+      if (cloudMsgs && cloudMsgs.length > 0) {
+        for (const m of cloudMsgs) {
+          try {
+            const parsed = JSON.parse(m.message) as StudentExamAttempt;
+            if (
+              parsed &&
+              parsed.mock_exam_id === mockExamId &&
+              (parsed.student_id === cleanId || parsed.student_email?.toLowerCase() === cleanId || parsed.student_id === studentIdOrEmail)
+            ) {
+              saveLocalAttempt(parsed);
+              return parsed;
+            }
+          } catch {}
         }
       }
     } catch {}
