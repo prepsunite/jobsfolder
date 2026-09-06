@@ -1636,6 +1636,68 @@ export const tpoService = {
     return true;
   },
 
+  async updateStudentBatch(
+    collegeId: string,
+    studentEmail: string,
+    batchName: string
+  ): Promise<boolean> {
+    let effectiveCollegeId = collegeId?.trim();
+    if (!effectiveCollegeId && typeof window !== 'undefined') {
+      effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
+    }
+    if (!effectiveCollegeId || !studentEmail) return false;
+
+    const cleanEmail = studentEmail.trim().toLowerCase();
+
+    // Find or create batch
+    let batchId: string | undefined;
+    try {
+      const batches = await this.getCollegeBatches(effectiveCollegeId);
+      let found = batches.find(b => b.name.trim().toLowerCase() === batchName.trim().toLowerCase());
+      if (!found) {
+        found = await this.createCollegeBatch(effectiveCollegeId, { name: batchName.trim() });
+      }
+      batchId = found.id;
+    } catch {}
+
+    // Update local cache
+    const localStudents = getLocalStudents(effectiveCollegeId);
+    const idx = localStudents.findIndex(s => s.email.toLowerCase() === cleanEmail);
+    if (idx !== -1) {
+      localStudents[idx].batch_name = batchName;
+      localStudents[idx].batch_id = batchId;
+      saveLocalStudents(effectiveCollegeId, localStudents);
+    }
+
+    // Update Supabase college_students
+    try {
+      await supabase
+        .from('college_students')
+        .update({
+          batch_id: batchId || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('college_id', effectiveCollegeId)
+        .eq('email', cleanEmail);
+    } catch {}
+
+    // Cloud backup
+    try {
+      const updatedStudent = idx !== -1 ? localStudents[idx] : null;
+      if (updatedStudent) {
+        await supabase.from('contact_messages').insert({
+          name: `Student Batch Update: ${updatedStudent.name}`,
+          email: 'tpo@prepunite.com',
+          subject: `B2B_STUDENT:${effectiveCollegeId}:${updatedStudent.id}`,
+          message: JSON.stringify({ ...updatedStudent, batch_name: batchName, batch_id: batchId }),
+          status: 'ACTIVE',
+        });
+      }
+    } catch {}
+
+    return true;
+  },
+
   async getCollegeStudents(
     collegeId: string,
     filters?: { search?: string; department?: string; batchYear?: number; batchId?: string; batchName?: string }
