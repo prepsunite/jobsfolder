@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { tpoService } from '@/services/tpo.service';
-import type { MockExam } from '@/types/tpo';
+import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 import {
   TrendingUp,
   Award,
@@ -14,14 +14,34 @@ import {
   ChevronRight,
   Clock,
   CheckCircle2,
+  Search,
+  Eye,
+  X,
+  XCircle,
+  Users,
 } from 'lucide-react';
 
 export default function TpoAnalyticsPage() {
   const { collegeId, currentCollege, stats } = useOutletContext<TpoOutletContext>();
 
+  // Search & Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedExamFilter, setSelectedExamFilter] = useState('ALL');
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState('ALL');
+  const [selectedTierFilter, setSelectedTierFilter] = useState('ALL');
+  const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
+
+  // 1. Fetch Mock Exams for College
   const { data: mockExams = [], isLoading: isLoadingExams } = useQuery<MockExam[]>({
     queryKey: ['tpo-mock-exams', collegeId],
     queryFn: () => tpoService.getMockExamsForCollege(collegeId),
+    enabled: !!collegeId,
+  });
+
+  // 2. Fetch All Candidate Attempts across all drives for this College
+  const { data: allAttempts = [], isLoading: isLoadingAttempts } = useQuery<StudentExamAttempt[]>({
+    queryKey: ['tpo-college-attempts', collegeId],
+    queryFn: () => tpoService.getAllCollegeAttempts(collegeId),
     enabled: !!collegeId,
   });
 
@@ -33,6 +53,37 @@ export default function TpoAnalyticsPage() {
   const tier1Count = stats?.tierCounts?.tier1 ?? 0;
   const tier2Count = stats?.tierCounts?.tier2 ?? 0;
   const tier3Count = stats?.tierCounts?.tier3 ?? total;
+
+  // Filter candidate attempts
+  const filteredAttempts = allAttempts.filter(att => {
+    const student = att.student || { name: '', email: '', roll_number: '', department: '' };
+    const matchesSearch =
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.roll_number && student.roll_number.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesExam = selectedExamFilter === 'ALL' || att.mock_exam_id === selectedExamFilter;
+    const matchesDept =
+      selectedDeptFilter === 'ALL' ||
+      (student.department || '').toUpperCase() === selectedDeptFilter.toUpperCase();
+
+    let matchesTier = true;
+    const pct = att.percentage || 0;
+    if (selectedTierFilter === 'TIER_1') matchesTier = pct >= 70 && att.status !== 'TERMINATED_MALPRACTICE';
+    else if (selectedTierFilter === 'TIER_2') matchesTier = pct >= 50 && pct < 70 && att.status !== 'TERMINATED_MALPRACTICE';
+    else if (selectedTierFilter === 'TIER_3') matchesTier = pct < 50 && att.status !== 'TERMINATED_MALPRACTICE';
+    else if (selectedTierFilter === 'MALPRACTICE') matchesTier = att.status === 'TERMINATED_MALPRACTICE';
+
+    return matchesSearch && matchesExam && matchesDept && matchesTier;
+  });
+
+  // Available unique departments from students and attempts
+  const availableDepts = Array.from(
+    new Set([
+      ...departments.map((d: any) => d.department),
+      ...allAttempts.map(a => a.student?.department).filter(Boolean),
+    ])
+  );
 
   // Generate real NIRF / NAAC Institutional Placement Intelligence Report CSV
   const handleDownloadReport = () => {
@@ -64,6 +115,38 @@ export default function TpoAnalyticsPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Export Student Results CSV
+  const handleDownloadCandidateResults = () => {
+    if (allAttempts.length === 0) return;
+    const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const headers = 'Rank,Roll Number,Student Name,Email,Department,Assessment Drive,Target Company,Score,Max Marks,Percentage,Tier,Status,Tab Switches,Submission Date\n';
+    const rows = allAttempts.map((a, idx) => {
+      const s = a.student || { name: 'Student', email: '', roll_number: '—', department: 'General' };
+      const pct = a.percentage || 0;
+      const tier = a.status === 'TERMINATED_MALPRACTICE' ? 'Malpractice' : pct >= 70 ? 'Tier 1' : pct >= 50 ? 'Tier 2' : 'Tier 3';
+      const examTitle = (a as any).exam_title || a.mock_exam_id;
+      const company = (a as any).target_company || 'Campus Drive';
+      const subDate = a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—';
+      return `${idx + 1},"${s.roll_number || '—'}","${s.name}","${s.email}","${s.department || 'General'}","${examTitle}","${company}",${a.total_score},${a.max_possible_score || 100},${pct}%,${tier},${a.status},${a.tab_switch_count || 0},"${subDate}"`;
+    }).join('\n');
+
+    const fullContent = `College,"${currentCollege.name}" (${currentCollege.code})\nExported On,"${reportDate}"\n\n` + headers + rows;
+    const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${currentCollege.code}_Student_Results_Leaderboard.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Find corresponding exam for currently inspected attempt
+  const activeExam = selectedAttempt
+    ? mockExams.find(e => e.id === selectedAttempt.mock_exam_id)
+    : null;
+
   return (
     <div className="space-y-8 animate-fadeIn">
       
@@ -74,17 +157,29 @@ export default function TpoAnalyticsPage() {
             Institutional Placement Intelligence
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Comparative performance analytics across departments for campus recruitment readiness
+            Real-time candidate scorecards, comparative department benchmarks, and NAAC/NIRF reporting
           </p>
         </div>
 
-        <button
-          onClick={handleDownloadReport}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20 self-start sm:self-auto cursor-pointer"
-        >
-          <Download className="w-4 h-4" />
-          Download NAAC / NIRF Report
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {allAttempts.length > 0 && (
+            <button
+              onClick={handleDownloadCandidateResults}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] hover:border-[#FD4A32] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-[#FD4A32]" />
+              Export Scores (CSV)
+            </button>
+          )}
+
+          <button
+            onClick={handleDownloadReport}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20 self-start sm:self-auto cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            Download NAAC / NIRF Report
+          </button>
+        </div>
       </div>
 
       {/* High-Level Placement Readiness Tiers */}
@@ -135,7 +230,275 @@ export default function TpoAnalyticsPage() {
         </div>
       </div>
 
-      {/* Branch vs Branch Comparison Cards */}
+      {/* 🌟 1. CANDIDATE ASSESSMENT RESULTS & INSTITUTIONAL LEADERBOARD */}
+      <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                Candidate Assessment Results &amp; Scorecards
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#FD4A32]/10 text-[#FD4A32]">
+                {allAttempts.length} Submissions
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Live rank leaderboard across all campus drives with full response audit &amp; proctoring inspection
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search student, roll #, email..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-hidden focus:border-[#FD4A32] text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Filter Controls */}
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+          {/* Drive / Exam Filter */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400 font-medium">Drive:</span>
+            <select
+              value={selectedExamFilter}
+              onChange={e => setSelectedExamFilter(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-hidden"
+            >
+              <option value="ALL">All Drives ({mockExams.length})</option>
+              {mockExams.map(ex => (
+                <option key={ex.id} value={ex.id}>
+                  {ex.title} ({ex.target_company || 'Drive'})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Department Filter */}
+          {availableDepts.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-medium">Branch:</span>
+              <select
+                value={selectedDeptFilter}
+                onChange={e => setSelectedDeptFilter(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-hidden"
+              >
+                <option value="ALL">All Branches</option>
+                {availableDepts.map(dept => (
+                  <option key={dept} value={dept}>
+                    {dept} Branch
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Performance Tier Filter */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400 font-medium">Tier:</span>
+            <select
+              value={selectedTierFilter}
+              onChange={e => setSelectedTierFilter(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-hidden"
+            >
+              <option value="ALL">All Tiers</option>
+              <option value="TIER_1">Tier 1 (70%+ Score)</option>
+              <option value="TIER_2">Tier 2 (50%–69%)</option>
+              <option value="TIER_3">Tier 3 (Below 50%)</option>
+              <option value="MALPRACTICE">Malpractice Flagged</option>
+            </select>
+          </div>
+
+          {(searchTerm || selectedExamFilter !== 'ALL' || selectedDeptFilter !== 'ALL' || selectedTierFilter !== 'ALL') && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedExamFilter('ALL');
+                setSelectedDeptFilter('ALL');
+                setSelectedTierFilter('ALL');
+              }}
+              className="text-[#FD4A32] hover:underline font-bold text-xs ml-auto cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+
+        {/* Student Results Table */}
+        {isLoadingAttempts ? (
+          <div className="py-16 text-center text-xs text-slate-400 animate-pulse space-y-2">
+            <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+            <p>Loading candidate test results &amp; rank metrics...</p>
+          </div>
+        ) : filteredAttempts.length === 0 ? (
+          <div className="py-14 text-center space-y-3 bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+            <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                {allAttempts.length === 0
+                  ? 'No Student Results Recorded Yet'
+                  : 'No Candidates Match the Filter Criteria'}
+              </h4>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                {allAttempts.length === 0
+                  ? 'Once candidates take and submit mock assessments, their rank, score, accuracy, and proctoring audit logs will appear here in real time.'
+                  : 'Try adjusting your search terms, drive selection, or tier filters.'}
+              </p>
+            </div>
+            {allAttempts.length === 0 && mockExams.length > 0 && (
+              <div className="pt-2">
+                <Link
+                  to={`/tpo/exams/${mockExams[0]?.id}`}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-[#FD4A32] hover:underline"
+                >
+                  View Active Drive Link <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
+                  <th className="pb-3 pr-3">Rank</th>
+                  <th className="pb-3 px-3">Roll No</th>
+                  <th className="pb-3 px-3">Candidate Details</th>
+                  <th className="pb-3 px-3">Branch</th>
+                  <th className="pb-3 px-3">Assessment Drive</th>
+                  <th className="pb-3 px-3">Score</th>
+                  <th className="pb-3 px-3">Readiness</th>
+                  <th className="pb-3 px-3">Proctor Log</th>
+                  <th className="pb-3 px-3">Status</th>
+                  <th className="pb-3 pl-3 text-right">Audit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {filteredAttempts.map((att, idx) => {
+                  const s = att.student || { name: 'Student', email: '', roll_number: '—', department: 'General' };
+                  const pct = att.percentage || 0;
+                  const isMalpractice = att.status === 'TERMINATED_MALPRACTICE';
+                  const tierLabel = isMalpractice
+                    ? 'Terminated'
+                    : pct >= 70
+                    ? 'Tier 1'
+                    : pct >= 50
+                    ? 'Tier 2'
+                    : 'Tier 3';
+
+                  const examTitle = (att as any).exam_title || mockExams.find(e => e.id === att.mock_exam_id)?.title || att.mock_exam_id;
+                  const targetCompany = (att as any).target_company || mockExams.find(e => e.id === att.mock_exam_id)?.target_company || 'Campus Drive';
+
+                  return (
+                    <tr key={att.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-4 pr-3 font-black text-slate-400">
+                        #{idx + 1}
+                      </td>
+                      <td className="py-4 px-3 font-mono font-bold text-slate-900 dark:text-white">
+                        {s.roll_number || '—'}
+                      </td>
+                      <td className="py-4 px-3">
+                        <div className="font-bold text-slate-900 dark:text-white">
+                          {s.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate max-w-xs">
+                          {s.email || att.student_email || att.student_id}
+                        </div>
+                      </td>
+                      <td className="py-4 px-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {s.department || 'General'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-3">
+                        <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">
+                          {examTitle}
+                        </div>
+                        <div className="text-[10px] text-[#FD4A32] font-bold">
+                          {targetCompany}
+                        </div>
+                      </td>
+                      <td className="py-4 px-3 font-bold text-slate-900 dark:text-white">
+                        {att.total_score} / {att.max_possible_score || 100}
+                      </td>
+                      <td className="py-4 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`font-black ${
+                              isMalpractice
+                                ? 'text-rose-600 dark:text-rose-400'
+                                : pct >= 70
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : pct >= 50
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-amber-600 dark:text-amber-400'
+                            }`}
+                          >
+                            {pct}%
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
+                              pct >= 70
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                : pct >= 50
+                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                            }`}
+                          >
+                            {tierLabel}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-3">
+                        {att.tab_switch_count && att.tab_switch_count > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                            <AlertTriangle className="w-3 h-3 text-amber-500" />
+                            {att.tab_switch_count} switches
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">0 switches</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-3">
+                        {isMalpractice ? (
+                          <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
+                            <XCircle className="w-3.5 h-3.5" /> Terminated
+                          </span>
+                        ) : att.passed ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Cleared
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-rose-500 font-bold text-[11px]">
+                            <XCircle className="w-3.5 h-3.5" /> Below Cutoff
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 pl-3 text-right">
+                        <button
+                          onClick={() => setSelectedAttempt(att)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                          title="View Detailed Student Scorecard & Responses"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Inspect</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Branch vs Branch Comparison Cards */}
       <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         <div>
           <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -186,7 +549,7 @@ export default function TpoAnalyticsPage() {
         )}
       </div>
 
-      {/* Assessment Drive Performance History */}
+      {/* 3. Assessment Drive Performance History */}
       <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -194,7 +557,7 @@ export default function TpoAnalyticsPage() {
               Assessment Drive Performance History
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Detailed candidate scores, question-by-question analytics, and proctoring audit logs for each drive
+              Scheduled mock recruitment drives with company blueprints and participation links
             </p>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 self-start sm:self-auto">
@@ -227,7 +590,7 @@ export default function TpoAnalyticsPage() {
                   <th className="pb-3 px-4">Duration</th>
                   <th className="pb-3 px-4">Proctoring</th>
                   <th className="pb-3 px-4">Status</th>
-                  <th className="pb-3 pl-4 text-right">Analytics &amp; Scorecards</th>
+                  <th className="pb-3 pl-4 text-right">Drive Leaderboard</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -289,6 +652,172 @@ export default function TpoAnalyticsPage() {
           </div>
         )}
       </div>
+
+      {/* 🔍 Candidate Detailed Scorecard & Response Audit Modal */}
+      {selectedAttempt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-[#151618] border border-slate-200 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#1a1b1e]">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#FD4A32]">
+                  Candidate Assessment Audit
+                </span>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  {selectedAttempt.student?.name || 'Candidate Scorecard'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Roll: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.roll_number || '—'}</strong> • 
+                  Dept: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.department || 'General'}</strong> • 
+                  Drive: <strong className="text-[#FD4A32]">{(selectedAttempt as any).exam_title || activeExam?.title || selectedAttempt.mock_exam_id}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedAttempt(null)}
+                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs">
+              {/* Scorecard KPIs */}
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Score</div>
+                  <div className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                    {selectedAttempt.total_score} / {selectedAttempt.max_possible_score || 100}
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Percentage</div>
+                  <div className={`text-xl font-black mt-1 ${selectedAttempt.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {selectedAttempt.percentage}%
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Time Taken</div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white mt-1.5 flex items-center justify-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{Math.round((selectedAttempt.time_spent_seconds || 0) / 60)} mins</span>
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="text-[10px] font-bold uppercase text-slate-500">Proctoring</div>
+                  <div className="text-xs font-black mt-1.5">
+                    {(selectedAttempt.tab_switch_count || 0) === 0 ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">0 Violations</span>
+                    ) : (
+                      <span className="text-amber-600 dark:text-amber-400 font-bold">{selectedAttempt.tab_switch_count} Tab Switches</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section Breakdown if exam metadata available */}
+              {activeExam?.sections && activeExam.sections.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Sectional Performance Breakdown
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {activeExam.sections.map((sec, sIdx) => {
+                      const secQIds = sec.question_ids || [];
+                      const answeredInSec = secQIds.filter(qId => {
+                        const r = (selectedAttempt.responses || {})[qId];
+                        return r && r.selected_option !== null && r.selected_option !== undefined;
+                      });
+                      const correctInSec = secQIds.filter(qId => {
+                        const r = (selectedAttempt.responses || {})[qId];
+                        return r && r.is_correct;
+                      });
+
+                      return (
+                        <div key={sec.id || sIdx} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                          <div className="font-bold text-slate-900 dark:text-white text-xs truncate">{sec.name}</div>
+                          <div className="text-[11px] text-slate-500">
+                            Answered: <strong className="text-slate-800 dark:text-slate-200">{answeredInSec.length}/{secQIds.length}</strong>
+                          </div>
+                          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                            Correct: {correctInSec.length}/{secQIds.length}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Question Responses Matrix */}
+              {selectedAttempt.responses && Object.keys(selectedAttempt.responses).length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Question Response Audit Log
+                  </h4>
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden max-h-64 overflow-y-auto">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-slate-50 dark:bg-slate-800/90 text-slate-500 font-bold sticky top-0 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                          <th className="p-3">Q#</th>
+                          <th className="p-3">Candidate Choice</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Time Spent</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {Object.entries(selectedAttempt.responses).map(([qId, r], idx) => {
+                          const hasAnswered = r && r.selected_option !== null && r.selected_option !== undefined;
+                          const isCorrect = r && r.is_correct;
+                          const optionLabel = hasAnswered ? String.fromCharCode(65 + Number(r.selected_option)) : '—';
+
+                          return (
+                            <tr key={qId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                              <td className="p-3 font-bold text-slate-400">Question {idx + 1}</td>
+                              <td className="p-3 font-mono font-bold">
+                                {hasAnswered ? `Option ${optionLabel}` : <span className="text-slate-400">Unanswered</span>}
+                              </td>
+                              <td className="p-3">
+                                {!hasAnswered ? (
+                                  <span className="text-slate-400">Skipped</span>
+                                ) : isCorrect ? (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Correct
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-500 font-bold flex items-center gap-1">
+                                    <XCircle className="w-3.5 h-3.5" /> Incorrect
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3 font-mono text-slate-500">
+                                {r?.time_spent_sec ? `${r.time_spent_sec}s` : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#1a1b1e] flex justify-end">
+              <button
+                onClick={() => setSelectedAttempt(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Close Audit
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

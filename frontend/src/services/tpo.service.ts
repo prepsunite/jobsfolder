@@ -2131,56 +2131,80 @@ export const tpoService = {
     return true;
   },
 
-  async getTpoStats(collegeId: string): Promise<TpoDashboardStats> {
-    const college = await this.getCollegeDetails(collegeId);
-    const maxLicenses = college?.max_licenses || 1500;
-    const students = await this.getCollegeStudents(collegeId);
-    const exams = await this.getMockExamsForCollege(collegeId);
+  /**
+   * Fetches all candidate attempts for a given college across all its assessment drives.
+   * Multi-vector aggregation: Supabase student_exam_attempts + contact_messages cloud backups + local cache
+   * with full student profile enrichment (name, email, roll number, department) and exam metadata.
+   */
+  async getAllCollegeAttempts(collegeId: string): Promise<StudentExamAttempt[]> {
+    if (!collegeId) return [];
 
-    let attempts: any[] = [];
+    const exams = await this.getMockExamsForCollege(collegeId);
+    const examMap = new Map<string, MockExam>();
+    exams.forEach(e => examMap.set(e.id, e));
+    const examIds = Array.from(examMap.keys());
+
+    const attemptsMap = new Map<string, StudentExamAttempt>();
+
+    // 1. Direct query from Supabase student_exam_attempts
     try {
-      const examIds = exams.map(e => e.id);
       let query = supabase
         .from('student_exam_attempts')
-        .select('id, student_id, student_email, mock_exam_id, total_score, percentage, status, college_id')
-        .in('status', ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE']);
+        .select('*');
 
       if (examIds.length > 0) {
-        query = query.or(`college_id.eq.${collegeId},mock_exam_id.in.(${examIds.map(id => `"${id}"`).join(',')})`);
+        query = query.or(`college_id.eq.${collegeId},mock_exam_id.in.(${examIds.join(',')})`);
       } else {
         query = query.eq('college_id', collegeId);
       }
 
-      const { data } = await query;
-      if (data && data.length > 0) attempts = data;
+      const { data, error } = await query.order('total_score', { ascending: false });
+      if (!error && data && Array.isArray(data)) {
+        data.forEach((a: StudentExamAttempt) => {
+          if (a && a.id) attemptsMap.set(a.id, a);
+        });
+      }
+    } catch (dbErr) {
+      console.warn('Notice querying college student_exam_attempts:', dbErr);
+    }
+
+    // 2. Query /api/campus-exams?action=attempts for known exams (service-role bypass)
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch(`/api/campus-exams?action=attempts&collegeId=${encodeURIComponent(collegeId)}`, {
+        headers: authHeaders,
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.attempts && Array.isArray(json.attempts)) {
+          json.attempts.forEach((a: StudentExamAttempt) => {
+            if (a && a.id && !attemptsMap.has(a.id)) {
+              attemptsMap.set(a.id, a);
+            }
+          });
+        }
+      }
     } catch {}
 
-    // Merge with local completed attempts
-    const examIds = new Set(exams.map(e => e.id));
-    const localAttempts = getLocalAttempts().filter(
-      a =>
-        (a.college_id === collegeId || examIds.has(a.mock_exam_id)) &&
-        (a.status === 'SUBMITTED' || a.status === 'TIMED_OUT' || a.status === 'TERMINATED_MALPRACTICE')
-    );
-
-    const attemptsMap = new Map<string, any>();
-    attempts.forEach(a => attemptsMap.set(a.id, a));
-    localAttempts.forEach(a => attemptsMap.set(a.id, a));
-
-    // Cloud resilience: Fetch attempts logged via contact_messages
+    // 3. Cloud resilience: Fetch attempts logged via contact_messages
     try {
       const { data: cloudMsgs } = await supabase
         .from('contact_messages')
         .select('message')
-        .like('subject', `B2B_ATTEMPT:%`)
+        .like('subject', 'B2B_ATTEMPT:%')
         .order('created_at', { ascending: false });
 
       if (cloudMsgs && cloudMsgs.length > 0) {
         cloudMsgs.forEach(m => {
           try {
-            const parsed = JSON.parse(m.message);
-            if (parsed && parsed.id && !attemptsMap.has(parsed.id)) {
-              if (parsed.college_id === collegeId || examIds.has(parsed.mock_exam_id)) {
+            const parsed = JSON.parse(m.message) as StudentExamAttempt;
+            if (parsed && parsed.id) {
+              const belongsToCollege =
+                parsed.college_id === collegeId ||
+                examMap.has(parsed.mock_exam_id) ||
+                (parsed.college_id && parsed.college_id.includes(collegeId));
+
+              if (belongsToCollege && !attemptsMap.has(parsed.id)) {
                 attemptsMap.set(parsed.id, parsed);
               }
             }
@@ -2189,7 +2213,95 @@ export const tpoService = {
       }
     } catch {}
 
+    // 4. Merge with local storage attempts
+    const localAttempts = getLocalAttempts().filter(
+      a => a.college_id === collegeId || examMap.has(a.mock_exam_id)
+    );
+    localAttempts.forEach(a => {
+      if (a && a.id && !attemptsMap.has(a.id)) {
+        attemptsMap.set(a.id, a);
+      }
+    });
+
     const allAttempts = Array.from(attemptsMap.values());
+
+    // 5. Batch enrich student profiles & exam metadata
+    if (allAttempts.length > 0) {
+      const studentEmails = Array.from(
+        new Set(
+          allAttempts
+            .map(a => (a.student_email || (a.student_id?.includes('@') ? a.student_id : '')).toLowerCase())
+            .filter(Boolean)
+        )
+      );
+      const studentIds = Array.from(new Set(allAttempts.map(a => a.student_id || '').filter(Boolean)));
+
+      const profMap = new Map<string, any>();
+      const csMap = new Map<string, any>();
+
+      try {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, name, email, roll_number, department')
+          .or(`id.in.(${studentIds.map(i => `"${i}"`).join(',')}),email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
+        (profs || []).forEach(p => {
+          if (p.id) profMap.set(p.id.toLowerCase(), p);
+          if (p.email) profMap.set(p.email.toLowerCase(), p);
+        });
+      } catch {}
+
+      try {
+        const { data: cs } = await supabase
+          .from('college_students')
+          .select('email, user_id, roll_number, department, full_name, name')
+          .eq('college_id', collegeId);
+        (cs || []).forEach(c => {
+          if (c.user_id) csMap.set(c.user_id.toLowerCase(), c);
+          if (c.email) csMap.set(c.email.toLowerCase(), c);
+        });
+      } catch {}
+
+      allAttempts.forEach(att => {
+        const sid = (att.student_id || '').toLowerCase();
+        const semail = (att.student_email || (sid.includes('@') ? sid : '')).toLowerCase();
+        const prof = profMap.get(sid) || profMap.get(semail);
+        const cs = csMap.get(sid) || csMap.get(semail);
+
+        const namePart = semail ? semail.split('@')[0].replace(/[._-]/g, ' ') : sid;
+        const fallbackName = namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : 'Candidate';
+
+        att.student = {
+          name: cs?.full_name || cs?.name || prof?.name || (att.student?.name && att.student.name !== 'Student' ? att.student.name : fallbackName),
+          email: att.student_email || prof?.email || (semail.includes('@') ? semail : ''),
+          roll_number: cs?.roll_number || prof?.roll_number || att.student?.roll_number || '—',
+          department: cs?.department || prof?.department || att.student?.department || 'General',
+        };
+
+        const matchingExam = examMap.get(att.mock_exam_id);
+        if (matchingExam) {
+          (att as any).exam_title = matchingExam.title;
+          (att as any).target_company = matchingExam.target_company;
+        }
+      });
+    }
+
+    return allAttempts.sort((a, b) => {
+      const dateA = new Date(a.submitted_at || a.started_at || 0).getTime();
+      const dateB = new Date(b.submitted_at || b.started_at || 0).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return (b.total_score || 0) - (a.total_score || 0);
+    });
+  },
+
+  async getTpoStats(collegeId: string): Promise<TpoDashboardStats> {
+    const college = await this.getCollegeDetails(collegeId);
+    const maxLicenses = college?.max_licenses || 1500;
+    const students = await this.getCollegeStudents(collegeId);
+    const exams = await this.getMockExamsForCollege(collegeId);
+
+    const allAttempts = (await this.getAllCollegeAttempts(collegeId)).filter(
+      a => a.status === 'SUBMITTED' || a.status === 'GRADED' || a.status === 'TIMED_OUT' || a.status === 'TERMINATED_MALPRACTICE'
+    );
 
     const totalStudents = students.length;
     const activeExamsCount = exams.filter(e => e.is_active).length;
@@ -2211,7 +2323,6 @@ export const tpoService = {
         else if (pct >= 50) tier2Count++;
         else tier3Count++;
       });
-      // Any enrolled students who haven't attempted an exam are placed in Tier 3 (Remediation Needed)
       if (totalStudents > allAttempts.length) {
         tier3Count += (totalStudents - allAttempts.length);
       }
@@ -2230,7 +2341,6 @@ export const tpoService = {
       }
     });
 
-    // Group students and attempts by department to calculate true per-department averages
     const deptDataMap: Record<string, { studentCount: number; scoreSum: number; attemptsCount: number }> = {};
     students.forEach(s => {
       const d = (s.department || 'GENERAL').toUpperCase();
@@ -3243,6 +3353,18 @@ export const tpoService = {
       console.warn('Notice creating attempt in Supabase:', insertErr);
     }
 
+    // 3. Resilient cloud backup to contact_messages
+    try {
+      const studentIdentifier = (cleanStudentId || studentId || 'anon').toLowerCase();
+      await supabase.from('contact_messages').insert({
+        name: `Candidate Start: ${studentIdentifier}`,
+        email: studentEmail || (studentIdentifier.includes('@') ? studentIdentifier : 'student@prepunite.com'),
+        subject: `B2B_ATTEMPT:${mockExamId}:${studentIdentifier}`,
+        message: JSON.stringify(newAttempt),
+        status: 'IN_PROGRESS',
+      });
+    } catch {}
+
     return newAttempt;
   },
 
@@ -3266,7 +3388,9 @@ export const tpoService = {
         proctor_events: payload.proctorEvents,
         updated_at: new Date().toISOString(),
       };
-      localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(local));
+      try {
+        localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(local));
+      } catch {}
     }
 
     try {
@@ -3328,6 +3452,19 @@ export const tpoService = {
         };
 
         saveLocalAttempt(finalizedAttempt);
+
+        // Backup to contact_messages
+        try {
+          const cleanSid = (studentId || 'anon').toLowerCase();
+          await supabase.from('contact_messages').insert({
+            name: `Candidate Attempt: ${cleanSid}`,
+            email: cleanSid.includes('@') ? cleanSid : 'student@prepunite.com',
+            subject: `B2B_ATTEMPT:${exam.id}:${cleanSid}`,
+            message: JSON.stringify(finalizedAttempt),
+            status: finalizedAttempt.status,
+          });
+        } catch {}
+
         return finalizedAttempt;
       }
     } catch (rpcErr) {
@@ -3426,24 +3563,32 @@ export const tpoService = {
       console.warn('Notice saving attempt to cloud messages:', cloudErr);
     }
 
-    // 4. Try updating Supabase student_exam_attempts table if it exists
+    // 4. Upsert Supabase student_exam_attempts table (inserts if not pre-created, updates if exists)
     try {
+      const cleanSid = (studentId || 'anon').toLowerCase();
+      const attemptRow = {
+        id: attemptId,
+        mock_exam_id: exam.id,
+        student_id: studentId || (cleanSid.includes('@') ? cleanSid : 'candidate'),
+        student_email: cleanSid.includes('@') ? cleanSid : null,
+        college_id: exam.college_id || 'unknown_college',
+        status: finalStatus,
+        started_at: startedAt,
+        submitted_at: new Date().toISOString(),
+        time_spent_seconds: timeSpentSeconds,
+        tab_switch_count: tabSwitchCount,
+        proctor_events: proctorEvents,
+        responses: gradedResponses,
+        total_score: totalScore,
+        max_possible_score: maxPossibleScore,
+        percentage,
+        passed,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: gradedAttempt } = await supabase
         .from('student_exam_attempts')
-        .update({
-          status: finalStatus,
-          submitted_at: new Date().toISOString(),
-          time_spent_seconds: timeSpentSeconds,
-          tab_switch_count: tabSwitchCount,
-          proctor_events: proctorEvents,
-          responses: gradedResponses,
-          total_score: totalScore,
-          max_possible_score: maxPossibleScore,
-          percentage,
-          passed,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', attemptId)
+        .upsert(attemptRow, { onConflict: 'id' })
         .select()
         .single();
 

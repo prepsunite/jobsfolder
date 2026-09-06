@@ -108,7 +108,7 @@ export interface StudentExamAttempt {
   student_id: string;
   student_email?: string;
   college_id: string;
-  status: 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT';
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT' | 'GRADED';
   started_at: string;
   submitted_at?: string;
   time_spent_seconds: number;
