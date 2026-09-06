@@ -2610,9 +2610,10 @@ export const tpoService = {
         if (sec.topic_ids && sec.topic_ids.length > 0) {
           const { data } = await supabase
             .from('topic_questions')
-            .select('id')
+            .select('id, question_number, topic_id')
             .in('topic_id', sec.topic_ids)
             .eq('is_deleted', false)
+            .order('question_number', { ascending: true })
             .limit(neededCount * 3);
 
           if (data && data.length > 0) {
@@ -2630,8 +2631,9 @@ export const tpoService = {
           const stillNeeded = neededCount - questionIds.length;
           const { data: fallbackQ } = await supabase
             .from('topic_questions')
-            .select('id')
+            .select('id, question_number, topic_id')
             .eq('is_deleted', false)
+            .order('question_number', { ascending: true })
             .limit(Math.max(stillNeeded * 4, 50));
 
           if (fallbackQ && fallbackQ.length > 0) {
@@ -2920,34 +2922,194 @@ export const tpoService = {
   async getQuestionsForExam(questionIds: string[]): Promise<any[]> {
     if (!questionIds || questionIds.length === 0) return [];
 
-    const normalizeQuestion = (q: any) => ({
-      ...q,
-      options: normalizeQuestionOptions(q.options),
-    });
+    let rawQuestions: any[] = [];
 
-    // 🛡️ 1. Secure RPC (Strips correct_answer and explanation to prevent DevTools cheating)
-    try {
-      const { data, error } = await supabase.rpc('get_safe_mock_exam_questions', {
-        p_question_ids: questionIds,
-      });
-
-      if (!error && data && data.length > 0) return data.map(normalizeQuestion);
-    } catch (rpcErr) {
-      console.warn('RPC get_safe_mock_exam_questions notice, falling back to direct query:', rpcErr);
-    }
-
-    // 2. Direct query fallback
+    // 1. Direct query with structured_explanation for passages & diagrams
     try {
       const { data, error } = await supabase
         .from('topic_questions')
-        .select('id, statement, options, difficulty, topic_id, question_number')
+        .select('id, statement, options, difficulty, topic_id, question_number, structured_explanation')
         .in('id', questionIds);
 
-      if (!error && data && data.length > 0) return data.map(normalizeQuestion);
+      if (!error && data && data.length > 0) {
+        rawQuestions = data;
+      }
     } catch (error) {
-      console.error('Error fetching questions:', error);
+      console.error('Error fetching questions from Supabase:', error);
     }
-    return [];
+
+    // Fallback to secure RPC if direct query yielded nothing
+    if (rawQuestions.length === 0) {
+      try {
+        const { data, error } = await supabase.rpc('get_safe_mock_exam_questions', {
+          p_question_ids: questionIds,
+        });
+        if (!error && data && data.length > 0) {
+          rawQuestions = data;
+        }
+      } catch (rpcErr) {
+        console.warn('RPC get_safe_mock_exam_questions fallback notice:', rpcErr);
+      }
+    }
+
+    if (rawQuestions.length === 0) return [];
+
+    // 2. Extract shared stimuli (Directions, SVG charts, Data Interpretation tables, Puzzles)
+    const stimulusBySet = new Map<string, { fromQ: number; toQ: number; stimulus: string; title: string }>();
+
+    rawQuestions.forEach(q => {
+      const dirMatch = q.statement?.match(/Directions \(Questions (\d+)\s+to\s+(\d+)\):/i);
+      if (dirMatch) {
+        const fromQ = parseInt(dirMatch[1]);
+        const toQ = parseInt(dirMatch[2]);
+        const setKey = `${q.topic_id}:${fromQ}-${toQ}`;
+
+        let stimulus = q.statement;
+        if (q.statement.includes('</svg>')) {
+          const svgEndIdx = q.statement.indexOf('</svg>') + 6;
+          stimulus = q.statement.slice(0, svgEndIdx).trim();
+        } else if (q.statement.includes('</table>')) {
+          const tableEndIdx = q.statement.indexOf('</table>') + 8;
+          stimulus = q.statement.slice(0, tableEndIdx).trim();
+        } else {
+          const paragraphs = q.statement.split('\n\n');
+          if (paragraphs.length > 1) {
+            stimulus = paragraphs.slice(0, -1).join('\n\n').trim();
+          }
+        }
+
+        stimulusBySet.set(setKey, {
+          fromQ,
+          toQ,
+          stimulus,
+          title: `Data Reference (Questions ${fromQ} to ${toQ})`,
+        });
+      }
+    });
+
+    // 3. Detect orphan questions that belong to a set but lack the header question in this batch
+    const missingHeaders = new Map<string, number>();
+    rawQuestions.forEach(q => {
+      const qNum = q.question_number || 0;
+      let hasSet = false;
+      for (const [setKey, data] of stimulusBySet.entries()) {
+        if (setKey.startsWith(`${q.topic_id}:`) && qNum >= data.fromQ && qNum <= data.toQ) {
+          hasSet = true;
+          break;
+        }
+      }
+      const statementLower = (q.statement || '').toLowerCase();
+      const isRefQuestion =
+        statementLower.includes('refer to the') ||
+        statementLower.includes('in the table above') ||
+        statementLower.includes('given chart');
+      if (!hasSet && (isRefQuestion || qNum > 1)) {
+        if (!missingHeaders.has(q.topic_id)) {
+          missingHeaders.set(q.topic_id, qNum);
+        }
+      }
+    });
+
+    // If any question might be an orphan, fetch the parent header question for that topic
+    if (missingHeaders.size > 0) {
+      try {
+        const topicIds = Array.from(missingHeaders.keys());
+        const { data: headerQuestions } = await supabase
+          .from('topic_questions')
+          .select('id, topic_id, question_number, statement')
+          .in('topic_id', topicIds)
+          .ilike('statement', '%Directions (Questions%')
+          .order('question_number', { ascending: true });
+
+        headerQuestions?.forEach(h => {
+          const dirMatch = h.statement?.match(/Directions \(Questions (\d+)\s+to\s+(\d+)\):/i);
+          if (dirMatch) {
+            const fromQ = parseInt(dirMatch[1]);
+            const toQ = parseInt(dirMatch[2]);
+            const setKey = `${h.topic_id}:${fromQ}-${toQ}`;
+
+            let stimulus = h.statement;
+            if (h.statement.includes('</svg>')) {
+              const svgEndIdx = h.statement.indexOf('</svg>') + 6;
+              stimulus = h.statement.slice(0, svgEndIdx).trim();
+            } else if (h.statement.includes('</table>')) {
+              const tableEndIdx = h.statement.indexOf('</table>') + 8;
+              stimulus = h.statement.slice(0, tableEndIdx).trim();
+            } else {
+              const paragraphs = h.statement.split('\n\n');
+              if (paragraphs.length > 1) {
+                stimulus = paragraphs.slice(0, -1).join('\n\n').trim();
+              }
+            }
+
+            stimulusBySet.set(setKey, {
+              fromQ,
+              toQ,
+              stimulus,
+              title: `Data Reference (Questions ${fromQ} to ${toQ})`,
+            });
+          }
+        });
+      } catch (err) {
+        console.warn('Notice fetching missing header questions:', err);
+      }
+    }
+
+    // 4. Attach context, sanitize answers, and normalize options
+    return rawQuestions.map(q => {
+      let se: any = null;
+      try {
+        se =
+          typeof q.structured_explanation === 'string'
+            ? JSON.parse(q.structured_explanation)
+            : q.structured_explanation;
+      } catch {}
+
+      const qNum = q.question_number || 0;
+      let contextData: string | null = null;
+      let contextTitle: string | null = null;
+      let cleanStatement = q.statement;
+
+      // Reading Comprehension
+      if (se?.passage) {
+        contextData = se.passage;
+        contextTitle = se.passageTitle || 'Reading Comprehension Passage';
+      } else {
+        // Data Interpretation / Puzzles
+        for (const [setKey, data] of stimulusBySet.entries()) {
+          if (setKey.startsWith(`${q.topic_id}:`) && qNum >= data.fromQ && qNum <= data.toQ) {
+            contextData = data.stimulus;
+            contextTitle = data.title;
+
+            // Clean up Q1 statement if it contained the entire SVG table
+            if (q.statement.includes('</svg>')) {
+              const svgEndIdx = q.statement.indexOf('</svg>') + 6;
+              const subQ = q.statement.slice(svgEndIdx).trim();
+              if (subQ) cleanStatement = subQ;
+            } else if (q.statement.includes('</table>')) {
+              const tableEndIdx = q.statement.indexOf('</table>') + 8;
+              const subQ = q.statement.slice(tableEndIdx).trim();
+              if (subQ) cleanStatement = subQ;
+            }
+            break;
+          }
+        }
+      }
+
+      return {
+        id: q.id,
+        topic_id: q.topic_id,
+        question_number: q.question_number,
+        statement: cleanStatement,
+        originalStatement: q.statement,
+        options: normalizeQuestionOptions(q.options),
+        difficulty: q.difficulty || 'MEDIUM',
+        passage: se?.passage || null,
+        passageTitle: se?.passageTitle || null,
+        contextData,
+        contextTitle,
+      };
+    });
   },
 
   async startOrResumeAttempt(

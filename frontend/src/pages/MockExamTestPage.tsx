@@ -17,6 +17,9 @@ import {
   ShieldAlert,
   Award,
   Building2,
+  BookOpen,
+  BarChart3,
+  X,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -38,6 +41,7 @@ export default function MockExamTestPage() {
 
   // Test Lifecycle: 'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'
   const [testPhase, setTestPhase] = useState<'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'>('INSTRUCTIONS');
+  const [isStimulusExpanded, setIsStimulusExpanded] = useState(false);
 
   // Fetch Exam configuration
   const { data: exam, isLoading: examLoading } = useQuery<MockExam | null>({
@@ -828,9 +832,16 @@ export default function MockExamTestPage() {
                 
                 {/* Question Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#25262a] pb-4">
-                  <span className="text-xs font-black uppercase tracking-wider text-gray-500">
-                    Question {currentQuestionIndex + 1}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-500">
+                      Question {currentQuestionIndex + 1}
+                    </span>
+                    {(currentQuestion.passage || currentQuestion.contextData) && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        {currentQuestion.passage ? 'Passage Based' : 'Data Reference Based'}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold">
                       +{currentSection?.marks_per_correct || 1} Marks
@@ -843,39 +854,111 @@ export default function MockExamTestPage() {
                   </div>
                 </div>
 
-                {/* Statement */}
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
-                  <QuestionRichContent content={currentQuestion.statement} />
-                </div>
-
-                {/* Options List */}
-                <div className="space-y-3 pt-2">
-                  {normalizeQuestionOptions(currentQuestion.options).map((opt, oIdx: number) => {
-                    const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
-                    return (
-                      <div
-                        key={opt.key || oIdx}
-                        onClick={() => handleSelectOption(oIdx)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-xs ${
-                          isSelected
-                            ? 'border-[#FD4A32] bg-[#FD4A32]/5 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32]'
-                            : 'border-gray-200 dark:border-[#25262a] hover:border-gray-300 dark:hover:border-[#383a40] bg-gray-50/50 dark:bg-[#1c1d20]'
-                        }`}
-                      >
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                            isSelected
-                              ? 'bg-[#FD4A32] text-white'
-                              : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
-                          }`}
-                        >
-                          {opt.key || String.fromCharCode(65 + oIdx)}
+                {/* Stimulus Split View vs Single Column View */}
+                {currentQuestion.passage || currentQuestion.contextData ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Left Pane: Shared Stimulus / Reference Data / Reading Passage */}
+                    <div className="lg:col-span-6 space-y-3 bg-gray-50/70 dark:bg-[#1c1d20] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-[#2e3035]">
+                      <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#2b2d31] pb-2.5">
+                        <div className="flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-400">
+                          {currentQuestion.passage ? (
+                            <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                          ) : (
+                            <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          )}
+                          <span className="font-sans">
+                            {currentQuestion.passageTitle || currentQuestion.contextTitle || (currentQuestion.passage ? 'Reading Passage' : 'Reference Data & Graph')}
+                          </span>
                         </div>
-                        <QuestionRichContent content={opt.text} isOption={true} className="mt-0.5 leading-relaxed flex-1 font-sans" />
+                        <button
+                          type="button"
+                          onClick={() => setIsStimulusExpanded(true)}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-gray-200/60 dark:hover:bg-gray-800 transition-colors"
+                          title="Expand Reference Material in Fullscreen"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Expand</span>
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      <div className="text-xs leading-relaxed max-h-[58vh] overflow-y-auto pr-2 custom-scrollbar text-gray-800 dark:text-gray-200 font-sans">
+                        <QuestionRichContent content={currentQuestion.passage || currentQuestion.contextData} />
+                      </div>
+                    </div>
+
+                    {/* Right Pane: Sub-Question & Options */}
+                    <div className="lg:col-span-6 space-y-4">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
+                        <QuestionRichContent content={currentQuestion.statement} />
+                      </div>
+
+                      {/* Options List */}
+                      <div className="space-y-2.5 pt-1">
+                        {normalizeQuestionOptions(currentQuestion.options).map((opt, oIdx: number) => {
+                          const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
+                          return (
+                            <div
+                              key={opt.key || oIdx}
+                              onClick={() => handleSelectOption(oIdx)}
+                              className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-xs ${
+                                isSelected
+                                  ? 'border-[#FD4A32] bg-[#FD4A32]/5 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32]'
+                                  : 'border-gray-200 dark:border-[#25262a] hover:border-gray-300 dark:hover:border-[#383a40] bg-gray-50/50 dark:bg-[#1c1d20]'
+                              }`}
+                            >
+                              <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                  isSelected
+                                    ? 'bg-[#FD4A32] text-white'
+                                    : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
+                                }`}
+                              >
+                                {opt.key || String.fromCharCode(65 + oIdx)}
+                              </div>
+                              <QuestionRichContent content={opt.text} isOption={true} className="mt-0.5 leading-relaxed flex-1 font-sans" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Statement */}
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
+                      <QuestionRichContent content={currentQuestion.statement} />
+                    </div>
+
+                    {/* Options List */}
+                    <div className="space-y-3 pt-2">
+                      {normalizeQuestionOptions(currentQuestion.options).map((opt, oIdx: number) => {
+                        const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
+                        return (
+                          <div
+                            key={opt.key || oIdx}
+                            onClick={() => handleSelectOption(oIdx)}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-xs ${
+                              isSelected
+                                ? 'border-[#FD4A32] bg-[#FD4A32]/5 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32]'
+                                : 'border-gray-200 dark:border-[#25262a] hover:border-gray-300 dark:hover:border-[#383a40] bg-gray-50/50 dark:bg-[#1c1d20]'
+                            }`}
+                          >
+                            <div
+                              className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                isSelected
+                                  ? 'bg-[#FD4A32] text-white'
+                                  : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              {opt.key || String.fromCharCode(65 + oIdx)}
+                            </div>
+                            <QuestionRichContent content={opt.text} isOption={true} className="mt-0.5 leading-relaxed flex-1 font-sans" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
 
                 {/* Bottom Question Controls */}
                 <div className="pt-4 border-t border-gray-100 dark:border-[#25262a] flex flex-wrap items-center justify-between gap-3">
@@ -1060,6 +1143,36 @@ export default function MockExamTestPage() {
 
         </div>
 
+        {/* Expanded Stimulus Modal */}
+        {isStimulusExpanded && currentQuestion && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white dark:bg-[#151618] border border-gray-200 dark:border-[#2e3035] w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#1c1d20]">
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
+                  {currentQuestion.passage ? (
+                    <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  ) : (
+                    <BarChart3 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                  <span>
+                    {currentQuestion.passageTitle || currentQuestion.contextTitle || (currentQuestion.passage ? 'Reading Passage' : 'Reference Data & Graph')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsStimulusExpanded(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[75vh] leading-relaxed text-sm text-gray-800 dark:text-gray-200 font-sans">
+                <QuestionRichContent content={currentQuestion.passage || currentQuestion.contextData} />
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     );
   }
@@ -1230,6 +1343,30 @@ export default function MockExamTestPage() {
                         </span>
                       )}
                     </div>
+
+                    {/* Stimulus in Review */}
+                    {q.passage && (
+                      <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-xs text-blue-950 dark:text-blue-200 space-y-1">
+                        <div className="font-bold flex items-center gap-1.5 text-blue-700 dark:text-blue-400">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          {q.passageTitle || 'Comprehension Passage'}
+                        </div>
+                        <div className="leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto pr-1">
+                          {q.passage}
+                        </div>
+                      </div>
+                    )}
+                    {q.contextData && !q.passage && (
+                      <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs space-y-1">
+                        <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                          <BarChart3 className="w-3.5 h-3.5" />
+                          {q.contextTitle || 'Reference Data & Graph'}
+                        </div>
+                        <div className="max-h-56 overflow-y-auto">
+                          <QuestionRichContent content={q.contextData} />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
                       <QuestionRichContent content={q.statement} />
