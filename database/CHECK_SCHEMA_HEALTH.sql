@@ -5,24 +5,24 @@
 -- ====================================================================
 
 WITH 
--- 1. Check Required Tables
+-- 1. Table Checks
 table_checks AS (
     SELECT 
-        'TABLE' AS category,
+        '1. TABLE' AS category,
         t.table_name AS item_name,
         CASE 
             WHEN EXISTS (
                 SELECT 1 FROM information_schema.tables 
                 WHERE table_schema = 'public' AND table_name = t.table_name
-            ) THEN '✅ PASS'
+            ) THEN '✅ PASS (UP TO DATE)'
             ELSE '❌ MISSING'
         END AS status,
         CASE 
             WHEN EXISTS (
                 SELECT 1 FROM information_schema.tables 
                 WHERE table_schema = 'public' AND table_name = t.table_name
-            ) THEN 'Table exists'
-            ELSE 'Needs table creation from MIGRATE_ALL_FIXES.sql'
+            ) THEN 'Table is live in PostgreSQL'
+            ELSE 'Table does not exist. Run database/MIGRATE_ALL_FIXES.sql'
         END AS details
     FROM (VALUES 
         ('profiles'),
@@ -36,14 +36,17 @@ table_checks AS (
         ('user_subscriptions'),
         ('user_bookmarks'),
         ('user_paper_purchases'),
-        ('admin_audit_logs')
+        ('admin_audit_logs'),
+        ('contact_messages'),
+        ('paper_tab_nodes'),
+        ('companies')
     ) AS t(table_name)
 ),
 
--- 2. Check Critical Columns
+-- 2. Column Checks (including latest features like target_batches, validity, quotas)
 column_checks AS (
     SELECT 
-        'COLUMN' AS category,
+        '2. COLUMN' AS category,
         c.tbl || '.' || c.col AS item_name,
         CASE 
             WHEN EXISTS (
@@ -51,7 +54,7 @@ column_checks AS (
                 WHERE table_schema = 'public' 
                   AND table_name = c.tbl 
                   AND column_name = c.col
-            ) THEN '✅ PASS'
+            ) THEN '✅ PASS (UP TO DATE)'
             ELSE '❌ MISSING'
         END AS status,
         CASE 
@@ -60,8 +63,8 @@ column_checks AS (
                 WHERE table_schema = 'public' 
                   AND table_name = c.tbl 
                   AND column_name = c.col
-            ) THEN 'Column exists'
-            ELSE 'Needs ALTER TABLE from MIGRATE_ALL_FIXES.sql'
+            ) THEN 'Column exists and is accessible'
+            ELSE 'Missing column. Run ALTER TABLE from database/MIGRATE_ALL_FIXES.sql'
         END AS details
     FROM (VALUES 
         ('profiles', 'college_id'),
@@ -72,70 +75,88 @@ column_checks AS (
         ('colleges', 'max_licenses'),
         ('colleges', 'valid_until'),
         ('colleges', 'contract_status'),
-        ('college_students', 'user_id'),
         ('college_students', 'batch_id'),
+        ('college_students', 'user_id'),
         ('college_students', 'status'),
+        ('college_batches', 'passout_year'),
+        ('college_batches', 'departments'),
         ('tpo_authorizations', 'user_id'),
         ('tpo_authorizations', 'max_licenses'),
-        ('user_subscriptions', 'updated_at'),
+        ('tpo_authorizations', 'status'),
         ('user_subscriptions', 'payment_id'),
+        ('user_subscriptions', 'updated_at'),
+        ('mock_exams', 'target_batches'),
+        ('mock_exams', 'target_departments'),
+        ('mock_exams', 'target_batch_year'),
+        ('mock_exams', 'enable_tab_switch_detection'),
+        ('mock_exams', 'max_tab_switches_allowed'),
+        ('mock_exams', 'enable_fullscreen_lock'),
+        ('mock_exam_sections', 'section_order'),
+        ('mock_exam_sections', 'marks_per_correct'),
         ('student_exam_attempts', 'student_email'),
-        ('student_exam_attempts', 'proctor_events'),
         ('student_exam_attempts', 'tab_switch_count'),
+        ('student_exam_attempts', 'proctor_events'),
         ('student_exam_attempts', 'max_possible_score'),
         ('student_exam_attempts', 'percentage'),
         ('student_exam_attempts', 'passed'),
-        ('mock_exam_sections', 'section_order'),
-        ('mock_exam_sections', 'marks_per_correct'),
-        ('mock_exams', 'enable_tab_switch_detection'),
-        ('mock_exams', 'max_tab_switches_allowed'),
         ('paper_tab_nodes', 'is_free')
     ) AS c(tbl, col)
 ),
 
--- 3. Check Critical RPC Functions
+-- 3. Function & RPC Signature Version Checks
 function_checks AS (
     SELECT 
-        'FUNCTION / RPC' AS category,
+        '3. RPC FUNCTION' AS category,
         f.func_name AS item_name,
         CASE 
-            WHEN EXISTS (
+            WHEN NOT EXISTS (
+                SELECT 1 FROM pg_proc p
+                JOIN pg_namespace n ON p.pronamespace = n.oid
+                WHERE n.nspname = 'public' AND p.proname = f.func_name
+            ) THEN '❌ MISSING'
+            WHEN f.required_arg IS NOT NULL AND NOT EXISTS (
                 SELECT 1 FROM pg_proc p
                 JOIN pg_namespace n ON p.pronamespace = n.oid
                 WHERE n.nspname = 'public' 
                   AND p.proname = f.func_name
-            ) THEN '✅ PASS'
-            ELSE '❌ MISSING'
+                  AND pg_get_function_arguments(p.oid) ILIKE ('%' || f.required_arg || '%')
+            ) THEN '⚠️ OUTDATED SIGNATURE'
+            ELSE '✅ PASS (UP TO DATE)'
         END AS status,
         CASE 
-            WHEN EXISTS (
+            WHEN NOT EXISTS (
+                SELECT 1 FROM pg_proc p
+                JOIN pg_namespace n ON p.pronamespace = n.oid
+                WHERE n.nspname = 'public' AND p.proname = f.func_name
+            ) THEN 'RPC function missing. Run database/MIGRATE_ALL_FIXES.sql'
+            WHEN f.required_arg IS NOT NULL AND NOT EXISTS (
                 SELECT 1 FROM pg_proc p
                 JOIN pg_namespace n ON p.pronamespace = n.oid
                 WHERE n.nspname = 'public' 
                   AND p.proname = f.func_name
-            ) THEN 'RPC function is live in Postgres'
-            ELSE 'Needs CREATE FUNCTION from SECURITY_AUDIT_HARDENING_PATCHES.sql'
+                  AND pg_get_function_arguments(p.oid) ILIKE ('%' || f.required_arg || '%')
+            ) THEN 'Old version installed (missing parameter ' || f.required_arg || '). Run database/MIGRATE_ALL_FIXES.sql to update'
+            ELSE 'Function is live and matches latest version signature'
         END AS details
     FROM (VALUES 
-        ('is_admin'),
-        ('is_tpo_for_college'),
-        ('is_any_tpo'),
-        ('provision_campus_student_subscription'),
-        ('check_college_seat_cap'),
-        ('check_student_college_entitlement'),
-        ('submit_and_grade_mock_attempt'),
-        ('check_user_paper_access'),
-        ('get_safe_mock_exam_questions'),
-        ('get_mock_exam_attempt_solutions'),
-        ('get_secure_exams_by_company'),
-        ('get_colleges_usage_summary')
-    ) AS f(func_name)
+        ('is_admin', NULL),
+        ('is_tpo_for_college', 'p_college_id'),
+        ('is_any_tpo', NULL),
+        ('provision_campus_student_subscription', 'p_college_id'),
+        ('check_college_seat_cap', NULL),
+        ('check_student_college_entitlement', 'p_email'),
+        ('submit_and_grade_mock_attempt', 'p_responses'),
+        ('check_user_paper_access', 'p_paper_id'),
+        ('get_safe_mock_exam_questions', 'p_mock_exam_id'),
+        ('get_mock_exam_attempt_solutions', 'p_attempt_id'),
+        ('get_colleges_usage_summary', NULL)
+    ) AS f(func_name, required_arg)
 ),
 
--- 4. Check RLS Policies
+-- 4. RLS Policy Checks
 policy_checks AS (
     SELECT 
-        'RLS POLICY' AS category,
+        '4. RLS POLICY' AS category,
         pol.tbl || ': ' || pol.policy_name AS item_name,
         CASE 
             WHEN EXISTS (
@@ -143,7 +164,7 @@ policy_checks AS (
                 WHERE schemaname = 'public' 
                   AND tablename = pol.tbl 
                   AND policyname = pol.policy_name
-            ) THEN '✅ PASS'
+            ) THEN '✅ PASS (UP TO DATE)'
             ELSE '❌ MISSING'
         END AS status,
         CASE 
@@ -152,8 +173,8 @@ policy_checks AS (
                 WHERE schemaname = 'public' 
                   AND tablename = pol.tbl 
                   AND policyname = pol.policy_name
-            ) THEN 'Policy active'
-            ELSE 'Needs CREATE POLICY from SECURITY_AUDIT_HARDENING_PATCHES.sql'
+            ) THEN 'Security policy is active'
+            ELSE 'Missing policy. Run database/MIGRATE_ALL_FIXES.sql'
         END AS details
     FROM (VALUES 
         ('user_subscriptions', 'TPO coordinator manage college student subscriptions'),
@@ -164,11 +185,10 @@ policy_checks AS (
         ('paper_tab_nodes', 'Secure select paper nodes'),
         ('contact_messages', 'Admin full access contact messages')
     ) AS pol(tbl, policy_name)
-)
+),
 
--- Unified Output: All Missing Items First, Followed by Passed Items
-SELECT category, item_name, status, details 
-FROM (
+-- Combined Checks
+all_checks AS (
     SELECT * FROM table_checks
     UNION ALL
     SELECT * FROM column_checks
@@ -176,8 +196,16 @@ FROM (
     SELECT * FROM function_checks
     UNION ALL
     SELECT * FROM policy_checks
-) checks
+)
+
+-- Final Output: All Issues (Missing/Outdated) First, Followed by Healthy Items
+SELECT category, item_name, status, details 
+FROM all_checks
 ORDER BY 
-    CASE WHEN status = '❌ MISSING' THEN 1 ELSE 2 END,
+    CASE 
+        WHEN status LIKE '❌%' THEN 1 
+        WHEN status LIKE '⚠️%' THEN 2 
+        ELSE 3 
+    END,
     category, 
     item_name;

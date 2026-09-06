@@ -122,6 +122,18 @@ BEGIN
   END IF;
 END $$;
 
+-- 2.10 Mock Exams Defensive Alters
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS target_batches TEXT[] DEFAULT '{}'::TEXT[];
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS target_departments TEXT[] DEFAULT '{}'::TEXT[];
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS target_batch_year INT;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS enable_tab_switch_detection BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS max_tab_switches_allowed INT DEFAULT 3;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS enable_fullscreen_lock BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS shuffle_questions BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS shuffle_options BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS show_results_immediately BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.mock_exams ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+
 -- --------------------------------------------------------------------
 -- STEP 3: Create Missing Master & Institutional Tables
 -- --------------------------------------------------------------------
