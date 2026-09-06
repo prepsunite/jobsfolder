@@ -3,7 +3,7 @@ import { useOutletContext, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { tpoService } from '@/services/tpo.service';
-import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
+import type { MockExam, StudentExamAttempt, CollegeStudent, EvaluatedStudentSummary } from '@/types/tpo';
 import {
   TrendingUp,
   Award,
@@ -20,10 +20,16 @@ import {
   X,
   XCircle,
   Users,
+  UserCheck,
+  RotateCcw,
 } from 'lucide-react';
 
 export default function TpoAnalyticsPage() {
   const { collegeId, currentCollege, stats } = useOutletContext<TpoOutletContext>();
+
+  // View Mode: Unique Candidate Roster vs All Exam Submissions
+  const [viewMode, setViewMode] = useState<'STUDENTS' | 'ATTEMPTS'>('STUDENTS');
+  const [selectedStudentEmail, setSelectedStudentEmail] = useState<string | null>(null);
 
   // Search & Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,6 +56,13 @@ export default function TpoAnalyticsPage() {
   const { data: collegeStudents = [] } = useQuery<CollegeStudent[]>({
     queryKey: ['tpo-students', collegeId],
     queryFn: () => (collegeId ? tpoService.getCollegeStudents(collegeId) : []),
+    enabled: !!collegeId,
+  });
+
+  // 4. Fetch Evaluated Unique Students Summary for Placement Readiness Roster
+  const { data: studentSummaries = [], isLoading: isLoadingSummaries } = useQuery<EvaluatedStudentSummary[]>({
+    queryKey: ['tpo-evaluated-students-summary', collegeId],
+    queryFn: () => (collegeId ? tpoService.getEvaluatedStudentsSummary(collegeId) : []),
     enabled: !!collegeId,
   });
 
@@ -93,15 +106,42 @@ export default function TpoAnalyticsPage() {
   };
 
   const departments = stats?.departments || [];
-  const total = stats?.totalStudents || 0;
+  const total = stats?.totalStudents || collegeStudents.length;
   const avg = stats?.avgCollegeScore || 0;
 
-  // Real placement readiness tier counts computed from actual student attempt results
-  const tier1Count = stats?.tierCounts?.tier1 ?? 0;
-  const tier2Count = stats?.tierCounts?.tier2 ?? 0;
-  const tier3Count = stats?.tierCounts?.tier3 ?? 0;
+  // Real placement readiness metrics strictly deduplicated by unique human candidate
+  const uniqueEvaluated = stats?.uniqueStudentsEvaluated ?? studentSummaries.length;
+  const untestedCount = stats?.untestedStudentsCount ?? Math.max(0, total - uniqueEvaluated);
 
-  // Filter candidate attempts
+  const tier1Count = stats?.tierCounts?.tier1 ?? studentSummaries.filter(s => s.tier === 'TIER_1').length;
+  const tier2Count = stats?.tierCounts?.tier2 ?? studentSummaries.filter(s => s.tier === 'TIER_2').length;
+  const tier3Count = stats?.tierCounts?.tier3 ?? studentSummaries.filter(s => s.tier === 'TIER_3' || s.tier === 'MALPRACTICE').length;
+
+  const tier1Attempts = stats?.tierCounts?.tier1Attempts ?? allAttempts.filter(a => (a.percentage || 0) >= 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
+  const tier2Attempts = stats?.tierCounts?.tier2Attempts ?? allAttempts.filter(a => (a.percentage || 0) >= 50 && (a.percentage || 0) < 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
+  const tier3Attempts = stats?.tierCounts?.tier3Attempts ?? allAttempts.filter(a => (a.percentage || 0) < 50 || a.status === 'TERMINATED_MALPRACTICE').length;
+
+  // Filter unique students for Candidate Readiness Roster
+  const filteredStudents = studentSummaries.filter(s => {
+    const matchesSearch =
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.rollNumber && s.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesDept =
+      selectedDeptFilter === 'ALL' ||
+      (s.department || '').toUpperCase() === selectedDeptFilter.toUpperCase();
+
+    let matchesTier = true;
+    if (selectedTierFilter === 'TIER_1') matchesTier = s.tier === 'TIER_1';
+    else if (selectedTierFilter === 'TIER_2') matchesTier = s.tier === 'TIER_2';
+    else if (selectedTierFilter === 'TIER_3') matchesTier = s.tier === 'TIER_3';
+    else if (selectedTierFilter === 'MALPRACTICE') matchesTier = s.hasMalpractice || s.tier === 'MALPRACTICE';
+
+    return matchesSearch && matchesDept && matchesTier;
+  });
+
+  // Filter candidate attempts for All Submissions Log
   const filteredAttempts = allAttempts.filter(att => {
     const student = resolveStudent(att);
     const matchesSearch =
@@ -121,13 +161,18 @@ export default function TpoAnalyticsPage() {
     else if (selectedTierFilter === 'TIER_3') matchesTier = pct < 50 && att.status !== 'TERMINATED_MALPRACTICE';
     else if (selectedTierFilter === 'MALPRACTICE') matchesTier = att.status === 'TERMINATED_MALPRACTICE';
 
-    return matchesSearch && matchesExam && matchesDept && matchesTier;
+    const matchesSelectedStudent = !selectedStudentEmail ||
+      student.email.toLowerCase() === selectedStudentEmail.toLowerCase() ||
+      (att.student_id && att.student_id.toLowerCase() === selectedStudentEmail.toLowerCase());
+
+    return matchesSearch && matchesExam && matchesDept && matchesTier && matchesSelectedStudent;
   });
 
   // Available unique departments from students and attempts
   const availableDepts = Array.from(
     new Set([
       ...departments.map((d: any) => d.department),
+      ...studentSummaries.map(s => s.department).filter(Boolean),
       ...allAttempts.map(a => a.student?.department).filter(Boolean),
     ])
   );
@@ -136,19 +181,20 @@ export default function TpoAnalyticsPage() {
   const handleDownloadReport = () => {
     const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const headers = 'Institution Placement Intelligence Report (NIRF / NAAC Criterion 5.2)\n';
-    const metadata = `College Name,"${currentCollege.name}"\nCollege Code,${currentCollege.code}\nGenerated On,"${reportDate}"\nTotal Student Licenses,${currentCollege.max_licenses}\nEnrolled Candidates,${total}\nCampus Average Score,${avg}%\n\n`;
+    const metadata = `College Name,"${currentCollege.name}"\nCollege Code,${currentCollege.code}\nGenerated On,"${reportDate}"\nTotal Student Licenses,${currentCollege.max_licenses}\nTotal Enrolled Candidates,${total}\nUnique Evaluated Candidates,${uniqueEvaluated}\nCampus Placement Readiness Average,${avg}%\nTotal Assessment Submissions Logged,${allAttempts.length}\n\n`;
 
-    const tierHeader = 'Placement Readiness Tier,Student Count,Benchmark Requirement\n';
+    const tierHeader = 'Placement Readiness Tier,Unique Student Count,Benchmark Requirement\n';
     const tierRows = [
-      `Tier 1 (Day-1 Placement Ready),${tier1Count},"Consistent 70%+ clearance in company mocks"`,
-      `Tier 2 (Near Ready),${tier2Count},"50%–69% score, targeted aptitude practice needed"`,
-      `Tier 3 (Remedial Prep Needed),${tier3Count},"Below 50%, foundational remediation recommended"`,
+      `Tier 1 (Day-1 Placement Ready),${tier1Count},"Consistent 70%+ clearance across company mocks (${tier1Attempts} submissions logged)"`,
+      `Tier 2 (Near Ready),${tier2Count},"50%–69% score, targeted aptitude practice needed (${tier2Attempts} submissions logged)"`,
+      `Tier 3 (Remedial Prep Needed),${tier3Count},"Below 50%, foundational remediation recommended (${tier3Attempts} submissions logged)"`,
+      ...(untestedCount > 0 ? [`Untested / Enrolled Pending Drive,${untestedCount},"Enrolled in college roster but not yet assessed"`] : []),
     ].join('\n') + '\n\n';
 
-    const deptHeader = 'Department,Enrolled Candidates,Average Score (%),Readiness Status\n';
+    const deptHeader = 'Department,Enrolled Candidates,Evaluated Candidates,Average Score (%),Readiness Status\n';
     const deptRows = departments.length > 0
-      ? departments.map(d => `"${d.department} Branch",${d.studentCount},${d.avgScore}%,${d.avgScore >= 60 ? 'Above Benchmark' : 'Review Needed'}`).join('\n')
-      : '"General Engineering",0,0%,Pending Roster Upload';
+      ? departments.map(d => `"${d.department} Branch",${d.studentCount},${d.evaluatedCount ?? '—'},${d.avgScore}%,${d.avgScore >= 60 ? 'Above Benchmark' : 'Review Needed'}`).join('\n')
+      : '"General Engineering",0,0,0%,Pending Roster Upload';
 
     const fullContent = headers + metadata + tierHeader + tierRows + deptHeader + deptRows;
     const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
@@ -162,7 +208,29 @@ export default function TpoAnalyticsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Export Student Results CSV
+  // Export Candidate Placement Readiness Roster CSV
+  const handleDownloadCandidateRoster = () => {
+    if (studentSummaries.length === 0) return;
+    const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const headers = 'Rank,Roll Number,Student Name,Email,Department,Drives Evaluated,Highest Score (%),Placement Average (%),Placement Readiness Tier,Status,Latest Submission\n';
+    const rows = studentSummaries.map((s, idx) => {
+      const latestDate = s.latestSubmissionDate ? new Date(s.latestSubmissionDate).toLocaleDateString() : '—';
+      return `${idx + 1},"${s.rollNumber || '—'}","${s.name}","${s.email}","${s.department || 'General'}",${s.attemptsCount},${s.highestScore}%,${s.overallAverageScore}%,"${s.tierLabel}","${s.hasMalpractice ? 'FLAGGED_MALPRACTICE' : 'CLEAN'}","${latestDate}"`;
+    }).join('\n');
+
+    const fullContent = `College,"${currentCollege.name}" (${currentCollege.code})\nCandidate Placement Readiness Roster (NIRF Criterion 5.2)\nExported On,"${reportDate}"\nTotal Evaluated Candidates,${uniqueEvaluated}\nCampus Placement Readiness Average,${avg}%\n\n` + headers + rows;
+    const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${currentCollege.code}_Placement_Readiness_Roster.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Export Individual Attempt Submissions CSV
   const handleDownloadCandidateResults = () => {
     if (allAttempts.length === 0) return;
     const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -182,12 +250,12 @@ export default function TpoAnalyticsPage() {
       return `${idx + 1},"${s.roll_number || '—'}","${s.name}","${s.email}","${s.department || 'General'}","${examTitle}","${company}",${a.total_score},${a.max_possible_score || 100},${pct}%,${qualification},"${tier}",${attempted},${totalQ},${acc},${a.tab_switch_count || 0},"${subDate}"`;
     }).join('\n');
 
-    const fullContent = `College,"${currentCollege.name}" (${currentCollege.code})\nExported On,"${reportDate}"\n\n` + headers + rows;
+    const fullContent = `College,"${currentCollege.name}" (${currentCollege.code})\nAll Assessment Submissions Log\nExported On,"${reportDate}"\n\n` + headers + rows;
     const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${currentCollege.code}_Candidate_Results_Leaderboard.csv`;
+    link.download = `${currentCollege.code}_All_Assessment_Submissions.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -214,14 +282,26 @@ export default function TpoAnalyticsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {allAttempts.length > 0 && (
-            <button
-              onClick={handleDownloadCandidateResults}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] hover:border-[#FD4A32] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-[#FD4A32]" />
-              Export Scores (CSV)
-            </button>
+          {viewMode === 'STUDENTS' ? (
+            studentSummaries.length > 0 && (
+              <button
+                onClick={handleDownloadCandidateRoster}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] hover:border-[#FD4A32] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-[#FD4A32]" />
+                Export Roster (CSV)
+              </button>
+            )
+          ) : (
+            allAttempts.length > 0 && (
+              <button
+                onClick={handleDownloadCandidateResults}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] hover:border-[#FD4A32] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-[#FD4A32]" />
+                Export Submissions (CSV)
+              </button>
+            )
           )}
 
           <button
@@ -234,8 +314,36 @@ export default function TpoAnalyticsPage() {
         </div>
       </div>
 
-      {/* High-Level Placement Readiness Tiers */}
+      {/* Institutional Candidate Evaluation Context Summary */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xs text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold">
+            <Users className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+              <span>{uniqueEvaluated} of {total} Enrolled Candidates Evaluated</span>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                {total > 0 ? Math.round((uniqueEvaluated / total) * 100) : 0}% Evaluated
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {allAttempts.length} total assessment submissions logged across all campus drives
+            </p>
+          </div>
+        </div>
+
+        {untestedCount > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-amber-700 dark:text-amber-400 font-medium text-[11px]">
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            <span>{untestedCount} enrolled candidate{untestedCount === 1 ? '' : 's'} pending first assessment</span>
+          </div>
+        )}
+      </div>
+
+      {/* High-Level Placement Readiness Tiers (Strictly Unique Human Candidates) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Tier 1 */}
         <div className="p-6 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -243,14 +351,22 @@ export default function TpoAnalyticsPage() {
             </span>
             <Award className="w-5 h-5 text-emerald-500" />
           </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">
-            {tier1Count} Students
+          <div>
+            <div className="text-3xl font-black text-slate-900 dark:text-white">
+              {tier1Count} {tier1Count === 1 ? 'Student' : 'Students'}
+            </div>
+            <div className="mt-1">
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full inline-block">
+                {uniqueEvaluated > 0 ? Math.round((tier1Count / uniqueEvaluated) * 100) : 0}% of evaluated • {tier1Attempts} submissions logged
+              </span>
+            </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Scoring 70%+ consistently in company mocks. Immediate candidates for mass IT (TCS Ninja/Digital, Accenture, Infosys DSE).
           </p>
         </div>
 
+        {/* Tier 2 */}
         <div className="p-6 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
@@ -258,14 +374,22 @@ export default function TpoAnalyticsPage() {
             </span>
             <TrendingUp className="w-5 h-5 text-blue-500" />
           </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">
-            {tier2Count} Students
+          <div>
+            <div className="text-3xl font-black text-slate-900 dark:text-white">
+              {tier2Count} {tier2Count === 1 ? 'Student' : 'Students'}
+            </div>
+            <div className="mt-1">
+              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full inline-block">
+                {uniqueEvaluated > 0 ? Math.round((tier2Count / uniqueEvaluated) * 100) : 0}% of evaluated • {tier2Attempts} submissions logged
+              </span>
+            </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Scoring between 50%–69%. Need 2–3 weeks of focused topic practice in Quantitative Aptitude &amp; Pseudo-code.
           </p>
         </div>
 
+        {/* Tier 3 */}
         <div className="p-6 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
@@ -273,8 +397,15 @@ export default function TpoAnalyticsPage() {
             </span>
             <AlertTriangle className="w-5 h-5 text-rose-500" />
           </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">
-            {tier3Count} Students
+          <div>
+            <div className="text-3xl font-black text-slate-900 dark:text-white">
+              {tier3Count} {tier3Count === 1 ? 'Student' : 'Students'}
+            </div>
+            <div className="mt-1">
+              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full inline-block">
+                {uniqueEvaluated > 0 ? Math.round((tier3Count / uniqueEvaluated) * 100) : 0}% of evaluated • {tier3Attempts} submissions logged
+              </span>
+            </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Scoring below 50%. Require foundational speed-math, reading comprehension, and basic reasoning modules.
@@ -286,16 +417,43 @@ export default function TpoAnalyticsPage() {
       <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Candidate Assessment Results &amp; Scorecards
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#FD4A32]/10 text-[#FD4A32]">
-                {allAttempts.length} Submissions
-              </span>
+              {/* Dual-View Toggle: Candidate Roster vs All Submissions */}
+              <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('STUDENTS');
+                    setSelectedStudentEmail(null);
+                  }}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'STUDENTS'
+                      ? 'bg-white dark:bg-slate-900 text-[#FD4A32] shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  Candidate Roster ({studentSummaries.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('ATTEMPTS')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'ATTEMPTS'
+                      ? 'bg-white dark:bg-slate-900 text-[#FD4A32] shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  All Submissions ({allAttempts.length})
+                </button>
+              </div>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Live rank leaderboard across all campus drives with full response audit &amp; proctoring inspection
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {viewMode === 'STUDENTS'
+                ? 'Unique candidate ranking with overall placement readiness averages across all company drives'
+                : 'Granular exam submission logs with anti-cheat audit and question-by-question scorecard inspection'}
             </p>
           </div>
 
@@ -314,22 +472,24 @@ export default function TpoAnalyticsPage() {
 
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
-          {/* Drive / Exam Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Drive:</span>
-            <select
-              value={selectedExamFilter}
-              onChange={e => setSelectedExamFilter(e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-hidden"
-            >
-              <option value="ALL">All Drives ({mockExams.length})</option>
-              {mockExams.map(ex => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.title} ({ex.target_company || 'Drive'})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Drive / Exam Filter (active in Submissions view) */}
+          {viewMode === 'ATTEMPTS' && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-medium">Drive:</span>
+              <select
+                value={selectedExamFilter}
+                onChange={e => setSelectedExamFilter(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-hidden"
+              >
+                <option value="ALL">All Drives ({mockExams.length})</option>
+                {mockExams.map(ex => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.title} ({ex.target_company || 'Drive'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Department Filter */}
           {availableDepts.length > 0 && (
@@ -366,13 +526,29 @@ export default function TpoAnalyticsPage() {
             </select>
           </div>
 
-          {(searchTerm || selectedExamFilter !== 'ALL' || selectedDeptFilter !== 'ALL' || selectedTierFilter !== 'ALL') && (
+          {/* Selected Candidate Filter Pill (when drill-down from Candidate Roster) */}
+          {selectedStudentEmail && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/30 text-[#FD4A32] text-xs font-bold">
+              <span>Candidate: {selectedStudentEmail}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedStudentEmail(null)}
+                className="hover:opacity-75 cursor-pointer"
+                title="Clear candidate filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {(searchTerm || selectedExamFilter !== 'ALL' || selectedDeptFilter !== 'ALL' || selectedTierFilter !== 'ALL' || selectedStudentEmail) && (
             <button
               onClick={() => {
                 setSearchTerm('');
                 setSelectedExamFilter('ALL');
                 setSelectedDeptFilter('ALL');
                 setSelectedTierFilter('ALL');
+                setSelectedStudentEmail(null);
               }}
               className="text-[#FD4A32] hover:underline font-bold text-xs ml-auto cursor-pointer"
             >
@@ -381,172 +557,323 @@ export default function TpoAnalyticsPage() {
           )}
         </div>
 
-        {/* Student Results Table */}
-        {isLoadingAttempts ? (
-          <div className="py-16 text-center text-xs text-slate-400 animate-pulse space-y-2">
-            <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
-            <p>Loading candidate test results &amp; rank metrics...</p>
-          </div>
-        ) : filteredAttempts.length === 0 ? (
-          <div className="py-14 text-center space-y-3 bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-            <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                {allAttempts.length === 0
-                  ? 'No Student Results Recorded Yet'
-                  : 'No Candidates Match the Filter Criteria'}
-              </h4>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
-                {allAttempts.length === 0
-                  ? 'Once candidates take and submit mock assessments, their rank, score, accuracy, and proctoring audit logs will appear here in real time.'
-                  : 'Try adjusting your search terms, drive selection, or tier filters.'}
-              </p>
+        {/* VIEW 1: Candidate Readiness Roster (Unique Human Candidates) */}
+        {viewMode === 'STUDENTS' ? (
+          isLoadingSummaries ? (
+            <div className="py-16 text-center text-xs text-slate-400 animate-pulse space-y-2">
+              <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+              <p>Loading unique candidate placement standings...</p>
             </div>
-            {allAttempts.length === 0 && mockExams.length > 0 && (
-              <div className="pt-2">
-                <Link
-                  to={`/tpo/exams/${mockExams[0]?.id}`}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#FD4A32] hover:underline"
-                >
-                  View Active Drive Link <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
+          ) : filteredStudents.length === 0 ? (
+            <div className="py-14 text-center space-y-3 bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+              <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {studentSummaries.length === 0
+                    ? 'No Evaluated Candidates Yet'
+                    : 'No Candidates Match the Filter Criteria'}
+                </h4>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  {studentSummaries.length === 0
+                    ? 'Once enrolled students submit mock drives, their consolidated rank, average score, and placement tier standing will appear here (1 entry per student).'
+                    : 'Try adjusting your search terms, branch selection, or tier filters.'}
+                </p>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
-                  <th className="pb-3 pr-3">Rank</th>
-                  <th className="pb-3 px-3">Roll No</th>
-                  <th className="pb-3 px-3">Candidate Details</th>
-                  <th className="pb-3 px-3">Branch</th>
-                  <th className="pb-3 px-3">Assessment Drive</th>
-                  <th className="pb-3 px-3">Score</th>
-                  <th className="pb-3 px-3">Readiness</th>
-                  <th className="pb-3 px-3">Proctor Log</th>
-                  <th className="pb-3 px-3">Status</th>
-                  <th className="pb-3 pl-3 text-right">Audit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {filteredAttempts.map((att, idx) => {
-                  const s = resolveStudent(att);
-                  const pct = att.percentage || 0;
-                  const isMalpractice = att.status === 'TERMINATED_MALPRACTICE';
-                  const tierLabel = isMalpractice
-                    ? 'Terminated'
-                    : pct >= 70
-                    ? 'Tier 1'
-                    : pct >= 50
-                    ? 'Tier 2'
-                    : 'Tier 3';
+              {studentSummaries.length === 0 && mockExams.length > 0 && (
+                <div className="pt-2">
+                  <Link
+                    to={`/tpo/exams/${mockExams[0]?.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#FD4A32] hover:underline"
+                  >
+                    View Active Drive Link <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
+                    <th className="pb-3 pr-3">Rank</th>
+                    <th className="pb-3 px-3">Roll No</th>
+                    <th className="pb-3 px-3">Candidate Details</th>
+                    <th className="pb-3 px-3">Branch</th>
+                    <th className="pb-3 px-3">Drives Taken</th>
+                    <th className="pb-3 px-3">Best Score</th>
+                    <th className="pb-3 px-3">Placement Avg</th>
+                    <th className="pb-3 px-3">Readiness Tier</th>
+                    <th className="pb-3 px-3">Status</th>
+                    <th className="pb-3 pl-3 text-right">Submissions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {filteredStudents.map((s, idx) => {
+                    const avgScore = s.overallAverageScore;
+                    const tierLabel = s.hasMalpractice
+                      ? 'Disqualified'
+                      : avgScore >= 70
+                      ? 'Tier 1'
+                      : avgScore >= 50
+                      ? 'Tier 2'
+                      : 'Tier 3';
 
-                  const examTitle = (att as any).exam_title || mockExams.find(e => e.id === att.mock_exam_id)?.title || att.mock_exam_id;
-                  const targetCompany = (att as any).target_company || mockExams.find(e => e.id === att.mock_exam_id)?.target_company || 'Campus Drive';
-
-                  return (
-                    <tr key={att.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-4 pr-3 font-black text-slate-400">
-                        #{idx + 1}
-                      </td>
-                      <td className="py-4 px-3 font-mono font-bold text-slate-900 dark:text-white">
-                        {s.roll_number || '—'}
-                      </td>
-                      <td className="py-4 px-3">
-                        <div className="font-bold text-slate-900 dark:text-white">
-                          {s.name}
-                        </div>
-                        <div className="text-[10px] text-slate-400 truncate max-w-xs">
-                          {s.email || att.student_email || att.student_id}
-                        </div>
-                      </td>
-                      <td className="py-4 px-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          {s.department || 'General'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-3">
-                        <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">
-                          {examTitle}
-                        </div>
-                        <div className="text-[10px] text-[#FD4A32] font-bold">
-                          {targetCompany}
-                        </div>
-                      </td>
-                      <td className="py-4 px-3 font-bold text-slate-900 dark:text-white">
-                        {att.total_score} / {att.max_possible_score || 100}
-                      </td>
-                      <td className="py-4 px-3">
-                        <div className="flex items-center gap-1.5">
+                    return (
+                      <tr key={s.studentId || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="py-4 pr-3 font-black text-slate-400">
+                          #{idx + 1}
+                        </td>
+                        <td className="py-4 px-3 font-mono font-bold text-slate-900 dark:text-white">
+                          {s.rollNumber || '—'}
+                        </td>
+                        <td className="py-4 px-3">
+                          <div className="font-bold text-slate-900 dark:text-white">
+                            {s.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate max-w-xs">
+                            {s.email}
+                          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {s.department || 'General'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-3 font-bold text-slate-900 dark:text-white">
+                          {s.attemptsCount} {s.attemptsCount === 1 ? 'Drive' : 'Drives'}
+                        </td>
+                        <td className="py-4 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          {s.highestScore}%
+                        </td>
+                        <td className="py-4 px-3">
                           <span
                             className={`font-black ${
-                              isMalpractice
+                              s.hasMalpractice
                                 ? 'text-rose-600 dark:text-rose-400'
-                                : pct >= 70
+                                : avgScore >= 70
                                 ? 'text-emerald-600 dark:text-emerald-400'
-                                : pct >= 50
+                                : avgScore >= 50
                                 ? 'text-blue-600 dark:text-blue-400'
                                 : 'text-amber-600 dark:text-amber-400'
                             }`}
                           >
-                            {pct}%
+                            {avgScore}%
                           </span>
+                        </td>
+                        <td className="py-4 px-3">
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
-                              pct >= 70
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                : pct >= 50
-                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
-                                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                            className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                              s.hasMalpractice
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
+                                : avgScore >= 70
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                : avgScore >= 50
+                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                             }`}
                           >
                             {tierLabel}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-3">
-                        {att.tab_switch_count && att.tab_switch_count > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                            <AlertTriangle className="w-3 h-3 text-amber-500" />
-                            {att.tab_switch_count} switches
+                        </td>
+                        <td className="py-4 px-3">
+                          {s.hasMalpractice ? (
+                            <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
+                              <XCircle className="w-3.5 h-3.5" /> Flagged Malpractice
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Clean Session
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 pl-3 text-right">
+                          <button
+                            onClick={() => {
+                              setSelectedStudentEmail(s.email);
+                              setViewMode('ATTEMPTS');
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                            title="View All Exam Submissions for this Candidate"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View {s.attemptsCount} {s.attemptsCount === 1 ? 'Test' : 'Tests'}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : (
+          /* VIEW 2: All Individual Assessment Submissions (with Proctoring Audit) */
+          isLoadingAttempts ? (
+            <div className="py-16 text-center text-xs text-slate-400 animate-pulse space-y-2">
+              <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+              <p>Loading candidate test results &amp; rank metrics...</p>
+            </div>
+          ) : filteredAttempts.length === 0 ? (
+            <div className="py-14 text-center space-y-3 bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+              <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {allAttempts.length === 0
+                    ? 'No Student Results Recorded Yet'
+                    : 'No Candidates Match the Filter Criteria'}
+                </h4>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  {allAttempts.length === 0
+                    ? 'Once candidates take and submit mock assessments, their rank, score, accuracy, and proctoring audit logs will appear here in real time.'
+                    : 'Try adjusting your search terms, drive selection, or tier filters.'}
+                </p>
+              </div>
+              {allAttempts.length === 0 && mockExams.length > 0 && (
+                <div className="pt-2">
+                  <Link
+                    to={`/tpo/exams/${mockExams[0]?.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#FD4A32] hover:underline"
+                  >
+                    View Active Drive Link <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
+                    <th className="pb-3 pr-3">Rank</th>
+                    <th className="pb-3 px-3">Roll No</th>
+                    <th className="pb-3 px-3">Candidate Details</th>
+                    <th className="pb-3 px-3">Branch</th>
+                    <th className="pb-3 px-3">Assessment Drive</th>
+                    <th className="pb-3 px-3">Score</th>
+                    <th className="pb-3 px-3">Readiness</th>
+                    <th className="pb-3 px-3">Proctor Log</th>
+                    <th className="pb-3 px-3">Status</th>
+                    <th className="pb-3 pl-3 text-right">Audit</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {filteredAttempts.map((att, idx) => {
+                    const s = resolveStudent(att);
+                    const pct = att.percentage || 0;
+                    const isMalpractice = att.status === 'TERMINATED_MALPRACTICE';
+                    const tierLabel = isMalpractice
+                      ? 'Terminated'
+                      : pct >= 70
+                      ? 'Tier 1'
+                      : pct >= 50
+                      ? 'Tier 2'
+                      : 'Tier 3';
+
+                    const examTitle = (att as any).exam_title || mockExams.find(e => e.id === att.mock_exam_id)?.title || att.mock_exam_id;
+                    const targetCompany = (att as any).target_company || mockExams.find(e => e.id === att.mock_exam_id)?.target_company || 'Campus Drive';
+
+                    return (
+                      <tr key={att.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="py-4 pr-3 font-black text-slate-400">
+                          #{idx + 1}
+                        </td>
+                        <td className="py-4 px-3 font-mono font-bold text-slate-900 dark:text-white">
+                          {s.roll_number || '—'}
+                        </td>
+                        <td className="py-4 px-3">
+                          <div className="font-bold text-slate-900 dark:text-white">
+                            {s.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate max-w-xs">
+                            {s.email || att.student_email || att.student_id}
+                          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {s.department || 'General'}
                           </span>
-                        ) : (
-                          <span className="text-slate-400 font-medium">0 switches</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-3">
-                        {isMalpractice ? (
-                          <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
-                            <XCircle className="w-3.5 h-3.5" /> Terminated
-                          </span>
-                        ) : att.passed ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Cleared
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-rose-500 font-bold text-[11px]">
-                            <XCircle className="w-3.5 h-3.5" /> Below Cutoff
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 pl-3 text-right">
-                        <button
-                          onClick={() => setSelectedAttempt(att)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                          title="View Detailed Student Scorecard & Responses"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Inspect</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">
+                            {examTitle}
+                          </div>
+                          <div className="text-[10px] text-[#FD4A32] font-bold">
+                            {targetCompany}
+                          </div>
+                        </td>
+                        <td className="py-4 px-3 font-bold text-slate-900 dark:text-white">
+                          {att.total_score} / {att.max_possible_score || 100}
+                        </td>
+                        <td className="py-4 px-3">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`font-black ${
+                                isMalpractice
+                                  ? 'text-rose-600 dark:text-rose-400'
+                                  : pct >= 70
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : pct >= 50
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : 'text-amber-600 dark:text-amber-400'
+                              }`}
+                            >
+                              {pct}%
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
+                                pct >= 70
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                  : pct >= 50
+                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                                  : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                              }`}
+                            >
+                              {tierLabel}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          {att.tab_switch_count && att.tab_switch_count > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                              <AlertTriangle className="w-3 h-3 text-amber-500" />
+                              {att.tab_switch_count} switches
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-medium">0 switches</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-3">
+                          {isMalpractice ? (
+                            <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
+                              <XCircle className="w-3.5 h-3.5" /> Terminated
+                            </span>
+                          ) : att.passed ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Cleared
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-rose-500 font-bold text-[11px]">
+                              <XCircle className="w-3.5 h-3.5" /> Below Cutoff
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 pl-3 text-right">
+                          <button
+                            onClick={() => setSelectedAttempt(att)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                            title="View Detailed Student Scorecard & Responses"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Inspect</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
 

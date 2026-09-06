@@ -194,7 +194,9 @@ export default function TpoOverviewPage() {
           <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {stats?.totalAttempts || 0}
           </div>
-          <p className="text-xs text-slate-400 mt-2">Candidate submissions logged</p>
+          <p className="text-xs text-slate-400 mt-2">
+            {stats?.uniqueStudentsEvaluated || 0} unique candidates tested
+          </p>
         </div>
 
         {/* Average College Score */}
@@ -206,7 +208,9 @@ export default function TpoOverviewPage() {
           <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
             {stats?.avgCollegeScore || 0}%
           </div>
-          <p className="text-xs text-slate-400 mt-2">Batch average across all drives</p>
+          <p className="text-xs text-slate-400 mt-2">
+            Candidate average across {stats?.uniqueStudentsEvaluated || 0} evaluated
+          </p>
         </div>
       </div>
 
@@ -306,7 +310,9 @@ export default function TpoOverviewPage() {
                     <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
                       {dept.department} Branch
                     </span>
-                    <span className="text-[11px] text-slate-400">{dept.studentCount} candidates enrolled</span>
+                    <span className="text-[11px] text-slate-400">
+                      {dept.studentCount} enrolled • {dept.evaluatedCount ?? 0} evaluated
+                    </span>
                   </div>
                   <span className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
                     {dept.avgScore}% avg

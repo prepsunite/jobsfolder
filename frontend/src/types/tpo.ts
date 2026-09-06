@@ -178,14 +178,39 @@ export interface BulkStudentRow {
   error?: string;
 }
 
+export interface EvaluatedStudentSummary {
+  studentId: string;
+  email: string;
+  name: string;
+  rollNumber: string;
+  department: string;
+  attemptsCount: number;
+  highestScore: number;
+  overallAverageScore: number;
+  tier: 'TIER_1' | 'TIER_2' | 'TIER_3' | 'MALPRACTICE';
+  tierLabel: string;
+  hasMalpractice: boolean;
+  latestSubmissionDate?: string;
+  attempts: StudentExamAttempt[];
+}
+
 export interface TpoDashboardStats {
   totalStudents: number;
+  uniqueStudentsEvaluated: number;
+  untestedStudentsCount: number;
   maxLicenses: number;
   activeExamsCount: number;
   totalAttempts: number;
   avgCollegeScore: number;
-  departments: { department: string; studentCount: number; avgScore: number }[];
-  tierCounts?: { tier1: number; tier2: number; tier3: number };
+  departments: { department: string; studentCount: number; evaluatedCount: number; avgScore: number }[];
+  tierCounts?: {
+    tier1: number;
+    tier2: number;
+    tier3: number;
+    tier1Attempts: number;
+    tier2Attempts: number;
+    tier3Attempts: number;
+  };
 }
 
 export interface TemplateSectionDraft {

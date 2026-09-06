@@ -102,6 +102,15 @@ export default function TpoExamDetailPage() {
   });
 
   const totalSubmitted = attempts.length;
+  const uniqueCandidatesCount = useMemo(() => {
+    const set = new Set<string>();
+    attempts.forEach(a => {
+      const k = (a.student_email || a.student?.email || a.student_id || '').trim().toLowerCase();
+      if (k) set.add(k);
+    });
+    return set.size;
+  }, [attempts]);
+
   const passedCount = attempts.filter(a => a.passed).length;
   const passRate = totalSubmitted > 0 ? Math.round((passedCount / totalSubmitted) * 100) : 0;
   const avgScore =
@@ -232,7 +241,12 @@ export default function TpoExamDetailPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Candidates Appeared</div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalSubmitted}</div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+            {uniqueCandidatesCount}
+            {totalSubmitted > uniqueCandidatesCount && (
+              <span className="text-xs font-normal text-slate-400 ml-1.5">({totalSubmitted} submissions)</span>
+            )}
+          </div>
         </div>
         <div className="p-4 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Clearance Rate</div>

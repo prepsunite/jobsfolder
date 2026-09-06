@@ -16,6 +16,7 @@ import type {
   TemplateSectionDraft,
   CandidateResultSummary,
   SectionResultSummary,
+  EvaluatedStudentSummary,
 } from '@/types/tpo';
 
 export const STORAGE_KEYS_TPO = {
@@ -2748,76 +2749,133 @@ export const tpoService = {
     const activeExamsCount = exams.filter(e => e.is_active).length;
     const totalAttempts = allAttempts.length;
 
-    // Real mathematical average across completed candidate attempts
-    const validAttempts = allAttempts.filter(
-      a => typeof a.percentage === 'number' && !isNaN(a.percentage)
-    );
-    const avgCollegeScore =
-      validAttempts.length > 0
-        ? Math.round(validAttempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / validAttempts.length)
-        : 0;
+    // Build student mapping for department & profile resolution
+    const studentDeptMap = new Map<string, string>();
+    students.forEach(s => {
+      const dept = (s.department || 'GENERAL').toUpperCase();
+      if (s.id) studentDeptMap.set(s.id.toLowerCase(), dept);
+      if (s.email) studentDeptMap.set(s.email.toLowerCase(), dept);
+    });
 
-    // Compute real placement readiness tiers strictly from actual candidate attempts
+    // Helper: Normalize candidate identity key (email preferred, then student_id)
+    const getStudentKey = (att: StudentExamAttempt): string => {
+      const email = (att.student_email || att.student?.email || '').trim().toLowerCase();
+      if (email && email.includes('@')) return email;
+      const sid = (att.student_id || '').trim().toLowerCase();
+      if (sid) return sid;
+      return (att.student?.name || att.id).trim().toLowerCase();
+    };
+
+    // Group valid completed attempts strictly by unique human student
+    const studentAttemptsMap = new Map<string, StudentExamAttempt[]>();
+    allAttempts.forEach(att => {
+      const key = getStudentKey(att);
+      if (!studentAttemptsMap.has(key)) {
+        studentAttemptsMap.set(key, []);
+      }
+      studentAttemptsMap.get(key)!.push(att);
+    });
+
+    const uniqueStudentsEvaluated = studentAttemptsMap.size;
+    const untestedStudentsCount = Math.max(0, totalStudents - uniqueStudentsEvaluated);
+
+    // Compute student-level metrics: each unique candidate gets exactly ONE placement tier
     let tier1Count = 0;
     let tier2Count = 0;
     let tier3Count = 0;
+    const evaluatedStudentAverages: number[] = [];
 
-    allAttempts.forEach(a => {
-      const pct = a.percentage || 0;
-      if (a.status === 'TERMINATED_MALPRACTICE') {
+    studentAttemptsMap.forEach((sAttempts) => {
+      const valid = sAttempts.filter(
+        a => typeof a.percentage === 'number' && !isNaN(a.percentage)
+      );
+      const studentAvg =
+        valid.length > 0
+          ? valid.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / valid.length
+          : 0;
+      evaluatedStudentAverages.push(studentAvg);
+
+      const hasMalpractice = sAttempts.some(a => a.status === 'TERMINATED_MALPRACTICE');
+
+      if (hasMalpractice) {
         tier3Count++;
-      } else if (pct >= 70) {
+      } else if (studentAvg >= 70) {
         tier1Count++;
-      } else if (pct >= 50) {
+      } else if (studentAvg >= 50) {
         tier2Count++;
       } else {
         tier3Count++;
       }
     });
 
-    // Map students for department resolution
-    const studentDeptMap = new Map<string, string>();
-    students.forEach(s => {
-      const dept = (s.department || 'GENERAL').toUpperCase();
-      if (s.id) studentDeptMap.set(s.id, dept);
-      if (s.email) {
-        studentDeptMap.set(s.email.toLowerCase(), dept);
-        studentDeptMap.set(s.email, dept);
+    // Attempt-level distribution across tiers (for detailed audit drill-downs)
+    let tier1Attempts = 0;
+    let tier2Attempts = 0;
+    let tier3Attempts = 0;
+
+    allAttempts.forEach(a => {
+      const pct = a.percentage || 0;
+      if (a.status === 'TERMINATED_MALPRACTICE' || pct < 50) {
+        tier3Attempts++;
+      } else if (pct >= 70) {
+        tier1Attempts++;
+      } else {
+        tier2Attempts++;
       }
     });
 
-    const deptDataMap: Record<string, { studentCount: number; scoreSum: number; attemptsCount: number }> = {};
+    // Real mathematical campus readiness: mean of unique student overall averages
+    const avgCollegeScore =
+      evaluatedStudentAverages.length > 0
+        ? Math.round(evaluatedStudentAverages.reduce((acc, cur) => acc + cur, 0) / evaluatedStudentAverages.length)
+        : 0;
+
+    // Department-level metrics: computed from unique student averages in each department
+    const deptDataMap: Record<string, { studentCount: number; evaluatedAverages: number[] }> = {};
     students.forEach(s => {
       const d = (s.department || 'GENERAL').toUpperCase();
-      if (!deptDataMap[d]) deptDataMap[d] = { studentCount: 0, scoreSum: 0, attemptsCount: 0 };
+      if (!deptDataMap[d]) deptDataMap[d] = { studentCount: 0, evaluatedAverages: [] };
       deptDataMap[d].studentCount++;
     });
 
-    allAttempts.forEach(a => {
-      const rawId = (a.student_id || a.student?.email || '').trim();
-      const lowerId = rawId.toLowerCase();
+    studentAttemptsMap.forEach((sAttempts, studentKey) => {
+      const first = sAttempts[0];
+      const rawId = (first.student_id || first.student?.email || '').trim().toLowerCase();
       const dept = (
         studentDeptMap.get(rawId) ||
-        studentDeptMap.get(lowerId) ||
-        a.student?.department ||
+        studentDeptMap.get(studentKey) ||
+        first.student?.department ||
         'GENERAL'
       ).toUpperCase();
 
       if (!deptDataMap[dept]) {
-        deptDataMap[dept] = { studentCount: 0, scoreSum: 0, attemptsCount: 0 };
+        deptDataMap[dept] = { studentCount: 0, evaluatedAverages: [] };
       }
-      deptDataMap[dept].scoreSum += (a.percentage || 0);
-      deptDataMap[dept].attemptsCount++;
+
+      const valid = sAttempts.filter(
+        a => typeof a.percentage === 'number' && !isNaN(a.percentage)
+      );
+      const studentAvg =
+        valid.length > 0
+          ? valid.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / valid.length
+          : 0;
+      deptDataMap[dept].evaluatedAverages.push(studentAvg);
     });
 
     const departments = Object.entries(deptDataMap).map(([department, data]) => ({
       department,
       studentCount: data.studentCount,
-      avgScore: data.attemptsCount > 0 ? Math.round(data.scoreSum / data.attemptsCount) : 0,
+      evaluatedCount: data.evaluatedAverages.length,
+      avgScore:
+        data.evaluatedAverages.length > 0
+          ? Math.round(data.evaluatedAverages.reduce((acc, cur) => acc + cur, 0) / data.evaluatedAverages.length)
+          : 0,
     }));
 
     return {
       totalStudents,
+      uniqueStudentsEvaluated,
+      untestedStudentsCount,
       maxLicenses,
       activeExamsCount: activeExamsCount || 0,
       totalAttempts,
@@ -2827,8 +2885,107 @@ export const tpoService = {
         tier1: tier1Count,
         tier2: tier2Count,
         tier3: tier3Count,
+        tier1Attempts,
+        tier2Attempts,
+        tier3Attempts,
       },
     };
+  },
+
+  /**
+   * Generates a clean, deduplicated candidate roster with overall placement standing,
+   * average score across all tests taken, highest score, and full attempt history.
+   */
+  async getEvaluatedStudentsSummary(collegeId: string): Promise<EvaluatedStudentSummary[]> {
+    const allAttempts = (await this.getAllCollegeAttempts(collegeId)).filter(
+      a => a.status === 'SUBMITTED' || a.status === 'GRADED' || a.status === 'TIMED_OUT' || a.status === 'TERMINATED_MALPRACTICE'
+    );
+    const students = await this.getCollegeStudents(collegeId);
+    const studentInfoMap = new Map<string, CollegeStudent>();
+    students.forEach(s => {
+      if (s.email) studentInfoMap.set(s.email.toLowerCase(), s);
+      if (s.id) studentInfoMap.set(s.id.toLowerCase(), s);
+    });
+
+    const getStudentKey = (att: StudentExamAttempt): string => {
+      const email = (att.student_email || att.student?.email || '').trim().toLowerCase();
+      if (email && email.includes('@')) return email;
+      const sid = (att.student_id || '').trim().toLowerCase();
+      if (sid) return sid;
+      return (att.student?.name || att.id).trim().toLowerCase();
+    };
+
+    const grouped = new Map<string, StudentExamAttempt[]>();
+    allAttempts.forEach(att => {
+      const key = getStudentKey(att);
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(att);
+    });
+
+    const summaries: EvaluatedStudentSummary[] = [];
+
+    grouped.forEach((sAttempts, studentKey) => {
+      const valid = sAttempts.filter(
+        a => typeof a.percentage === 'number' && !isNaN(a.percentage)
+      );
+      const studentAvg =
+        valid.length > 0
+          ? Math.round((valid.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / valid.length) * 10) / 10
+          : 0;
+
+      const highestScore = valid.reduce((max, a) => Math.max(max, a.percentage || 0), 0);
+      const hasMalpractice = sAttempts.some(a => a.status === 'TERMINATED_MALPRACTICE');
+
+      let tier: 'TIER_1' | 'TIER_2' | 'TIER_3' | 'MALPRACTICE';
+      let tierLabel: string;
+      if (hasMalpractice) {
+        tier = 'MALPRACTICE';
+        tierLabel = 'Disqualified / Malpractice';
+      } else if (studentAvg >= 70) {
+        tier = 'TIER_1';
+        tierLabel = 'Tier 1: Day-1 Ready';
+      } else if (studentAvg >= 50) {
+        tier = 'TIER_2';
+        tierLabel = 'Tier 2: Near Ready';
+      } else {
+        tier = 'TIER_3';
+        tierLabel = 'Tier 3: Remedial Needed';
+      }
+
+      // Find best available profile info
+      const first = sAttempts[0];
+      const enrolled = studentInfoMap.get(studentKey) || studentInfoMap.get((first.student_id || '').toLowerCase());
+      const studentName = enrolled?.name || first.student?.name || (studentKey.includes('@') ? studentKey.split('@')[0] : 'Candidate');
+      const studentRoll = enrolled?.roll_number || first.student?.roll_number || '—';
+      const studentDept = enrolled?.department || first.student?.department || 'General';
+      const studentEmail = enrolled?.email || first.student_email || first.student?.email || studentKey;
+
+      // Find latest submission date
+      const latestDate = sAttempts.reduce((latest, a) => {
+        const d = a.submitted_at || a.started_at;
+        if (!d) return latest;
+        if (!latest) return d;
+        return new Date(d) > new Date(latest) ? d : latest;
+      }, '');
+
+      summaries.push({
+        studentId: first.student_id || studentKey,
+        email: studentEmail,
+        name: studentName,
+        rollNumber: studentRoll,
+        department: studentDept,
+        attemptsCount: sAttempts.length,
+        highestScore,
+        overallAverageScore: studentAvg,
+        tier,
+        tierLabel,
+        hasMalpractice,
+        latestSubmissionDate: latestDate || undefined,
+        attempts: sAttempts.sort((a, b) => new Date(b.submitted_at || b.started_at || 0).getTime() - new Date(a.submitted_at || a.started_at || 0).getTime()),
+      });
+    });
+
+    return summaries.sort((a, b) => b.overallAverageScore - a.overallAverageScore);
   },
 
   // ==========================================

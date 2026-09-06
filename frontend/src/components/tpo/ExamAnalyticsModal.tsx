@@ -45,6 +45,12 @@ export default function ExamAnalyticsModal({
   });
 
   const totalSubmitted = attempts.length;
+  const uniqueCandidatesCount = attempts.reduce((set, a) => {
+    const k = (a.student_email || a.student?.email || a.student_id || '').trim().toLowerCase();
+    if (k) set.add(k);
+    return set;
+  }, new Set<string>()).size;
+
   const passedCount = attempts.filter(a => a.passed).length;
   const passRate = totalSubmitted > 0 ? Math.round((passedCount / totalSubmitted) * 100) : 0;
   const avgScore = totalSubmitted > 0
@@ -101,8 +107,13 @@ export default function ExamAnalyticsModal({
         {/* Quick Stats Bar */}
         <div className="grid grid-cols-4 gap-4 px-6 py-4 bg-gray-100/60 dark:bg-[#202225] border-b border-gray-200 dark:border-[#2b2d31]">
           <div className="p-3 bg-white dark:bg-[#151618] rounded-xl border border-gray-200 dark:border-[#2e3035]">
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Appeared</div>
-            <div className="text-xl font-black text-gray-900 dark:text-white mt-1">{totalSubmitted}</div>
+            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Candidates Appeared</div>
+            <div className="text-xl font-black text-gray-900 dark:text-white mt-1">
+              {uniqueCandidatesCount}
+              {totalSubmitted > uniqueCandidatesCount && (
+                <span className="text-xs font-normal text-gray-400 ml-1">({totalSubmitted} tests)</span>
+              )}
+            </div>
           </div>
           <div className="p-3 bg-white dark:bg-[#151618] rounded-xl border border-gray-200 dark:border-[#2e3035]">
             <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Pass Rate</div>
