@@ -397,6 +397,7 @@ BEGIN
     EXECUTE 'DROP POLICY IF EXISTS "Allow select" ON public.paper_tab_nodes;';
     EXECUTE 'DROP POLICY IF EXISTS "Allow public read access to paper_tab_nodes" ON public.paper_tab_nodes;';
     EXECUTE 'DROP POLICY IF EXISTS "Admin write paper nodes" ON public.paper_tab_nodes;';
+    EXECUTE 'DROP POLICY IF EXISTS "Secure select paper nodes" ON public.paper_tab_nodes;';
 
     EXECUTE 'CREATE POLICY "Admin write paper nodes" ON public.paper_tab_nodes FOR ALL USING (public.is_admin());';
     EXECUTE 'CREATE POLICY "Secure select paper nodes" ON public.paper_tab_nodes FOR SELECT USING (
