@@ -7,6 +7,8 @@ import {
   AlertCircle,
   Users,
   ShieldCheck,
+  Layers,
+  Plus,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +44,9 @@ export default function AddStudentModal({
   const [rollNumber, setRollNumber] = useState('');
   const [department, setDepartment] = useState('CSE');
   const [batchYear, setBatchYear] = useState<number>(currentYear);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('');
+  const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+  const [newBatchName, setNewBatchName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -51,6 +56,21 @@ export default function AddStudentModal({
     queryFn: () => tpoService.getTpoStats(effectiveCollegeId),
     enabled: isOpen && !!effectiveCollegeId,
   });
+
+  // Fetch available batches for this college
+  const { data: batches = [] } = useQuery({
+    queryKey: ['tpo-batches', effectiveCollegeId],
+    queryFn: () => tpoService.getCollegeBatches(effectiveCollegeId),
+    enabled: isOpen && !!effectiveCollegeId,
+  });
+
+  // Default to Top Batch or first batch if available
+  React.useEffect(() => {
+    if (!selectedBatchId && batches.length > 0 && !isCreatingBatch) {
+      const top = batches.find(b => b.name.toLowerCase().includes('top'));
+      setSelectedBatchId(top ? top.id : batches[0].id);
+    }
+  }, [batches, selectedBatchId, isCreatingBatch]);
 
   const maxLicenses = stats?.maxLicenses || 1500;
   const currentEnrolled = stats?.totalStudents || 0;
@@ -63,6 +83,11 @@ export default function AddStudentModal({
     e.preventDefault();
     if (!name.trim() || !email.trim()) {
       setErrorMessage('Student Full Name and Email Address are required.');
+      return;
+    }
+
+    if (isCreatingBatch && !newBatchName.trim()) {
+      setErrorMessage('Please provide a name for the new batch (e.g. Top Batch, Super 60).');
       return;
     }
 
@@ -83,6 +108,8 @@ export default function AddStudentModal({
         roll_number: rollNumber.trim() || undefined,
         department: department.trim(),
         batch_year: batchYear,
+        batch_id: !isCreatingBatch && selectedBatchId ? selectedBatchId : undefined,
+        batch_name: isCreatingBatch && newBatchName.trim() ? newBatchName.trim() : undefined,
       });
 
       if (!res.success) {
@@ -96,6 +123,8 @@ export default function AddStudentModal({
       setRollNumber('');
       setDepartment('CSE');
       setBatchYear(currentYear);
+      setNewBatchName('');
+      setIsCreatingBatch(false);
       onSuccess(addedName);
       onClose();
     } catch (err: any) {
@@ -237,6 +266,68 @@ export default function AddStudentModal({
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
+          </div>
+
+          {/* Institutional Batch Assignment */}
+          <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#FD4A32]" />
+                Cohort Batch Assignment *
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatingBatch(!isCreatingBatch);
+                  if (!isCreatingBatch) setNewBatchName('');
+                }}
+                className="text-[11px] font-bold text-[#FD4A32] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                {isCreatingBatch ? 'Choose Existing' : '+ Create New Batch'}
+              </button>
+            </div>
+
+            {isCreatingBatch ? (
+              <div className="space-y-1 mt-1">
+                <input
+                  type="text"
+                  required
+                  value={newBatchName}
+                  onChange={e => setNewBatchName(e.target.value)}
+                  placeholder="e.g. Top Batch, Super 60, Normal Batch"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#FD4A32] bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/30"
+                  autoFocus
+                />
+                <p className="text-[10px] text-slate-400">
+                  New named batch will be created and this student assigned into it.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1 mt-1">
+                <select
+                  value={selectedBatchId}
+                  onChange={e => {
+                    if (e.target.value === '__NEW__') {
+                      setIsCreatingBatch(true);
+                      setNewBatchName('');
+                    } else {
+                      setSelectedBatchId(e.target.value);
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-semibold"
+                >
+                  {batches.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.passout_year || currentYear})
+                    </option>
+                  ))}
+                  <option value="__NEW__">+ Create New Custom Batch...</option>
+                </select>
+                <p className="text-[10px] text-slate-400">
+                  Select which cohort (e.g. Top Batch vs Normal Batch) this student belongs to.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="pt-2 flex gap-3">

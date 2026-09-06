@@ -23,6 +23,7 @@ import {
   LayoutGrid,
   ChevronLeft,
   ChevronRight,
+  Layers,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -107,11 +108,84 @@ export default function MockExamTestPage() {
     staleTime: 60 * 1000,
   });
 
+  // Query candidate's student profile (department and cohort batch)
+  const { data: candidateStudentRecord } = useQuery({
+    queryKey: ['candidate-student-record', user?.email, exam?.college_id],
+    queryFn: async () => {
+      if (!user?.email || !exam?.college_id) return null;
+      const cleanEmail = user.email.trim().toLowerCase();
+
+      let department = '';
+      let batchName = '';
+
+      try {
+        const { data: cs } = await supabase
+          .from('college_students')
+          .select('id, college_id, batch_id, department, roll_number, email, name')
+          .eq('email', cleanEmail)
+          .eq('college_id', exam.college_id)
+          .maybeSingle();
+
+        if (cs) {
+          if (cs.department) department = cs.department;
+          if (cs.batch_id) {
+            const { data: b } = await supabase
+              .from('college_batches')
+              .select('name')
+              .eq('id', cs.batch_id)
+              .maybeSingle();
+            if (b?.name) {
+              batchName = b.name;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error fetching candidate student record from Supabase:', e);
+      }
+
+      // If not fully resolved, check college students list via service
+      if (!department || !batchName) {
+        try {
+          const students = await tpoService.getCollegeStudents(exam.college_id);
+          const found = students.find(s => s.email?.trim().toLowerCase() === cleanEmail);
+          if (found) {
+            if (!department) department = found.department || '';
+            if (!batchName) batchName = found.batch_name || '';
+          }
+        } catch {}
+      }
+
+      return { department, batch_name: batchName };
+    },
+    enabled: !!user?.email && !!exam?.college_id,
+    staleTime: 60 * 1000,
+  });
+
   const isCollegeTpo = isTpoAdmin && (user?.collegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
+  const isAdminOrTpo = isSuperAdmin || isCollegeTpo;
   const isEnrolledStudent = Boolean(
     exam?.college_id && (dbEnrollmentVerified || userCollegeId === exam.college_id)
   );
-  const isAuthorizedCandidate = !exam?.college_id || isSuperAdmin || isCollegeTpo || isEnrolledStudent;
+  const isAuthorizedCandidate = !exam?.college_id || isAdminOrTpo || isEnrolledStudent;
+
+  // Cohort Batch & Stream Eligibility
+  const isBatchEligible = useMemo(() => {
+    if (isAdminOrTpo) return true;
+    if (!exam?.target_batches || exam.target_batches.length === 0) return true;
+    if (exam.target_batches.some(b => b.toUpperCase() === 'ALL')) return true;
+    const studentBatch = candidateStudentRecord?.batch_name?.trim().toLowerCase();
+    if (!studentBatch) return false;
+    return exam.target_batches.some(b => b.trim().toLowerCase() === studentBatch);
+  }, [isAdminOrTpo, exam?.target_batches, candidateStudentRecord?.batch_name]);
+
+  const isDeptEligible = useMemo(() => {
+    if (isAdminOrTpo) return true;
+    if (!exam?.target_departments || exam.target_departments.length === 0) return true;
+    if (exam.target_departments.some(d => d.toUpperCase() === 'ALL')) return true;
+    const studentDept = candidateStudentRecord?.department?.trim().toUpperCase();
+    if (!studentDept) return false;
+    return exam.target_departments.some(d => d.trim().toUpperCase() === studentDept);
+  }, [isAdminOrTpo, exam?.target_departments, candidateStudentRecord?.department]);
 
   // Fetch Existing Candidate Attempt
   const { data: existingAttempt } = useQuery<StudentExamAttempt | null>({
@@ -629,6 +703,122 @@ export default function MockExamTestPage() {
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
               >
                 Contact Support
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 🛡️ Cohort Batch Exclusivity Guard
+    if (!isAdminOrTpo && !isBatchEligible && exam) {
+      const allowedBatches = exam.target_batches?.join(', ') || 'Restricted Batches';
+      const studentBatch = candidateStudentRecord?.batch_name || 'Unassigned';
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0f1013] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-lg bg-white dark:bg-[#18191c] rounded-3xl p-6 sm:p-8 border border-purple-200 dark:border-purple-900/50 shadow-xl text-center space-y-5">
+            <div className="w-16 h-16 rounded-3xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+              <Layers className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-[11px] font-bold uppercase tracking-wider">
+                <Layers className="w-3.5 h-3.5" />
+                Cohort Exclusive Assessment
+              </div>
+              <h2 className="font-display text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                Reserved for {allowedBatches}
+              </h2>
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-md mx-auto">
+                This mock placement assessment (<strong>{exam.title}</strong>) is scheduled exclusively for candidates assigned to the <strong>{allowedBatches}</strong> cohort.
+              </p>
+              <div className="p-3 bg-gray-50 dark:bg-[#202226] rounded-xl text-[11px] text-gray-500 dark:text-gray-400 text-left space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Your Account:</span>
+                  <strong className="text-gray-800 dark:text-gray-200">{user?.email}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Your Enrolled Batch:</span>
+                  <strong className="text-purple-600 dark:text-purple-400">{studentBatch}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Allowed Cohorts:</span>
+                  <strong className="text-gray-800 dark:text-gray-200">{allowedBatches}</strong>
+                </div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-200 dark:border-gray-800">
+                  If you believe you should be in this batch, please contact your College TPO to update your cohort assignment.
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                Return to Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/contact')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Contact Placement Cell
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 🛡️ Academic Stream / Branch Guard
+    if (!isAdminOrTpo && !isDeptEligible && exam) {
+      const allowedDepts = exam.target_departments?.join(', ') || 'Specific Branches';
+      const studentDept = candidateStudentRecord?.department || 'Unassigned';
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0f1013] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-lg bg-white dark:bg-[#18191c] rounded-3xl p-6 sm:p-8 border border-amber-200 dark:border-amber-900/50 shadow-xl text-center space-y-5">
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+                <BookOpen className="w-3.5 h-3.5" />
+                Stream / Branch Restricted
+              </div>
+              <h2 className="font-display text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                Restricted to {allowedDepts}
+              </h2>
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-md mx-auto">
+                This mock assessment (<strong>{exam.title}</strong>) is targeted exclusively for candidates enrolled in the <strong>{allowedDepts}</strong> stream(s).
+              </p>
+              <div className="p-3 bg-gray-50 dark:bg-[#202226] rounded-xl text-[11px] text-gray-500 dark:text-gray-400 text-left space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Your Account:</span>
+                  <strong className="text-gray-800 dark:text-gray-200">{user?.email}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Your Department:</span>
+                  <strong className="text-amber-600 dark:text-amber-400">{studentDept}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Eligible Streams:</span>
+                  <strong className="text-gray-800 dark:text-gray-200">{allowedDepts}</strong>
+                </div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-200 dark:border-gray-800">
+                  If your registered branch is incorrect, please request your Placement Cell to update your profile.
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                Return to Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/contact')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Contact Placement Cell
               </button>
             </div>
           </div>

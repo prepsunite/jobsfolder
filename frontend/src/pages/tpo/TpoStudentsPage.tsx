@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   AlertCircle,
   Clock,
+  Layers,
 } from 'lucide-react';
 import type { CollegeStudent } from '@/types/tpo';
 import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
@@ -25,6 +26,7 @@ export default function TpoStudentsPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [batchFilter, setBatchFilter] = useState('ALL');
   const [batchYearFilter, setBatchYearFilter] = useState<number | undefined>(undefined);
   const currentYear = new Date().getFullYear();
   const batchYears = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
@@ -32,17 +34,25 @@ export default function TpoStudentsPage() {
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
+  // Fetch Available Batches
+  const { data: batches = [] } = useQuery({
+    queryKey: ['tpo-batches', collegeId],
+    queryFn: () => tpoService.getCollegeBatches(collegeId),
+    enabled: !!collegeId,
+  });
+
   // Fetch Students
   const {
     data: students = [],
     isLoading,
     refetch,
   } = useQuery<CollegeStudent[]>({
-    queryKey: ['tpo-students', collegeId, searchTerm, deptFilter, batchYearFilter],
+    queryKey: ['tpo-students', collegeId, searchTerm, deptFilter, batchFilter, batchYearFilter],
     queryFn: () =>
       tpoService.getCollegeStudents(collegeId, {
         search: searchTerm,
         department: deptFilter,
+        batchName: batchFilter,
         batchYear: batchYearFilter,
       }),
     enabled: !!collegeId,
@@ -52,11 +62,11 @@ export default function TpoStudentsPage() {
   const handleExportRoster = () => {
     if (students.length === 0) return;
 
-    const headers = 'Roll Number,Name,Email,Department,Batch Year,Status\n';
+    const headers = 'Roll Number,Name,Email,Department,Passout Year,Cohort Batch,Status\n';
     const rows = students
       .map(
         s =>
-          `"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || 'GENERAL'}",${s.batch_year || 2026},Active`
+          `"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || 'GENERAL'}",${s.batch_year || 2026},"${s.batch_name || 'Normal Batch'}",Active`
       )
       .join('\n');
 
@@ -64,7 +74,7 @@ export default function TpoStudentsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${currentCollege.code}_Student_Roster_${deptFilter}_${batchYearFilter || 'All'}.csv`;
+    link.download = `${currentCollege.code}_Student_Roster_${batchFilter}_${deptFilter}_${batchYearFilter || 'All'}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -218,33 +228,23 @@ export default function TpoStudentsPage() {
           />
         </div>
 
-        {/* Filters: Department & Batch Year */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          {/* Batch Year */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
-            <button
-              onClick={() => setBatchYearFilter(undefined)}
-              className={`px-3 py-1 rounded-lg transition-all ${
-                batchYearFilter === undefined
-                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
+        {/* Filters: Cohort Batch, Department & Batch Year */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Cohort Batch Filter */}
+          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Layers className="w-3.5 h-3.5 text-[#FD4A32]" />
+            <select
+              value={batchFilter}
+              onChange={e => setBatchFilter(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
-              All Batches
-            </button>
-            {batchYears.map(yr => (
-              <button
-                key={yr}
-                onClick={() => setBatchYearFilter(yr)}
-                className={`px-3 py-1 rounded-lg transition-all ${
-                  batchYearFilter === yr
-                    ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                {yr}
-              </button>
-            ))}
+              <option value="ALL">All Batches (Cohorts)</option>
+              {batches.map(b => (
+                <option key={b.id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Department Select */}
@@ -261,6 +261,33 @@ export default function TpoStudentsPage() {
             <option value="MECH">MECH</option>
             <option value="CIVIL">CIVIL</option>
           </select>
+
+          {/* Graduation Passout Year */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+            <button
+              onClick={() => setBatchYearFilter(undefined)}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                batchYearFilter === undefined
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              All Years
+            </button>
+            {batchYears.map(yr => (
+              <button
+                key={yr}
+                onClick={() => setBatchYearFilter(yr)}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  batchYearFilter === yr
+                    ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {yr}
+              </button>
+            ))}
+          </div>
         </div>
 
       </div>
@@ -274,6 +301,7 @@ export default function TpoStudentsPage() {
               <th className="p-4">Student Name</th>
               <th className="p-4">Email Address</th>
               <th className="p-4">Department</th>
+              <th className="p-4">Cohort Batch</th>
               <th className="p-4">Passout Batch</th>
               <th className="p-4">Pro Entitlement Status</th>
               <th className="p-4 text-right">Action</th>
@@ -282,13 +310,13 @@ export default function TpoStudentsPage() {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="p-12 text-center text-slate-400">
+                <td colSpan={8} className="p-12 text-center text-slate-400">
                   Loading student records...
                 </td>
               </tr>
             ) : students.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-12 text-center space-y-2">
+                <td colSpan={8} className="p-12 text-center space-y-2">
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
                     <Users className="w-5 h-5" />
                   </div>
@@ -312,6 +340,18 @@ export default function TpoStudentsPage() {
                   </td>
                   <td className="p-4 uppercase font-black text-[#FD4A32]">
                     {s.department || 'GENERAL'}
+                  </td>
+                  <td className="p-4">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold border shadow-2xs ${
+                        (s.batch_name || '').toLowerCase().includes('top')
+                          ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      <Layers className="w-3 h-3 text-[#FD4A32]" />
+                      {s.batch_name || 'Normal Batch'}
+                    </span>
                   </td>
                   <td className="p-4 text-slate-600 dark:text-slate-400 font-semibold">
                     {s.batch_year || 2026}

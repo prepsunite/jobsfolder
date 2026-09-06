@@ -11,12 +11,16 @@ import {
   Settings2,
   Edit3,
   Search,
+  Layers,
+  Calendar,
+  ArrowLeft,
+  Check,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import type { MockExamTemplate } from '@/types/tpo';
+import type { MockExamTemplate, CollegeBatch } from '@/types/tpo';
 
 interface CreateMockExamModalProps {
   isOpen: boolean;
@@ -44,6 +48,8 @@ const PRESET_COMPANIES = [
   'General CRT Aptitude',
 ];
 
+const ALL_DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AI/ML', 'DATA SCIENCE'];
+
 export default function CreateMockExamModal({
   isOpen,
   onClose,
@@ -56,6 +62,26 @@ export default function CreateMockExamModal({
   const [modalMode, setModalMode] = useState<'TEMPLATES' | 'CUSTOM' | 'ADMIN_EDIT_TEMPLATE'>('TEMPLATES');
   const [templateSearch, setTemplateSearch] = useState('');
   const [launchingTemplateId, setLaunchingTemplateId] = useState<string | null>(null);
+
+  // College Batches Query
+  const { data: collegeBatches = [] } = useQuery<CollegeBatch[]>({
+    queryKey: ['tpo-batches', collegeId],
+    queryFn: () => tpoService.getCollegeBatches(collegeId),
+    enabled: isOpen && !!collegeId,
+  });
+
+  // 1-Click Targeting & Audience Confirmation State
+  const [targetingTemplate, setTargetingTemplate] = useState<MockExamTemplate | null>(null);
+  const [targetDriveTitle, setTargetDriveTitle] = useState('');
+  const [targetBatches, setTargetBatches] = useState<string[]>(['ALL']);
+  const [targetDepartments, setTargetDepartments] = useState<string[]>(['ALL']);
+  const [targetGradYear, setTargetGradYear] = useState<number>(new Date().getFullYear());
+  const [targetStartTime, setTargetStartTime] = useState(new Date().toISOString().slice(0, 16));
+  const [targetEndTime, setTargetEndTime] = useState(
+    new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+  );
+  const [inlineNewBatchName, setInlineNewBatchName] = useState('');
+  const [isAddingInlineBatch, setIsAddingInlineBatch] = useState(false);
 
   // Template query (built-ins + cloud saved patterns)
   const {
@@ -142,22 +168,89 @@ export default function CreateMockExamModal({
 
   if (!isOpen) return null;
 
-  // ⚡ 1-Click Launch Handler
-  const handle1ClickLaunch = async (tmpl: MockExamTemplate) => {
-    if (!collegeId) {
-      alert('Missing college identifier.');
+  // ⚡ 1-Click Launch: Opens Target Audience Selector Dialog
+  const handleOpen1ClickTargeting = (tmpl: MockExamTemplate) => {
+    const now = new Date();
+    setTargetingTemplate(tmpl);
+    setTargetDriveTitle(`${tmpl.name} - Drive ${now.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`);
+    setTargetBatches(['ALL']);
+    setTargetDepartments(['ALL']);
+    setTargetGradYear(now.getFullYear());
+    setTargetStartTime(now.toISOString().slice(0, 16));
+    setTargetEndTime(new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+    setIsAddingInlineBatch(false);
+    setInlineNewBatchName('');
+  };
+
+  const handleToggleBatch = (batchName: string) => {
+    if (batchName === 'ALL') {
+      setTargetBatches(['ALL']);
       return;
     }
+    setTargetBatches(prev => {
+      const withoutAll = prev.filter(b => b !== 'ALL');
+      if (withoutAll.includes(batchName)) {
+        const next = withoutAll.filter(b => b !== batchName);
+        return next.length === 0 ? ['ALL'] : next;
+      } else {
+        return [...withoutAll, batchName];
+      }
+    });
+  };
 
-    setLaunchingTemplateId(tmpl.id);
+  const handleToggleDept = (deptName: string) => {
+    if (deptName === 'ALL') {
+      setTargetDepartments(['ALL']);
+      return;
+    }
+    setTargetDepartments(prev => {
+      const withoutAll = prev.filter(d => d !== 'ALL');
+      if (withoutAll.includes(deptName)) {
+        const next = withoutAll.filter(d => d !== deptName);
+        return next.length === 0 ? ['ALL'] : next;
+      } else {
+        return [...withoutAll, deptName];
+      }
+    });
+  };
+
+  const handleCreateInlineBatch = async () => {
+    if (!inlineNewBatchName.trim() || !collegeId) return;
     try {
-      await tpoService.createExamFromTemplate(collegeId, tmpl);
+      const created = await tpoService.createCollegeBatch(collegeId, {
+        name: inlineNewBatchName.trim(),
+        passout_year: targetGradYear,
+      });
+      setTargetBatches(prev => {
+        const withoutAll = prev.filter(b => b !== 'ALL');
+        return withoutAll.includes(created.name) ? withoutAll : [...withoutAll, created.name];
+      });
+      setInlineNewBatchName('');
+      setIsAddingInlineBatch(false);
+    } catch (err: any) {
+      alert(`Could not create batch: ${err.message}`);
+    }
+  };
+
+  const handleDeployTargetedExam = async () => {
+    if (!collegeId || !targetingTemplate) return;
+    setIsSubmitting(true);
+    try {
+      await tpoService.createExamFromTemplate(collegeId, targetingTemplate, {
+        title: targetDriveTitle.trim() || targetingTemplate.name,
+        target_batches: targetBatches.includes('ALL') ? [] : targetBatches,
+        target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
+        target_batch_year: targetGradYear,
+        start_time: new Date(targetStartTime).toISOString(),
+        end_time: new Date(targetEndTime).toISOString(),
+      });
+      setTargetingTemplate(null);
       onSuccess();
       onClose();
     } catch (err: any) {
       alert(`Failed to launch exam: ${err.message || 'Unknown error'}`);
     } finally {
-      setLaunchingTemplateId(null);
+      setIsSubmitting(false);
     }
   };
 
@@ -332,7 +425,8 @@ export default function CreateMockExamModal({
           shuffle_questions: shuffleQuestions,
           shuffle_options: shuffleOptions,
           show_results_immediately: showResultsImmediately,
-          target_departments: targetDepartment === 'ALL' ? [] : [targetDepartment],
+          target_batches: targetBatches.includes('ALL') ? [] : targetBatches,
+          target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
           target_batch_year: targetBatchYear,
         },
         sections
@@ -439,168 +533,409 @@ export default function CreateMockExamModal({
           {/* ========================================================= */}
           {modalMode === 'TEMPLATES' && (
             <div className="space-y-4">
-              {/* Search & Quality Banner */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 justify-between">
-                <div className="relative w-full sm:w-72">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search blueprints (TCS, Accenture...)"
-                    value={templateSearch}
-                    onChange={e => setTemplateSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/30"
-                  />
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 self-start sm:self-auto">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  <span>Pre-configured with company patterns & negative marking rules</span>
-                </div>
-              </div>
+              {targetingTemplate ? (
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  {/* Top Bar with Back Button */}
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#2e3035]">
+                    <button
+                      type="button"
+                      onClick={() => setTargetingTemplate(null)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4" /> Back to Blueprints
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 dark:bg-orange-950/50 text-[#FD4A32] dark:text-orange-400">
+                        {targetingTemplate.target_company}
+                      </span>
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                        {targetingTemplate.duration_minutes}m • {targetingTemplate.sections.reduce((a, s) => a + (Number(s.question_count) || 0), 0)} Questions
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Blueprints Grid */}
-              {templatesLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                  <p className="text-xs font-semibold">Loading Exam Blueprints...</p>
-                </div>
-              ) : filteredTemplates.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 text-xs">
-                  No exam blueprints found matching "{templateSearch}".
+                  <div className="p-4 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/30 flex items-start gap-3">
+                    <Zap className="w-5 h-5 text-[#FD4A32] shrink-0 mt-0.5" />
+                    <div className="text-xs">
+                      <h4 className="font-bold text-gray-900 dark:text-white">Target Audience & Schedule Configuration</h4>
+                      <p className="text-gray-500 dark:text-gray-400 mt-0.5">
+                        Choose which student cohorts (e.g. Top Batch, Normal Batch) and academic streams are eligible to take this <strong>{targetingTemplate.name}</strong> assessment.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Drive Title */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                      Placement Drive Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={targetDriveTitle}
+                      onChange={e => setTargetDriveTitle(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/30"
+                    />
+                  </div>
+
+                  {/* Target Batches / Cohorts */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                        Target Batches / Cohorts
+                      </label>
+                      <span className="text-[11px] text-gray-500">
+                        {targetBatches.includes('ALL') ? 'Open to All Batches' : `${targetBatches.length} batch(es) selected`}
+                      </span>
+                    </div>
+                    
+                    {/* Pills */}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBatch('ALL')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          targetBatches.includes('ALL')
+                            ? 'bg-[#FD4A32] text-white shadow-sm shadow-[#FD4A32]/25'
+                            : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                        }`}
+                      >
+                        All Batches (Campus-Wide)
+                      </button>
+
+                      {/* Existing College Batches */}
+                      {collegeBatches.map(b => {
+                        const isSelected = targetBatches.includes(b.name);
+                        return (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => handleToggleBatch(b.name)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/25'
+                                : 'bg-gray-100 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+                            }`}
+                          >
+                            <Layers className="w-3 h-3" />
+                            {b.name}
+                          </button>
+                        );
+                      })}
+
+                      {/* Inline Create Batch */}
+                      {isAddingInlineBatch ? (
+                        <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-[#1a1b1e]">
+                          <input
+                            type="text"
+                            placeholder="e.g. Top Batch"
+                            value={inlineNewBatchName}
+                            onChange={e => setInlineNewBatchName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleCreateInlineBatch();
+                              }
+                            }}
+                            className="px-2 py-0.5 text-xs bg-transparent text-gray-900 dark:text-white focus:outline-none w-28 font-medium"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCreateInlineBatch}
+                            className="p-1 rounded-lg bg-purple-600 text-white hover:bg-purple-700 text-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingInlineBatch(false);
+                              setInlineNewBatchName('');
+                            }}
+                            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 text-xs"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingInlineBatch(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                        >
+                          <Plus className="w-3 h-3" /> New Batch
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Target Streams / Departments */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                        Target Streams / Departments
+                      </label>
+                      <span className="text-[11px] text-gray-500">
+                        {targetDepartments.includes('ALL') ? 'Open to All Streams' : `${targetDepartments.length} stream(s) selected`}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDept('ALL')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          targetDepartments.includes('ALL')
+                            ? 'bg-[#FD4A32] text-white shadow-sm shadow-[#FD4A32]/25'
+                            : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                        }`}
+                      >
+                        All Streams
+                      </button>
+                      {ALL_DEPARTMENTS.map(d => {
+                        const isSelected = targetDepartments.includes(d);
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => handleToggleDept(d)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-[#FD4A32] text-white shadow-sm shadow-[#FD4A32]/25'
+                                : 'bg-gray-100 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Passout Year & Schedule Window */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Passout Year
+                      </label>
+                      <select
+                        value={targetGradYear}
+                        onChange={e => setTargetGradYear(parseInt(e.target.value) || 2026)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold"
+                      >
+                        {[2024, 2025, 2026, 2027, 2028, 2029].map(y => (
+                          <option key={y} value={y}>{y} Batch</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Start Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={targetStartTime}
+                        onChange={e => setTargetStartTime(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        End Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={targetEndTime}
+                        onChange={e => setTargetEndTime(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Footer Buttons */}
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-[#2e3035]">
+                    <button
+                      type="button"
+                      onClick={() => setTargetingTemplate(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={handleDeployTargetedExam}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-[#FD4A32]/25"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Deploying Exam...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-4 h-4" /> Deploy Assessment to Selected Audience
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredTemplates.map(tmpl => {
-                    const totalQs = tmpl.sections.reduce(
-                      (a, s) => a + (Number(s.question_count) || 0),
-                      0
-                    );
-                    const isLaunching = launchingTemplateId === tmpl.id;
+                <>
+                  {/* Search & Quality Banner */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 justify-between">
+                    <div className="relative w-full sm:w-72">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search blueprints (TCS, Accenture...)"
+                        value={templateSearch}
+                        onChange={e => setTemplateSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/30"
+                      />
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 self-start sm:self-auto">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      <span>Pre-configured with company patterns & negative marking rules</span>
+                    </div>
+                  </div>
 
-                    return (
-                      <div
-                        key={tmpl.id}
-                        className="p-4 rounded-2xl border border-gray-200 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#202225]/60 hover:border-orange-400 dark:hover:border-orange-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md"
-                      >
-                        <div>
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 dark:bg-orange-950/50 text-[#FD4A32] dark:text-orange-400">
-                                {tmpl.target_company}
-                              </span>
-                              {tmpl.badge && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200/70 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                                  {tmpl.badge}
-                                </span>
-                              )}
-                            </div>
-                            {isAdmin && (
-                              <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditPattern(tmpl)}
-                                  className="p-1 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                                  title="Edit Pattern (Admin)"
-                                >
-                                  <Edit3 className="w-3.5 h-3.5" />
-                                </button>
-                                {!tmpl.is_default && (
-                                  <button
-                                    type="button"
-                                    onClick={e => handleDeletePattern(tmpl.id, e)}
-                                    className="p-1 text-gray-400 hover:text-rose-600 transition-colors"
-                                    title="Delete Custom Pattern"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                  {/* Blueprints Grid */}
+                  {templatesLoading ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                      <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                      <p className="text-xs font-semibold">Loading Exam Blueprints...</p>
+                    </div>
+                  ) : filteredTemplates.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500 text-xs">
+                      No exam blueprints found matching "{templateSearch}".
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredTemplates.map(tmpl => {
+                        const totalQs = tmpl.sections.reduce(
+                          (a, s) => a + (Number(s.question_count) || 0),
+                          0
+                        );
+
+                        return (
+                          <div
+                            key={tmpl.id}
+                            className="p-4 rounded-2xl border border-gray-200 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#202225]/60 hover:border-orange-400 dark:hover:border-orange-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md"
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 dark:bg-orange-950/50 text-[#FD4A32] dark:text-orange-400">
+                                    {tmpl.target_company}
+                                  </span>
+                                  {tmpl.badge && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200/70 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                      {tmpl.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                {isAdmin && (
+                                  <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEditPattern(tmpl)}
+                                      className="p-1 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                      title="Edit Pattern (Admin)"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    {!tmpl.is_default && (
+                                      <button
+                                        type="button"
+                                        onClick={e => handleDeletePattern(tmpl.id, e)}
+                                        className="p-1 text-gray-400 hover:text-rose-600 transition-colors"
+                                        title="Delete Custom Pattern"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
 
-                          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-                            {tmpl.name}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
-                            {tmpl.description}
-                          </p>
+                              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+                                {tmpl.name}
+                              </h3>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
+                                {tmpl.description}
+                              </p>
 
-                          {/* Stat Badges */}
-                          <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-white dark:bg-[#151618] border border-gray-100 dark:border-[#2b2d31] text-[11px] mb-3">
-                            <div>
-                              <span className="text-gray-400 block text-[9px] uppercase font-bold">
-                                Duration
-                              </span>
-                              <span className="font-bold text-gray-800 dark:text-gray-200">
-                                {tmpl.duration_minutes} Mins
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400 block text-[9px] uppercase font-bold">
-                                Questions
-                              </span>
-                              <span className="font-bold text-gray-800 dark:text-gray-200">
-                                {totalQs} Qs
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400 block text-[9px] uppercase font-bold">
-                                Pass Cutoff
-                              </span>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                {tmpl.passing_percentage}%
-                              </span>
-                            </div>
-                          </div>
+                              {/* Stat Badges */}
+                              <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-white dark:bg-[#151618] border border-gray-100 dark:border-[#2b2d31] text-[11px] mb-3">
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase font-bold">
+                                    Duration
+                                  </span>
+                                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                                    {tmpl.duration_minutes} Mins
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase font-bold">
+                                    Questions
+                                  </span>
+                                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                                    {totalQs} Qs
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 block text-[9px] uppercase font-bold">
+                                    Pass Cutoff
+                                  </span>
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                    {tmpl.passing_percentage}%
+                                  </span>
+                                </div>
+                              </div>
 
-                          {/* Sections List */}
-                          <div className="space-y-1 mb-4">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                              Sections ({tmpl.sections.length}):
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {tmpl.sections.map((s, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-200/60 dark:bg-[#2b2d31] text-[10px] font-semibold text-gray-700 dark:text-gray-300"
-                                >
-                                  {s.name}{' '}
-                                  <span className="opacity-60">({s.question_count}Q)</span>
+                              {/* Sections List */}
+                              <div className="space-y-1 mb-4">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                                  Sections ({tmpl.sections.length}):
                                 </span>
-                              ))}
+                                <div className="flex flex-wrap gap-1.5">
+                                  {tmpl.sections.map((s, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-200/60 dark:bg-[#2b2d31] text-[10px] font-semibold text-gray-700 dark:text-gray-300"
+                                    >
+                                      {s.name}{' '}
+                                      <span className="opacity-60">({s.question_count}Q)</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-[#2e3035]">
+                              <button
+                                type="button"
+                                onClick={() => handleCustomizeTemplate(tmpl)}
+                                className="px-3 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2b2d31] transition-colors"
+                              >
+                                Customize
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpen1ClickTargeting(tmpl)}
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold transition-all shadow-sm shadow-[#FD4A32]/25"
+                              >
+                                <Zap className="w-3.5 h-3.5" /> 🚀 1-Click Add Exam
+                              </button>
                             </div>
                           </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-[#2e3035]">
-                          <button
-                            type="button"
-                            onClick={() => handleCustomizeTemplate(tmpl)}
-                            className="px-3 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2b2d31] transition-colors"
-                          >
-                            Customize
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isLaunching}
-                            onClick={() => handle1ClickLaunch(tmpl)}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm shadow-[#FD4A32]/25"
-                          >
-                            {isLaunching ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Launching...
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="w-3.5 h-3.5" /> 🚀 1-Click Add Exam
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -982,37 +1317,147 @@ export default function CreateMockExamModal({
 
                     <div>
                       <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                        Target Department
-                      </label>
-                      <select
-                        value={targetDepartment}
-                        onChange={e => setTargetDepartment(e.target.value)}
-                        className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold"
-                      >
-                        <option value="ALL">All Departments (Campus-Wide)</option>
-                        <option value="CSE">CSE</option>
-                        <option value="IT">IT</option>
-                        <option value="ECE">ECE</option>
-                        <option value="EEE">EEE</option>
-                        <option value="MECH">MECH</option>
-                        <option value="CIVIL">CIVIL</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                        Target Batch Passout Year
+                        Passout Year
                       </label>
                       <select
                         value={targetBatchYear}
-                        onChange={e => setTargetBatchYear(parseInt(e.target.value))}
+                        onChange={e => setTargetBatchYear(parseInt(e.target.value) || 2026)}
                         className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-[#383a40] bg-white dark:bg-[#202225] text-xs font-semibold"
                       >
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                        <option value="2028">2028</option>
+                        {[2024, 2025, 2026, 2027, 2028, 2029].map(y => (
+                          <option key={y} value={y}>{y} Batch</option>
+                        ))}
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Custom Wizard Target Batches */}
+                  <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-[#2e3035]">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                        Target Batches / Cohorts
+                      </label>
+                      <span className="text-[11px] text-gray-500">
+                        {targetBatches.includes('ALL') ? 'Open to All Batches' : `${targetBatches.length} batch(es) selected`}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBatch('ALL')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          targetBatches.includes('ALL')
+                            ? 'bg-[#FD4A32] text-white shadow-sm shadow-[#FD4A32]/25'
+                            : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                        }`}
+                      >
+                        All Batches (Campus-Wide)
+                      </button>
+
+                      {collegeBatches.map(b => {
+                        const isSelected = targetBatches.includes(b.name);
+                        return (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => handleToggleBatch(b.name)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/25'
+                                : 'bg-gray-100 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+                            }`}
+                          >
+                            <Layers className="w-3 h-3" />
+                            {b.name}
+                          </button>
+                        );
+                      })}
+
+                      {isAddingInlineBatch ? (
+                        <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-[#1a1b1e]">
+                          <input
+                            type="text"
+                            placeholder="e.g. Top Batch"
+                            value={inlineNewBatchName}
+                            onChange={e => setInlineNewBatchName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleCreateInlineBatch();
+                              }
+                            }}
+                            className="px-2 py-0.5 text-xs bg-transparent text-gray-900 dark:text-white focus:outline-none w-28 font-medium"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCreateInlineBatch}
+                            className="p-1 rounded-lg bg-purple-600 text-white hover:bg-purple-700 text-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingInlineBatch(false);
+                              setInlineNewBatchName('');
+                            }}
+                            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 text-xs"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingInlineBatch(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                        >
+                          <Plus className="w-3 h-3" /> New Batch
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Custom Wizard Target Streams */}
+                  <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-[#2e3035]">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                        Target Streams / Departments
+                      </label>
+                      <span className="text-[11px] text-gray-500">
+                        {targetDepartments.includes('ALL') ? 'Open to All Streams' : `${targetDepartments.length} stream(s) selected`}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDept('ALL')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          targetDepartments.includes('ALL')
+                            ? 'bg-[#FD4A32] text-white shadow-sm shadow-[#FD4A32]/25'
+                            : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                        }`}
+                      >
+                        All Streams
+                      </button>
+                      {ALL_DEPARTMENTS.map(d => {
+                        const isSelected = targetDepartments.includes(d);
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => handleToggleDept(d)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-[#FD4A32] text-white shadow-sm shadow-[#FD4A32]/25'
+                                : 'bg-gray-100 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

@@ -11,6 +11,7 @@ import {
   Users,
   ShieldAlert,
   GraduationCap,
+  Layers,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import type { BulkStudentRow } from '@/types/tpo';
@@ -43,6 +44,8 @@ export default function BulkStudentImportModal({
   const [parsedRows, setParsedRows] = useState<BulkStudentRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('AUTO');
+  const [customBatchName, setCustomBatchName] = useState<string>('');
   const [importResult, setImportResult] = useState<{
     importedCount: number;
     updatedCount: number;
@@ -57,6 +60,13 @@ export default function BulkStudentImportModal({
     enabled: isOpen && !!effectiveCollegeId,
   });
 
+  // Fetch college batches
+  const { data: batches = [] } = useQuery({
+    queryKey: ['tpo-batches', effectiveCollegeId],
+    queryFn: () => tpoService.getCollegeBatches(effectiveCollegeId),
+    enabled: isOpen && !!effectiveCollegeId,
+  });
+
   const maxLicenses = stats?.maxLicenses || 1500;
   const currentEnrolled = stats?.totalStudents || 0;
   const remainingSeats = Math.max(0, maxLicenses - currentEnrolled);
@@ -66,11 +76,11 @@ export default function BulkStudentImportModal({
   // 1. Download CSV Sample Template
   const handleDownloadTemplate = () => {
     const csvContent =
-      'roll_number,name,email,department,batch_year\n' +
-      '22B91A0501,Rahul Sharma,rahul.sharma@example.com,CSE,2026\n' +
-      '22B91A0502,Sneha Reddy,sneha.reddy@example.com,CSE,2026\n' +
-      '22B91A0401,Vikram Varma,vikram.varma@example.com,ECE,2026\n' +
-      '22B91A1201,Priya Patel,priya.patel@example.com,IT,2026\n';
+      'roll_number,name,email,department,batch_year,batch_name\n' +
+      '22B91A0501,Rahul Sharma,rahul.sharma@example.com,CSE,2026,Top Batch\n' +
+      '22B91A0502,Sneha Reddy,sneha.reddy@example.com,CSE,2026,Top Batch\n' +
+      '22B91A0401,Vikram Varma,vikram.varma@example.com,ECE,2026,Normal Batch\n' +
+      '22B91A1201,Priya Patel,priya.patel@example.com,IT,2026,Normal Batch\n';
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -107,7 +117,8 @@ export default function BulkStudentImportModal({
       const nameIdx = headers.findIndex(h => h.includes('name'));
       const emailIdx = headers.findIndex(h => h.includes('email'));
       const deptIdx = headers.findIndex(h => h.includes('dept') || h.includes('branch'));
-      const yearIdx = headers.findIndex(h => h.includes('year') || h.includes('batch'));
+      const yearIdx = headers.findIndex(h => h.includes('year') || (h.includes('batch') && !h.includes('name')));
+      const batchIdx = headers.findIndex(h => h.includes('batch_name') || h === 'batch' || h.includes('cohort') || h.includes('group'));
 
       if (emailIdx === -1) {
         alert('CSV file must include an "email" column.');
@@ -129,6 +140,7 @@ export default function BulkStudentImportModal({
           email,
           department: deptIdx !== -1 ? cols[deptIdx]?.toUpperCase() || 'CSE' : 'CSE',
           batch_year: yearIdx !== -1 ? parseInt(cols[yearIdx]) || 2026 : 2026,
+          batch_name: batchIdx !== -1 && cols[batchIdx] ? cols[batchIdx].trim() : undefined,
           isValid,
           error: !isValid ? 'Invalid email format' : undefined,
         });
@@ -145,10 +157,28 @@ export default function BulkStudentImportModal({
     const validRows = parsedRows.filter(r => r.isValid);
     if (validRows.length === 0) return;
 
+    if (selectedBatchId === '__NEW__' && !customBatchName.trim()) {
+      setImportError('Please enter a name for the new batch before importing.');
+      return;
+    }
+
     setIsProcessing(true);
     setImportError(null);
     try {
-      const res = await tpoService.bulkImportStudents(effectiveCollegeId, validRows);
+      const defaultBatchName =
+        selectedBatchId === '__NEW__'
+          ? customBatchName.trim()
+          : selectedBatchId !== 'AUTO'
+          ? batches.find(b => b.id === selectedBatchId)?.name
+          : undefined;
+
+      const defaultBatchId =
+        selectedBatchId !== 'AUTO' && selectedBatchId !== '__NEW__' ? selectedBatchId : undefined;
+
+      const res = await tpoService.bulkImportStudents(effectiveCollegeId, validRows, {
+        defaultBatchName,
+        defaultBatchId,
+      });
       setImportResult(res);
       onSuccess();
     } catch (err: any) {
@@ -248,7 +278,7 @@ export default function BulkStudentImportModal({
                 Step 1: Download Standard CSV Template
               </h4>
               <p className="text-xs text-gray-600 dark:text-gray-300">
-                Includes Roll No, Full Name, Email, Department (CSE/ECE/IT), and Passout Year.
+                Includes Roll No, Full Name, Email, Department (CSE/ECE/IT), Passout Year, and Batch Name.
               </p>
             </div>
             <button
@@ -258,6 +288,49 @@ export default function BulkStudentImportModal({
               <Download className="w-4 h-4 text-[#FD4A32]" />
               Download Template
             </button>
+          </div>
+
+          {/* Step 2: Cohort Batch Assignment */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#FD4A32]" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                  Step 2: Assign Cohort Batch for this Roster
+                </h4>
+              </div>
+              <span className="text-[11px] text-slate-400">
+                Determines student batch classification
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <select
+                value={selectedBatchId}
+                onChange={e => setSelectedBatchId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-xs font-bold text-slate-800 dark:text-slate-200"
+              >
+                <option value="AUTO">Auto-detect from CSV (batch_name column)</option>
+                {batches.map(b => (
+                  <option key={b.id} value={b.id}>
+                    Assign All to "{b.name}"
+                  </option>
+                ))}
+                <option value="__NEW__">+ Create &amp; Assign to New Batch...</option>
+              </select>
+
+              {selectedBatchId === '__NEW__' && (
+                <input
+                  type="text"
+                  required
+                  value={customBatchName}
+                  onChange={e => setCustomBatchName(e.target.value)}
+                  placeholder="e.g. Top Batch, Super 60, Normal Batch"
+                  className="w-full px-3 py-2 rounded-xl border border-[#FD4A32] bg-white dark:bg-[#151618] text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/30"
+                  autoFocus
+                />
+              )}
+            </div>
           </div>
 
           {/* Upload Area */}

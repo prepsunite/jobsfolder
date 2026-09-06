@@ -42,6 +42,8 @@ export interface CollegeStudent {
   roll_number?: string;
   department?: string;
   batch_year?: number;
+  batch_id?: string;
+  batch_name?: string;
   college_id?: string;
   college_name?: string;
   max_licenses?: number;
@@ -71,6 +73,7 @@ export interface MockExam {
   shuffle_options: boolean;
   show_results_immediately: boolean;
   target_departments: string[];
+  target_batches?: string[];
   target_batch_year?: number;
   is_deleted?: boolean;
   created_at?: string;
@@ -169,6 +172,8 @@ export interface BulkStudentRow {
   email: string;
   department: string;
   batch_year: number;
+  batch_id?: string;
+  batch_name?: string;
   isValid?: boolean;
   error?: string;
 }
@@ -207,6 +212,9 @@ export interface MockExamTemplate {
   shuffle_questions?: boolean;
   shuffle_options?: boolean;
   show_results_immediately?: boolean;
+  target_batches?: string[];
+  target_departments?: string[];
+  target_batch_year?: number;
   sections: TemplateSectionDraft[];
   is_default?: boolean;
   updated_at?: string;

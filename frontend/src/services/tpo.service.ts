@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import type {
   College,
+  CollegeBatch,
   CollegeStudent,
   MockExam,
   MockExamSection,
@@ -21,6 +22,7 @@ export const STORAGE_KEYS_TPO = {
   COLLEGES: 'prepunite_colleges_store',
   TPO_AUTH: 'prepunite_tpo_authorizations',
   STUDENTS: 'prepunite_tpo_students',
+  BATCHES: 'prepunite_tpo_college_batches',
   EXAMS: 'prepunite_tpo_mock_exams',
   STUDENT_ENTITLEMENTS: 'prepunite_student_entitlements',
   ATTEMPTS: 'prepunite_tpo_exam_attempts',
@@ -411,6 +413,23 @@ function getLocalStudents(collegeId: string): CollegeStudent[] {
 function saveLocalStudents(collegeId: string, students: CollegeStudent[]) {
   try {
     localStorage.setItem(`${STORAGE_KEYS_TPO.STUDENTS}_${collegeId}`, JSON.stringify(students));
+  } catch {}
+}
+
+function getLocalBatches(collegeId: string): CollegeBatch[] {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_KEYS_TPO.BATCHES}_${collegeId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function saveLocalBatches(collegeId: string, batches: CollegeBatch[]) {
+  try {
+    localStorage.setItem(`${STORAGE_KEYS_TPO.BATCHES}_${collegeId}`, JSON.stringify(batches));
   } catch {}
 }
 
@@ -1440,9 +1459,186 @@ export const tpoService = {
     return null;
   },
 
+  // ==========================================
+  // BATCH MANAGEMENT (Named Batches for College)
+  // ==========================================
+
+  async getCollegeBatches(collegeId: string): Promise<CollegeBatch[]> {
+    let effectiveCollegeId = collegeId?.trim();
+    if (!effectiveCollegeId && typeof window !== 'undefined') {
+      effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
+    }
+    if (!effectiveCollegeId) return [];
+
+    let batches: CollegeBatch[] = [];
+
+    // 1. Fetch from Supabase college_batches table
+    try {
+      const { data, error } = await supabase
+        .from('college_batches')
+        .select('*')
+        .eq('college_id', effectiveCollegeId)
+        .order('created_at', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        batches = data.map(b => ({
+          id: b.id,
+          college_id: b.college_id,
+          name: b.name,
+          passout_year: b.passout_year,
+          departments: Array.isArray(b.departments) ? b.departments : [],
+          created_at: b.created_at,
+        }));
+      }
+    } catch (err) {
+      console.warn('Error fetching college_batches from Supabase:', err);
+    }
+
+    // 2. Fetch from contact_messages cloud resilience (B2B_BATCH)
+    try {
+      const { data: b2bMsgs } = await supabase
+        .from('contact_messages')
+        .select('subject, message')
+        .like('subject', `B2B_BATCH:${effectiveCollegeId}:%`)
+        .order('created_at', { ascending: true });
+
+      if (b2bMsgs && b2bMsgs.length > 0) {
+        const batchMap = new Map<string, CollegeBatch>();
+        batches.forEach(b => batchMap.set(b.id, b));
+        b2bMsgs.forEach(m => {
+          try {
+            const parsed: CollegeBatch = JSON.parse(m.message);
+            if (parsed && parsed.id) {
+              batchMap.set(parsed.id, parsed);
+            }
+          } catch {}
+        });
+        batches = Array.from(batchMap.values());
+      }
+    } catch {}
+
+    // 3. Merge with local storage
+    const localBatches = getLocalBatches(effectiveCollegeId);
+    if (localBatches.length > 0) {
+      const batchMap = new Map<string, CollegeBatch>();
+      batches.forEach(b => batchMap.set(b.id, b));
+      localBatches.forEach(b => {
+        if (!batchMap.has(b.id)) {
+          batchMap.set(b.id, b);
+        }
+      });
+      batches = Array.from(batchMap.values());
+    }
+
+    // If completely empty for this college, initialize with default batches: "Top Batch" and "Normal Batch"
+    if (batches.length === 0) {
+      const currentYr = new Date().getFullYear();
+      const defaultBatch1: CollegeBatch = {
+        id: `batch-${effectiveCollegeId}-top`,
+        college_id: effectiveCollegeId,
+        name: 'Top Batch',
+        passout_year: currentYr,
+        departments: ['CSE', 'IT', 'ECE'],
+        created_at: new Date().toISOString(),
+      };
+      const defaultBatch2: CollegeBatch = {
+        id: `batch-${effectiveCollegeId}-normal`,
+        college_id: effectiveCollegeId,
+        name: 'Normal Batch',
+        passout_year: currentYr,
+        departments: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL'],
+        created_at: new Date().toISOString(),
+      };
+      batches = [defaultBatch1, defaultBatch2];
+      saveLocalBatches(effectiveCollegeId, batches);
+
+      // Save defaults to Supabase college_batches in background
+      try {
+        await supabase.from('college_batches').upsert(batches);
+      } catch {}
+    } else {
+      saveLocalBatches(effectiveCollegeId, batches);
+    }
+
+    return batches;
+  },
+
+  async createCollegeBatch(
+    collegeId: string,
+    batchData: {
+      name: string;
+      passout_year?: number;
+      departments?: string[];
+    }
+  ): Promise<CollegeBatch> {
+    const cleanName = batchData.name.trim();
+    if (!cleanName) throw new Error('Batch name is required.');
+
+    let effectiveCollegeId = collegeId?.trim();
+    if (!effectiveCollegeId && typeof window !== 'undefined') {
+      effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
+    }
+    if (!effectiveCollegeId) throw new Error('College ID is required.');
+
+    const existingBatches = await this.getCollegeBatches(effectiveCollegeId);
+    const found = existingBatches.find(b => b.name.toLowerCase() === cleanName.toLowerCase());
+    if (found) return found;
+
+    const newBatch: CollegeBatch = {
+      id: `batch-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      college_id: effectiveCollegeId,
+      name: cleanName,
+      passout_year: batchData.passout_year || new Date().getFullYear(),
+      departments: batchData.departments && batchData.departments.length > 0 ? batchData.departments : ['CSE', 'IT', 'ECE'],
+      created_at: new Date().toISOString(),
+    };
+
+    // 1. Save locally
+    const currentLocal = getLocalBatches(effectiveCollegeId);
+    currentLocal.push(newBatch);
+    saveLocalBatches(effectiveCollegeId, currentLocal);
+
+    // 2. Insert into Supabase college_batches
+    try {
+      await supabase.from('college_batches').insert([newBatch]);
+    } catch (err) {
+      console.warn('Notice saving college_batch to Supabase:', err);
+    }
+
+    // 3. Backup to contact_messages
+    try {
+      await supabase.from('contact_messages').insert({
+        name: `Batch: ${newBatch.name}`,
+        email: 'tpo@prepunite.com',
+        subject: `B2B_BATCH:${effectiveCollegeId}:${newBatch.id}`,
+        message: JSON.stringify(newBatch),
+        status: 'ACTIVE',
+      });
+    } catch {}
+
+    return newBatch;
+  },
+
+  async deleteCollegeBatch(collegeId: string, batchId: string): Promise<boolean> {
+    let effectiveCollegeId = collegeId?.trim();
+    if (!effectiveCollegeId && typeof window !== 'undefined') {
+      effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
+    }
+    if (!effectiveCollegeId) return false;
+
+    const currentLocal = getLocalBatches(effectiveCollegeId).filter(b => b.id !== batchId);
+    saveLocalBatches(effectiveCollegeId, currentLocal);
+
+    try {
+      await supabase.from('college_batches').delete().eq('id', batchId).eq('college_id', effectiveCollegeId);
+    } catch {}
+
+    return true;
+  },
+
   async getCollegeStudents(
     collegeId: string,
-    filters?: { search?: string; department?: string; batchYear?: number }
+    filters?: { search?: string; department?: string; batchYear?: number; batchId?: string; batchName?: string }
   ): Promise<CollegeStudent[]> {
     let list: CollegeStudent[] = [];
 
@@ -1486,6 +1682,24 @@ export const tpoService = {
       list = Array.from(map.values());
     }
 
+    // Resolve batch_name using college batches
+    try {
+      const batches = await this.getCollegeBatches(collegeId);
+      const batchMap = new Map<string, string>();
+      batches.forEach(b => batchMap.set(b.id, b.name));
+
+      list = list.map(s => {
+        if (s.batch_id && batchMap.has(s.batch_id)) {
+          return { ...s, batch_name: batchMap.get(s.batch_id) };
+        }
+        if (s.batch_id && !s.batch_name) {
+          // If batch_id itself is named or legacy
+          return { ...s, batch_name: s.batch_id };
+        }
+        return s;
+      });
+    } catch {}
+
     // Apply filters reliably to the combined list
     if (filters) {
       if (filters.department && filters.department !== 'ALL') {
@@ -1495,13 +1709,21 @@ export const tpoService = {
       if (filters.batchYear) {
         list = list.filter(s => Number(s.batch_year) === Number(filters.batchYear));
       }
+      if (filters.batchName && filters.batchName !== 'ALL') {
+        const targetBatch = filters.batchName.trim().toLowerCase();
+        list = list.filter(s => (s.batch_name || '').toLowerCase() === targetBatch);
+      }
+      if (filters.batchId && filters.batchId !== 'ALL') {
+        list = list.filter(s => s.batch_id === filters.batchId);
+      }
       if (filters.search && filters.search.trim()) {
         const term = filters.search.trim().toLowerCase();
         list = list.filter(
           s =>
             (s.name || '').toLowerCase().includes(term) ||
             (s.email || '').toLowerCase().includes(term) ||
-            (s.roll_number || '').toLowerCase().includes(term)
+            (s.roll_number || '').toLowerCase().includes(term) ||
+            (s.batch_name || '').toLowerCase().includes(term)
         );
       }
     }
@@ -1511,7 +1733,8 @@ export const tpoService = {
 
   async bulkImportStudents(
     collegeId: string,
-    students: BulkStudentRow[]
+    students: BulkStudentRow[],
+    options?: { defaultBatchName?: string; defaultBatchId?: string }
   ): Promise<{ importedCount: number; updatedCount: number; errors: string[] }> {
     let effectiveCollegeId = collegeId?.trim();
     if (!effectiveCollegeId && typeof window !== 'undefined') {
@@ -1555,6 +1778,14 @@ export const tpoService = {
     let importedCount = 0;
     let updatedCount = 0;
 
+    // Fetch existing batches to map names to ids
+    const collegeBatches = await this.getCollegeBatches(effectiveCollegeId);
+    const batchMap = new Map<string, CollegeBatch>();
+    collegeBatches.forEach(b => {
+      batchMap.set(b.id, b);
+      batchMap.set(b.name.toLowerCase(), b);
+    });
+
     // Local storage student cache
     const localStudents = getLocalStudents(effectiveCollegeId);
     const localMap = new Map<string, CollegeStudent>();
@@ -1563,6 +1794,26 @@ export const tpoService = {
     for (const student of students) {
       if (!student.isValid) continue;
       const cleanEmail = student.email.trim().toLowerCase();
+
+      // Resolve batch
+      const targetBatchName = student.batch_name?.trim() || options?.defaultBatchName?.trim();
+      let studentBatchId = student.batch_id || options?.defaultBatchId;
+      let studentBatchName = targetBatchName;
+
+      if (targetBatchName && !studentBatchId) {
+        let matched = batchMap.get(targetBatchName.toLowerCase());
+        if (!matched) {
+          try {
+            matched = await this.createCollegeBatch(effectiveCollegeId, { name: targetBatchName });
+            batchMap.set(matched.id, matched);
+            batchMap.set(matched.name.toLowerCase(), matched);
+          } catch {}
+        }
+        if (matched) {
+          studentBatchId = matched.id;
+          studentBatchName = matched.name;
+        }
+      }
 
       // Check if already enrolled locally
       const existingLocal = localMap.get(cleanEmail);
@@ -1574,6 +1825,8 @@ export const tpoService = {
         roll_number: student.roll_number?.trim() || undefined,
         department: student.department?.trim().toUpperCase() || 'CSE',
         batch_year: Number(student.batch_year) || 2026,
+        batch_id: studentBatchId || existingLocal?.batch_id || undefined,
+        batch_name: studentBatchName || existingLocal?.batch_name || undefined,
         is_tpo_admin: false,
         role: 'USER',
         created_at: existingLocal?.created_at || new Date().toISOString(),
@@ -1598,6 +1851,7 @@ export const tpoService = {
           roll_number: student.roll_number?.trim() || null,
           department: student.department?.trim().toUpperCase() || 'CSE',
           batch_year: Number(student.batch_year) || 2026,
+          batch_id: studentRecord.batch_id || null,
           is_tpo_admin: false,
           role: 'USER',
           updated_at: new Date().toISOString(),
@@ -1993,6 +2247,8 @@ export const tpoService = {
       roll_number?: string;
       department?: string;
       batch_year?: number;
+      batch_id?: string;
+      batch_name?: string;
     }
   ): Promise<{ success: boolean; student?: CollegeStudent; error?: string }> {
     let effectiveCollegeId = collegeId?.trim();
@@ -2029,6 +2285,28 @@ export const tpoService = {
       };
     }
 
+    // Resolve batch assignment
+    let studentBatchId = studentData.batch_id;
+    let studentBatchName = studentData.batch_name?.trim();
+
+    if (studentBatchName && !studentBatchId) {
+      try {
+        const batch = await this.createCollegeBatch(effectiveCollegeId, {
+          name: studentBatchName,
+          passout_year: studentData.batch_year,
+          departments: [studentData.department?.trim().toUpperCase() || 'CSE'],
+        });
+        studentBatchId = batch.id;
+        studentBatchName = batch.name;
+      } catch {}
+    } else if (studentBatchId && !studentBatchName) {
+      try {
+        const batches = await this.getCollegeBatches(effectiveCollegeId);
+        const found = batches.find(b => b.id === studentBatchId);
+        if (found) studentBatchName = found.name;
+      } catch {}
+    }
+
     const localStudents = getLocalStudents(effectiveCollegeId);
     const existingIdx = localStudents.findIndex(s => s.email.toLowerCase() === cleanEmail);
 
@@ -2041,6 +2319,8 @@ export const tpoService = {
       roll_number: studentData.roll_number?.trim() || undefined,
       department: studentData.department?.trim().toUpperCase() || 'CSE',
       batch_year: studentData.batch_year || 2026,
+      batch_id: studentBatchId || (existingIdx !== -1 ? localStudents[existingIdx].batch_id : undefined),
+      batch_name: studentBatchName || (existingIdx !== -1 ? localStudents[existingIdx].batch_name : undefined),
       is_tpo_admin: false,
       role: 'USER',
       created_at: existingIdx !== -1 ? localStudents[existingIdx].created_at : new Date().toISOString(),
@@ -2064,10 +2344,22 @@ export const tpoService = {
         roll_number: studentData.roll_number?.trim() || null,
         department: studentData.department?.trim().toUpperCase() || 'CSE',
         batch_year: studentData.batch_year || 2026,
+        batch_id: studentRecord.batch_id || null,
         is_tpo_admin: false,
         role: 'USER',
         updated_at: new Date().toISOString(),
       }, { onConflict: 'college_id,email' });
+    } catch {}
+
+    // Cloud backup to contact_messages
+    try {
+      await supabase.from('contact_messages').insert({
+        name: `Student: ${studentRecord.name}`,
+        email: 'tpo@prepunite.com',
+        subject: `B2B_STUDENT:${effectiveCollegeId}:${studentRecord.id}`,
+        message: JSON.stringify(studentRecord),
+        status: 'ACTIVE',
+      });
     } catch {}
 
     // 2. Cloud sync to Supabase profiles - strictly enforce role: 'user'
@@ -2511,7 +2803,29 @@ export const tpoService = {
         dbExams.forEach(e => {
           const eSections = secMap.get(e.id) || e.sections || [];
           eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
-          map.set(e.id, { ...e, sections: eSections });
+
+          // Unpack audience metadata if stored in instructions
+          let targetBatches = e.target_batches || [];
+          let instructions = e.instructions || '';
+          if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
+            try {
+              const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
+              if (match && match[1]) {
+                const parsed = JSON.parse(match[1]);
+                if (Array.isArray(parsed.target_batches)) {
+                  targetBatches = parsed.target_batches;
+                }
+              }
+            } catch {}
+          }
+          instructions = instructions.replace(/<!--AUDIENCE:.*?-->\n?/, '');
+
+          map.set(e.id, {
+            ...e,
+            instructions,
+            target_batches: targetBatches,
+            sections: eSections,
+          });
         });
       }
     } catch (error: any) {
@@ -2580,8 +2894,26 @@ export const tpoService = {
           .order('section_order', { ascending: true });
 
         const sections = (secData || []).sort((a: any, b: any) => (a.section_order || 0) - (b.section_order || 0));
+
+        let targetBatches = examData.target_batches || [];
+        let instructions = examData.instructions || '';
+        if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
+          try {
+            const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
+            if (match && match[1]) {
+              const parsed = JSON.parse(match[1]);
+              if (Array.isArray(parsed.target_batches)) {
+                targetBatches = parsed.target_batches;
+              }
+            }
+          } catch {}
+        }
+        instructions = instructions.replace(/<!--AUDIENCE:.*?-->\n?/, '');
+
         return {
           ...examData,
+          instructions,
+          target_batches: targetBatches,
           sections: sections.length > 0 ? sections : examData.sections || [],
         };
       }
@@ -2755,6 +3087,7 @@ export const tpoService = {
     overrides?: {
       title?: string;
       target_departments?: string[];
+      target_batches?: string[];
       target_batch_year?: number;
       start_time?: string;
       end_time?: string;
@@ -2791,8 +3124,9 @@ export const tpoService = {
         shuffle_questions: template.shuffle_questions ?? true,
         shuffle_options: template.shuffle_options ?? true,
         show_results_immediately: template.show_results_immediately ?? true,
-        target_departments: overrides?.target_departments || [],
-        target_batch_year: overrides?.target_batch_year || 2026,
+        target_departments: overrides?.target_departments || template.target_departments || [],
+        target_batches: overrides?.target_batches || template.target_batches || [],
+        target_batch_year: overrides?.target_batch_year || template.target_batch_year || 2026,
       },
       template.sections.map(s => ({
         name: s.name,
@@ -2908,6 +3242,7 @@ export const tpoService = {
       shuffle_options: examData.shuffle_options,
       show_results_immediately: examData.show_results_immediately,
       target_departments: examData.target_departments || [],
+      target_batches: examData.target_batches || [],
       target_batch_year: examData.target_batch_year || undefined,
       sections,
       is_deleted: false,
@@ -2945,6 +3280,12 @@ export const tpoService = {
     }
 
     // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
+    // Pack target_batches into instructions metadata for universal multi-device persistence
+    const audienceMeta = examData.target_batches && examData.target_batches.length > 0
+      ? `<!--AUDIENCE:${JSON.stringify({ target_batches: examData.target_batches })}-->\n`
+      : '';
+    const instructionsToSave = `${audienceMeta}${examData.instructions || ''}`;
+
     try {
       const { data: newExam, error: examErr } = await supabase
         .from('mock_exams')
@@ -2954,7 +3295,7 @@ export const tpoService = {
           title: examData.title,
           target_company: examData.target_company,
           description: examData.description,
-          instructions: examData.instructions,
+          instructions: instructionsToSave,
           duration_minutes: examData.duration_minutes,
           total_marks: examData.total_marks,
           passing_percentage: examData.passing_percentage,
