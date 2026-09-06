@@ -1049,6 +1049,9 @@ FOR EACH ROW
 EXECUTE FUNCTION public.cascade_college_validity_update();
 
 -- 8.6 Secure Exam Question Retrieval (Strips correct_answer and explanation during active test)
+DROP FUNCTION IF EXISTS public.get_safe_mock_exam_questions(TEXT[]);
+DROP FUNCTION IF EXISTS public.get_safe_mock_exam_questions(UUID[]);
+
 CREATE OR REPLACE FUNCTION public.get_safe_mock_exam_questions(p_question_ids TEXT[])
 RETURNS TABLE (
     id TEXT,

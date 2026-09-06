@@ -414,6 +414,9 @@ END $$;
 -- 2. SAFE EXAM QUESTION RETRIEVAL (STRIP ANSWERS & EXPLANATIONS)
 -- --------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS public.get_safe_mock_exam_questions(TEXT[]);
+DROP FUNCTION IF EXISTS public.get_safe_mock_exam_questions(UUID[]);
+
 CREATE OR REPLACE FUNCTION public.get_safe_mock_exam_questions(p_question_ids TEXT[])
 RETURNS TABLE (
     id TEXT,
@@ -1104,6 +1107,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
+DROP FUNCTION IF EXISTS public.get_secure_exams_by_company(TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.get_secure_exams_by_company(TEXT);
+
 CREATE OR REPLACE FUNCTION public.get_secure_exams_by_company(
   p_company_slug TEXT,
   p_user_email TEXT DEFAULT NULL
@@ -1176,6 +1182,8 @@ GRANT EXECUTE ON FUNCTION public.get_secure_exams_by_company(TEXT, TEXT) TO anon
 -- --------------------------------------------------------------------
 -- 11. SERVER-SIDE COLLEGE USAGE AGGREGATION RPC
 -- --------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS public.get_colleges_usage_summary();
 
 CREATE OR REPLACE FUNCTION public.get_colleges_usage_summary()
 RETURNS TABLE (
