@@ -146,8 +146,8 @@ function_checks AS (
         ('check_college_seat_cap', NULL),
         ('check_student_college_entitlement', 'p_email'),
         ('submit_and_grade_mock_attempt', 'p_responses'),
-        ('check_user_paper_access', 'p_paper_id'),
-        ('get_safe_mock_exam_questions', 'p_mock_exam_id'),
+        ('check_user_paper_access', 'p_exam_id'),
+        ('get_safe_mock_exam_questions', 'p_question_ids'),
         ('get_mock_exam_attempt_solutions', 'p_attempt_id'),
         ('get_colleges_usage_summary', NULL)
     ) AS f(func_name, required_arg)
