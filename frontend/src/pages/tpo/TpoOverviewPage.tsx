@@ -335,6 +335,7 @@ export default function TpoOverviewPage() {
           setIsAddStudentOpen(false);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
         }}
       />
 
@@ -347,6 +348,7 @@ export default function TpoOverviewPage() {
           setIsImportOpen(false);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
         }}
       />
 

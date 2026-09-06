@@ -299,7 +299,11 @@ export default function CollegesTpoManager() {
             {totalEnrolledStudents.toLocaleString()}
           </div>
           <p className="text-[10px] text-slate-400 mt-1">
-            {totalSoldLicenses > 0 ? Math.round((totalEnrolledStudents / totalSoldLicenses) * 100) : 0}% utilization rate
+            {totalSoldLicenses > 0
+              ? totalEnrolledStudents > 0 && Math.round((totalEnrolledStudents / totalSoldLicenses) * 100) === 0
+                ? '<1%'
+                : `${Math.round((totalEnrolledStudents / totalSoldLicenses) * 100)}%`
+              : '0%'} utilization rate
           </p>
         </div>
 
@@ -427,11 +431,14 @@ export default function CollegesTpoManager() {
 
                       {/* Progress Bar */}
                       <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                        <div className={`${barColor} h-full rounded-full transition-all`} style={{ width: `${percent}%` }} />
+                        <div
+                          className={`${barColor} h-full rounded-full transition-all`}
+                          style={{ width: `${Math.max(used > 0 ? 1 : 0, percent)}%` }}
+                        />
                       </div>
 
                       <div className="flex justify-between text-[10px] text-slate-400">
-                        <span>{percent}% seats utilized</span>
+                        <span>{used > 0 && percent === 0 ? '<1%' : `${percent}%`} seats utilized</span>
                         <span>{Math.max(0, cap - used)} seats free</span>
                       </div>
                     </div>

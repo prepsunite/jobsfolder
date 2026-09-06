@@ -112,6 +112,7 @@ export default function TpoStudentsPage() {
       setActionSuccessMsg(`Removed ${studentName} from campus roster and freed up 1 license seat.`);
       setTimeout(() => setActionSuccessMsg(null), 5000);
       queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
       refetch();
     } catch (err: any) {
       alert(`Failed to remove student: ${err.message}`);
@@ -510,6 +511,7 @@ export default function TpoStudentsPage() {
           );
           setTimeout(() => setActionSuccessMsg(null), 6000);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
           refetch();
         }}
       />
@@ -525,6 +527,7 @@ export default function TpoStudentsPage() {
           setActionSuccessMsg('Batch roster imported! All uploaded students have been provisioned with Campus Pro Pass.');
           setTimeout(() => setActionSuccessMsg(null), 6000);
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
           refetch();
         }}
       />

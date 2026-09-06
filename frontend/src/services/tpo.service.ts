@@ -672,74 +672,174 @@ export const tpoService = {
   },
 
   async getAllCollegesWithUsage(): Promise<(College & { enrolled_count: number; tpo_email?: string; active_exams_count: number })[]> {
-    // 🛡️ 1. Try server-side aggregation RPC (O(1) request / high performance)
-    try {
-      const { data: summaryData, error: rpcErr } = await supabase.rpc('get_colleges_usage_summary');
-      if (!rpcErr && summaryData && summaryData.length > 0) {
-        return summaryData.map((row: any) => ({
-          id: row.id,
-          name: row.name,
-          code: row.code || 'CRT',
-          slug: row.id.replace(/^col-/, ''),
-          city: row.city || '',
-          state: row.state || '',
-          contract_status: row.contract_status || 'ACTIVE',
-          max_licenses: row.max_licenses || 1500,
-          valid_until: row.valid_until || new Date(0).toISOString(),
-          created_at: row.created_at || new Date().toISOString(),
-          enrolled_count: Number(row.enrolled_count || 0),
-          active_exams_count: Number(row.active_exams_count || 0),
-          tpo_email: row.tpo_email || undefined,
-        }));
-      }
-    } catch (rpcError) {
-      console.warn('RPC get_colleges_usage_summary notice, falling back to mapped scan:', rpcError);
-    }
-
+    // 1. Fetch complete list of colleges (from DB + cloud messages + local store)
     const colleges = await this.getAllColleges();
     const tpoAdmins = await this.getTpoAdmins();
 
-    // Fetch active college student subscriptions and exams from Supabase
-    let subscriptions: any[] = [];
-    let exams: any[] = [];
+    // 2. Query server-side RPC get_colleges_usage_summary safely
+    const rpcUsageMap = new Map<string, { enrolled_count: number; active_exams_count: number }>();
+    try {
+      const { data: summaryData, error: rpcErr } = await supabase.rpc('get_colleges_usage_summary');
+      if (!rpcErr && summaryData && Array.isArray(summaryData)) {
+        summaryData.forEach((row: any) => {
+          const cid = row.college_id || row.id;
+          if (cid) {
+            rpcUsageMap.set(cid, {
+              enrolled_count: Number(row.enrolled_count || 0),
+              active_exams_count: Number(row.active_exams_count || 0),
+            });
+          }
+        });
+      }
+    } catch (rpcError) {
+      console.warn('RPC get_colleges_usage_summary notice:', rpcError);
+    }
 
+    // 3. Multi-vector queries across database tables & backups:
+    // A. Institutional roster: college_students table
+    let collegeStudents: any[] = [];
+    try {
+      const { data: csData } = await supabase
+        .from('college_students')
+        .select('id, email, college_id, college_name, role')
+        .neq('role', 'TPO_ADMIN');
+      if (csData) collegeStudents = csData;
+    } catch (e) {
+      console.warn('Notice fetching college_students for usage:', e);
+    }
+
+    // B. Cloud resilience backup: contact_messages with B2B_STUDENT:*
+    let studentCloudMsgs: any[] = [];
+    try {
+      const { data: cmData } = await supabase
+        .from('contact_messages')
+        .select('subject, message')
+        .like('subject', 'B2B_STUDENT:%')
+        .neq('status', 'DELETED');
+      if (cmData) studentCloudMsgs = cmData;
+    } catch {}
+
+    // C. Institutional subscriptions in user_subscriptions (without strict future expiry filter)
+    let subscriptions: any[] = [];
     try {
       const { data: sData } = await supabase
         .from('user_subscriptions')
-        .select('user_email, plan_name, status, expires_at')
-        .eq('status', 'ACTIVE')
-        .gt('expires_at', new Date().toISOString());
+        .select('user_email, plan_name, payment_id, status')
+        .neq('status', 'REVOKED');
       if (sData) subscriptions = sData;
     } catch {}
 
+    // D. Mock exams
+    let exams: any[] = [];
     try {
       const { data: eData } = await supabase
         .from('mock_exams')
-        .select('college_id')
+        .select('id, college_id, is_active')
         .eq('is_deleted', false);
       if (eData) exams = eData;
     } catch {}
 
+    // E. Profiles with college_id
+    let profiles: any[] = [];
+    try {
+      const { data: pData } = await supabase
+        .from('profiles')
+        .select('id, email, college_id, role')
+        .not('college_id', 'is', null)
+        .neq('role', 'TPO_ADMIN');
+      if (pData) profiles = pData;
+    } catch {}
+
+    // 4. Map each college with its aggregated enrolled count and active exams count
     return colleges.map(c => {
       // 1. Find assigned TPO email from resolved TPO admins
-      const assignedTpo = tpoAdmins.find(a => a.college_id === c.id);
+      const assignedTpo = tpoAdmins.find(
+        a => a.college_id === c.id || (c.code && (a.college_id === c.code || (a as any).college_code === c.code))
+      );
       const tpoEmail = assignedTpo?.email;
 
-      // 2. Count enrolled students from Supabase subscriptions and local storage
-      const subCount = subscriptions.filter(s =>
-        s.plan_name && (s.plan_name.includes(c.name) || (c.code && s.plan_name.includes(c.code)))
-      ).length;
-      const localStudents = getLocalStudents(c.id);
-      const enrolledCount = Math.max(subCount, localStudents.length);
+      // Unique student emails set for deduplication
+      const enrolledEmails = new Set<string>();
 
-      // 3. Count active exams
-      const activeExamsCount = exams.filter(e => e.college_id === c.id).length;
+      // From college_students table
+      collegeStudents.forEach(s => {
+        if (!s.email) return;
+        const matchesCollege =
+          s.college_id === c.id ||
+          (c.code && s.college_id === c.code) ||
+          (s.college_name && s.college_name.trim().toLowerCase() === c.name.trim().toLowerCase());
+        if (matchesCollege) {
+          enrolledEmails.add(s.email.trim().toLowerCase());
+        }
+      });
+
+      // From contact_messages cloud backups
+      studentCloudMsgs.forEach(m => {
+        const parts = (m.subject || '').split(':');
+        if (parts.length >= 2) {
+          const msgCid = parts[1];
+          if (msgCid === c.id || (c.code && msgCid === c.code)) {
+            try {
+              const parsed = JSON.parse(m.message);
+              if (parsed?.email && parsed.role !== 'TPO_ADMIN') {
+                enrolledEmails.add(parsed.email.trim().toLowerCase());
+              }
+            } catch {}
+          }
+        }
+      });
+
+      // From user_subscriptions
+      subscriptions.forEach(s => {
+        if (!s.user_email) return;
+        const matchesCollege =
+          (s.payment_id && s.payment_id.includes(c.id)) ||
+          (s.plan_name && (
+            s.plan_name.toLowerCase().includes(c.name.toLowerCase()) ||
+            (c.code && s.plan_name.toLowerCase().includes(c.code.toLowerCase()))
+          ));
+        if (matchesCollege) {
+          enrolledEmails.add(s.user_email.trim().toLowerCase());
+        }
+      });
+
+      // From profiles
+      profiles.forEach(p => {
+        if (!p.email) return;
+        if (p.college_id === c.id || (c.code && p.college_id === c.code)) {
+          enrolledEmails.add(p.email.trim().toLowerCase());
+        }
+      });
+
+      // From local storage
+      const localStudents = [...getLocalStudents(c.id), ...(c.code ? getLocalStudents(c.code) : [])];
+      localStudents.forEach(s => {
+        if (s.email && s.role !== 'TPO_ADMIN' && !s.is_tpo_admin) {
+          enrolledEmails.add(s.email.trim().toLowerCase());
+        }
+      });
+
+      // Also compare with RPC summary count if available
+      const rpcData = rpcUsageMap.get(c.id) || (c.code ? rpcUsageMap.get(c.code) : undefined);
+      const rpcEnrolled = rpcData?.enrolled_count || 0;
+      const finalEnrolledCount = Math.max(enrolledEmails.size, rpcEnrolled);
+
+      // Active mock exams count
+      const localExams = [...getLocalExams(c.id), ...(c.code ? getLocalExams(c.code) : [])];
+      const dbExamsCount = exams.filter(
+        e => e.college_id === c.id || (c.code && e.college_id === c.code)
+      ).length;
+      const finalActiveExamsCount = Math.max(
+        dbExamsCount,
+        localExams.length,
+        rpcData?.active_exams_count || 0
+      );
 
       return {
         ...c,
-        enrolled_count: enrolledCount,
+        enrolled_count: finalEnrolledCount,
         tpo_email: tpoEmail,
-        active_exams_count: activeExamsCount,
+        active_exams_count: finalActiveExamsCount,
       };
     });
   },
@@ -1704,13 +1804,21 @@ export const tpoService = {
     filters?: { search?: string; department?: string; batchYear?: number; batchId?: string; batchName?: string }
   ): Promise<CollegeStudent[]> {
     let list: CollegeStudent[] = [];
+    const targetCollegeIds = [collegeId];
+
+    // Resolve alternate identifiers (e.g. ID vs Code vs Slug)
+    try {
+      const col = await this.getCollegeDetails(collegeId);
+      if (col?.id && !targetCollegeIds.includes(col.id)) targetCollegeIds.push(col.id);
+      if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
+    } catch {}
 
     // 1. Try dedicated college_students table first (multi-device institutional roster)
     try {
       const { data: csData, error: csErr } = await supabase
         .from('college_students')
         .select('*')
-        .eq('college_id', collegeId)
+        .in('college_id', targetCollegeIds)
         .order('created_at', { ascending: false });
 
       if (!csErr && csData && csData.length > 0) {
@@ -1718,13 +1826,39 @@ export const tpoService = {
       }
     } catch {}
 
-    // 2. Fallback to profiles table if college_students is empty
+    // 2. Cloud resilience: Fetch students stored as B2B_STUDENT in contact_messages
+    try {
+      const { data: studentMsgs } = await supabase
+        .from('contact_messages')
+        .select('subject, message')
+        .like('subject', 'B2B_STUDENT:%')
+        .neq('status', 'DELETED');
+
+      if (studentMsgs && studentMsgs.length > 0) {
+        studentMsgs.forEach(m => {
+          const parts = (m.subject || '').split(':');
+          if (parts.length >= 2) {
+            const msgCid = parts[1];
+            if (targetCollegeIds.includes(msgCid)) {
+              try {
+                const parsed = JSON.parse(m.message) as CollegeStudent;
+                if (parsed && parsed.email && !list.some(s => s.email.toLowerCase() === parsed.email.toLowerCase())) {
+                  list.push(parsed);
+                }
+              } catch {}
+            }
+          }
+        });
+      }
+    } catch {}
+
+    // 3. Fallback to profiles table if list is still empty
     if (list.length === 0) {
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, email, name, roll_number, department, batch_year, college_id, is_tpo_admin, role, created_at')
-          .eq('college_id', collegeId)
+          .in('college_id', targetCollegeIds)
           .neq('role', 'TPO_ADMIN')
           .order('created_at', { ascending: false });
 
@@ -1732,18 +1866,21 @@ export const tpoService = {
       } catch {}
     }
 
-    // Merge with local students
-    const local = getLocalStudents(collegeId);
-    if (local.length > 0) {
-      const map = new Map<string, CollegeStudent>();
-      list.forEach(s => map.set(s.email.toLowerCase(), s));
+    // Merge with local students across all resolved identifiers
+    const studentMap = new Map<string, CollegeStudent>();
+    list.forEach(s => {
+      if (s.email) studentMap.set(s.email.toLowerCase(), s);
+    });
+
+    targetCollegeIds.forEach(tId => {
+      const local = getLocalStudents(tId);
       local.forEach(s => {
-        if (!map.has(s.email.toLowerCase()) && !s.is_tpo_admin && s.role !== 'TPO_ADMIN') {
-          map.set(s.email.toLowerCase(), s);
+        if (s.email && !studentMap.has(s.email.toLowerCase()) && !s.is_tpo_admin && s.role !== 'TPO_ADMIN') {
+          studentMap.set(s.email.toLowerCase(), s);
         }
       });
-      list = Array.from(map.values());
-    }
+    });
+    list = Array.from(studentMap.values());
 
     // Resolve batch_name using college batches
     try {
@@ -2458,18 +2595,26 @@ export const tpoService = {
 
   async removeStudent(collegeId: string, studentEmail: string): Promise<boolean> {
     const cleanEmail = studentEmail.trim().toLowerCase();
+    const targetCollegeIds = [collegeId];
+    try {
+      const col = await this.getCollegeDetails(collegeId);
+      if (col?.id && !targetCollegeIds.includes(col.id)) targetCollegeIds.push(col.id);
+      if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
+    } catch {}
 
-    // 1. Remove from local storage
-    const localStudents = getLocalStudents(collegeId);
-    const filtered = localStudents.filter(s => s.email.toLowerCase() !== cleanEmail);
-    saveLocalStudents(collegeId, filtered);
+    // 1. Remove from local storage across all resolved identifiers
+    targetCollegeIds.forEach(tId => {
+      const localStudents = getLocalStudents(tId);
+      const filtered = localStudents.filter(s => s.email.toLowerCase() !== cleanEmail);
+      saveLocalStudents(tId, filtered);
+    });
 
     // 2. Remove from Supabase college_students table
     try {
       await supabase
         .from('college_students')
         .delete()
-        .eq('college_id', collegeId)
+        .in('college_id', targetCollegeIds)
         .eq('email', cleanEmail);
     } catch {}
 
@@ -2479,10 +2624,19 @@ export const tpoService = {
         .from('profiles')
         .update({ college_id: null })
         .eq('email', cleanEmail)
-        .eq('college_id', collegeId);
+        .in('college_id', targetCollegeIds);
     } catch {}
 
-    // 4. Revoke student entitlement in user_subscriptions & cache
+    // 4. Cloud resilience: Mark any B2B_STUDENT backup in contact_messages as DELETED
+    try {
+      await supabase
+        .from('contact_messages')
+        .update({ status: 'DELETED' })
+        .or(targetCollegeIds.map(id => `subject.like.B2B_STUDENT:${id}:%`).join(','))
+        .ilike('message', `%"email":"${cleanEmail}"%`);
+    } catch {}
+
+    // 5. Revoke student entitlement in user_subscriptions & cache
     await this.revokeStudentEntitlement(collegeId, cleanEmail);
 
     return true;
