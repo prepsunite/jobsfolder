@@ -2302,17 +2302,23 @@ export const tpoService = {
           }
         }
 
-        // Self-heal score if total_score is 0 but section scores exist in result_summary
-        if (att.result_summary?.sections && att.result_summary.sections.length > 0) {
-          const sectionSum = att.result_summary.sections.reduce((sum, s) => sum + (s.score || 0), 0);
-          if (sectionSum > 0 && (!att.total_score || att.result_summary.total_score === 0)) {
-            att.total_score = sectionSum;
-            att.result_summary.total_score = sectionSum;
-            const max = att.max_possible_score || att.result_summary.max_score || (matchingExam?.total_marks || 100);
-            att.percentage = max > 0 ? Math.round((sectionSum / max) * 1000) / 10 : 0;
-            att.result_summary.percentage = att.percentage;
-            att.passed = att.percentage >= (matchingExam?.passing_percentage || 40);
-            att.result_summary.passed = att.passed;
+        // Guarantee percentage is mathematically accurate from real score
+        if (typeof att.percentage !== 'number' || isNaN(att.percentage)) {
+          const max = att.max_possible_score || (matchingExam?.total_marks || 100);
+          att.percentage = max > 0 ? Math.round(((att.total_score || 0) / max) * 1000) / 10 : 0;
+        }
+
+        // Align result_summary strictly with the candidate's real score
+        if (att.result_summary) {
+          att.result_summary.total_score = att.total_score || 0;
+          att.result_summary.percentage = att.percentage || 0;
+          att.result_summary.passed = Boolean(att.passed);
+          if (att.total_score === 0 && att.result_summary.sections) {
+            att.result_summary.sections.forEach(sec => {
+              sec.score = 0;
+              sec.percentage = 0;
+              sec.correct = 0;
+            });
           }
         }
       });
@@ -2339,29 +2345,33 @@ export const tpoService = {
     const totalStudents = students.length;
     const activeExamsCount = exams.filter(e => e.is_active).length;
     const totalAttempts = allAttempts.length;
+
+    // Real mathematical average across completed candidate attempts
+    const validAttempts = allAttempts.filter(
+      a => typeof a.percentage === 'number' && !isNaN(a.percentage)
+    );
     const avgCollegeScore =
-      totalAttempts > 0
-        ? Math.round(allAttempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / totalAttempts)
+      validAttempts.length > 0
+        ? Math.round(validAttempts.reduce((acc, cur) => acc + (cur.percentage || 0), 0) / validAttempts.length)
         : 0;
 
-    // Compute real placement readiness tiers from actual student attempts
+    // Compute real placement readiness tiers strictly from actual candidate attempts
     let tier1Count = 0;
     let tier2Count = 0;
     let tier3Count = 0;
 
-    if (allAttempts.length > 0) {
-      allAttempts.forEach(a => {
-        const pct = a.percentage || 0;
-        if (pct >= 70) tier1Count++;
-        else if (pct >= 50) tier2Count++;
-        else tier3Count++;
-      });
-      if (totalStudents > allAttempts.length) {
-        tier3Count += (totalStudents - allAttempts.length);
+    allAttempts.forEach(a => {
+      const pct = a.percentage || 0;
+      if (a.status === 'TERMINATED_MALPRACTICE') {
+        tier3Count++;
+      } else if (pct >= 70) {
+        tier1Count++;
+      } else if (pct >= 50) {
+        tier2Count++;
+      } else {
+        tier3Count++;
       }
-    } else if (totalStudents > 0) {
-      tier3Count = totalStudents;
-    }
+    });
 
     // Map students for department resolution
     const studentDeptMap = new Map<string, string>();
@@ -2401,7 +2411,7 @@ export const tpoService = {
     const departments = Object.entries(deptDataMap).map(([department, data]) => ({
       department,
       studentCount: data.studentCount,
-      avgScore: data.attemptsCount > 0 ? Math.round(data.scoreSum / data.attemptsCount) : (totalAttempts > 0 ? avgCollegeScore : 0),
+      avgScore: data.attemptsCount > 0 ? Math.round(data.scoreSum / data.attemptsCount) : 0,
     }));
 
     return {
@@ -3078,6 +3088,25 @@ export const tpoService = {
         };
       });
     }
+
+    allAttempts.forEach(att => {
+      if (typeof att.percentage !== 'number' || isNaN(att.percentage)) {
+        const max = att.max_possible_score || 100;
+        att.percentage = max > 0 ? Math.round(((att.total_score || 0) / max) * 1000) / 10 : 0;
+      }
+      if (att.result_summary) {
+        att.result_summary.total_score = att.total_score || 0;
+        att.result_summary.percentage = att.percentage || 0;
+        att.result_summary.passed = Boolean(att.passed);
+        if (att.total_score === 0 && att.result_summary.sections) {
+          att.result_summary.sections.forEach(sec => {
+            sec.score = 0;
+            sec.percentage = 0;
+            sec.correct = 0;
+          });
+        }
+      }
+    });
 
     return allAttempts.sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
   },

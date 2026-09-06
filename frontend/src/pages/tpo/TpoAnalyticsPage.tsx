@@ -53,7 +53,7 @@ export default function TpoAnalyticsPage() {
   // Real placement readiness tier counts computed from actual student attempt results
   const tier1Count = stats?.tierCounts?.tier1 ?? 0;
   const tier2Count = stats?.tierCounts?.tier2 ?? 0;
-  const tier3Count = stats?.tierCounts?.tier3 ?? total;
+  const tier3Count = stats?.tierCounts?.tier3 ?? 0;
 
   // Filter candidate attempts
   const filteredAttempts = allAttempts.filter(att => {
