@@ -612,6 +612,18 @@ DECLARE
     v_time_spent INT;
     v_raw_correct TEXT;
     v_effective_tab_switches INT;
+    v_sec_q_count INT;
+    v_sec_attempted INT;
+    v_sec_correct INT;
+    v_sec_incorrect INT;
+    v_sec_score NUMERIC;
+    v_sec_max NUMERIC;
+    v_total_questions INT := 0;
+    v_total_attempted INT := 0;
+    v_total_correct INT := 0;
+    v_total_incorrect INT := 0;
+    v_sections_summary JSONB := '[]'::jsonb;
+    v_result_summary JSONB;
 BEGIN
     SELECT * INTO v_attempt 
     FROM public.student_exam_attempts 
@@ -690,11 +702,20 @@ BEGIN
         LOOP
             v_marks_per_q := COALESCE(v_section.marks_per_correct, 1.00);
             v_neg_mark := COALESCE(v_section.negative_marking, 0.00);
+            v_sec_q_count := 0;
+            v_sec_attempted := 0;
+            v_sec_correct := 0;
+            v_sec_incorrect := 0;
+            v_sec_score := 0.00;
+            v_sec_max := 0.00;
 
             IF v_section.question_ids IS NOT NULL THEN
                 FOREACH v_q_id IN ARRAY v_section.question_ids
                 LOOP
                     v_max_possible_score := v_max_possible_score + v_marks_per_q;
+                    v_sec_max := v_sec_max + v_marks_per_q;
+                    v_total_questions := v_total_questions + 1;
+                    v_sec_q_count := v_sec_q_count + 1;
 
                     SELECT correct_answer INTO v_raw_correct
                     FROM public.topic_questions 
@@ -726,6 +747,8 @@ BEGIN
                        AND (v_item_resp->>'selected_option') != '' 
                        AND (v_item_resp->>'selected_option') ~ '^-?\d+$' THEN
                         v_student_selected := (v_item_resp->>'selected_option')::INT;
+                        v_sec_attempted := v_sec_attempted + 1;
+                        v_total_attempted := v_total_attempted + 1;
                         v_marked_review := COALESCE(
                             (v_item_resp->>'marked_for_review')::BOOLEAN,
                             (v_item_resp->>'marked_review')::BOOLEAN,
@@ -740,9 +763,15 @@ BEGIN
                         IF v_correct_ans >= 0 AND v_student_selected = v_correct_ans THEN
                             v_is_correct := true;
                             v_total_score := v_total_score + v_marks_per_q;
+                            v_sec_score := v_sec_score + v_marks_per_q;
+                            v_sec_correct := v_sec_correct + 1;
+                            v_total_correct := v_total_correct + 1;
                         ELSE
                             v_is_correct := false;
                             v_total_score := v_total_score - v_neg_mark;
+                            v_sec_score := v_sec_score - v_neg_mark;
+                            v_sec_incorrect := v_sec_incorrect + 1;
+                            v_total_incorrect := v_total_incorrect + 1;
                         END IF;
 
                         v_graded_responses := jsonb_set(
@@ -761,6 +790,20 @@ BEGIN
                     END IF;
                 END LOOP;
             END IF;
+
+            v_sections_summary := v_sections_summary || jsonb_build_object(
+                'section_id', v_section.id,
+                'section_name', v_section.name,
+                'total_questions', v_sec_q_count,
+                'attempted', v_sec_attempted,
+                'correct', v_sec_correct,
+                'incorrect', v_sec_incorrect,
+                'unattempted', GREATEST(0, v_sec_q_count - v_sec_attempted),
+                'score', GREATEST(0.00, v_sec_score),
+                'max_score', v_sec_max,
+                'percentage', CASE WHEN v_sec_max > 0 THEN ROUND((GREATEST(0.00, v_sec_score) / v_sec_max) * 100.0, 1) ELSE 0 END,
+                'accuracy', CASE WHEN v_sec_attempted > 0 THEN ROUND((v_sec_correct::NUMERIC / v_sec_attempted::NUMERIC) * 100.0, 1) ELSE 0 END
+            );
         END LOOP;
 
         IF v_max_possible_score > 0 THEN
@@ -772,11 +815,40 @@ BEGIN
             v_percentage := 0.00;
             v_passed := false;
         END IF;
+
+        v_result_summary := jsonb_build_object(
+            'total_score', v_total_score,
+            'max_score', v_max_possible_score,
+            'percentage', v_percentage,
+            'passed', v_passed,
+            'tier', CASE 
+                WHEN v_status = 'TERMINATED_MALPRACTICE' THEN 'MALPRACTICE'
+                WHEN v_percentage >= 70 THEN 'TIER_1'
+                WHEN v_percentage >= 50 THEN 'TIER_2'
+                ELSE 'TIER_3'
+            END,
+            'tier_label', CASE 
+                WHEN v_status = 'TERMINATED_MALPRACTICE' THEN 'Disqualified / Malpractice'
+                WHEN v_percentage >= 70 THEN 'Tier 1: Day-1 Ready (70%+)'
+                WHEN v_percentage >= 50 THEN 'Tier 2: Near Ready (50-69%)'
+                ELSE 'Tier 3: Remedial Prep Needed (<50%)'
+            END,
+            'total_questions', v_total_questions,
+            'total_attempted', v_total_attempted,
+            'total_correct', v_total_correct,
+            'total_incorrect', v_total_incorrect,
+            'total_unattempted', GREATEST(0, v_total_questions - v_total_attempted),
+            'overall_accuracy', CASE WHEN v_total_attempted > 0 THEN ROUND((v_total_correct::NUMERIC / v_total_attempted::NUMERIC) * 100.0, 1) ELSE 0 END,
+            'time_spent_seconds', COALESCE(p_time_spent_seconds, 0),
+            'tab_switch_count', v_effective_tab_switches,
+            'proctor_status', CASE WHEN v_status = 'TERMINATED_MALPRACTICE' THEN 'MALPRACTICE_TERMINATED' WHEN v_effective_tab_switches > 0 THEN 'WARNING' ELSE 'CLEAN' END,
+            'sections', v_sections_summary
+        );
     END IF;
 
     UPDATE public.student_exam_attempts
     SET 
-        responses = v_graded_responses,
+        responses = jsonb_set(v_graded_responses, '{__result_summary}', COALESCE(v_result_summary, '{}'::jsonb)),
         total_score = v_total_score,
         max_possible_score = v_max_possible_score,
         percentage = v_percentage,
@@ -797,6 +869,7 @@ BEGIN
         'percentage', v_percentage,
         'passed', v_passed,
         'tab_switch_count', v_effective_tab_switches,
+        'result_summary', v_result_summary,
         'responses', v_graded_responses
     );
 END;

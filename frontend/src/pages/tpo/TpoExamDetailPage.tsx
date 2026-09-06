@@ -15,6 +15,7 @@ import {
   X,
   Clock,
   Award,
+  AlertCircle,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,11 +68,18 @@ export default function TpoExamDetailPage() {
     if (!exam || attempts.length === 0) return;
 
     const headers =
-      'Rank,Roll Number,Student Name,Email,Department,Score,Max Score,Percentage,Result,Tab Switches,Status\n';
+      'Rank,Roll Number,Student Name,Email,Department,Score,Max Score,Percentage,Result,Placement Tier,Attempted Questions,Total Questions,Accuracy,Tab Switches,Status\n';
     const rows = attempts
       .map((a, idx) => {
         const s = a.student || { name: 'Student', email: '', roll_number: '', department: 'CSE' };
-        return `${idx + 1},"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || ''}",${a.total_score},${a.max_possible_score},${a.percentage}%,${a.passed ? 'PASSED' : 'FAILED'},${a.tab_switch_count},${a.status}`;
+        const pct = a.percentage || 0;
+        const res = a.result_summary;
+        const tier = a.status === 'TERMINATED_MALPRACTICE' ? 'Malpractice / Disqualified' : (res?.tier_label || (pct >= 70 ? 'Tier 1: Day-1 Ready' : pct >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed'));
+        const qualification = a.passed ? 'QUALIFIED' : 'NOT QUALIFIED';
+        const attempted = res?.total_attempted ?? '—';
+        const totalQ = res?.total_questions ?? '—';
+        const acc = res?.overall_accuracy !== undefined ? `${res.overall_accuracy}%` : `${pct}%`;
+        return `${idx + 1},"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || ''}",${a.total_score},${a.max_possible_score},${pct}%,${qualification},"${tier}",${attempted},${totalQ},${acc},${a.tab_switch_count},${a.status}`;
       })
       .join('\n');
 
@@ -320,168 +328,210 @@ export default function TpoExamDetailPage() {
         </table>
       </div>
 
-      {/* Candidate Detailed Scorecard & Response Audit Modal */}
-      {selectedAttempt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white dark:bg-[#151618] border border-slate-200 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
-            {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#1a1b1e]">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#FD4A32]">
-                  Candidate Assessment Audit
-                </span>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                  {selectedAttempt.student?.name || 'Candidate Scorecard'}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Roll: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.roll_number || '—'}</strong> • 
-                  Dept: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.department || 'General'}</strong> • 
-                  Email: {selectedAttempt.student?.email || selectedAttempt.student_email || selectedAttempt.student_id}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedAttempt(null)}
-                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* 🔍 Candidate Placement Performance Scorecard Modal */}
+      {selectedAttempt && (() => {
+        const inspectedSummary = selectedAttempt.result_summary || (exam ? tpoService.calculateAttemptResult(
+          exam,
+          selectedAttempt.responses || {},
+          {},
+          selectedAttempt.time_spent_seconds || 0,
+          selectedAttempt.tab_switch_count || 0,
+          selectedAttempt.status as any
+        ).resultSummary : null);
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-6 text-xs">
-              {/* Scorecard KPIs */}
-              <div className="grid grid-cols-4 gap-3 text-center">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
-                  <div className="text-[10px] font-bold uppercase text-slate-500">Score</div>
-                  <div className="text-xl font-black text-slate-900 dark:text-white mt-1">
-                    {selectedAttempt.total_score} / {selectedAttempt.max_possible_score}
-                  </div>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white dark:bg-[#151618] border border-slate-200 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              
+              {/* Modal Header */}
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#1a1b1e]">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#FD4A32]">
+                    Candidate Placement Performance Scorecard
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    {selectedAttempt.student?.name || 'Candidate Scorecard'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Roll: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.roll_number || '—'}</strong> • 
+                    Dept: <strong className="text-slate-800 dark:text-slate-200">{selectedAttempt.student?.department || 'General'}</strong> • 
+                    Email: {selectedAttempt.student?.email || selectedAttempt.student_email || selectedAttempt.student_id}
+                  </p>
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
-                  <div className="text-[10px] font-bold uppercase text-slate-500">Percentage</div>
-                  <div className={`text-xl font-black mt-1 ${selectedAttempt.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {selectedAttempt.percentage}%
-                  </div>
-                </div>
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
-                  <div className="text-[10px] font-bold uppercase text-slate-500">Time Taken</div>
-                  <div className="text-sm font-black text-slate-900 dark:text-white mt-1.5 flex items-center justify-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{Math.round((selectedAttempt.time_spent_seconds || 0) / 60)} mins</span>
-                  </div>
-                </div>
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
-                  <div className="text-[10px] font-bold uppercase text-slate-500">Proctoring</div>
-                  <div className="text-xs font-black mt-1.5">
-                    {selectedAttempt.tab_switch_count === 0 ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">0 Violations</span>
-                    ) : (
-                      <span className="text-amber-600 dark:text-amber-400 font-bold">{selectedAttempt.tab_switch_count} Tab Switches</span>
-                    )}
-                  </div>
-                </div>
+                <button
+                  onClick={() => setSelectedAttempt(null)}
+                  className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* Section-Wise Performance Breakdown */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Sectional Performance Breakdown
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {(exam.sections || []).map((sec, sIdx) => {
-                    const secQIds = sec.question_ids || [];
-                    const answeredInSec = secQIds.filter(qId => {
-                      const r = (selectedAttempt.responses || {})[qId];
-                      return r && r.selected_option !== null && r.selected_option !== undefined;
-                    });
-                    const correctInSec = secQIds.filter(qId => {
-                      const r = (selectedAttempt.responses || {})[qId];
-                      return r && r.is_correct;
-                    });
-
-                    return (
-                      <div key={sec.id || sIdx} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                        <div className="font-bold text-slate-900 dark:text-white text-xs truncate">{sec.name}</div>
-                        <div className="text-[11px] text-slate-500">
-                          Answered: <strong className="text-slate-800 dark:text-slate-200">{answeredInSec.length}/{secQIds.length}</strong>
-                        </div>
-                        <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                          Correct: {correctInSec.length}/{secQIds.length}
-                        </div>
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto space-y-6 text-xs">
+                {/* 1. Placement Verdict & Cutoff Banner */}
+                <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${
+                  selectedAttempt.passed
+                    ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60'
+                    : 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      selectedAttempt.passed
+                        ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {selectedAttempt.passed ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                        {selectedAttempt.passed ? 'Qualified For Next Placement Round' : 'Remedial Training Required'}
                       </div>
-                    );
-                  })}
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {selectedAttempt.passed ? 'Candidate scored above institutional cutoff threshold' : 'Candidate scored below minimum qualifying passing marks'}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1.5 rounded-xl text-xs font-black tracking-wider uppercase self-start sm:self-auto border ${
+                    selectedAttempt.status === 'TERMINATED_MALPRACTICE'
+                      ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-400'
+                      : (selectedAttempt.percentage || 0) >= 70
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300'
+                      : (selectedAttempt.percentage || 0) >= 50
+                      ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/60 dark:text-blue-300'
+                      : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-300'
+                  }`}>
+                    {inspectedSummary?.tier_label || (selectedAttempt.status === 'TERMINATED_MALPRACTICE' ? 'Disqualified / Malpractice' : (selectedAttempt.percentage || 0) >= 70 ? 'Tier 1: Day-1 Ready' : (selectedAttempt.percentage || 0) >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed')}
+                  </span>
                 </div>
+
+                {/* 2. Core Placement Assessment Metrics (5 Cards) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-center">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">Total Marks</div>
+                    <div className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                      {selectedAttempt.total_score} <span className="text-xs font-bold text-slate-400">/ {selectedAttempt.max_possible_score || 100}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Net Marks</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">Percentage</div>
+                    <div className={`text-xl font-black mt-1 ${selectedAttempt.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {selectedAttempt.percentage}%
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Overall Score</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">Overall Accuracy</div>
+                    <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                      {inspectedSummary?.overall_accuracy ?? (selectedAttempt.percentage || 0)}%
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Correct / Attempted</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">Attempt Rate</div>
+                    <div className="text-sm font-black text-slate-900 dark:text-white mt-1.5">
+                      {inspectedSummary?.total_attempted ?? '—'} <span className="text-xs font-normal text-slate-400">/ {inspectedSummary?.total_questions ?? '—'} Qs</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {inspectedSummary?.total_unattempted ?? 0} Skipped
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 col-span-2 sm:col-span-1">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">Integrity & Time</div>
+                    <div className="text-sm font-black text-slate-900 dark:text-white mt-1.5 flex items-center justify-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{Math.round((selectedAttempt.time_spent_seconds || 0) / 60)} mins</span>
+                    </div>
+                    <div className="text-[10px] mt-0.5">
+                      {(selectedAttempt.tab_switch_count || 0) === 0 ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">0 Violations</span>
+                      ) : (
+                        <span className="text-amber-600 dark:text-amber-400 font-semibold">{selectedAttempt.tab_switch_count} Tab Switches</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Domain & Sectional Mastery Breakdown */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Domain-Wise Performance Breakdown
+                    </h4>
+                    <span className="text-[11px] text-slate-400">Sectional Scores & Accuracy</span>
+                  </div>
+
+                  {inspectedSummary?.sections && inspectedSummary.sections.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {inspectedSummary.sections.map((sec) => (
+                        <div
+                          key={sec.section_id}
+                          className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                              {sec.section_name}
+                            </span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              {sec.score} / {sec.max_score} <span className="text-slate-400 font-normal">({sec.percentage}%)</span>
+                            </span>
+                          </div>
+
+                          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                sec.percentage >= 70 ? 'bg-emerald-500' : sec.percentage >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${Math.min(100, Math.max(0, sec.percentage))}%` }}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 text-center text-[11px] pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                            <div>
+                              <span className="text-slate-400 block text-[10px]">Attempted</span>
+                              <strong className="text-slate-700 dark:text-slate-300">{sec.attempted} / {sec.total_questions}</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[10px]">Accuracy</span>
+                              <strong className="text-blue-600 dark:text-blue-400">{sec.accuracy}%</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[10px]">Correct / Wrong</span>
+                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{sec.correct}</span>
+                              <span className="text-slate-400"> / </span>
+                              <span className="font-semibold text-rose-500">{sec.incorrect}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 text-center text-xs text-slate-400">
+                      Overall score recorded: {selectedAttempt.total_score} marks ({selectedAttempt.percentage}%).
+                    </div>
+                  )}
+                </div>
+
               </div>
 
-              {/* Question Responses Matrix */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Question Response Audit Log
-                </h4>
-                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden max-h-64 overflow-y-auto">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="bg-slate-50 dark:bg-slate-800/90 text-slate-500 font-bold sticky top-0 border-b border-slate-200 dark:border-slate-700">
-                      <tr>
-                        <th className="p-3">Q#</th>
-                        <th className="p-3">Candidate Choice</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Time Spent</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {(exam.sections || []).flatMap(s => s.question_ids).map((qId, idx) => {
-                        const r = (selectedAttempt.responses || {})[qId];
-                        const hasAnswered = r && r.selected_option !== null && r.selected_option !== undefined;
-                        const isCorrect = r && r.is_correct;
-                        const optionLabel = hasAnswered ? String.fromCharCode(65 + Number(r.selected_option)) : '—';
-
-                        return (
-                          <tr key={qId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                            <td className="p-3 font-bold text-slate-400">Question {idx + 1}</td>
-                            <td className="p-3 font-mono font-bold">
-                              {hasAnswered ? `Option ${optionLabel}` : <span className="text-slate-400">Unanswered</span>}
-                            </td>
-                            <td className="p-3">
-                              {!hasAnswered ? (
-                                <span className="text-slate-400">Skipped</span>
-                              ) : isCorrect ? (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" /> Correct
-                                </span>
-                              ) : (
-                                <span className="text-rose-500 font-bold flex items-center gap-1">
-                                  <XCircle className="w-3.5 h-3.5" /> Incorrect
-                                </span>
-                              )}
-                            </td>
-                            <td className="p-3 font-mono text-slate-500">
-                              {r?.time_spent_sec ? `${r.time_spent_sec}s` : '—'}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#1a1b1e] flex justify-end">
+                <button
+                  onClick={() => setSelectedAttempt(null)}
+                  className="px-5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+                >
+                  Close Scorecard
+                </button>
               </div>
 
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#1a1b1e] flex justify-end">
-              <button
-                onClick={() => setSelectedAttempt(null)}
-                className="px-5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
-              >
-                Close Audit
-              </button>
-            </div>
-
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

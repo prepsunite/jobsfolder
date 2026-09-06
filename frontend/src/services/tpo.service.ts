@@ -13,6 +13,8 @@ import type {
   TpoAuthorizationRecord,
   MockExamTemplate,
   TemplateSectionDraft,
+  CandidateResultSummary,
+  SectionResultSummary,
 } from '@/types/tpo';
 
 export const STORAGE_KEYS_TPO = {
@@ -2282,6 +2284,23 @@ export const tpoService = {
           (att as any).exam_title = matchingExam.title;
           (att as any).target_company = matchingExam.target_company;
         }
+
+        // Guarantee result_summary is populated for TPO analytics
+        if (!att.result_summary) {
+          if ((att.responses as any)?.__result_summary) {
+            att.result_summary = (att.responses as any).__result_summary;
+          } else if (matchingExam) {
+            const calc = this.calculateAttemptResult(
+              matchingExam,
+              att.responses || {},
+              {},
+              att.time_spent_seconds || 0,
+              att.tab_switch_count || 0,
+              att.status as any
+            );
+            att.result_summary = calc.resultSummary;
+          }
+        }
       });
     }
 
@@ -3408,6 +3427,173 @@ export const tpoService = {
     } catch {}
   },
 
+  /**
+   * Comprehensive candidate result calculation engine.
+   * Runs immediately upon test submission to calculate overall marks, percentage,
+   * pass/fail verdict, placement readiness tier, overall accuracy %,
+   * and sectional domain mastery breakdowns.
+   */
+  calculateAttemptResult(
+    exam: MockExam,
+    responses: Record<string, StudentExamResponse>,
+    solutionMap: Record<string, number>,
+    timeSpentSeconds: number,
+    tabSwitchCount: number,
+    statusOverride?: 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT'
+  ): {
+    totalScore: number;
+    maxPossibleScore: number;
+    percentage: number;
+    passed: boolean;
+    finalStatus: 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT';
+    gradedResponses: Record<string, StudentExamResponse>;
+    resultSummary: CandidateResultSummary;
+  } {
+    const sectionsSummary: SectionResultSummary[] = [];
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+    let totalQuestions = 0;
+    let totalAttempted = 0;
+    let totalCorrect = 0;
+    let totalIncorrect = 0;
+    let totalUnattempted = 0;
+    const gradedResponses: Record<string, StudentExamResponse> = {};
+
+    for (const section of exam.sections || []) {
+      const marksPerQ = Number(section.marks_per_correct) || 1;
+      const negMarking = Number(section.negative_marking) || 0;
+      const qIds = section.question_ids || [];
+
+      let secScore = 0;
+      let secMaxScore = 0;
+      let secAttempted = 0;
+      let secCorrect = 0;
+      let secIncorrect = 0;
+      let secUnattempted = 0;
+
+      for (const qId of qIds) {
+        secMaxScore += marksPerQ;
+        totalQuestions++;
+
+        const resp = responses[qId];
+        const correctAns = solutionMap[qId];
+        const hasSelected = resp && resp.selected_option !== null && resp.selected_option !== undefined && (resp.selected_option as unknown) !== '';
+
+        if (hasSelected) {
+          secAttempted++;
+          totalAttempted++;
+          const isCorrect = correctAns !== undefined
+            ? Number(resp.selected_option) === Number(correctAns)
+            : Boolean(resp?.is_correct);
+
+          if (isCorrect) {
+            secScore += marksPerQ;
+            secCorrect++;
+            totalCorrect++;
+          } else {
+            secScore -= negMarking;
+            secIncorrect++;
+            totalIncorrect++;
+          }
+
+          gradedResponses[qId] = {
+            ...resp,
+            is_correct: isCorrect,
+          };
+        } else {
+          secUnattempted++;
+          totalUnattempted++;
+          gradedResponses[qId] = {
+            selected_option: null,
+            time_spent_sec: 0,
+            marked_review: false,
+            is_correct: false,
+          };
+        }
+      }
+
+      // Clamp section score to 0 if negative
+      const clampedSecScore = Math.max(0, Math.round(secScore * 100) / 100);
+      const secPercentage = secMaxScore > 0 ? Math.round((clampedSecScore / secMaxScore) * 100) : 0;
+      const secAccuracy = secAttempted > 0 ? Math.round((secCorrect / secAttempted) * 100) : 0;
+
+      totalScore += clampedSecScore;
+      maxPossibleScore += secMaxScore;
+
+      sectionsSummary.push({
+        section_id: section.id || String(section.section_order ?? 'default'),
+        section_name: section.name,
+        total_questions: qIds.length,
+        attempted: secAttempted,
+        correct: secCorrect,
+        incorrect: secIncorrect,
+        unattempted: secUnattempted,
+        score: clampedSecScore,
+        max_score: secMaxScore,
+        percentage: secPercentage,
+        accuracy: secAccuracy,
+      });
+    }
+
+    if (totalScore < 0) totalScore = 0;
+    totalScore = Math.round(totalScore * 100) / 100;
+    const finalMaxScore = maxPossibleScore > 0 ? maxPossibleScore : (exam.total_marks || 100);
+    const percentage = finalMaxScore > 0 ? Math.round((totalScore / finalMaxScore) * 1000) / 10 : 0;
+    const passed = percentage >= (exam.passing_percentage || 40);
+
+    const isMalpractice = statusOverride === 'TERMINATED_MALPRACTICE' ||
+      (exam.enable_tab_switch_detection && tabSwitchCount > (exam.max_tab_switches_allowed || 3));
+
+    let tier: 'TIER_1' | 'TIER_2' | 'TIER_3' | 'MALPRACTICE';
+    let tier_label: string;
+
+    if (isMalpractice) {
+      tier = 'MALPRACTICE';
+      tier_label = 'Disqualified / Malpractice';
+    } else if (percentage >= 70) {
+      tier = 'TIER_1';
+      tier_label = 'Tier 1: Day-1 Ready (70%+)';
+    } else if (percentage >= 50) {
+      tier = 'TIER_2';
+      tier_label = 'Tier 2: Near Ready (50-69%)';
+    } else {
+      tier = 'TIER_3';
+      tier_label = 'Tier 3: Remedial Prep Needed (<50%)';
+    }
+
+    const overallAccuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+    const finalStatus = isMalpractice ? 'TERMINATED_MALPRACTICE' : (statusOverride || 'SUBMITTED');
+
+    const resultSummary: CandidateResultSummary = {
+      total_score: totalScore,
+      max_score: finalMaxScore,
+      percentage,
+      passed,
+      tier,
+      tier_label,
+      total_questions: totalQuestions,
+      total_attempted: totalAttempted,
+      total_correct: totalCorrect,
+      total_incorrect: totalIncorrect,
+      total_unattempted: totalUnattempted,
+      overall_accuracy: overallAccuracy,
+      time_spent_seconds: timeSpentSeconds,
+      tab_switch_count: tabSwitchCount,
+      proctor_status: isMalpractice ? 'MALPRACTICE_TERMINATED' : tabSwitchCount > 0 ? 'WARNING' : 'CLEAN',
+      sections: sectionsSummary,
+    };
+
+    return {
+      totalScore,
+      maxPossibleScore: finalMaxScore,
+      percentage,
+      passed,
+      finalStatus,
+      gradedResponses,
+      resultSummary,
+    };
+  },
+
   async submitAttempt(
     attemptId: string,
     exam: MockExam,
@@ -3421,57 +3607,7 @@ export const tpoService = {
     const startedAt = existingAttempt?.started_at || new Date(Date.now() - timeSpentSeconds * 1000).toISOString();
     const studentId = existingAttempt?.student_id || '';
 
-    // 🛡️ 1. Attempt Server-Side Secure Grading via Supabase RPC (100% Anti-Cheat / Prevents DevTools Tampering)
-    try {
-      const { data: serverGraded, error: rpcError } = await supabase.rpc('submit_and_grade_mock_attempt', {
-        p_attempt_id: attemptId,
-        p_responses: responses,
-        p_time_spent_seconds: timeSpentSeconds,
-        p_proctor_events: proctorEvents,
-        p_tab_switch_count: tabSwitchCount,
-        p_status_override: statusOverride || null,
-      });
-
-      if (!rpcError && serverGraded) {
-        const finalizedAttempt: StudentExamAttempt = {
-          id: attemptId,
-          mock_exam_id: exam.id,
-          student_id: studentId,
-          college_id: exam.college_id,
-          status: (serverGraded.status as any) || 'SUBMITTED',
-          started_at: startedAt,
-          submitted_at: new Date().toISOString(),
-          time_spent_seconds: timeSpentSeconds,
-          total_score: Number(serverGraded.total_score || 0),
-          max_possible_score: Number(serverGraded.max_possible_score || exam.total_marks || 100),
-          percentage: Number(serverGraded.percentage || 0),
-          passed: Boolean(serverGraded.passed),
-          tab_switch_count: tabSwitchCount,
-          proctor_events: proctorEvents,
-          responses: serverGraded.responses || responses,
-        };
-
-        saveLocalAttempt(finalizedAttempt);
-
-        // Backup to contact_messages
-        try {
-          const cleanSid = (studentId || 'anon').toLowerCase();
-          await supabase.from('contact_messages').insert({
-            name: `Candidate Attempt: ${cleanSid}`,
-            email: cleanSid.includes('@') ? cleanSid : 'student@prepunite.com',
-            subject: `B2B_ATTEMPT:${exam.id}:${cleanSid}`,
-            message: JSON.stringify(finalizedAttempt),
-            status: finalizedAttempt.status,
-          });
-        } catch {}
-
-        return finalizedAttempt;
-      }
-    } catch (rpcErr) {
-      console.warn('[tpoService.submitAttempt] Server RPC grading notice (falling back to local):', rpcErr);
-    }
-
-    // 2. Fallback: Local Client-Side Grading (for offline or local demo test runs)
+    // Fetch question solutions for grading
     const allQuestionIds = (exam.sections || []).flatMap(s => s.question_ids);
     let solutionMap: Record<string, number> = {};
 
@@ -3486,48 +3622,55 @@ export const tpoService = {
       });
     } catch {}
 
-    // 2. Grade each section
-    let totalScore = 0;
-    let maxPossibleScore = 0;
-    const gradedResponses: Record<string, StudentExamResponse> = {};
+    // 1. Calculate full candidate result (score, percentage, accuracy, section breakdowns)
+    const calculated = this.calculateAttemptResult(
+      exam,
+      responses,
+      solutionMap,
+      timeSpentSeconds,
+      tabSwitchCount,
+      statusOverride
+    );
 
-    for (const section of exam.sections || []) {
-      const marksPerQ = section.marks_per_correct || 1;
-      const negMarking = section.negative_marking || 0;
+    // 2. Attempt Server-Side RPC grading (if enabled)
+    let totalScore = calculated.totalScore;
+    let maxPossibleScore = calculated.maxPossibleScore;
+    let percentage = calculated.percentage;
+    let passed = calculated.passed;
+    let finalStatus = calculated.finalStatus;
+    let gradedResponses = calculated.gradedResponses;
+    let resultSummary = calculated.resultSummary;
 
-      for (const qId of section.question_ids) {
-        maxPossibleScore += marksPerQ;
-        const resp = responses[qId];
-        const correctAns = solutionMap[qId];
+    try {
+      const { data: serverGraded, error: rpcError } = await supabase.rpc('submit_and_grade_mock_attempt', {
+        p_attempt_id: attemptId,
+        p_responses: responses,
+        p_time_spent_seconds: timeSpentSeconds,
+        p_proctor_events: proctorEvents,
+        p_tab_switch_count: tabSwitchCount,
+        p_status_override: statusOverride || null,
+      });
 
-        if (resp && resp.selected_option !== null && resp.selected_option !== undefined) {
-          const isCorrect = correctAns !== undefined ? resp.selected_option === correctAns : true;
-          if (isCorrect) {
-            totalScore += marksPerQ;
-          } else {
-            totalScore -= negMarking;
-          }
-          gradedResponses[qId] = {
-            ...resp,
-            is_correct: isCorrect,
-          };
+      if (!rpcError && serverGraded) {
+        totalScore = Number(serverGraded.total_score ?? totalScore);
+        maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
+        percentage = Number(serverGraded.percentage ?? percentage);
+        passed = Boolean(serverGraded.passed ?? passed);
+        if (serverGraded.status) finalStatus = serverGraded.status;
+        if (serverGraded.responses) gradedResponses = serverGraded.responses;
+        if (serverGraded.result_summary) {
+          resultSummary = serverGraded.result_summary;
         } else {
-          gradedResponses[qId] = {
-            selected_option: null,
-            time_spent_sec: 0,
-            marked_review: false,
-            is_correct: false,
-          };
+          resultSummary.total_score = totalScore;
+          resultSummary.percentage = percentage;
+          resultSummary.passed = passed;
         }
       }
+    } catch (rpcErr) {
+      console.warn('[tpoService.submitAttempt] Server RPC grading notice (falling back to local calculation):', rpcErr);
     }
 
-    if (totalScore < 0) totalScore = 0;
-    const percentage = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
-    const passed = percentage >= (exam.passing_percentage || 40);
-    const finalStatus = statusOverride || 'SUBMITTED';
-
-    // 3. Save finalized graded attempt locally
+    // 3. Create finalized attempt with full result_summary
     const finalizedAttempt: StudentExamAttempt = {
       id: attemptId,
       mock_exam_id: exam.id,
@@ -3540,6 +3683,7 @@ export const tpoService = {
       tab_switch_count: tabSwitchCount,
       proctor_events: proctorEvents,
       responses: gradedResponses,
+      result_summary: resultSummary,
       total_score: totalScore,
       max_possible_score: maxPossibleScore,
       percentage,
@@ -3549,7 +3693,7 @@ export const tpoService = {
 
     saveLocalAttempt(finalizedAttempt);
 
-    // Resilient cloud backup to contact_messages (ensures TPO on another device sees attempt)
+    // Resilient cloud backup to contact_messages (ensures TPO sees attempt)
     try {
       const cleanSid = (studentId || 'anon').toLowerCase();
       await supabase.from('contact_messages').insert({
@@ -3563,7 +3707,7 @@ export const tpoService = {
       console.warn('Notice saving attempt to cloud messages:', cloudErr);
     }
 
-    // 4. Upsert Supabase student_exam_attempts table (inserts if not pre-created, updates if exists)
+    // 4. Upsert to student_exam_attempts table (includes result_summary inside responses payload)
     try {
       const cleanSid = (studentId || 'anon').toLowerCase();
       const attemptRow = {
@@ -3578,7 +3722,10 @@ export const tpoService = {
         time_spent_seconds: timeSpentSeconds,
         tab_switch_count: tabSwitchCount,
         proctor_events: proctorEvents,
-        responses: gradedResponses,
+        responses: {
+          ...gradedResponses,
+          __result_summary: resultSummary,
+        },
         total_score: totalScore,
         max_possible_score: maxPossibleScore,
         percentage,
@@ -3593,7 +3740,10 @@ export const tpoService = {
         .single();
 
       if (gradedAttempt) {
-        saveLocalAttempt(gradedAttempt);
+        saveLocalAttempt({
+          ...gradedAttempt,
+          result_summary: resultSummary,
+        });
       }
     } catch {}
 

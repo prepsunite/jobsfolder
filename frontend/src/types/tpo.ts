@@ -102,6 +102,39 @@ export interface StudentExamResponse {
   marked_review: boolean;
 }
 
+export interface SectionResultSummary {
+  section_id: string;
+  section_name: string;
+  total_questions: number;
+  attempted: number;
+  correct: number;
+  incorrect: number;
+  unattempted: number;
+  score: number;
+  max_score: number;
+  percentage: number;
+  accuracy: number;
+}
+
+export interface CandidateResultSummary {
+  total_score: number;
+  max_score: number;
+  percentage: number;
+  passed: boolean;
+  tier: 'TIER_1' | 'TIER_2' | 'TIER_3' | 'MALPRACTICE';
+  tier_label: string;
+  total_questions: number;
+  total_attempted: number;
+  total_correct: number;
+  total_incorrect: number;
+  total_unattempted: number;
+  overall_accuracy: number;
+  time_spent_seconds: number;
+  tab_switch_count: number;
+  proctor_status: 'CLEAN' | 'WARNING' | 'MALPRACTICE_TERMINATED';
+  sections: SectionResultSummary[];
+}
+
 export interface StudentExamAttempt {
   id: string;
   mock_exam_id: string;
@@ -119,6 +152,7 @@ export interface StudentExamAttempt {
   tab_switch_count: number;
   proctor_events: ProctorEvent[];
   responses: Record<string, StudentExamResponse>;
+  result_summary?: CandidateResultSummary;
   student?: {
     name: string;
     email: string;
