@@ -1059,9 +1059,8 @@ BEGIN
                             v_total_incorrect := v_total_incorrect + 1;
                         END IF;
 
-                        v_graded_responses := jsonb_set(
-                            v_graded_responses,
-                            ARRAY[v_q_id],
+                        v_graded_responses := v_graded_responses || jsonb_build_object(
+                            v_q_id,
                             jsonb_build_object(
                                 'selected_option', v_student_selected,
                                 'is_correct', v_is_correct,
@@ -1131,9 +1130,14 @@ BEGIN
         );
     END IF;
 
+    -- 🛡️ Guarantee: Never clobber candidate responses with empty object if server grading had no sections
+    IF v_graded_responses = '{}'::jsonb AND p_responses IS NOT NULL AND p_responses != '{}'::jsonb THEN
+        v_graded_responses := p_responses;
+    END IF;
+
     UPDATE public.student_exam_attempts
     SET 
-        responses = jsonb_set(v_graded_responses, '{__result_summary}', COALESCE(v_result_summary, '{}'::jsonb)),
+        responses = v_graded_responses || jsonb_build_object('__result_summary', COALESCE(v_result_summary, '{}'::jsonb)),
         total_score = v_total_score,
         max_possible_score = v_max_possible_score,
         percentage = v_percentage,

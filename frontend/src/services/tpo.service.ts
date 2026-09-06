@@ -2301,6 +2301,20 @@ export const tpoService = {
             att.result_summary = calc.resultSummary;
           }
         }
+
+        // Self-heal score if total_score is 0 but section scores exist in result_summary
+        if (att.result_summary?.sections && att.result_summary.sections.length > 0) {
+          const sectionSum = att.result_summary.sections.reduce((sum, s) => sum + (s.score || 0), 0);
+          if (sectionSum > 0 && (!att.total_score || att.result_summary.total_score === 0)) {
+            att.total_score = sectionSum;
+            att.result_summary.total_score = sectionSum;
+            const max = att.max_possible_score || att.result_summary.max_score || (matchingExam?.total_marks || 100);
+            att.percentage = max > 0 ? Math.round((sectionSum / max) * 1000) / 10 : 0;
+            att.result_summary.percentage = att.percentage;
+            att.passed = att.percentage >= (matchingExam?.passing_percentage || 40);
+            att.result_summary.passed = att.passed;
+          }
+        }
       });
     }
 
@@ -3498,6 +3512,7 @@ export const tpoService = {
 
           gradedResponses[qId] = {
             ...resp,
+            selected_option: Number(resp.selected_option),
             is_correct: isCorrect,
           };
         } else {
@@ -3505,8 +3520,8 @@ export const tpoService = {
           totalUnattempted++;
           gradedResponses[qId] = {
             selected_option: null,
-            time_spent_sec: 0,
-            marked_review: false,
+            time_spent_sec: resp?.time_spent_sec || 0,
+            marked_review: Boolean(resp?.marked_review),
             is_correct: false,
           };
         }
@@ -3533,6 +3548,17 @@ export const tpoService = {
         percentage: secPercentage,
         accuracy: secAccuracy,
       });
+    }
+
+    // Preserve any responses submitted by student that were not in sections loop
+    for (const [qId, resp] of Object.entries(responses || {})) {
+      if (qId !== '__result_summary' && !gradedResponses[qId]) {
+        gradedResponses[qId] = {
+          ...resp,
+          selected_option: resp && resp.selected_option !== null && resp.selected_option !== undefined ? Number(resp.selected_option) : null,
+          is_correct: Boolean(resp?.is_correct),
+        };
+      }
     }
 
     if (totalScore < 0) totalScore = 0;
@@ -3651,13 +3677,21 @@ export const tpoService = {
         p_status_override: statusOverride || null,
       });
 
-      if (!rpcError && serverGraded) {
+      // 🛡️ CRITICAL INTEGRITY GUARD:
+      // Only accept server grading if it actually graded the attempt (i.e. found the exam sections in PostgreSQL and returned at least 1 graded question)
+      const serverGradedCount = Object.keys(serverGraded?.responses || {}).filter(k => k !== '__result_summary').length;
+      if (!rpcError && serverGraded && serverGradedCount > 0 && Number(serverGraded.max_possible_score || 0) > 0) {
         totalScore = Number(serverGraded.total_score ?? totalScore);
         maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
         percentage = Number(serverGraded.percentage ?? percentage);
         passed = Boolean(serverGraded.passed ?? passed);
         if (serverGraded.status) finalStatus = serverGraded.status;
-        if (serverGraded.responses) gradedResponses = serverGraded.responses;
+        if (serverGraded.responses) {
+          gradedResponses = {
+            ...calculated.gradedResponses,
+            ...serverGraded.responses,
+          };
+        }
         if (serverGraded.result_summary) {
           resultSummary = serverGraded.result_summary;
         } else {
@@ -3665,6 +3699,8 @@ export const tpoService = {
           resultSummary.percentage = percentage;
           resultSummary.passed = passed;
         }
+      } else {
+        console.log('[tpoService.submitAttempt] Server RPC returned 0 graded responses or failed, using accurate client calculated grade.');
       }
     } catch (rpcErr) {
       console.warn('[tpoService.submitAttempt] Server RPC grading notice (falling back to local calculation):', rpcErr);
@@ -3812,6 +3848,18 @@ export const tpoService = {
           responses: rpcData.responses || rpcData.student_responses || {},
         };
 
+        // Check local attempt to avoid losing rich student responses if RPC returned {}
+        const localAtt = getLocalAttempts().find(a => a.id === attemptId);
+        if (localAtt && localAtt.responses && Object.keys(localAtt.responses).length > Object.keys(attempt.responses || {}).length) {
+          attempt.responses = { ...localAtt.responses, ...attempt.responses };
+          if (!attempt.total_score && localAtt.total_score) attempt.total_score = localAtt.total_score;
+          if (!attempt.percentage && localAtt.percentage) attempt.percentage = localAtt.percentage;
+          if (!attempt.result_summary && localAtt.result_summary) attempt.result_summary = localAtt.result_summary;
+        }
+        if (!attempt.result_summary && (attempt.responses as any)?.__result_summary) {
+          attempt.result_summary = (attempt.responses as any).__result_summary;
+        }
+
         saveLocalAttempt(attempt);
         return {
           attempt,
@@ -3843,6 +3891,18 @@ export const tpoService = {
     }
 
     if (!attempt) return null;
+
+    // Check local attempts to merge any responses if DB had empty responses
+    const localFallback = getLocalAttempts().find(a => a.id === attemptId);
+    if (localFallback && localFallback.responses && Object.keys(localFallback.responses).length > Object.keys(attempt.responses || {}).length) {
+      attempt.responses = { ...localFallback.responses, ...attempt.responses };
+      if (!attempt.total_score && localFallback.total_score) attempt.total_score = localFallback.total_score;
+      if (!attempt.percentage && localFallback.percentage) attempt.percentage = localFallback.percentage;
+      if (!attempt.result_summary && localFallback.result_summary) attempt.result_summary = localFallback.result_summary;
+    }
+    if (!attempt.result_summary && (attempt.responses as any)?.__result_summary) {
+      attempt.result_summary = (attempt.responses as any).__result_summary;
+    }
 
     const questionIds = Object.keys(attempt.responses || {});
     let questions: any[] = [];

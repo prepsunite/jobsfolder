@@ -260,7 +260,22 @@ export default function MockExamTestPage() {
           return updated;
         });
         if (res.attempt) {
-          setFinalGradedAttempt(prev => (prev ? { ...prev, ...res.attempt } : res.attempt));
+          setFinalGradedAttempt(prev => {
+            if (!prev) return res.attempt;
+            const merged = {
+              ...(responses || {}),
+              ...(prev.responses || {}),
+              ...(res.attempt.responses || {}),
+            };
+            return {
+              ...prev,
+              ...res.attempt,
+              responses: Object.keys(merged).length > 0 ? merged : (prev.responses || responses),
+              total_score: res.attempt.total_score || prev.total_score,
+              percentage: res.attempt.percentage || prev.percentage,
+              result_summary: res.attempt.result_summary || prev.result_summary,
+            };
+          });
         }
       }
     });
@@ -363,6 +378,13 @@ export default function MockExamTestPage() {
           } catch {}
         }
 
+        // Merge graded responses with currentResponses so no answer is ever wiped
+        const mergedResponses = {
+          ...currentResponses,
+          ...(graded.responses || {}),
+        };
+        graded.responses = mergedResponses;
+        setResponses(mergedResponses);
         setFinalGradedAttempt(graded);
         setTestPhase('SUBMITTED');
       } catch (err: any) {
@@ -1448,9 +1470,10 @@ export default function MockExamTestPage() {
               {sections.flatMap(s => s.question_ids).map((qId, idx) => {
                 const q = questionsMap[qId];
                 if (!q) return null;
-                const studentResp = (finalGradedAttempt?.responses || responses)[qId];
-                const selectedOpt = studentResp?.selected_option;
-                const isCorrect = studentResp?.is_correct;
+                const studentResp = finalGradedAttempt?.responses?.[qId] ?? responses[qId];
+                const selectedOpt = studentResp && studentResp.selected_option !== null && studentResp.selected_option !== undefined
+                  ? Number(studentResp.selected_option)
+                  : null;
                 const rawCorrect = q.correct_answer;
                 const correctOptIdx =
                   typeof rawCorrect === 'number'
@@ -1458,6 +1481,9 @@ export default function MockExamTestPage() {
                     : typeof rawCorrect === 'string' && ['0', '1', '2', '3'].includes(rawCorrect)
                     ? Number(rawCorrect)
                     : ['A', 'B', 'C', 'D'].indexOf(String(rawCorrect).toUpperCase());
+                const isCorrect = studentResp?.is_correct ?? (
+                  selectedOpt !== null && correctOptIdx >= 0 ? selectedOpt === correctOptIdx : false
+                );
 
                 return (
                   <div
