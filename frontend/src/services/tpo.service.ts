@@ -4671,6 +4671,30 @@ export const tpoService = {
     const startedAt = existingAttempt?.started_at || new Date(Date.now() - timeSpentSeconds * 1000).toISOString();
     const studentId = existingAttempt?.student_id || '';
 
+    // Calculate strict wall-clock elapsed time to prevent client-side timer manipulation
+    const startedAtMs = new Date(startedAt).getTime();
+    const wallClockElapsedSeconds = Number.isFinite(startedAtMs) && startedAtMs > 0
+      ? Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000))
+      : timeSpentSeconds;
+
+    // True elapsed time: cannot be forged lower than wall-clock elapsed time
+    const effectiveTimeSpent = Math.max(timeSpentSeconds, wallClockElapsedSeconds);
+
+    // Exam duration enforcement: max allowed duration + 60s grace for submission network latency
+    const allowedDurationSeconds = (exam.duration_minutes || 90) * 60;
+    const gracePeriodSeconds = 60;
+    let effectiveStatusOverride = statusOverride;
+
+    if (
+      effectiveStatusOverride !== 'TERMINATED_MALPRACTICE' &&
+      wallClockElapsedSeconds > allowedDurationSeconds + gracePeriodSeconds
+    ) {
+      console.warn(
+        `[submitAttempt] Wall-clock time (${wallClockElapsedSeconds}s) exceeded allowed duration (${allowedDurationSeconds}s). Enforcing TIMED_OUT.`
+      );
+      effectiveStatusOverride = 'TIMED_OUT';
+    }
+
     // Fetch question solutions for grading
     const allQuestionIds = (exam.sections || []).flatMap(s => s.question_ids);
     let solutionMap: Record<string, number> = {};
@@ -4691,9 +4715,9 @@ export const tpoService = {
       exam,
       responses,
       solutionMap,
-      timeSpentSeconds,
+      effectiveTimeSpent,
       tabSwitchCount,
-      statusOverride
+      effectiveStatusOverride
     );
 
     // 2. Attempt Server-Side RPC grading (if enabled)
@@ -4709,10 +4733,10 @@ export const tpoService = {
       const { data: serverGraded, error: rpcError } = await supabase.rpc('submit_and_grade_mock_attempt', {
         p_attempt_id: attemptId,
         p_responses: responses,
-        p_time_spent_seconds: timeSpentSeconds,
+        p_time_spent_seconds: effectiveTimeSpent,
         p_proctor_events: proctorEvents,
         p_tab_switch_count: tabSwitchCount,
-        p_status_override: statusOverride || null,
+        p_status_override: effectiveStatusOverride || null,
       });
 
       // 🛡️ CRITICAL INTEGRITY GUARD:
@@ -4784,7 +4808,7 @@ export const tpoService = {
       status: finalStatus,
       started_at: startedAt,
       submitted_at: new Date().toISOString(),
-      time_spent_seconds: timeSpentSeconds,
+      time_spent_seconds: effectiveTimeSpent,
       tab_switch_count: tabSwitchCount,
       proctor_events: proctorEvents,
       responses: gradedResponses,
@@ -4824,7 +4848,7 @@ export const tpoService = {
         status: finalStatus,
         started_at: startedAt,
         submitted_at: new Date().toISOString(),
-        time_spent_seconds: timeSpentSeconds,
+        time_spent_seconds: effectiveTimeSpent,
         tab_switch_count: tabSwitchCount,
         proctor_events: proctorEvents,
         responses: {

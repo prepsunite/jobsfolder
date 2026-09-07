@@ -95,7 +95,7 @@ export interface MockExamSection {
 
 export interface ProctorEvent {
   timestamp: string;
-  type: 'BLUR' | 'FOCUS' | 'FULLSCREEN_EXIT' | 'FULLSCREEN_ENTER' | 'TAB_SWITCH';
+  type: 'BLUR' | 'FOCUS' | 'FULLSCREEN_EXIT' | 'FULLSCREEN_ENTER' | 'TAB_SWITCH' | 'DEVTOOLS_OPEN';
   details?: string;
 }
 

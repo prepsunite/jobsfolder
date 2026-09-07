@@ -213,7 +213,9 @@ export default function MockExamTestPage() {
   const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
   const tabSwitchCountRef = useRef<number>(0);
   const lastViolationTimeRef = useRef<number>(0);
+  const startedAtMsRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
+  const [warningMessage, setWarningMessage] = useState<string>('');
   const [proctorEvents, setProctorEvents] = useState<ProctorEvent[]>([]);
 
   // Submission Modal & Final Result
@@ -277,9 +279,13 @@ export default function MockExamTestPage() {
       setTabSwitchCount(count);
       setProctorEvents(existingAttempt.proctor_events || []);
       const totalSec = (exam?.duration_minutes || 90) * 60;
-      const spent = existingAttempt.time_spent_seconds || 0;
-      setTimeSpentSeconds(spent);
-      setTimeRemainingSeconds(Math.max(0, totalSec - spent));
+      const startedAtMs = existingAttempt.started_at
+        ? new Date(existingAttempt.started_at).getTime()
+        : Date.now() - (existingAttempt.time_spent_seconds || 0) * 1000;
+      startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : Date.now();
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMsRef.current) / 1000));
+      setTimeSpentSeconds(elapsedSec);
+      setTimeRemainingSeconds(Math.max(0, totalSec - elapsedSec));
     }
   }, [existingAttempt, exam, testPhase, examId]);
 
@@ -418,13 +424,15 @@ export default function MockExamTestPage() {
       }
 
       setAttemptId(attempt.id);
-      if (attempt.time_spent_seconds) {
-        setTimeSpentSeconds(attempt.time_spent_seconds);
-        setTimeRemainingSeconds(Math.max(0, exam.duration_minutes * 60 - attempt.time_spent_seconds));
-        if (attempt.responses) setResponses(attempt.responses);
-      } else {
-        setTimeRemainingSeconds(exam.duration_minutes * 60);
-      }
+      const startedAtMs = attempt.started_at
+        ? new Date(attempt.started_at).getTime()
+        : Date.now() - (attempt.time_spent_seconds || 0) * 1000;
+      startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : Date.now();
+      const totalSec = (exam.duration_minutes || 90) * 60;
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMsRef.current) / 1000));
+      setTimeSpentSeconds(elapsedSec);
+      setTimeRemainingSeconds(Math.max(0, totalSec - elapsedSec));
+      if (attempt.responses) setResponses(attempt.responses);
       setTestPhase('IN_PROGRESS');
     } catch (err: any) {
       alert(`Could not start exam: ${err.message}`);
@@ -490,23 +498,26 @@ export default function MockExamTestPage() {
     [exam]
   );
 
-  // 4. Timer Countdown & Auto-Sync Hook
+  // 4. Timer Countdown & Auto-Sync Hook (Strict Wall-Clock Anchored)
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
 
-    const interval = setInterval(() => {
-      setTimeRemainingSeconds(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setTimeout(() => {
-            handleFinalSubmit('TIMED_OUT');
-          }, 0);
-          return 0;
-        }
-        return prev - 1;
-      });
+    const totalSec = (exam?.duration_minutes || 90) * 60;
 
-      setTimeSpentSeconds(prev => prev + 1);
+    const interval = setInterval(() => {
+      const startedAtMs = startedAtMsRef.current || (startedAtMsRef.current = Date.now());
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+      const remainingSec = Math.max(0, totalSec - elapsedSec);
+
+      setTimeSpentSeconds(elapsedSec);
+      setTimeRemainingSeconds(remainingSec);
+
+      if (remainingSec <= 0) {
+        clearInterval(interval);
+        setTimeout(() => {
+          handleFinalSubmit('TIMED_OUT');
+        }, 0);
+      }
     }, 1000);
 
     // Auto-save every 15 seconds
@@ -526,31 +537,44 @@ export default function MockExamTestPage() {
       clearInterval(interval);
       clearInterval(syncInterval);
     };
-  }, [testPhase, handleFinalSubmit]);
+  }, [testPhase, exam?.duration_minutes, handleFinalSubmit]);
 
-  // 5. Anti-Cheat Watchdog (Tab Switch & Fullscreen Exit Detection)
+  // 5. Anti-Cheat & Anti-Inspect Watchdog (DevTools, Right-Click, Shortcuts, Tab Switch & Fullscreen)
   useEffect(() => {
-    if (testPhase !== 'IN_PROGRESS' || !exam?.enable_tab_switch_detection) return;
+    if (testPhase !== 'IN_PROGRESS') return;
 
-    const handleViolation = (type: ProctorEvent['type']) => {
+    const handleViolation = (type: ProctorEvent['type'], customMessage?: string) => {
       const now = Date.now();
-      // 🛡️ Debounce Guard: Ignore concurrent window.blur, visibilitychange, or fullscreen events within 1,500ms
+      // 🛡️ Debounce Guard: Ignore concurrent violations within 1,500ms
       if (now - lastViolationTimeRef.current < 1500) {
         return;
       }
       lastViolationTimeRef.current = now;
 
-      const maxAllowed = exam.max_tab_switches_allowed || 3;
+      const maxAllowed = exam?.max_tab_switches_allowed || 3;
       tabSwitchCountRef.current += 1;
       const nextCount = tabSwitchCountRef.current;
       setTabSwitchCount(nextCount);
 
+      const defaultMsg =
+        type === 'DEVTOOLS_OPEN'
+          ? (customMessage || 'Developer tools or inspect element attempt detected')
+          : `Violation ${nextCount} of ${maxAllowed}`;
+
       const newEvent: ProctorEvent = {
         timestamp: new Date().toISOString(),
         type,
-        details: `Violation ${nextCount} of ${maxAllowed}`,
+        details: defaultMsg,
       };
       setProctorEvents(prev => [...prev, newEvent]);
+
+      if (customMessage) {
+        setWarningMessage(customMessage);
+      } else if (type === 'DEVTOOLS_OPEN') {
+        setWarningMessage('Developer Tools & Inspect Element are strictly forbidden. Tampering with timers or exam elements will terminate your test.');
+      } else {
+        setWarningMessage('You switched away from the examination screen or minimized the window. This incident has been logged.');
+      }
 
       if (nextCount >= maxAllowed) {
         handleFinalSubmit('TERMINATED_MALPRACTICE');
@@ -560,29 +584,102 @@ export default function MockExamTestPage() {
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        handleViolation('TAB_SWITCH');
+      if (exam?.enable_tab_switch_detection && document.hidden) {
+        handleViolation('TAB_SWITCH', 'Switched browser tab or minimized window');
       }
     };
 
     const handleWindowBlur = () => {
-      handleViolation('BLUR');
+      if (exam?.enable_tab_switch_detection) {
+        handleViolation('BLUR', 'Examination window lost focus');
+      }
     };
 
     const handleFullscreenChange = () => {
-      if (exam.enable_fullscreen_lock && !document.fullscreenElement) {
-        handleViolation('FULLSCREEN_EXIT');
+      if (exam?.enable_fullscreen_lock && !document.fullscreenElement) {
+        handleViolation('FULLSCREEN_EXIT', 'Exited fullscreen examination mode');
       }
     };
+
+    // 🛡️ Anti-Inspect 1: Block Right-Click Context Menu completely
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleViolation('DEVTOOLS_OPEN', 'Right-click context menu / Inspect element is blocked');
+      return false;
+    };
+
+    // 🛡️ Anti-Inspect 2: Block DevTools Keyboard Shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+U, etc.)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+      const key = (e.key || '').toUpperCase();
+
+      // F12
+      if (key === 'F12') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleViolation('DEVTOOLS_OPEN', 'F12 (Developer Tools) shortcut is blocked');
+        return false;
+      }
+
+      // Ctrl + Shift + I (Inspect)
+      // Ctrl + Shift + J (Console)
+      // Ctrl + Shift + C (Element picker)
+      if (isCtrlOrCmd && isShift && (key === 'I' || key === 'J' || key === 'C')) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleViolation('DEVTOOLS_OPEN', `DevTools shortcut (Ctrl+Shift+${key}) is blocked`);
+        return false;
+      }
+
+      // Ctrl + U (View Source)
+      if (isCtrlOrCmd && key === 'U') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleViolation('DEVTOOLS_OPEN', 'View Page Source (Ctrl+U) is blocked');
+        return false;
+      }
+
+      // Ctrl + S (Save page)
+      if (isCtrlOrCmd && key === 'S') {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    // 🛡️ Anti-Inspect 3: DevTools Window Docking Detection (outer vs inner differential)
+    const checkDevToolsOpen = () => {
+      const threshold = 160;
+      const widthDiff = window.outerWidth - window.innerWidth;
+      const heightDiff = window.outerHeight - window.innerHeight;
+      if (widthDiff > threshold || heightDiff > threshold) {
+        handleViolation('DEVTOOLS_OPEN', 'Developer tools inspection dock detected');
+      }
+    };
+
+    const handleResize = () => {
+      checkDevToolsOpen();
+    };
+
+    const devtoolsCheckInterval = setInterval(checkDevToolsOpen, 2000);
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('contextmenu', handleContextMenu, true);
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('resize', handleResize);
 
     return () => {
+      clearInterval(devtoolsCheckInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('contextmenu', handleContextMenu, true);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('resize', handleResize);
     };
   }, [testPhase, exam, handleFinalSubmit]);
 
@@ -892,7 +989,7 @@ export default function MockExamTestPage() {
                 <div className="flex items-start gap-2 text-rose-700 dark:text-rose-400 font-medium">
                   <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>
-                    <strong>Anti-Cheat Watchdog Enabled:</strong> Exiting fullscreen, minimizing browser, or opening tabs will trigger warnings. Maximum {exam.max_tab_switches_allowed} tab switches allowed before automatic termination!
+                    <strong>Anti-Cheat & Anti-Tamper Enabled:</strong> Right-click inspect element, Developer Tools (F12), keyboard shortcuts, and tab switching are strictly blocked. Timers are cryptographically synchronized to server wall-clock time. Maximum {exam.max_tab_switches_allowed} violations before automatic malpractice termination!
                   </span>
                 </div>
               )}
@@ -974,19 +1071,19 @@ export default function MockExamTestPage() {
               <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 flex items-center justify-center mx-auto animate-bounce">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-black text-rose-600 dark:text-rose-400">
-                PROCTOR ALERT: TAB SWITCH DETECTED
+              <h3 className="text-lg font-black text-rose-600 dark:text-rose-400 uppercase tracking-wide">
+                PROCTOR ALERT: SECURITY VIOLATION
               </h3>
               <p className="text-xs text-gray-600 dark:text-gray-300">
-                You switched away from the examination screen. This incident has been logged.
+                {warningMessage || 'An unauthorized action was detected. This incident has been logged.'}
               </p>
               <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300">
-                Violation {tabSwitchCount} of {exam?.max_tab_switches_allowed}.<br />
-                Remaining allowed switches: {(exam?.max_tab_switches_allowed || 3) - tabSwitchCount}.
+                Violation {tabSwitchCount} of {exam?.max_tab_switches_allowed || 3}.<br />
+                Remaining allowed warnings: {Math.max(0, (exam?.max_tab_switches_allowed || 3) - tabSwitchCount)}.
               </div>
               <button
                 onClick={() => setShowWarningModal(false)}
-                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider"
+                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
               >
                 Return to Exam Immediately
               </button>
