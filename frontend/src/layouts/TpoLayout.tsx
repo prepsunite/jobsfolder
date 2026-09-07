@@ -13,6 +13,8 @@ import {
   Sun,
   Moon,
   Clock,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 
 export interface TpoOutletContext {
@@ -166,6 +168,12 @@ export default function TpoLayout() {
             <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#FD4A32]/20 text-[#FD4A32] border border-[#FD4A32]/30">
               {currentCollege.code} CRT
             </span>
+            {isAdmin && (
+              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                <ShieldCheck className="w-3 h-3 text-purple-400" />
+                Super Admin Mode
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -213,6 +221,18 @@ export default function TpoLayout() {
                 {stats?.totalStudents || 0} / {totalCap} Seats Enrolled
               </span>
             </div>
+
+            {/* Super Admin Return Link */}
+            {isAdmin && (
+              <Link
+                to="/admin/colleges"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-900/30 hover:bg-purple-900/50 border border-purple-500/30 text-purple-300 text-[11px] font-bold transition-all"
+                title="Return to Master Admin Colleges Management"
+              >
+                <span>Colleges Admin</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
 
             {/* Theme Toggle (Desktop) */}
             <button

@@ -1288,6 +1288,52 @@ export const tpoService = {
     return results;
   },
 
+  async getTpoCoordinatorForCollege(collegeId?: string, collegeCode?: string): Promise<{
+    name: string;
+    email: string;
+    assigned_at?: string;
+  } | null> {
+    if (!collegeId) return null;
+    const cleanCid = collegeId.trim();
+    const cleanCode = (collegeCode || '').trim().toUpperCase();
+
+    // 1. Direct Supabase query to tpo_authorizations table
+    try {
+      const { data: dbAuth } = await supabase
+        .from('tpo_authorizations')
+        .select('*')
+        .eq('college_id', cleanCid)
+        .eq('status', 'ACTIVE')
+        .maybeSingle();
+
+      if (dbAuth?.email) {
+        return {
+          name: `TPO Coordinator (${dbAuth.college_code || cleanCode || 'Campus'})`,
+          email: dbAuth.email,
+          assigned_at: dbAuth.assigned_at,
+        };
+      }
+    } catch {}
+
+    // 2. Comprehensive fallback across getTpoAdmins (cloud contact_messages + local store)
+    const admins = await this.getTpoAdmins();
+    const matched = admins.find(
+      a =>
+        a.college_id === cleanCid ||
+        (cleanCode && (a.college_id === cleanCode || (a as any).college_code === cleanCode))
+    );
+
+    if (matched?.email) {
+      return {
+        name: matched.name || `TPO Coordinator (${cleanCode || 'Campus'})`,
+        email: matched.email,
+        assigned_at: matched.created_at,
+      };
+    }
+
+    return null;
+  },
+
   async assignTpoAdmin(email: string, collegeId: string): Promise<{ success: boolean; message: string }> {
     const cleanEmail = email.trim().toLowerCase();
     const colleges = await this.getAllColleges();
