@@ -768,22 +768,13 @@ export default function StudentExamsPage() {
                 {/* Bottom Action Footer */}
                 <div className="pt-4 border-t border-gray-100 dark:border-[#27292e] mt-4 space-y-2">
                   {isSubmitted ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setSelectedScorecardExam(exam)}
-                        className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-blue-500" />
-                        <span>Scorecard</span>
-                      </button>
-
-                      <Link
-                        to={`/exam/${exam.id}`}
-                        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-                      >
-                        <span>Solutions →</span>
-                      </Link>
-                    </div>
+                    <button
+                      onClick={() => setSelectedScorecardExam(exam)}
+                      className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-blue-500" />
+                      <span>View Marks & Scorecard ({attempt.total_score}/{attempt.max_possible_score || exam.total_marks})</span>
+                    </button>
                   ) : isInProgress ? (
                     <Link
                       to={`/exam/${exam.id}`}
@@ -1004,23 +995,15 @@ export default function StudentExamsPage() {
               )}
 
             {/* Bottom Actions */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-[#27292e]">
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#27292e]">
+              <div className="text-[11px] text-gray-400 font-medium">
+                Submission finalized. Retest is permanently disabled for completed drives.
+              </div>
               <button
                 onClick={() => setSelectedScorecardExam(null)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#27292e] text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-[#202226] transition-colors cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-colors cursor-pointer"
               >
                 Close
-              </button>
-
-              <button
-                onClick={() => {
-                  const examId = selectedScorecardExam.id;
-                  setSelectedScorecardExam(null);
-                  navigate(`/exam/${examId}`);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-[#FD4A32]/25 cursor-pointer"
-              >
-                <span>View Full Question Solutions & Explanations →</span>
               </button>
             </div>
           </div>

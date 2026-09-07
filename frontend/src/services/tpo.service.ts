@@ -4329,7 +4329,7 @@ export const tpoService = {
     const existingLocal = localAttempts.find(
       a => a.student_id === studentId || a.student_id?.toLowerCase() === cleanStudentId
     );
-    if (existingLocal && existingLocal.status === 'IN_PROGRESS') {
+    if (existingLocal) {
       return existingLocal;
     }
 
@@ -4340,6 +4340,8 @@ export const tpoService = {
         .select('*')
         .eq('mock_exam_id', mockExamId)
         .or(`student_id.eq.${studentId},student_id.eq.${cleanStudentId}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (existing) {

@@ -202,7 +202,6 @@ export default function MockExamTestPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsMap, setQuestionsMap] = useState<Record<string, any>>({});
   const [questionsLoading, setQuestionsLoading] = useState(false);
-  const [showReviewAnswers, setShowReviewAnswers] = useState(false);
 
   // Responses Map: { [questionId]: { selected_option: number | null, marked_review: boolean, time_spent_sec: number } }
   const [responses, setResponses] = useState<Record<string, StudentExamResponse>>({});
@@ -362,11 +361,25 @@ export default function MockExamTestPage() {
   const currentQuestion = questionsMap[currentQuestionId];
 
   // 2. Start Exam Handler
-  const handleStartExam = async (forceFresh = false) => {
+  const handleStartExam = async () => {
     if (!exam || !user) return;
 
     if (!isAuthorizedCandidate) {
       alert(`Access Restricted: This assessment is reserved exclusively for students of ${examCollege?.name || exam.college_id}.`);
+      return;
+    }
+
+    // 🔒 STRICT SECURITY: Completed exams can never be retaken
+    if (
+      existingAttempt &&
+      (existingAttempt.status === 'SUBMITTED' ||
+        existingAttempt.status === 'TIMED_OUT' ||
+        existingAttempt.status === 'TERMINATED_MALPRACTICE' ||
+        existingAttempt.status === 'GRADED')
+    ) {
+      alert('This assessment has already been completed and submitted. Under campus placement drive regulations, re-attempts are strictly disabled.');
+      setFinalGradedAttempt(existingAttempt);
+      setTestPhase('SUBMITTED');
       return;
     }
 
@@ -382,14 +395,6 @@ export default function MockExamTestPage() {
 
       isSubmittingRef.current = false;
 
-      if (forceFresh) {
-        setResponses({});
-        setProctorEvents([]);
-        setTabSwitchCount(0);
-        setTimeSpentSeconds(0);
-        setTimeRemainingSeconds(exam.duration_minutes * 60);
-      }
-
       // Initialize or resume attempt in Supabase & local storage
       const candidateIdentifier = user.email || user.id;
       const attempt = await tpoService.startOrResumeAttempt(
@@ -399,8 +404,21 @@ export default function MockExamTestPage() {
         user.email || undefined
       );
 
+      // Guard against already completed attempt returned by service
+      if (
+        attempt.status === 'SUBMITTED' ||
+        attempt.status === 'TIMED_OUT' ||
+        attempt.status === 'TERMINATED_MALPRACTICE' ||
+        attempt.status === 'GRADED'
+      ) {
+        setFinalGradedAttempt(attempt);
+        setAttemptId(attempt.id);
+        setTestPhase('SUBMITTED');
+        return;
+      }
+
       setAttemptId(attempt.id);
-      if (!forceFresh && attempt.time_spent_seconds) {
+      if (attempt.time_spent_seconds) {
         setTimeSpentSeconds(attempt.time_spent_seconds);
         setTimeRemainingSeconds(Math.max(0, exam.duration_minutes * 60 - attempt.time_spent_seconds));
         if (attempt.responses) setResponses(attempt.responses);
@@ -888,28 +906,48 @@ export default function MockExamTestPage() {
             </div>
           )}
 
-          <button
-            onClick={() => handleStartExam(false)}
-            disabled={questionsLoading}
-            className="w-full py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-sm uppercase tracking-wider transition-all shadow-lg shadow-[#FD4A32]/25 flex items-center justify-center gap-2"
-          >
-            {questionsLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Preparing Question Palette...
-              </>
-            ) : existingAttempt?.status === 'IN_PROGRESS' ? (
-              <>
-                <Clock className="w-4 h-4" />
-                Resume In-Progress Exam ({formatTime(timeRemainingSeconds)})
-              </>
-            ) : (
-              <>
-                <Maximize2 className="w-4 h-4" />
-                I Understand — Start Fullscreen Exam
-              </>
-            )}
-          </button>
+          {existingAttempt && (existingAttempt.status === 'SUBMITTED' || existingAttempt.status === 'TIMED_OUT' || existingAttempt.status === 'TERMINATED_MALPRACTICE' || existingAttempt.status === 'GRADED') ? (
+            <div className="space-y-3">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl text-xs text-emerald-800 dark:text-emerald-300 space-y-1 text-left">
+                <div className="font-bold flex items-center gap-1.5 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  Assessment Completed & Submitted
+                </div>
+                <p>
+                  You have already completed and submitted this mock exam. Under campus placement drive regulations, re-attempts are strictly disabled.
+                </p>
+              </div>
+              <button
+                onClick={() => setTestPhase('SUBMITTED')}
+                className="w-full py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <span>View My Marks & Scorecard →</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleStartExam()}
+              disabled={questionsLoading}
+              className="w-full py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-sm uppercase tracking-wider transition-all shadow-lg shadow-[#FD4A32]/25 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {questionsLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Preparing Question Palette...
+                </>
+              ) : existingAttempt?.status === 'IN_PROGRESS' ? (
+                <>
+                  <Clock className="w-4 h-4" />
+                  Resume In-Progress Exam ({formatTime(timeRemainingSeconds)})
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-4 h-4" />
+                  I Understand — Start Fullscreen Exam
+                </>
+              )}
+            </button>
+          )}
 
         </div>
       </div>
@@ -1616,164 +1654,83 @@ export default function MockExamTestPage() {
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-1">
-            {exam?.show_results_immediately !== false ? (
-              <button
-                onClick={() => setShowReviewAnswers(prev => !prev)}
-                className="flex-1 py-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-wider transition-all border border-blue-200 dark:border-blue-800 flex items-center justify-center gap-1.5"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>{showReviewAnswers ? 'Hide Answer Key' : 'Review Questions & Solutions'}</span>
-              </button>
-            ) : (
-              <div className="flex-1 py-3 rounded-2xl bg-gray-100 dark:bg-slate-800/50 text-gray-500 text-xs font-semibold flex items-center justify-center gap-1.5">
-                <span>Solutions scheduled for release by TPO after drive closes</span>
+          {/* Section Performance Marks Breakdown */}
+          {finalGradedAttempt?.result_summary?.sections &&
+            finalGradedAttempt.result_summary.sections.length > 0 && (
+              <div className="space-y-2.5 text-left pt-2 border-t border-gray-100 dark:border-[#27292e]">
+                <h4 className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Section-Wise Marks Breakdown
+                </h4>
+                <div className="border border-gray-200 dark:border-[#27292e] rounded-xl overflow-hidden text-xs">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 dark:bg-[#1c1d20] text-gray-500 dark:text-gray-400 text-[10px] uppercase font-bold border-b border-gray-200 dark:border-[#27292e]">
+                      <tr>
+                        <th className="py-2 px-3">Section</th>
+                        <th className="py-2 px-3 text-center">Attempted</th>
+                        <th className="py-2 px-3 text-center">Accuracy</th>
+                        <th className="py-2 px-3 text-right">Score</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-[#27292e]">
+                      {finalGradedAttempt.result_summary.sections.map((sec, i) => (
+                        <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-[#1a1b1f]">
+                          <td className="py-2 px-3 font-bold text-gray-900 dark:text-white">
+                            {sec.section_name}
+                          </td>
+                          <td className="py-2 px-3 text-center text-gray-600 dark:text-gray-400 font-mono">
+                            {sec.attempted} / {sec.total_questions}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            <span
+                              className={`font-bold font-mono ${
+                                sec.accuracy >= 70
+                                  ? 'text-emerald-600'
+                                  : sec.accuracy >= 50
+                                  ? 'text-blue-600'
+                                  : 'text-rose-600'
+                              }`}
+                            >
+                              {sec.accuracy}%
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-right font-black font-mono text-gray-900 dark:text-white">
+                            {sec.score} / {sec.max_score}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
-            <button
-              onClick={() => {
-                if (confirm('Retake this assessment for practice? This will start a fresh session.')) {
-                  handleStartExam(true);
-                }
-              }}
-              className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Retake Exam (Practice)</span>
-            </button>
+          {/* Institutional Drive Retest Prohibition Notice */}
+          <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#1a1b1f] border border-gray-200 dark:border-[#282a30] text-xs text-gray-600 dark:text-gray-400 space-y-1">
+            <div className="font-bold text-gray-900 dark:text-white flex items-center justify-center gap-1.5">
+              <ShieldAlert className="w-3.5 h-3.5 text-[#FD4A32]" />
+              Institutional Placement Drive Finalized
+            </div>
+            <p className="text-[11px]">
+              This assessment has been submitted and recorded by your Placement Cell. Under institutional drive policy, re-attempts are strictly disabled. You can review your scores in your Mock Exams portal.
+            </p>
           </div>
 
-          {/* Question Review Section */}
-          {showReviewAnswers && (
-            <div className="text-left space-y-4 pt-4 border-t border-gray-200 dark:border-[#25262a] max-h-96 overflow-y-auto pr-1">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-black uppercase tracking-wider text-gray-500">
-                  Detailed Solution Key
-                </h4>
-                <span className="text-[11px] text-gray-400">
-                  {Object.keys(responses).length} responses logged
-                </span>
-              </div>
-
-              {sections.flatMap(s => s.question_ids).map((qId, idx) => {
-                const q = questionsMap[qId];
-                if (!q) return null;
-                const studentResp = finalGradedAttempt?.responses?.[qId] ?? responses[qId];
-                const selectedOpt = studentResp && studentResp.selected_option !== null && studentResp.selected_option !== undefined
-                  ? Number(studentResp.selected_option)
-                  : null;
-                const rawCorrect = q.correct_answer;
-                const correctOptIdx =
-                  typeof rawCorrect === 'number'
-                    ? rawCorrect
-                    : typeof rawCorrect === 'string' && ['0', '1', '2', '3'].includes(rawCorrect)
-                    ? Number(rawCorrect)
-                    : ['A', 'B', 'C', 'D'].indexOf(String(rawCorrect).toUpperCase());
-                const isCorrect = studentResp?.is_correct ?? (
-                  selectedOpt !== null && correctOptIdx >= 0 ? selectedOpt === correctOptIdx : false
-                );
-
-                return (
-                  <div
-                    key={qId}
-                    className="p-4 rounded-2xl bg-gray-50 dark:bg-[#1a1b1e] border border-gray-200 dark:border-[#2e3035] space-y-2.5 text-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-500">Question {idx + 1}</span>
-                      {selectedOpt === null || selectedOpt === undefined ? (
-                        <span className="px-2 py-0.5 rounded-full bg-gray-200 dark:bg-[#2b2d31] text-gray-600 dark:text-gray-300 text-[10px] font-bold">
-                          Unanswered
-                        </span>
-                      ) : isCorrect ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Correct
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 text-[10px] font-bold flex items-center gap-1">
-                          <XCircle className="w-3 h-3 text-rose-500" /> Incorrect
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stimulus in Review */}
-                    {q.passage && (
-                      <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-xs text-blue-950 dark:text-blue-200 space-y-1">
-                        <div className="font-bold flex items-center gap-1.5 text-blue-700 dark:text-blue-400">
-                          <BookOpen className="w-3.5 h-3.5" />
-                          {q.passageTitle || 'Comprehension Passage'}
-                        </div>
-                        <div className="leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto pr-1">
-                          {q.passage}
-                        </div>
-                      </div>
-                    )}
-                    {q.contextData && !q.passage && (
-                      <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs space-y-1">
-                        <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                          <BarChart3 className="w-3.5 h-3.5" />
-                          {q.contextTitle || 'Reference Data & Graph'}
-                        </div>
-                        <div className="max-h-56 overflow-y-auto">
-                          <QuestionRichContent content={q.contextData} />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
-                      <QuestionRichContent content={q.statement} />
-                    </div>
-
-                    <div className="space-y-1.5 pt-1">
-                      {normalizeQuestionOptions(q.options).map((opt, oIdx: number) => {
-                        const isStudentChoice = selectedOpt === oIdx;
-                        const isThisCorrect =
-                          correctOptIdx === oIdx ||
-                          (typeof rawCorrect === 'string' && rawCorrect.toUpperCase() === opt.key);
-
-                        let optClasses = 'border-gray-200 dark:border-[#2e3035] bg-white dark:bg-[#202225] text-gray-700 dark:text-gray-300';
-                        if (isThisCorrect) {
-                          optClasses = 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold';
-                        } else if (isStudentChoice && !isCorrect) {
-                          optClasses = 'border-rose-300 dark:border-rose-800 bg-rose-50/80 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 font-semibold';
-                        }
-
-                        return (
-                          <div
-                            key={opt.key || oIdx}
-                            className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${optClasses}`}
-                          >
-                            <div className="flex items-center gap-2 flex-1">
-                              <span className="font-bold shrink-0">{opt.key || String.fromCharCode(65 + oIdx)}.</span>
-                              <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
-                            </div>
-                            <div className="flex items-center gap-1 text-[10px] font-bold uppercase shrink-0">
-                              {isThisCorrect && <span className="text-emerald-600 dark:text-emerald-400">Correct Answer</span>}
-                              {isStudentChoice && !isThisCorrect && <span className="text-rose-600 dark:text-rose-400">Your Choice</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {q.explanation && (
-                      <div className="p-2.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 text-blue-900 dark:text-blue-200 text-[11px] leading-relaxed">
-                        <strong>Explanation:</strong> {q.explanation}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="w-full py-3.5 rounded-2xl bg-[#121417] dark:bg-white text-white dark:text-black font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all shadow-md"
-          >
-            Return to Student Dashboard
-          </button>
+          {/* Navigation Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-1">
+            <button
+              onClick={() => navigate('/student/exams')}
+              className="flex-1 py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/25 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Back to Mock Exams Portal</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="py-3.5 px-6 rounded-2xl bg-gray-100 dark:bg-[#202226] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider hover:bg-gray-200 dark:hover:bg-[#282a30] transition-all cursor-pointer"
+            >
+              Dashboard
+            </button>
+          </div>
 
         </div>
       </div>
