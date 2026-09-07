@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
 } from 'lucide-react';
 
 export type AnalyticsTab = 'aptitude' | 'technical' | 'interview';
@@ -42,6 +45,9 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
     }
     return 'aptitude';
   });
+
+  // Collapsed by default: user clicks to open
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleTabChange = (tab: AnalyticsTab) => {
     setActiveTab(tab);
@@ -159,6 +165,94 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
     );
   }
 
+  // When collapsed by default, show sleek interactive summary banner
+  if (!isExpanded) {
+    return (
+      <div
+        className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-3.5 sm:p-4 shadow-xs transition-all hover:border-[#FD4A32]/40 group ${className}`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left: Branding & Click Prompt */}
+          <div
+            onClick={() => setIsExpanded(true)}
+            className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
+          >
+            <div className="w-9 h-9 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <TrendingUp className="w-4.5 h-4.5 text-[#FD4A32]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-display font-bold text-sm text-[#121417] dark:text-white tracking-tight group-hover:text-[#FD4A32] transition-colors truncate">
+                  Placement Readiness &amp; Analytics
+                </h3>
+                <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
+                  Analytics
+                </span>
+              </div>
+              <p className="text-[11px] text-[#868E96] dark:text-[#777777] font-sans truncate">
+                Click to view your Aptitude, Coding &amp; Interview mastery breakdowns
+              </p>
+            </div>
+          </div>
+
+          {/* Right: 3 Quick Summary Pills (Clicking any opens directly to that tab!) + Expand Button */}
+          <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                handleTabChange('aptitude');
+                setIsExpanded(true);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono transition-colors cursor-pointer"
+              title="Click to view Aptitude analytics"
+            >
+              <Brain className="w-3.5 h-3.5 text-[#FD4A32]" />
+              <span className="text-[#868E96] dark:text-[#777777] text-[11px] font-sans">Apt:</span>
+              <span className="font-bold text-[#121417] dark:text-white">{aptSolved}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                handleTabChange('technical');
+                setIsExpanded(true);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono transition-colors cursor-pointer"
+              title="Click to view Coding analytics"
+            >
+              <Code2 className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-[#868E96] dark:text-[#777777] text-[11px] font-sans">Code:</span>
+              <span className="font-bold text-[#121417] dark:text-white">{codingSolved}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                handleTabChange('interview');
+                setIsExpanded(true);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono transition-colors cursor-pointer"
+              title="Click to view Interview analytics"
+            >
+              <MessageSquareQuote className="w-3.5 h-3.5 text-purple-500" />
+              <span className="text-[#868E96] dark:text-[#777777] text-[11px] font-sans">Viva:</span>
+              <span className="font-bold text-[#121417] dark:text-white">{intMastered}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#121417] hover:bg-black dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black text-xs font-bold transition-colors cursor-pointer ml-1"
+            >
+              <span>View</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-4 sm:p-5 shadow-xs transition-all ${className}`}>
       {/* 1. Header Bar: Dynamic Title & Interactive 3-Tab Selector */}
@@ -200,60 +294,72 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
           </div>
         </div>
 
-        {/* 3 Interactive Tab Selector Buttons */}
-        <div className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] self-start lg:self-auto gap-1">
-          <button
-            type="button"
-            onClick={() => handleTabChange('aptitude')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'aptitude'
-                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
-                : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-            }`}
-          >
-            <Brain className={`w-3.5 h-3.5 ${activeTab === 'aptitude' ? 'text-[#FD4A32]' : 'text-current'}`} />
-            <span>Aptitude</span>
-            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-              activeTab === 'aptitude' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
-            }`}>
-              {aptSolved}
-            </span>
-          </button>
+        {/* 3 Interactive Tab Selector Buttons + Collapse Button */}
+        <div className="flex items-center gap-2 self-start lg:self-auto flex-wrap">
+          <div className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] gap-1">
+            <button
+              type="button"
+              onClick={() => handleTabChange('aptitude')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'aptitude'
+                  ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                  : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+              }`}
+            >
+              <Brain className={`w-3.5 h-3.5 ${activeTab === 'aptitude' ? 'text-[#FD4A32]' : 'text-current'}`} />
+              <span>Aptitude</span>
+              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                activeTab === 'aptitude' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
+              }`}>
+                {aptSolved}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange('technical')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'technical'
+                  ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                  : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+              }`}
+            >
+              <Code2 className={`w-3.5 h-3.5 ${activeTab === 'technical' ? 'text-[#FD4A32]' : 'text-current'}`} />
+              <span>Coding</span>
+              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                activeTab === 'technical' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
+              }`}>
+                {codingSolved}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange('interview')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'interview'
+                  ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                  : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+              }`}
+            >
+              <MessageSquareQuote className={`w-3.5 h-3.5 ${activeTab === 'interview' ? 'text-purple-500' : 'text-current'}`} />
+              <span>Interview</span>
+              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                activeTab === 'interview' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-black/5 dark:bg-white/5'
+              }`}>
+                {intMastered}
+              </span>
+            </button>
+          </div>
 
           <button
             type="button"
-            onClick={() => handleTabChange('technical')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'technical'
-                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
-                : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-            }`}
+            onClick={() => setIsExpanded(false)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] text-[#868E96] hover:text-[#121417] dark:text-[#777777] dark:hover:text-white border border-[#E9ECEF] dark:border-[#242424] text-xs font-bold transition-all cursor-pointer"
+            title="Collapse analytics"
           >
-            <Code2 className={`w-3.5 h-3.5 ${activeTab === 'technical' ? 'text-[#FD4A32]' : 'text-current'}`} />
-            <span>Coding</span>
-            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-              activeTab === 'technical' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
-            }`}>
-              {codingSolved}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange('interview')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'interview'
-                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
-                : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-            }`}
-          >
-            <MessageSquareQuote className={`w-3.5 h-3.5 ${activeTab === 'interview' ? 'text-purple-500' : 'text-current'}`} />
-            <span>Interview</span>
-            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-              activeTab === 'interview' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-black/5 dark:bg-white/5'
-            }`}>
-              {intMastered}
-            </span>
+            <span>Hide</span>
+            <ChevronUp className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
