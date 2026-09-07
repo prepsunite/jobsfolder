@@ -246,10 +246,23 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   >
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                      <span>Back to Admin Panel</span>
+                      <span>Admin Console</span>
                     </div>
                     <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
-                      Admin
+                      Core
+                    </span>
+                  </Link>
+                  <Link
+                    to="/admin/colleges"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+                      <span>Colleges &amp; TPOs</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/60 text-[#FD4A32]">
+                      B2B
                     </span>
                   </Link>
                 </div>
@@ -339,17 +352,53 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     to="/admin"
                     onClick={onClose}
                     className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                      location.pathname.startsWith('/admin')
+                      location.pathname === '/admin'
                         ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
                         : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                      <span>Admin Panel</span>
+                      <span>Admin Console</span>
                     </div>
                     <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
-                      Admin
+                      Core
+                    </span>
+                  </Link>
+
+                  <Link
+                    to="/admin/colleges"
+                    onClick={onClose}
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                      location.pathname.startsWith('/admin/colleges')
+                        ? 'bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30'
+                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+                      <span>Colleges &amp; TPOs</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/60 text-[#FD4A32]">
+                      B2B
+                    </span>
+                  </Link>
+
+                  <Link
+                    to="/admin/bulk-import"
+                    onClick={onClose}
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                      location.pathname.startsWith('/admin/bulk-import')
+                        ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <span>Bulk Importer</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                      Import
                     </span>
                   </Link>
                 </div>

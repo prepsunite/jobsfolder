@@ -18,6 +18,7 @@ const TopicQuestionsPage = lazy(() => import('@/pages/TopicQuestionsPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
+const AdminCollegesPage = lazy(() => import('@/pages/AdminCollegesPage'));
 const AdminBulkImportPage = lazy(() => import('@/pages/AdminBulkImportPage'));
 
 // Dedicated TPO Portal Pages
@@ -144,6 +145,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requireAdmin>
             {withSuspense(AdminDashboardPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin/colleges',
+        element: (
+          <ProtectedRoute requireAdmin>
+            {withSuspense(AdminCollegesPage)}
           </ProtectedRoute>
         ),
       },

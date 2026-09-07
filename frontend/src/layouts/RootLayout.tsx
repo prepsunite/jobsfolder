@@ -273,6 +273,9 @@ export default function RootLayout() {
               <Link to="/admin" className="hover:text-emerald-300 font-display font-bold flex items-center gap-1">
                 <Plus className="w-3.5 h-3.5" /> Dashboard
               </Link>
+              <Link to="/admin/colleges" className="hover:text-emerald-300 font-display font-bold flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-orange-400" /> Colleges &amp; TPOs
+              </Link>
               <Link to="/admin/bulk-import" className="hover:text-emerald-300 font-display font-bold flex items-center gap-1">
                 <Plus className="w-3.5 h-3.5" /> Bulk Import
               </Link>

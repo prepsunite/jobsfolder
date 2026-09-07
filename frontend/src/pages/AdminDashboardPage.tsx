@@ -624,17 +624,13 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setAdminTab('colleges-tpo')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0 ${
-              adminTab === 'colleges-tpo'
-                ? 'bg-[#FD4A32] text-white ring-2 ring-[#FD4A32]/40'
-                : 'bg-orange-600 hover:bg-orange-500 text-white'
-            }`}
+          <Link
+            to="/admin/colleges"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
           >
             <Building2 className="w-3.5 h-3.5" />
             <span>Colleges &amp; TPOs</span>
-          </button>
+          </Link>
           <Link
             to="/admin/bulk-import"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
@@ -680,17 +676,14 @@ export default function AdminDashboardPage() {
           <span>Company &amp; Exam Modules</span>
         </button>
 
-        <button
-          onClick={() => setAdminTab('colleges-tpo')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-            adminTab === 'colleges-tpo'
-              ? 'bg-[#FD4A32] text-white shadow-sm'
-              : 'text-[#FD4A32] hover:bg-orange-50 dark:hover:bg-orange-950/30'
-          }`}
+        <Link
+          to="/admin/colleges"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap text-[#FD4A32] hover:bg-orange-50 dark:hover:bg-orange-950/30 border border-orange-500/20"
         >
-          <Building2 className={`w-3.5 h-3.5 ${adminTab === 'colleges-tpo' ? 'text-white' : 'text-[#FD4A32]'}`} />
+          <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
           <span className="font-extrabold">Colleges &amp; TPO Admins</span>
-        </button>
+          <ArrowRight className="w-3 h-3 ml-0.5 text-[#FD4A32]" />
+        </Link>
 
         <button
           onClick={() => setAdminTab('moderation')}
@@ -2229,7 +2222,31 @@ export default function AdminDashboardPage() {
 
       {/* TAB 7: COLLEGES & TPO ADMINS MANAGEMENT */}
       {adminTab === 'colleges-tpo' && (
-        <CollegesTpoManager />
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-orange-500/20 text-[#FD4A32] shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-[#1f1b17] dark:text-[#e3e3e3]">
+                  Colleges &amp; TPO Admins has a dedicated full-width workspace!
+                </h4>
+                <p className="text-xs text-[#747878] dark:text-[#a6adbb]">
+                  Navigate to the dedicated page for an uncluttered layout with full-screen seat capacity and license controls.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/admin/colleges"
+              className="px-4 py-2 bg-[#FD4A32] hover:bg-[#e03a24] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-sm"
+            >
+              <span>Open Dedicated Workspace</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <CollegesTpoManager />
+        </div>
       )}
 
       {/* 📝 MODAL: EDIT EXAM MARKDOWN */}
