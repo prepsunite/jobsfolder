@@ -16,6 +16,7 @@ const SubmitExperiencePage = lazy(() => import('@/pages/SubmitExperiencePage'));
 const AptitudePage = lazy(() => import('@/pages/AptitudePage'));
 const TopicQuestionsPage = lazy(() => import('@/pages/TopicQuestionsPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const StudentExamsPage = lazy(() => import('@/pages/StudentExamsPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 const AdminCollegesPage = lazy(() => import('@/pages/AdminCollegesPage'));
@@ -129,6 +130,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(DashboardPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/student/exams',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(StudentExamsPage)}
           </ProtectedRoute>
         ),
       },

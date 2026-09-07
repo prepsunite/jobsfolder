@@ -58,6 +58,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   // Consumer Student Navigation
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Mock Exams', href: '/student/exams', icon: GraduationCap, badge: 'CRT' },
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
@@ -292,7 +293,14 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
                         <span>{link.name}</span>
                       </div>
-                      {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
+                      <div className="flex items-center gap-1.5">
+                        {'badge' in link && (link as any).badge && (
+                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                            {(link as any).badge}
+                          </span>
+                        )}
+                        {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
+                      </div>
                     </Link>
                   );
                 })}

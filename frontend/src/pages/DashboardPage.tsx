@@ -35,6 +35,7 @@ import {
   Clock,
   Award,
   TrendingUp,
+  GraduationCap,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -622,14 +623,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 🏛️ Campus Mock Placement Drives Widget for Enrolled College Students */}
+      {/* 🏛️ Campus Mock Placement Drives Gateway Widget for Enrolled College Students */}
       {enrolledCollege && (
-        <div className="rounded-2xl p-5 sm:p-6 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/40 via-white to-orange-50/10 dark:from-[#1a1311] dark:via-[#141414] dark:to-[#121417] shadow-sm relative overflow-hidden space-y-5">
+        <div className="rounded-2xl p-5 sm:p-6 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/40 via-white to-orange-50/10 dark:from-[#1a1311] dark:via-[#141414] dark:to-[#121417] shadow-sm relative overflow-hidden space-y-4">
           {/* Top Banner Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-orange-100 dark:border-[#2a2220] pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-orange-100 dark:border-[#2a2220] pb-3.5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0">
-                <Building2 className="w-5 h-5" />
+                <GraduationCap className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -641,7 +642,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight mt-0.5">
-                  Assigned Placement Drives & Assessments
+                  Assigned Placement Drives & Mock Tests
                 </h2>
               </div>
             </div>
@@ -667,178 +668,93 @@ export default function DashboardPage() {
           </div>
 
           {/* Student Placement Readiness Intelligence Bar */}
-          {campusExams.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-white/70 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] text-center">
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                  Assigned Drives
-                </span>
-                <span className="text-sm font-black text-gray-900 dark:text-white">
-                  {campusExams.length} Mock Drives
-                </span>
-              </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-white/70 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] text-center">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Assigned Drives
+              </span>
+              <span className="text-sm font-black text-gray-900 dark:text-white">
+                {campusExams.length} Mock Drives
+              </span>
+            </div>
 
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                  Completed
-                </span>
-                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                  {completedCampusAttempts.length} / {campusExams.length}
-                </span>
-              </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Completed
+              </span>
+              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                {completedCampusAttempts.length} / {campusExams.length}
+              </span>
+            </div>
 
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                  Campus Mock Avg
-                </span>
-                <span className="text-sm font-black text-blue-600 dark:text-blue-400">
-                  {avgCampusScore !== null ? `${avgCampusScore}%` : 'Pending Attempt'}
-                </span>
-              </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Campus Mock Avg
+              </span>
+              <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                {avgCampusScore !== null ? `${avgCampusScore}%` : 'Pending Attempt'}
+              </span>
+            </div>
 
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                  Placement Readiness
-                </span>
-                {avgCampusScore !== null ? (
-                  avgCampusScore >= 70 ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                      <Award className="w-3 h-3 text-emerald-500" /> Day-1 Ready
-                    </span>
-                  ) : avgCampusScore >= 50 ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                      <TrendingUp className="w-3 h-3 text-blue-500" /> Near Ready
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                      <AlertTriangle className="w-3 h-3 text-rose-500" /> Remedial Prep
-                    </span>
-                  )
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Placement Readiness
+              </span>
+              {avgCampusScore !== null ? (
+                avgCampusScore >= 70 ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <Award className="w-3 h-3 text-emerald-500" /> Day-1 Ready
+                  </span>
+                ) : avgCampusScore >= 50 ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                    <TrendingUp className="w-3 h-3 text-blue-500" /> Near Ready
+                  </span>
                 ) : (
-                  <span className="text-[11px] font-bold text-gray-400">Not Attempted</span>
-                )}
-              </div>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                    <AlertTriangle className="w-3 h-3 text-rose-500" /> Remedial Prep
+                  </span>
+                )
+              ) : (
+                <span className="text-[11px] font-bold text-gray-400">Not Attempted</span>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Drives List / Grid */}
-          {isCampusExamsLoading ? (
-            <div className="py-8 text-center text-xs text-gray-400">
-              Loading active campus placement drives...
+          {/* Quick Action Navigation Strip */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              {completedCampusAttempts.length < campusExams.length ? (
+                <span>
+                  You have{' '}
+                  <strong className="text-gray-900 dark:text-white">
+                    {campusExams.length - completedCampusAttempts.length} active placement assessments
+                  </strong>{' '}
+                  ready for your branch and cohort.
+                </span>
+              ) : (
+                <span>All assigned campus placement tests have been completed and evaluated.</span>
+              )}
             </div>
-          ) : campusExams.length === 0 ? (
-            <div className="py-6 px-4 text-center rounded-xl bg-white/60 dark:bg-[#18191c] border border-gray-200/60 dark:border-[#27292e] space-y-2">
-              <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950/40 text-orange-600 flex items-center justify-center mx-auto">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                No Active Drives Scheduled Currently
-              </h4>
-              <p className="text-xs text-gray-500 max-w-md mx-auto">
-                Your college Training & Placement Office will publish upcoming placement assessments here. Keep practicing your aptitude topics!
-              </p>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              {campusExams.some(e => e.attempt?.status === 'IN_PROGRESS') && (
+                <Link
+                  to={`/exam/${campusExams.find(e => e.attempt?.status === 'IN_PROGRESS')?.id}`}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm shrink-0"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Resume Exam →</span>
+                </Link>
+              )}
+              <Link
+                to="/student/exams"
+                className="px-4 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm shadow-[#FD4A32]/25 w-full sm:w-auto shrink-0"
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span>Go to Mock Exams Portal ({campusExams.length} Drives) →</span>
+              </Link>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {campusExams.map(exam => {
-                const attempt = exam.attempt;
-                const isSubmitted = attempt && attempt.status === 'SUBMITTED';
-                const isInProgress = attempt && attempt.status === 'IN_PROGRESS';
-                const targetDepts = exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches';
-
-                return (
-                  <div
-                    key={exam.id}
-                    className="bg-white dark:bg-[#18191c] rounded-2xl border border-gray-200/80 dark:border-[#27292e] p-5 shadow-xs flex flex-col justify-between hover:border-[#FD4A32]/40 transition-all group"
-                  >
-                    <div className="space-y-3">
-                      {/* Badge Row */}
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
-                          {exam.target_company}
-                        </span>
-
-                        {isSubmitted ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                            <span>Submitted ({attempt.percentage}%)</span>
-                          </span>
-                        ) : isInProgress ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1 animate-pulse">
-                            <span>In Progress</span>
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                            Live Drive
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="font-bold text-sm text-gray-900 dark:text-white leading-snug">
-                        {exam.title}
-                      </h3>
-
-                      {/* Info grid */}
-                      <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#202226] text-center border border-gray-100 dark:border-[#2c2e33]">
-                        <div>
-                          <div className="text-[9px] font-bold text-gray-400 uppercase">Duration</div>
-                          <div className="text-xs font-black text-gray-800 dark:text-gray-200 mt-0.5">{exam.duration_minutes}m</div>
-                        </div>
-                        <div>
-                          <div className="text-[9px] font-bold text-gray-400 uppercase">Marks</div>
-                          <div className="text-xs font-black text-gray-800 dark:text-gray-200 mt-0.5">{exam.total_marks}</div>
-                        </div>
-                        <div>
-                          <div className="text-[9px] font-bold text-gray-400 uppercase">Cutoff</div>
-                          <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{exam.passing_percentage}%</div>
-                        </div>
-                      </div>
-
-                      <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between">
-                        <span>Branches: <strong>{targetDepts}</strong></span>
-                        {exam.enable_tab_switch_detection && (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500">
-                            <ShieldCheck className="w-3 h-3 text-[#FD4A32]" />
-                            Proctored
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action CTA */}
-                    <div className="pt-4 border-t border-gray-100 dark:border-[#27292e] mt-4">
-                      {isSubmitted ? (
-                        <Link
-                          to={`/exam/${exam.id}`}
-                          className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#25282d] hover:bg-gray-200 dark:hover:bg-[#2e3238] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>View Scorecard ({attempt.total_score}/{attempt.max_possible_score || exam.total_marks}) →</span>
-                        </Link>
-                      ) : isInProgress ? (
-                        <Link
-                          to={`/exam/${exam.id}`}
-                          className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
-                        >
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>Resume Exam In-Progress →</span>
-                        </Link>
-                      ) : (
-                        <Link
-                          to={`/exam/${exam.id}`}
-                          className="w-full py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#FD4A32]/25 group-hover:scale-[1.01]"
-                        >
-                          <span>Take Mock Exam →</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          </div>
         </div>
       )}
 
