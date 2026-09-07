@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { ExamItem } from '@/services/dataStore';
+import { dataStore, type ExamItem } from '@/services/dataStore';
 import { auditService } from '@/services/audit.service';
 
 export interface ExamWithCompany extends ExamItem {
@@ -76,64 +76,60 @@ export const examService = {
   },
 
   getAllExams: async (): Promise<ExamWithCompany[]> => {
-    const [examsRes, compsRes] = await Promise.all([
-      supabase
-        .from('exams')
-        .select(`
-          *,
-          companies (
-            id,
-            name,
-            logo_url,
-            industry
-          )
-        `)
-        .eq('is_deleted', false)
-        .order('name', { ascending: true }),
-      supabase
-        .from('companies')
-        .select('id, name, slug, logo_url, industry')
-        .eq('is_deleted', false),
-    ]);
+    try {
+      const [examsRes, compsRes] = await Promise.all([
+        supabase
+          .from('exams')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('name', { ascending: true }),
+        supabase
+          .from('companies')
+          .select('id, name, slug, logo_url, industry')
+          .eq('is_deleted', false),
+      ]);
 
-    if (examsRes.error) {
-      console.error('[examService.getAllExams] Supabase error:', examsRes.error);
-      throw examsRes.error;
+      if (examsRes.error) {
+        console.warn('[examService.getAllExams] Supabase notice, falling back to dataStore:', examsRes.error?.message || examsRes.error);
+        return dataStore.getAllExams();
+      }
+
+      const companyMapBySlug = new Map(
+        (compsRes.data || []).map(c => [c.slug, c])
+      );
+      const companyMapById = new Map(
+        (compsRes.data || []).map(c => [c.id, c])
+      );
+
+      if (examsRes.data && examsRes.data.length > 0) {
+        return examsRes.data.map(e => {
+          const fallbackComp = companyMapBySlug.get(e.company_slug) || companyMapById.get(e.company_id);
+
+          return {
+            id: e.id,
+            companySlug: e.company_slug,
+            name: e.name,
+            badge: e.badge || 'Campus Recruitment Drive',
+            content: e.content || '',
+            oldPapers: e.old_papers || '',
+            price: e.price ? Number(e.price) : 99,
+            paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+            googleDocEmbedUrl: e.google_doc_embed_url,
+            googleDocEditUrl: e.google_doc_edit_url,
+            isPublicExam: e.is_public_exam ?? false,
+            upvotes: e.upvotes || 0,
+            companyName: fallbackComp?.name || e.company_slug.toUpperCase(),
+            companyLogoUrl: fallbackComp?.logo_url || undefined,
+            companyIndustry: fallbackComp?.industry || 'IT Services & Consulting',
+          };
+        });
+      }
+
+      return dataStore.getAllExams();
+    } catch (err) {
+      console.warn('[examService.getAllExams] Handled error, returning dataStore exams:', err);
+      return dataStore.getAllExams();
     }
-
-    const companyMapBySlug = new Map(
-      (compsRes.data || []).map(c => [c.slug, c])
-    );
-    const companyMapById = new Map(
-      (compsRes.data || []).map(c => [c.id, c])
-    );
-
-    if (examsRes.data && examsRes.data.length > 0) {
-      return examsRes.data.map(e => {
-        const joinedComp = Array.isArray(e.companies) ? e.companies[0] : e.companies;
-        const fallbackComp = joinedComp || companyMapBySlug.get(e.company_slug) || companyMapById.get(e.company_id);
-
-        return {
-          id: e.id,
-          companySlug: e.company_slug,
-          name: e.name,
-          badge: e.badge || 'Campus Recruitment Drive',
-          content: e.content || '',
-          oldPapers: e.old_papers || '',
-          price: e.price ? Number(e.price) : 99,
-          paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
-          googleDocEmbedUrl: e.google_doc_embed_url,
-          googleDocEditUrl: e.google_doc_edit_url,
-          isPublicExam: e.is_public_exam ?? false,
-          upvotes: e.upvotes || 0,
-          companyName: fallbackComp?.name || e.company_slug.toUpperCase(),
-          companyLogoUrl: fallbackComp?.logo_url || undefined,
-          companyIndustry: fallbackComp?.industry || 'IT Services & Consulting',
-        };
-      });
-    }
-
-    return [];
   },
 
   createExam: async (examData: Partial<ExamItem>): Promise<ExamItem> => {

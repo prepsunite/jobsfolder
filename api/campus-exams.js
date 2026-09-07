@@ -11,29 +11,45 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://qcelcsswvalvvtlxohbl.supabase.co';
+    const supabaseServiceKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_SERVICE_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return res.status(500).json({ error: 'Supabase service configuration missing on server.' });
-  }
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(200).json({
+        success: false,
+        disabled: true,
+        notice: 'Supabase service configuration missing on server.',
+        exams: [],
+        attempts: [],
+        templates: [],
+      });
+    }
 
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+    // 1. Mandatory JWT Authentication Guard
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or invalid Bearer authentication token.' });
+    }
 
-  // 1. Mandatory JWT Authentication Guard
-  const authHeader = req.headers.authorization || req.headers.Authorization;
-  if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: Missing or invalid Bearer authentication token.' });
-  }
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
-  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    });
 
-  if (authError || !user) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or expired authentication session.' });
-  }
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid or expired authentication session.' });
+    }
 
   // 2. Authorization Helper Functions
   const userEmail = (user.email || '').trim().toLowerCase();
@@ -202,19 +218,19 @@ export default async function handler(req, res) {
         }
         return res.status(200).json({ success: true, templates });
       } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return res.status(200).json({ success: false, error: err.message, templates: [] });
       }
     }
 
-    // Action: Get all attempts for an assessment with enriched student metadata
+    // Action: Get all attempts for an assessment or college with enriched student metadata
     if (action === 'attempts') {
-      if (!examId) {
-        return res.status(400).json({ error: 'Missing examId query parameter for attempts' });
+      if (!examId && !collegeId) {
+        return res.status(200).json({ success: true, attempts: [] });
       }
 
       try {
         let examCollegeId = collegeId;
-        if (!examCollegeId) {
+        if (!examCollegeId && examId) {
           const { data: ex } = await supabaseAdmin
             .from('mock_exams')
             .select('college_id')
@@ -245,14 +261,21 @@ export default async function handler(req, res) {
           return res.status(403).json({ error: 'Forbidden: Caller is not authorized to inspect attempts for this assessment.' });
         }
 
-        const { data: attempts, error: attErr } = await supabaseAdmin
+        let query = supabaseAdmin
           .from('student_exam_attempts')
           .select('*')
-          .eq('mock_exam_id', examId)
           .order('total_score', { ascending: false });
 
+        if (examId) {
+          query = query.eq('mock_exam_id', examId);
+        } else if (collegeId) {
+          query = query.eq('college_id', collegeId);
+        }
+
+        const { data: attempts, error: attErr } = await query;
+
         if (attErr) {
-          return res.status(500).json({ error: attErr.message });
+          return res.status(200).json({ success: false, error: attErr.message, attempts: [] });
         }
 
         const allAttempts = attempts || [];
@@ -337,7 +360,7 @@ export default async function handler(req, res) {
 
         return res.status(200).json({ success: true, attempts: [] });
       } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return res.status(200).json({ success: false, error: err.message, attempts: [] });
       }
     }
 
@@ -443,7 +466,7 @@ export default async function handler(req, res) {
         exam: exams[0] || null,
       });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(200).json({ success: false, error: err.message, exams: [], exam: null });
     }
   }
 
@@ -682,9 +705,19 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true, exam });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(200).json({ success: false, error: err.message, exam: null });
     }
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
+  } catch (globalErr) {
+    console.warn('[api/campus-exams] Handled global error:', globalErr);
+    return res.status(200).json({
+      success: false,
+      error: globalErr?.message || 'Server error',
+      exams: [],
+      attempts: [],
+      templates: [],
+    });
+  }
 }

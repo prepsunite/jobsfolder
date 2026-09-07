@@ -2768,23 +2768,25 @@ export const tpoService = {
       console.warn('Notice querying college student_exam_attempts:', dbErr);
     }
 
-    // 2. Query /api/campus-exams?action=attempts for known exams (service-role bypass)
-    try {
-      const authHeaders = await getAuthHeaders();
-      const res = await fetch(`/api/campus-exams?action=attempts&collegeId=${encodeURIComponent(collegeId)}`, {
-        headers: authHeaders,
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.attempts && Array.isArray(json.attempts)) {
-          json.attempts.forEach((a: StudentExamAttempt) => {
-            if (a && a.id && !attemptsMap.has(a.id)) {
-              attemptsMap.set(a.id, a);
-            }
-          });
+    // 2. Query /api/campus-exams?action=attempts for known exams (service-role bypass fallback)
+    if (attemptsMap.size === 0) {
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch(`/api/campus-exams?action=attempts&collegeId=${encodeURIComponent(collegeId)}`, {
+          headers: authHeaders,
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.attempts && Array.isArray(json.attempts)) {
+            json.attempts.forEach((a: StudentExamAttempt) => {
+              if (a && a.id && !attemptsMap.has(a.id)) {
+                attemptsMap.set(a.id, a);
+              }
+            });
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
     // 3. Cloud resilience: Fetch attempts logged via contact_messages
     try {
@@ -3379,23 +3381,25 @@ export const tpoService = {
       console.warn('Notice reading cloud exam messages:', err);
     }
 
-    // Serverless API fetch (bypasses RLS, ensuring cross-device support across all student/TPO browsers)
-    try {
-      const authHeaders = await getAuthHeaders();
-      const res = await fetch(`/api/campus-exams?collegeId=${encodeURIComponent(collegeId)}`, {
-        headers: authHeaders,
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.exams && Array.isArray(json.exams)) {
-          json.exams.forEach((e: MockExam) => {
-            if (e && e.id && !map.has(e.id)) {
-              map.set(e.id, e);
-            }
-          });
+    // Serverless API fetch (fallback if direct queries returned nothing)
+    if (map.size === 0) {
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch(`/api/campus-exams?collegeId=${encodeURIComponent(collegeId)}`, {
+          headers: authHeaders,
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.exams && Array.isArray(json.exams)) {
+            json.exams.forEach((e: MockExam) => {
+              if (e && e.id && !map.has(e.id)) {
+                map.set(e.id, e);
+              }
+            });
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
     const merged = Array.from(map.values()).filter(e => !e.is_deleted);
     saveLocalExams(collegeId, merged);
