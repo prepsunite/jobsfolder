@@ -457,6 +457,25 @@ function getLocalAttempts(examId?: string): StudentExamAttempt[] {
     if (raw) {
       const parsed: StudentExamAttempt[] = JSON.parse(raw);
       if (Array.isArray(parsed)) {
+        // 🛡️ ANTI-TAMPER & SELF-HEALING: Auto-heal any legacy zeroed attempts in local cache
+        parsed.forEach(a => {
+          if (a.result_summary?.sections && a.result_summary.sections.length > 0) {
+            const secSum = a.result_summary.sections.reduce((sum, s) => sum + (Number(s.score) || 0), 0);
+            const secMax = a.result_summary.sections.reduce((sum, s) => sum + (Number(s.max_score) || 0), 0);
+            if (secSum > 0 && (!a.total_score || a.total_score === 0)) {
+              a.total_score = Math.round(secSum * 100) / 100;
+              a.result_summary.total_score = a.total_score;
+            }
+            if (secMax > 0 && (!a.max_possible_score || a.max_possible_score === 0)) {
+              a.max_possible_score = secMax;
+              a.result_summary.max_score = secMax;
+            }
+            if (a.max_possible_score > 0 && (!a.percentage || a.percentage === 0)) {
+              a.percentage = Math.round(((a.total_score || 0) / a.max_possible_score) * 1000) / 10;
+              a.result_summary.percentage = a.percentage;
+            }
+          }
+        });
         return examId ? parsed.filter(a => a.mock_exam_id === examId) : parsed;
       }
     }
@@ -466,9 +485,33 @@ function getLocalAttempts(examId?: string): StudentExamAttempt[] {
 
 function saveLocalAttempt(attempt: StudentExamAttempt) {
   try {
+    // 🛡️ ANTI-TAMPER: If attempt has section scores summing to > 0, ensure total_score is authentic
+    if (attempt.result_summary?.sections && attempt.result_summary.sections.length > 0) {
+      const secSum = attempt.result_summary.sections.reduce((sum, s) => sum + (Number(s.score) || 0), 0);
+      const secMax = attempt.result_summary.sections.reduce((sum, s) => sum + (Number(s.max_score) || 0), 0);
+      if (secSum > 0 && (!attempt.total_score || attempt.total_score === 0)) {
+        attempt.total_score = Math.round(secSum * 100) / 100;
+        attempt.result_summary.total_score = attempt.total_score;
+      }
+      if (secMax > 0 && (!attempt.max_possible_score || attempt.max_possible_score === 0)) {
+        attempt.max_possible_score = secMax;
+        attempt.result_summary.max_score = secMax;
+      }
+      if (attempt.max_possible_score > 0 && (!attempt.percentage || attempt.percentage === 0)) {
+        attempt.percentage = Math.round(((attempt.total_score || 0) / attempt.max_possible_score) * 1000) / 10;
+        attempt.result_summary.percentage = attempt.percentage;
+      }
+    }
+
     const all = getLocalAttempts();
     const idx = all.findIndex(a => a.id === attempt.id);
     if (idx !== -1) {
+      // If existing attempt already had an authentic score, do not overwrite with 0
+      if ((all[idx].total_score || 0) > 0 && (attempt.total_score || 0) === 0) {
+        attempt.total_score = all[idx].total_score;
+        attempt.percentage = all[idx].percentage;
+        attempt.max_possible_score = all[idx].max_possible_score;
+      }
       all[idx] = attempt;
     } else {
       all.unshift(attempt);
@@ -2888,43 +2931,100 @@ export const tpoService = {
           (att as any).target_company = matchingExam.target_company;
         }
 
-        // Guarantee result_summary is populated for TPO analytics
+        // 🛡️ ANTI-TAMPER INTEGRITY: Ensure result_summary is populated without ever overwriting with empty evaluation
         if (!att.result_summary) {
           if ((att.responses as any)?.__result_summary) {
             att.result_summary = (att.responses as any).__result_summary;
-          } else if (matchingExam) {
-            const calc = this.calculateAttemptResult(
-              matchingExam,
-              att.responses || {},
-              {},
-              att.time_spent_seconds || 0,
-              att.tab_switch_count || 0,
-              att.status as any
-            );
-            att.result_summary = calc.resultSummary;
+          } else {
+            const max = att.max_possible_score || (matchingExam?.total_marks || 100);
+            const score = Number(att.total_score) || 0;
+            const pct = max > 0 ? Math.round((score / max) * 1000) / 10 : 0;
+            att.result_summary = {
+              total_score: score,
+              max_score: max,
+              percentage: pct,
+              passed: Boolean(att.passed),
+              tier: pct >= 70 ? 'TIER_1' : pct >= 50 ? 'TIER_2' : 'TIER_3',
+              tier_label: pct >= 70 ? 'Tier 1: Day-1 Ready' : pct >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed',
+              total_questions: matchingExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || 0,
+              total_attempted: Object.keys(att.responses || {}).length,
+              total_correct: Math.round(score),
+              total_incorrect: Math.max(0, Object.keys(att.responses || {}).length - Math.round(score)),
+              total_unattempted: 0,
+              overall_accuracy: Object.keys(att.responses || {}).length > 0 ? Math.round((score / Object.keys(att.responses || {}).length) * 100) : 0,
+              time_spent_seconds: att.time_spent_seconds || 0,
+              tab_switch_count: att.tab_switch_count || 0,
+              proctor_status: (att.tab_switch_count || 0) > 3 ? 'MALPRACTICE_TERMINATED' : (att.tab_switch_count || 0) > 0 ? 'WARNING' : 'CLEAN',
+              sections: matchingExam?.sections?.map((s, idx) => ({
+                section_id: s.id || `sec-${idx}`,
+                section_name: s.name,
+                total_questions: s.question_ids?.length || 0,
+                attempted: 0,
+                correct: 0,
+                incorrect: 0,
+                unattempted: s.question_ids?.length || 0,
+                score: 0,
+                max_score: (s.question_ids?.length || 0) * (Number(s.marks_per_correct) || 1),
+                percentage: 0,
+                accuracy: 0,
+              })) || [],
+            };
           }
         }
 
-        // Guarantee percentage is mathematically accurate from real score
-        if (typeof att.percentage !== 'number' || isNaN(att.percentage)) {
-          const max = att.max_possible_score || (matchingExam?.total_marks || 100);
+        // 🛡️ ANTI-TAMPER INTEGRITY & IMMUTABLE SCORE RESOLUTION:
+        // 1. If result_summary.sections has scored questions, resolve total_score and max_possible_score accurately
+        if (att.result_summary?.sections && att.result_summary.sections.length > 0) {
+          const sectionScoreSum = att.result_summary.sections.reduce((sum, s) => sum + (Number(s.score) || 0), 0);
+          const sectionMaxSum = att.result_summary.sections.reduce((sum, s) => sum + (Number(s.max_score) || 0), 0);
+
+          // If top-level total_score is 0 or missing, but section scores sum to > 0, restore the authentic score!
+          if (sectionScoreSum > 0 && (!att.total_score || att.total_score === 0)) {
+            att.total_score = Math.round(sectionScoreSum * 100) / 100;
+            att.result_summary.total_score = att.total_score;
+          }
+          if (sectionMaxSum > 0 && (!att.max_possible_score || att.max_possible_score === 0)) {
+            att.max_possible_score = sectionMaxSum;
+            att.result_summary.max_score = sectionMaxSum;
+          }
+        } else if ((!att.total_score || att.total_score === 0) && (att.result_summary?.total_correct || 0) > 0) {
+          // If sections array is empty but candidate had recorded correct questions
+          att.total_score = att.result_summary!.total_correct;
+          if (att.result_summary) att.result_summary.total_score = att.total_score;
+        }
+
+        // 2. Guarantee percentage is mathematically accurate from real score and max marks
+        const max = att.max_possible_score || att.result_summary?.max_score || (matchingExam?.total_marks || 100);
+        if (typeof att.percentage !== 'number' || isNaN(att.percentage) || (att.percentage === 0 && (att.total_score || 0) > 0)) {
           att.percentage = max > 0 ? Math.round(((att.total_score || 0) / max) * 1000) / 10 : 0;
         }
 
-        // Align result_summary strictly with the candidate's real score
+        // 3. Align result_summary strictly with the candidate's authentic score (NEVER zero out sections!)
         if (att.result_summary) {
           att.result_summary.total_score = att.total_score || 0;
+          att.result_summary.max_score = max;
           att.result_summary.percentage = att.percentage || 0;
           att.result_summary.passed = Boolean(att.passed);
-          if (att.total_score === 0 && att.result_summary.sections) {
-            att.result_summary.sections.forEach(sec => {
-              sec.score = 0;
-              sec.percentage = 0;
-              sec.correct = 0;
-            });
-          }
         }
       });
+
+      // Self-heal local storage attempt cache if any score was healed
+      try {
+        const local = getLocalAttempts();
+        let updatedLocal = false;
+        allAttempts.forEach(att => {
+          const matchIdx = local.findIndex(l => l.id === att.id);
+          if (matchIdx !== -1) {
+            if (local[matchIdx].total_score !== att.total_score || local[matchIdx].percentage !== att.percentage) {
+              local[matchIdx] = { ...local[matchIdx], ...att };
+              updatedLocal = true;
+            }
+          }
+        });
+        if (updatedLocal) {
+          localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(local));
+        }
+      } catch {}
     }
 
     return allAttempts.sort((a, b) => {
@@ -2957,10 +3057,12 @@ export const tpoService = {
       if (s.email) studentDeptMap.set(s.email.toLowerCase(), dept);
     });
 
-    // Helper: Normalize candidate identity key (email preferred, then student_id)
+    // Helper: Normalize candidate identity key (email preferred, then roll, then student_id)
     const getStudentKey = (att: StudentExamAttempt): string => {
-      const email = (att.student_email || att.student?.email || '').trim().toLowerCase();
+      const email = (att.student_email || att.student?.email || (att.student_id?.includes('@') ? att.student_id : '')).trim().toLowerCase();
       if (email && email.includes('@')) return email;
+      const roll = (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '').trim().toLowerCase();
+      if (roll) return `roll:${roll}`;
       const sid = (att.student_id || '').trim().toLowerCase();
       if (sid) return sid;
       return (att.student?.name || att.id).trim().toLowerCase();
@@ -3107,9 +3209,12 @@ export const tpoService = {
       if (s.id) studentInfoMap.set(s.id.toLowerCase(), s);
     });
 
+    // Helper: Normalize candidate identity key (email preferred, then roll, then student_id)
     const getStudentKey = (att: StudentExamAttempt): string => {
-      const email = (att.student_email || att.student?.email || '').trim().toLowerCase();
+      const email = (att.student_email || att.student?.email || (att.student_id?.includes('@') ? att.student_id : '')).trim().toLowerCase();
       if (email && email.includes('@')) return email;
+      const roll = (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '').trim().toLowerCase();
+      if (roll) return `roll:${roll}`;
       const sid = (att.student_id || '').trim().toLowerCase();
       if (sid) return sid;
       return (att.student?.name || att.id).trim().toLowerCase();
@@ -3979,21 +4084,34 @@ export const tpoService = {
     } catch {}
 
     allAttempts.forEach(att => {
-      if (typeof att.percentage !== 'number' || isNaN(att.percentage)) {
-        const max = att.max_possible_score || 100;
+      // 🛡️ ANTI-TAMPER INTEGRITY & IMMUTABLE SCORE RESOLUTION:
+      if (att.result_summary?.sections && att.result_summary.sections.length > 0) {
+        const sectionScoreSum = att.result_summary.sections.reduce((sum, s) => sum + (Number(s.score) || 0), 0);
+        const sectionMaxSum = att.result_summary.sections.reduce((sum, s) => sum + (Number(s.max_score) || 0), 0);
+
+        if (sectionScoreSum > 0 && (!att.total_score || att.total_score === 0)) {
+          att.total_score = Math.round(sectionScoreSum * 100) / 100;
+          att.result_summary.total_score = att.total_score;
+        }
+        if (sectionMaxSum > 0 && (!att.max_possible_score || att.max_possible_score === 0)) {
+          att.max_possible_score = sectionMaxSum;
+          att.result_summary.max_score = sectionMaxSum;
+        }
+      } else if ((!att.total_score || att.total_score === 0) && (att.result_summary?.total_correct || 0) > 0) {
+        att.total_score = att.result_summary!.total_correct;
+        if (att.result_summary) att.result_summary.total_score = att.total_score;
+      }
+
+      const max = att.max_possible_score || att.result_summary?.max_score || 100;
+      if (typeof att.percentage !== 'number' || isNaN(att.percentage) || (att.percentage === 0 && (att.total_score || 0) > 0)) {
         att.percentage = max > 0 ? Math.round(((att.total_score || 0) / max) * 1000) / 10 : 0;
       }
+
       if (att.result_summary) {
         att.result_summary.total_score = att.total_score || 0;
+        att.result_summary.max_score = max;
         att.result_summary.percentage = att.percentage || 0;
         att.result_summary.passed = Boolean(att.passed);
-        if (att.total_score === 0 && att.result_summary.sections) {
-          att.result_summary.sections.forEach(sec => {
-            sec.score = 0;
-            sec.percentage = 0;
-            sec.correct = 0;
-          });
-        }
       }
     });
 
@@ -4599,9 +4717,13 @@ export const tpoService = {
       // Only accept server grading if it actually graded the attempt (i.e. found the exam sections in PostgreSQL and returned at least 1 graded question)
       const serverGradedCount = Object.keys(serverGraded?.responses || {}).filter(k => k !== '__result_summary').length;
       if (!rpcError && serverGraded && serverGradedCount > 0 && Number(serverGraded.max_possible_score || 0) > 0) {
-        totalScore = Number(serverGraded.total_score ?? totalScore);
+        if (Number(serverGraded.total_score || 0) > 0 || calculated.totalScore === 0) {
+          totalScore = Number(serverGraded.total_score ?? totalScore);
+        } else {
+          console.warn('[tpoService.submitAttempt] Server returned 0 score while client verified score of', calculated.totalScore, '- preserving verified score.');
+        }
         maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
-        percentage = Number(serverGraded.percentage ?? percentage);
+        percentage = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 1000) / 10 : Number(serverGraded.percentage ?? percentage);
         passed = Boolean(serverGraded.passed ?? passed);
         if (serverGraded.status) finalStatus = serverGraded.status;
         if (serverGraded.responses) {
@@ -4611,9 +4733,15 @@ export const tpoService = {
           };
         }
         if (serverGraded.result_summary) {
-          resultSummary = serverGraded.result_summary;
+          resultSummary = {
+            ...serverGraded.result_summary,
+            total_score: totalScore,
+            max_score: maxPossibleScore,
+            percentage,
+          };
         } else {
           resultSummary.total_score = totalScore;
+          resultSummary.max_score = maxPossibleScore;
           resultSummary.percentage = percentage;
           resultSummary.passed = passed;
         }

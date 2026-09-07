@@ -1034,14 +1034,36 @@ export default function TpoAnalyticsPage() {
 
       {/* 🔍 Candidate Placement Performance Scorecard Modal */}
       {selectedAttempt && (() => {
-        const inspectedSummary = selectedAttempt.result_summary || (activeExam ? tpoService.calculateAttemptResult(
-          activeExam,
-          selectedAttempt.responses || {},
-          {},
-          selectedAttempt.time_spent_seconds || 0,
-          selectedAttempt.tab_switch_count || 0,
-          selectedAttempt.status as any
-        ).resultSummary : null);
+        const inspectedSummary = selectedAttempt.result_summary || {
+          total_score: selectedAttempt.total_score || 0,
+          max_score: selectedAttempt.max_possible_score || (activeExam?.total_marks || 100),
+          percentage: selectedAttempt.percentage || 0,
+          passed: Boolean(selectedAttempt.passed),
+          tier: (selectedAttempt.percentage || 0) >= 70 ? 'TIER_1' : (selectedAttempt.percentage || 0) >= 50 ? 'TIER_2' : 'TIER_3',
+          tier_label: (selectedAttempt.percentage || 0) >= 70 ? 'Tier 1: Day-1 Ready' : (selectedAttempt.percentage || 0) >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed',
+          total_questions: activeExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || 0,
+          total_attempted: Object.keys(selectedAttempt.responses || {}).length,
+          total_correct: Math.round(selectedAttempt.total_score || 0),
+          total_incorrect: Math.max(0, Object.keys(selectedAttempt.responses || {}).length - Math.round(selectedAttempt.total_score || 0)),
+          total_unattempted: 0,
+          overall_accuracy: Object.keys(selectedAttempt.responses || {}).length > 0 ? Math.round(((selectedAttempt.total_score || 0) / Object.keys(selectedAttempt.responses || {}).length) * 100) : (selectedAttempt.percentage || 0),
+          time_spent_seconds: selectedAttempt.time_spent_seconds || 0,
+          tab_switch_count: selectedAttempt.tab_switch_count || 0,
+          proctor_status: (selectedAttempt.tab_switch_count || 0) > 3 ? 'MALPRACTICE_TERMINATED' : (selectedAttempt.tab_switch_count || 0) > 0 ? 'WARNING' : 'CLEAN',
+          sections: activeExam?.sections?.map((s, idx) => ({
+            section_id: s.id || `sec-${idx}`,
+            section_name: s.name,
+            total_questions: s.question_ids?.length || 0,
+            attempted: 0,
+            correct: 0,
+            incorrect: 0,
+            unattempted: s.question_ids?.length || 0,
+            score: 0,
+            max_score: (s.question_ids?.length || 0) * (Number(s.marks_per_correct) || 1),
+            percentage: 0,
+            accuracy: 0,
+          })) || [],
+        };
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
