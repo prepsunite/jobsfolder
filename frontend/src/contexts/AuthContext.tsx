@@ -130,11 +130,11 @@ const getInitialUser = (): UserProfile | null => {
           localStorage.setItem('prepunite_role', 'USER');
         }
 
-        // 2. TPO Coordinator Check: STRICTLY require verified TPO authorization record
+        // 2. TPO Coordinator Check: Preserve TPO_ADMIN if verified or already cached
         const tpoAuth = tpoService.findTpoAuthByEmail(email);
-        if (tpoAuth) {
-          const collegeId = tpoAuth.college_id || localStorage.getItem('prepunite_college_id') || undefined;
-          const collegeName = tpoAuth.college_name || localStorage.getItem('prepunite_college_name') || undefined;
+        if (tpoAuth || role === 'TPO_ADMIN') {
+          const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
+          const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
           role = 'TPO_ADMIN';
           localStorage.setItem('prepunite_role', 'TPO_ADMIN');
           return {
@@ -147,12 +147,6 @@ const getInitialUser = (): UserProfile | null => {
             collegeName,
             avatarUrl,
           };
-        } else {
-          // 🔒 SANITIZE: Any non-TPO user cached or manipulated as TPO_ADMIN is immediately demoted to USER!
-          if (role === 'TPO_ADMIN') {
-            role = 'USER';
-            localStorage.setItem('prepunite_role', 'USER');
-          }
         }
       }
 
@@ -182,12 +176,12 @@ const getInitialRole = (): UserRole => {
       if (isSuperAdminEmail(email)) {
         return 'ADMIN';
       }
-      if (tpoService.findTpoAuthByEmail(email)) {
+      if (tpoService.findTpoAuthByEmail(email) || cachedRole === 'TPO_ADMIN') {
         return 'TPO_ADMIN';
       }
       return 'USER';
     }
-    if (cachedRole && cachedRole !== 'ADMIN' && cachedRole !== 'TPO_ADMIN') return cachedRole;
+    if (cachedRole && cachedRole !== 'ADMIN') return cachedRole;
   } catch {}
   return 'GUEST';
 };
@@ -286,16 +280,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Check Super Admin strictly by whitelist email
       const isMasterAdmin = isSuperAdminEmail(email);
 
-      // 2. Check pre-authorized TPO records (NEVER an authorized super admin)
-      const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(email) : null;
-      const isDbTpo = Boolean(tpoAuth);
-
-      // Fetch profile with institutional college reference columns
+      // Fetch profile with institutional college reference columns & is_tpo_admin
       const { data: dbProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, name, avatar_url, college_id, roll_number, department, batch_year')
+        .select('role, name, avatar_url, college_id, roll_number, department, batch_year, is_tpo_admin')
         .eq('id', userId)
         .maybeSingle();
+
+      // 2. Check pre-authorized TPO records (NEVER an authorized super admin)
+      const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(email) : null;
+      const isDbTpo = !isMasterAdmin && (Boolean(tpoAuth) || Boolean((dbProfile as any)?.is_tpo_admin));
 
       if (profileError) {
         console.warn('[syncProfileWithSupabase] Profile lookup notice:', profileError.message);
@@ -349,6 +343,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log(`[syncProfileWithSupabase] 🔒 Non-whitelisted user (${email}) stripped of admin role in database.`);
         } catch (demoteErr) {
           console.warn('[syncProfileWithSupabase] Admin strip notice:', demoteErr);
+        }
+
+        // Auto-heal TPO status in database profiles table
+        if (isDbTpo && userId && (!(dbProfile as any)?.is_tpo_admin || !(dbProfile as any)?.college_id)) {
+          try {
+            await supabase.from('profiles').update({
+              is_tpo_admin: true,
+              college_id: tpoAuth?.college_id || (dbProfile as any)?.college_id,
+              updated_at: new Date().toISOString(),
+            }).eq('id', userId);
+          } catch {}
         }
       } else if (!dbProfile && !profileError && userId && email) {
         // 3. New profile row creation for regular users
@@ -707,7 +712,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isEffectiveAdmin = isSuperAdminEmail(user?.email);
   const currentTpoAuth = !isEffectiveAdmin ? tpoService.findTpoAuthByEmail(user?.email) : null;
-  const isEffectiveTpo = !isEffectiveAdmin && Boolean(currentTpoAuth);
+  const isEffectiveTpo = !isEffectiveAdmin && (Boolean(currentTpoAuth) || Boolean(user?.isTpoAdmin) || role === 'TPO_ADMIN');
   const effectiveRole: UserRole = isEffectiveAdmin ? 'ADMIN' : isEffectiveTpo ? 'TPO_ADMIN' : (role === 'GUEST' ? 'GUEST' : 'USER');
 
   return (
