@@ -15,6 +15,8 @@ const ExperiencesPage = lazy(() => import('@/pages/ExperiencesPage'));
 const SubmitExperiencePage = lazy(() => import('@/pages/SubmitExperiencePage'));
 const AptitudePage = lazy(() => import('@/pages/AptitudePage'));
 const TopicQuestionsPage = lazy(() => import('@/pages/TopicQuestionsPage'));
+const TechnicalHubPage = lazy(() => import('@/pages/TechnicalHubPage'));
+const InterviewPrepPage = lazy(() => import('@/pages/InterviewPrepPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const StudentExamsPage = lazy(() => import('@/pages/StudentExamsPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
@@ -124,6 +126,14 @@ export const router = createBrowserRouter([
       {
         path: '/aptitude/:categorySlug/topic/:topicId',
         element: withSuspense(TopicQuestionsPage),
+      },
+      {
+        path: '/technical',
+        element: withSuspense(TechnicalHubPage),
+      },
+      {
+        path: '/interview-prep',
+        element: withSuspense(InterviewPrepPage),
       },
       {
         path: '/dashboard',

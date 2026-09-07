@@ -27,6 +27,8 @@ import {
   FileText,
   Settings,
   GraduationCap,
+  MessageSquareQuote,
+  Code2,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -59,6 +61,8 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Mock Exams', href: '/student/exams', icon: GraduationCap, badge: 'CRT' },
+    { name: 'Technical & Coding', href: '/technical', icon: Terminal, badge: 'HOT' },
+    { name: 'Interview Prep', href: '/interview-prep', icon: MessageSquareQuote, badge: 'NEW' },
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },

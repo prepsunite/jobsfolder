@@ -9,6 +9,7 @@ import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionIt
 import { progressService } from '@/services/progress.service';
 import { tpoService } from '@/services/tpo.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
+import TechnicalStatsWidget from '@/components/TechnicalStatsWidget';
 import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -765,6 +766,9 @@ export default function DashboardPage() {
         title="Overall Aptitude Mastery & Progress"
         subtitle="Your lifetime question solving accuracy, difficulty distribution, and active streaks."
       />
+
+      {/* 💻 Technical & Coding Hub + Interview Prep Bible Readiness Cards */}
+      <TechnicalStatsWidget />
 
       {/* Navigation Tabs for Profile */}
       <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#242424] pb-2">
