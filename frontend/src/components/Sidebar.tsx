@@ -29,6 +29,9 @@ import {
   GraduationCap,
   MessageSquareQuote,
   Code2,
+  Cpu,
+  HelpCircle,
+  Briefcase,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -47,6 +50,8 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
   const displayCollegeName = collegeName || (collegeCode ? `${collegeCode}` : '') || user?.collegeName || 'Institutional';
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
+  const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(true);
+  const [isInterviewExpanded, setIsInterviewExpanded] = useState(true);
 
   // TPO Institutional Modules (Strictly for College Placement Officers)
   const tpoNavLinks = [
@@ -61,8 +66,6 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Mock Exams', href: '/student/exams', icon: GraduationCap, badge: 'CRT' },
-    { name: 'Technical & Coding', href: '/technical', icon: Terminal, badge: 'HOT' },
-    { name: 'Interview Prep', href: '/interview-prep', icon: MessageSquareQuote, badge: 'NEW' },
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
@@ -77,6 +80,18 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'Verbal Ability', slug: 'verbal-ability', icon: MessageSquare },
     { name: 'Nonverbal Reasoning', slug: 'nonverbal-reasoning', icon: Compass },
     { name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },
+  ];
+
+  const technicalTracks = [
+    { name: 'Programming 150', href: '/technical?track=programming-150', track: 'programming-150', icon: Code2, badge: '150' },
+    { name: 'Campus DSA Core', href: '/technical?track=campus-dsa', track: 'campus-dsa', icon: Layers, badge: 'Patterns' },
+    { name: 'Technical MCQs', href: '/technical?track=mcqs', track: 'mcqs', icon: HelpCircle, badge: 'OA' },
+  ];
+
+  const interviewCategories = [
+    { name: 'Core CS Subjects', href: '/interview-prep?category=core-cs', category: 'core-cs', icon: Cpu, badge: 'High-Yield' },
+    { name: 'HR & Behavioral', href: '/interview-prep?category=hr', category: 'hr', icon: Briefcase, badge: 'STAR' },
+    { name: 'Project Defense', href: '/interview-prep?category=project', category: 'project', icon: ShieldCheck, badge: 'Viva' },
   ];
 
   return (
@@ -345,6 +360,104 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
                             <span className="truncate">{cat.name}</span>
                           </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Collapsible Technical & Coding */}
+              <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+                <button
+                  type="button"
+                  onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
+                  className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
+                >
+                  <span>Technical &amp; Coding</span>
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform duration-200 ${
+                      isTechnicalExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
+                    }`}
+                  />
+                </button>
+
+                {isTechnicalExpanded && (
+                  <div className="space-y-0.5 pt-1.5 animate-fadeIn">
+                    {technicalTracks.map((item) => {
+                      const ItemIcon = item.icon;
+                      const isItemActive =
+                        location.pathname === '/technical' &&
+                        (location.search.includes(item.track) || (!location.search && item.track === 'programming-150'));
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={onClose}
+                          className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                            isItemActive
+                              ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                              : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                            <span className="truncate">{item.name}</span>
+                          </div>
+                          {item.badge && (
+                            <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Collapsible Interview Preparation */}
+              <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+                <button
+                  type="button"
+                  onClick={() => setIsInterviewExpanded(!isInterviewExpanded)}
+                  className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
+                >
+                  <span>Interview Preparation</span>
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform duration-200 ${
+                      isInterviewExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
+                    }`}
+                  />
+                </button>
+
+                {isInterviewExpanded && (
+                  <div className="space-y-0.5 pt-1.5 animate-fadeIn">
+                    {interviewCategories.map((item) => {
+                      const ItemIcon = item.icon;
+                      const isItemActive =
+                        location.pathname === '/interview-prep' &&
+                        (location.search.includes(item.category) || (!location.search && item.category === 'core-cs'));
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={onClose}
+                          className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                            isItemActive
+                              ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                              : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ItemIcon className="w-3.5 h-3.5 shrink-0 text-purple-500 transition-transform group-hover:scale-110" />
+                            <span className="truncate">{item.name}</span>
+                          </div>
+                          {item.badge && (
+                            <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+                              {item.badge}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   MessageSquareQuote,
@@ -25,7 +26,23 @@ import { interviewService } from '@/services/interview.service';
 import type { InterviewQuestion, InterviewCategory, CoreCsSubject } from '@/types/interview';
 
 export default function InterviewPrepPage() {
-  const [activeCategory, setActiveCategory] = useState<InterviewCategory>('CORE_CS');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+
+  const activeCategory: InterviewCategory = useMemo(() => {
+    if (categoryParam === 'hr') return 'HR_BEHAVIORAL';
+    if (categoryParam === 'project') return 'PROJECT_DEFENSE';
+    return 'CORE_CS';
+  }, [categoryParam]);
+
+  const handleCategoryChange = (cat: InterviewCategory) => {
+    let paramVal = 'core-cs';
+    if (cat === 'HR_BEHAVIORAL') paramVal = 'hr';
+    if (cat === 'PROJECT_DEFENSE') paramVal = 'project';
+    setSearchParams({ category: paramVal });
+    setSelectedSubject('ALL');
+  };
+
   const [selectedSubject, setSelectedSubject] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedQuestionIds, setExpandedQuestionIds] = useState<Record<string, boolean>>({
@@ -119,10 +136,7 @@ export default function InterviewPrepPage() {
       {/* Main Category Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-[#22242a] pb-3">
         <button
-          onClick={() => {
-            setActiveCategory('CORE_CS');
-            setSelectedSubject('ALL');
-          }}
+          onClick={() => handleCategoryChange('CORE_CS')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeCategory === 'CORE_CS'
               ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/25'
@@ -137,10 +151,7 @@ export default function InterviewPrepPage() {
         </button>
 
         <button
-          onClick={() => {
-            setActiveCategory('HR_BEHAVIORAL');
-            setSelectedSubject('ALL');
-          }}
+          onClick={() => handleCategoryChange('HR_BEHAVIORAL')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeCategory === 'HR_BEHAVIORAL'
               ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/25'
@@ -155,10 +166,7 @@ export default function InterviewPrepPage() {
         </button>
 
         <button
-          onClick={() => {
-            setActiveCategory('PROJECT_DEFENSE');
-            setSelectedSubject('ALL');
-          }}
+          onClick={() => handleCategoryChange('PROJECT_DEFENSE')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeCategory === 'PROJECT_DEFENSE'
               ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/25'

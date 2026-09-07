@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   Code2,
@@ -25,7 +26,24 @@ import { technicalService } from '@/services/technical.service';
 import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, TechnicalTrack } from '@/types/technical';
 
 export default function TechnicalHubPage() {
-  const [activeTrack, setActiveTrack] = useState<TechnicalTrack>('PROGRAMMING_150');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const trackParam = searchParams.get('track');
+
+  const activeTrack: TechnicalTrack = useMemo(() => {
+    if (trackParam === 'campus-dsa') return 'CAMPUS_DSA';
+    if (trackParam === 'mcqs') return 'TECHNICAL_MCQS';
+    return 'PROGRAMMING_150';
+  }, [trackParam]);
+
+  const handleTrackChange = (track: TechnicalTrack) => {
+    let paramVal = 'programming-150';
+    if (track === 'CAMPUS_DSA') paramVal = 'campus-dsa';
+    if (track === 'TECHNICAL_MCQS') paramVal = 'mcqs';
+    setSearchParams({ track: paramVal });
+    setSelectedCategory('ALL');
+    setSelectedLevel('ALL');
+  };
+
   const [selectedLevel, setSelectedLevel] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,11 +166,7 @@ export default function TechnicalHubPage() {
       {/* Main Track Selection Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-[#22242a] pb-3">
         <button
-          onClick={() => {
-            setActiveTrack('PROGRAMMING_150');
-            setSelectedCategory('ALL');
-            setSelectedLevel('ALL');
-          }}
+          onClick={() => handleTrackChange('PROGRAMMING_150')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeTrack === 'PROGRAMMING_150'
               ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/25'
@@ -167,11 +181,7 @@ export default function TechnicalHubPage() {
         </button>
 
         <button
-          onClick={() => {
-            setActiveTrack('CAMPUS_DSA');
-            setSelectedCategory('ALL');
-            setSelectedLevel('ALL');
-          }}
+          onClick={() => handleTrackChange('CAMPUS_DSA')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeTrack === 'CAMPUS_DSA'
               ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/25'
@@ -186,7 +196,7 @@ export default function TechnicalHubPage() {
         </button>
 
         <button
-          onClick={() => setActiveTrack('TECHNICAL_MCQS')}
+          onClick={() => handleTrackChange('TECHNICAL_MCQS')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeTrack === 'TECHNICAL_MCQS'
               ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/25'
