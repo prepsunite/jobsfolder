@@ -121,6 +121,8 @@ const getInitialUser = (): UserProfile | null => {
       if (isSuper) {
         role = 'ADMIN';
         localStorage.setItem('prepunite_role', 'ADMIN');
+        localStorage.removeItem('prepunite_college_id');
+        localStorage.removeItem('prepunite_college_name');
       } else {
         // 🔒 SANITIZE: Any non-super-admin cached as ADMIN is immediately demoted to USER!
         if (role === 'ADMIN') {
@@ -154,7 +156,7 @@ const getInitialUser = (): UserProfile | null => {
         }
       }
 
-      const studentInfo = tpoService.getStudentEntitlementInfo(email);
+      const studentInfo = !isSuper ? tpoService.getStudentEntitlementInfo(email) : null;
 
       return {
         id: email,
@@ -162,8 +164,8 @@ const getInitialUser = (): UserProfile | null => {
         email,
         role,
         avatarUrl,
-        collegeId: studentInfo?.collegeId || localStorage.getItem('prepunite_college_id') || undefined,
-        collegeName: studentInfo?.collegeName || localStorage.getItem('prepunite_college_name') || undefined,
+        collegeId: !isSuper ? (studentInfo?.collegeId || localStorage.getItem('prepunite_college_id') || undefined) : undefined,
+        collegeName: !isSuper ? (studentInfo?.collegeName || localStorage.getItem('prepunite_college_name') || undefined) : undefined,
       };
     }
   } catch (e) {
@@ -226,11 +228,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: finalRole,
       avatarUrl,
       isTpoAdmin: finalRole === 'TPO_ADMIN',
-      collegeId: collegeData?.collegeId,
-      collegeName: collegeData?.collegeName,
-      rollNumber: collegeData?.rollNumber,
-      department: collegeData?.department,
-      batchYear: collegeData?.batchYear,
+      collegeId: isSuperAdmin ? undefined : collegeData?.collegeId,
+      collegeName: isSuperAdmin ? undefined : collegeData?.collegeName,
+      rollNumber: isSuperAdmin ? undefined : collegeData?.rollNumber,
+      department: isSuperAdmin ? undefined : collegeData?.department,
+      batchYear: isSuperAdmin ? undefined : collegeData?.batchYear,
     };
 
     setUser(newProfile);
@@ -241,7 +243,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (avatarUrl) {
       localStorage.setItem('prepunite_user_avatar', avatarUrl);
     }
-    if (collegeData?.collegeId) {
+    if (isSuperAdmin) {
+      localStorage.removeItem('prepunite_college_id');
+      localStorage.removeItem('prepunite_college_name');
+    } else if (collegeData?.collegeId) {
       localStorage.setItem('prepunite_college_id', collegeData.collegeId);
       try {
         const raw = localStorage.getItem('prepunite_student_entitlements');

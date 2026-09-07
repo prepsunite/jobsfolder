@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link } from 'react-router';
+import { Outlet, Link, Navigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
@@ -34,54 +34,59 @@ export default function TpoLayout() {
     queryFn: () => tpoService.getAllColleges(),
   });
 
+  const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
+  const isPureSuperAdmin = Boolean(isAdmin && !tpoAuth);
+
+  // Determine initial college ID:
+  // For Super Admins: strictly require an explicit ?collegeId= URL parameter or active inspection session!
+  // For TPOs: strictly their authorized college ID!
+  const [searchParams] = useSearchParams();
+  const queryCollegeId = searchParams.get('collegeId');
+
   const getInitialCollegeId = (): string => {
+    if (isPureSuperAdmin) {
+      if (queryCollegeId) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('prepunite_admin_inspect_college_id', queryCollegeId);
+        }
+        return queryCollegeId;
+      }
+      if (typeof window !== 'undefined') {
+        const stored = sessionStorage.getItem('prepunite_admin_inspect_college_id');
+        if (stored) return stored;
+      }
+      return '';
+    }
+    if (tpoAuth?.college_id) return tpoAuth.college_id;
     if (user?.collegeId) return user.collegeId;
     if (typeof window !== 'undefined') {
       const cached = localStorage.getItem('prepunite_college_id');
       if (cached) return cached;
     }
-    const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
-    if (tpoAuth?.college_id) return tpoAuth.college_id;
     return '';
   };
 
-  const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
-  const authorizedCollegeId = tpoAuth?.college_id || user?.collegeId || (typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : '') || '';
+  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(getInitialCollegeId);
 
-  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(() => {
-    if (isAdmin) {
-      return getInitialCollegeId();
-    }
-    return authorizedCollegeId;
-  });
-
-  // Keep selectedCollegeId synchronized for Super Admins when user or colleges list loads
+  // Sync state if query param changes
   useEffect(() => {
-    if (isAdmin) {
-      if (!selectedCollegeId) {
-        const cached = typeof window !== 'undefined' ? localStorage.getItem('prepunite_college_id') : null;
-        if (user?.collegeId) {
-          setSelectedCollegeId(user.collegeId);
-        } else if (cached) {
-          setSelectedCollegeId(cached);
-        } else if (tpoAuth?.college_id) {
-          setSelectedCollegeId(tpoAuth.college_id);
-        } else if (allColleges.length > 0 && allColleges[0]?.id) {
-          setSelectedCollegeId(allColleges[0].id);
-        }
-      }
-    } else {
-      // Non-admin TPOs are strictly locked to their authorized college
-      if (authorizedCollegeId && selectedCollegeId !== authorizedCollegeId) {
-        setSelectedCollegeId(authorizedCollegeId);
+    if (queryCollegeId && queryCollegeId !== selectedCollegeId) {
+      setSelectedCollegeId(queryCollegeId);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('prepunite_admin_inspect_college_id', queryCollegeId);
       }
     }
-  }, [isAdmin, user?.collegeId, user?.email, allColleges, selectedCollegeId, authorizedCollegeId, tpoAuth?.college_id]);
+  }, [queryCollegeId, selectedCollegeId]);
 
-  // 🛡️ Cross-Tenant Security Invariant: Non-admin TPOs are strictly restricted to their authorized institution
-  const effectiveCollegeId = isAdmin
-    ? (selectedCollegeId || authorizedCollegeId || allColleges[0]?.id || '')
-    : authorizedCollegeId;
+  const effectiveCollegeId = isPureSuperAdmin
+    ? (selectedCollegeId || queryCollegeId || '')
+    : (tpoAuth?.college_id || user?.collegeId || selectedCollegeId || '');
+
+  // 🛡️ SAFE GUARD: If a Super Admin opens /tpo directly without choosing a specific college to inspect,
+  // automatically redirect them to the dedicated Super Admin Colleges Hub (/admin/colleges)!
+  if (isPureSuperAdmin && !effectiveCollegeId) {
+    return <Navigate to="/admin/colleges" replace />;
+  }
 
   // Query real-time college details directly from Supabase
   const { data: dbCollegeDetails } = useQuery({
@@ -158,6 +163,31 @@ export default function TpoLayout() {
       {/* Main Workspace Content Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0C0C0C]">
         
+        {/* Super Admin Inspection Mode Banner */}
+        {isPureSuperAdmin && (
+          <div className="bg-purple-950 text-purple-200 border-b border-purple-800/80 py-2.5 px-4 sm:px-8 text-xs font-semibold flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0" />
+              <span>
+                <strong>Super Admin Inspection Mode:</strong> Auditing <strong>{currentCollege.name}</strong> ({currentCollege.code}) as <code className="font-mono text-[11px] bg-purple-900/60 px-1.5 py-0.5 rounded text-purple-200">{user?.email}</code>.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem('prepunite_admin_inspect_college_id');
+                }
+                window.location.href = '/admin/colleges';
+              }}
+              className="px-3 py-1 rounded-lg bg-purple-800 hover:bg-purple-700 text-white font-bold text-[11px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <span>Exit to Admin Hub</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
         {/* Top Status & Institutional Campus Bar */}
         <div className="bg-[#18120c] dark:bg-[#120d08] text-amber-200 py-2.5 px-4 sm:px-8 border-b border-amber-500/20 text-xs font-semibold flex flex-wrap items-center justify-between gap-3 shadow-xs sticky top-0 z-30">
           <div className="flex items-center gap-2.5">

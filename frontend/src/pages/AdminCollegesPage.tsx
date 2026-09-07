@@ -58,18 +58,6 @@ export default function AdminCollegesPage() {
           </Link>
 
           <Link
-            to="/tpo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 py-2 bg-[#F8F9FA] dark:bg-[#2b2d31] hover:bg-[#E9ECEF] dark:hover:bg-[#383a40] text-[#1f1b17] dark:text-[#e3e3e3] rounded-full text-xs font-bold transition-all border border-[#E9ECEF] dark:border-[#383a40] flex items-center gap-1.5 shadow-xs"
-            title="Open institutional TPO portal in a new tab"
-          >
-            <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
-            <span>TPO Portal View</span>
-            <ExternalLink className="w-3 h-3 text-[#747878]" />
-          </Link>
-
-          <Link
             to="/admin/bulk-import"
             className="px-3.5 py-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold transition-all border border-purple-500/30 flex items-center gap-1.5 shadow-xs"
           >

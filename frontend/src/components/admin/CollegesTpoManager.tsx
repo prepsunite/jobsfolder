@@ -550,6 +550,16 @@ export default function CollegesTpoManager() {
                     >
                       Coordinator →
                     </button>
+
+                    <a
+                      href={`/tpo?collegeId=${college.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-600 dark:text-purple-400 hover:text-purple-700 font-bold inline-flex items-center gap-1 text-[11px] ml-auto"
+                      title="Inspect this campus TPO portal in Super Admin mode"
+                    >
+                      Inspect Portal →
+                    </a>
                   </div>
                 </div>
               );
