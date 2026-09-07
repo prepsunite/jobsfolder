@@ -18,7 +18,6 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
-  TrendingUp,
 } from 'lucide-react';
 
 export type AnalyticsTab = 'aptitude' | 'technical' | 'interview';
@@ -46,11 +45,17 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
     return 'aptitude';
   });
 
-  // Collapsed by default: user clicks to open
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-  const handleTabChange = (tab: AnalyticsTab) => {
-    setActiveTab(tab);
+  const handleTabClick = (tab: AnalyticsTab) => {
+    if (!isExpanded) {
+      setActiveTab(tab);
+      setIsExpanded(true);
+    } else if (activeTab === tab) {
+      setIsExpanded(false);
+    } else {
+      setActiveTab(tab);
+    }
     try {
       localStorage.setItem(STORAGE_KEY, tab);
     } catch {}
@@ -165,209 +170,140 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
     );
   }
 
-  // When collapsed by default, show sleek interactive summary banner
-  if (!isExpanded) {
-    return (
-      <div
-        className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-3.5 sm:p-4 shadow-xs transition-all hover:border-[#FD4A32]/40 group ${className}`}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Left: Branding & Click Prompt */}
-          <div
-            onClick={() => setIsExpanded(true)}
-            className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
-          >
-            <div className="w-9 h-9 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <TrendingUp className="w-4.5 h-4.5 text-[#FD4A32]" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-display font-bold text-sm text-[#121417] dark:text-white tracking-tight group-hover:text-[#FD4A32] transition-colors truncate">
-                  Placement Readiness &amp; Analytics
-                </h3>
-                <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
-                  Analytics
-                </span>
-              </div>
-              <p className="text-[11px] text-[#868E96] dark:text-[#777777] font-sans truncate">
-                Click to view your Aptitude, Coding &amp; Interview mastery breakdowns
-              </p>
-            </div>
-          </div>
-
-          {/* Right: 3 Quick Summary Pills (Clicking any opens directly to that tab!) + Expand Button */}
-          <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                handleTabChange('aptitude');
-                setIsExpanded(true);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono transition-colors cursor-pointer"
-              title="Click to view Aptitude analytics"
-            >
-              <Brain className="w-3.5 h-3.5 text-[#FD4A32]" />
-              <span className="text-[#868E96] dark:text-[#777777] text-[11px] font-sans">Apt:</span>
-              <span className="font-bold text-[#121417] dark:text-white">{aptSolved}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                handleTabChange('technical');
-                setIsExpanded(true);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono transition-colors cursor-pointer"
-              title="Click to view Coding analytics"
-            >
-              <Code2 className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-[#868E96] dark:text-[#777777] text-[11px] font-sans">Code:</span>
-              <span className="font-bold text-[#121417] dark:text-white">{codingSolved}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                handleTabChange('interview');
-                setIsExpanded(true);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono transition-colors cursor-pointer"
-              title="Click to view Interview analytics"
-            >
-              <MessageSquareQuote className="w-3.5 h-3.5 text-purple-500" />
-              <span className="text-[#868E96] dark:text-[#777777] text-[11px] font-sans">Viva:</span>
-              <span className="font-bold text-[#121417] dark:text-white">{intMastered}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsExpanded(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#121417] hover:bg-black dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black text-xs font-bold transition-colors cursor-pointer ml-1"
-            >
-              <span>View</span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-4 sm:p-5 shadow-xs transition-all ${className}`}>
       {/* 1. Header Bar: Dynamic Title & Interactive 3-Tab Selector */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]">
+      <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isExpanded ? 'pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]' : ''}`}>
         {/* Dynamic Left Header Info */}
         <div className="flex items-center gap-2.5">
-          {activeTab === 'aptitude' && (
+          {isExpanded ? (
+            <>
+              {activeTab === 'aptitude' && (
+                <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
+                  <Brain className="w-4 h-4 text-[#FD4A32]" />
+                </div>
+              )}
+              {activeTab === 'technical' && (
+                <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
+                  <Terminal className="w-4 h-4 text-[#FD4A32]" />
+                </div>
+              )}
+              {activeTab === 'interview' && (
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                  <MessageSquareQuote className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                </div>
+              )}
+            </>
+          ) : (
             <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
-              <Brain className="w-4 h-4 text-[#FD4A32]" />
-            </div>
-          )}
-          {activeTab === 'technical' && (
-            <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
-              <Terminal className="w-4 h-4 text-[#FD4A32]" />
-            </div>
-          )}
-          {activeTab === 'interview' && (
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-              <MessageSquareQuote className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <Sparkles className="w-4 h-4 text-[#FD4A32]" />
             </div>
           )}
 
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-display font-bold text-sm text-[#121417] dark:text-white tracking-tight">
-                {activeTab === 'aptitude' && 'Aptitude & Reasoning Mastery'}
-                {activeTab === 'technical' && 'Technical & Coding Hub'}
-                {activeTab === 'interview' && 'Interview Preparation Bible'}
+                {isExpanded
+                  ? activeTab === 'aptitude'
+                    ? 'Aptitude & Reasoning Mastery'
+                    : activeTab === 'technical'
+                    ? 'Technical & Coding Hub'
+                    : 'Interview Preparation Bible'
+                  : 'Preparation Analytics & Mastery'}
               </h3>
               <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-black/5 dark:bg-white/10 text-[#868E96] dark:text-[#AAAAAA]">
-                Analytics
+                {isExpanded ? 'Active View' : 'Collapsed'}
               </span>
             </div>
             <p className="text-[11px] text-[#868E96] dark:text-[#777777] font-sans">
-              {activeTab === 'aptitude' && 'Question accuracy, difficulty distribution, and active problem-solving streaks'}
-              {activeTab === 'technical' && 'Programming 150 foundations, 15 campus DSA patterns, and OA pseudo-code traps'}
-              {activeTab === 'interview' && 'Core CS fundamentals (DBMS, OOPs, OS, CN), HR STAR answers, and project defense'}
+              {isExpanded
+                ? activeTab === 'aptitude'
+                  ? 'Question accuracy, difficulty distribution, and active problem-solving streaks'
+                  : activeTab === 'technical'
+                  ? 'Programming 150 foundations, 15 campus DSA patterns, and OA pseudo-code traps'
+                  : 'Core CS fundamentals (DBMS, OOPs, OS, CN), HR STAR answers, and project defense'
+                : 'Click any domain below to view accuracy, difficulty distribution, and problem stats'}
             </p>
           </div>
         </div>
 
-        {/* 3 Interactive Tab Selector Buttons + Collapse Button */}
-        <div className="flex items-center gap-2 self-start lg:self-auto flex-wrap">
-          <div className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] gap-1">
-            <button
-              type="button"
-              onClick={() => handleTabChange('aptitude')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'aptitude'
-                  ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
-                  : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-              }`}
-            >
-              <Brain className={`w-3.5 h-3.5 ${activeTab === 'aptitude' ? 'text-[#FD4A32]' : 'text-current'}`} />
-              <span>Aptitude</span>
-              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-                activeTab === 'aptitude' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
-              }`}>
-                {aptSolved}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTabChange('technical')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'technical'
-                  ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
-                  : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-              }`}
-            >
-              <Code2 className={`w-3.5 h-3.5 ${activeTab === 'technical' ? 'text-[#FD4A32]' : 'text-current'}`} />
-              <span>Coding</span>
-              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-                activeTab === 'technical' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
-              }`}>
-                {codingSolved}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTabChange('interview')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'interview'
-                  ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
-                  : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-              }`}
-            >
-              <MessageSquareQuote className={`w-3.5 h-3.5 ${activeTab === 'interview' ? 'text-purple-500' : 'text-current'}`} />
-              <span>Interview</span>
-              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-                activeTab === 'interview' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-black/5 dark:bg-white/5'
-              }`}>
-                {intMastered}
-              </span>
-            </button>
-          </div>
+        {/* 3 Interactive Tab Selector Buttons + Expand/Collapse Button */}
+        <div className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] self-start lg:self-auto gap-1">
+          <button
+            type="button"
+            onClick={() => handleTabClick('aptitude')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              isExpanded && activeTab === 'aptitude'
+                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+            }`}
+          >
+            <Brain className={`w-3.5 h-3.5 ${isExpanded && activeTab === 'aptitude' ? 'text-[#FD4A32]' : 'text-current'}`} />
+            <span>Aptitude</span>
+            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+              isExpanded && activeTab === 'aptitude' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
+            }`}>
+              {aptSolved}
+            </span>
+          </button>
 
           <button
             type="button"
-            onClick={() => setIsExpanded(false)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] hover:bg-[#E9ECEF] dark:bg-[#0C0C0C] dark:hover:bg-[#1C1C1C] text-[#868E96] hover:text-[#121417] dark:text-[#777777] dark:hover:text-white border border-[#E9ECEF] dark:border-[#242424] text-xs font-bold transition-all cursor-pointer"
-            title="Collapse analytics"
+            onClick={() => handleTabClick('technical')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              isExpanded && activeTab === 'technical'
+                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+            }`}
           >
-            <span>Hide</span>
-            <ChevronUp className="w-3.5 h-3.5" />
+            <Code2 className={`w-3.5 h-3.5 ${isExpanded && activeTab === 'technical' ? 'text-[#FD4A32]' : 'text-current'}`} />
+            <span>Coding</span>
+            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+              isExpanded && activeTab === 'technical' ? 'bg-[#FD4A32]/10 text-[#FD4A32]' : 'bg-black/5 dark:bg-white/5'
+            }`}>
+              {codingSolved}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabClick('interview')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              isExpanded && activeTab === 'interview'
+                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+            }`}
+          >
+            <MessageSquareQuote className={`w-3.5 h-3.5 ${isExpanded && activeTab === 'interview' ? 'text-purple-500' : 'text-current'}`} />
+            <span>Interview</span>
+            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+              isExpanded && activeTab === 'interview' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-black/5 dark:bg-white/5'
+            }`}>
+              {intMastered}
+            </span>
+          </button>
+
+          {/* Dedicated Expand / Collapse Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ml-1 ${
+              isExpanded
+                ? 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white bg-black/5 dark:bg-white/5'
+                : 'text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/20'
+            }`}
+            title={isExpanded ? 'Collapse Analytics' : 'Open Analytics'}
+          >
+            <span>{isExpanded ? 'Collapse' : 'Open'}</span>
+            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
-      {/* 2. DYNAMIC CONTENT AREA */}
+      {/* 2. DYNAMIC CONTENT AREA (Only rendered when isExpanded is true) */}
 
       {/* --- TAB A: APTITUDE ANALYTICS --- */}
-      {activeTab === 'aptitude' && (
+      {isExpanded && activeTab === 'aptitude' && (
         <div className="space-y-4 animate-fadeIn">
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -514,7 +450,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
       )}
 
       {/* --- TAB B: TECHNICAL & CODING ANALYTICS --- */}
-      {activeTab === 'technical' && (
+      {isExpanded && activeTab === 'technical' && (
         <div className="space-y-4 animate-fadeIn">
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -652,7 +588,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
       )}
 
       {/* --- TAB C: INTERVIEW PREP ANALYTICS --- */}
-      {activeTab === 'interview' && (
+      {isExpanded && activeTab === 'interview' && (
         <div className="space-y-4 animate-fadeIn">
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">

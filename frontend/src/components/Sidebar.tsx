@@ -49,9 +49,9 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) || (isAdmin && isTpoRoute);
 
   const displayCollegeName = collegeName || (collegeCode ? `${collegeCode}` : '') || user?.collegeName || 'Institutional';
-  const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
-  const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(true);
-  const [isInterviewExpanded, setIsInterviewExpanded] = useState(true);
+  const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(() => location.pathname.startsWith('/aptitude'));
+  const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(() => location.pathname.startsWith('/technical'));
+  const [isInterviewExpanded, setIsInterviewExpanded] = useState(() => location.pathname.startsWith('/interview-prep'));
 
   // TPO Institutional Modules (Strictly for College Placement Officers)
   const tpoNavLinks = [
