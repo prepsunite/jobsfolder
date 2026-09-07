@@ -62,8 +62,6 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
     { name: 'Pricing & Passes', href: '/pricing', icon: Zap },
-    { name: 'About Us', href: '/about', icon: Info },
-    { name: 'Contact Us', href: '/contact', icon: Mail },
   ];
 
   const aptitudeCategories = [
