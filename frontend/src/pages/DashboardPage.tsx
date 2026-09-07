@@ -8,8 +8,7 @@ import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
 import { progressService } from '@/services/progress.service';
 import { tpoService } from '@/services/tpo.service';
-import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
-import TechnicalStatsWidget from '@/components/TechnicalStatsWidget';
+import StudentAnalyticsHub from '@/components/StudentAnalyticsHub';
 import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -759,16 +758,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 🚀 LeetCode-style Aptitude Stats Widget */}
-      <AptitudeStatsWidget
+      {/* 🎯 Unified Student Analytics Hub (Aptitude, Coding, Interview Prep) */}
+      <StudentAnalyticsHub
         stats={aptitudeStats}
         isLoading={(isMetaLoading && allQuestionsMeta.length === 0) || isProgressLoading}
-        title="Overall Aptitude Mastery & Progress"
-        subtitle="Your lifetime question solving accuracy, difficulty distribution, and active streaks."
       />
-
-      {/* 💻 Technical & Coding Hub + Interview Prep Bible Readiness Cards */}
-      <TechnicalStatsWidget />
 
       {/* Navigation Tabs for Profile */}
       <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#242424] pb-2">
