@@ -35,6 +35,12 @@ export interface ProgrammingTopic {
   order: number;
 }
 
+export interface TestCase {
+  input: string;
+  output: string;
+  explanation?: string;
+}
+
 export interface ProgrammingProblem {
   id: string;
   title: string;
@@ -46,8 +52,9 @@ export interface ProgrammingProblem {
   topicId?: string;
   description: string;
   constraints?: string[];
-  sampleInput: string;
-  sampleOutput: string;
+  testCases?: TestCase[];
+  sampleInput?: string;
+  sampleOutput?: string;
   explanation?: string;
   solutions: MultiLanguageSolution;
   timeComplexity: string;

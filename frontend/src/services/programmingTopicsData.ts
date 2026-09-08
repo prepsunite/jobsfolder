@@ -166,6 +166,18 @@ export const PROGRAMMING_150_EXPANDED_SEED: ProgrammingProblem[] = [
     constraints: ['-10^9 <= N <= 10^9'],
     sampleInput: 'N = 7',
     sampleOutput: 'Odd',
+    testCases: [
+        {
+            "input": "N = 7",
+            "output": "Odd",
+            "explanation": "7 in binary is 0111. (7 & 1) == 1, meaning the least significant bit is set (Odd)."
+        },
+        {
+            "input": "N = 12",
+            "output": "Even",
+            "explanation": "12 in binary is 1100. (12 & 1) == 0, meaning the least significant bit is 0 (Even)."
+        }
+    ],
     explanation: 'The binary representation of 7 is 0111. The least significant bit (LSB) is 1. Performing bitwise AND with 1 (7 & 1) yields 1, signifying an odd number. For even numbers, LSB is always 0.',
     solutions: {
       java: `public class Solution {
@@ -202,6 +214,18 @@ std::string checkEvenOdd(int n) {
     constraints: ['1 <= Y <= 9999'],
     sampleInput: 'Y = 2024',
     sampleOutput: 'true',
+    testCases: [
+        {
+            "input": "Y = 2024",
+            "output": "true",
+            "explanation": "2024 is divisible by 4 and not by 100, hence it is a leap year."
+        },
+        {
+            "input": "Y = 1900",
+            "output": "false",
+            "explanation": "1900 is divisible by 100 but not by 400, hence not a leap year."
+        }
+    ],
     explanation: '2024 is divisible by 4 and not by 100, so it is a leap year. 1900 is divisible by 4 and 100, but not 400, so it is not a leap year.',
     solutions: {
       java: `public class Solution {
@@ -240,6 +264,18 @@ std::string checkEvenOdd(int n) {
     constraints: ['0 <= N <= 10^9'],
     sampleInput: 'N = 38',
     sampleOutput: '2 (3 + 8 = 11 -> 1 + 1 = 2)',
+    testCases: [
+        {
+            "input": "N = 38",
+            "output": "2",
+            "explanation": "3 + 8 = 11 -> 1 + 1 = 2."
+        },
+        {
+            "input": "N = 9",
+            "output": "9",
+            "explanation": "Single digit number returns itself."
+        }
+    ],
     explanation: 'Can be solved using a while loop summing digits, or using modulo 9 arithmetic: N == 0 ? 0 : 1 + (N - 1) % 9.',
     solutions: {
       java: `public class Solution {
@@ -278,6 +314,18 @@ std::string checkEvenOdd(int n) {
     constraints: ['-10^6 <= A, B <= 10^6'],
     sampleInput: 'A = 10, B = 0, op = \'/\'',
     sampleOutput: '-1 (Division by Zero)',
+    testCases: [
+        {
+            "input": "A = 10, B = 0, op = '/'",
+            "output": "-1 (Division by Zero Guard)",
+            "explanation": "Dividing by zero is guarded against and returns -1."
+        },
+        {
+            "input": "A = 15, B = 4, op = '*'",
+            "output": "60",
+            "explanation": "15 * 4 = 60."
+        }
+    ],
     explanation: 'Use switch-case or chained if-else. Before division or modulo, assert that B is not 0.',
     solutions: {
       java: `public class Solution {
@@ -341,6 +389,18 @@ std::string checkEvenOdd(int n) {
     constraints: ['0 <= N <= 10^9'],
     sampleInput: 'N = 1221',
     sampleOutput: 'Reversed: 1221, Is Palindrome: true',
+    testCases: [
+        {
+            "input": "N = 121",
+            "output": "Reversed: 121, Is Palindrome: true",
+            "explanation": "Digits 121 reversed are 121, matching the original."
+        },
+        {
+            "input": "N = -121",
+            "output": "Reversed: -121, Is Palindrome: false",
+            "explanation": "Negative numbers cannot be palindromes due to leading sign."
+        }
+    ],
     explanation: 'Extract digits using modulo 10 and build the reversed number by multiplying the running sum by 10. Finally, compare with original number.',
     solutions: {
       java: `public class Solution {
@@ -399,6 +459,18 @@ std::string checkEvenOdd(int n) {
     constraints: ['0 <= N <= 10^18'],
     sampleInput: 'N = 1122334',
     sampleOutput: 'Digit 1: 2, Digit 2: 2, Digit 3: 2, Digit 4: 1',
+    testCases: [
+        {
+            "input": "N = 112233",
+            "output": "1: 2, 2: 2, 3: 2",
+            "explanation": "Each digit appears exactly two times."
+        },
+        {
+            "input": "N = 500",
+            "output": "0: 2, 5: 1",
+            "explanation": "Digit 0 appears 2 times and digit 5 appears 1 time."
+        }
+    ],
     explanation: 'Use a fixed array of size 10. While N > 0, extract the last digit (N % 10), increment its count in frequency array, and divide N by 10.',
     solutions: {
       java: `public class Solution {
@@ -463,6 +535,18 @@ std::vector<int> countDigitFrequencies(long long n) {
     constraints: ['1 <= A, B <= 10^9'],
     sampleInput: 'A = 24, B = 36',
     sampleOutput: 'GCD = 12, LCM = 72',
+    testCases: [
+        {
+            "input": "A = 12, B = 18",
+            "output": "GCD = 6, LCM = 36",
+            "explanation": "Greatest common factor is 6, and LCM is (12 * 18) / 6 = 36."
+        },
+        {
+            "input": "A = 7, B = 13",
+            "output": "GCD = 1, LCM = 91",
+            "explanation": "Co-prime numbers have GCD 1 and LCM = 7 * 13 = 91."
+        }
+    ],
     explanation: 'GCD(A, B) = GCD(B, A % B) until B becomes 0. LCM is computed using the identity: LCM(A, B) = (A * B) / GCD(A, B).',
     solutions: {
       java: `public class Solution {
@@ -528,6 +612,18 @@ long long lcm(long long a, long long b) {
     constraints: ['1 <= N <= 10^12'],
     sampleInput: 'N = 29',
     sampleOutput: 'true',
+    testCases: [
+        {
+            "input": "N = 29",
+            "output": "true",
+            "explanation": "29 has no divisors between 2 and sqrt(29) ≈ 5.38."
+        },
+        {
+            "input": "N = 49",
+            "output": "false",
+            "explanation": "49 is divisible by 7."
+        }
+    ],
     explanation: 'A number is prime if it has no divisors other than 1 and itself. We check divisibility up to sqrt(N). By testing multiples of 6 (6k +/- 1), we optimize operations by 66%.',
     solutions: {
       java: `public class Solution {
@@ -592,6 +688,18 @@ long long lcm(long long a, long long b) {
     constraints: ['1 <= N <= 10^8'],
     sampleInput: 'N = 153',
     sampleOutput: 'true',
+    testCases: [
+        {
+            "input": "N = 153",
+            "output": "true",
+            "explanation": "1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153."
+        },
+        {
+            "input": "N = 120",
+            "output": "false",
+            "explanation": "1^3 + 2^3 + 0^3 = 9 != 120."
+        }
+    ],
     explanation: '153 has 3 digits. 1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153. Hence, 153 is an Armstrong number.',
     solutions: {
       java: `public class Solution {
@@ -652,6 +760,18 @@ int isArmstrong(int n) {
     constraints: ['1 <= N <= 50'],
     sampleInput: 'N = 6',
     sampleOutput: '[0, 1, 1, 2, 3, 5]',
+    testCases: [
+        {
+            "input": "N = 5",
+            "output": "0, 1, 1, 2, 3",
+            "explanation": "First 5 numbers of the Fibonacci sequence starting at 0."
+        },
+        {
+            "input": "N = 1",
+            "output": "0",
+            "explanation": "Only the first term is returned."
+        }
+    ],
     explanation: 'F(0) = 0, F(1) = 1, F(i) = F(i-1) + F(i-2). Maintain two variables: prev2 and prev1, updating iteratively.',
     solutions: {
       java: `public class Solution {
@@ -712,6 +832,18 @@ std::vector<long long> getFibonacci(int n) {
     constraints: ['1 <= N <= 20'],
     sampleInput: 'N = 4',
     sampleOutput: `*******\n *****\n  ***\n   *`,
+    testCases: [
+      {
+        input: 'N = 3',
+        output: '*****\n ***\n  *',
+        explanation: 'Row i has 2*(N-i)-1 stars with i leading spaces.'
+      },
+      {
+        input: 'N = 1',
+        output: '*',
+        explanation: 'Single star pyramid.'
+      }
+    ],
     explanation: 'For row i from 0 to N-1, print i spaces followed by 2*(N-i) - 1 asterisks.',
     solutions: {
       java: `public class Solution {
@@ -763,6 +895,18 @@ void printInvertedPyramid(int n) {
     constraints: ['0 <= N <= 30'],
     sampleInput: 'N = 4',
     sampleOutput: '[1, 4, 6, 4, 1]',
+    testCases: [
+        {
+            "input": "N = 4",
+            "output": "[1, 4, 6, 4, 1]",
+            "explanation": "Row 4 of Pascal's triangle is 1, 4, 6, 4, 1."
+        },
+        {
+            "input": "N = 1",
+            "output": "[1, 1]",
+            "explanation": "Row 1 of Pascal's triangle is 1, 1."
+        }
+    ],
     explanation: 'Each element is C(n, k). The next element can be derived from the previous: element = prev * (n - k + 1) / k.',
     solutions: {
       java: `import java.util.*;
@@ -829,6 +973,18 @@ std::vector<int> getRow(int rowIndex) {
     constraints: ['1 <= N <= 10^5'],
     sampleInput: 'arr = [1, 2, 3, 4, 5]',
     sampleOutput: '[5, 4, 3, 2, 1]',
+    testCases: [
+        {
+            "input": "arr = [1, 2, 3, 4, 5]",
+            "output": "[5, 4, 3, 2, 1]",
+            "explanation": "Elements swapped from opposite ends toward middle in-place."
+        },
+        {
+            "input": "arr = [10, 20]",
+            "output": "[20, 10]",
+            "explanation": "Elements at index 0 and 1 are swapped."
+        }
+    ],
     explanation: 'Use two pointers: left at 0 and right at N-1. Swap elements at left and right, then increment left and decrement right until left >= right.',
     solutions: {
       java: `public class Solution {
@@ -885,6 +1041,18 @@ void reverseArray(std::vector<int>& arr) {
     constraints: ['1 <= N <= 10^5'],
     sampleInput: 'arr = [1000, 11, 445, 1, 330, 3000]',
     sampleOutput: 'Min = 1, Max = 3000 (Comparisons <= 3N/2)',
+    testCases: [
+        {
+            "input": "nums = [3, 5, 4, 1, 9]",
+            "output": "Min = 1, Max = 9",
+            "explanation": "Elements compared in pairs with 3N/2 comparisons."
+        },
+        {
+            "input": "nums = [7]",
+            "output": "Min = 7, Max = 7",
+            "explanation": "Single element serves as both min and max."
+        }
+    ],
     explanation: 'By comparing adjacent elements in pairs first, and then comparing the larger with max and smaller with min, we reduce total comparisons from 2N to 3N/2.',
     solutions: {
       java: `public class Solution {
@@ -999,6 +1167,18 @@ std::pair<int, int> getMinMax(const std::vector<int>& arr) {
     constraints: ['2 <= N <= 10^5', '-10^9 <= arr[i] <= 10^9'],
     sampleInput: 'arr = [12, 35, 1, 10, 34, 1]',
     sampleOutput: '34',
+    testCases: [
+        {
+            "input": "nums = [12, 35, 1, 10, 34, 1]",
+            "output": "34",
+            "explanation": "Largest is 35; the second largest distinct value is 34."
+        },
+        {
+            "input": "nums = [10, 10, 10]",
+            "output": "-1",
+            "explanation": "All elements identical, so no distinct second largest exists."
+        }
+    ],
     explanation: 'Maintain two variables: largest and secondLargest. If arr[i] > largest, update secondLargest = largest and largest = arr[i]. Else if arr[i] > secondLargest and arr[i] != largest, update secondLargest.',
     solutions: {
       java: `public class Solution {
@@ -1071,6 +1251,18 @@ int getSecondLargest(int arr[], int n) {
     constraints: ['1 <= N <= 10^5', '0 <= K <= 10^9'],
     sampleInput: 'arr = [1, 2, 3, 4, 5], K = 2',
     sampleOutput: '[3, 4, 5, 1, 2]',
+    testCases: [
+        {
+            "input": "nums = [1, 2, 3, 4, 5], k = 2",
+            "output": "[3, 4, 5, 1, 2]",
+            "explanation": "Array elements shifted left by 2 indices."
+        },
+        {
+            "input": "nums = [1, 2], k = 3",
+            "output": "[2, 1]",
+            "explanation": "Effective rotation is k % 2 = 1 shift left."
+        }
+    ],
     explanation: '1) Reverse first K elements [0..K-1]. 2) Reverse remaining elements [K..N-1]. 3) Reverse whole array [0..N-1].',
     solutions: {
       java: `public class Solution {
@@ -1139,6 +1331,18 @@ void rotateLeft(int arr[], int n, int k) {
     constraints: ['1 <= nums.length <= 10^5'],
     sampleInput: 'nums = [0, 1, 0, 3, 12]',
     sampleOutput: '[1, 3, 12, 0, 0]',
+    testCases: [
+        {
+            "input": "nums = [0, 1, 0, 3, 12]",
+            "output": "[1, 3, 12, 0, 0]",
+            "explanation": "Non-zeroes preserve relative order; zeroes pushed to end in-place."
+        },
+        {
+            "input": "nums = [0]",
+            "output": "[0]",
+            "explanation": "Single zero remains unchanged."
+        }
+    ],
     explanation: 'Maintain a pointer insertPos. Whenever a non-zero is found, swap nums[i] with nums[insertPos] and increment insertPos.',
     solutions: {
       java: `public class Solution {
@@ -1205,6 +1409,18 @@ void moveZeroes(std::vector<int>& nums) {
     constraints: ['1 <= nums.length <= 10^5', '-10^4 <= nums[i] <= 10^4'],
     sampleInput: 'nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]',
     sampleOutput: '6 ([4, -1, 2, 1])',
+    testCases: [
+        {
+            "input": "nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]",
+            "output": "6",
+            "explanation": "Contiguous subarray [4, -1, 2, 1] achieves max sum of 6."
+        },
+        {
+            "input": "nums = [-3, -1, -2]",
+            "output": "-1",
+            "explanation": "When all elements negative, max subarray is highest single element -1."
+        }
+    ],
     explanation: 'Iterate through the array maintaining runningSum. If runningSum < 0, reset it to 0. At each step, update maxSum = max(maxSum, runningSum).',
     solutions: {
       java: `public class Solution {
@@ -1262,6 +1478,18 @@ int maxSubArray(const std::vector<int>& nums) {
     constraints: ['2 <= N <= 10^5'],
     sampleInput: 'arr = [1, 2, 4, 6, 3, 7, 8], N = 8',
     sampleOutput: '5',
+    testCases: [
+        {
+            "input": "nums = [1, 2, 4, 5], N = 5",
+            "output": "3",
+            "explanation": "Expected sum 15 - actual sum 12 = 3."
+        },
+        {
+            "input": "nums = [2, 3, 1, 5], N = 5",
+            "output": "4",
+            "explanation": "Missing integer in range [1..5] is 4."
+        }
+    ],
     explanation: 'Expected sum of first N natural numbers is N*(N+1)/2. The missing number is expectedSum - sum(arr). Alternatively, XOR 1..N with all elements.',
     solutions: {
       java: `public class Solution {
@@ -1311,6 +1539,18 @@ int findMissing(const std::vector<int>& arr, int n) {
     constraints: ['1 <= N <= 500'],
     sampleInput: 'matrix = [[1, 2], [3, 4]]',
     sampleOutput: '[[3, 1], [4, 2]]',
+    testCases: [
+        {
+            "input": "matrix = [[1,2],[3,4]]",
+            "output": "[[3,1],[4,2]]",
+            "explanation": "Transpose the matrix then reverse each row to achieve 90° clockwise rotation."
+        },
+        {
+            "input": "matrix = [[1]]",
+            "output": "[[1]]",
+            "explanation": "1x1 matrix rotation leaves element unchanged."
+        }
+    ],
     explanation: 'Two-step in-place transformation: 1) Transpose matrix (swap matrix[i][j] with matrix[j][i]). 2) Reverse each individual row.',
     solutions: {
       java: `public class Solution {
@@ -1392,6 +1632,18 @@ void rotate(std::vector<std::vector<int>>& matrix) {
     constraints: ['1 <= S.length <= 10^5'],
     sampleInput: 'S = "TCS NQT 2026 Batch!"',
     sampleOutput: 'Vowels: 1, Consonants: 5, Digits: 4, Spaces: 3',
+    testCases: [
+        {
+            "input": "s = \"Take u forward 123\"",
+            "output": "Vowels: 5, Consonants: 7, Digits: 3, Spaces: 3",
+            "explanation": "Counts characters categorized by ASCII ranges."
+        },
+        {
+            "input": "s = \"aeiou\"",
+            "output": "Vowels: 5, Consonants: 0, Digits: 0, Spaces: 0",
+            "explanation": "All characters are vowels."
+        }
+    ],
     explanation: 'Iterate through each character, convert to lowercase for uniform check, and classify using ASCII ranges or set containment.',
     solutions: {
       java: `public class Solution {
@@ -1475,6 +1727,18 @@ void countTypes(const char* s, int* v, int* c, int* d, int* sp) {
     constraints: ['1 <= s.length, t.length <= 5 * 10^4', 's and t contain lowercase English letters.'],
     sampleInput: 's = "anagram", t = "nagaram"',
     sampleOutput: 'true',
+    testCases: [
+        {
+            "input": "s = \"anagram\", t = \"nagaram\"",
+            "output": "true",
+            "explanation": "Both strings have identical frequency of all lowercase characters."
+        },
+        {
+            "input": "s = \"rat\", t = \"car\"",
+            "output": "false",
+            "explanation": "Frequencies differ for letters r, t, c."
+        }
+    ],
     explanation: 'Use a fixed array of size 26 to count character frequencies. Increment for s and decrement for t. If all 26 buckets are 0, they are anagrams.',
     solutions: {
       java: `public class Solution {
@@ -1545,6 +1809,18 @@ int isAnagram(const char* s, const char* t) {
     constraints: ['1 <= chars.length <= 2000'],
     sampleInput: 'chars = ["a","a","b","b","c","c","c"]',
     sampleOutput: '["a","2","b","2","c","3"] (length = 6)',
+    testCases: [
+        {
+            "input": "s = \"aabcccccaaa\"",
+            "output": "\"a2b1c5a3\"",
+            "explanation": "Consecutive runs of identical characters compressed with lengths."
+        },
+        {
+            "input": "s = \"abc\"",
+            "output": "\"a1b1c1\"",
+            "explanation": "Each character has frequency 1."
+        }
+    ],
     explanation: 'Use two pointers (i for reading groups and writeIndex for placing compressed result in-place).',
     solutions: {
       java: `public class Solution {
@@ -1639,6 +1915,18 @@ int compress(char* chars, int charsSize) {
     constraints: ['1 <= nums.length <= 10', '-10 <= nums[i] <= 10'],
     sampleInput: 'nums = [1, 2, 3]',
     sampleOutput: '[[], [1], [2], [1, 2], [3], [1, 3], [2, 3], [1, 2, 3]]',
+    testCases: [
+        {
+            "input": "nums = [1, 2, 3]",
+            "output": "[[], [1], [2], [1,2], [3], [1,3], [2,3], [1,2,3]]",
+            "explanation": "2^3 = 8 possible subsets generated recursively."
+        },
+        {
+            "input": "nums = [0]",
+            "output": "[[], [0]]",
+            "explanation": "2^1 = 2 subsets generated."
+        }
+    ],
     explanation: 'For each element, we have two choices: include it in the current subset or exclude it. Using backtracking, we explore both choices recursively.',
     solutions: {
       java: `import java.util.*;
@@ -1705,6 +1993,18 @@ std::vector<std::vector<int>> subsets(const std::vector<int>& nums) {
     constraints: ['1 <= N <= 16'],
     sampleInput: 'N = 3, Source = "A", Aux = "B", Dest = "C"',
     sampleOutput: '7 moves: Move disk 1 from A to C, Move disk 2 from A to B...',
+    testCases: [
+        {
+            "input": "N = 3",
+            "output": "7 moves: 1:A->C, 2:A->B, 1:C->B, 3:A->C, 1:B->A, 2:B->C, 1:A->C",
+            "explanation": "Follows 2^N - 1 minimum moves formula."
+        },
+        {
+            "input": "N = 1",
+            "output": "1 move: Move disk 1 from A to C",
+            "explanation": "Single move required."
+        }
+    ],
     explanation: '1) Move N-1 disks from Source to Aux using Dest. 2) Move disk N from Source to Dest. 3) Move N-1 disks from Aux to Dest using Source.',
     solutions: {
       java: `public class Solution {
@@ -1759,6 +2059,18 @@ void hanoi(int n, char from, char aux, char to) {
     constraints: ['1 <= arr.length <= 10^5', '-10^9 <= arr[i], target <= 10^9'],
     sampleInput: 'arr = [-1, 0, 3, 5, 9, 12], target = 9',
     sampleOutput: '4',
+    testCases: [
+        {
+            "input": "nums = [-1, 0, 3, 5, 9, 12], target = 9",
+            "output": "4",
+            "explanation": "Target 9 found at index 4 in O(log N)."
+        },
+        {
+            "input": "nums = [-1, 0, 3, 5, 9, 12], target = 2",
+            "output": "-1",
+            "explanation": "Target 2 does not exist in array."
+        }
+    ],
     explanation: 'Divide search space in half each time by comparing target with middle element. Calculate mid as low + (high - low) / 2 to prevent 32-bit integer overflow.',
     solutions: {
       java: `public class Solution {
@@ -1825,6 +2137,18 @@ int search(const std::vector<int>& nums, int target) {
     constraints: ['1 <= N <= 10^4'],
     sampleInput: 'arr = [64, 34, 25, 12, 22, 11, 90]',
     sampleOutput: '[11, 12, 22, 25, 34, 64, 90]',
+    testCases: [
+        {
+            "input": "arr = [64, 34, 25, 12, 22, 11, 90]",
+            "output": "[11, 12, 22, 25, 34, 64, 90]",
+            "explanation": "Adjacent elements swapped repeatedly until sorted."
+        },
+        {
+            "input": "arr = [1, 2, 3, 4]",
+            "output": "[1, 2, 3, 4]",
+            "explanation": "Already sorted array detected in pass 1 with 0 swaps, exiting early in O(N)."
+        }
+    ],
     explanation: 'In each pass, compare adjacent elements and swap if out of order. If no swaps occurred in a pass, the array is already sorted, so we can terminate early.',
     solutions: {
       java: `public class Solution {
@@ -1907,6 +2231,18 @@ void bubbleSort(std::vector<int>& arr) {
     constraints: ['-2^31 <= N <= 2^31 - 1'],
     sampleInput: 'N = 16',
     sampleOutput: 'true',
+    testCases: [
+        {
+            "input": "N = 16",
+            "output": "true",
+            "explanation": "16 in binary is 10000. (16 & 15) == (10000 & 01111) == 0, confirming power of 2."
+        },
+        {
+            "input": "N = 18",
+            "output": "false",
+            "explanation": "18 in binary is 10010. (18 & 17) != 0."
+        }
+    ],
     explanation: 'A power of two in binary has exactly one set bit (e.g. 16 = 10000). Subtracting 1 inverts all bits up to the lowest set bit (15 = 01111). Therefore, (N & (N - 1)) == 0 for all powers of two.',
     solutions: {
       java: `public class Solution {
@@ -1941,6 +2277,18 @@ void bubbleSort(std::vector<int>& arr) {
     constraints: ['1 <= nums.length <= 3 * 10^4', '-3 * 10^4 <= nums[i] <= 3 * 10^4'],
     sampleInput: 'nums = [4, 1, 2, 1, 2]',
     sampleOutput: '4',
+    testCases: [
+        {
+            "input": "nums = [4, 1, 2, 1, 2]",
+            "output": "4",
+            "explanation": "Pairs cancel out via XOR: 1^1 = 0, 2^2 = 0, leaving 4."
+        },
+        {
+            "input": "nums = [2, 2, 1]",
+            "output": "1",
+            "explanation": "2^2 = 0, leaving unique element 1."
+        }
+    ],
     explanation: 'XOR properties: A ^ A = 0, and A ^ 0 = A. XORing all elements together cancels out all pairs, leaving only the single unique number.',
     solutions: {
       java: `public class Solution {
@@ -1986,6 +2334,18 @@ int singleNumber(const std::vector<int>& nums) {
     constraints: ['1 <= N <= 2^31 - 1'],
     sampleInput: 'N = 29 (Binary: 11101)',
     sampleOutput: '4',
+    testCases: [
+        {
+            "input": "N = 9 (1001 in binary)",
+            "output": "2",
+            "explanation": "Two set bits (1s) at positions 0 and 3."
+        },
+        {
+            "input": "N = 0",
+            "output": "0",
+            "explanation": "Zero contains no set bits."
+        }
+    ],
     explanation: 'In each step, N = N & (N - 1) turns off the lowest set bit. The loop runs only as many times as there are set bits in N.',
     solutions: {
       java: `public class Solution {

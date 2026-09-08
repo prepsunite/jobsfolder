@@ -31,8 +31,11 @@ import {
   ArrowLeft,
   BookOpen,
   Folder,
+  FileCode,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
+import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImportModal';
 import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
@@ -53,6 +56,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 };
 
 export default function TechnicalHubPage() {
+  const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const trackParam = searchParams.get('track');
   const topicParam = searchParams.get('topic');
@@ -81,11 +85,11 @@ export default function TechnicalHubPage() {
   const [selectedStage, setSelectedStage] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProblem, setSelectedProblem] = useState<ProgrammingProblem | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<'java' | 'python' | 'cpp' | 'c'>('java');
   const [expandedSolutions, setExpandedSolutions] = useState<Record<string, boolean>>({});
   const [problemLanguages, setProblemLanguages] = useState<Record<string, 'java' | 'python' | 'cpp' | 'c'>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedMcqAnswers, setSelectedMcqAnswers] = useState<Record<string, number>>({});
+  const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
 
   // Query Programming Topics (15 Structured Syllabus Topics)
   const { data: topics = [] } = useQuery<ProgrammingTopic[]>({
@@ -93,7 +97,7 @@ export default function TechnicalHubPage() {
     queryFn: () => technicalService.getProgrammingTopics(),
   });
 
-  // Query Programming 150 Problems
+  // Query Programming 150 Problems (Seed + Custom Imported)
   const { data: p150Problems = [], refetch: refetchP150 } = useQuery({
     queryKey: ['programming-150-problems'],
     queryFn: () => technicalService.getProgramming150Problems(),
@@ -125,7 +129,6 @@ export default function TechnicalHubPage() {
 
   const activeTrackSolved = useMemo(() => activeTrackProblems.filter(p => p.solved).length, [activeTrackProblems]);
   const activeTrackTotal = activeTrackProblems.length;
-  const activeTrackPct = activeTrackTotal > 0 ? Math.round((activeTrackSolved / activeTrackTotal) * 100) : 0;
 
   const basicProblems = useMemo(() => activeTrackProblems.filter(p => p.level === 'BASIC'), [activeTrackProblems]);
   const basicSolved = useMemo(() => basicProblems.filter(p => p.solved).length, [basicProblems]);
@@ -168,15 +171,6 @@ export default function TechnicalHubPage() {
       return true;
     });
   }, [topics, selectedStage, searchQuery]);
-
-  // Distinct categories in active track
-  const availableCategories = useMemo(() => {
-    const map = new Map<string, string>();
-    currentProblems.forEach(p => {
-      map.set(p.category, p.categoryLabel);
-    });
-    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
-  }, [currentProblems]);
 
   // Active topic total and solved count
   const activeTopicProblems = useMemo(() => {
@@ -311,6 +305,17 @@ export default function TechnicalHubPage() {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkModal(true)}
+                    className="px-3 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-md text-xs font-display font-bold transition-all border border-purple-500/30 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Bulk import questions into this topic"
+                  >
+                    <FileCode className="w-3.5 h-3.5" />
+                    <span>Bulk JSON</span>
+                  </button>
+                )}
                 <div className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/25">
                   {filteredProblems.length} Problems
                 </div>
@@ -392,7 +397,7 @@ export default function TechnicalHubPage() {
             </div>
           </div>
 
-          {/* 4. Full-Width Questions List (Matching TopicQuestionsPage + Old Papers QuestionCard) */}
+          {/* 4. Full-Width Questions List (Placement OA Standard: Statement -> Constraints -> 2 Test Cases -> Solutions) */}
           <div className="space-y-4">
             {filteredProblems.length === 0 ? (
               <div className="p-10 text-center rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
@@ -492,47 +497,90 @@ export default function TechnicalHubPage() {
                       </div>
                     </div>
 
-                    {/* Problem Title */}
+                    {/* 1. Problem Title */}
                     <h3 className="font-display text-base sm:text-lg font-bold text-[#121417] dark:text-[#FFFFFF] leading-snug">
                       {problem.title}
                     </h3>
 
-                    {/* Problem Statement / Description (Matching Old Papers QuestionCard block) */}
+                    {/* 2. Problem Statement / Description */}
                     <div className="text-xs sm:text-sm text-[#495057] dark:text-[#CCCCCC] leading-relaxed bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] font-sans whitespace-pre-line">
                       {problem.description}
                     </div>
 
-                    {/* Constraints */}
+                    {/* 3. Constraints Section */}
                     {problem.constraints && problem.constraints.length > 0 && (
-                      <div className="text-xs font-mono text-[#868E96] dark:text-[#777777] flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-[10px] uppercase font-display text-[#121417] dark:text-[#E9ECEF]">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
                           Constraints:
                         </span>
-                        {problem.constraints.map((c, i) => (
-                          <span
-                            key={i}
-                            className="bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded border border-[#E9ECEF] dark:border-[#242424]"
-                          >
-                            {c}
-                          </span>
+                        <ul className="list-disc pl-4 space-y-0.5 text-xs font-mono text-[#495057] dark:text-[#CCCCCC]">
+                          {problem.constraints.map((c, i) => (
+                            <li key={i}>{c}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 4. Two Test Cases (Example 1 & Example 2) */}
+                    {problem.testCases && problem.testCases.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {problem.testCases.map((tc, tcIdx) => (
+                          <div key={tcIdx} className="space-y-1">
+                            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
+                              Example {tcIdx + 1}:
+                            </span>
+                            <div className="p-3 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-mono text-xs text-[#121417] dark:text-[#E9ECEF] space-y-1">
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400 font-bold">Input: </span>
+                                <span>{tc.input}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400 font-bold">Output: </span>
+                                <span>{tc.output}</span>
+                              </div>
+                              {tc.explanation && (
+                                <div className="pt-1 text-[11px] font-sans text-gray-600 dark:text-gray-300">
+                                  <span className="font-bold text-gray-500 dark:text-gray-400 font-mono">Explanation: </span>
+                                  <span>{tc.explanation}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         ))}
                       </div>
+                    ) : (
+                      (problem.sampleInput || problem.sampleOutput) && (
+                        <div className="space-y-2.5">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
+                              Example 1:
+                            </span>
+                            <div className="p-3 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-mono text-xs text-[#121417] dark:text-[#E9ECEF] space-y-1">
+                              {problem.sampleInput && (
+                                <div>
+                                  <span className="text-gray-500 dark:text-gray-400 font-bold">Input: </span>
+                                  <span>{problem.sampleInput}</span>
+                                </div>
+                              )}
+                              {problem.sampleOutput && (
+                                <div>
+                                  <span className="text-gray-500 dark:text-gray-400 font-bold">Output: </span>
+                                  <span>{problem.sampleOutput}</span>
+                                </div>
+                              )}
+                              {problem.explanation && (
+                                <div className="pt-1 text-[11px] font-sans text-gray-600 dark:text-gray-300">
+                                  <span className="font-bold text-gray-500 dark:text-gray-400 font-mono">Explanation: </span>
+                                  <span>{problem.explanation}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
                     )}
 
-                    {/* Sample Test Case (Input / Output Box matching Old Papers) */}
-                    {(problem.sampleInput || problem.sampleOutput) && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
-                          Sample Test Case:
-                        </span>
-                        <pre className="test-case text-xs p-3 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-mono text-[#121417] dark:text-[#E9ECEF] overflow-x-auto whitespace-pre-wrap">
-                          {problem.sampleInput && `Input:\n${problem.sampleInput}\n`}
-                          {problem.sampleOutput && `\nOutput:\n${problem.sampleOutput}`}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* Expandable In-Place Solution & Code (Matching Old Papers QuestionCard) */}
+                    {/* 5. Expandable In-Place Solution & Code (Multi-Language) */}
                     <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
                       <button
                         type="button"
@@ -738,7 +786,7 @@ export default function TechnicalHubPage() {
             </div>
           </div>
 
-          {/* 🏷️ 2. TRACK SELECTION PILLS + SEARCH BAR */}
+          {/* 🏷️ 2. TRACK SELECTION PILLS + SEARCH BAR + ADMIN BULK BUTTON */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             {/* Track Switchers with meaningful semantic labels */}
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -797,8 +845,20 @@ export default function TechnicalHubPage() {
               </button>
             </div>
 
-            {/* Search Bar */}
+            {/* Search Bar + Admin Bulk JSON Button */}
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowBulkModal(true)}
+                  className="px-3 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-md text-xs font-display font-bold transition-all border border-purple-500/30 flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
+                  title="Bulk import programming questions (JSON)"
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                  <span>Bulk JSON</span>
+                </button>
+              )}
+
               <div className="relative w-48 sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
                 <input
@@ -949,6 +1009,19 @@ export default function TechnicalHubPage() {
                     <div className="text-xs sm:text-sm text-[#495057] dark:text-[#CCCCCC] leading-relaxed bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] font-sans whitespace-pre-line">
                       {problem.description}
                     </div>
+
+                    {problem.constraints && problem.constraints.length > 0 && (
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
+                          Constraints:
+                        </span>
+                        <ul className="list-disc pl-4 space-y-0.5 text-xs font-mono text-[#495057] dark:text-[#CCCCCC]">
+                          {problem.constraints.map((c, i) => (
+                            <li key={i}>{c}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     {(problem.sampleInput || problem.sampleOutput) && (
                       <div className="space-y-1.5">
@@ -1126,6 +1199,19 @@ export default function TechnicalHubPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* 💻 ADMIN BULK JSON IMPORT MODAL */}
+      {showBulkModal && (
+        <TechnicalBulkImportModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          onSuccess={() => {
+            refetchP150();
+          }}
+          defaultTopicId={activeTopic?.id}
+          topics={topics}
+        />
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, ProblemCategory, P
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_EXPANDED_SEED } from './programmingTopicsData';
 
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
+const IMPORTED_PROBLEMS_KEY = 'prepunite_imported_programming_problems';
 
 export const technicalService = {
   // Solved Problem State Management
@@ -32,15 +33,112 @@ export const technicalService = {
     return isNowSolved;
   },
 
+  // Custom Imported Problems Management
+  getImportedProblems(): ProgrammingProblem[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem(IMPORTED_PROBLEMS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async importProgrammingProblems(newProblems: Partial<ProgrammingProblem>[]): Promise<{ importedCount: number }> {
+    const existing = this.getImportedProblems();
+    const existingIds = new Set([...PROGRAMMING_150_EXPANDED_SEED.map(p => p.id), ...existing.map(p => p.id)]);
+    let count = 0;
+
+    const normalized: ProgrammingProblem[] = [];
+    newProblems.forEach((p, idx) => {
+      if (!p.title) return;
+      let id = p.id || `custom-p150-${Date.now()}-${idx}`;
+      while (existingIds.has(id)) {
+        id = `custom-p150-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      }
+      existingIds.add(id);
+
+      const topicId = p.topicId || 'syntax-operators';
+      const matchedTopic = PROGRAMMING_TOPICS.find(t => t.id === topicId);
+
+      let testCases = p.testCases;
+      if (!testCases || testCases.length === 0) {
+        if (p.sampleInput || p.sampleOutput) {
+          testCases = [
+            {
+              input: p.sampleInput || '',
+              output: p.sampleOutput || '',
+              explanation: p.explanation || '',
+            },
+          ];
+        } else {
+          testCases = [];
+        }
+      }
+
+      const item: ProgrammingProblem = {
+        id,
+        title: p.title.trim(),
+        slug: p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        track: 'PROGRAMMING_150',
+        level: p.level || 'MEDIUM',
+        category: p.category || (matchedTopic ? matchedTopic.category : 'SYNTAX_BASICS'),
+        categoryLabel: p.categoryLabel || (matchedTopic ? matchedTopic.title : 'General Programming'),
+        topicId,
+        description: p.description || '',
+        constraints: Array.isArray(p.constraints) ? p.constraints : (p.constraints ? [String(p.constraints)] : []),
+        testCases,
+        sampleInput: testCases[0]?.input || p.sampleInput || '',
+        sampleOutput: testCases[0]?.output || p.sampleOutput || '',
+        explanation: p.explanation || '',
+        solutions: p.solutions || {
+          java: '// Java implementation',
+          python: '# Python implementation',
+          cpp: '// C++ implementation',
+          c: '// C implementation',
+        },
+        timeComplexity: p.timeComplexity || 'O(N)',
+        spaceComplexity: p.spaceComplexity || 'O(1)',
+        hints: Array.isArray(p.hints) ? p.hints : [],
+        companyTags: Array.isArray(p.companyTags) ? p.companyTags : ['Campus Placement'],
+      };
+
+      normalized.push(item);
+      count++;
+    });
+
+    const updated = [...existing, ...normalized];
+    try {
+      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save imported problems to localStorage:', e);
+    }
+
+    return { importedCount: count };
+  },
+
+  deleteProgrammingProblem(problemId: string): boolean {
+    const existing = this.getImportedProblems();
+    const filtered = existing.filter(p => p.id !== problemId);
+    try {
+      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(filtered));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   // Retrieve Programming Topics (Structured Directory)
   async getProgrammingTopics(): Promise<ProgrammingTopic[]> {
     return PROGRAMMING_TOPICS;
   },
 
-  // Retrieve Programming 150 problems
+  // Retrieve Programming 150 problems (Seed + Custom Imported)
   async getProgramming150Problems(): Promise<ProgrammingProblem[]> {
     const solvedSet = this.getSolvedProblemIds();
-    return PROGRAMMING_150_EXPANDED_SEED.map(p => ({
+    const imported = this.getImportedProblems();
+    const all = [...PROGRAMMING_150_EXPANDED_SEED, ...imported];
+    return all.map(p => ({
       ...p,
       solved: solvedSet.has(p.id),
     }));
