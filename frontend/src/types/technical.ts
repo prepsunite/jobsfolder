@@ -25,6 +25,16 @@ export interface MultiLanguageSolution {
   c?: string;
 }
 
+export interface ProgrammingTopic {
+  id: string;
+  title: string;
+  cluster: string;
+  description: string;
+  iconName: string;
+  category: ProblemCategory;
+  order: number;
+}
+
 export interface ProgrammingProblem {
   id: string;
   title: string;
@@ -33,6 +43,7 @@ export interface ProgrammingProblem {
   level: ProblemLevel;
   category: ProblemCategory;
   categoryLabel: string;
+  topicId?: string;
   description: string;
   constraints?: string[];
   sampleInput: string;

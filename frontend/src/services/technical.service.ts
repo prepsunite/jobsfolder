@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, ProblemCategory } from '@/types/technical';
+import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, ProblemCategory, ProgrammingTopic } from '@/types/technical';
+import { PROGRAMMING_TOPICS, PROGRAMMING_150_EXPANDED_SEED } from './programmingTopicsData';
 
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
 
@@ -31,13 +32,24 @@ export const technicalService = {
     return isNowSolved;
   },
 
+  // Retrieve Programming Topics (Structured Directory)
+  async getProgrammingTopics(): Promise<ProgrammingTopic[]> {
+    return PROGRAMMING_TOPICS;
+  },
+
   // Retrieve Programming 150 problems
   async getProgramming150Problems(): Promise<ProgrammingProblem[]> {
     const solvedSet = this.getSolvedProblemIds();
-    return PROGRAMMING_150_SEED.map(p => ({
+    return PROGRAMMING_150_EXPANDED_SEED.map(p => ({
       ...p,
       solved: solvedSet.has(p.id),
     }));
+  },
+
+  // Retrieve Programming Problems filtered by topic
+  async getProblemsByTopic(topicId: string): Promise<ProgrammingProblem[]> {
+    const all = await this.getProgramming150Problems();
+    return all.filter(p => p.topicId === topicId);
   },
 
   // Retrieve Campus DSA Top 100 problems
