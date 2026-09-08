@@ -79,7 +79,7 @@ export default function TechnicalHubPage() {
   const [copied, setCopied] = useState(false);
   const [selectedMcqAnswers, setSelectedMcqAnswers] = useState<Record<string, number>>({});
 
-  // Query Programming Topics (12 Structured Syllabus Topics)
+  // Query Programming Topics (15 Structured Syllabus Topics)
   const { data: topics = [] } = useQuery<ProgrammingTopic[]>({
     queryKey: ['programming-topics'],
     queryFn: () => technicalService.getProgrammingTopics(),
@@ -235,7 +235,7 @@ export default function TechnicalHubPage() {
               {activeTrack === 'PROGRAMMING_150' && (
                 activeTopic
                   ? activeTopic.description
-                  : 'Structured 12-topic syllabus building syntax foundations, loop mechanics, number logic, patterns, arrays, and recursion.'
+                  : 'Structured 15-topic syllabus across 6 progressive stages building syntax foundations, loop mechanics, number logic, patterns, arrays, strings, and recursion.'
               )}
               {activeTrack === 'CAMPUS_DSA' &&
                 'Curated 15 repeatable campus placement patterns frequently tested in Amazon, TCS Prime, and Infosys SP.'}

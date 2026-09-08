@@ -1,118 +1,158 @@
 import type { ProgrammingTopic, ProgrammingProblem } from '@/types/technical';
 
 export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
+  // ── STAGE 1: LANGUAGE & CONTROL FLOW FOUNDATIONS ──
   {
-    id: 'syntax-basics',
-    title: 'Syntax & Operators',
-    cluster: 'Stage 1: Foundations',
-    description: 'Variables, data types, arithmetic & bitwise operators, ternary conditionals, and ASCII values.',
+    id: 'syntax-operators',
+    title: 'Syntax, Operators & Typecasting',
+    cluster: 'Stage 1: Language & Control Flow',
+    description: 'Data types, fast I/O, arithmetic & bitwise operator precedence, typecasting, and ASCII arithmetic.',
     iconName: 'Code2',
     category: 'SYNTAX_BASICS',
     order: 1,
   },
   {
-    id: 'loops-conditions',
-    title: 'Loops & Conditionals',
-    cluster: 'Stage 1: Foundations',
-    description: 'While and for loop mechanics, nested branches, digit extraction, and summation algorithms.',
+    id: 'conditionals-loops',
+    title: 'Conditionals & Iteration Loops',
+    cluster: 'Stage 1: Language & Control Flow',
+    description: 'If-else branches, switch-case calculators, while/for loops, break/continue, and summation logic.',
     iconName: 'Terminal',
     category: 'SYNTAX_BASICS',
     order: 2,
   },
+
+  // ── STAGE 2: MATHEMATICAL & NUMBER LOGIC ──
   {
-    id: 'number-logic',
-    title: 'Number Theory & Math',
-    cluster: 'Stage 2: Logic Building',
-    description: 'Prime check, Palindrome, Armstrong, Factorial, GCD/LCM, and Fibonacci sequences.',
+    id: 'digit-manipulation',
+    title: 'Digit Extraction & Manipulation',
+    cluster: 'Stage 2: Mathematical & Number Logic',
+    description: 'Modulo 10 extractions, counting digits, reversing integers, digital roots, and palindrome numbers.',
     iconName: 'Hash',
     category: 'NUMBER_LOGIC',
     order: 3,
   },
   {
-    id: 'patterns',
-    title: 'Star & Number Patterns',
-    cluster: 'Stage 2: Logic Building',
-    description: 'Inverted pyramids, hollow diamonds, Floyd\'s triangle, Pascal\'s triangle, and nested loops.',
-    iconName: 'Shuffle',
-    category: 'PATTERNS',
+    id: 'primes-divisibility',
+    title: 'Primes, Divisibility & Euclidean Math',
+    cluster: 'Stage 2: Mathematical & Number Logic',
+    description: 'Prime checks in O(sqrt(N)), Sieve of Eratosthenes, Euclidean GCD/LCM, and divisor extraction.',
+    iconName: 'Binary',
+    category: 'NUMBER_LOGIC',
     order: 4,
   },
   {
-    id: 'arrays-basic',
-    title: '1D Arrays (Fundamentals)',
-    cluster: 'Stage 3: Core Data Structures',
-    description: 'Min/Max, reverse in-place, sorted validation, frequency hashing, and linear scanning.',
-    iconName: 'Layers',
-    category: 'ARRAYS',
+    id: 'special-numbers',
+    title: 'Special Numbers & Sequences',
+    cluster: 'Stage 2: Mathematical & Number Logic',
+    description: 'Armstrong, Strong, Harshad, Perfect, Automorphic numbers, and the Fibonacci sequence.',
+    iconName: 'Sparkles',
+    category: 'NUMBER_LOGIC',
     order: 5,
   },
+
+  // ── STAGE 3: 2D GRID & PATTERN PROGRAMMING ──
   {
-    id: 'arrays-logic',
-    title: '1D Arrays (Logic & Pointers)',
-    cluster: 'Stage 3: Core Data Structures',
-    description: 'Second largest, remove duplicates, left rotate by K, move zeroes, and missing number.',
-    iconName: 'Sliders',
-    category: 'ARRAYS',
+    id: 'patterns',
+    title: 'Star, Number & Symmetric Patterns',
+    cluster: 'Stage 3: 2D Grid & Patterns',
+    description: 'Pyramids, inverted pyramids, hollow shapes, Floyd\'s triangle, Pascal\'s triangle, and butterfly patterns.',
+    iconName: 'Shuffle',
+    category: 'PATTERNS',
     order: 6,
   },
+
+  // ── STAGE 4: LINEAR DATA STRUCTURES: 1D ARRAYS ──
   {
-    id: 'matrices',
-    title: '2D Arrays & Matrices',
-    cluster: 'Stage 3: Core Data Structures',
-    description: 'Matrix addition, transpose, rotate 90 degrees, row with max 1s, and spiral traversal.',
-    iconName: 'Grid',
+    id: 'arrays-fundamentals',
+    title: '1D Arrays: Fundamentals & Linear Scans',
+    cluster: 'Stage 4: 1D Arrays',
+    description: 'Min/Max search, in-place reversal, sorted verification, frequency tables, and linear scanning.',
+    iconName: 'Layers',
     category: 'ARRAYS',
     order: 7,
   },
   {
-    id: 'strings-basic',
-    title: 'Strings & Characters',
-    cluster: 'Stage 4: Text Processing',
-    description: 'Vowel/consonant counts, reverse string, palindrome string, and ASCII case toggling.',
-    iconName: 'Type',
-    category: 'STRINGS',
+    id: 'arrays-two-pointers',
+    title: '1D Arrays: Two Pointers & Transformations',
+    cluster: 'Stage 4: 1D Arrays',
+    description: 'Second largest distinct element, in-place duplicate removal, moving zeroes, and array rotation by K.',
+    iconName: 'Sliders',
+    category: 'ARRAYS',
     order: 8,
   },
   {
-    id: 'strings-logic',
-    title: 'String Logic & Anagrams',
-    cluster: 'Stage 4: Text Processing',
-    description: 'Anagram check, string compression (RLE), longest common prefix, and substring search.',
-    iconName: 'Sparkles',
-    category: 'STRINGS',
+    id: 'arrays-subarrays',
+    title: '1D Arrays: Subarrays & Classic Patterns',
+    cluster: 'Stage 4: 1D Arrays',
+    description: 'Kadane\'s algorithm for maximum subarray sum, missing numbers, leader elements, and running prefix sums.',
+    iconName: 'Layers',
+    category: 'ARRAYS',
     order: 9,
   },
+
+  // ── STAGE 5: MATRICES & STRING MANIPULATION ──
   {
-    id: 'recursion',
-    title: 'Recursion & Backtracking',
-    cluster: 'Stage 5: Advanced Logic',
-    description: '1 to N recursion, Tower of Hanoi, recursive power, and power set generation.',
-    iconName: 'Cpu',
-    category: 'RECURSION',
+    id: 'matrices-grid',
+    title: '2D Arrays & Matrix Mathematics',
+    cluster: 'Stage 5: Matrices & Strings',
+    description: 'Matrix multiplication, in-place transpose, 90° clockwise rotation, and spiral boundary traversal.',
+    iconName: 'Grid',
+    category: 'ARRAYS',
     order: 10,
   },
   {
-    id: 'searching-sorting',
-    title: 'Searching & Sorting',
-    cluster: 'Stage 5: Advanced Logic',
-    description: 'Binary search (iterative/recursive), bubble sort, selection sort, and merge sort.',
-    iconName: 'Search',
-    category: 'SEARCHING_SORTING',
+    id: 'strings-fundamentals',
+    title: 'Strings: Fundamentals & ASCII Logic',
+    cluster: 'Stage 5: Matrices & Strings',
+    description: 'String length without library calls, vowel/consonant counts, word reversal, and case toggling.',
+    iconName: 'Type',
+    category: 'STRINGS',
     order: 11,
   },
   {
+    id: 'strings-algorithms',
+    title: 'Strings: Anagrams, Substrings & Compression',
+    cluster: 'Stage 5: Matrices & Strings',
+    description: 'Valid Anagram verification, Run-Length Encoding (RLE), longest common prefix, and first non-repeating char.',
+    iconName: 'Sparkles',
+    category: 'STRINGS',
+    order: 12,
+  },
+
+  // ── STAGE 6: RECURSION, SEARCHING & BIT HACKS ──
+  {
+    id: 'recursion-backtracking',
+    title: 'Recursion & Backtracking Basics',
+    cluster: 'Stage 6: Recursion, Search & Bits',
+    description: '1 to N recursion, Tower of Hanoi puzzle, recursive array sum, and Power Set generation.',
+    iconName: 'Cpu',
+    category: 'RECURSION',
+    order: 13,
+  },
+  {
+    id: 'searching-sorting',
+    title: 'Searching & Sorting Algorithms',
+    cluster: 'Stage 6: Recursion, Search & Bits',
+    description: 'Binary search with overflow guards, rotated sorted search, bubble sort, selection sort, and merge sort.',
+    iconName: 'Search',
+    category: 'SEARCHING_SORTING',
+    order: 14,
+  },
+  {
     id: 'bit-manipulation',
-    title: 'Bitwise Hacks & Math',
-    cluster: 'Stage 5: Advanced Logic',
-    description: 'Odd/even check, power of 2, count set bits, and single non-repeating number.',
+    title: 'Bit Manipulation Hacks & Math Tricks',
+    cluster: 'Stage 6: Recursion, Search & Bits',
+    description: 'Even/odd check, powers of two, Brian Kernighan\'s bit counter, XOR cancellations, and in-place swaps.',
     iconName: 'Binary',
     category: 'BIT_MANIPULATION',
-    order: 12,
+    order: 15,
   },
 ];
 
 export const PROGRAMMING_150_EXPANDED_SEED: ProgrammingProblem[] = [
-  // ── 1. SYNTAX & OPERATORS ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 1: SYNTAX, OPERATORS & TYPECASTING
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-1',
     title: 'Check Even or Odd without Modulo Operator',
@@ -120,8 +160,8 @@ export const PROGRAMMING_150_EXPANDED_SEED: ProgrammingProblem[] = [
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'SYNTAX_BASICS',
-    categoryLabel: 'Basic Syntax & Operators',
-    topicId: 'syntax-basics',
+    categoryLabel: 'Syntax & Operators',
+    topicId: 'syntax-operators',
     description: 'Given an integer N, determine whether the number is Even or Odd without using the modulo (%) or division (/) operator.',
     constraints: ['-10^9 <= N <= 10^9'],
     sampleInput: 'N = 7',
@@ -130,8 +170,7 @@ export const PROGRAMMING_150_EXPANDED_SEED: ProgrammingProblem[] = [
     solutions: {
       java: `public class Solution {
     public static String checkEvenOdd(int n) {
-        if ((n & 1) == 0) return "Even";
-        return "Odd";
+        return (n & 1) == 0 ? "Even" : "Odd";
     }
 }`,
       python: `def check_even_odd(n: int) -> str:
@@ -152,13 +191,13 @@ std::string checkEvenOdd(int n) {
   },
   {
     id: 'p150-8',
-    title: 'Leap Year Validation & Days in Month',
+    title: 'Leap Year Validation & Gregorian Calendar Rule',
     slug: 'leap-year-validation',
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'SYNTAX_BASICS',
-    categoryLabel: 'Basic Syntax & Operators',
-    topicId: 'syntax-basics',
+    categoryLabel: 'Syntax & Operators',
+    topicId: 'syntax-operators',
     description: 'Given a calendar year Y, determine if it is a leap year. A year is leap if divisible by 400, or divisible by 4 but NOT divisible by 100.',
     constraints: ['1 <= Y <= 9999'],
     sampleInput: 'Y = 2024',
@@ -185,7 +224,9 @@ std::string checkEvenOdd(int n) {
     companyTags: ['Infosys', 'Cognizant']
   },
 
-  // ── 2. LOOPS & CONDITIONALS ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 2: CONDITIONALS & ITERATION LOOPS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-9',
     title: 'Digital Root: Sum of Digits until Single Digit',
@@ -193,13 +234,13 @@ std::string checkEvenOdd(int n) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'SYNTAX_BASICS',
-    categoryLabel: 'Loops & Conditionals',
-    topicId: 'loops-conditions',
+    categoryLabel: 'Conditionals & Loops',
+    topicId: 'conditionals-loops',
     description: 'Given a non-negative integer N, repeatedly add all its digits until the result has only one digit.',
     constraints: ['0 <= N <= 10^9'],
     sampleInput: 'N = 38',
     sampleOutput: '2 (3 + 8 = 11 -> 1 + 1 = 2)',
-    explanation: 'Can be solved using a while loop summing digits, or using the mathematical congruence formula: N == 0 ? 0 : 1 + (N - 1) % 9.',
+    explanation: 'Can be solved using a while loop summing digits, or using modulo 9 arithmetic: N == 0 ? 0 : 1 + (N - 1) % 9.',
     solutions: {
       java: `public class Solution {
     public static int addDigits(int num) {
@@ -208,12 +249,11 @@ std::string checkEvenOdd(int n) {
     }
 }`,
       python: `def add_digits(num: int) -> int:
-    if num == 0:
-        return 0
+    if num == 0: return 0
     return 1 + (num - 1) % 9`,
       cpp: `int addDigits(int num) {
-        if (num == 0) return 0;
-        return 1 + (num - 1) % 9;
+    if (num == 0) return 0;
+    return 1 + (num - 1) % 9;
 }`,
       c: `int addDigits(int num) {
     if (num == 0) return 0;
@@ -225,8 +265,69 @@ std::string checkEvenOdd(int n) {
     hints: ['Think about modulo 9 arithmetic for digital roots.'],
     companyTags: ['Amazon', 'TCS Prime']
   },
+  {
+    id: 'p150-26',
+    title: 'Simple Calculator with Division by Zero Guard',
+    slug: 'simple-calculator-switch',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'SYNTAX_BASICS',
+    categoryLabel: 'Conditionals & Loops',
+    topicId: 'conditionals-loops',
+    description: 'Given two numbers A and B, and an arithmetic operator (+, -, *, /, %), evaluate the expression. Handle division or modulo by zero gracefully by returning -1.',
+    constraints: ['-10^6 <= A, B <= 10^6'],
+    sampleInput: 'A = 10, B = 0, op = \'/\'',
+    sampleOutput: '-1 (Division by Zero)',
+    explanation: 'Use switch-case or chained if-else. Before division or modulo, assert that B is not 0.',
+    solutions: {
+      java: `public class Solution {
+    public static double calculate(double a, double b, char op) {
+        switch (op) {
+            case '+': return a + b;
+            case '-': return a - b;
+            case '*': return a * b;
+            case '/': return b == 0 ? -1 : a / b;
+            case '%': return b == 0 ? -1 : a % b;
+            default: return -1;
+        }
+    }
+}`,
+      python: `def calculate(a: float, b: float, op: str) -> float:
+    if op == '+': return a + b
+    if op == '-': return a - b
+    if op == '*': return a * b
+    if op == '/': return -1 if b == 0 else a / b
+    if op == '%': return -1 if b == 0 else a % b
+    return -1`,
+      cpp: `double calculate(double a, double b, char op) {
+    switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': return b == 0 ? -1 : a / b;
+        case '%': return b == 0 ? -1 : (int)a % (int)b;
+        default: return -1;
+    }
+}`,
+      c: `double calculate(double a, double b, char op) {
+    switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': return b == 0 ? -1 : a / b;
+        default: return -1;
+    }
+}`
+    },
+    timeComplexity: 'O(1)',
+    spaceComplexity: 'O(1)',
+    hints: ['Always validate the denominator before executing division or modulo.'],
+    companyTags: ['Accenture', 'Wipro']
+  },
 
-  // ── 3. NUMBER THEORY & MATH ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 3: DIGIT EXTRACTION & MANIPULATION
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-2',
     title: 'Reverse a Number and Check Palindrome',
@@ -234,8 +335,8 @@ std::string checkEvenOdd(int n) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'NUMBER_LOGIC',
-    categoryLabel: 'Number Theory & Logic',
-    topicId: 'number-logic',
+    categoryLabel: 'Digit Extraction',
+    topicId: 'digit-manipulation',
     description: 'Given an integer N, reverse its digits and determine if it is a palindrome. Note that negative numbers are not considered palindromes.',
     constraints: ['0 <= N <= 10^9'],
     sampleInput: 'N = 1221',
@@ -286,65 +387,69 @@ std::string checkEvenOdd(int n) {
     companyTags: ['Infosys', 'Cognizant', 'TCS']
   },
   {
-    id: 'p150-3',
-    title: 'Check Armstrong Number (Narcissistic Number)',
-    slug: 'armstrong-number',
+    id: 'p150-28',
+    title: 'Count Frequency of Each Digit in a Number',
+    slug: 'count-digit-frequency',
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'NUMBER_LOGIC',
-    categoryLabel: 'Number Theory & Logic',
-    topicId: 'number-logic',
-    description: 'An Armstrong number of order K is a number that is the sum of its own digits each raised to the power of the total number of digits (K). Return true if N is an Armstrong number, otherwise false.',
-    constraints: ['1 <= N <= 10^8'],
-    sampleInput: 'N = 153',
-    sampleOutput: 'true',
-    explanation: '153 has 3 digits. 1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153. Hence, 153 is an Armstrong number.',
+    categoryLabel: 'Digit Extraction',
+    topicId: 'digit-manipulation',
+    description: 'Given a non-negative integer N, compute the frequency of occurrence for each digit (0 through 9) present in the number.',
+    constraints: ['0 <= N <= 10^18'],
+    sampleInput: 'N = 1122334',
+    sampleOutput: 'Digit 1: 2, Digit 2: 2, Digit 3: 2, Digit 4: 1',
+    explanation: 'Use a fixed array of size 10. While N > 0, extract the last digit (N % 10), increment its count in frequency array, and divide N by 10.',
     solutions: {
       java: `public class Solution {
-    public static boolean isArmstrong(int n) {
-        int original = n, digits = String.valueOf(n).length();
-        long sum = 0, temp = n;
-        while (temp > 0) {
-            sum += Math.pow(temp % 10, digits);
-            temp /= 10;
+    public static int[] countDigitFrequencies(long n) {
+        int[] freq = new int[10];
+        if (n == 0) { freq[0] = 1; return freq; }
+        while (n > 0) {
+            freq[(int)(n % 10)]++;
+            n /= 10;
         }
-        return sum == original;
+        return freq;
     }
 }`,
-      python: `def is_armstrong(n: int) -> bool:
-    s = str(n)
-    d = len(s)
-    return sum(int(c) ** d for c in s) == n`,
-      cpp: `#include <cmath>
+      python: `def count_digit_frequencies(n: int) -> list[int]:
+    freq = [0] * 10
+    if n == 0:
+        freq[0] = 1
+        return freq
+    while n > 0:
+        freq[n % 10] += 1
+        n //= 10
+    return freq`,
+      cpp: `#include <vector>
 
-bool isArmstrong(int n) {
-    int original = n, digits = 0, temp = n;
-    while (temp > 0) { digits++; temp /= 10; }
-    long long sum = 0; temp = n;
-    while (temp > 0) {
-        sum += std::pow(temp % 10, digits);
-        temp /= 10;
+std::vector<int> countDigitFrequencies(long long n) {
+    std::vector<int> freq(10, 0);
+    if (n == 0) { freq[0] = 1; return freq; }
+    while (n > 0) {
+        freq[n % 10]++;
+        n /= 10;
     }
-    return sum == original;
+    return freq;
 }`,
-      c: `#include <math.h>
-
-int isArmstrong(int n) {
-    int original = n, digits = 0, temp = n;
-    while (temp > 0) { digits++; temp /= 10; }
-    long long sum = 0; temp = n;
-    while (temp > 0) {
-        sum += (long long)pow(temp % 10, digits);
-        temp /= 10;
+      c: `void countDigitFrequencies(long long n, int freq[10]) {
+    for (int i = 0; i < 10; i++) freq[i] = 0;
+    if (n == 0) { freq[0] = 1; return; }
+    while (n > 0) {
+        freq[n % 10]++;
+        n /= 10;
     }
-    return sum == original;
 }`
     },
     timeComplexity: 'O(log10(N))',
     spaceComplexity: 'O(1)',
-    hints: ['First count digits, then accumulate sum of power of each digit.'],
-    companyTags: ['Accenture', 'TCS', 'HCL']
+    hints: ['Remember to handle N = 0 as an edge case (digit 0 occurs once).'],
+    companyTags: ['TCS', 'Capgemini']
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 4: PRIMES, DIVISIBILITY & EUCLIDEAN MATH
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-10',
     title: 'Greatest Common Divisor (GCD) & LCM (Euclidean Algorithm)',
@@ -352,8 +457,8 @@ int isArmstrong(int n) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'NUMBER_LOGIC',
-    categoryLabel: 'Number Theory & Logic',
-    topicId: 'number-logic',
+    categoryLabel: 'Primes & Divisibility',
+    topicId: 'primes-divisibility',
     description: 'Given two integers A and B, compute their Greatest Common Divisor (GCD) and Lowest Common Multiple (LCM) using Euclidean algorithm.',
     constraints: ['1 <= A, B <= 10^9'],
     sampleInput: 'A = 24, B = 36',
@@ -417,13 +522,13 @@ long long lcm(long long a, long long b) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'NUMBER_LOGIC',
-    categoryLabel: 'Number Theory & Logic',
-    topicId: 'number-logic',
+    categoryLabel: 'Primes & Divisibility',
+    topicId: 'primes-divisibility',
     description: 'Given an integer N, determine if it is a prime number in O(sqrt(N)) time complexity.',
     constraints: ['1 <= N <= 10^12'],
     sampleInput: 'N = 29',
     sampleOutput: 'true',
-    explanation: 'A number is prime if it has no divisors other than 1 and itself. Any composite number must have a factor <= sqrt(N). We only test numbers of form 6k +/- 1.',
+    explanation: 'A number is prime if it has no divisors other than 1 and itself. We check divisibility up to sqrt(N). By testing multiples of 6 (6k +/- 1), we optimize operations by 66%.',
     solutions: {
       java: `public class Solution {
     public static boolean isPrime(long n) {
@@ -471,7 +576,129 @@ long long lcm(long long a, long long b) {
     companyTags: ['TCS Digital', 'Accenture', 'Infosys']
   },
 
-  // ── 4. STAR & NUMBER PATTERNS ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 5: SPECIAL NUMBERS & SEQUENCES
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: 'p150-3',
+    title: 'Check Armstrong Number (Narcissistic Number)',
+    slug: 'armstrong-number',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'NUMBER_LOGIC',
+    categoryLabel: 'Special Numbers',
+    topicId: 'special-numbers',
+    description: 'An Armstrong number of order K is a number that is the sum of its own digits each raised to the power of the total number of digits (K). Return true if N is an Armstrong number, otherwise false.',
+    constraints: ['1 <= N <= 10^8'],
+    sampleInput: 'N = 153',
+    sampleOutput: 'true',
+    explanation: '153 has 3 digits. 1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153. Hence, 153 is an Armstrong number.',
+    solutions: {
+      java: `public class Solution {
+    public static boolean isArmstrong(int n) {
+        int original = n, digits = String.valueOf(n).length();
+        long sum = 0, temp = n;
+        while (temp > 0) {
+            sum += Math.pow(temp % 10, digits);
+            temp /= 10;
+        }
+        return sum == original;
+    }
+}`,
+      python: `def is_armstrong(n: int) -> bool:
+    s = str(n)
+    d = len(s)
+    return sum(int(c) ** d for c in s) == n`,
+      cpp: `#include <cmath>
+
+bool isArmstrong(int n) {
+    int original = n, digits = 0, temp = n;
+    while (temp > 0) { digits++; temp /= 10; }
+    long long sum = 0; temp = n;
+    while (temp > 0) {
+        sum += std::pow(temp % 10, digits);
+        temp /= 10;
+    }
+    return sum == original;
+}`,
+      c: `#include <math.h>
+
+int isArmstrong(int n) {
+    int original = n, digits = 0, temp = n;
+    while (temp > 0) { digits++; temp /= 10; }
+    long long sum = 0; temp = n;
+    while (temp > 0) {
+        sum += (long long)pow(temp % 10, digits);
+        temp /= 10;
+    }
+    return sum == original;
+}`
+    },
+    timeComplexity: 'O(log10(N))',
+    spaceComplexity: 'O(1)',
+    hints: ['First count digits, then accumulate sum of power of each digit.'],
+    companyTags: ['Accenture', 'TCS', 'HCL']
+  },
+  {
+    id: 'p150-29',
+    title: 'Fibonacci Series up to N Terms (Space-Optimized)',
+    slug: 'fibonacci-series-optimized',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'NUMBER_LOGIC',
+    categoryLabel: 'Special Numbers',
+    topicId: 'special-numbers',
+    description: 'Given an integer N, generate the first N numbers in the Fibonacci sequence starting with 0 and 1, utilizing O(1) auxiliary space.',
+    constraints: ['1 <= N <= 50'],
+    sampleInput: 'N = 6',
+    sampleOutput: '[0, 1, 1, 2, 3, 5]',
+    explanation: 'F(0) = 0, F(1) = 1, F(i) = F(i-1) + F(i-2). Maintain two variables: prev2 and prev1, updating iteratively.',
+    solutions: {
+      java: `public class Solution {
+    public static long[] getFibonacci(int n) {
+        long[] fib = new long[n];
+        if (n >= 1) fib[0] = 0;
+        if (n >= 2) fib[1] = 1;
+        for (int i = 2; i < n; i++) {
+            fib[i] = fib[i - 1] + fib[i - 2];
+        }
+        return fib;
+    }
+}`,
+      python: `def get_fibonacci(n: int) -> list[int]:
+    if n == 1: return [0]
+    fib = [0, 1]
+    for i in range(2, n):
+        fib.append(fib[-1] + fib[-2])
+    return fib[:n]`,
+      cpp: `#include <vector>
+
+std::vector<long long> getFibonacci(int n) {
+    std::vector<long long> fib(n);
+    if (n >= 1) fib[0] = 0;
+    if (n >= 2) fib[1] = 1;
+    for (int i = 2; i < n; i++) {
+        fib[i] = fib[i - 1] + fib[i - 2];
+    }
+    return fib;
+}`,
+      c: `void getFibonacci(int n, long long fib[]) {
+    if (n >= 1) fib[0] = 0;
+    if (n >= 2) fib[1] = 1;
+    for (int i = 2; i < n; i++) {
+        fib[i] = fib[i - 1] + fib[i - 2];
+    }
+}`
+    },
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(1) auxiliary',
+    hints: ['Only the last two numbers need to be stored in registers during generation.'],
+    companyTags: ['TCS', 'Cognizant', 'Infosys']
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 6: STAR, NUMBER & SYMMETRIC PATTERNS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-4',
     title: 'Print Inverted Pyramid & Hollow Diamond Patterns',
@@ -479,7 +706,7 @@ long long lcm(long long a, long long b) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'PATTERNS',
-    categoryLabel: 'Pattern Printing & Nested Loops',
+    categoryLabel: 'Star & Number Patterns',
     topicId: 'patterns',
     description: 'Given an integer N, generate an inverted pyramid of stars where row i contains (2*(N-i) - 1) stars preceded by i spaces.',
     constraints: ['1 <= N <= 20'],
@@ -530,7 +757,7 @@ void printInvertedPyramid(int n) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'PATTERNS',
-    categoryLabel: 'Pattern Printing & Nested Loops',
+    categoryLabel: 'Star & Number Patterns',
     topicId: 'patterns',
     description: 'Given row index N (0-indexed), return the N-th row of Pascal\'s triangle in O(N) time without calculating complete factorials.',
     constraints: ['0 <= N <= 30'],
@@ -586,7 +813,9 @@ std::vector<int> getRow(int rowIndex) {
     companyTags: ['Amazon', 'Infosys SP', 'TCS Prime']
   },
 
-  // ── 5. 1D ARRAYS (FUNDAMENTALS) ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 7: 1D ARRAYS: FUNDAMENTALS & LINEAR SCANS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-12',
     title: 'Reverse an Array In-Place (Two Pointers)',
@@ -594,8 +823,8 @@ std::vector<int> getRow(int rowIndex) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'ARRAYS',
-    categoryLabel: 'Arrays & Vectors',
-    topicId: 'arrays-basic',
+    categoryLabel: 'Array Fundamentals',
+    topicId: 'arrays-fundamentals',
     description: 'Given an array of integers, reverse the array in-place without allocating extra space for another array.',
     constraints: ['1 <= N <= 10^5'],
     sampleInput: 'arr = [1, 2, 3, 4, 5]',
@@ -643,8 +872,120 @@ void reverseArray(std::vector<int>& arr) {
     hints: ['Initialize two pointers at opposite ends and swap towards the middle.'],
     companyTags: ['TCS', 'Cognizant', 'Accenture']
   },
+  {
+    id: 'p150-32',
+    title: 'Find Minimum and Maximum in Array with Minimum Comparisons',
+    slug: 'min-max-array-min-comparisons',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'ARRAYS',
+    categoryLabel: 'Array Fundamentals',
+    topicId: 'arrays-fundamentals',
+    description: 'Find the minimum and maximum elements in an array using the minimum number of element comparisons (compare in pairs).',
+    constraints: ['1 <= N <= 10^5'],
+    sampleInput: 'arr = [1000, 11, 445, 1, 330, 3000]',
+    sampleOutput: 'Min = 1, Max = 3000 (Comparisons <= 3N/2)',
+    explanation: 'By comparing adjacent elements in pairs first, and then comparing the larger with max and smaller with min, we reduce total comparisons from 2N to 3N/2.',
+    solutions: {
+      java: `public class Solution {
+    public static int[] getMinMax(int[] arr) {
+        int n = arr.length;
+        int min, max, i;
+        if (n % 2 == 0) {
+            if (arr[0] > arr[1]) { max = arr[0]; min = arr[1]; }
+            else { min = arr[0]; max = arr[1]; }
+            i = 2;
+        } else {
+            min = max = arr[0];
+            i = 1;
+        }
+        while (i < n - 1) {
+            if (arr[i] > arr[i + 1]) {
+                if (arr[i] > max) max = arr[i];
+                if (arr[i + 1] < min) min = arr[i + 1];
+            } else {
+                if (arr[i + 1] > max) max = arr[i + 1];
+                if (arr[i] < min) min = arr[i];
+            }
+            i += 2;
+        }
+        return new int[]{min, max};
+    }
+}`,
+      python: `def get_min_max(arr: list[int]) -> tuple[int, int]:
+    n = len(arr)
+    if n % 2 == 0:
+        mx, mn = (arr[0], arr[1]) if arr[0] > arr[1] else (arr[1], arr[0])
+        i = 2
+    else:
+        mx = mn = arr[0]
+        i = 1
+    while i < n - 1:
+        if arr[i] > arr[i + 1]:
+            mx = max(mx, arr[i])
+            mn = min(mn, arr[i + 1])
+        else:
+            mx = max(mx, arr[i + 1])
+            mn = min(mn, arr[i])
+        i += 2
+    return mn, mx`,
+      cpp: `#include <vector>
+#include <utility>
 
-  // ── 6. 1D ARRAYS (LOGIC & POINTERS) ──
+std::pair<int, int> getMinMax(const std::vector<int>& arr) {
+    int n = arr.size();
+    int mn, mx, i;
+    if (n % 2 == 0) {
+        if (arr[0] > arr[1]) { mx = arr[0]; mn = arr[1]; }
+        else { mn = arr[0]; mx = arr[1]; }
+        i = 2;
+    } else {
+        mn = mx = arr[0];
+        i = 1;
+    }
+    while (i < n - 1) {
+        if (arr[i] > arr[i + 1]) {
+            if (arr[i] > mx) mx = arr[i];
+            if (arr[i + 1] < mn) mn = arr[i + 1];
+        } else {
+            if (arr[i + 1] > mx) mx = arr[i + 1];
+            if (arr[i] < mn) mn = arr[i];
+        }
+        i += 2;
+    }
+    return {mn, mx};
+}`,
+      c: `void getMinMax(int arr[], int n, int* mn, int* mx) {
+    int i;
+    if (n % 2 == 0) {
+        if (arr[0] > arr[1]) { *mx = arr[0]; *mn = arr[1]; }
+        else { *mn = arr[0]; *mx = arr[1]; }
+        i = 2;
+    } else {
+        *mn = *mx = arr[0];
+        i = 1;
+    }
+    while (i < n - 1) {
+        if (arr[i] > arr[i + 1]) {
+            if (arr[i] > *mx) *mx = arr[i];
+            if (arr[i + 1] < *mn) *mn = arr[i + 1];
+        } else {
+            if (arr[i + 1] > *mx) *mx = arr[i + 1];
+            if (arr[i] < *mn) *mn = arr[i];
+        }
+        i += 2;
+    }
+}`
+    },
+    timeComplexity: 'O(N) with ~1.5N comparisons',
+    spaceComplexity: 'O(1)',
+    hints: ['Process elements in pairs to reduce comparison count by 25%.'],
+    companyTags: ['Amazon', 'Microsoft', 'TCS Prime']
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 8: 1D ARRAYS: TWO POINTERS & TRANSFORMATIONS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-5',
     title: 'Find Second Largest Element in Array (Single Pass)',
@@ -652,8 +993,8 @@ void reverseArray(std::vector<int>& arr) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'ARRAYS',
-    categoryLabel: 'Arrays & Vectors',
-    topicId: 'arrays-logic',
+    categoryLabel: 'Two Pointers & Array Logic',
+    topicId: 'arrays-two-pointers',
     description: 'Given an array of integers of size N, find the second largest distinct element without sorting the array.',
     constraints: ['2 <= N <= 10^5', '-10^9 <= arr[i] <= 10^9'],
     sampleInput: 'arr = [12, 35, 1, 10, 34, 1]',
@@ -724,8 +1065,8 @@ int getSecondLargest(int arr[], int n) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'ARRAYS',
-    categoryLabel: 'Arrays & Vectors',
-    topicId: 'arrays-logic',
+    categoryLabel: 'Two Pointers & Array Logic',
+    topicId: 'arrays-two-pointers',
     description: 'Given an array of size N, rotate the array to the left by K steps in O(N) time and O(1) extra space.',
     constraints: ['1 <= N <= 10^5', '0 <= K <= 10^9'],
     sampleInput: 'arr = [1, 2, 3, 4, 5], K = 2',
@@ -785,8 +1126,178 @@ void rotateLeft(int arr[], int n, int k) {
     hints: ['Handle K > N by performing K = K % N first.'],
     companyTags: ['Infosys', 'Capgemini', 'TCS Prime']
   },
+  {
+    id: 'p150-34',
+    title: 'Move All Zeroes to End of Array In-Place',
+    slug: 'move-zeroes-to-end',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'ARRAYS',
+    categoryLabel: 'Two Pointers & Array Logic',
+    topicId: 'arrays-two-pointers',
+    description: 'Given an integer array nums, move all 0\'s to the end of it while maintaining the relative order of the non-zero elements.',
+    constraints: ['1 <= nums.length <= 10^5'],
+    sampleInput: 'nums = [0, 1, 0, 3, 12]',
+    sampleOutput: '[1, 3, 12, 0, 0]',
+    explanation: 'Maintain a pointer insertPos. Whenever a non-zero is found, swap nums[i] with nums[insertPos] and increment insertPos.',
+    solutions: {
+      java: `public class Solution {
+    public static void moveZeroes(int[] nums) {
+        int insertPos = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if (nums[i] != 0) {
+                int temp = nums[insertPos];
+                nums[insertPos] = nums[i];
+                nums[i] = temp;
+                insertPos++;
+            }
+        }
+    }
+}`,
+      python: `def move_zeroes(nums: list[int]):
+    insert_pos = 0
+    for i in range(len(nums)):
+        if nums[i] != 0:
+            nums[insert_pos], nums[i] = nums[i], nums[insert_pos]
+            insert_pos += 1`,
+      cpp: `#include <vector>
+#include <algorithm>
 
-  // ── 7. 2D ARRAYS & MATRICES ──
+void moveZeroes(std::vector<int>& nums) {
+    int insertPos = 0;
+    for (size_t i = 0; i < nums.size(); i++) {
+        if (nums[i] != 0) {
+            std::swap(nums[insertPos++], nums[i]);
+        }
+    }
+}`,
+      c: `void moveZeroes(int nums[], int n) {
+    int insertPos = 0;
+    for (int i = 0; i < n; i++) {
+        if (nums[i] != 0) {
+            int t = nums[insertPos];
+            nums[insertPos] = nums[i];
+            nums[i] = t;
+            insertPos++;
+        }
+    }
+}`
+    },
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(1)',
+    hints: ['Use two pointers: one scans all elements, one tracks insertion index for non-zeroes.'],
+    companyTags: ['Amazon', 'Facebook', 'TCS']
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 9: 1D ARRAYS: SUBARRAYS & CLASSIC PATTERNS
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: 'p150-36',
+    title: 'Maximum Subarray Sum (Kadane\'s Algorithm)',
+    slug: 'maximum-subarray-sum-kadane',
+    track: 'PROGRAMMING_150',
+    level: 'MEDIUM',
+    category: 'ARRAYS',
+    categoryLabel: 'Subarrays & Classic Patterns',
+    topicId: 'arrays-subarrays',
+    description: 'Given an integer array nums, find the subarray with the largest sum, and return its sum.',
+    constraints: ['1 <= nums.length <= 10^5', '-10^4 <= nums[i] <= 10^4'],
+    sampleInput: 'nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]',
+    sampleOutput: '6 ([4, -1, 2, 1])',
+    explanation: 'Iterate through the array maintaining runningSum. If runningSum < 0, reset it to 0. At each step, update maxSum = max(maxSum, runningSum).',
+    solutions: {
+      java: `public class Solution {
+    public static int maxSubArray(int[] nums) {
+        int maxSoFar = nums[0];
+        int currentMax = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            currentMax = Math.max(nums[i], currentMax + nums[i]);
+            maxSoFar = Math.max(maxSoFar, currentMax);
+        }
+        return maxSoFar;
+    }
+}`,
+      python: `def max_sub_array(nums: list[int]) -> int:
+    max_so_far = current_max = nums[0]
+    for num in nums[1:]:
+        current_max = max(num, current_max + num)
+        max_so_far = max(max_so_far, current_max)
+    return max_so_far`,
+      cpp: `#include <vector>
+#include <algorithm>
+
+int maxSubArray(const std::vector<int>& nums) {
+    int maxSoFar = nums[0], currentMax = nums[0];
+    for (size_t i = 1; i < nums.size(); i++) {
+        currentMax = std::max(nums[i], currentMax + nums[i]);
+        maxSoFar = std::max(maxSoFar, currentMax);
+    }
+    return maxSoFar;
+}`,
+      c: `int maxSubArray(int nums[], int n) {
+    int maxSoFar = nums[0], currentMax = nums[0];
+    for (int i = 1; i < n; i++) {
+        currentMax = (nums[i] > currentMax + nums[i]) ? nums[i] : (currentMax + nums[i]);
+        if (currentMax > maxSoFar) maxSoFar = currentMax;
+    }
+    return maxSoFar;
+}`
+    },
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(1)',
+    hints: ['If the running sum becomes less than the current number, start a new subarray.'],
+    companyTags: ['Microsoft', 'Amazon', 'TCS Prime', 'Infosys SP']
+  },
+  {
+    id: 'p150-37',
+    title: 'Find Missing Number in Array [1 to N] (Sum & XOR Methods)',
+    slug: 'find-missing-number-1-to-n',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'ARRAYS',
+    categoryLabel: 'Subarrays & Classic Patterns',
+    topicId: 'arrays-subarrays',
+    description: 'Given an array containing N-1 distinct integers in the range [1, N], find the one missing integer.',
+    constraints: ['2 <= N <= 10^5'],
+    sampleInput: 'arr = [1, 2, 4, 6, 3, 7, 8], N = 8',
+    sampleOutput: '5',
+    explanation: 'Expected sum of first N natural numbers is N*(N+1)/2. The missing number is expectedSum - sum(arr). Alternatively, XOR 1..N with all elements.',
+    solutions: {
+      java: `public class Solution {
+    public static int findMissing(int[] arr, int n) {
+        long expected = ((long) n * (n + 1)) / 2;
+        long actual = 0;
+        for (int num : arr) actual += num;
+        return (int)(expected - actual);
+    }
+}`,
+      python: `def find_missing(arr: list[int], n: int) -> int:
+    return (n * (n + 1)) // 2 - sum(arr)`,
+      cpp: `#include <vector>
+
+int findMissing(const std::vector<int>& arr, int n) {
+    long long expected = ((long long)n * (n + 1)) / 2;
+    long long actual = 0;
+    for (int num : arr) actual += num;
+    return (int)(expected - actual);
+}`,
+      c: `int findMissing(int arr[], int size, int n) {
+    long long expected = ((long long)n * (n + 1)) / 2;
+    long long actual = 0;
+    for (int i = 0; i < size; i++) actual += arr[i];
+    return (int)(expected - actual);
+}`
+    },
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(1)',
+    hints: ['Use 64-bit integer (long) for expected sum to avoid integer overflow.'],
+    companyTags: ['Cognizant', 'Accenture', 'TCS']
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 10: 2D ARRAYS & MATRIX MATHEMATICS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-14',
     title: 'Transpose & Rotate Matrix by 90 Degrees Clockwise',
@@ -794,8 +1305,8 @@ void rotateLeft(int arr[], int n, int k) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'ARRAYS',
-    categoryLabel: '2D Arrays & Matrix Traversal',
-    topicId: 'matrices',
+    categoryLabel: '2D Matrices',
+    topicId: 'matrices-grid',
     description: 'Given an N x N 2D matrix, rotate the matrix by 90 degrees clockwise in-place without allocating a second matrix.',
     constraints: ['1 <= N <= 500'],
     sampleInput: 'matrix = [[1, 2], [3, 4]]',
@@ -805,7 +1316,6 @@ void rotateLeft(int arr[], int n, int k) {
       java: `public class Solution {
     public static void rotate(int[][] matrix) {
         int n = matrix.length;
-        // Step 1: Transpose
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 int temp = matrix[i][j];
@@ -813,7 +1323,6 @@ void rotateLeft(int arr[], int n, int k) {
                 matrix[j][i] = temp;
             }
         }
-        // Step 2: Reverse rows
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n / 2; j++) {
                 int temp = matrix[i][j];
@@ -825,11 +1334,9 @@ void rotateLeft(int arr[], int n, int k) {
 }`,
       python: `def rotate_matrix(matrix: list[list[int]]):
     n = len(matrix)
-    # Transpose
     for i in range(n):
         for j in range(i + 1, n):
             matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
-    # Reverse rows
     for row in matrix:
         row.reverse()`,
       cpp: `#include <vector>
@@ -869,7 +1376,9 @@ void rotate(std::vector<std::vector<int>>& matrix) {
     companyTags: ['Amazon', 'Microsoft', 'TCS Prime']
   },
 
-  // ── 8. STRINGS & CHARACTERS ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 11: STRINGS: FUNDAMENTALS & ASCII LOGIC
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-15',
     title: 'Count Vowels, Consonants, Digits & Spaces in String',
@@ -877,8 +1386,8 @@ void rotate(std::vector<std::vector<int>>& matrix) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'STRINGS',
-    categoryLabel: 'Strings & Character Arrays',
-    topicId: 'strings-basic',
+    categoryLabel: 'Strings Fundamentals',
+    topicId: 'strings-fundamentals',
     description: 'Given a string S, compute the count of vowels, consonants, numerical digits, and whitespace characters.',
     constraints: ['1 <= S.length <= 10^5'],
     sampleInput: 'S = "TCS NQT 2026 Batch!"',
@@ -950,7 +1459,9 @@ void countTypes(const char* s, int* v, int* c, int* d, int* sp) {
     companyTags: ['Wipro', 'Infosys', 'Cognizant']
   },
 
-  // ── 9. STRING LOGIC & ANAGRAMS ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 12: STRINGS: ANAGRAMS, SUBSTRINGS & COMPRESSION
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-6',
     title: 'Valid Anagram Check (Frequency Hash)',
@@ -958,8 +1469,8 @@ void countTypes(const char* s, int* v, int* c, int* d, int* sp) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'STRINGS',
-    categoryLabel: 'Strings & Character Arrays',
-    topicId: 'strings-logic',
+    categoryLabel: 'Strings Algorithms',
+    topicId: 'strings-algorithms',
     description: 'Given two strings s and t, return true if t is an anagram of s (contains the exact same characters with the exact same frequencies), and false otherwise.',
     constraints: ['1 <= s.length, t.length <= 5 * 10^4', 's and t contain lowercase English letters.'],
     sampleInput: 's = "anagram", t = "nagaram"',
@@ -1028,8 +1539,8 @@ int isAnagram(const char* s, const char* t) {
     track: 'PROGRAMMING_150',
     level: 'MEDIUM',
     category: 'STRINGS',
-    categoryLabel: 'Strings & Character Arrays',
-    topicId: 'strings-logic',
+    categoryLabel: 'Strings Algorithms',
+    topicId: 'strings-algorithms',
     description: 'Given a character array chars, compress it using Run-Length Encoding: for each group of consecutive repeating characters, write character followed by count if count > 1.',
     constraints: ['1 <= chars.length <= 2000'],
     sampleInput: 'chars = ["a","a","b","b","c","c","c"]',
@@ -1112,7 +1623,9 @@ int compress(char* chars, int charsSize) {
     companyTags: ['Microsoft', 'Amazon', 'TCS Prime']
   },
 
-  // ── 10. RECURSION & BACKTRACKING ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 13: RECURSION & BACKTRACKING BASICS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-7',
     title: 'Generate All Subsets / Power Set (Backtracking & Bitmask)',
@@ -1121,7 +1634,7 @@ int compress(char* chars, int charsSize) {
     level: 'HARD',
     category: 'RECURSION',
     categoryLabel: 'Recursion & Backtracking',
-    topicId: 'recursion',
+    topicId: 'recursion-backtracking',
     description: 'Given an integer array nums of unique elements, return all possible subsets (the power set). The solution set must not contain duplicate subsets.',
     constraints: ['1 <= nums.length <= 10', '-10 <= nums[i] <= 10'],
     sampleInput: 'nums = [1, 2, 3]',
@@ -1171,7 +1684,7 @@ std::vector<std::vector<int>> subsets(const std::vector<int>& nums) {
     backtrack(nums, 0, current, result);
     return result;
 }`,
-      c: `// Backtracking logic in C uses dynamic array buffer
+      c: `// Standard recursive state tracking in C
 // See C++ implementation for exact iterative state`
     },
     timeComplexity: 'O(2^N)',
@@ -1187,7 +1700,7 @@ std::vector<std::vector<int>> subsets(const std::vector<int>& nums) {
     level: 'MEDIUM',
     category: 'RECURSION',
     categoryLabel: 'Recursion & Backtracking',
-    topicId: 'recursion',
+    topicId: 'recursion-backtracking',
     description: 'Solve the Tower of Hanoi puzzle with N disks using 3 rods (Source A, Auxiliary B, Destination C). Total moves required is 2^N - 1.',
     constraints: ['1 <= N <= 16'],
     sampleInput: 'N = 3, Source = "A", Aux = "B", Dest = "C"',
@@ -1203,8 +1716,7 @@ std::vector<std::vector<int>> subsets(const std::vector<int>& nums) {
     }
 }`,
       python: `def hanoi(n: int, from_rod: str, aux_rod: str, to_rod: str):
-    if n == 0:
-        return
+    if n == 0: return
     hanoi(n - 1, from_rod, to_rod, aux_rod)
     print(f"Move disk {n} from {from_rod} to {to_rod}")
     hanoi(n - 1, aux_rod, from_rod, to_rod)`,
@@ -1231,7 +1743,9 @@ void hanoi(int n, char from, char aux, char to) {
     companyTags: ['Cognizant', 'Wipro', 'Capgemini']
   },
 
-  // ── 11. SEARCHING & SORTING ──
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 14: SEARCHING & SORTING ALGORITHMS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-18',
     title: 'Binary Search (Iterative & Recursive with Overflow Prevention)',
@@ -1239,7 +1753,7 @@ void hanoi(int n, char from, char aux, char to) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'SEARCHING_SORTING',
-    categoryLabel: 'Searching & Sorting Algorithms',
+    categoryLabel: 'Searching & Sorting',
     topicId: 'searching-sorting',
     description: 'Given a sorted array of distinct integers arr and a target value, return the index of target if found, otherwise return -1.',
     constraints: ['1 <= arr.length <= 10^5', '-10^9 <= arr[i], target <= 10^9'],
@@ -1298,8 +1812,88 @@ int search(const std::vector<int>& nums, int target) {
     hints: ['Always use low + (high - low) / 2 instead of (low + high) / 2 to prevent overflow.'],
     companyTags: ['Amazon', 'TCS', 'Infosys', 'Cognizant']
   },
+  {
+    id: 'p150-48',
+    title: 'Bubble Sort with Optimization Flag',
+    slug: 'bubble-sort-optimized',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'SEARCHING_SORTING',
+    categoryLabel: 'Searching & Sorting',
+    topicId: 'searching-sorting',
+    description: 'Sort an array of integers in ascending order using Bubble Sort. Implement the swapped flag optimization to achieve O(N) best-case time complexity.',
+    constraints: ['1 <= N <= 10^4'],
+    sampleInput: 'arr = [64, 34, 25, 12, 22, 11, 90]',
+    sampleOutput: '[11, 12, 22, 25, 34, 64, 90]',
+    explanation: 'In each pass, compare adjacent elements and swap if out of order. If no swaps occurred in a pass, the array is already sorted, so we can terminate early.',
+    solutions: {
+      java: `public class Solution {
+    public static void bubbleSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 0; i < n - 1; i++) {
+            boolean swapped = false;
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                    swapped = true;
+                }
+            }
+            if (!swapped) break;
+        }
+    }
+}`,
+      python: `def bubble_sort(arr: list[int]):
+    n = len(arr)
+    for i in range(n - 1):
+        swapped = False
+        for j in range(n - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                swapped = True
+        if not swapped:
+            break`,
+      cpp: `#include <vector>
+#include <algorithm>
 
-  // ── 12. BIT MANIPULATION HACKS ──
+void bubbleSort(std::vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        bool swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                std::swap(arr[j], arr[j + 1]);
+                swapped = true;
+            }
+        }
+        if (!swapped) break;
+    }
+}`,
+      c: `void bubbleSort(int arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        int swapped = 0;
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+                swapped = 1;
+            }
+        }
+        if (!swapped) break;
+    }
+}`
+    },
+    timeComplexity: 'O(N^2) worst case, O(N) best case',
+    spaceComplexity: 'O(1)',
+    hints: ['Check if any swap occurred during the inner loop to break out early.'],
+    companyTags: ['Wipro', 'Capgemini', 'TCS']
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 15: BIT MANIPULATION HACKS & MATH TRICKS
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-19',
     title: 'Check if Number is Power of Two (Bitwise Trick)',
@@ -1307,7 +1901,7 @@ int search(const std::vector<int>& nums, int target) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'BIT_MANIPULATION',
-    categoryLabel: 'Bit Manipulation & Bit Hacks',
+    categoryLabel: 'Bit Manipulation',
     topicId: 'bit-manipulation',
     description: 'Given an integer N, return true if it is a power of two. An integer N is a power of two if there exists an integer x such that N == 2^x.',
     constraints: ['-2^31 <= N <= 2^31 - 1'],
@@ -1341,7 +1935,7 @@ int search(const std::vector<int>& nums, int target) {
     track: 'PROGRAMMING_150',
     level: 'BASIC',
     category: 'BIT_MANIPULATION',
-    categoryLabel: 'Bit Manipulation & Bit Hacks',
+    categoryLabel: 'Bit Manipulation',
     topicId: 'bit-manipulation',
     description: 'Given a non-empty array of integers nums, every element appears twice except for one. Find that single one in O(N) time and O(1) space.',
     constraints: ['1 <= nums.length <= 3 * 10^4', '-3 * 10^4 <= nums[i] <= 3 * 10^4'],
@@ -1378,5 +1972,58 @@ int singleNumber(const std::vector<int>& nums) {
     spaceComplexity: 'O(1)',
     hints: ['Bitwise XOR of identical numbers is 0. XOR is associative and commutative.'],
     companyTags: ['Amazon', 'Infosys SP', 'Capgemini']
+  },
+  {
+    id: 'p150-50',
+    title: 'Count Set Bits in an Integer (Brian Kernighan\'s Algorithm)',
+    slug: 'count-set-bits-kernighan',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'BIT_MANIPULATION',
+    categoryLabel: 'Bit Manipulation',
+    topicId: 'bit-manipulation',
+    description: 'Given a positive integer N, count the number of 1s (set bits) in its binary representation using Brian Kernighan\'s algorithm in O(number of set bits).',
+    constraints: ['1 <= N <= 2^31 - 1'],
+    sampleInput: 'N = 29 (Binary: 11101)',
+    sampleOutput: '4',
+    explanation: 'In each step, N = N & (N - 1) turns off the lowest set bit. The loop runs only as many times as there are set bits in N.',
+    solutions: {
+      java: `public class Solution {
+    public static int countSetBits(int n) {
+        int count = 0;
+        while (n > 0) {
+            n &= (n - 1);
+            count++;
+        }
+        return count;
+    }
+}`,
+      python: `def count_set_bits(n: int) -> int:
+    count = 0
+    while n > 0:
+        n &= (n - 1)
+        count += 1
+    return count`,
+      cpp: `int countSetBits(int n) {
+    int count = 0;
+    while (n > 0) {
+        n &= (n - 1);
+        count++;
+    }
+    return count;
+}`,
+      c: `int countSetBits(int n) {
+    int count = 0;
+    while (n > 0) {
+        n &= (n - 1);
+        count++;
+    }
+    return count;
+}`
+    },
+    timeComplexity: 'O(k) where k is number of set bits',
+    spaceComplexity: 'O(1)',
+    hints: ['n & (n - 1) clears the rightmost set bit in each iteration.'],
+    companyTags: ['Microsoft', 'Amazon', 'TCS Prime']
   }
 ];

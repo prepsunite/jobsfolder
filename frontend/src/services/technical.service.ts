@@ -486,7 +486,7 @@ std::vector<std::vector<int>> subsets(const std::vector<int>& nums) {
 ];
 
 // ============================================================================
-// 2. CAMPUS DSA CORE SEED (The 15 Placement Patterns)
+// 1. CAMPUS DSA CORE SEED (The 15 Placement Patterns)
 // ============================================================================
 const CAMPUS_DSA_SEED: ProgrammingProblem[] = [
   {
