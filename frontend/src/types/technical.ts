@@ -33,6 +33,7 @@ export interface ProgrammingTopic {
   iconName: string;
   category: ProblemCategory;
   order: number;
+  track?: TechnicalTrack;
 }
 
 export interface TestCase {
@@ -53,6 +54,7 @@ export interface ProgrammingProblem {
   description: string;
   constraints?: string[];
   testCases?: TestCase[];
+  sampleCases?: TestCase[];
   sampleInput?: string;
   sampleOutput?: string;
   explanation?: string;
@@ -67,7 +69,18 @@ export interface ProgrammingProblem {
 export interface TechnicalMcq {
   id: string;
   topic: string;
-  topicCategory: 'C_CPP_SNIPPETS' | 'JAVA_SNIPPETS' | 'PYTHON_SNIPPETS' | 'DATA_STRUCTURES' | 'PSEUDO_CODE';
+  topicCategory:
+    | 'C_PROGRAMMING'
+    | 'CPP_PROGRAMMING'
+    | 'CSHARP_PROGRAMMING'
+    | 'JAVA_PROGRAMMING'
+    | 'DATABASE'
+    | 'NETWORKING'
+    | 'OPERATING_SYSTEMS'
+    | 'DATA_STRUCTURES'
+    | 'PSEUDO_CODE'
+    | string;
+  topicId?: string;
   question: string;
   codeSnippet?: string;
   options: string[];
