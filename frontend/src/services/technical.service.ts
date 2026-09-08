@@ -1,11 +1,33 @@
 import { supabase } from '@/lib/supabase';
-import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, ProblemCategory, ProgrammingTopic } from '@/types/technical';
+import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic } from '@/types/technical';
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_EXPANDED_SEED } from './programmingTopicsData';
 
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
 const IMPORTED_PROBLEMS_KEY = 'prepunite_imported_programming_problems';
+const SOLVED_MCQS_KEY = 'prepunite_solved_technical_mcqs';
 
 export const technicalService = {
+  // Technical MCQ Progress Management
+  getMcqProgress(): Record<string, TechnicalMcqProgress> {
+    if (typeof window === 'undefined') return {};
+    try {
+      const stored = localStorage.getItem(SOLVED_MCQS_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  saveMcqProgress(mcqId: string, progress: TechnicalMcqProgress): void {
+    const existing = this.getMcqProgress();
+    existing[mcqId] = progress;
+    try {
+      localStorage.setItem(SOLVED_MCQS_KEY, JSON.stringify(existing));
+    } catch (e) {
+      console.error('Failed to save MCQ progress to localStorage:', e);
+    }
+  },
+
   // Solved Problem State Management
   getSolvedProblemIds(): Set<string> {
     if (typeof window === 'undefined') return new Set();
@@ -168,6 +190,8 @@ export const technicalService = {
     const p150 = await this.getProgramming150Problems();
     const dsa = await this.getCampusDsaProblems();
     const mcqs = await this.getTechnicalMcqs();
+    const mcqProgress = this.getMcqProgress();
+    const mcqSolved = Object.values(mcqProgress).filter(p => p.solved).length;
     const p150Solved = p150.filter(p => p.solved).length;
     const dsaSolved = dsa.filter(p => p.solved).length;
     const totalCoding = p150.length + dsa.length;
@@ -178,6 +202,7 @@ export const technicalService = {
       dsaTotal: dsa.length,
       dsaSolved,
       mcqTotal: mcqs.length,
+      mcqSolved,
       totalCoding,
       totalSolved,
       percentage: totalCoding > 0 ? Math.round((totalSolved / totalCoding) * 100) : 0,

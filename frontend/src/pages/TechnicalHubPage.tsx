@@ -20,6 +20,12 @@ import {
   HardDrive,
   Lightbulb,
   X,
+  XCircle,
+  Zap,
+  Eye,
+  EyeOff,
+  Volume2,
+  VolumeX,
   Hash,
   Shuffle,
   Sliders,
@@ -35,8 +41,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
+import audioEffects from '@/utils/audioEffects';
 import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImportModal';
-import type { ProgrammingProblem, TechnicalMcq, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
+import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
   Code2,
@@ -80,7 +87,7 @@ export default function TechnicalHubPage() {
   };
 
   const [selectedLevel, setSelectedLevel] = useState<string>('ALL');
-  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'UNSOLVED' | 'SOLVED'>('ALL');
+  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'UNSOLVED' | 'SOLVED' | 'RETRY'>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStage, setSelectedStage] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,8 +95,19 @@ export default function TechnicalHubPage() {
   const [expandedSolutions, setExpandedSolutions] = useState<Record<string, boolean>>({});
   const [problemLanguages, setProblemLanguages] = useState<Record<string, 'java' | 'python' | 'cpp' | 'c'>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [selectedMcqAnswers, setSelectedMcqAnswers] = useState<Record<string, number>>({});
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
+
+  // Technical MCQ Progress & State (Aptitude-Grade Active Learning)
+  const [mcqProgress, setMcqProgress] = useState<Record<string, TechnicalMcqProgress>>(() =>
+    technicalService.getMcqProgress()
+  );
+  const [revealedMcqExpl, setRevealedMcqExpl] = useState<Record<string, boolean>>({});
+  const [isMuted, setIsMuted] = useState<boolean>(() => audioEffects.getMuted());
+
+  const handleToggleSound = () => {
+    const next = audioEffects.toggleMute();
+    setIsMuted(next);
+  };
 
   // Query Programming Topics (15 Structured Syllabus Topics)
   const { data: topics = [] } = useQuery<ProgrammingTopic[]>({
@@ -127,8 +145,27 @@ export default function TechnicalHubPage() {
     return [];
   }, [activeTrack, p150Problems, dsaProblems]);
 
-  const activeTrackSolved = useMemo(() => activeTrackProblems.filter(p => p.solved).length, [activeTrackProblems]);
-  const activeTrackTotal = activeTrackProblems.length;
+  const mcqSolvedCount = useMemo(() => {
+    return mcqs.filter(m => mcqProgress[m.id]?.solved).length;
+  }, [mcqs, mcqProgress]);
+
+  const mcqRetryCount = useMemo(() => {
+    return mcqs.filter(m => !mcqProgress[m.id]?.solved && (mcqProgress[m.id]?.wrongPicks?.length ?? 0) > 0).length;
+  }, [mcqs, mcqProgress]);
+
+  const mcqUnsolvedCount = useMemo(() => {
+    return mcqs.filter(m => !mcqProgress[m.id]?.solved).length;
+  }, [mcqs, mcqProgress]);
+
+  const activeTrackSolved = useMemo(() => {
+    if (activeTrack === 'TECHNICAL_MCQS') return mcqSolvedCount;
+    return activeTrackProblems.filter(p => p.solved).length;
+  }, [activeTrack, activeTrackProblems, mcqSolvedCount]);
+
+  const activeTrackTotal = useMemo(() => {
+    if (activeTrack === 'TECHNICAL_MCQS') return mcqs.length;
+    return activeTrackProblems.length;
+  }, [activeTrack, activeTrackProblems, mcqs]);
 
   const basicProblems = useMemo(() => activeTrackProblems.filter(p => p.level === 'BASIC'), [activeTrackProblems]);
   const basicSolved = useMemo(() => basicProblems.filter(p => p.solved).length, [basicProblems]);
@@ -204,6 +241,72 @@ export default function TechnicalHubPage() {
       return true;
     });
   }, [currentProblems, activeTopic, selectedLevel, selectedStatus, selectedCategory, searchQuery]);
+
+  // Filtered MCQs based on category, status, and search query (Active Learning Parity)
+  const filteredMcqs = useMemo(() => {
+    return mcqs.filter(mcq => {
+      const prog = mcqProgress[mcq.id];
+      const isSolved = prog?.solved ?? false;
+      const isRetry = !isSolved && (prog?.wrongPicks?.length ?? 0) > 0;
+
+      // Category filter
+      if (selectedCategory !== 'ALL' && mcq.topicCategory !== selectedCategory) return false;
+
+      // Status filter
+      if (selectedStatus === 'SOLVED' && !isSolved) return false;
+      if (selectedStatus === 'UNSOLVED' && isSolved) return false;
+      if (selectedStatus === 'RETRY' && !isRetry) return false;
+
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesQ = mcq.question.toLowerCase().includes(q);
+        const matchesTopic = mcq.topic.toLowerCase().includes(q);
+        const matchesCode = mcq.codeSnippet?.toLowerCase().includes(q) ?? false;
+        const matchesTags = mcq.companyTags?.some(t => t.toLowerCase().includes(q)) ?? false;
+        if (!matchesQ && !matchesTopic && !matchesCode && !matchesTags) return false;
+      }
+
+      return true;
+    });
+  }, [mcqs, mcqProgress, selectedCategory, selectedStatus, searchQuery]);
+
+  const handleSelectMcqOption = (mcq: TechnicalMcq, optIdx: number) => {
+    const isCorrect = optIdx === mcq.correctOptionIndex;
+    const currentProg = mcqProgress[mcq.id] || { solved: false, wrongPicks: [] };
+
+    if (isCorrect) {
+      audioEffects.playSuccessChime();
+      const updated: TechnicalMcqProgress = {
+        solved: true,
+        wrongPicks: currentProg.wrongPicks,
+        selectedOption: optIdx,
+        timestamp: Date.now(),
+      };
+      technicalService.saveMcqProgress(mcq.id, updated);
+      setMcqProgress(prev => ({ ...prev, [mcq.id]: updated }));
+    } else {
+      audioEffects.playErrorBuzz();
+      const newWrong = currentProg.wrongPicks.includes(optIdx)
+        ? currentProg.wrongPicks
+        : [...currentProg.wrongPicks, optIdx];
+      const updated: TechnicalMcqProgress = {
+        solved: false,
+        wrongPicks: newWrong,
+        selectedOption: optIdx,
+        timestamp: Date.now(),
+      };
+      technicalService.saveMcqProgress(mcq.id, updated);
+      setMcqProgress(prev => ({ ...prev, [mcq.id]: updated }));
+    }
+  };
+
+  const toggleMcqExplanation = (mcqId: string) => {
+    setRevealedMcqExpl(prev => ({
+      ...prev,
+      [mcqId]: !prev[mcqId],
+    }));
+  };
 
   const handleToggleSolve = (problemId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -737,56 +840,102 @@ export default function TechnicalHubPage() {
                     </div>
                   </div>
 
-                  {/* 3 Difficulty Progress Bars (Matching Aptitude Easy/Med/Hard breakdown) */}
-                  <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
-                    {/* Basic / Easy */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                        <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Basic</span>
-                        <span className="text-[#868E96] dark:text-[#666666]">{basicSolved}/{basicProblems.length}</span>
+                  {/* 3 Difficulty / Category Progress Bars */}
+                  {activeTrack === 'TECHNICAL_MCQS' ? (
+                    <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
+                      {/* Solved */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                          <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Solved</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mcqSolvedCount}/{mcqs.length}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                            style={{ width: `${mcqs.length > 0 ? Math.round((mcqSolvedCount / mcqs.length) * 100) : 0}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                          style={{ width: `${basicPct}%` }}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Medium */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                        <span className="font-display font-bold text-amber-600 dark:text-amber-400">Medium</span>
-                        <span className="text-[#868E96] dark:text-[#666666]">{mediumSolved}/{mediumProblems.length}</span>
+                      {/* Needs Retry */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                          <span className="font-display font-bold text-amber-600 dark:text-amber-400">Needs Retry</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mcqRetryCount}/{mcqs.length}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                            style={{ width: `${mcqs.length > 0 ? Math.round((mcqRetryCount / mcqs.length) * 100) : 0}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                        <div
-                          className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${mediumPct}%` }}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Hard */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                        <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
-                        <span className="text-[#868E96] dark:text-[#666666]">{hardSolved}/{hardProblems.length}</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                        <div
-                          className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                          style={{ width: `${hardPct}%` }}
-                        />
+                      {/* Unsolved */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                          <span className="font-display font-bold text-rose-600 dark:text-rose-400">Unsolved</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mcqUnsolvedCount}/{mcqs.length}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                          <div
+                            className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                            style={{ width: `${mcqs.length > 0 ? Math.round((mcqUnsolvedCount / mcqs.length) * 100) : 0}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
+                      {/* Basic / Easy */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                          <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Basic</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{basicSolved}/{basicProblems.length}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                            style={{ width: `${basicPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Medium */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                          <span className="font-display font-bold text-amber-600 dark:text-amber-400">Medium</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mediumSolved}/{mediumProblems.length}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                            style={{ width: `${mediumPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hard */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                          <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{hardSolved}/{hardProblems.length}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                          <div
+                            className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                            style={{ width: `${hardPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 🏷️ 2. FILTER PILLS (STAGES / DIFFICULTY) + SEARCH BAR + ADMIN BULK BUTTON */}
+          {/* 🏷️ 2. FILTER PILLS (STAGES / DIFFICULTY / CATEGORIES) + SEARCH BAR + ADMIN BULK BUTTON */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             {/* Programming 150: Stage Cluster Pills */}
             {activeTrack === 'PROGRAMMING_150' && (
@@ -833,16 +982,61 @@ export default function TechnicalHubPage() {
               </div>
             )}
 
-            {/* Technical MCQs: OA Topic Label */}
+            {/* Technical MCQs: Category Pills & Status Filter */}
             {activeTrack === 'TECHNICAL_MCQS' && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#777777] px-2.5 py-1 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424]">
-                  {mcqs.length} Campus OA Pseudo-Code MCQs
-                </span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Category Selector */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: 'ALL', label: 'All Topics' },
+                    { id: 'C_CPP_SNIPPETS', label: 'C / C++' },
+                    { id: 'JAVA_SNIPPETS', label: 'Java' },
+                    { id: 'PYTHON_SNIPPETS', label: 'Python' },
+                    { id: 'PSEUDO_CODE', label: 'Pseudo-Code' },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(item.id)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                        selectedCategory === item.id
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                          : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="h-4 w-px bg-gray-200 dark:bg-gray-800 hidden sm:block" />
+
+                {/* Status Filter */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  {[
+                    { id: 'ALL', label: 'All' },
+                    { id: 'UNSOLVED', label: 'Unsolved' },
+                    { id: 'SOLVED', label: `Solved (${mcqSolvedCount})` },
+                    { id: 'RETRY', label: `Retry (${mcqRetryCount})` },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedStatus(item.id as any)}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all border shrink-0 cursor-pointer ${
+                        selectedStatus === item.id
+                          ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-xs'
+                          : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Search Bar + Admin Bulk JSON Button */}
+            {/* Search Bar + Audio Toggle + Admin Bulk JSON Button */}
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
               <div className="relative w-48 sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
@@ -860,6 +1054,21 @@ export default function TechnicalHubPage() {
                   className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
                 />
               </div>
+
+              {activeTrack === 'TECHNICAL_MCQS' && (
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  className={`p-1.5 rounded-md border text-xs transition-all cursor-pointer ${
+                    isMuted
+                      ? 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96]'
+                      : 'bg-[#FD4A32]/10 border-[#FD4A32]/30 text-[#FD4A32]'
+                  }`}
+                  title={isMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+              )}
 
               {isAdmin && activeTrack === 'PROGRAMMING_150' && (
                 <button
@@ -1091,94 +1300,195 @@ export default function TechnicalHubPage() {
             </div>
           )}
 
-          {/* 📝 6. TECHNICAL MCQS VIEW */}
+          {/* 📝 6. TECHNICAL MCQS VIEW (Active Learning & Aptitude Parity) */}
           {activeTrack === 'TECHNICAL_MCQS' && (
-            <div className="space-y-3">
-              {mcqs.map((mcq, idx) => {
-                const userPick = selectedMcqAnswers[mcq.id];
-                const isAnswered = userPick !== undefined;
+            <div className="space-y-4">
+              {filteredMcqs.length === 0 ? (
+                <div className="p-12 text-center rounded-xl border border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] space-y-2">
+                  <HelpCircle className="w-8 h-8 text-[#868E96] mx-auto opacity-50" />
+                  <p className="text-sm font-bold text-[#121417] dark:text-white">No MCQs Found</p>
+                  <p className="text-xs text-gray-500">
+                    Try adjusting your topic category, status filter, or search keywords.
+                  </p>
+                </div>
+              ) : (
+                filteredMcqs.map((mcq, idx) => {
+                  const prog = mcqProgress[mcq.id];
+                  const isSolved = prog?.solved ?? false;
+                  const wrongPicks = prog?.wrongPicks ?? [];
+                  const isExplVisible = !!revealedMcqExpl[mcq.id];
 
-                return (
-                  <div
-                    key={mcq.id}
-                    className="p-4 sm:p-5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-2xs space-y-3 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold text-[#FD4A32] uppercase">
-                            Q{idx + 1} • {mcq.topic}
+                  return (
+                    <div
+                      key={mcq.id}
+                      className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#FD4A32]/40 transition-all duration-300 space-y-4 shadow-xs"
+                    >
+                      {/* 1. Header: Q# • Topic • Company Tags • Solved Badge */}
+                      <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
+                            Q{idx + 1}
+                          </span>
+                          <span className="text-[10px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-semibold">
+                            {mcq.topic}
                           </span>
                           {mcq.companyTags?.map(tag => (
                             <span
                               key={tag}
-                              className="text-[9px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-1 py-0.2 rounded"
+                              className="text-[9px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-1.5 py-0.5 rounded"
                             >
                               {tag}
                             </span>
                           ))}
                         </div>
-                        <p className="font-display font-bold text-sm text-[#121417] dark:text-white">
-                          {mcq.question}
-                        </p>
+
+                        {/* Status Badge */}
+                        <div>
+                          {isSolved ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Solved</span>
+                            </span>
+                          ) : wrongPicks.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded">
+                              <span>Needs Retry</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-display font-medium text-[#868E96] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded">
+                              <Circle className="w-3 h-3" />
+                              <span>Unsolved</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    {mcq.codeSnippet && (
-                      <div className="bg-[#0C0C0C] rounded-md p-3 border border-[#242424] overflow-x-auto text-xs font-mono text-emerald-400">
-                        <pre>{mcq.codeSnippet}</pre>
-                      </div>
-                    )}
+                      {/* 2. Question Statement */}
+                      <p className="font-display font-bold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] leading-snug">
+                        {mcq.question}
+                      </p>
 
-                    {/* Options Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {mcq.options.map((opt, optIdx) => {
-                        const isSelected = userPick === optIdx;
-                        const isCorrect = mcq.correctOptionIndex === optIdx;
+                      {/* 3. Code Snippet Box (Syntax-Styled Monospace Container) */}
+                      {mcq.codeSnippet && (
+                        <div className="relative rounded-lg bg-[#0C0C0C] dark:bg-[#000000] border border-[#242424] overflow-hidden text-xs font-mono">
+                          <div className="flex items-center justify-between px-3 py-1.5 bg-[#141414] border-b border-[#242424] text-[10px] text-[#888888]">
+                            <span className="font-bold text-[#FD4A32] uppercase tracking-wider">
+                              {mcq.topicCategory.replace(/_SNIPPETS|_/g, ' ')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCode(mcq.codeSnippet!, mcq.id)}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#1F1F1F] hover:bg-[#2A2A2A] text-gray-300 hover:text-white transition-colors cursor-pointer"
+                            >
+                              {copiedId === mcq.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedId === mcq.id ? 'Copied!' : 'Copy Code'}</span>
+                            </button>
+                          </div>
+                          <pre className="p-3.5 overflow-x-auto text-emerald-400 leading-relaxed font-mono">
+                            {mcq.codeSnippet}
+                          </pre>
+                        </div>
+                      )}
 
-                        let optClass = 'bg-[#F8F9FA] dark:bg-[#1A1A1A] border-[#E9ECEF] dark:border-[#262626] text-[#121417] dark:text-gray-200 hover:border-[#121417] dark:hover:border-white';
-                        if (isAnswered) {
-                          if (isCorrect) {
-                            optClass = 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-200 font-bold';
-                          } else if (isSelected) {
-                            optClass = 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 text-rose-800 dark:text-rose-200';
+                      {/* 4. Full-Width Stacked Options (Active Learning Flow) */}
+                      <div className="space-y-2">
+                        {mcq.options.map((opt, optIdx) => {
+                          const isCorrect = optIdx === mcq.correctOptionIndex;
+                          const wasWrong = wrongPicks.includes(optIdx);
+                          const letterBadge = String.fromCharCode(65 + optIdx);
+
+                          let optionStyle = 'bg-[#F8F9FA] dark:bg-[#0C0C0C] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#444444]';
+
+                          if (isSolved && isCorrect) {
+                            optionStyle = 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs';
+                          } else if (wasWrong) {
+                            optionStyle = 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
+                          } else if (isExplVisible && isCorrect) {
+                            optionStyle = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-semibold';
                           }
-                        }
 
-                        return (
-                          <button
-                            key={optIdx}
-                            type="button"
-                            onClick={() => {
-                              if (isAnswered) return;
-                              setSelectedMcqAnswers(prev => ({ ...prev, [mcq.id]: optIdx }));
-                            }}
-                            className={`p-2.5 rounded-md text-xs text-left border transition-all cursor-pointer flex items-center justify-between ${optClass}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-black/5 dark:bg-white/10 text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
-                                {String.fromCharCode(65 + optIdx)}
-                              </span>
-                              <span>{opt}</span>
-                            </div>
-                            {isAnswered && isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
+                          return (
+                            <button
+                              key={optIdx}
+                              type="button"
+                              onClick={() => handleSelectMcqOption(mcq, optIdx)}
+                              className={`w-full flex items-center justify-between gap-3 p-3 rounded-lg border text-xs sm:text-sm text-left transition-all cursor-pointer ${optionStyle}`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className={`w-6 h-6 rounded-md border flex items-center justify-center font-display font-bold text-xs shrink-0 ${
+                                  (isSolved && isCorrect) || (isExplVisible && isCorrect)
+                                    ? 'bg-emerald-500 text-white border-emerald-500'
+                                    : wasWrong
+                                      ? 'bg-rose-500 text-white border-rose-500'
+                                      : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] bg-white dark:bg-[#181818]'
+                                }`}>
+                                  {letterBadge}
+                                </div>
+                                <span className="leading-snug font-sans truncate-none">{opt}</span>
+                              </div>
 
-                    {/* Explanation Reveal */}
-                    {isAnswered && (
-                      <div className="p-3 rounded-md bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] text-xs text-[#495057] dark:text-gray-300 space-y-1 animate-fadeIn">
-                        <span className="font-display font-bold text-[10px] text-[#FD4A32] uppercase tracking-wider block">
-                          Explanation
-                        </span>
-                        <p className="leading-relaxed text-xs">{mcq.explanation}</p>
+                              {((isSolved && isCorrect) || (isExplVisible && isCorrect)) && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                              )}
+                              {wasWrong && !isSolved && (
+                                <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* 5. Action Toolbar: Show Answer Toggle + Status Message */}
+                      <div className="pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleMcqExplanation(mcq.id)}
+                            className={`px-3 py-1.5 rounded-md border text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                              isExplVisible
+                                ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white'
+                                : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                            }`}
+                            title={isExplVisible ? 'Hide Solution' : 'Show Answer & Detailed Solution'}
+                          >
+                            {isExplVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            <span className="text-[10px] uppercase tracking-wider">
+                              {isExplVisible ? 'Hide Solution' : isSolved ? 'View Solution' : 'Show Answer & Solution'}
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* Live Feedback */}
+                        <div>
+                          {isSolved ? (
+                            <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                              <span>Correct! Question Solved</span>
+                            </span>
+                          ) : wrongPicks.length > 0 ? (
+                            <span className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                              <XCircle className="w-4 h-4 text-rose-500" />
+                              <span>Incorrect option. Dry-run and try again!</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* 6. Collapsible Explanation Accordion */}
+                      {isExplVisible && (
+                        <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-2.5 animate-fadeIn text-xs">
+                          <div className="flex items-center gap-2 text-xs font-display font-bold text-[#FD4A32]">
+                            <Zap className="w-3.5 h-3.5 text-[#FD4A32]" />
+                            <span>Correct Answer: Option ({String.fromCharCode(65 + mcq.correctOptionIndex)})</span>
+                          </div>
+                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-sans whitespace-pre-line text-xs">
+                            {mcq.explanation}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
         </>

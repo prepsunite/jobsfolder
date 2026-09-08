@@ -75,3 +75,11 @@ export interface TechnicalMcq {
   explanation: string;
   companyTags?: string[];
 }
+
+export interface TechnicalMcqProgress {
+  solved: boolean;
+  wrongPicks: number[];
+  selectedOption?: number;
+  timestamp?: number;
+}
+
