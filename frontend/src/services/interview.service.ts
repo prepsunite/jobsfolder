@@ -32,11 +32,14 @@ export const interviewService = {
 
   async getAllQuestions(): Promise<InterviewQuestion[]> {
     const masteredSet = this.getMasteredQuestionIds();
-    return INTERVIEW_QUESTIONS_SEED.map(q => ({
+    const imported = this.getImportedQuestions();
+    const all = [...INTERVIEW_QUESTIONS_SEED, ...imported];
+    return all.map(q => ({
       ...q,
       mastered: masteredSet.has(q.id),
     }));
   },
+
 
   async getTopicsForCategory(category: InterviewCategory): Promise<InterviewTopic[]> {
     const allQuestions = await this.getAllQuestions();
@@ -87,6 +90,85 @@ export const interviewService = {
       projectMastered: project.filter(q => q.mastered).length,
       percentage: all.length > 0 ? Math.round((masteredCount / all.length) * 100) : 0,
     };
+  },
+
+  // -----------------------------------------------------------------------
+  // CRUD: Custom Imported Interview Questions
+  // -----------------------------------------------------------------------
+  getImportedQuestions(): InterviewQuestion[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem('prepunite_imported_interview_questions');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+
+  async importInterviewQuestions(newQuestions: Partial<InterviewQuestion>[]): Promise<{ importedCount: number }> {
+    const existing = this.getImportedQuestions();
+    const existingIds = new Set([...INTERVIEW_QUESTIONS_SEED.map(q => q.id), ...existing.map(q => q.id)]);
+    let count = 0;
+    const normalized: InterviewQuestion[] = [];
+    newQuestions.forEach((q, idx) => {
+      if (!q.title || !q.answer) return;
+      let id = q.id || `custom-int-${Date.now()}-${idx}`;
+      while (existingIds.has(id)) id = `custom-int-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      existingIds.add(id);
+      normalized.push({
+        id,
+        topicId: q.topicId,
+        title: q.title.trim(),
+        category: q.category || 'CORE_CS',
+        subject: q.subject,
+        subjectLabel: q.subjectLabel,
+        bulletPoints: Array.isArray(q.bulletPoints) ? q.bulletPoints : [],
+        answer: q.answer.trim(),
+        codeSnippet: q.codeSnippet,
+        proTip: q.proTip,
+        companyTags: Array.isArray(q.companyTags) ? q.companyTags : [],
+        frequency: q.frequency || 'MEDIUM',
+      });
+      count++;
+    });
+    const updated = [...existing, ...normalized];
+    try {
+      localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save imported interview questions:', e);
+    }
+    return { importedCount: count };
+  },
+
+  updateImportedQuestion(questionId: string, updates: Partial<InterviewQuestion>): boolean {
+    const existing = this.getImportedQuestions();
+    const idx = existing.findIndex(q => q.id === questionId);
+    if (idx === -1) return false;
+    existing[idx] = { ...existing[idx], ...updates };
+    try {
+      localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(existing));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  deleteImportedQuestion(questionId: string): boolean {
+    const existing = this.getImportedQuestions();
+    const filtered = existing.filter(q => q.id !== questionId);
+    try {
+      localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(filtered));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  clearAllImportedQuestions(): void {
+    try {
+      localStorage.removeItem('prepunite_imported_interview_questions');
+    } catch {}
   },
 };
 

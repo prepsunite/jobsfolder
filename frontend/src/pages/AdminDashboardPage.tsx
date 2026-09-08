@@ -638,6 +638,20 @@ export default function AdminDashboardPage() {
             <BookOpen className="w-3.5 h-3.5" />
             <span>Bulk Import</span>
           </Link>
+          <Link
+            to="/admin/technical"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-700 hover:bg-indigo-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Technical Hub</span>
+          </Link>
+          <Link
+            to="/admin/interview"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-teal-700 hover:bg-teal-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+            <span>Interview Prep</span>
+          </Link>
           <button
             onClick={() => setAdminTab('moderation')}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"

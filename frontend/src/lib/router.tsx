@@ -23,6 +23,8 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 const AdminCollegesPage = lazy(() => import('@/pages/AdminCollegesPage'));
 const AdminBulkImportPage = lazy(() => import('@/pages/AdminBulkImportPage'));
+const AdminTechnicalPage = lazy(() => import('@/pages/AdminTechnicalPage'));
+const AdminInterviewPage = lazy(() => import('@/pages/AdminInterviewPage'));
 
 // Dedicated TPO Portal Pages
 const TpoOverviewPage = lazy(() => import('@/pages/tpo/TpoOverviewPage'));
@@ -180,6 +182,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requireAdmin>
             {withSuspense(AdminBulkImportPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin/technical',
+        element: (
+          <ProtectedRoute requireAdmin>
+            {withSuspense(AdminTechnicalPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin/interview',
+        element: (
+          <ProtectedRoute requireAdmin>
+            {withSuspense(AdminInterviewPage)}
           </ProtectedRoute>
         ),
       },

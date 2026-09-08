@@ -198,9 +198,107 @@ export const technicalService = {
     }));
   },
 
-  // Retrieve Technical MCQs & Pseudo-Code
+  // Retrieve Technical MCQs & Pseudo-Code (Seed + Custom Imported)
   async getTechnicalMcqs(): Promise<TechnicalMcq[]> {
-    return TECHNICAL_MCQS_SEED;
+    return [...TECHNICAL_MCQS_SEED, ...this.getImportedMcqs()];
+  },
+
+  // -----------------------------------------------------------------------
+  // CRUD: Custom Imported MCQs
+  // -----------------------------------------------------------------------
+  getImportedMcqs(): TechnicalMcq[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem('prepunite_imported_technical_mcqs');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async importTechnicalMcqs(newMcqs: Partial<TechnicalMcq>[]): Promise<{ importedCount: number }> {
+    const existing = this.getImportedMcqs();
+    const existingIds = new Set([...TECHNICAL_MCQS_SEED.map(m => m.id), ...existing.map(m => m.id)]);
+    let count = 0;
+    const normalized: TechnicalMcq[] = [];
+    newMcqs.forEach((m, idx) => {
+      if (!m.question) return;
+      let id = m.id || `custom-mcq-${Date.now()}-${idx}`;
+      while (existingIds.has(id)) id = `custom-mcq-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      existingIds.add(id);
+      normalized.push({
+        id,
+        topic: m.topic || 'General',
+        topicCategory: m.topicCategory || 'C_PROGRAMMING',
+        topicId: m.topicId,
+        question: m.question.trim(),
+        codeSnippet: m.codeSnippet,
+        options: Array.isArray(m.options) ? m.options : ['A', 'B', 'C', 'D'],
+        correctOptionIndex: m.correctOptionIndex ?? 0,
+        explanation: m.explanation || '',
+        companyTags: Array.isArray(m.companyTags) ? m.companyTags : [],
+      });
+      count++;
+    });
+    const updated = [...existing, ...normalized];
+    try {
+      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save imported MCQs:', e);
+    }
+    return { importedCount: count };
+  },
+
+  updateImportedMcq(mcqId: string, updates: Partial<TechnicalMcq>): boolean {
+    const existing = this.getImportedMcqs();
+    const idx = existing.findIndex(m => m.id === mcqId);
+    if (idx === -1) return false;
+    existing[idx] = { ...existing[idx], ...updates };
+    try {
+      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(existing));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  deleteImportedMcq(mcqId: string): boolean {
+    const existing = this.getImportedMcqs();
+    const filtered = existing.filter(m => m.id !== mcqId);
+    try {
+      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(filtered));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  // -----------------------------------------------------------------------
+  // CRUD: Update / Delete imported Programming 150 problems
+  // -----------------------------------------------------------------------
+  updateImportedProblem(problemId: string, updates: Partial<ProgrammingProblem>): boolean {
+    const existing = this.getImportedProblems();
+    const idx = existing.findIndex(p => p.id === problemId);
+    if (idx === -1) return false;
+    existing[idx] = { ...existing[idx], ...updates };
+    try {
+      localStorage.setItem('prepunite_imported_programming_problems', JSON.stringify(existing));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  clearAllImportedProblems(): void {
+    try {
+      localStorage.removeItem('prepunite_imported_programming_problems');
+    } catch {}
+  },
+
+  clearAllImportedMcqs(): void {
+    try {
+      localStorage.removeItem('prepunite_imported_technical_mcqs');
+    } catch {}
   },
 
   async getStats() {
