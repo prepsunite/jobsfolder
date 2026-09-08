@@ -53,7 +53,6 @@ export default function TechnicalHubPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const trackParam = searchParams.get('track');
   const topicParam = searchParams.get('topic');
-  const viewParam = searchParams.get('view'); // 'all' or undefined
 
   const activeTrack: TechnicalTrack = useMemo(() => {
     if (trackParam === 'campus-dsa') return 'CAMPUS_DSA';
@@ -215,16 +214,7 @@ export default function TechnicalHubPage() {
     setSelectedLevel('ALL');
   };
 
-  const toggleViewMode = (mode: 'DIRECTORY' | 'ALL') => {
-    if (mode === 'ALL') {
-      setSearchParams({ track: 'programming-150', view: 'all' });
-    } else {
-      setSearchParams({ track: 'programming-150' });
-    }
-    setSearchQuery('');
-  };
-
-  const isDirectoryView = activeTrack === 'PROGRAMMING_150' && !activeTopic && viewParam !== 'all';
+  const isDirectoryView = activeTrack === 'PROGRAMMING_150' && !activeTopic;
 
   return (
     <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12 font-sans relative">
@@ -449,55 +439,23 @@ export default function TechnicalHubPage() {
         </div>
       )}
 
-      {/* 🎚️ 4. DIRECTORY FILTERS & VIEW MODE SWITCHER (For Programming 150) */}
+      {/* 🎚️ 4. DIRECTORY STAGE CLUSTER PILLS (For Programming 150) */}
       {activeTrack === 'PROGRAMMING_150' && !activeTopic && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E9ECEF] dark:border-[#242424] pb-3">
-          {/* Stage Filter Pills for Directory */}
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
-            {stages.map(st => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setSelectedStage(st)}
-                className={`px-2.5 py-1 rounded text-xs font-display font-bold whitespace-nowrap transition-all border cursor-pointer ${
-                  selectedStage === st
-                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-2xs'
-                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                }`}
-              >
-                {st === 'ALL' ? 'All Stages' : st}
-              </button>
-            ))}
-          </div>
-
-          {/* View Toggle: Topic Directory vs All Problems */}
-          <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 border-b border-[#E9ECEF] dark:border-[#242424]">
+          {stages.map(st => (
             <button
+              key={st}
               type="button"
-              onClick={() => toggleViewMode('DIRECTORY')}
-              className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${
-                viewParam !== 'all'
-                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-2xs'
+              onClick={() => setSelectedStage(st)}
+              className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                selectedStage === st
+                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
                   : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
               }`}
             >
-              <Folder className="w-3.5 h-3.5 text-[#FD4A32]" />
-              <span>Topic Directory</span>
+              {st === 'ALL' ? 'All Stages' : st}
             </button>
-
-            <button
-              type="button"
-              onClick={() => toggleViewMode('ALL')}
-              className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${
-                viewParam === 'all'
-                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-2xs'
-                  : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>All 150 Problems</span>
-            </button>
-          </div>
+          ))}
         </div>
       )}
 
