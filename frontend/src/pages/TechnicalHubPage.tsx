@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Code2,
   Terminal,
@@ -42,6 +42,9 @@ import {
   Database,
   Network,
   Server,
+  Plus,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
@@ -74,6 +77,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 
 export default function TechnicalHubPage() {
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const trackParam = searchParams.get('track');
   const topicParam = searchParams.get('topic');
@@ -107,7 +111,17 @@ export default function TechnicalHubPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
 
-  // Technical MCQ Progress & State (Aptitude-Grade Active Learning)
+  // Admin Topic Editor State
+  const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const [editingTopic, setEditingTopic] = useState<Partial<ProgrammingTopic> | null>(null);
+
+  // Admin Problem / MCQ Editor State
+  const [isEditingProblem, setIsEditingProblem] = useState(false);
+  const [editingProblem, setEditingProblem] = useState<Partial<ProgrammingProblem> | null>(null);
+  const [isEditingMcq, setIsEditingMcq] = useState(false);
+  const [editingMcq, setEditingMcq] = useState<Partial<TechnicalMcq> | null>(null);
+
+  // Technical MCQ Progress & State
   const [mcqProgress, setMcqProgress] = useState<Record<string, TechnicalMcqProgress>>(() =>
     technicalService.getMcqProgress()
   );
@@ -119,26 +133,32 @@ export default function TechnicalHubPage() {
     setIsMuted(next);
   };
 
-  // Query Topics for activeTrack (Programming 150, Campus DSA 15 Patterns, Technical MCQs)
-  const { data: topics = [] } = useQuery<ProgrammingTopic[]>({
+  // Query Topics for activeTrack (Supabase-first)
+  const { data: topics = [], refetch: refetchTopics } = useQuery<ProgrammingTopic[]>({
     queryKey: ['technical-topics', activeTrack],
     queryFn: () => technicalService.getTopicsForTrack(activeTrack),
   });
 
-  // Query Programming 150 Problems (Seed + Custom Imported)
+  // Query Live Topic Question Counts (Supabase-first)
+  const { data: liveCountMap = {} } = useQuery<Record<string, number>>({
+    queryKey: ['technical-topic-counts', activeTrack],
+    queryFn: () => technicalService.getTopicCountsMap(activeTrack),
+  });
+
+  // Query Programming 150 Problems (Supabase-first)
   const { data: p150Problems = [], refetch: refetchP150 } = useQuery({
     queryKey: ['programming-150-problems'],
     queryFn: () => technicalService.getProgramming150Problems(),
   });
 
-  // Query Campus DSA Problems
+  // Query Campus DSA Problems (Supabase-first)
   const { data: dsaProblems = [], refetch: refetchDsa } = useQuery({
     queryKey: ['campus-dsa-problems'],
     queryFn: () => technicalService.getCampusDsaProblems(),
   });
 
-  // Query Technical MCQs
-  const { data: mcqs = [] } = useQuery({
+  // Query Technical MCQs (Supabase-first)
+  const { data: mcqs = [], refetch: refetchMcqs } = useQuery({
     queryKey: ['technical-mcqs'],
     queryFn: () => technicalService.getTechnicalMcqs(),
   });
@@ -148,7 +168,7 @@ export default function TechnicalHubPage() {
     return activeTrack === 'PROGRAMMING_150' ? p150Problems : dsaProblems;
   }, [activeTrack, p150Problems, dsaProblems]);
 
-  // Active track stats for header analytics (Matching Aptitude Easy/Med/Hard Breakdown)
+  // Active track stats for header analytics
   const activeTrackProblems = useMemo(() => {
     if (activeTrack === 'PROGRAMMING_150') return p150Problems;
     if (activeTrack === 'CAMPUS_DSA') return dsaProblems;
@@ -196,7 +216,12 @@ export default function TechnicalHubPage() {
   const codingPortion = activeTrackTotal > 0 ? (activeTrackSolved / activeTrackTotal) * circumference : 0;
   const codingDashOffset = circumference - codingPortion;
 
-  // Active topic object if topicParam is set (supported across all 3 tracks)
+  // Filter topics (Admins see all, Users see non-hidden)
+  const currentCategoryTopics = useMemo(() => {
+    return topics.filter(t => isAdmin || !t.is_hidden);
+  }, [topics, isAdmin]);
+
+  // Active topic object if topicParam is set
   const activeTopic = useMemo(() => {
     if (!topicParam) return null;
     return topics.find(t => t.id === topicParam) || null;
@@ -204,17 +229,15 @@ export default function TechnicalHubPage() {
 
   // Distinct clusters/stages for directory filter
   const stages = useMemo(() => {
-    const rawClusters = Array.from(new Set(topics.map(t => t.cluster)));
+    const rawClusters = Array.from(new Set(currentCategoryTopics.map(t => t.cluster)));
     if (activeTrack === 'PROGRAMMING_150') {
-      // Strictly starts from Stage 1, NO 'All Stages' option
       return rawClusters;
     }
     if (activeTrack === 'CAMPUS_DSA') {
       return ['All Patterns', ...rawClusters];
     }
-    // Technical MCQs: IndiaBix subject categories with 'All Topics' default
     return ['All Topics', ...rawClusters];
-  }, [topics, activeTrack]);
+  }, [currentCategoryTopics, activeTrack]);
 
   // Auto-synchronize stage/cluster selection when track changes or on initial load
   useEffect(() => {
@@ -237,7 +260,7 @@ export default function TechnicalHubPage() {
 
   // Filtered topics for directory
   const filteredTopics = useMemo(() => {
-    return topics.filter(t => {
+    return currentCategoryTopics.filter(t => {
       const isAll =
         !selectedStage ||
         selectedStage === 'All Topics' ||
@@ -254,9 +277,9 @@ export default function TechnicalHubPage() {
       }
       return true;
     });
-  }, [topics, selectedStage, searchQuery]);
+  }, [currentCategoryTopics, selectedStage, searchQuery]);
 
-  // Active topic problems (for programming & campus dsa)
+  // Active topic problems
   const activeTopicProblems = useMemo(() => {
     if (!activeTopic) return [];
     if (activeTrack === 'CAMPUS_DSA') {
@@ -285,7 +308,7 @@ export default function TechnicalHubPage() {
 
   const topicPercentage = activeTopicTotalCount > 0 ? Math.round((activeTopicSolvedCount / activeTopicTotalCount) * 100) : 0;
 
-  // Filtered Problems (accounting for selected topic, difficulty, status, and search query)
+  // Filtered Problems
   const filteredProblems = useMemo(() => {
     const list = activeTopic ? activeTopicProblems : currentProblems;
     return list.filter(p => {
@@ -297,7 +320,7 @@ export default function TechnicalHubPage() {
         const q = searchQuery.toLowerCase();
         const matchesTitle = p.title.toLowerCase().includes(q);
         const matchesDesc = p.description.toLowerCase().includes(q);
-        const matchesCategory = p.categoryLabel.toLowerCase().includes(q);
+        const matchesCategory = (p.categoryLabel || '').toLowerCase().includes(q);
         const matchesCompany = p.companyTags?.some(t => t.toLowerCase().includes(q));
         if (!matchesTitle && !matchesDesc && !matchesCategory && !matchesCompany) return false;
       }
@@ -305,7 +328,7 @@ export default function TechnicalHubPage() {
     });
   }, [activeTopic, activeTopicProblems, currentProblems, selectedLevel, selectedStatus, selectedCategory, searchQuery]);
 
-  // Filtered MCQs based on status and search query
+  // Filtered MCQs
   const filteredMcqs = useMemo(() => {
     const list = activeTopic ? activeTopicMcqs : mcqs;
     return list.filter(mcq => {
@@ -313,12 +336,10 @@ export default function TechnicalHubPage() {
       const isSolved = prog?.solved ?? false;
       const isRetry = !isSolved && (prog?.wrongPicks?.length ?? 0) > 0;
 
-      // Status filter
       if (selectedStatus === 'SOLVED' && !isSolved) return false;
       if (selectedStatus === 'UNSOLVED' && isSolved) return false;
       if (selectedStatus === 'RETRY' && !isRetry) return false;
 
-      // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesQ = mcq.question.toLowerCase().includes(q);
@@ -420,13 +441,207 @@ export default function TechnicalHubPage() {
     setSelectedStatus('ALL');
   };
 
-  const isDirectoryView = !activeTopic;
+  // ─── ADMIN TOPIC ACTIONS ──────────────────────────────────────────────────
+  const openTopicEditor = (e: React.MouseEvent, topic?: ProgrammingTopic) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (topic) {
+      setEditingTopic({ ...topic });
+    } else {
+      const rawClusters = Array.from(new Set(topics.map(t => t.cluster)));
+      setEditingTopic({
+        id: '',
+        title: '',
+        name: '',
+        track: activeTrack,
+        category: activeTrack === 'TECHNICAL_MCQS' ? 'C_PROGRAMMING' : 'SYNTAX_BASICS',
+        cluster: rawClusters[0] || (activeTrack === 'PROGRAMMING_150' ? 'Stage 1: Language & Control Flow' : 'General'),
+        description: '',
+        iconName: 'Code2',
+        icon_name: 'Code2',
+        tips: [],
+        is_hidden: false,
+        sort_order: topics.length + 1,
+      });
+    }
+    setIsEditingTopic(true);
+  };
+
+  const saveTopic = async () => {
+    if (!editingTopic || !editingTopic.id || !(editingTopic.name || editingTopic.title)) {
+      alert("Topic ID and Title/Name are required.");
+      return;
+    }
+
+    const res = await technicalService.saveTopic({
+      ...editingTopic,
+      track: editingTopic.track || activeTrack,
+      name: editingTopic.name || editingTopic.title,
+      title: editingTopic.name || editingTopic.title,
+    });
+
+    if (res.success) {
+      setIsEditingTopic(false);
+      setEditingTopic(null);
+      refetchTopics();
+      queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
+    } else {
+      alert("Error saving topic: " + res.error);
+    }
+  };
+
+  const handleToggleTopicHide = async (e: React.MouseEvent, topic: ProgrammingTopic) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    const success = await technicalService.toggleTopicVisibility(topic.id, !topic.is_hidden);
+    if (success) {
+      refetchTopics();
+      queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
+    } else {
+      alert("Failed to toggle visibility");
+    }
+  };
+
+  const handleDeleteTopic = async (e: React.MouseEvent, topic: ProgrammingTopic) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (confirm(`Are you sure you want to permanently delete topic "${topic.title}"?`)) {
+      const success = await technicalService.deleteTopic(topic.id);
+      if (success) {
+        refetchTopics();
+        queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
+      } else {
+        alert("Failed to delete topic");
+      }
+    }
+  };
+
+  // ─── ADMIN PROBLEM ACTIONS ────────────────────────────────────────────────
+  const openProblemEditor = (e: React.MouseEvent, problem?: ProgrammingProblem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (problem) {
+      setEditingProblem({ ...problem });
+    } else {
+      setEditingProblem({
+        id: `p-${Date.now()}`,
+        topicId: activeTopic?.id || 'syntax-operators',
+        track: activeTrack === 'CAMPUS_DSA' ? 'CAMPUS_DSA' : 'PROGRAMMING_150',
+        title: '',
+        level: 'MEDIUM',
+        category: (activeTopic?.category as any) || 'SYNTAX_BASICS',
+        categoryLabel: activeTopic?.title || 'General Programming',
+        description: '',
+        constraints: ['1 <= N <= 10^5'],
+        sampleInput: '',
+        sampleOutput: '',
+        explanation: '',
+        solutions: { java: '// Java solution', python: '# Python solution', cpp: '// C++ solution', c: '// C solution' },
+        timeComplexity: 'O(N)',
+        spaceComplexity: 'O(1)',
+        hints: [],
+        companyTags: ['Campus Placement'],
+        is_hidden: false,
+      });
+    }
+    setIsEditingProblem(true);
+  };
+
+  const saveProblem = async () => {
+    if (!editingProblem || !editingProblem.title) {
+      alert("Problem title is required.");
+      return;
+    }
+
+    const res = await technicalService.saveProgrammingProblem({
+      ...editingProblem,
+      topicId: activeTopic?.id || editingProblem.topicId,
+      track: activeTrack === 'CAMPUS_DSA' ? 'CAMPUS_DSA' : 'PROGRAMMING_150',
+    });
+
+    if (res.success) {
+      setIsEditingProblem(false);
+      setEditingProblem(null);
+      if (activeTrack === 'CAMPUS_DSA') refetchDsa();
+      else refetchP150();
+    } else {
+      alert("Error saving problem: " + res.error);
+    }
+  };
+
+  const handleDeleteProblem = async (problemId: string) => {
+    if (!confirm("Are you sure you want to delete this problem?")) return;
+    await technicalService.deleteProgrammingProblem(problemId);
+    if (activeTrack === 'CAMPUS_DSA') refetchDsa();
+    else refetchP150();
+  };
+
+  // ─── ADMIN MCQ ACTIONS ────────────────────────────────────────────────────
+  const openMcqEditor = (e: React.MouseEvent, mcq?: TechnicalMcq) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (mcq) {
+      setEditingMcq({ ...mcq });
+    } else {
+      setEditingMcq({
+        id: `mcq-${Date.now()}`,
+        topicId: activeTopic?.id || 'mcq-c-programming',
+        topic: activeTopic?.title || 'C Programming',
+        topicCategory: (activeTopic?.category as any) || 'C_PROGRAMMING',
+        question: '',
+        codeSnippet: '',
+        options: ['', '', '', ''],
+        correctOptionIndex: 0,
+        explanation: '',
+        companyTags: ['TCS', 'Infosys'],
+        difficulty: 'MEDIUM',
+        is_hidden: false,
+      });
+    }
+    setIsEditingMcq(true);
+  };
+
+  const saveMcq = async () => {
+    if (!editingMcq || !editingMcq.question) {
+      alert("MCQ Question is required.");
+      return;
+    }
+
+    const res = await technicalService.saveTechnicalMcq({
+      ...editingMcq,
+      topicId: activeTopic?.id || editingMcq.topicId,
+      topic: activeTopic?.title || editingMcq.topic,
+    });
+
+    if (res.success) {
+      setIsEditingMcq(false);
+      setEditingMcq(null);
+      refetchMcqs();
+    } else {
+      alert("Error saving MCQ: " + res.error);
+    }
+  };
+
+  const handleDeleteMcq = async (mcqId: string) => {
+    if (!confirm("Are you sure you want to delete this MCQ?")) return;
+    await technicalService.deleteTechnicalMcq(mcqId);
+    refetchMcqs();
+  };
 
   return (
     <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
       {/* ────────────────────────────────────────────────────────────────────────
           TOPIC QUESTIONS VIEW (When a Topic is Selected in Any Track)
-          Matches Aptitude TopicQuestionsPage + Old Papers QuestionCard UI
       ──────────────────────────────────────────────────────────────────────── */}
       {activeTopic ? (
         <div className="space-y-6 animate-fadeIn">
@@ -441,67 +656,67 @@ export default function TechnicalHubPage() {
               <span>Back to Topic Directory</span>
             </button>
 
-            <span className="text-xs text-[#868E96] dark:text-[#555555]">
-              Topic Practice Mode
-            </span>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={(e) => activeTrack === 'TECHNICAL_MCQS' ? openMcqEditor(e) : openProblemEditor(e)}
+                  className="px-2.5 py-1 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{activeTrack === 'TECHNICAL_MCQS' ? 'Add MCQ' : 'Add Problem'}</span>
+                </button>
+              )}
+              <span className="text-xs text-[#868E96] dark:text-[#555555]">
+                Topic Practice Mode
+              </span>
+            </div>
           </div>
 
-          {/* 2. Topic Header Banner (Matching Aptitude TopicQuestionsPage banner) */}
+          {/* 2. Topic Header Banner */}
           <div className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <span className="text-[9px] font-display font-bold text-[#FD4A32] uppercase tracking-wider block">
-                  {activeTrack === 'PROGRAMMING_150' && 'Programming 150 • '}
-                  {activeTrack === 'CAMPUS_DSA' && 'Campus DSA Core • '}
-                  {activeTrack === 'TECHNICAL_MCQS' && 'Technical MCQs • '}
-                  {activeTopic.cluster}
-                </span>
-                <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  {activeTopic.title} {activeTrack === 'TECHNICAL_MCQS' ? 'MCQs' : 'Questions'}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/25 px-2 py-0.5 rounded">
+                    {activeTopic.cluster}
+                  </span>
+                  {activeTopic.is_hidden && (
+                    <span className="text-[9px] font-mono font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 px-2 py-0.5 rounded">
+                      Hidden from students
+                    </span>
+                  )}
+                </div>
+                <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+                  {activeTopic.title}
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-sans mt-0.5">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-sans max-w-xl">
                   {activeTopic.description}
                 </p>
-
-                {/* Topic Progress Bar */}
-                <div className="flex items-center gap-3 pt-2">
-                  <div className="w-44 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                      style={{ width: `${topicPercentage}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    {activeTopicSolvedCount} / {activeTopicTotalCount} Solved ({topicPercentage}%)
-                  </span>
-                </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                {isAdmin && activeTrack === 'PROGRAMMING_150' && (
-                  <button
-                    type="button"
-                    onClick={() => setShowBulkModal(true)}
-                    className="px-3 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-md text-xs font-display font-bold transition-all border border-purple-500/30 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                    title="Bulk import questions into this topic"
-                  >
-                    <FileCode className="w-3.5 h-3.5" />
-                    <span>Bulk JSON</span>
-                  </button>
-                )}
-                <div className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/25">
-                  {activeTrack === 'TECHNICAL_MCQS' ? `${filteredMcqs.length} MCQs` : `${filteredProblems.length} Problems`}
+              {/* Solved Counter & Radial / Bar */}
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E9ECEF] dark:border-[#242424]">
+                <span className="text-[11px] font-mono text-[#868E96] dark:text-[#777777]">
+                  Topic Progress
+                </span>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-display font-extrabold text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400">
+                    {activeTopicSolvedCount}
+                  </span>
+                  <span className="font-display text-xs text-[#868E96]">
+                    / {activeTopicTotalCount} ({topicPercentage}%)
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 3. Filter Bar (Track-specific: Coding vs MCQ) */}
+          {/* 3. Filter Bar & Search inside topic */}
           {activeTrack === 'TECHNICAL_MCQS' ? (
             <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center flex-wrap gap-4">
-                  {/* Status Filter */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
                       Status:
@@ -531,7 +746,6 @@ export default function TechnicalHubPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* In-topic search */}
                   <div className="relative w-48 sm:w-56">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
                     <input
@@ -543,7 +757,6 @@ export default function TechnicalHubPage() {
                     />
                   </div>
 
-                  {/* Audio Toggle */}
                   <button
                     type="button"
                     onClick={handleToggleSound}
@@ -563,7 +776,6 @@ export default function TechnicalHubPage() {
             <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center flex-wrap gap-4">
-                  {/* Difficulty Filter */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
                       Difficulty:
@@ -591,7 +803,6 @@ export default function TechnicalHubPage() {
                     </div>
                   </div>
 
-                  {/* Status Filter */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
                       Status:
@@ -619,7 +830,6 @@ export default function TechnicalHubPage() {
                   </div>
                 </div>
 
-                {/* In-topic search */}
                 <div className="relative w-48 sm:w-56">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
                   <input
@@ -666,7 +876,6 @@ export default function TechnicalHubPage() {
                       key={mcq.id}
                       className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#FD4A32]/40 transition-all duration-300 space-y-4 shadow-xs"
                     >
-                      {/* Header */}
                       <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
@@ -685,7 +894,7 @@ export default function TechnicalHubPage() {
                           ))}
                         </div>
 
-                        <div>
+                        <div className="flex items-center gap-2">
                           {isSolved ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded">
                               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -701,51 +910,57 @@ export default function TechnicalHubPage() {
                               <span>Unsolved</span>
                             </span>
                           )}
+
+                          {isAdmin && (
+                            <div className="flex items-center gap-1 ml-2 border-l border-gray-200 dark:border-gray-800 pl-2">
+                              <button
+                                type="button"
+                                onClick={(e) => openMcqEditor(e, mcq)}
+                                className="p-1 text-gray-500 hover:text-blue-500 rounded"
+                                title="Edit MCQ"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMcq(mcq.id)}
+                                className="p-1 text-gray-500 hover:text-rose-500 rounded"
+                                title="Delete MCQ"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Question Statement */}
-                      <p className="font-display font-bold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] leading-snug">
+                      {/* Question Text */}
+                      <div className="text-xs sm:text-sm font-semibold text-[#121417] dark:text-[#FFFFFF] leading-relaxed">
                         {mcq.question}
-                      </p>
+                      </div>
 
-                      {/* Code Snippet Box */}
+                      {/* Optional Code Snippet */}
                       {mcq.codeSnippet && (
-                        <div className="relative rounded-lg bg-[#0C0C0C] dark:bg-[#000000] border border-[#242424] overflow-hidden text-xs font-mono">
-                          <div className="flex items-center justify-between px-3 py-1.5 bg-[#141414] border-b border-[#242424] text-[10px] text-[#888888]">
-                            <span className="font-bold text-[#FD4A32] uppercase tracking-wider">
-                              {mcq.topicCategory.replace(/_SNIPPETS|_/g, ' ')}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyCode(mcq.codeSnippet!, mcq.id)}
-                              className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#1F1F1F] hover:bg-[#2A2A2A] text-gray-300 hover:text-white transition-colors cursor-pointer"
-                            >
-                              {copiedId === mcq.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                              <span>{copiedId === mcq.id ? 'Copied!' : 'Copy Code'}</span>
-                            </button>
-                          </div>
-                          <pre className="p-3.5 overflow-x-auto text-emerald-400 leading-relaxed font-mono">
-                            {mcq.codeSnippet}
-                          </pre>
+                        <div className="p-3 bg-[#0A0A0A] rounded-lg border border-[#242424] font-mono text-xs text-emerald-400 overflow-x-auto">
+                          <pre>{mcq.codeSnippet}</pre>
                         </div>
                       )}
 
-                      {/* Stacked Options */}
-                      <div className="space-y-2">
+                      {/* Options Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {mcq.options.map((opt, optIdx) => {
-                          const isCorrect = optIdx === mcq.correctOptionIndex;
-                          const wasWrong = wrongPicks.includes(optIdx);
-                          const letterBadge = String.fromCharCode(65 + optIdx);
+                          const isOptionCorrect = optIdx === mcq.correctOptionIndex;
+                          const wasPickedWrong = wrongPicks.includes(optIdx);
+                          const isPickedAndCorrect = isSolved && isOptionCorrect;
 
-                          let optionStyle = 'bg-[#F8F9FA] dark:bg-[#0C0C0C] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#444444]';
-
-                          if (isSolved && isCorrect) {
-                            optionStyle = 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs';
-                          } else if (wasWrong) {
-                            optionStyle = 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
-                          } else if (isExplVisible && isCorrect) {
-                            optionStyle = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-semibold';
+                          let btnClasses =
+                            'bg-[#F8F9FA] dark:bg-[#191919] border-[#E9ECEF] dark:border-[#2A2A2A] text-[#121417] dark:text-[#EEEEEE] hover:border-[#FD4A32]';
+                          if (isPickedAndCorrect) {
+                            btnClasses =
+                              'bg-emerald-500/15 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-bold';
+                          } else if (wasPickedWrong) {
+                            btnClasses =
+                              'bg-rose-500/15 border-rose-500/50 text-rose-700 dark:text-rose-300 font-semibold';
                           }
 
                           return (
@@ -753,49 +968,27 @@ export default function TechnicalHubPage() {
                               key={optIdx}
                               type="button"
                               onClick={() => handleSelectMcqOption(mcq, optIdx)}
-                              className={`w-full flex items-center justify-between gap-3 p-3 rounded-lg border text-xs sm:text-sm text-left transition-all cursor-pointer ${optionStyle}`}
+                              className={`p-3 rounded-lg border text-left text-xs transition-all flex items-start gap-2.5 cursor-pointer ${btnClasses}`}
                             >
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className={`w-6 h-6 rounded-md border flex items-center justify-center font-display font-bold text-xs shrink-0 ${
-                                  (isSolved && isCorrect) || (isExplVisible && isCorrect)
-                                    ? 'bg-emerald-500 text-white border-emerald-500'
-                                    : wasWrong
-                                      ? 'bg-rose-500 text-white border-rose-500'
-                                      : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] bg-white dark:bg-[#181818]'
-                                }`}>
-                                  {letterBadge}
-                                </div>
-                                <span className="leading-snug font-sans truncate-none">{opt}</span>
-                              </div>
-
-                              {((isSolved && isCorrect) || (isExplVisible && isCorrect)) && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                              )}
-                              {wasWrong && !isSolved && (
-                                <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                              )}
+                              <span className="font-mono font-bold text-[10px] w-5 h-5 rounded flex items-center justify-center bg-black/5 dark:bg-white/10 shrink-0">
+                                {String.fromCharCode(65 + optIdx)}
+                              </span>
+                              <span className="font-sans flex-1 leading-snug">{opt}</span>
                             </button>
                           );
                         })}
                       </div>
 
-                      {/* Action Toolbar */}
-                      <div className="pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
+                      {/* Footer: View Explanation Toggle & Live Status */}
+                      <div className="flex items-center justify-between pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
+                        <div>
                           <button
                             type="button"
                             onClick={() => toggleMcqExplanation(mcq.id)}
-                            className={`px-3 py-1.5 rounded-md border text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                              isExplVisible
-                                ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white'
-                                : 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                            }`}
-                            title={isExplVisible ? 'Hide Solution' : 'Show Answer & Detailed Solution'}
+                            className="flex items-center gap-1.5 text-xs font-bold text-[#FD4A32] hover:text-[#E0351D] transition-colors cursor-pointer"
                           >
-                            {isExplVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            <span className="text-[10px] uppercase tracking-wider">
-                              {isExplVisible ? 'Hide Solution' : isSolved ? 'View Solution' : 'Show Answer & Solution'}
-                            </span>
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            <span>{isExplVisible ? 'Hide Explanation' : 'View Explanation'}</span>
                           </button>
                         </div>
 
@@ -863,15 +1056,12 @@ export default function TechnicalHubPage() {
                       key={problem.id}
                       className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#FD4A32]/40 transition-all duration-300 space-y-4 shadow-xs"
                     >
-                      {/* Top Header Row: Question #, Difficulty Badge, Company Tags, Solved Toggle */}
                       <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
                         <div className="flex items-center gap-2 flex-wrap">
-                          {/* Question Number Badge */}
                           <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
                             Question #{index + 1}
                           </span>
 
-                          {/* Difficulty Badge with Pulse Dot */}
                           <span
                             className={`inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
                               problem.level === 'BASIC'
@@ -893,7 +1083,6 @@ export default function TechnicalHubPage() {
                             <span>{problem.level}</span>
                           </span>
 
-                          {/* Company Tags */}
                           {problem.companyTags?.map(tag => (
                             <span
                               key={tag}
@@ -904,7 +1093,6 @@ export default function TechnicalHubPage() {
                           ))}
                         </div>
 
-                        {/* Solved Toggle Status */}
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
@@ -928,6 +1116,27 @@ export default function TechnicalHubPage() {
                               </>
                             )}
                           </button>
+
+                          {isAdmin && (
+                            <div className="flex items-center gap-1 ml-2 border-l border-gray-200 dark:border-gray-800 pl-2">
+                              <button
+                                type="button"
+                                onClick={(e) => openProblemEditor(e, problem)}
+                                className="p-1 text-gray-500 hover:text-blue-500 rounded"
+                                title="Edit Problem"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteProblem(problem.id)}
+                                className="p-1 text-gray-500 hover:text-rose-500 rounded"
+                                title="Delete Problem"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -941,7 +1150,7 @@ export default function TechnicalHubPage() {
                         {problem.description}
                       </div>
 
-                      {/* 3. Constraints Section */}
+                      {/* 3. Constraints */}
                       {problem.constraints && problem.constraints.length > 0 && (
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
@@ -955,7 +1164,7 @@ export default function TechnicalHubPage() {
                         </div>
                       )}
 
-                      {/* 4. Placement OA Standard: Two Sample Test Cases */}
+                      {/* 4. Sample Test Cases */}
                       {(problem.sampleCases || problem.testCases) && (problem.sampleCases || problem.testCases)!.length > 0 ? (
                         <div className="space-y-2">
                           <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
@@ -1018,9 +1227,7 @@ export default function TechnicalHubPage() {
 
                         {isExpanded && (
                           <div className="mt-3 space-y-3 p-4 bg-[#0C0C0C] dark:bg-[#000000] text-white rounded-xl border border-[#242424] animate-fadeIn">
-                            {/* Language Selector + Complexity Badges + Copy Code */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#242424]">
-                              {/* 4 Language Buttons */}
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {(['java', 'python', 'cpp', 'c'] as const).map(lang => (
                                   <button
@@ -1038,7 +1245,6 @@ export default function TechnicalHubPage() {
                                 ))}
                               </div>
 
-                              {/* Complexity Badges + Copy Button */}
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
                                   Time: {problem.timeComplexity}
@@ -1057,12 +1263,10 @@ export default function TechnicalHubPage() {
                               </div>
                             </div>
 
-                            {/* Code Pre Box */}
                             <div className="bg-[#050505] rounded-lg p-3.5 border border-[#1E1E1E] overflow-x-auto text-xs font-mono text-emerald-400">
                               <pre>{problem.solutions[activeLang] || '// Solution not available in this language'}</pre>
                             </div>
 
-                            {/* Explanation & Approach */}
                             {problem.explanation && (
                               <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
                                 <span className="font-bold flex items-center gap-1.5 text-[10px] text-[#FD4A32] uppercase tracking-wider">
@@ -1075,7 +1279,6 @@ export default function TechnicalHubPage() {
                               </div>
                             )}
 
-                            {/* Hints */}
                             {problem.hints && problem.hints.length > 0 && (
                               <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
                                 <span className="font-bold flex items-center gap-1.5 text-[10px] text-amber-400 uppercase tracking-wider">
@@ -1101,10 +1304,10 @@ export default function TechnicalHubPage() {
         </div>
       ) : (
         /* ────────────────────────────────────────────────────────────────────────
-            MAIN DIRECTORY VIEW (Matching Aptitude /aptitude/arithmetic-aptitude)
+            MAIN DIRECTORY VIEW
         ──────────────────────────────────────────────────────────────────────── */
         <>
-          {/* 🚀 1. UNIFIED HEADER BANNER: Donut on Left, Difficulty Breakdown on Right (Matching Aptitude) */}
+          {/* 🚀 1. UNIFIED HEADER BANNER */}
           <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-1 sm:max-w-md shrink-0">
@@ -1135,10 +1338,9 @@ export default function TechnicalHubPage() {
                 </p>
               </div>
 
-              {/* Embedded Donut & Difficulty Progress (Exact Aptitude embedded styling) */}
+              {/* Embedded Donut & Difficulty Progress */}
               <div className="flex-1 lg:max-w-2xl">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                  {/* Donut Ring with Solved / Total inside */}
                   <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
                       <circle
@@ -1170,10 +1372,8 @@ export default function TechnicalHubPage() {
                     </div>
                   </div>
 
-                  {/* 3 Difficulty / Category Progress Bars */}
                   {activeTrack === 'TECHNICAL_MCQS' ? (
                     <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
-                      {/* Solved */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                           <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Solved</span>
@@ -1187,7 +1387,6 @@ export default function TechnicalHubPage() {
                         </div>
                       </div>
 
-                      {/* Needs Retry */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                           <span className="font-display font-bold text-amber-600 dark:text-amber-400">Needs Retry</span>
@@ -1201,7 +1400,6 @@ export default function TechnicalHubPage() {
                         </div>
                       </div>
 
-                      {/* Unsolved */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                           <span className="font-display font-bold text-rose-600 dark:text-rose-400">Unsolved</span>
@@ -1217,7 +1415,6 @@ export default function TechnicalHubPage() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
-                      {/* Basic / Easy */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                           <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Basic</span>
@@ -1231,7 +1428,6 @@ export default function TechnicalHubPage() {
                         </div>
                       </div>
 
-                      {/* Medium */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                           <span className="font-display font-bold text-amber-600 dark:text-amber-400">Medium</span>
@@ -1245,7 +1441,6 @@ export default function TechnicalHubPage() {
                         </div>
                       </div>
 
-                      {/* Hard */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                           <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
@@ -1265,9 +1460,8 @@ export default function TechnicalHubPage() {
             </div>
           </div>
 
-          {/* 🏷️ 2. STAGE CLUSTER FILTER PILLS (Starts strictly from Stage 1, no 'All Stages') + SEARCH BAR + ADMIN BULK BUTTON */}
+          {/* 🏷️ 2. STAGE CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ACTIONS */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            {/* Stage Cluster Pills (Works uniformly for Programming 150, Campus DSA, and Technical MCQs) */}
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
               {stages.map(st => (
                 <button
@@ -1285,7 +1479,6 @@ export default function TechnicalHubPage() {
               ))}
             </div>
 
-            {/* Search Bar + Audio Toggle + Admin Bulk JSON Button */}
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
               <div className="relative w-48 sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
@@ -1319,6 +1512,18 @@ export default function TechnicalHubPage() {
                 </button>
               )}
 
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={(e) => openTopicEditor(e)}
+                  className="px-3 py-1 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                  title="Add New Technical Topic"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Topic</span>
+                </button>
+              )}
+
               {isAdmin && activeTrack === 'PROGRAMMING_150' && (
                 <button
                   type="button"
@@ -1333,7 +1538,7 @@ export default function TechnicalHubPage() {
             </div>
           </div>
 
-          {/* 📁 3. TOPIC DIRECTORY CARDS (2-Column Grid Matching PrepUnite Blueprint) */}
+          {/* 📁 3. TOPIC DIRECTORY CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {filteredTopics.length === 0 ? (
               <div className="col-span-full p-10 text-center rounded-xl border border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
@@ -1360,28 +1565,34 @@ export default function TechnicalHubPage() {
               </div>
             ) : (
               filteredTopics.map(topic => {
-                const TopicIcon = TOPIC_ICON_MAP[topic.iconName] || Code2;
-                let countText = '';
+                const TopicIcon = TOPIC_ICON_MAP[topic.icon_name || topic.iconName] || Code2;
+                const liveCount = liveCountMap[topic.id] ?? 0;
+                let countText = `${liveCount} Items`;
                 let solvedCount = 0;
+
                 if (activeTrack === 'TECHNICAL_MCQS') {
                   const topicMcqs = mcqs.filter(m => m.topicId === topic.id);
                   solvedCount = topicMcqs.filter(m => mcqProgress[m.id]?.solved).length;
-                  countText = `${topicMcqs.length} MCQs`;
+                  countText = `${liveCount > 0 ? liveCount : topicMcqs.length} MCQs`;
                 } else if (activeTrack === 'CAMPUS_DSA') {
                   const topicProblems = dsaProblems.filter(p => p.topicId === topic.id);
                   solvedCount = topicProblems.filter(p => p.solved).length;
-                  countText = `${topicProblems.length} Problems`;
+                  countText = `${liveCount > 0 ? liveCount : topicProblems.length} Problems`;
                 } else {
                   const topicProblems = p150Problems.filter(p => p.topicId === topic.id);
                   solvedCount = topicProblems.filter(p => p.solved).length;
-                  countText = `${topicProblems.length} Problems`;
+                  countText = `${liveCount > 0 ? liveCount : topicProblems.length} Problems`;
                 }
 
                 return (
                   <div
                     key={topic.id}
                     onClick={() => selectTopic(topic.id)}
-                    className="group flex items-center justify-between p-3.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/50 dark:hover:border-[#FD4A32]/50 rounded-lg transition-all duration-150 shadow-2xs cursor-pointer"
+                    className={`group flex items-center justify-between p-3.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
+                      topic.is_hidden
+                        ? 'border-amber-500/40 opacity-75'
+                        : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/50 dark:hover:border-[#FD4A32]/50'
+                    } rounded-lg transition-all duration-150 shadow-2xs cursor-pointer`}
                   >
                     {/* Left: Icon & Title & Description */}
                     <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
@@ -1390,21 +1601,57 @@ export default function TechnicalHubPage() {
                       </div>
 
                       <div className="flex flex-col min-w-0">
-                        <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors truncate">
-                          {topic.title}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors truncate">
+                            {topic.title || topic.name}
+                          </span>
+                          {topic.is_hidden && (
+                            <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1 rounded">
+                              Hidden
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                           {topic.cluster} • {topic.description}
                         </span>
                       </div>
                     </div>
 
-                    {/* Right: Solved Badge & Explore Link */}
+                    {/* Right: Solved Badge & Admin Controls / Explore Link */}
                     <div className="flex items-center gap-2 shrink-0">
                       {solvedCount > 0 && (
                         <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                           {solvedCount} Solved
                         </span>
+                      )}
+
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 border-r border-[#E9ECEF] dark:border-[#242424] pr-2 mr-1">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleTopicHide(e, topic)}
+                            className="p-1 rounded text-gray-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5"
+                            title={topic.is_hidden ? 'Make Visible' : 'Hide Topic'}
+                          >
+                            {topic.is_hidden ? <EyeOff className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => openTopicEditor(e, topic)}
+                            className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-black/5 dark:hover:bg-white/5"
+                            title="Edit Topic Details"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteTopic(e, topic)}
+                            className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5"
+                            title="Delete Topic"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
 
                       <div className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-[#FD4A32] group-hover:text-[#FD4A32] transition-colors">
@@ -1431,6 +1678,433 @@ export default function TechnicalHubPage() {
           defaultTopicId={activeTopic?.id}
           topics={topics}
         />
+      )}
+
+      {/* 🛠️ ADMIN TOPIC EDITOR MODAL */}
+      {isEditingTopic && editingTopic && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-gray-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <h3 className="font-display font-bold text-lg text-gray-900 dark:text-white">
+                {editingTopic.id && topics.some(t => t.id === editingTopic.id) ? 'Edit Technical Topic' : 'Add Technical Topic'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setIsEditingTopic(false); setEditingTopic(null); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Topic ID (Slug) *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTopic.id || ''}
+                    onChange={e => setEditingTopic({ ...editingTopic, id: e.target.value })}
+                    disabled={topics.some(t => t.id === editingTopic.id)}
+                    placeholder="e.g. syntax-operators"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Track
+                  </label>
+                  <select
+                    value={editingTopic.track || activeTrack}
+                    onChange={e => setEditingTopic({ ...editingTopic, track: e.target.value as any })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    <option value="PROGRAMMING_150">Programming 150</option>
+                    <option value="CAMPUS_DSA">Campus DSA</option>
+                    <option value="TECHNICAL_MCQS">Technical MCQs</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Topic Title / Name *
+                </label>
+                <input
+                  type="text"
+                  value={editingTopic.name || editingTopic.title || ''}
+                  onChange={e => setEditingTopic({ ...editingTopic, name: e.target.value, title: e.target.value })}
+                  placeholder="e.g. Syntax, Operators & Typecasting"
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Cluster / Stage Header
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTopic.cluster || ''}
+                    onChange={e => setEditingTopic({ ...editingTopic, cluster: e.target.value })}
+                    placeholder="e.g. Stage 1: Language & Control Flow"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Icon Name
+                  </label>
+                  <select
+                    value={editingTopic.icon_name || editingTopic.iconName || 'Code2'}
+                    onChange={e => setEditingTopic({ ...editingTopic, icon_name: e.target.value, iconName: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    {Object.keys(TOPIC_ICON_MAP).map(iconKey => (
+                      <option key={iconKey} value={iconKey}>{iconKey}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingTopic.description || ''}
+                  onChange={e => setEditingTopic({ ...editingTopic, description: e.target.value })}
+                  placeholder="Overview of this topic..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="topic_is_hidden"
+                  checked={!!editingTopic.is_hidden}
+                  onChange={e => setEditingTopic({ ...editingTopic, is_hidden: e.target.checked })}
+                  className="rounded text-[#FD4A32] focus:ring-[#FD4A32]"
+                />
+                <label htmlFor="topic_is_hidden" className="text-gray-700 dark:text-gray-300 cursor-pointer font-semibold">
+                  Hide topic from students (Draft / Archived)
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <button
+                type="button"
+                onClick={() => { setIsEditingTopic(false); setEditingTopic(null); }}
+                className="px-4 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveTopic}
+                className="px-4 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                Save Topic to Supabase
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🛠️ ADMIN PROBLEM EDITOR MODAL */}
+      {isEditingProblem && editingProblem && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-gray-800 rounded-xl max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <h3 className="font-display font-bold text-lg text-gray-900 dark:text-white">
+                {editingProblem.id ? 'Edit Coding Problem' : 'Add Coding Problem'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setIsEditingProblem(false); setEditingProblem(null); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Problem Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.title || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, title: e.target.value })}
+                    placeholder="e.g. Reverse a Number"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Difficulty Level
+                  </label>
+                  <select
+                    value={editingProblem.level || 'MEDIUM'}
+                    onChange={e => setEditingProblem({ ...editingProblem, level: e.target.value as any })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    <option value="BASIC">BASIC</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HARD">HARD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Problem Description *
+                </label>
+                <textarea
+                  rows={3}
+                  value={editingProblem.description || ''}
+                  onChange={e => setEditingProblem({ ...editingProblem, description: e.target.value })}
+                  placeholder="Given an integer N..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Sample Input
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.sampleInput || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, sampleInput: e.target.value })}
+                    placeholder="e.g. N = 1221"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Sample Output
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.sampleOutput || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, sampleOutput: e.target.value })}
+                    placeholder="e.g. true"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Java Solution
+                </label>
+                <textarea
+                  rows={3}
+                  value={editingProblem.solutions?.java || ''}
+                  onChange={e => setEditingProblem({
+                    ...editingProblem,
+                    solutions: { ...(editingProblem.solutions || {}), java: e.target.value }
+                  })}
+                  placeholder="public class Solution { ... }"
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-[#0A0A0A] rounded-md text-emerald-400 font-mono text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Python Solution
+                </label>
+                <textarea
+                  rows={3}
+                  value={editingProblem.solutions?.python || ''}
+                  onChange={e => setEditingProblem({
+                    ...editingProblem,
+                    solutions: { ...(editingProblem.solutions || {}), python: e.target.value }
+                  })}
+                  placeholder="def solve(n): ..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-[#0A0A0A] rounded-md text-emerald-400 font-mono text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Explanation &amp; Approach
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingProblem.explanation || ''}
+                  onChange={e => setEditingProblem({ ...editingProblem, explanation: e.target.value })}
+                  placeholder="Approach and logic..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Time Complexity
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.timeComplexity || 'O(N)'}
+                    onChange={e => setEditingProblem({ ...editingProblem, timeComplexity: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Space Complexity
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.spaceComplexity || 'O(1)'}
+                    onChange={e => setEditingProblem({ ...editingProblem, spaceComplexity: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <button
+                type="button"
+                onClick={() => { setIsEditingProblem(false); setEditingProblem(null); }}
+                className="px-4 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveProblem}
+                className="px-4 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                Save Problem to Supabase
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🛠️ ADMIN MCQ EDITOR MODAL */}
+      {isEditingMcq && editingMcq && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-gray-800 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl my-8 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <h3 className="font-display font-bold text-lg text-gray-900 dark:text-white">
+                {editingMcq.id ? 'Edit Technical MCQ' : 'Add Technical MCQ'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setIsEditingMcq(false); setEditingMcq(null); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  MCQ Question Statement *
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingMcq.question || ''}
+                  onChange={e => setEditingMcq({ ...editingMcq, question: e.target.value })}
+                  placeholder="What is the output of..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Code Snippet (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={editingMcq.codeSnippet || ''}
+                  onChange={e => setEditingMcq({ ...editingMcq, codeSnippet: e.target.value })}
+                  placeholder="#include<stdio.h> ..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-[#0A0A0A] rounded-md text-emerald-400 font-mono text-xs"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block font-bold text-gray-700 dark:text-gray-300">
+                  Options (Select correct radio)
+                </label>
+                {(editingMcq.options || ['', '', '', '']).map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="correct_mcq_opt"
+                      checked={(editingMcq.correctOptionIndex ?? 0) === i}
+                      onChange={() => setEditingMcq({ ...editingMcq, correctOptionIndex: i })}
+                      className="text-[#FD4A32] focus:ring-[#FD4A32]"
+                    />
+                    <span className="font-mono font-bold text-gray-500 w-4">{String.fromCharCode(65 + i)}</span>
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={e => {
+                        const newOpts = [...(editingMcq.options || ['', '', '', ''])];
+                        newOpts[i] = e.target.value;
+                        setEditingMcq({ ...editingMcq, options: newOpts });
+                      }}
+                      placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                      className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Explanation
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingMcq.explanation || ''}
+                  onChange={e => setEditingMcq({ ...editingMcq, explanation: e.target.value })}
+                  placeholder="Detailed explanation of the correct answer..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <button
+                type="button"
+                onClick={() => { setIsEditingMcq(false); setEditingMcq(null); }}
+                className="px-4 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveMcq}
+                className="px-4 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                Save MCQ to Supabase
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

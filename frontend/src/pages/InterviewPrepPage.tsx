@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   MessageSquareQuote,
   Database,
@@ -25,7 +25,14 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  EyeOff,
+  X,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { interviewService } from '@/services/interview.service';
 import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/types/interview';
 
@@ -46,6 +53,8 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 };
 
 export default function InterviewPrepPage() {
+  const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const topicParam = searchParams.get('topic');
@@ -72,17 +81,34 @@ export default function InterviewPrepPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedQuestionIds, setExpandedQuestionIds] = useState<Record<string, boolean>>({});
 
-  // Query All Questions (Seed + Mastered State)
-  const { data: allQuestions = [], refetch } = useQuery({
+  // Admin Topic & Question Editor State
+  const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const [editingTopic, setEditingTopic] = useState<Partial<InterviewTopic> | null>(null);
+  const [isEditingQuestion, setIsEditingQuestion] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<Partial<InterviewQuestion> | null>(null);
+
+  // Query All Questions (Supabase-first)
+  const { data: allQuestions = [], refetch: refetchQuestions } = useQuery({
     queryKey: ['interview-prep-questions'],
     queryFn: () => interviewService.getAllQuestions(),
   });
 
-  // Query Topics for activeCategory
-  const { data: topics = [] } = useQuery<InterviewTopic[]>({
+  // Query Topics for activeCategory (Supabase-first)
+  const { data: topics = [], refetch: refetchTopics } = useQuery<InterviewTopic[]>({
     queryKey: ['interview-prep-topics', activeCategory],
     queryFn: () => interviewService.getTopicsForCategory(activeCategory),
   });
+
+  // Query Live Topic Question Counts
+  const { data: liveCountMap = {} } = useQuery<Record<string, number>>({
+    queryKey: ['interview-topic-counts', activeCategory],
+    queryFn: () => interviewService.getTopicCountsMap(activeCategory),
+  });
+
+  // Filter topics (Admins see all, students see non-hidden)
+  const currentCategoryTopics = useMemo(() => {
+    return topics.filter(t => isAdmin || !t.is_hidden);
+  }, [topics, isAdmin]);
 
   // Active topic object if topicParam is present
   const activeTopic = useMemo(() => {
@@ -92,9 +118,9 @@ export default function InterviewPrepPage() {
 
   // Distinct clusters for directory filter pills
   const clusters = useMemo(() => {
-    const raw = Array.from(new Set(topics.map(t => t.cluster)));
+    const raw = Array.from(new Set(currentCategoryTopics.map(t => t.cluster)));
     return ['All Topics', ...raw];
-  }, [topics]);
+  }, [currentCategoryTopics]);
 
   // Synchronize cluster filter when category changes
   useEffect(() => {
@@ -128,16 +154,16 @@ export default function InterviewPrepPage() {
 
   // Filtered topics for directory view
   const filteredTopics = useMemo(() => {
-    return topics.filter(topic => {
+    return currentCategoryTopics.filter(topic => {
       const matchCluster = selectedCluster === 'All Topics' || topic.cluster === selectedCluster;
       const matchSearch =
         !searchQuery.trim() ||
-        topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (topic.title || topic.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         topic.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         topic.cluster.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCluster && matchSearch;
     });
-  }, [topics, selectedCluster, searchQuery]);
+  }, [currentCategoryTopics, selectedCluster, searchQuery]);
 
   // Active topic questions
   const activeTopicQuestions = useMemo(() => {
@@ -149,39 +175,45 @@ export default function InterviewPrepPage() {
     return activeTopicQuestions.filter(q => q.mastered).length;
   }, [activeTopicQuestions]);
 
-  const topicMasteryPct =
+  const activeTopicPercentage =
     activeTopicQuestions.length > 0
       ? Math.round((activeTopicMasteredCount / activeTopicQuestions.length) * 100)
       : 0;
 
-  // Filtered questions for Topic Practice Mode
-  const filteredQuestions = useMemo(() => {
+  // Filtered active questions (search + status)
+  const filteredActiveQuestions = useMemo(() => {
     return activeTopicQuestions.filter(q => {
-      if (selectedStatus === 'MASTERED' && !q.mastered) return false;
-      if (selectedStatus === 'UNMASTERED' && q.mastered) return false;
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const matchTitle = q.title.toLowerCase().includes(query);
-        const matchAnswer = q.answer.toLowerCase().includes(query);
-        const matchCompany = q.companyTags?.some(c => c.toLowerCase().includes(query));
-        if (!matchTitle && !matchAnswer && !matchCompany) return false;
-      }
-      return true;
+      const matchStatus =
+        selectedStatus === 'ALL' ||
+        (selectedStatus === 'MASTERED' && q.mastered) ||
+        (selectedStatus === 'UNMASTERED' && !q.mastered);
+
+      const matchSearch =
+        !searchQuery.trim() ||
+        q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        q.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        q.bulletPoints?.some(bp => bp.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        q.companyTags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      return matchStatus && matchSearch;
     });
   }, [activeTopicQuestions, selectedStatus, searchQuery]);
 
-  const toggleExpand = (id: string) => {
-    setExpandedQuestionIds(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleToggleMastered = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    interviewService.toggleQuestionMastered(id);
-    refetch();
-  };
-
-  const handleCopyText = (text: string, id: string, e?: React.MouseEvent) => {
+  // Handlers
+  const handleToggleMastered = (questionId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    interviewService.toggleQuestionMastered(questionId);
+    refetchQuestions();
+  };
+
+  const toggleAccordion = (questionId: string) => {
+    setExpandedQuestionIds(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId],
+    }));
+  };
+
+  const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -205,77 +237,226 @@ export default function InterviewPrepPage() {
     setSelectedStatus('ALL');
   };
 
+  // ─── ADMIN TOPIC ACTIONS ──────────────────────────────────────────────────
+  const openTopicEditor = (e: React.MouseEvent, topic?: InterviewTopic) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (topic) {
+      setEditingTopic({ ...topic });
+    } else {
+      const rawClusters = Array.from(new Set(topics.map(t => t.cluster)));
+      setEditingTopic({
+        id: '',
+        title: '',
+        name: '',
+        category: activeCategory,
+        cluster: rawClusters[0] || (activeCategory === 'CORE_CS' ? 'Database Systems' : 'Foundations'),
+        description: '',
+        iconName: 'BookOpen',
+        icon_name: 'BookOpen',
+        formulas: [],
+        is_hidden: false,
+        sort_order: topics.length + 1,
+      });
+    }
+    setIsEditingTopic(true);
+  };
+
+  const saveTopic = async () => {
+    if (!editingTopic || !editingTopic.id || !(editingTopic.name || editingTopic.title)) {
+      alert("Topic ID and Title/Name are required.");
+      return;
+    }
+
+    const res = await interviewService.saveTopic({
+      ...editingTopic,
+      category: editingTopic.category || activeCategory,
+      name: editingTopic.name || editingTopic.title,
+      title: editingTopic.name || editingTopic.title,
+    });
+
+    if (res.success) {
+      setIsEditingTopic(false);
+      setEditingTopic(null);
+      refetchTopics();
+      queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
+    } else {
+      alert("Error saving topic: " + res.error);
+    }
+  };
+
+  const handleToggleTopicHide = async (e: React.MouseEvent, topic: InterviewTopic) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    const success = await interviewService.toggleTopicVisibility(topic.id, !topic.is_hidden);
+    if (success) {
+      refetchTopics();
+      queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
+    } else {
+      alert("Failed to toggle visibility");
+    }
+  };
+
+  const handleDeleteTopic = async (e: React.MouseEvent, topic: InterviewTopic) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (confirm(`Are you sure you want to permanently delete topic "${topic.title || topic.name}"?`)) {
+      const success = await interviewService.deleteTopic(topic.id);
+      if (success) {
+        refetchTopics();
+        queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
+      } else {
+        alert("Failed to delete topic");
+      }
+    }
+  };
+
+  // ─── ADMIN QUESTION ACTIONS ───────────────────────────────────────────────
+  const openQuestionEditor = (e: React.MouseEvent, question?: InterviewQuestion) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAdmin) return;
+
+    if (question) {
+      setEditingQuestion({ ...question });
+    } else {
+      setEditingQuestion({
+        id: `iq-${Date.now()}`,
+        topicId: activeTopic?.id || 'topic-dbms',
+        title: '',
+        category: activeCategory,
+        subject: activeTopic?.title || 'Core CS',
+        subjectLabel: activeTopic?.title || 'Core CS',
+        answer: '',
+        bulletPoints: [],
+        proTip: '',
+        companyTags: ['TCS', 'Infosys', 'Amazon'],
+        frequency: 'VERY_HIGH',
+        difficulty: 'MEDIUM',
+        is_hidden: false,
+      });
+    }
+    setIsEditingQuestion(true);
+  };
+
+  const saveQuestion = async () => {
+    if (!editingQuestion || !editingQuestion.title || !editingQuestion.answer) {
+      alert("Question prompt and answer are required.");
+      return;
+    }
+
+    const res = await interviewService.saveInterviewQuestion({
+      ...editingQuestion,
+      topicId: activeTopic?.id || editingQuestion.topicId,
+      category: activeCategory,
+    });
+
+    if (res.success) {
+      setIsEditingQuestion(false);
+      setEditingQuestion(null);
+      refetchQuestions();
+    } else {
+      alert("Error saving question: " + res.error);
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!confirm("Are you sure you want to delete this question?")) return;
+    await interviewService.deleteInterviewQuestion(questionId);
+    refetchQuestions();
+  };
+
   return (
-    <div
-      className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${
-        activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'
-      }`}
-    >
+    <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
       {/* ────────────────────────────────────────────────────────────────────────
-          TOPIC PRACTICE VIEW (When a Topic is Selected)
-          Matches PrepUnite TopicQuestionsPage & TechnicalHub Blueprint
+          ACTIVE TOPIC DRILLDOWN VIEW
       ──────────────────────────────────────────────────────────────────────── */}
       {activeTopic ? (
         <div className="space-y-6 animate-fadeIn">
-          {/* 1. Breadcrumb & Return Navigation */}
+          {/* Breadcrumb + Back Button */}
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={clearSelectedTopic}
-              className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#999999] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#999999] hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
-              <span>Back to Topic Directory</span>
+              <span>Back to Interview Topics</span>
             </button>
 
-            <span className="text-xs text-[#868E96] dark:text-[#555555]">
-              Interview Practice Mode
-            </span>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={(e) => openQuestionEditor(e)}
+                  className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Question</span>
+                </button>
+              )}
+              <span className="text-xs text-[#868E96] dark:text-[#555555]">
+                Interview Practice Mode
+              </span>
+            </div>
           </div>
 
-          {/* 2. Topic Header Banner */}
+          {/* Topic Header Banner */}
           <div className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs">
-            <div className="space-y-2">
-              <span className="text-[9px] font-display font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
-                {activeCategory === 'CORE_CS' && 'Core CS • '}
-                {activeCategory === 'HR_BEHAVIORAL' && 'HR & Behavioral • '}
-                {activeCategory === 'PROJECT_DEFENSE' && 'Project Defense • '}
-                {activeTopic.cluster}
-              </span>
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
-                {activeTopic.title}
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-sans">
-                {activeTopic.description}
-              </p>
-
-              {/* Topic Mastery Progress Bar */}
-              <div className="flex items-center gap-3 pt-2">
-                <div className="w-44 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${topicMasteryPct}%` }}
-                  />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/25 px-2 py-0.5 rounded">
+                    {activeTopic.cluster}
+                  </span>
+                  {activeTopic.is_hidden && (
+                    <span className="text-[9px] font-mono font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 px-2 py-0.5 rounded">
+                      Hidden from students
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  {activeTopicMasteredCount} / {activeTopicQuestions.length} Mastered ({topicMasteryPct}%)
+                <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+                  {activeTopic.title || activeTopic.name}
+                </h1>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-sans max-w-xl">
+                  {activeTopic.description}
+                </p>
+              </div>
+
+              {/* Progress Summary */}
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E9ECEF] dark:border-[#242424]">
+                <span className="text-[11px] font-mono text-[#868E96] dark:text-[#777777]">
+                  Mastery Progress
                 </span>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-display font-extrabold text-xl sm:text-2xl text-purple-600 dark:text-purple-400">
+                    {activeTopicMasteredCount}
+                  </span>
+                  <span className="font-display text-xs text-[#868E96]">
+                    / {activeTopicQuestions.length} ({activeTopicPercentage}%)
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* 3. In-Topic Filters & Search Bar */}
-          <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
+          {/* Filter Bar */}
+          <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {/* Mastery Status Filter */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                  Filter:
+                  Status:
                 </span>
                 <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
                   {[
                     { id: 'ALL', label: 'All Questions' },
-                    { id: 'UNMASTERED', label: 'To Learn' },
+                    { id: 'UNMASTERED', label: 'Unmastered' },
                     { id: 'MASTERED', label: `Mastered (${activeTopicMasteredCount})` },
                   ].map(item => (
                     <button
@@ -284,7 +465,7 @@ export default function InterviewPrepPage() {
                       onClick={() => setSelectedStatus(item.id as any)}
                       className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
                         selectedStatus === item.id
-                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                          ? 'bg-purple-600 text-white shadow-xs'
                           : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                     >
@@ -294,7 +475,7 @@ export default function InterviewPrepPage() {
                 </div>
               </div>
 
-              {/* In-Topic Search Input */}
+              {/* In-Topic Search */}
               <div className="relative w-48 sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
                 <input
@@ -302,19 +483,19 @@ export default function InterviewPrepPage() {
                   placeholder="Search in this topic..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
+                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-purple-600 rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
                 />
               </div>
             </div>
           </div>
 
-          {/* 4. Question Cards List */}
-          <div className="space-y-3">
-            {filteredQuestions.length === 0 ? (
+          {/* Questions Accordion List */}
+          <div className="space-y-4">
+            {filteredActiveQuestions.length === 0 ? (
               <div className="p-10 text-center rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
                 <HelpCircle className="w-8 h-8 text-[#868E96] mx-auto mb-2 opacity-50" />
                 <p className="text-sm font-semibold text-[#868E96] dark:text-[#555555]">
-                  No interview questions match your selected status or search filter.
+                  No interview questions match your filter or search terms.
                 </p>
                 <button
                   type="button"
@@ -322,95 +503,116 @@ export default function InterviewPrepPage() {
                     setSelectedStatus('ALL');
                     setSearchQuery('');
                   }}
-                  className="mt-3 px-3 py-1.5 bg-[#FD4A32] text-white rounded-md text-xs font-display font-bold cursor-pointer"
+                  className="mt-3 px-3 py-1.5 bg-purple-600 text-white rounded-md text-xs font-display font-bold cursor-pointer"
                 >
                   Reset Filters
                 </button>
               </div>
             ) : (
-              filteredQuestions.map(q => {
-                const isExpanded = expandedQuestionIds[q.id] ?? true;
+              filteredActiveQuestions.map((q, idx) => {
+                const isExpanded = expandedQuestionIds[q.id] ?? false;
 
                 return (
                   <div
                     key={q.id}
-                    className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] overflow-hidden shadow-xs hover:border-[#121417]/30 dark:hover:border-[#444444] transition-all"
+                    className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-purple-500/40 transition-all duration-300 shadow-xs overflow-hidden"
                   >
-                    {/* Question Card Header */}
+                    {/* Header Row */}
                     <div
-                      onClick={() => toggleExpand(q.id)}
-                      className="p-4 sm:p-5 flex items-start justify-between gap-3 cursor-pointer select-none"
+                      onClick={() => toggleAccordion(q.id)}
+                      className="p-5 flex items-start justify-between gap-4 cursor-pointer hover:bg-[#F8F9FA]/50 dark:hover:bg-[#191919]/50 transition-colors"
                     >
-                      <div className="flex items-start gap-3 min-w-0">
-                        {/* Mastered Toggle Checkbox */}
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-display font-bold text-[10px] tracking-tight border border-purple-500/25">
+                            Q{idx + 1}
+                          </span>
+
+                          {q.frequency === 'VERY_HIGH' && (
+                            <span className="text-[9px] font-display font-bold bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded flex items-center gap-1">
+                              <Zap className="w-2.5 h-2.5" />
+                              Very High Frequency
+                            </span>
+                          )}
+
+                          {q.companyTags?.map(tag => (
+                            <span
+                              key={tag}
+                              className="text-[9px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-1.5 py-0.5 rounded"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        <h3 className="font-display font-bold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] leading-snug">
+                          {q.title}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 pt-0.5">
                         <button
                           type="button"
                           onClick={e => handleToggleMastered(q.id, e)}
-                          className="mt-0.5 shrink-0 cursor-pointer text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-colors"
-                          title={q.mastered ? 'Mark as not mastered' : 'Mark as mastered'}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border transition-all cursor-pointer ${
+                            q.mastered
+                              ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
+                              : 'bg-[#F8F9FA] dark:bg-[#202020] text-[#868E96] border-[#E9ECEF] dark:border-[#2E2E2E] hover:text-purple-600'
+                          }`}
+                          title={q.mastered ? 'Marked as Mastered' : 'Mark as Mastered'}
                         >
                           {q.mastered ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              <span>Mastered</span>
+                            </>
                           ) : (
-                            <Circle className="w-4 h-4" />
+                            <>
+                              <Circle className="w-3.5 h-3.5" />
+                              <span>Mark Mastered</span>
+                            </>
                           )}
                         </button>
 
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {q.frequency && (
-                              <span
-                                className={`text-[9px] font-display font-extrabold uppercase px-1.5 py-0.2 rounded ${
-                                  q.frequency === 'VERY_HIGH'
-                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                                }`}
-                              >
-                                {q.frequency === 'VERY_HIGH' ? 'High Yield' : 'Frequently Asked'}
-                              </span>
-                            )}
-                            {q.companyTags?.slice(0, 4).map(c => (
-                              <span
-                                key={c}
-                                className="text-[9px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-1.5 py-0.2 rounded"
-                              >
-                                {c}
-                              </span>
-                            ))}
+                        {isAdmin && (
+                          <div className="flex items-center gap-1 border-l border-gray-200 dark:border-gray-800 pl-2">
+                            <button
+                              type="button"
+                              onClick={(e) => openQuestionEditor(e, q)}
+                              className="p-1 text-gray-500 hover:text-blue-500 rounded"
+                              title="Edit Question"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id); }}
+                              className="p-1 text-gray-500 hover:text-rose-500 rounded"
+                              title="Delete Question"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
+                        )}
 
-                          <h3 className="font-display font-bold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] leading-snug">
-                            {q.title}
-                          </h3>
+                        <div className="p-1 text-[#868E96]">
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          className="p-1 text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-colors"
-                        >
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </button>
                       </div>
                     </div>
 
-                    {/* Question Content Accordion */}
+                    {/* Collapsible Answer Body */}
                     {isExpanded && (
-                      <div className="px-4 pb-5 sm:px-5 sm:pb-6 pt-0 border-t border-[#E9ECEF] dark:border-[#242424] space-y-4 animate-fadeIn">
-                        {/* 1. Key Concepts to Mention ("Interviewer Checklist") */}
+                      <div className="p-5 pt-0 border-t border-[#E9ECEF] dark:border-[#242424] space-y-4 animate-fadeIn text-xs sm:text-sm">
+                        {/* Bullet Points Quick Revision Box */}
                         {q.bulletPoints && q.bulletPoints.length > 0 && (
-                          <div className="pt-3.5 space-y-2">
-                            <span className="text-[10px] font-display font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block">
-                              Key Concepts Interviewers Look For:
+                          <div className="p-3.5 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/20 space-y-1.5 mt-4">
+                            <span className="font-display font-bold text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
+                              Key Takeaways for Quick Revision:
                             </span>
-                            <ul className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300 font-sans pl-2 border-l-2 border-purple-500/30">
-                              {q.bulletPoints.map((point, idx) => (
-                                <li key={idx} className="leading-relaxed">
+                            <ul className="list-disc pl-4 space-y-1 text-xs text-gray-700 dark:text-gray-300 font-sans">
+                              {q.bulletPoints.map((point, pIdx) => (
+                                <li key={pIdx} className="leading-relaxed">
                                   {point}
                                 </li>
                               ))}
@@ -418,78 +620,48 @@ export default function InterviewPrepPage() {
                           </div>
                         )}
 
-                        {/* 2. Model Answer / Script */}
-                        <div className="space-y-1.5 bg-[#F8F9FA] dark:bg-[#0C0C0C] p-4 rounded-lg border border-[#E9ECEF] dark:border-[#242424]">
-                          <div className="flex items-center justify-between pb-1 border-b border-[#E9ECEF] dark:border-[#242424]">
-                            <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#121417] dark:text-white">
-                              Model Answer (Concise &amp; Articulate)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={e => handleCopyText(q.answer, q.id, e)}
-                              className="inline-flex items-center gap-1 text-[10px] font-mono text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
-                            >
-                              {copiedId === q.id ? (
-                                <>
-                                  <Check className="w-3 h-3 text-emerald-500" />
-                                  <span className="text-emerald-500">Copied</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copy Answer</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed font-sans whitespace-pre-line pt-1">
+                        {/* Full In-Depth Answer */}
+                        <div className="space-y-1.5 pt-2">
+                          <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
+                            Comprehensive Interview Answer:
+                          </span>
+                          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#212529] dark:text-[#E9ECEF] whitespace-pre-line leading-relaxed font-sans text-xs sm:text-sm">
                             {q.answer}
                           </div>
                         </div>
 
-                        {/* 3. Code Snippet Box (if available) */}
+                        {/* Code Snippet */}
                         {q.codeSnippet && (
-                          <div className="rounded-lg bg-[#0C0C0C] dark:bg-[#000000] border border-[#242424] overflow-hidden text-xs font-mono">
-                            <div className="flex items-center justify-between px-3 py-1.5 bg-[#141414] border-b border-[#242424] text-[10px] text-[#888888]">
-                              <span className="font-bold uppercase tracking-wider">
-                                {q.codeSnippet.language} Implementation
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
+                                Code / Query Example ({q.codeSnippet.language}):
                               </span>
                               <button
                                 type="button"
-                                onClick={e => handleCopyText(q.codeSnippet!.code, `${q.id}-code`, e)}
-                                className="inline-flex items-center gap-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                                onClick={() => handleCopy(q.codeSnippet!.code, q.id)}
+                                className="flex items-center gap-1 text-[11px] font-mono text-gray-500 hover:text-purple-600 transition-colors"
                               >
-                                {copiedId === `${q.id}-code` ? (
-                                  <>
-                                    <Check className="w-3 h-3 text-emerald-400" />
-                                    <span>Copied!</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-3 h-3" />
-                                    <span>Copy Code</span>
-                                  </>
-                                )}
+                                {copiedId === q.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                <span>{copiedId === q.id ? 'Copied' : 'Copy'}</span>
                               </button>
                             </div>
-                            <pre className="p-3 text-emerald-400 overflow-x-auto whitespace-pre leading-relaxed">
-                              {q.codeSnippet.code}
-                            </pre>
+                            <div className="p-3.5 rounded-lg bg-[#0A0A0A] border border-[#242424] font-mono text-xs text-emerald-400 overflow-x-auto">
+                              <pre>{q.codeSnippet.code}</pre>
+                            </div>
                           </div>
                         )}
 
-                        {/* 4. Pro-Tip Insider Advice */}
+                        {/* Pro Tip */}
                         {q.proTip && (
-                          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs flex items-start gap-2.5">
-                            <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                            <div className="space-y-0.5">
-                              <span className="font-display font-bold text-amber-600 dark:text-amber-400 text-[10px] uppercase tracking-wider block">
-                                Interviewer Insider Tip:
-                              </span>
-                              <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-sans">
-                                {q.proTip}
-                              </p>
-                            </div>
+                          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 space-y-1 text-xs">
+                            <span className="font-bold flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                              Interviewer Follow-up &amp; Pro-Tip
+                            </span>
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-sans text-xs">
+                              {q.proTip}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -502,10 +674,10 @@ export default function InterviewPrepPage() {
         </div>
       ) : (
         /* ────────────────────────────────────────────────────────────────────────
-            MAIN DIRECTORY VIEW (Matching AptitudePage & TechnicalHubPage)
+            MAIN DIRECTORY VIEW
         ──────────────────────────────────────────────────────────────────────── */
         <>
-          {/* 🚀 1. UNIFIED HEADER BANNER: Title on Left, Analytics on Right */}
+          {/* 🚀 1. UNIFIED HEADER BANNER */}
           <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-1 sm:max-w-md shrink-0">
@@ -531,7 +703,6 @@ export default function InterviewPrepPage() {
               {/* Embedded Donut & Category Progress */}
               <div className="flex-1 lg:max-w-2xl">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                  {/* Donut Ring with Mastered / Total inside */}
                   <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
                       <circle
@@ -563,7 +734,6 @@ export default function InterviewPrepPage() {
                     </div>
                   </div>
 
-                  {/* 3 Track Progress Bars */}
                   <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
                     {/* Core CS */}
                     <div className="space-y-1">
@@ -693,9 +863,8 @@ export default function InterviewPrepPage() {
             </button>
           </div>
 
-          {/* 🏷️ 3. CLUSTER FILTER PILLS + SEARCH BAR */}
+          {/* 🏷️ 3. CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ADD TOPIC BUTTON */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            {/* Cluster Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
               {clusters.map(cluster => (
                 <button
@@ -713,7 +882,6 @@ export default function InterviewPrepPage() {
               ))}
             </div>
 
-            {/* Real-Time Search Bar */}
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
               <div className="relative w-48 sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
@@ -722,13 +890,25 @@ export default function InterviewPrepPage() {
                   placeholder="Search topics..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
+                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-purple-600 rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
                 />
               </div>
+
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={(e) => openTopicEditor(e)}
+                  className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                  title="Add New Interview Topic"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Topic</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* 📁 4. TOPIC DIRECTORY CARDS (2-Column Grid Matching Aptitude & Technical Hub) */}
+          {/* 📁 4. TOPIC DIRECTORY CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {filteredTopics.length === 0 ? (
               <div className="col-span-full p-10 text-center rounded-xl border border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
@@ -749,15 +929,20 @@ export default function InterviewPrepPage() {
               </div>
             ) : (
               filteredTopics.map(topic => {
-                const TopicIcon = TOPIC_ICON_MAP[topic.iconName] || BookOpen;
+                const TopicIcon = TOPIC_ICON_MAP[topic.icon_name || topic.iconName] || BookOpen;
                 const topicQuestions = allQuestions.filter(q => q.topicId === topic.id);
                 const masteredInTopic = topicQuestions.filter(q => q.mastered).length;
+                const liveCount = liveCountMap[topic.id] ?? topicQuestions.length;
 
                 return (
                   <div
                     key={topic.id}
                     onClick={() => selectTopic(topic.id)}
-                    className="group flex items-center justify-between p-3.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] hover:border-purple-500/50 dark:hover:border-purple-500/50 rounded-lg transition-all duration-150 shadow-2xs cursor-pointer"
+                    className={`group flex items-center justify-between p-3.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
+                      topic.is_hidden
+                        ? 'border-amber-500/40 opacity-75'
+                        : 'border-[#E9ECEF] dark:border-[#242424] hover:border-purple-500/50 dark:hover:border-purple-500/50'
+                    } rounded-lg transition-all duration-150 shadow-2xs cursor-pointer`}
                   >
                     {/* Left: Icon & Title & Description */}
                     <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
@@ -766,16 +951,23 @@ export default function InterviewPrepPage() {
                       </div>
 
                       <div className="flex flex-col min-w-0">
-                        <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
-                          {topic.title}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
+                            {topic.title || topic.name}
+                          </span>
+                          {topic.is_hidden && (
+                            <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1 rounded">
+                              Hidden
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                           {topic.cluster} • {topic.description}
                         </span>
                       </div>
                     </div>
 
-                    {/* Right: Mastered Badge & Questions Pill */}
+                    {/* Right: Mastered Badge & Admin Controls / Questions Pill */}
                     <div className="flex items-center gap-2 shrink-0">
                       {masteredInTopic > 0 && (
                         <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
@@ -783,8 +975,37 @@ export default function InterviewPrepPage() {
                         </span>
                       )}
 
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 border-r border-[#E9ECEF] dark:border-[#242424] pr-2 mr-1">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleTopicHide(e, topic)}
+                            className="p-1 rounded text-gray-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5"
+                            title={topic.is_hidden ? 'Make Visible' : 'Hide Topic'}
+                          >
+                            {topic.is_hidden ? <EyeOff className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => openTopicEditor(e, topic)}
+                            className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-black/5 dark:hover:bg-white/5"
+                            title="Edit Topic Details"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteTopic(e, topic)}
+                            className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5"
+                            title="Delete Topic"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-purple-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                        <span>{topicQuestions.length} Questions</span>
+                        <span>{liveCount} Questions</span>
                         <ChevronRight className="w-3 h-3 text-[#868E96]" />
                       </div>
                     </div>
@@ -794,6 +1015,271 @@ export default function InterviewPrepPage() {
             )}
           </div>
         </>
+      )}
+
+      {/* 🛠️ ADMIN INTERVIEW TOPIC EDITOR MODAL */}
+      {isEditingTopic && editingTopic && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-gray-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <h3 className="font-display font-bold text-lg text-gray-900 dark:text-white">
+                {editingTopic.id && topics.some(t => t.id === editingTopic.id) ? 'Edit Interview Topic' : 'Add Interview Topic'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setIsEditingTopic(false); setEditingTopic(null); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Topic ID (Slug) *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTopic.id || ''}
+                    onChange={e => setEditingTopic({ ...editingTopic, id: e.target.value })}
+                    disabled={topics.some(t => t.id === editingTopic.id)}
+                    placeholder="e.g. topic-dbms"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={editingTopic.category || activeCategory}
+                    onChange={e => setEditingTopic({ ...editingTopic, category: e.target.value as any })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    <option value="CORE_CS">Core CS</option>
+                    <option value="HR_BEHAVIORAL">HR Behavioral</option>
+                    <option value="PROJECT_DEFENSE">Project Defense</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Topic Title / Name *
+                </label>
+                <input
+                  type="text"
+                  value={editingTopic.name || editingTopic.title || ''}
+                  onChange={e => setEditingTopic({ ...editingTopic, name: e.target.value, title: e.target.value })}
+                  placeholder="e.g. Database Management Systems (DBMS)"
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Cluster Header
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTopic.cluster || ''}
+                    onChange={e => setEditingTopic({ ...editingTopic, cluster: e.target.value })}
+                    placeholder="e.g. Database Systems"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Icon Name
+                  </label>
+                  <select
+                    value={editingTopic.icon_name || editingTopic.iconName || 'BookOpen'}
+                    onChange={e => setEditingTopic({ ...editingTopic, icon_name: e.target.value, iconName: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    {Object.keys(TOPIC_ICON_MAP).map(iconKey => (
+                      <option key={iconKey} value={iconKey}>{iconKey}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingTopic.description || ''}
+                  onChange={e => setEditingTopic({ ...editingTopic, description: e.target.value })}
+                  placeholder="Overview of this interview topic..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="topic_is_hidden"
+                  checked={!!editingTopic.is_hidden}
+                  onChange={e => setEditingTopic({ ...editingTopic, is_hidden: e.target.checked })}
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <label htmlFor="topic_is_hidden" className="text-gray-700 dark:text-gray-300 cursor-pointer font-semibold">
+                  Hide topic from students (Draft / Archived)
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <button
+                type="button"
+                onClick={() => { setIsEditingTopic(false); setEditingTopic(null); }}
+                className="px-4 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveTopic}
+                className="px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                Save Topic to Supabase
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🛠️ ADMIN INTERVIEW QUESTION EDITOR MODAL */}
+      {isEditingQuestion && editingQuestion && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-gray-800 rounded-xl max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <h3 className="font-display font-bold text-lg text-gray-900 dark:text-white">
+                {editingQuestion.id ? 'Edit Interview Question' : 'Add Interview Question'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setIsEditingQuestion(false); setEditingQuestion(null); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Question Prompt / Title *
+                </label>
+                <input
+                  type="text"
+                  value={editingQuestion.title || ''}
+                  onChange={e => setEditingQuestion({ ...editingQuestion, title: e.target.value })}
+                  placeholder="e.g. Explain ACID Properties in DBMS with an Example"
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Comprehensive Answer *
+                </label>
+                <textarea
+                  rows={4}
+                  value={editingQuestion.answer || ''}
+                  onChange={e => setEditingQuestion({ ...editingQuestion, answer: e.target.value })}
+                  placeholder="Detailed answer for the candidate to speak in interview..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Key Takeaway Bullet Points (Newline separated)
+                </label>
+                <textarea
+                  rows={3}
+                  value={(editingQuestion.bulletPoints || []).join('\n')}
+                  onChange={e => setEditingQuestion({
+                    ...editingQuestion,
+                    bulletPoints: e.target.value.split('\n').filter(Boolean)
+                  })}
+                  placeholder="Atomicity: All-or-nothing execution...&#10;Consistency: DB state invariant..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Interviewer Pro-Tip / Follow-up Inquiry
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingQuestion.proTip || ''}
+                  onChange={e => setEditingQuestion({ ...editingQuestion, proTip: e.target.value })}
+                  placeholder="e.g. Interviewers often ask which ACID property is hardest to achieve..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Frequency
+                  </label>
+                  <select
+                    value={editingQuestion.frequency || 'VERY_HIGH'}
+                    onChange={e => setEditingQuestion({ ...editingQuestion, frequency: e.target.value as any })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    <option value="VERY_HIGH">VERY HIGH</option>
+                    <option value="HIGH">HIGH</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Difficulty
+                  </label>
+                  <select
+                    value={editingQuestion.difficulty || 'MEDIUM'}
+                    onChange={e => setEditingQuestion({ ...editingQuestion, difficulty: e.target.value as any })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    <option value="EASY">EASY</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HARD">HARD</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <button
+                type="button"
+                onClick={() => { setIsEditingQuestion(false); setEditingQuestion(null); }}
+                className="px-4 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveQuestion}
+                className="px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                Save Question to Supabase
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
