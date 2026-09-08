@@ -786,68 +786,82 @@ export default function TechnicalHubPage() {
             </div>
           </div>
 
-          {/* 🏷️ 2. TRACK SELECTION PILLS + SEARCH BAR + ADMIN BULK BUTTON */}
+          {/* 🏷️ 2. FILTER PILLS (STAGES / DIFFICULTY) + SEARCH BAR + ADMIN BULK BUTTON */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            {/* Track Switchers with meaningful semantic labels */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button
-                type="button"
-                onClick={() => handleTrackChange('PROGRAMMING_150')}
-                className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  activeTrack === 'PROGRAMMING_150'
-                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                }`}
-              >
-                <Code2 className="w-3.5 h-3.5 text-[#FD4A32]" />
-                <span>Programming 150</span>
-                <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                  activeTrack === 'PROGRAMMING_150' ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black' : 'bg-black/5 dark:bg-white/5'
-                }`}>
-                  15 Topics
-                </span>
-              </button>
+            {/* Programming 150: Stage Cluster Pills */}
+            {activeTrack === 'PROGRAMMING_150' && (
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
+                {stages.map(st => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setSelectedStage(st)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                      selectedStage === st
+                        ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                    }`}
+                  >
+                    {st === 'ALL' ? 'All Stages' : st}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => handleTrackChange('CAMPUS_DSA')}
-                className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  activeTrack === 'CAMPUS_DSA'
-                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                }`}
-              >
-                <Brain className="w-3.5 h-3.5 text-amber-500" />
-                <span>Campus DSA Core</span>
-                <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                  activeTrack === 'CAMPUS_DSA' ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black' : 'bg-black/5 dark:bg-white/5'
-                }`}>
-                  Patterns
-                </span>
-              </button>
+            {/* Campus DSA: Pattern Difficulty Pills */}
+            {activeTrack === 'CAMPUS_DSA' && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { id: 'ALL', label: 'All Patterns' },
+                  { id: 'BASIC', label: 'Basic' },
+                  { id: 'MEDIUM', label: 'Medium' },
+                  { id: 'HARD', label: 'Hard' },
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelectedLevel(item.id)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                      selectedLevel === item.id
+                        ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => handleTrackChange('TECHNICAL_MCQS')}
-                className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  activeTrack === 'TECHNICAL_MCQS'
-                    ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                    : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                }`}
-              >
-                <Terminal className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Technical MCQs</span>
-                <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                  activeTrack === 'TECHNICAL_MCQS' ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black' : 'bg-black/5 dark:bg-white/5'
-                }`}>
-                  Tricky MCQs
+            {/* Technical MCQs: OA Topic Label */}
+            {activeTrack === 'TECHNICAL_MCQS' && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#777777] px-2.5 py-1 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424]">
+                  {mcqs.length} Campus OA Pseudo-Code MCQs
                 </span>
-              </button>
-            </div>
+              </div>
+            )}
 
             {/* Search Bar + Admin Bulk JSON Button */}
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
-              {isAdmin && (
+              <div className="relative w-48 sm:w-56">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
+                <input
+                  type="text"
+                  placeholder={
+                    activeTrack === 'PROGRAMMING_150'
+                      ? 'Search topics...'
+                      : activeTrack === 'CAMPUS_DSA'
+                      ? 'Search patterns...'
+                      : 'Search MCQs...'
+                  }
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
+                />
+              </div>
+
+              {isAdmin && activeTrack === 'PROGRAMMING_150' && (
                 <button
                   type="button"
                   onClick={() => setShowBulkModal(true)}
@@ -858,39 +872,8 @@ export default function TechnicalHubPage() {
                   <span>Bulk JSON</span>
                 </button>
               )}
-
-              <div className="relative w-48 sm:w-56">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
-                <input
-                  type="text"
-                  placeholder={isDirectoryView ? "Search topics..." : "Search problems or patterns..."}
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
-                />
-              </div>
             </div>
           </div>
-
-          {/* 🎚️ 3. DIRECTORY STAGE CLUSTER PILLS (For Programming 150) */}
-          {activeTrack === 'PROGRAMMING_150' && (
-            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 border-b border-[#E9ECEF] dark:border-[#242424]">
-              {stages.map(st => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setSelectedStage(st)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
-                    selectedStage === st
-                      ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                      : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                  }`}
-                >
-                  {st === 'ALL' ? 'All Stages' : st}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* 📁 4. TOPIC DIRECTORY CARDS (2-Column Grid Matching AptitudePage) */}
           {isDirectoryView && (
