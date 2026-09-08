@@ -291,7 +291,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
             <>
               {/* Main Navigation Links */}
               <nav className="space-y-0.5">
-                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
+                <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
                   Menu
                 </span>
                 {navLinks.map((link) => {
@@ -305,7 +305,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         isActive
                           ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
-                          : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -326,16 +326,16 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               </nav>
 
               {/* Collapsible Aptitude Categories */}
-              <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+              <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
                 <button
                   type="button"
                   onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
                 >
-                  <span>Aptitude & Reasoning</span>
+                  <span>Aptitude &amp; Reasoning</span>
                   <ChevronDown
-                    className={`w-3 h-3 transition-transform duration-200 ${
-                      isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
                     }`}
                   />
                 </button>
@@ -353,7 +353,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                           className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                             isCatActive
                               ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                              : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                              : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
@@ -368,16 +368,16 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               </div>
 
               {/* Collapsible Technical & Coding */}
-              <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+              <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
                 <button
                   type="button"
                   onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
                 >
                   <span>Technical &amp; Coding</span>
                   <ChevronDown
-                    className={`w-3 h-3 transition-transform duration-200 ${
-                      isTechnicalExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      isTechnicalExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
                     }`}
                   />
                 </button>
@@ -397,7 +397,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                           className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                             isItemActive
                               ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                              : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                              : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
@@ -417,16 +417,16 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               </div>
 
               {/* Collapsible Interview Preparation */}
-              <div className="pt-3 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+              <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
                 <button
                   type="button"
                   onClick={() => setIsInterviewExpanded(!isInterviewExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1 text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider hover:text-[#121417] dark:hover:text-[#FFFFFF] transition-colors cursor-pointer group font-display"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
                 >
                   <span>Interview Preparation</span>
                   <ChevronDown
-                    className={`w-3 h-3 transition-transform duration-200 ${
-                      isInterviewExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-[#868E96] dark:text-[#555555]'
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      isInterviewExpanded ? 'rotate-180 text-purple-600 dark:text-purple-400' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
                     }`}
                   />
                 </button>
@@ -446,7 +446,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                           className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                             isItemActive
                               ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                              : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                              : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
@@ -468,7 +468,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               {/* Admin Control Panel Section */}
               {isAdmin && (
                 <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
-                  <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                  <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
                     Control Center
                   </span>
                   <Link
@@ -477,7 +477,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                       location.pathname === '/admin'
                         ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -495,7 +495,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                       location.pathname.startsWith('/admin/colleges')
                         ? 'bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30'
-                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -513,7 +513,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                       location.pathname.startsWith('/admin/bulk-import')
                         ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                        : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -568,7 +568,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">
                     {user?.name || 'Workspace Account'}
                   </span>
-                  <span className="text-[9px] font-medium text-[#868E96] dark:text-[#555555] block truncate">
+                  <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 block truncate">
                     {isAdmin
                       ? 'Administrator'
                       : (role === 'TPO_ADMIN' || isTpoAdmin)
@@ -580,7 +580,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               <button
                 onClick={logout}
                 title="Sign Out"
-                className="p-1 text-[#868E96] dark:text-[#555555] hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors shrink-0 cursor-pointer"
+                className="p-1 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors shrink-0 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
