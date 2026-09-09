@@ -488,10 +488,14 @@ function RichTextEditorInner({
           }
         }
 
-        // 2. Handle ONLY pure test case blocks (not full questions with prose/headings)
+        // 2. Handle ONLY pure test case blocks (not full questions with prose/headings/descriptions)
         const isPureTestCaseOnly = (
           (plainText.trim().startsWith('Test Case') || plainText.trim().startsWith('Input:')) &&
           !/^#{1,6}\s/m.test(plainText) &&
+          !/^Q\d+[\.:\s]/im.test(plainText) &&
+          !plainText.toLowerCase().includes('constraints') &&
+          !plainText.toLowerCase().includes('given ') &&
+          !plainText.toLowerCase().includes('description') &&
           !plainText.includes('### Constraints') &&
           !plainText.includes('### Test Cases')
         );
