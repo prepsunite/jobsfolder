@@ -132,29 +132,37 @@ function parseChatGPTToCases(text: string): Array<{ title: string; input: string
     .replace(/<\/?p>/gi, '')
     .trim();
 
-  const regex = /(?:(?:Test\s*Case|Example|Sample)\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:(?:Test\s*Case|Example|Sample)\s*\d+|$))/gi;
+  const regex = /(?:^|\n)\s*(?:#{1,4}\s*|\*\*\s*)?(?:Test\s*Case|Example|Sample)\s*(\d+)?[:\s\*\#]*\n*([\s\S]*?)(?=(?:\n\s*(?:#{1,4}\s*|\*\*\s*)?(?:Test\s*Case|Example|Sample)\s*(?:\d+|[:\s\*\#])|$))/gi;
   const matches = [...clean.matchAll(regex)];
   if (matches.length === 0) {
     const inputMatch = clean.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
     const outputMatch = clean.match(/Output:?\s*([\s\S]*?)$/i);
     if (inputMatch || outputMatch) {
+      const cleanIn = (inputMatch ? inputMatch[1] : '').replace(/[\s\n#=\-]+$/, '').trim();
+      const cleanOut = (outputMatch ? outputMatch[1] : '').replace(/[\s\n#=\-]+$/, '').trim();
       return [{
         title: 'Test Case 1',
-        input: inputMatch ? inputMatch[1].trim() : '',
-        output: outputMatch ? outputMatch[1].trim() : '',
+        input: cleanIn,
+        output: cleanOut,
       }];
     }
     return [];
   }
   return matches.map((m, idx) => {
     const caseNum = m[1] || `${idx + 1}`;
-    const content = m[2].trim();
+    let content = m[2].trim();
+    content = content.replace(/[\s\n#=\-]+$/, '').trim();
+
     const inputMatch = content.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
     const outputMatch = content.match(/Output:?\s*([\s\S]*?)$/i);
+
+    const cleanIn = inputMatch ? inputMatch[1].replace(/[\s\n#=\-]+$/, '').trim() : '';
+    const cleanOut = outputMatch ? outputMatch[1].replace(/[\s\n#=\-]+$/, '').trim() : '';
+
     return {
       title: `Test Case ${caseNum}`,
-      input: inputMatch ? inputMatch[1].trim() : '',
-      output: outputMatch ? outputMatch[1].trim() : '',
+      input: cleanIn,
+      output: cleanOut,
     };
   });
 }
