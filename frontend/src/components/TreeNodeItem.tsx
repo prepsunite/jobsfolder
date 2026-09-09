@@ -12,6 +12,7 @@ import {
   FolderPlus,
   Check,
   X,
+  Upload,
 } from 'lucide-react';
 
 interface TreeNodeItemProps {
@@ -38,6 +39,7 @@ interface TreeNodeItemProps {
   onAddAfter: (e: React.MouseEvent, nodeId: string) => void;
   onDeleteNode: (e: React.MouseEvent, nodeId: string) => void;
   onToggleNodeAccess: (node: DocTabNode) => void;
+  onImportIntoNode?: (e: React.MouseEvent, nodeId: string) => void;
 }
 
 export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
@@ -64,6 +66,7 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   onAddAfter,
   onDeleteNode,
   onToggleNodeAccess,
+  onImportIntoNode,
 }) => {
   if (searchQuery && !matchesSearch(node, searchQuery)) return null;
 
@@ -209,6 +212,16 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
                   <FilePlus className="w-3 h-3" />
                 </button>
                 <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onImportIntoNode?.(e, node.id);
+                  }}
+                  className="p-0.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded"
+                  title="Import questions into this file"
+                >
+                  <Upload className="w-3 h-3" />
+                </button>
+                <button
                   onClick={(e) => onDeleteNode(e, node.id)}
                   className="p-0.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded"
                   title="Delete"
@@ -250,6 +263,7 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
               onAddAfter={onAddAfter}
               onDeleteNode={onDeleteNode}
               onToggleNodeAccess={onToggleNodeAccess}
+              onImportIntoNode={onImportIntoNode}
             />
           ))}
         </div>

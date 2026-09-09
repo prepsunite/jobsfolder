@@ -14,12 +14,12 @@ import {
   Lock,
   Unlock,
   Trash2,
-  ChevronDown,
-  ChevronUp,
   FileText,
+  PlusCircle,
 } from 'lucide-react';
 import type { DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
+import { flattenNodes, findNodeById, updateNode } from '@/utils/treeUtils';
 
 export interface BulkImportPapersModalProps {
   isOpen: boolean;
@@ -27,7 +27,8 @@ export interface BulkImportPapersModalProps {
   examName: string;
   companyName: string;
   currentTabs: DocTabNode[];
-  onImport: (newTabs: DocTabNode[]) => void;
+  initialTargetNodeId?: string | null;
+  onImport: (newTabs: DocTabNode[], targetNodeId?: string) => void;
 }
 
 export interface ParsedPaperQuestion {
@@ -104,6 +105,24 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
+export function cleanQuestionTitle(rawTitle: string, defaultIdx: number): string {
+  let t = (rawTitle || '').replace(/^#+\s*/, '').trim();
+  // Strip duplicate "Question 1: Q1." or "Question 1 - Q1." or "Question 1. Q1."
+  t = t.replace(/^Question\s*(\d+)[\s:\.\-]+Q\1[\s:\.\-]+/i, 'Q$1. ');
+  // Strip "Question 1: " or "Question 1 - " or "Question 1. " -> "Q1. "
+  t = t.replace(/^Question\s*(\d+)[\s:\.\-]+/i, 'Q$1. ');
+  // Strip "Question 1 " -> "Q1. "
+  t = t.replace(/^Question\s*(\d+)\s+/i, 'Q$1. ');
+  // Normalize "Q1: " or "Q1 - " -> "Q1. "
+  t = t.replace(/^Q(\d+)[\s:\-]+/i, 'Q$1. ');
+  
+  // If title doesn't start with Q<digits>, prepend Q<defaultIdx>.
+  if (!/^Q\d+[\.:\s]/i.test(t)) {
+    t = `Q${defaultIdx}. ${t}`;
+  }
+  return t;
+}
+
 function parseChatGPTToCases(text: string): Array<{ title: string; input: string; output: string }> {
   if (!text?.trim()) return [];
   const regex = /(?:Test\s*Case\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:Test\s*Case\s*\d+|$))/gi;
@@ -149,7 +168,7 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
         else isFree = idx < 2;
 
         return {
-          title: item.title || `Question ${idx + 1}`,
+          title: cleanQuestionTitle(item.title || `Question ${idx + 1}`, idx + 1),
           description: item.description || '',
           constraints: Array.isArray(item.constraints)
             ? item.constraints
@@ -163,15 +182,25 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
   }
 
   // 2. Identify questions by heading regex:
-  // Matches "# Q1. Title", "Q1. Title", "### Q1: Title", etc.
-  const questionRegex = /(?:^|\n)(?:[=\-]{5,}\s*\n)?\s*(?:#{1,3}\s*)?(Q\d+[\.:\s][^\n\r]+)([\s\S]*?)(?=(?:\n\s*(?:[=\-]{5,}\s*\n)?\s*(?:#{1,3}\s*)?Q\d+[\.:\s])|$)/gi;
+  // Matches "# Q1. Title", "Q1. Title", "### Q1: Title", "Question 1: Title", "Question 1. Title", etc.
+  const questionRegex = /(?:^|\n)(?:[=\-]{5,}\s*\n)?\s*(?:#{1,3}\s*)?((?:Q\d+|Question\s*\d+)[\.:\s\-][^\n\r]+)([\s\S]*?)(?=(?:\n\s*(?:[=\-]{5,}\s*\n)?\s*(?:#{1,3}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-])|$)/gi;
   const matches = [...text.matchAll(questionRegex)];
 
   if (matches.length > 0) {
     return matches.map((m, idx) => {
       const rawTitle = m[1].trim();
-      const title = rawTitle.replace(/^#+\s*/, '').trim();
-      const body = m[2].trim().replace(/^[=\-\s]+/, '');
+      let title = cleanQuestionTitle(rawTitle, idx + 1);
+      let body = m[2].trim().replace(/^[=\-\s]+/, '');
+
+      // Check if first line of body is also a title line (e.g. user pasted Question 1 \n Q1. Title)
+      const bodyLines = body.split('\n');
+      const firstLine = bodyLines[0]?.trim() || '';
+      if (/^(?:#{1,3}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-]/i.test(firstLine)) {
+        if (/^Q\d+\.\s*Question\s*\d+$/i.test(title) || /^Q\d+$/i.test(title)) {
+          title = cleanQuestionTitle(firstLine, idx + 1);
+        }
+        body = bodyLines.slice(1).join('\n').trim();
+      }
 
       // Constraints
       let constraints: string[] = [];
@@ -216,13 +245,25 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
   const chunks = text
     .split(/(?:\n[=\-]{10,}\n)/g)
     .map(c => c.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    // Filter out preamble or banner chunks
+    .filter(c => /(?:Q\d+|Question\s*\d+|Test\s*Case|Input:|Output:)/i.test(c));
 
-  if (chunks.length > 1) {
+  if (chunks.length > 0) {
     return chunks.map((chunk, idx) => {
       const lines = chunk.split('\n').map(l => l.trim()).filter(Boolean);
-      const title = lines[0]?.replace(/^#+\s*/, '') || `Question ${idx + 1}`;
-      const desc = lines.slice(1).join('\n');
+      const rawTitle = lines[0] || `Question ${idx + 1}`;
+      let title = cleanQuestionTitle(rawTitle, idx + 1);
+      let descLines = lines.slice(1);
+
+      if (descLines[0] && /^(?:#{1,3}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-]/i.test(descLines[0])) {
+        if (/^Q\d+\.\s*Question\s*\d+$/i.test(title) || /^Q\d+$/i.test(title)) {
+          title = cleanQuestionTitle(descLines[0], idx + 1);
+        }
+        descLines = descLines.slice(1);
+      }
+
+      const desc = descLines.join('\n');
       return {
         title,
         description: desc,
@@ -238,7 +279,7 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
 }
 
 /** Formats a single question into rich HTML with side-by-side test cases */
-export function formatQuestionContentToHtml(q: ParsedPaperQuestion, idx?: number): string {
+export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
   const caseCards = (q.testCases || []).map((c, cIdx) => `
     <div class="test-case-item" data-type="test-case">
       <div class="test-case-header">${c.title || `Test Case ${cIdx + 1}`}</div>
@@ -279,14 +320,9 @@ export function formatQuestionContentToHtml(q: ParsedPaperQuestion, idx?: number
     .replace(/\n\n+/g, '</p><p>')
     .replace(/\n/g, '<br>');
 
-  const badge = typeof idx === 'number'
-    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] mr-2">Question ${idx + 1}</span>`
-    : '';
-
   return `
     <div class="question-block mb-10 pb-8 border-b border-[#E9ECEF] dark:border-[#242424] last:border-b-0">
-      <div class="flex items-center gap-2 mb-2">
-        ${badge}
+      <div class="mb-2">
         <h2 class="text-lg sm:text-xl font-display font-extrabold text-[#121417] dark:text-white m-0">${escapeHtml(q.title)}</h2>
       </div>
       <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed my-3 font-sans">
@@ -298,23 +334,9 @@ export function formatQuestionContentToHtml(q: ParsedPaperQuestion, idx?: number
   `.trim();
 }
 
-/** Formats an entire batch of questions into a single comprehensive HTML document */
-export function formatBatchToSingleFileHtml(
-  questions: ParsedPaperQuestion[],
-  batchTitle: string,
-  companyName: string
-): string {
-  const questionsHtml = questions.map((q, idx) => formatQuestionContentToHtml(q, idx)).join('\n\n');
-
-  return `
-    <div class="batch-document-container">
-      <div class="mb-8 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
-        <h1 class="text-2xl sm:text-3xl font-display font-black text-[#121417] dark:text-white mb-1.5">${escapeHtml(batchTitle)}</h1>
-        <p class="text-xs text-gray-500 dark:text-gray-400 font-sans">${escapeHtml(companyName)} Campus Placement Series • ${questions.length} Verified Coding Problems</p>
-      </div>
-      ${questionsHtml}
-    </div>
-  `.trim();
+/** Formats an entire batch of questions directly without unnecessary banners */
+export function formatBatchToSingleFileHtml(questions: ParsedPaperQuestion[]): string {
+  return questions.map(q => formatQuestionContentToHtml(q)).join('\n\n');
 }
 
 export default function BulkImportPapersModal({
@@ -323,38 +345,76 @@ export default function BulkImportPapersModal({
   examName,
   companyName,
   currentTabs,
+  initialTargetNodeId,
   onImport,
 }: BulkImportPapersModalProps) {
   const [inputText, setInputText] = useState<string>('');
   const [accessMode, setAccessMode] = useState<'standard' | 'free' | 'paid'>('standard');
-  const [structureMode, setStructureMode] = useState<'single-file' | 'multi-file'>('single-file');
-  const [singleFileTitle, setSingleFileTitle] = useState<string>('');
+  
+  // All flat files in this exam
+  const allFiles = useMemo(() => {
+    return flattenNodes(currentTabs).filter(n => !n.children || n.children.length === 0);
+  }, [currentTabs]);
+
+  // Existing folder nodes
+  const existingFolders = useMemo(() => {
+    return currentTabs.filter(t => t.children && t.children.length > 0);
+  }, [currentTabs]);
+
+  // Target Destination Modes:
+  // 'append' (Add into existing file) | 'new-file' (New single file) | 'multi-file' (1 file per question)
+  const [destMode, setDestMode] = useState<'append' | 'new-file' | 'multi-file'>(() => {
+    return (initialTargetNodeId || allFiles.length > 0) ? 'append' : 'new-file';
+  });
+
+  const [targetFileId, setTargetFileId] = useState<string>(() => {
+    return initialTargetNodeId || allFiles[0]?.id || '';
+  });
+
+  // Sync state whenever initialTargetNodeId or modal open changes
+  useEffect(() => {
+    if (isOpen) {
+      if (initialTargetNodeId) {
+        setDestMode('append');
+        setTargetFileId(initialTargetNodeId);
+      } else if (allFiles.length > 0 && !targetFileId) {
+        setTargetFileId(allFiles[0].id);
+      }
+    }
+  }, [isOpen, initialTargetNodeId, allFiles]);
+
+  const targetNode = useMemo(() => {
+    return findNodeById(currentTabs, targetFileId) || null;
+  }, [currentTabs, targetFileId]);
+
+  const existingQCount = useMemo(() => {
+    if (!targetNode?.content) return 0;
+    const matches = targetNode.content.match(/(?:question-block|Q\d+[\.:])/g);
+    return matches ? matches.length : (targetNode.content.trim() ? 1 : 0);
+  }, [targetNode]);
+
+  const [newFileTitle, setNewFileTitle] = useState<string>('');
   const [fileEmoji, setFileEmoji] = useState<string>('⚡');
   const [targetFolderId, setTargetFolderId] = useState<string>('ROOT');
   const [copiedTemplate, setCopiedTemplate] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'input' | 'preview'>('input');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Filter available existing folder tabs
-  const existingFolders = useMemo(() => {
-    return currentTabs.filter(t => t.children && t.children.length > 0);
-  }, [currentTabs]);
-
   // Real-time parsing
   const parsedQuestions = useMemo(() => {
     return parseBatchQuestions(inputText, accessMode);
   }, [inputText, accessMode]);
 
-  // Auto-generate sensible default title when questions are parsed
+  // Auto-generate title for new file mode
   useEffect(() => {
-    if (parsedQuestions.length > 0 && !singleFileTitle) {
+    if (parsedQuestions.length > 0 && !newFileTitle) {
       const firstQ = parsedQuestions[0]?.title || '';
       const matchQNum = firstQ.match(/Q(\d+)/i);
       const startNum = matchQNum ? matchQNum[1] : '1';
       const endNum = parseInt(startNum, 10) + parsedQuestions.length - 1;
-      setSingleFileTitle(`${companyName} Batch: Coding Questions (Q${startNum}–Q${endNum})`);
+      setNewFileTitle(`${companyName} Batch (Q${startNum}–Q${endNum})`);
     }
-  }, [parsedQuestions, companyName, singleFileTitle]);
+  }, [parsedQuestions, companyName, newFileTitle]);
 
   if (!isOpen) return null;
 
@@ -372,22 +432,33 @@ export default function BulkImportPapersModal({
     setIsSubmitting(true);
 
     try {
-      const finalTitle = singleFileTitle.trim() || `${companyName} Batch Coding Questions`;
-
       let updatedTabs: DocTabNode[] = [];
+      let finalTargetId: string | undefined = undefined;
 
-      if (structureMode === 'single-file') {
-        // Mode 1: ALL QUESTIONS IN ONE SINGLE PROPER FILE
+      const newQuestionsHtml = formatBatchToSingleFileHtml(parsedQuestions);
+
+      if (destMode === 'append' && targetNode) {
+        // APPEND TO SELECTED EXISTING FILE
+        finalTargetId = targetNode.id;
+        const existingContent = (targetNode.content || '').trim();
+        const combined = existingContent
+          ? `${existingContent}\n\n<div class="my-10 border-b border-[#E9ECEF] dark:border-[#242424]"></div>\n\n${newQuestionsHtml}`
+          : newQuestionsHtml;
+
+        updatedTabs = updateNode(currentTabs, targetNode.id, { content: combined });
+      } else if (destMode === 'new-file') {
+        // CREATE A NEW SINGLE FILE
+        const finalTitle = newFileTitle.trim() || `${companyName} Batch Questions`;
         const singleNode: DocTabNode = {
           id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           title: finalTitle,
           emoji: fileEmoji || '⚡',
-          content: formatBatchToSingleFileHtml(parsedQuestions, finalTitle, companyName),
+          content: newQuestionsHtml,
           isFree: accessMode === 'free',
         };
+        finalTargetId = singleNode.id;
 
         if (targetFolderId !== 'ROOT') {
-          // Append into existing folder
           updatedTabs = currentTabs.map(tab => {
             if (tab.id === targetFolderId) {
               return {
@@ -398,11 +469,10 @@ export default function BulkImportPapersModal({
             return tab;
           });
         } else {
-          // Add to document root
           updatedTabs = [...currentTabs, singleNode];
         }
       } else {
-        // Mode 2: Multi-file (Separate file per question)
+        // MULTI-FILE MODE (Separate tab per question)
         const questionNodes: DocTabNode[] = parsedQuestions.map((q, idx) => ({
           id: `q-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
           title: q.title,
@@ -411,19 +481,21 @@ export default function BulkImportPapersModal({
           isFree: q.isFree,
         }));
 
+        const finalTitle = newFileTitle.trim() || `${companyName} Question Batch`;
         const folderNode: DocTabNode = {
           id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           title: finalTitle,
           emoji: '📁',
-          content: `### ${finalTitle}\n\nContains ${questionNodes.length} verified coding questions for ${companyName}.`,
+          content: `### ${finalTitle}\n\nContains ${questionNodes.length} verified coding questions.`,
           isFree: accessMode === 'free',
           children: questionNodes,
         };
 
         updatedTabs = [...currentTabs, folderNode];
+        finalTargetId = folderNode.id;
       }
 
-      onImport(updatedTabs);
+      onImport(updatedTabs, finalTargetId);
       onClose();
     } catch (err: any) {
       alert('Failed to import questions: ' + (err.message || err));
@@ -433,9 +505,15 @@ export default function BulkImportPapersModal({
   };
 
   const previewSingleFileHtml = useMemo(() => {
-    const finalTitle = singleFileTitle.trim() || `${companyName} Batch Coding Questions`;
-    return formatBatchToSingleFileHtml(parsedQuestions, finalTitle, companyName);
-  }, [parsedQuestions, singleFileTitle, companyName]);
+    return formatBatchToSingleFileHtml(parsedQuestions);
+  }, [parsedQuestions]);
+
+  const targetFileName = useMemo(() => {
+    if (destMode === 'append') {
+      return targetNode?.title || 'Selected File';
+    }
+    return newFileTitle || 'New File';
+  }, [destMode, targetNode, newFileTitle]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs animate-fadeIn font-sans">
@@ -452,7 +530,7 @@ export default function BulkImportPapersModal({
               Bulk Import Coding Questions — {companyName}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Add entire batches directly into a <strong>single clean document</strong> with verified side-by-side test case cards.
+              Add batches into a single file or append to an existing document. Questions render with clean titles and side-by-side test cases.
             </p>
           </div>
 
@@ -467,72 +545,60 @@ export default function BulkImportPapersModal({
 
         {/* TOP CONFIGURATION STRIP */}
         <div className="p-3 sm:px-5 sm:py-3.5 bg-[#F8F9FA] dark:bg-[#1A1A1A] border-b border-[#E9ECEF] dark:border-[#2E2E2E] flex flex-wrap items-center justify-between gap-3 text-xs">
-          {/* Structure Mode: Single File vs Multi-File */}
+          
+          {/* Target Mode Selector */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-[#121417] dark:text-white shrink-0">Structure:</span>
-            <div className="inline-flex rounded-lg p-0.5 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E]">
-              <button
-                type="button"
-                onClick={() => setStructureMode('single-file')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  structureMode === 'single-file'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Single File (All in 1)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStructureMode('multi-file')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  structureMode === 'multi-file'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Separate Files (1 per Q)</span>
-              </button>
-            </div>
+            <span className="font-bold text-[#121417] dark:text-white shrink-0">Store in:</span>
+            <select
+              value={destMode}
+              onChange={e => setDestMode(e.target.value as any)}
+              className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2.5 py-1 text-xs font-semibold text-[#121417] dark:text-white focus:outline-none cursor-pointer"
+            >
+              {allFiles.length > 0 && (
+                <option value="append">
+                  📄 Append into File {targetNode ? `("${targetNode.title}")` : ''}
+                </option>
+              )}
+              <option value="new-file">➕ Create a New Single File</option>
+              <option value="multi-file">📁 Separate Files (1 file per question)</option>
+            </select>
           </div>
 
-          {/* File / Folder Title input */}
-          <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-            <input
-              type="text"
-              value={fileEmoji}
-              onChange={e => setFileEmoji(e.target.value)}
-              className="w-9 text-center bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md py-1 text-sm"
-              title="Emoji icon"
-              maxLength={2}
-            />
-            <input
-              type="text"
-              value={singleFileTitle}
-              onChange={e => setSingleFileTitle(e.target.value)}
-              placeholder="e.g. Accenture Batch 1: Coding Questions (Q1–Q10)"
-              className="flex-1 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-3 py-1 text-xs text-[#121417] dark:text-white focus:outline-none font-semibold"
-            />
-          </div>
-
-          {/* Placement / Target */}
-          {existingFolders.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-[#121417] dark:text-white shrink-0">In:</span>
+          {/* If Append mode: Show target file dropdown */}
+          {destMode === 'append' && allFiles.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-1 min-w-[240px]">
+              <span className="font-bold text-[#121417] dark:text-white shrink-0">Target File:</span>
               <select
-                value={targetFolderId}
-                onChange={e => setTargetFolderId(e.target.value)}
-                className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2 py-1 text-xs text-[#121417] dark:text-white focus:outline-none cursor-pointer"
+                value={targetFileId}
+                onChange={e => setTargetFileId(e.target.value)}
+                className="flex-1 bg-white dark:bg-[#141414] border border-purple-500/40 rounded-md px-2.5 py-1 text-xs text-[#121417] dark:text-white focus:outline-none cursor-pointer font-bold shadow-xs"
               >
-                <option value="ROOT">📄 Root Level</option>
-                {existingFolders.map(f => (
+                {allFiles.map(f => (
                   <option key={f.id} value={f.id}>
-                    {f.emoji || '📁'} {f.title}
+                    {f.emoji || '📄'} {f.title} {f.id === initialTargetNodeId ? '★ (Active File)' : ''}
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {destMode === 'new-file' && (
+            <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+              <input
+                type="text"
+                value={fileEmoji}
+                onChange={e => setFileEmoji(e.target.value)}
+                className="w-8 text-center bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md py-1 text-xs"
+                title="Emoji"
+                maxLength={2}
+              />
+              <input
+                type="text"
+                value={newFileTitle}
+                onChange={e => setNewFileTitle(e.target.value)}
+                placeholder="New file title (e.g. Accenture Batch 1)..."
+                className="flex-1 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2.5 py-1 text-xs text-[#121417] dark:text-white focus:outline-none font-semibold"
+              />
             </div>
           )}
 
@@ -550,6 +616,24 @@ export default function BulkImportPapersModal({
             </select>
           </div>
         </div>
+
+        {/* DESTINATION SUMMARY BANNER */}
+        {destMode === 'append' && targetNode && (
+          <div className="px-4 py-2 bg-purple-500/10 border-b border-purple-500/20 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 truncate">
+              <span className="text-purple-600 dark:text-purple-400 font-bold shrink-0">🎯 Destination:</span>
+              <span className="text-[#121417] dark:text-white truncate">
+                Questions will be stored in <strong>"{targetNode.title}"</strong>
+                {targetNode.content?.trim() ? ' (appended to current content)' : ' (empty file)'}
+              </span>
+            </div>
+            <div className="text-[11px] font-bold text-purple-700 dark:text-purple-300 shrink-0">
+              {parsedQuestions.length > 0 && (
+                <span>Adding {parsedQuestions.length} questions • File will have ~{existingQCount + parsedQuestions.length} questions</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* TABS NAVIGATION & QUICK ACTIONS */}
         <div className="flex items-center justify-between px-4 sm:px-5 pt-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
@@ -577,7 +661,7 @@ export default function BulkImportPapersModal({
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Live Visual Preview ({structureMode === 'single-file' ? 'Single File' : 'Multi-Files'})</span>
+              <span>Live Visual Preview</span>
               {parsedQuestions.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
                   {parsedQuestions.length}
@@ -593,7 +677,7 @@ export default function BulkImportPapersModal({
               className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors cursor-pointer"
             >
               {copiedTemplate ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-              <span>{copiedTemplate ? 'Template Copied!' : 'Copy Sample Template'}</span>
+              <span>{copiedTemplate ? 'Template Copied!' : 'Copy Template'}</span>
             </button>
             {inputText && (
               <button
@@ -614,7 +698,7 @@ export default function BulkImportPapersModal({
             <div className="space-y-3 h-full flex flex-col">
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>
-                  Paste your full batch of questions below. Both <strong>Markdown Batch</strong> (with <code># Q1.</code>) and <strong>JSON array</strong> formats work automatically.
+                  Paste your batch of questions below. Clean question headings and side-by-side test case cards will be generated automatically.
                 </span>
                 <span className="font-mono font-bold text-[11px] text-purple-600 dark:text-purple-400">
                   {inputText.split('\n').length} lines
@@ -635,13 +719,13 @@ export default function BulkImportPapersModal({
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>
-                      Detected {parsedQuestions.length} coding question(s)! Will be saved as <strong>1 single file</strong>: "{singleFileTitle}".
+                      Detected {parsedQuestions.length} coding question(s)! Target destination: <strong>"{targetFileName}"</strong>.
                     </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-gray-500">
                     <AlertCircle className="w-4 h-4" />
-                    <span>Paste text containing questions (e.g. # Q1. Title, Constraints, Test Cases).</span>
+                    <span>Paste questions (e.g. # Q1. Title, Constraints, Test Cases).</span>
                   </div>
                 )}
               </div>
@@ -650,45 +734,17 @@ export default function BulkImportPapersModal({
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs text-gray-500 pb-2 border-b border-[#E9ECEF] dark:border-[#242424]">
                 <span>
-                  Previewing <strong>{structureMode === 'single-file' ? 'Single Combined Document' : `${parsedQuestions.length} Separate Files`}</strong> ({parsedQuestions.length} questions):
+                  Previewing <strong>{parsedQuestions.length} question(s)</strong> inside <strong>"{targetFileName}"</strong>:
                 </span>
                 <span className="font-bold text-purple-600 dark:text-purple-400">
-                  {structureMode === 'single-file' ? '📄 Single File Mode' : '📁 Multi-File Mode'}
+                  Side-by-Side Test Case Cards Active
                 </span>
               </div>
 
-              {structureMode === 'single-file' ? (
-                /* SINGLE FILE PREVIEW */
-                <div className="p-4 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
-                  <ContentRenderer content={previewSingleFileHtml} />
-                </div>
-              ) : (
-                /* MULTI FILE PREVIEW */
-                parsedQuestions.map((q, idx) => (
-                  <div
-                    key={idx}
-                    className="border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden bg-[#F8F9FA] dark:bg-[#0C0C0C]"
-                  >
-                    <div className="p-3.5 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-base">{q.emoji || '⚡'}</span>
-                        <div className="truncate">
-                          <h4 className="font-bold text-xs sm:text-sm text-[#121417] dark:text-white truncate">
-                            {q.title}
-                          </h4>
-                          <div className="flex items-center gap-3 text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                            <span>{q.constraints?.length || 0} Constraints</span>
-                            <span>•</span>
-                            <span className="text-purple-600 dark:text-purple-400 font-bold">
-                              {q.testCases?.length || 0} Test Cases
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              {/* LIVE PREVIEW OF THE QUESTIONS */}
+              <div className="p-4 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
+                <ContentRenderer content={previewSingleFileHtml} />
+              </div>
             </div>
           )}
         </div>
@@ -700,9 +756,7 @@ export default function BulkImportPapersModal({
               <span>
                 Ready to import <strong>{parsedQuestions.length}</strong> questions into{' '}
                 <span className="text-purple-600 dark:text-purple-400 font-bold">
-                  {structureMode === 'single-file'
-                    ? `1 single file: "${singleFileTitle}"`
-                    : `separate files in folder`}
+                  "{targetFileName}"
                 </span>.
               </span>
             ) : (
@@ -728,9 +782,9 @@ export default function BulkImportPapersModal({
               <span>
                 {isSubmitting
                   ? 'Importing...'
-                  : structureMode === 'single-file'
-                  ? `Import as 1 File (${parsedQuestions.length} Questions)`
-                  : `Import as ${parsedQuestions.length} Files`}
+                  : destMode === 'append'
+                  ? `Append ${parsedQuestions.length} Questions to File`
+                  : `Import as 1 File (${parsedQuestions.length} Qs)`}
               </span>
             </button>
           </div>

@@ -94,6 +94,7 @@ export default function DocumentExplorer({
   const [emojiValue, setEmojiValue] = useState('');
   const [adminMode, setAdminMode] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [targetImportNodeId, setTargetImportNodeId] = useState<string | null>(null);
 
   const flatNodes = useMemo(() => flattenNodes(localTabs), [localTabs]);
 
@@ -111,12 +112,21 @@ export default function DocumentExplorer({
   };
 
   // ── Bulk Import handler ────────────────────────────────────────────────
-  const handleBulkImport = (newTabs: DocTabNode[]) => {
+  const handleBulkImport = (newTabs: DocTabNode[], finalTargetId?: string) => {
     persist(newTabs);
-    const flat = flattenNodes(newTabs);
-    if (flat.length > 0) {
-      setSelectedNodeId(flat[flat.length - 1].id);
+    if (finalTargetId) {
+      setSelectedNodeId(finalTargetId);
+    } else {
+      const flat = flattenNodes(newTabs);
+      if (flat.length > 0) {
+        setSelectedNodeId(flat[flat.length - 1].id);
+      }
     }
+  };
+
+  const handleOpenBulkImportModal = (nodeId?: string) => {
+    setTargetImportNodeId(nodeId || activeNode?.id || null);
+    setShowBulkImportModal(true);
   };
 
   // ── Admin tree operations ──────────────────────────────────────────────
@@ -194,10 +204,14 @@ export default function DocumentExplorer({
       {showBulkImportModal && (
         <BulkImportPapersModal
           isOpen={showBulkImportModal}
-          onClose={() => setShowBulkImportModal(false)}
+          onClose={() => {
+            setShowBulkImportModal(false);
+            setTargetImportNodeId(null);
+          }}
           examName={examName}
           companyName={companyName}
           currentTabs={localTabs}
+          initialTargetNodeId={targetImportNodeId}
           onImport={handleBulkImport}
         />
       )}
@@ -223,7 +237,7 @@ export default function DocumentExplorer({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setShowBulkImportModal(true)}
+                  onClick={() => handleOpenBulkImportModal(activeNode?.id)}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-display font-extrabold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-xs cursor-pointer"
                   title="Bulk import questions from batch text or JSON"
                 >
@@ -251,7 +265,7 @@ export default function DocumentExplorer({
             <div className="grid grid-cols-2 gap-1.5">
               <button
                 type="button"
-                onClick={() => setShowBulkImportModal(true)}
+                onClick={() => handleOpenBulkImportModal(activeNode?.id)}
                 className="w-full flex items-center justify-center gap-1 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-display font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
               >
                 <Upload className="w-3 h-3" />
@@ -340,6 +354,7 @@ export default function DocumentExplorer({
                 onAddAfter={handleAddAfter}
                 onDeleteNode={handleDelete}
                 onToggleNodeAccess={handleToggleNodeAccess}
+                onImportIntoNode={(_e, id) => handleOpenBulkImportModal(id)}
               />
             ))
           ) : (
@@ -460,6 +475,17 @@ export default function DocumentExplorer({
                         </>
                       )}
                     </button>
+
+                    {/* Bulk Import Questions directly into this active file */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenBulkImportModal(activeNode.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-xs transition-all cursor-pointer shrink-0"
+                      title={`Import / append coding questions directly into "${activeNode.title}"`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Import into this File</span>
+                    </button>
                   </div>
                 </div>
 
@@ -506,7 +532,7 @@ export default function DocumentExplorer({
             {/* Document header */}
             {activeNode && (
               <div className="space-y-3 border-b border-[#E9ECEF] dark:border-[#242424] pb-6 mb-8">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{activeNode.emoji || '📄'}</span>
                     <div>
@@ -514,11 +540,24 @@ export default function DocumentExplorer({
                       <p className="text-xs text-[#868E96] dark:text-[#555555] mt-0.5">{companyName} • {examName} Official Placement Series</p>
                     </div>
                   </div>
-                  {activeNode.isFree === true && (
-                    <span className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider flex items-center gap-1">
-                      <Unlock className="w-3 h-3" /> Free Practice Guide
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenBulkImportModal(activeNode.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-xs transition-all cursor-pointer"
+                        title={`Import or append questions directly into "${activeNode.title}"`}
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Import Questions into this File</span>
+                      </button>
+                    )}
+                    {activeNode.isFree === true && (
+                      <span className="px-2.5 py-1 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Unlock className="w-3 h-3" /> Free Practice Guide
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
