@@ -17,6 +17,7 @@ import Subscript from '@tiptap/extension-subscript';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { marked } from 'marked';
+import { transformRawMarkdownToBeautifulHtml } from './ContentRenderer';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, CheckSquare,
@@ -71,12 +72,14 @@ function looksLikeMarkdown(text: string): boolean {
 
 function parseToHTML(value: string): string {
   if (!value?.trim()) return '';
-  if (value.trim().startsWith('<')) return value;
-  if (looksLikeMarkdown(value)) {
-    const rawHtml = String(marked.parse(value));
+  const preprocessed = transformRawMarkdownToBeautifulHtml(value.trim());
+  if (preprocessed.startsWith('<')) return preprocessed;
+  try {
+    const rawHtml = String(marked.parse(preprocessed));
     return transformPreTestCasesToGroupHtml(rawHtml);
+  } catch {
+    return `<p>${preprocessed.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
   }
-  return `<p>${value.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
 }
 
 // ─── Custom ResizableImage Extension ─────────────────────────────────────────
@@ -471,11 +474,18 @@ function RichTextEditorInner({
         const plainText = event.clipboardData?.getData('text/plain');
         if (!plainText) return false;
 
-        // 1. If pasting a full Markdown question or text with markdown elements (headings, codeblocks, etc.)
-        if (looksLikeMarkdown(plainText) || /^#{1,6}\s/m.test(plainText)) {
+        // 1. If pasting questions, test cases, or markdown with headings/delimiters
+        if (
+          looksLikeMarkdown(plainText) ||
+          /^#{1,6}\s/m.test(plainText) ||
+          plainText.includes('Test Case') ||
+          /^[=\-]{5,}/m.test(plainText) ||
+          /^Q\d+[\.:\s]/im.test(plainText)
+        ) {
           event.preventDefault();
           try {
-            const parsedHTML = marked.parse(plainText);
+            const preprocessed = transformRawMarkdownToBeautifulHtml(plainText);
+            const parsedHTML = marked.parse(preprocessed);
             const htmlString = typeof parsedHTML === 'string' ? parsedHTML : String(parsedHTML);
             const transformed = transformPreTestCasesToGroupHtml(htmlString);
             editor?.commands.insertContent(transformed);

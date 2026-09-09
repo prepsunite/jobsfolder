@@ -190,7 +190,7 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
     return matches.map((m, idx) => {
       const rawTitle = m[1].trim();
       let title = cleanQuestionTitle(rawTitle, idx + 1);
-      let body = m[2].trim().replace(/^[=\-\s]+/, '');
+      let body = m[2].trim().replace(/^[=\-\s]+/, '').replace(/^[=\-]{5,}\s*$/gm, '').trim();
 
       // Check if first line of body is also a title line (e.g. user pasted Question 1 \n Q1. Title)
       const bodyLines = body.split('\n');
@@ -223,7 +223,7 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
       const descPart = body
         .split(/###?\s*Constraints/i)[0]
         .split(/###?\s*Test\s*Cases/i)[0];
-      const description = descPart.replace(/^[=\-\s]+/, '').trim();
+      const description = descPart.replace(/^[=\-\s]+/, '').replace(/[=\-\s]+$/, '').trim();
 
       let isFree = false;
       if (accessMode === 'free') isFree = true;
@@ -403,14 +403,17 @@ export default function BulkImportPapersModal({
 
   // Auto-generate title for new file mode
   useEffect(() => {
-    if (parsedQuestions.length > 0 && !newFileTitle) {
+    if (parsedQuestions.length > 0) {
       const firstQ = parsedQuestions[0]?.title || '';
       const matchQNum = firstQ.match(/Q(\d+)/i);
       const startNum = matchQNum ? matchQNum[1] : '1';
       const endNum = parseInt(startNum, 10) + parsedQuestions.length - 1;
-      setNewFileTitle(`${companyName} Batch (Q${startNum}–Q${endNum})`);
+      const expectedTitle = `${companyName} Batch (Q${startNum}–Q${endNum})`;
+      if (!newFileTitle || newFileTitle.includes('Batch (Q')) {
+        setNewFileTitle(expectedTitle);
+      }
     }
-  }, [parsedQuestions, companyName, newFileTitle]);
+  }, [parsedQuestions, companyName]);
 
   if (!isOpen) return null;
 
@@ -437,11 +440,28 @@ export default function BulkImportPapersModal({
         // APPEND TO SELECTED EXISTING FILE
         finalTargetId = targetNode.id;
         const existingContent = (targetNode.content || '').trim();
-        const combined = existingContent
-          ? `${existingContent}\n\n<div class="my-10 border-b border-[#E9ECEF] dark:border-[#242424]"></div>\n\n${newQuestionsHtml}`
-          : newQuestionsHtml;
+        const isPlaceholder = !existingContent ||
+          /^(?:###\s*[^\n]+\s*)?(?:Write content here\.?|No content added yet\.?)?$/i.test(existingContent);
 
-        updatedTabs = updateNode(currentTabs, targetNode.id, { content: combined });
+        const combined = isPlaceholder
+          ? newQuestionsHtml
+          : `${existingContent}\n\n<div class="my-10 border-b border-[#E9ECEF] dark:border-[#242424]"></div>\n\n${newQuestionsHtml}`;
+
+        // If target file title is a default like "New File" or "New Section", rename it nicely
+        const isDefaultTitle = /^New\s*(?:File|Section|Subtab)(?:\s*\d+)?$/i.test(targetNode.title.trim());
+        let updatedTitle = targetNode.title;
+        if (isDefaultTitle && parsedQuestions.length > 0) {
+          const firstQ = parsedQuestions[0]?.title || '';
+          const matchQNum = firstQ.match(/Q(\d+)/i);
+          const startNum = matchQNum ? matchQNum[1] : '1';
+          const endNum = parseInt(startNum, 10) + parsedQuestions.length - 1;
+          updatedTitle = `${companyName} Batch (Q${startNum}–Q${endNum})`;
+        }
+
+        updatedTabs = updateNode(currentTabs, targetNode.id, {
+          content: combined,
+          title: updatedTitle,
+        });
       } else if (destMode === 'new-file') {
         // CREATE A NEW SINGLE FILE
         const finalTitle = newFileTitle.trim() || `${companyName} Batch Questions`;

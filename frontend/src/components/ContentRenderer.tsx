@@ -11,9 +11,6 @@
  */
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import { marked } from 'marked';
 
 export interface ContentRendererProps {
@@ -22,36 +19,13 @@ export interface ContentRendererProps {
   emptyText?: string;
 }
 
-function containsHTML(str: string): boolean {
-  if (!str?.trim()) return false;
-  const trimmed = str.trim();
-  if (trimmed.startsWith('<')) return true;
-  return /<(?:div|span|pre|p|h[1-6]|table|ul|ol|section)\b/i.test(trimmed);
-}
-
-function sanitizeSpacing(html: string): string {
-  if (!html) return '';
-  return html
-    .replace(/(<p>\s*<br\s*\/?>\s*<\/p>)+/gi, '')
-    .replace(/(<p>\s*<\/p>)+/gi, '');
-}
-
-function renderContentToHTML(content: string): string {
-  if (!content?.trim()) return '';
-  const trimmed = content.trim();
-
-  // If it's already HTML and has no top-level markdown headers
-  if (trimmed.startsWith('<') && !/^#{1,6}\s/m.test(trimmed)) {
-    return sanitizeSpacing(trimmed);
-  }
-
-  // If it contains markdown headers or formatting along with HTML
-  try {
-    const parsed = String(marked.parse(trimmed));
-    return sanitizeSpacing(parsed);
-  } catch {
-    return sanitizeSpacing(trimmed);
-  }
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function parseTestCasesFromText(rawText: string) {
@@ -86,6 +60,91 @@ function parseTestCasesFromText(rawText: string) {
   });
 }
 
+function generateTestCaseBoxHtml(cases: Array<{ title: string; input: string; output: string }>): string {
+  if (!cases || cases.length === 0) return '';
+  const caseCards = cases.map((c, idx) => `
+<div class="test-case-item" data-type="test-case">
+<div class="test-case-header">${escapeHtml(c.title || `Test Case ${idx + 1}`)}</div>
+<div class="test-case-io-grid">
+<div class="test-case-section">
+<span class="test-case-label">Input:</span>
+<pre class="test-case-code test-case-input-val">${escapeHtml(c.input)}</pre>
+</div>
+<div class="test-case-section">
+<span class="test-case-label">Output:</span>
+<pre class="test-case-code test-case-output-val">${escapeHtml(c.output)}</pre>
+</div>
+</div>
+</div>`).join('\n');
+
+  return `
+<div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(cases).replace(/'/g, '&#39;')}'>
+<div class="test-case-group-title">🧪 Test Cases</div>
+${caseCards}
+</div>`;
+}
+
+export function transformRawMarkdownToBeautifulHtml(raw: string): string {
+  if (!raw?.trim()) return '';
+
+  // 1. Strip delimiter lines (==== or ----) so they never render as ugly text lines or setext headings
+  let text = raw.replace(/^[=\-]{5,}\s*$/gm, '').trim();
+
+  // 2. Also strip Setext markdown heading underlines where a line of text is immediately followed by ===== or -----
+  text = text.replace(/^([^\n]+)\n[=\-]{5,}\s*$/gm, '## $1');
+
+  // 3. Convert any "### Test Cases" blocks into styled HTML cards
+  text = text.replace(/(?:###?\s*Test\s*Cases\s*\n)([\s\S]*?)(?=(?:\n#{1,3}\s*|\n[=\-]{5,}|$))/gi, (match, caseBlock) => {
+    const cases = parseTestCasesFromText(caseBlock);
+    if (cases.length > 0) {
+      return generateTestCaseBoxHtml(cases);
+    }
+    return match;
+  });
+
+  // 4. Convert any <pre><code> test cases that might be in legacy content
+  text = text.replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, (match, innerText) => {
+    const unescaped = innerText
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+    if (unescaped.includes('Test Case') || (unescaped.includes('Input:') && unescaped.includes('Output:'))) {
+      const cases = parseTestCasesFromText(unescaped);
+      if (cases.length > 0) {
+        return generateTestCaseBoxHtml(cases);
+      }
+    }
+    return match;
+  });
+
+  return text;
+}
+
+function sanitizeSpacing(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/(<p>\s*<br\s*\/?>\s*<\/p>)+/gi, '')
+    .replace(/(<p>\s*<\/p>)+/gi, '');
+}
+
+function renderContentToHTML(content: string): string {
+  if (!content?.trim()) return '';
+  const preprocessed = transformRawMarkdownToBeautifulHtml(content.trim());
+
+  // If it's already pure HTML and has no top-level markdown headers
+  if (preprocessed.startsWith('<') && !/^#{1,6}\s/m.test(preprocessed)) {
+    return sanitizeSpacing(preprocessed);
+  }
+
+  // If it contains markdown headers, formatting, or mixed HTML
+  try {
+    const parsed = String(marked.parse(preprocessed));
+    return sanitizeSpacing(parsed);
+  } catch {
+    return sanitizeSpacing(preprocessed);
+  }
+}
+
 export default function ContentRenderer({
   content,
   className = '',
@@ -113,79 +172,10 @@ export default function ContentRenderer({
     return null;
   }
 
-  // HTML or mixed HTML/Markdown output
-  if (containsHTML(content)) {
-    return (
-      <div
-        className={wrapCls}
-        dangerouslySetInnerHTML={{ __html: renderContentToHTML(content) }}
-      />
-    );
-  }
-
-  // Legacy Markdown
   return (
-    <div className={wrapCls}>
-      <ReactMarkdown
-        rehypePlugins={[rehypeRaw]}
-        remarkPlugins={[remarkGfm]}
-        components={{
-          pre: ({ children, ...props }: any) => {
-            const rawText = React.Children.toArray(children)
-              .map((child: any) => (typeof child === 'string' ? child : child?.props?.children || ''))
-              .join('');
-
-            const cases = (rawText.includes('Test Case') || (rawText.includes('Input:') && rawText.includes('Output:')))
-              ? parseTestCasesFromText(rawText)
-              : [];
-
-            if (cases.length > 0) {
-              return (
-                <div className="test-case-group" data-type="test-case-box">
-                  <div className="test-case-group-title">🧪 Test Cases</div>
-                  {cases.map((c, idx) => (
-                    <div key={idx} className="test-case-item" data-type="test-case">
-                      <div className="test-case-header">{c.title || `Test Case ${idx + 1}`}</div>
-                      <div className="test-case-io-grid">
-                        <div className="test-case-section">
-                          <span className="test-case-label">Input:</span>
-                          <pre className="test-case-code test-case-input-val">{c.input}</pre>
-                        </div>
-                        <div className="test-case-section">
-                          <span className="test-case-label">Output:</span>
-                          <pre className="test-case-code test-case-output-val">{c.output}</pre>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            }
-
-            return (
-              <pre className="test-case p-4 bg-[#141517] dark:bg-[#101113] text-[#FD4A32] dark:text-[#FD4A32] rounded-xl border border-[#383a40] overflow-x-auto text-xs font-mono whitespace-pre-wrap leading-relaxed my-3" {...props}>
-                {children}
-              </pre>
-            );
-          },
-          code: ({ inline, className, children, ...props }: any) => {
-            if (inline) {
-              return (
-                <code className="px-1.5 py-0.5 rounded bg-[#F8F9FA] dark:bg-[#2b2d31] text-[#FD4A32] dark:text-[#FD4A32] text-xs font-mono font-semibold" {...props}>
-                  {children}
-                </code>
-              );
-            }
-            return (
-              <code className={`font-mono text-xs text-inherit whitespace-pre-wrap ${className || ''}`} {...props}>
-                {children}
-              </code>
-            );
-          },
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
+    <div
+      className={wrapCls}
+      dangerouslySetInnerHTML={{ __html: renderContentToHTML(content) }}
+    />
   );
 }
