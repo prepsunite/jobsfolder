@@ -209,13 +209,13 @@ export const TestCaseBox = TipTapNode.create({
         [
           'div',
           { class: 'test-case-section' },
-          ['span', { class: 'test-case-label' }, 'Input'],
+          ['span', { class: 'test-case-label' }, 'Input:'],
           ['pre', { class: 'test-case-code test-case-input-val' }, c.input || ''],
         ],
         [
           'div',
           { class: 'test-case-section' },
-          ['span', { class: 'test-case-label' }, 'Output'],
+          ['span', { class: 'test-case-label' }, 'Output:'],
           ['pre', { class: 'test-case-code test-case-output-val' }, c.output || ''],
         ],
       ],
@@ -228,7 +228,7 @@ export const TestCaseBox = TipTapNode.create({
         'data-type': 'test-case-box',
         class: 'test-case-group',
       },
-      ['div', { class: 'test-case-group-title' }, 'Test Cases'],
+      ['div', { class: 'test-case-group-title' }, '🧪 Test Cases'],
       ...caseElements,
     ];
   },
@@ -297,11 +297,11 @@ export function transformPreTestCasesToGroupHtml(html: string): string {
             <div class="test-case-header">${c.title || `Test Case ${idx + 1}`}</div>
             <div class="test-case-io-grid">
               <div class="test-case-section">
-                <span class="test-case-label">Input</span>
+                <span class="test-case-label">Input:</span>
                 <pre class="test-case-code test-case-input-val">${c.input.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
               </div>
               <div class="test-case-section">
-                <span class="test-case-label">Output</span>
+                <span class="test-case-label">Output:</span>
                 <pre class="test-case-code test-case-output-val">${c.output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
               </div>
             </div>
@@ -310,7 +310,7 @@ export function transformPreTestCasesToGroupHtml(html: string): string {
 
         return `
           <div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(cases).replace(/'/g, '&#39;')}'>
-            <div class="test-case-group-title">Test Cases</div>
+            <div class="test-case-group-title">🧪 Test Cases</div>
             ${caseCards}
           </div>
         `;

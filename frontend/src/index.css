@@ -303,113 +303,129 @@ pre code {
 
 /* ═══════════════════════════════════════════════════
    Structured Test Case Group & Item Styles
-   (Clean Card Surface + Vertical Stacked Input/Output Monospace Boxes)
+   (Outer Box + Individual Cards with Monospace Grid)
 ══════════════════════════════════════════════════════ */
 .test-case-group,
 div[data-type="test-case-box"],
 div[data-type="test-case-group"] {
+  background-color: #F8F9FA !important;
+  border: 1.5px solid #E9ECEF !important;
+  border-radius: 1rem !important;
+  padding: 1.25rem !important;
+  margin: 1.25rem 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 1rem !important;
-  margin: 1.5rem 0 !important;
-  width: 100% !important;
-  max-width: 1000px !important;
+  gap: 0.875rem !important;
+}
+
+:where(.dark, .dark *) .test-case-group,
+:where(.dark, .dark *) div[data-type="test-case-box"],
+:where(.dark, .dark *) div[data-type="test-case-group"] {
+  background-color: #141517 !important;
+  border-color: #2b2d31 !important;
 }
 
 .test-case-group-title {
-  font-family: var(--font-display), Inter, sans-serif !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  color: #0F172A !important;
-  letter-spacing: -0.01em !important;
-  margin-bottom: 0.25rem !important;
+  font-family: var(--font-display), sans-serif !important;
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #FD4A32 !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 1px dashed #E9ECEF !important;
 }
 
 :where(.dark, .dark *) .test-case-group-title {
-  color: #F1F5F9 !important;
+  color: #ff6d59 !important;
+  border-bottom-color: #2b2d31 !important;
 }
 
 .test-case-item,
 div[data-type="test-case"] {
-  background-color: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 12px !important;
-  padding: 1.25rem 1.5rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid #E9ECEF !important;
+  border-radius: 0.75rem !important;
+  padding: 0.875rem 1rem !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.875rem !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+  gap: 0.5rem !important;
 }
 
 :where(.dark, .dark *) .test-case-item,
 :where(.dark, .dark *) div[data-type="test-case"] {
-  background-color: #18191B !important;
-  border-color: #2E3035 !important;
-  box-shadow: none !important;
+  background-color: #1e1f22 !important;
+  border-color: #342f2b !important;
 }
 
 .test-case-header {
-  font-family: Inter, sans-serif !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  color: #0F172A !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #1f1b17 !important;
   display: flex !important;
   align-items: center !important;
   gap: 0.5rem !important;
 }
 
 :where(.dark, .dark *) .test-case-header {
-  color: #F8FAFC !important;
+  color: #e3e3e3 !important;
 }
 
 .test-case-io-grid {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 0.875rem !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
   width: 100% !important;
+}
+
+@media (max-width: 480px) {
+  .test-case-io-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .test-case-section {
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.35rem !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
   width: 100% !important;
 }
 
 .test-case-label {
-  font-family: Inter, sans-serif !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #64748B !important;
-  letter-spacing: -0.01em !important;
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #747878 !important;
 }
 
 :where(.dark, .dark *) .test-case-label {
-  color: #94A3B8 !important;
+  color: #a6adbb !important;
 }
 
 .test-case-code,
 pre.test-case-code {
-  font-family: "JetBrains Mono", "Fira Code", monospace !important;
-  font-size: 13px !important;
-  line-height: 1.6 !important;
-  white-space: pre !important;
-  overflow-x: auto !important;
-  background-color: #F8FAFC !important;
-  color: #0F172A !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 8px !important;
-  padding: 12px 14px !important;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace !important;
+  font-size: 0.8rem !important;
+  line-height: 1.55 !important;
+  white-space: pre-wrap !important;
+  background-color: #141517 !important;
+  color: #ff6d59 !important;
+  border: 1px solid #2b2d31 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.6rem 0.75rem !important;
   margin: 0 !important;
+  word-break: break-word !important;
+  overflow-x: auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
 :where(.dark, .dark *) .test-case-code,
 :where(.dark, .dark *) pre.test-case-code {
-  background-color: #0F1012 !important;
-  color: #F1F5F9 !important;
-  border-color: #2B2D31 !important;
+  background-color: #0f1012 !important;
+  border-color: #2b2d31 !important;
 }
 
 /* Horizontal rule */
