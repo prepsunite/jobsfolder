@@ -281,39 +281,36 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
 /** Formats a single question into rich HTML with side-by-side test cases */
 export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
   const caseCards = (q.testCases || []).map((c, cIdx) => `
-    <div class="test-case-item" data-type="test-case">
-      <div class="test-case-header">${c.title || `Test Case ${cIdx + 1}`}</div>
-      <div class="test-case-io-grid">
-        <div class="test-case-section">
-          <span class="test-case-label">Input:</span>
-          <pre class="test-case-code test-case-input-val">${escapeHtml(c.input)}</pre>
-        </div>
-        <div class="test-case-section">
-          <span class="test-case-label">Output:</span>
-          <pre class="test-case-code test-case-output-val">${escapeHtml(c.output)}</pre>
-        </div>
-      </div>
-    </div>
-  `).join('');
+<div class="test-case-item" data-type="test-case">
+<div class="test-case-header">${escapeHtml(c.title || `Test Case ${cIdx + 1}`)}</div>
+<div class="test-case-io-grid">
+<div class="test-case-section">
+<span class="test-case-label">Input:</span>
+<pre class="test-case-code test-case-input-val">${escapeHtml(c.input)}</pre>
+</div>
+<div class="test-case-section">
+<span class="test-case-label">Output:</span>
+<pre class="test-case-code test-case-output-val">${escapeHtml(c.output)}</pre>
+</div>
+</div>
+</div>`).join('\n');
 
   const constraintsList = (q.constraints && q.constraints.length > 0)
     ? `
-      <div class="my-3">
-        <h3 class="text-xs font-bold text-[#FD4A32] uppercase tracking-wider mb-1.5">Constraints</h3>
-        <ul class="list-disc pl-5 space-y-1 text-xs font-mono text-gray-700 dark:text-gray-300">
-          ${q.constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
-        </ul>
-      </div>
-    `
+<div class="my-3">
+<h3 class="text-xs font-bold text-[#FD4A32] uppercase tracking-wider mb-1.5">Constraints</h3>
+<ul class="list-disc pl-5 space-y-1 text-xs font-mono text-gray-700 dark:text-gray-300">
+${q.constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('\n')}
+</ul>
+</div>`
     : '';
 
   const testCasesBox = (q.testCases && q.testCases.length > 0)
     ? `
-      <div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(q.testCases).replace(/'/g, '&#39;')}'>
-        <div class="test-case-group-title">🧪 Test Cases</div>
-        ${caseCards}
-      </div>
-    `
+<div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(q.testCases).replace(/'/g, '&#39;')}'>
+<div class="test-case-group-title">🧪 Test Cases</div>
+${caseCards}
+</div>`
     : '';
 
   const formattedDesc = escapeHtml(q.description)
@@ -321,17 +318,16 @@ export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
     .replace(/\n/g, '<br>');
 
   return `
-    <div class="question-block mb-10 pb-8 border-b border-[#E9ECEF] dark:border-[#242424] last:border-b-0">
-      <div class="mb-2">
-        <h2 class="text-lg sm:text-xl font-display font-extrabold text-[#121417] dark:text-white m-0">${escapeHtml(q.title)}</h2>
-      </div>
-      <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed my-3 font-sans">
-        <p>${formattedDesc}</p>
-      </div>
-      ${constraintsList}
-      ${testCasesBox}
-    </div>
-  `.trim();
+<div class="question-block mb-10 pb-8 border-b border-[#E9ECEF] dark:border-[#242424] last:border-b-0">
+<div class="mb-2">
+<h2 class="text-lg sm:text-xl font-display font-extrabold text-[#121417] dark:text-white m-0">${escapeHtml(q.title)}</h2>
+</div>
+<div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed my-3 font-sans">
+<p>${formattedDesc}</p>
+</div>
+${constraintsList}
+${testCasesBox}
+</div>`.trim();
 }
 
 /** Formats an entire batch of questions directly without unnecessary banners */

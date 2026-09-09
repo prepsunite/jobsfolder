@@ -293,27 +293,25 @@ export function transformPreTestCasesToGroupHtml(html: string): string {
       const cases = parseChatGPTToCases(raw);
       if (cases.length > 0) {
         const caseCards = cases.map((c, idx) => `
-          <div class="test-case-item" data-type="test-case">
-            <div class="test-case-header">${c.title || `Test Case ${idx + 1}`}</div>
-            <div class="test-case-io-grid">
-              <div class="test-case-section">
-                <span class="test-case-label">Input:</span>
-                <pre class="test-case-code test-case-input-val">${c.input.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-              </div>
-              <div class="test-case-section">
-                <span class="test-case-label">Output:</span>
-                <pre class="test-case-code test-case-output-val">${c.output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-              </div>
-            </div>
-          </div>
-        `).join('');
+<div class="test-case-item" data-type="test-case">
+<div class="test-case-header">${c.title || `Test Case ${idx + 1}`}</div>
+<div class="test-case-io-grid">
+<div class="test-case-section">
+<span class="test-case-label">Input:</span>
+<pre class="test-case-code test-case-input-val">${c.input.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+</div>
+<div class="test-case-section">
+<span class="test-case-label">Output:</span>
+<pre class="test-case-code test-case-output-val">${c.output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+</div>
+</div>
+</div>`).join('\n');
 
         return `
-          <div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(cases).replace(/'/g, '&#39;')}'>
-            <div class="test-case-group-title">🧪 Test Cases</div>
-            ${caseCards}
-          </div>
-        `;
+<div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(cases).replace(/'/g, '&#39;')}'>
+<div class="test-case-group-title">🧪 Test Cases</div>
+${caseCards}
+</div>`;
       }
     }
     return match;

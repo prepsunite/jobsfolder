@@ -14,6 +14,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { marked } from 'marked';
 
 export interface ContentRendererProps {
   content: string;
@@ -21,9 +22,11 @@ export interface ContentRendererProps {
   emptyText?: string;
 }
 
-function isHTML(str: string): boolean {
+function containsHTML(str: string): boolean {
   if (!str?.trim()) return false;
-  return str.trim().startsWith('<');
+  const trimmed = str.trim();
+  if (trimmed.startsWith('<')) return true;
+  return /<(?:div|span|pre|p|h[1-6]|table|ul|ol|section)\b/i.test(trimmed);
 }
 
 function sanitizeSpacing(html: string): string {
@@ -31,6 +34,24 @@ function sanitizeSpacing(html: string): string {
   return html
     .replace(/(<p>\s*<br\s*\/?>\s*<\/p>)+/gi, '')
     .replace(/(<p>\s*<\/p>)+/gi, '');
+}
+
+function renderContentToHTML(content: string): string {
+  if (!content?.trim()) return '';
+  const trimmed = content.trim();
+
+  // If it's already HTML and has no top-level markdown headers
+  if (trimmed.startsWith('<') && !/^#{1,6}\s/m.test(trimmed)) {
+    return sanitizeSpacing(trimmed);
+  }
+
+  // If it contains markdown headers or formatting along with HTML
+  try {
+    const parsed = String(marked.parse(trimmed));
+    return sanitizeSpacing(parsed);
+  } catch {
+    return sanitizeSpacing(trimmed);
+  }
 }
 
 function parseTestCasesFromText(rawText: string) {
@@ -92,12 +113,12 @@ export default function ContentRenderer({
     return null;
   }
 
-  // TipTap HTML output
-  if (isHTML(content)) {
+  // HTML or mixed HTML/Markdown output
+  if (containsHTML(content)) {
     return (
       <div
         className={wrapCls}
-        dangerouslySetInnerHTML={{ __html: sanitizeSpacing(content) }}
+        dangerouslySetInnerHTML={{ __html: renderContentToHTML(content) }}
       />
     );
   }
