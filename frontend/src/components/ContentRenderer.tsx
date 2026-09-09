@@ -33,6 +33,38 @@ function sanitizeSpacing(html: string): string {
     .replace(/(<p>\s*<\/p>)+/gi, '');
 }
 
+function parseTestCasesFromText(rawText: string) {
+  if (!rawText?.trim()) return [];
+  const regex = /(?:Test\s*Case\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:Test\s*Case\s*\d+|$))/gi;
+  const matches = [...rawText.matchAll(regex)];
+
+  if (matches.length === 0) {
+    const inputMatch = rawText.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
+    const outputMatch = rawText.match(/Output:?\s*([\s\S]*?)$/i);
+    if (inputMatch || outputMatch) {
+      return [{
+        title: 'Test Case 1',
+        input: inputMatch ? inputMatch[1].trim() : '',
+        output: outputMatch ? outputMatch[1].trim() : '',
+      }];
+    }
+    return [];
+  }
+
+  return matches.map((m, idx) => {
+    const caseNum = m[1] || `${idx + 1}`;
+    const content = m[2].trim();
+    const inputMatch = content.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
+    const outputMatch = content.match(/Output:?\s*([\s\S]*?)$/i);
+
+    return {
+      title: `Test Case ${caseNum}`,
+      input: inputMatch ? inputMatch[1].trim() : '',
+      output: outputMatch ? outputMatch[1].trim() : '',
+    };
+  });
+}
+
 export default function ContentRenderer({
   content,
   className = '',
@@ -77,11 +109,44 @@ export default function ContentRenderer({
         rehypePlugins={[rehypeRaw]}
         remarkPlugins={[remarkGfm]}
         components={{
-          pre: ({ children, ...props }) => (
-            <pre className="test-case p-4 bg-[#141517] dark:bg-[#101113] text-[#FD4A32] dark:text-[#FD4A32] rounded-xl border border-[#383a40] overflow-x-auto text-xs font-mono whitespace-pre-wrap leading-relaxed my-3" {...props}>
-              {children}
-            </pre>
-          ),
+          pre: ({ children, ...props }: any) => {
+            const rawText = React.Children.toArray(children)
+              .map((child: any) => (typeof child === 'string' ? child : child?.props?.children || ''))
+              .join('');
+
+            const cases = (rawText.includes('Test Case') || (rawText.includes('Input:') && rawText.includes('Output:')))
+              ? parseTestCasesFromText(rawText)
+              : [];
+
+            if (cases.length > 0) {
+              return (
+                <div className="test-case-group" data-type="test-case-box">
+                  <div className="test-case-group-title">🧪 Test Cases</div>
+                  {cases.map((c, idx) => (
+                    <div key={idx} className="test-case-item" data-type="test-case">
+                      <div className="test-case-header">{c.title || `Test Case ${idx + 1}`}</div>
+                      <div className="test-case-io-grid">
+                        <div className="test-case-section">
+                          <span className="test-case-label">Input:</span>
+                          <pre className="test-case-code test-case-input-val">{c.input}</pre>
+                        </div>
+                        <div className="test-case-section">
+                          <span className="test-case-label">Output:</span>
+                          <pre className="test-case-code test-case-output-val">{c.output}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+
+            return (
+              <pre className="test-case p-4 bg-[#141517] dark:bg-[#101113] text-[#FD4A32] dark:text-[#FD4A32] rounded-xl border border-[#383a40] overflow-x-auto text-xs font-mono whitespace-pre-wrap leading-relaxed my-3" {...props}>
+                {children}
+              </pre>
+            );
+          },
           code: ({ inline, className, children, ...props }: any) => {
             if (inline) {
               return (

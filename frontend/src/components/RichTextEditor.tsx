@@ -72,7 +72,10 @@ function looksLikeMarkdown(text: string): boolean {
 function parseToHTML(value: string): string {
   if (!value?.trim()) return '';
   if (value.trim().startsWith('<')) return value;
-  if (looksLikeMarkdown(value)) return String(marked.parse(value));
+  if (looksLikeMarkdown(value)) {
+    const rawHtml = String(marked.parse(value));
+    return transformPreTestCasesToGroupHtml(rawHtml);
+  }
   return `<p>${value.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
 }
 
@@ -277,6 +280,46 @@ export function parseChatGPTToCases(text: string): Array<{ title: string; input:
   });
 }
 
+export function transformPreTestCasesToGroupHtml(html: string): string {
+  if (!html) return '';
+  return html.replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, (match, innerText) => {
+    const raw = innerText
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"');
+
+    if (raw.includes('Test Case') || (raw.includes('Input:') && raw.includes('Output:'))) {
+      const cases = parseChatGPTToCases(raw);
+      if (cases.length > 0) {
+        const caseCards = cases.map((c, idx) => `
+          <div class="test-case-item" data-type="test-case">
+            <div class="test-case-header">${c.title || `Test Case ${idx + 1}`}</div>
+            <div class="test-case-io-grid">
+              <div class="test-case-section">
+                <span class="test-case-label">Input:</span>
+                <pre class="test-case-code test-case-input-val">${c.input.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+              </div>
+              <div class="test-case-section">
+                <span class="test-case-label">Output:</span>
+                <pre class="test-case-code test-case-output-val">${c.output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="test-case-group" data-type="test-case-box" data-cases='${JSON.stringify(cases).replace(/'/g, '&#39;')}'>
+            <div class="test-case-group-title">🧪 Test Cases</div>
+            ${caseCards}
+          </div>
+        `;
+      }
+    }
+    return match;
+  });
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 function RichTextEditorInner({
   value,
@@ -436,7 +479,8 @@ function RichTextEditorInner({
           try {
             const parsedHTML = marked.parse(plainText);
             const htmlString = typeof parsedHTML === 'string' ? parsedHTML : String(parsedHTML);
-            editor?.commands.insertContent(htmlString);
+            const transformed = transformPreTestCasesToGroupHtml(htmlString);
+            editor?.commands.insertContent(transformed);
             return true;
           } catch (err) {
             console.warn('[RichTextEditor] Markdown paste parse fallback:', err);
