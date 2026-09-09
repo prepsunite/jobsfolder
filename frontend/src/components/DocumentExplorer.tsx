@@ -3,6 +3,7 @@ import { type DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
 import { TreeNodeItem } from '@/components/TreeNodeItem';
+import BulkImportPapersModal from '@/components/BulkImportPapersModal';
 import {
   cloneTree,
   moveUp,
@@ -26,6 +27,7 @@ import {
   Sparkles,
   Plus,
   Settings2,
+  Upload,
 } from 'lucide-react';
 
 interface DocumentExplorerProps {
@@ -91,6 +93,7 @@ export default function DocumentExplorer({
   const [renameValue, setRenameValue] = useState('');
   const [emojiValue, setEmojiValue] = useState('');
   const [adminMode, setAdminMode] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
   const flatNodes = useMemo(() => flattenNodes(localTabs), [localTabs]);
 
@@ -105,6 +108,15 @@ export default function DocumentExplorer({
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // ── Bulk Import handler ────────────────────────────────────────────────
+  const handleBulkImport = (newTabs: DocTabNode[]) => {
+    persist(newTabs);
+    const flat = flattenNodes(newTabs);
+    if (flat.length > 0) {
+      setSelectedNodeId(flat[flat.length - 1].id);
+    }
   };
 
   // ── Admin tree operations ──────────────────────────────────────────────
@@ -143,7 +155,8 @@ export default function DocumentExplorer({
 
   const handleDelete = (e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
-    if (!confirm('Delete this section and all its children?')) return;
+    const target = findNodeById(localTabs, nodeId);
+    if (!confirm(`Delete "${target?.title || 'this section'}" and all its children?`)) return;
     const updated = deleteNode(localTabs, nodeId);
     persist(updated);
     if (selectedNodeId === nodeId) setSelectedNodeId(updated[0]?.id || '');
@@ -178,6 +191,17 @@ export default function DocumentExplorer({
   return (
     <div className="w-full rounded-lg overflow-hidden border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col md:flex-row min-h-[680px]">
 
+      {showBulkImportModal && (
+        <BulkImportPapersModal
+          isOpen={showBulkImportModal}
+          onClose={() => setShowBulkImportModal(false)}
+          examName={examName}
+          companyName={companyName}
+          currentTabs={localTabs}
+          onImport={handleBulkImport}
+        />
+      )}
+
       {/* ── LEFT SIDEBAR ─────────────────────────────────────────────────── */}
       <div className="w-full md:w-72 lg:w-80 border-r border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] flex flex-col shrink-0">
 
@@ -194,32 +218,53 @@ export default function DocumentExplorer({
               </div>
             </div>
 
-            {/* Admin Mode Toggle */}
+            {/* Admin Controls */}
             {isAdmin && (
-              <button
-                onClick={() => setAdminMode(v => !v)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-display font-bold transition-all border ${
-                  adminMode
-                    ? 'bg-purple-700 text-white border-purple-700'
-                    : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:border-purple-400 hover:text-purple-600'
-                }`}
-                title="Toggle admin editing mode"
-              >
-                <Settings2 className="w-3 h-3" />
-                <span>{adminMode ? 'Editing' : 'Manage'}</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkImportModal(true)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-display font-extrabold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-xs cursor-pointer"
+                  title="Bulk import questions from batch text or JSON"
+                >
+                  <Upload className="w-3 h-3" />
+                  <span>Bulk Import</span>
+                </button>
+                <button
+                  onClick={() => setAdminMode(v => !v)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-display font-bold transition-all border ${
+                    adminMode
+                      ? 'bg-purple-700 text-white border-purple-700'
+                      : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:border-purple-400 hover:text-purple-600'
+                  }`}
+                  title="Toggle admin editing mode"
+                >
+                  <Settings2 className="w-3 h-3" />
+                  <span>{adminMode ? 'Editing' : 'Manage'}</span>
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Admin Root-level Add */}
+          {/* Admin Root-level Add & Bulk Action */}
           {isAdmin && adminMode && (
-            <button
-              onClick={handleAddRootFile}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-purple-400 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[10px] font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Root File
-            </button>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowBulkImportModal(true)}
+                className="w-full flex items-center justify-center gap-1 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-display font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+              >
+                <Upload className="w-3 h-3" />
+                Bulk Import
+              </button>
+              <button
+                onClick={handleAddRootFile}
+                className="w-full flex items-center justify-center gap-1 py-1.5 rounded-md border border-dashed border-purple-400 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[10px] font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" />
+                Add File
+              </button>
+            </div>
           )}
 
           {/* Admin Bulk Exam Access Toggle */}
