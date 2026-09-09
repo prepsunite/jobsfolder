@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import {
   FileText,
   Plus,
@@ -41,9 +41,13 @@ export default function TpoExamsPage() {
     enabled: !!collegeId,
   });
 
+  const now = new Date();
   // Apply active/all filter and batch filter
   const filteredExams = mockExams.filter(exam => {
-    if (filterStatus === 'ACTIVE' && !exam.is_active) return false;
+    if (filterStatus === 'ACTIVE') {
+      if (!exam.is_active || exam.is_deleted) return false;
+      return getExamTimingStatus(exam, now) === 'LIVE';
+    }
     if (selectedBatchFilter !== 'ALL') {
       const batches = exam.target_batches || [];
       if (batches.length > 0 && !batches.includes('ALL') && !batches.includes(selectedBatchFilter)) {
@@ -159,15 +163,36 @@ export default function TpoExamsPage() {
                     {exam.target_company}
                   </span>
                   <div className="flex items-center gap-2">
-                    {exam.is_active ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                        Live
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        Draft
-                      </span>
-                    )}
+                    {(() => {
+                      const timing = getExamTimingStatus(exam, now);
+                      if (timing === 'LIVE') {
+                        return (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            Live
+                          </span>
+                        );
+                      }
+                      if (timing === 'UPCOMING') {
+                        return (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            Scheduled
+                          </span>
+                        );
+                      }
+                      if (timing === 'CONCLUDED') {
+                        return (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            Concluded
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          Draft
+                        </span>
+                      );
+                    })()}
                     <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
                       {exam.duration_minutes} Mins

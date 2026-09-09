@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import type { MockExam, StudentExamAttempt, CollegeStudent, EvaluatedStudentSummary } from '@/types/tpo';
 import {
   TrendingUp,
@@ -1005,15 +1005,36 @@ export default function TpoAnalyticsPage() {
                         )}
                       </td>
                       <td className="py-4 px-4">
-                        {exam.is_active ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                            <CheckCircle2 className="w-3 h-3" /> Live
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                            Completed / Inactive
-                          </span>
-                        )}
+                        {(() => {
+                          const timing = getExamTimingStatus(exam);
+                          if (timing === 'LIVE') {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                Live
+                              </span>
+                            );
+                          }
+                          if (timing === 'UPCOMING') {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                Scheduled
+                              </span>
+                            );
+                          }
+                          if (timing === 'CONCLUDED') {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                Concluded
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                              Draft
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="py-4 pl-4 text-right">
                         <Link
@@ -1049,7 +1070,12 @@ export default function TpoAnalyticsPage() {
           overall_accuracy: Object.keys(selectedAttempt.responses || {}).length > 0 ? Math.round(((selectedAttempt.total_score || 0) / Object.keys(selectedAttempt.responses || {}).length) * 100) : (selectedAttempt.percentage || 0),
           time_spent_seconds: selectedAttempt.time_spent_seconds || 0,
           tab_switch_count: selectedAttempt.tab_switch_count || 0,
-          proctor_status: (selectedAttempt.tab_switch_count || 0) > 3 ? 'MALPRACTICE_TERMINATED' : (selectedAttempt.tab_switch_count || 0) > 0 ? 'WARNING' : 'CLEAN',
+          proctor_status:
+            selectedAttempt.status === 'TERMINATED_MALPRACTICE' || (selectedAttempt.tab_switch_count || 0) >= 3
+              ? 'MALPRACTICE_TERMINATED'
+              : (selectedAttempt.tab_switch_count || 0) > 0
+              ? 'WARNING'
+              : 'CLEAN',
           sections: activeExam?.sections?.map((s, idx) => ({
             section_id: s.id || `sec-${idx}`,
             section_name: s.name,

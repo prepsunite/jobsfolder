@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase';
 import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
 import { progressService } from '@/services/progress.service';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/tpo.service';
+import type { StudentExamAttempt } from '@/types/tpo';
 import StudentAnalyticsHub from '@/components/StudentAnalyticsHub';
 import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
@@ -123,14 +124,21 @@ export default function DashboardPage() {
   const campusExams = campusExamsData?.exams || [];
 
   const completedCampusAttempts = useMemo(
-    () => campusExams.filter(e => e.attempt && e.attempt.status === 'SUBMITTED'),
+    () => campusExams.filter(e => isAttemptCompleted(e.attempt)),
+    [campusExams]
+  );
+  const activeCampusExams = useMemo(
+    () => campusExams.filter(e => !isAttemptCompleted(e.attempt) && getExamTimingStatus(e) === 'LIVE'),
     [campusExams]
   );
   const avgCampusScore = useMemo(() => {
-    if (completedCampusAttempts.length === 0) return null;
-    const sum = completedCampusAttempts.reduce((acc, e) => acc + (e.attempt?.percentage || 0), 0);
-    return Math.round(sum / completedCampusAttempts.length);
-  }, [completedCampusAttempts]);
+    const scored = campusExams
+      .map(e => e.attempt)
+      .filter((a): a is StudentExamAttempt => !!a && isAttemptCompleted(a) && typeof a.percentage === 'number' && !isNaN(a.percentage));
+    if (scored.length === 0) return null;
+    const sum = scored.reduce((acc, a) => acc + (a.percentage || 0), 0);
+    return Math.round(sum / scored.length);
+  }, [campusExams]);
 
   // Fetch all questions metadata to compute user's lifetime aptitude stats
   const { data: allQuestionsMeta = [], isLoading: isMetaLoading } = useQuery({
@@ -723,11 +731,11 @@ export default function DashboardPage() {
           {/* Quick Action Navigation Strip */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
             <div className="text-xs text-gray-600 dark:text-gray-400">
-              {completedCampusAttempts.length < campusExams.length ? (
+              {activeCampusExams.length > 0 ? (
                 <span>
                   You have{' '}
                   <strong className="text-gray-900 dark:text-white">
-                    {campusExams.length - completedCampusAttempts.length} active placement assessments
+                    {activeCampusExams.length} active placement assessment{activeCampusExams.length > 1 ? 's' : ''}
                   </strong>{' '}
                   ready for your branch and cohort.
                 </span>
@@ -737,9 +745,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
-              {campusExams.some(e => e.attempt?.status === 'IN_PROGRESS') && (
+              {campusExams.some(e => e.attempt?.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE') && (
                 <Link
-                  to={`/exam/${campusExams.find(e => e.attempt?.status === 'IN_PROGRESS')?.id}`}
+                  to={`/exam/${campusExams.find(e => e.attempt?.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE')?.id}`}
                   className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm shrink-0"
                 >
                   <Clock className="w-3.5 h-3.5" />

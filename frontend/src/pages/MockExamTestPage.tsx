@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, useNavigate, Link } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Clock,
   AlertTriangle,
@@ -24,10 +24,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
+  Calendar,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import type {
@@ -42,6 +43,7 @@ export default function MockExamTestPage() {
   const { examId } = useParams<{ examId: string }>();
   const { user, isAdmin, isTpoAdmin } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Test Lifecycle: 'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'
   const [testPhase, setTestPhase] = useState<'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'>('INSTRUCTIONS');
@@ -389,6 +391,16 @@ export default function MockExamTestPage() {
       return;
     }
 
+    const timing = getExamTimingStatus(exam);
+    if (timing === 'CONCLUDED' && (!existingAttempt || !isAttemptCompleted(existingAttempt))) {
+      alert('This mock assessment window has concluded. Submissions and new attempts are no longer accepted.');
+      return;
+    }
+    if (timing === 'UPCOMING' && (!existingAttempt || !isAttemptCompleted(existingAttempt))) {
+      alert(`This mock exam is scheduled to open on ${exam.start_time ? new Date(exam.start_time).toLocaleString() : 'a later date'}.`);
+      return;
+    }
+
     try {
       // Enter Fullscreen if required
       if (exam.enable_fullscreen_lock && document.documentElement.requestFullscreen) {
@@ -487,6 +499,12 @@ export default function MockExamTestPage() {
         setResponses(mergedResponses);
         setFinalGradedAttempt(graded);
         setTestPhase('SUBMITTED');
+
+        // Invalidate queries so that student portal and TPO views reflect the attempt immediately
+        queryClient.invalidateQueries({ queryKey: ['candidate-existing-attempt', exam?.id] });
+        queryClient.invalidateQueries({ queryKey: ['student-campus-mock-exams'] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-exam-attempts'] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-stats'] });
       } catch (err: any) {
         alert(`Submission error: ${err.message}`);
         isSubmittingRef.current = false;
@@ -1003,23 +1021,74 @@ export default function MockExamTestPage() {
             </div>
           )}
 
-          {existingAttempt && (existingAttempt.status === 'SUBMITTED' || existingAttempt.status === 'TIMED_OUT' || existingAttempt.status === 'TERMINATED_MALPRACTICE' || existingAttempt.status === 'GRADED') ? (
+          {existingAttempt && isAttemptCompleted(existingAttempt) ? (
             <div className="space-y-3">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl text-xs text-emerald-800 dark:text-emerald-300 space-y-1 text-left">
+              <div className={`p-4 border rounded-2xl text-xs space-y-1 text-left ${
+                existingAttempt.status === 'TERMINATED_MALPRACTICE'
+                  ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300'
+              }`}>
                 <div className="font-bold flex items-center gap-1.5 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  Assessment Completed & Submitted
+                  {existingAttempt.status === 'TERMINATED_MALPRACTICE' ? (
+                    <>
+                      <ShieldAlert className="w-4 h-4 text-rose-600" />
+                      Assessment Terminated (Proctor Disqualification)
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      Assessment Completed & Submitted
+                    </>
+                  )}
                 </div>
                 <p>
-                  You have already completed and submitted this mock exam. Under campus placement drive regulations, re-attempts are strictly disabled.
+                  {existingAttempt.status === 'TERMINATED_MALPRACTICE'
+                    ? 'This assessment was terminated due to exceeding allowed window/tab switches. Re-attempts are strictly disabled.'
+                    : 'You have already completed and submitted this mock exam. Under campus placement drive regulations, re-attempts are strictly disabled.'}
                 </p>
               </div>
               <button
                 onClick={() => setTestPhase('SUBMITTED')}
                 className="w-full py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
-                <span>View My Marks & Scorecard →</span>
+                <span>{existingAttempt.status === 'TERMINATED_MALPRACTICE' ? 'View Disqualification Details & Marks →' : 'View My Marks & Scorecard →'}</span>
               </button>
+            </div>
+          ) : getExamTimingStatus(exam) === 'CONCLUDED' ? (
+            <div className="space-y-3">
+              <div className="p-4 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs text-slate-800 dark:text-slate-200 space-y-1 text-left">
+                <div className="font-bold flex items-center gap-1.5 text-sm text-slate-900 dark:text-white">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  Assessment Window Concluded
+                </div>
+                <p>
+                  The scheduled testing window for this mock exam has ended ({exam.end_time ? new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Closed'}). New attempts are no longer accepted.
+                </p>
+              </div>
+              <Link
+                to="/student/exams"
+                className="w-full py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <span>← Return to Placement Mock Drives</span>
+              </Link>
+            </div>
+          ) : getExamTimingStatus(exam) === 'UPCOMING' ? (
+            <div className="space-y-3">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 rounded-2xl text-xs text-blue-800 dark:text-blue-300 space-y-1 text-left">
+                <div className="font-bold flex items-center gap-1.5 text-sm text-blue-900 dark:text-white">
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  Assessment Scheduled
+                </div>
+                <p>
+                  This mock exam is scheduled to open on {exam.start_time ? new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'soon'}. Please return when the assessment window opens.
+                </p>
+              </div>
+              <Link
+                to="/student/exams"
+                className="w-full py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <span>← Return to Mock Exams</span>
+              </Link>
             </div>
           ) : (
             <button

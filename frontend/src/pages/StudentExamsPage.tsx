@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   Calendar,
   TrendingUp,
   X,
@@ -28,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/tpo.service';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 
 type ExamFilterTab = 'ACTIVE' | 'COMPLETED' | 'UPCOMING' | 'ALL';
@@ -147,56 +148,41 @@ export default function StudentExamsPage() {
   const isUserPro = subData?.isPro ?? false;
 
   // 4. Categorize Exams
-  const now = useMemo(() => new Date(), []);
-
   const completedExams = useMemo(() => {
     return campusExams.filter(
-      e =>
-        e.attempt &&
-        (e.attempt.status === 'SUBMITTED' ||
-          e.attempt.status === 'TIMED_OUT' ||
-          e.attempt.status === 'GRADED')
+      e => isAttemptCompleted(e.attempt) || getExamTimingStatus(e) === 'CONCLUDED'
     );
   }, [campusExams]);
 
   const upcomingExams = useMemo(() => {
     return campusExams.filter(e => {
-      if (e.attempt && e.attempt.status === 'SUBMITTED') return false;
-      if (!e.start_time) return false;
-      return new Date(e.start_time) > now;
+      if (isAttemptCompleted(e.attempt)) return false;
+      return getExamTimingStatus(e) === 'UPCOMING';
     });
-  }, [campusExams, now]);
+  }, [campusExams]);
 
   const activeExams = useMemo(() => {
     return campusExams.filter(e => {
-      // If submitted, it's in completed
-      if (
-        e.attempt &&
-        (e.attempt.status === 'SUBMITTED' ||
-          e.attempt.status === 'TIMED_OUT' ||
-          e.attempt.status === 'GRADED')
-      ) {
-        return false;
-      }
-      // If starts in the future, it's upcoming
-      if (e.start_time && new Date(e.start_time) > now) {
-        return false;
-      }
-      // Otherwise it's active or in-progress
-      return true;
+      if (isAttemptCompleted(e.attempt)) return false;
+      return getExamTimingStatus(e) === 'LIVE';
     });
-  }, [campusExams, now]);
+  }, [campusExams]);
 
   const inProgressExams = useMemo(() => {
-    return campusExams.filter(e => e.attempt && e.attempt.status === 'IN_PROGRESS');
+    return campusExams.filter(
+      e => e.attempt && e.attempt.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE'
+    );
   }, [campusExams]);
 
   // Overall Score Calculation
   const avgCampusScore = useMemo(() => {
-    if (completedExams.length === 0) return null;
-    const sum = completedExams.reduce((acc, e) => acc + (e.attempt?.percentage || 0), 0);
-    return Math.round(sum / completedExams.length);
-  }, [completedExams]);
+    const scoredAttempts = campusExams
+      .map(e => e.attempt)
+      .filter((a): a is StudentExamAttempt => !!a && isAttemptCompleted(a) && typeof a.percentage === 'number' && !isNaN(a.percentage));
+    if (scoredAttempts.length === 0) return null;
+    const sum = scoredAttempts.reduce((acc, a) => acc + (a.percentage || 0), 0);
+    return Math.round(sum / scoredAttempts.length);
+  }, [campusExams]);
 
   // Unique Companies for Filter Chips
   const availableCompanies = useMemo(() => {
@@ -628,13 +614,13 @@ export default function StudentExamsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {displayedExams.map(exam => {
             const attempt = exam.attempt;
-            const isSubmitted =
-              attempt &&
-              (attempt.status === 'SUBMITTED' ||
-                attempt.status === 'TIMED_OUT' ||
-                attempt.status === 'GRADED');
-            const isInProgress = attempt && attempt.status === 'IN_PROGRESS';
-            const isUpcoming = exam.start_time && new Date(exam.start_time) > now && !isSubmitted;
+            const isFinished = isAttemptCompleted(attempt);
+            const timingStatus = getExamTimingStatus(exam);
+            const isInProgress = attempt && attempt.status === 'IN_PROGRESS' && timingStatus === 'LIVE';
+            const isMalpractice = attempt && attempt.status === 'TERMINATED_MALPRACTICE';
+            const isUpcoming = !isFinished && timingStatus === 'UPCOMING';
+            const isConcluded = !isFinished && timingStatus === 'CONCLUDED';
+            const isLive = !isFinished && timingStatus === 'LIVE';
 
             const targetDepts = exam.target_departments?.length
               ? exam.target_departments.join(', ')
@@ -643,7 +629,11 @@ export default function StudentExamsPage() {
             const totalQuestions =
               exam.sections?.reduce((acc, s) => acc + (s.question_ids?.length || 0), 0) || 0;
 
-            const isPassed = isSubmitted && (attempt.passed ?? (attempt.percentage >= (exam.passing_percentage || 50)));
+            const isPassed =
+              isFinished &&
+              !isMalpractice &&
+              !!attempt &&
+              (attempt.passed ?? (attempt.percentage >= (exam.passing_percentage || 50)));
 
             return (
               <div
@@ -657,7 +647,12 @@ export default function StudentExamsPage() {
                       {exam.target_company}
                     </span>
 
-                    {isSubmitted ? (
+                    {isMalpractice ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1">
+                        <ShieldAlert className="w-3 h-3 text-rose-500" />
+                        <span>Terminated ({attempt?.tab_switch_count || 3} Switches)</span>
+                      </span>
+                    ) : isFinished ? (
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
                           isPassed
@@ -671,7 +666,7 @@ export default function StudentExamsPage() {
                           <XCircle className="w-3 h-3 text-rose-500" />
                         )}
                         <span>
-                          {isPassed ? 'Passed' : 'Failed'} ({attempt.percentage}%)
+                          {isPassed ? 'Passed' : 'Completed'} ({attempt?.percentage || 0}%)
                         </span>
                       </span>
                     ) : isInProgress ? (
@@ -683,6 +678,11 @@ export default function StudentExamsPage() {
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-blue-500" />
                         <span>Scheduled</span>
+                      </span>
+                    ) : isConcluded ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-slate-500" />
+                        <span>Concluded</span>
                       </span>
                     ) : (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
@@ -714,11 +714,11 @@ export default function StudentExamsPage() {
                     </div>
                     <div>
                       <div className="text-[9px] font-bold text-gray-400 uppercase">
-                        {isSubmitted ? 'Your Score' : 'Total Marks'}
+                        {isFinished ? 'Your Score' : 'Total Marks'}
                       </div>
                       <div className="text-xs font-black text-gray-800 dark:text-gray-200 mt-0.5">
-                        {isSubmitted ? (
-                          <span className={isPassed ? 'text-emerald-600' : 'text-rose-600'}>
+                        {isFinished && attempt ? (
+                          <span className={isMalpractice ? 'text-rose-600' : isPassed ? 'text-emerald-600' : 'text-rose-600'}>
                             {attempt.total_score} / {attempt.max_possible_score || exam.total_marks}
                           </span>
                         ) : (
@@ -750,7 +750,7 @@ export default function StudentExamsPage() {
                       {exam.enable_tab_switch_detection ? (
                         <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500">
                           <ShieldCheck className="w-3 h-3 text-[#FD4A32]" />
-                          Anti-Cheat Proctoring
+                          Anti-Cheat Proctoring (Max {exam.max_tab_switches_allowed || 3} switches)
                         </span>
                       ) : (
                         <span className="text-[10px] text-gray-400">Standard Test</span>
@@ -761,19 +761,28 @@ export default function StudentExamsPage() {
                           Starts: {new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
+                      {isConcluded && exam.end_time && (
+                        <span className="text-[10px] font-bold text-slate-500">
+                          Ended: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Bottom Action Footer */}
                 <div className="pt-4 border-t border-gray-100 dark:border-[#27292e] mt-4 space-y-2">
-                  {isSubmitted ? (
+                  {isFinished && attempt ? (
                     <button
                       onClick={() => setSelectedScorecardExam(exam)}
                       className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5 text-blue-500" />
-                      <span>View Marks & Scorecard ({attempt.total_score}/{attempt.max_possible_score || exam.total_marks})</span>
+                      <span>
+                        {isMalpractice
+                          ? 'View Disqualification & Scorecard'
+                          : `View Marks & Scorecard (${attempt.total_score}/${attempt.max_possible_score || exam.total_marks})`}
+                      </span>
                     </button>
                   ) : isInProgress ? (
                     <Link
@@ -789,7 +798,15 @@ export default function StudentExamsPage() {
                       className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-600 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed"
                     >
                       <Clock className="w-3.5 h-3.5" />
-                      <span>Scheduled — Opens Soon</span>
+                      <span>Scheduled — Opens {exam.start_time ? new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Soon'}</span>
+                    </button>
+                  ) : isConcluded ? (
+                    <button
+                      disabled
+                      className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-600 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Window Closed — Concluded</span>
                     </button>
                   ) : (
                     <Link
@@ -843,69 +860,102 @@ export default function StudentExamsPage() {
             </div>
 
             {/* Primary Score Banner */}
-            <div
-              className={`rounded-2xl p-5 border flex flex-col sm:flex-row items-center justify-between gap-4 ${
-                (selectedScorecardExam.attempt.passed ??
-                selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50))
-                  ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold shrink-0 ${
-                    (selectedScorecardExam.attempt.passed ??
-                    selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50))
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-rose-500 text-white'
-                  }`}
-                >
-                  {(selectedScorecardExam.attempt.passed ??
-                  selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50)) ? (
-                    <CheckCircle2 className="w-8 h-8" />
-                  ) : (
-                    <XCircle className="w-8 h-8" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider">
-                      {(selectedScorecardExam.attempt.passed ??
-                      selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50))
-                        ? 'Passed Assessment'
-                        : 'Below Cutoff'}
-                    </span>
-                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
-                      (Cutoff: {selectedScorecardExam.passing_percentage}%)
-                    </span>
+            {selectedScorecardExam.attempt.status === 'TERMINATED_MALPRACTICE' ? (
+              <div className="rounded-2xl p-5 border bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md">
+                    <ShieldAlert className="w-8 h-8" />
                   </div>
-                  <div className="text-3xl font-black text-gray-900 dark:text-white mt-0.5">
-                    {selectedScorecardExam.attempt.percentage}%
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    Total Score: <strong>{selectedScorecardExam.attempt.total_score}</strong> out of{' '}
-                    <strong>
-                      {selectedScorecardExam.attempt.max_possible_score || selectedScorecardExam.total_marks}
-                    </strong>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                        Disqualified for Proctoring Violations
+                      </span>
+                    </div>
+                    <div className="text-xl font-black text-rose-900 dark:text-white mt-0.5">
+                      Malpractice Terminated
+                    </div>
+                    <div className="text-xs text-rose-700 dark:text-rose-300 font-medium">
+                      Exceeded maximum allowed window/tab switches ({selectedScorecardExam.attempt.tab_switch_count || 3} recorded).
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Placement Readiness Badge */}
-              <div className="text-right">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
-                  Readiness Caliber
-                </span>
-                <span className="inline-flex items-center gap-1 text-sm font-black text-[#FD4A32] mt-0.5">
-                  <Award className="w-4 h-4" />
-                  {selectedScorecardExam.attempt.percentage >= 70
-                    ? 'Day-1 Placement Ready'
-                    : selectedScorecardExam.attempt.percentage >= 50
-                    ? 'Near Industry Ready'
-                    : 'Requires Remedial Prep'}
-                </span>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 block">
+                    Placement Standing
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                    Disqualified / Remedial
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div
+                className={`rounded-2xl p-5 border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                  (selectedScorecardExam.attempt.passed ??
+                  selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50))
+                    ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold shrink-0 ${
+                      (selectedScorecardExam.attempt.passed ??
+                      selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50))
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-rose-500 text-white'
+                    }`}
+                  >
+                    {(selectedScorecardExam.attempt.passed ??
+                    selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50)) ? (
+                      <CheckCircle2 className="w-8 h-8" />
+                    ) : (
+                      <XCircle className="w-8 h-8" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider">
+                        {(selectedScorecardExam.attempt.passed ??
+                        selectedScorecardExam.attempt.percentage >= (selectedScorecardExam.passing_percentage || 50))
+                          ? 'Passed Assessment'
+                          : 'Below Cutoff'}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                        (Cutoff: {selectedScorecardExam.passing_percentage}%)
+                      </span>
+                    </div>
+                    <div className="text-3xl font-black text-gray-900 dark:text-white mt-0.5">
+                      {selectedScorecardExam.attempt.percentage}%
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      Total Score: <strong>{selectedScorecardExam.attempt.total_score}</strong> out of{' '}
+                      <strong>
+                        {selectedScorecardExam.attempt.max_possible_score || selectedScorecardExam.total_marks}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Placement Readiness Badge */}
+                <div className="text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                    Readiness Caliber
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-sm font-black text-[#FD4A32] mt-0.5">
+                    <Award className="w-4 h-4" />
+                    {selectedScorecardExam.attempt.percentage >= 70
+                      ? 'Day-1 Placement Ready'
+                      : selectedScorecardExam.attempt.percentage >= 50
+                      ? 'Near Industry Ready'
+                      : 'Requires Remedial Prep'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Quick Metrics (Time Spent, Integrity, Total Attempted) */}
             <div className="grid grid-cols-3 gap-3 text-center">
@@ -920,7 +970,11 @@ export default function StudentExamsPage() {
               <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-100 dark:border-[#27292e]">
                 <div className="text-[10px] font-bold uppercase text-gray-400">Proctor Integrity</div>
                 <div className="text-sm font-black mt-0.5">
-                  {(selectedScorecardExam.attempt.tab_switch_count || 0) === 0 ? (
+                  {selectedScorecardExam.attempt.status === 'TERMINATED_MALPRACTICE' ? (
+                    <span className="text-rose-600 dark:text-rose-400 font-bold">
+                      {selectedScorecardExam.attempt.tab_switch_count || 3} Switches (Disqualified)
+                    </span>
+                  ) : (selectedScorecardExam.attempt.tab_switch_count || 0) === 0 ? (
                     <span className="text-emerald-600 dark:text-emerald-400">Clean (0 Switches)</span>
                   ) : (
                     <span className="text-amber-600 dark:text-amber-400">

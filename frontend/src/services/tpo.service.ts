@@ -30,6 +30,45 @@ export const STORAGE_KEYS_TPO = {
   TEMPLATES: 'prepunite_tpo_exam_templates',
 } as const;
 
+/**
+ * Helper to check if a student exam attempt has finished/finalized (submitted, timed out, graded, or malpractice-terminated)
+ */
+export function isAttemptCompleted(attempt?: StudentExamAttempt | null): boolean {
+  if (!attempt || !attempt.status) return false;
+  return (
+    attempt.status === 'SUBMITTED' ||
+    attempt.status === 'GRADED' ||
+    attempt.status === 'TIMED_OUT' ||
+    attempt.status === 'TERMINATED_MALPRACTICE'
+  );
+}
+
+/**
+ * Helper to get the real-time scheduling lifecycle of an exam
+ */
+export function getExamTimingStatus(
+  exam: { is_active?: boolean; is_deleted?: boolean; start_time?: string; end_time?: string },
+  referenceDate = new Date()
+): 'DRAFT' | 'UPCOMING' | 'LIVE' | 'CONCLUDED' {
+  if (exam.is_deleted || exam.is_active === false) {
+    return 'DRAFT';
+  }
+  const nowMs = referenceDate.getTime();
+  if (exam.start_time) {
+    const startMs = new Date(exam.start_time).getTime();
+    if (Number.isFinite(startMs) && startMs > nowMs) {
+      return 'UPCOMING';
+    }
+  }
+  if (exam.end_time) {
+    const endMs = new Date(exam.end_time).getTime();
+    if (Number.isFinite(endMs) && endMs <= nowMs) {
+      return 'CONCLUDED';
+    }
+  }
+  return 'LIVE';
+}
+
 export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
   {
     id: 'tmpl-tcs-nqt-2026',
@@ -2956,7 +2995,12 @@ export const tpoService = {
               overall_accuracy: Object.keys(att.responses || {}).length > 0 ? Math.round((score / Object.keys(att.responses || {}).length) * 100) : 0,
               time_spent_seconds: att.time_spent_seconds || 0,
               tab_switch_count: att.tab_switch_count || 0,
-              proctor_status: (att.tab_switch_count || 0) > 3 ? 'MALPRACTICE_TERMINATED' : (att.tab_switch_count || 0) > 0 ? 'WARNING' : 'CLEAN',
+              proctor_status:
+                att.status === 'TERMINATED_MALPRACTICE' || (att.tab_switch_count || 0) >= 3
+                  ? 'MALPRACTICE_TERMINATED'
+                  : (att.tab_switch_count || 0) > 0
+                  ? 'WARNING'
+                  : 'CLEAN',
               sections: matchingExam?.sections?.map((s, idx) => ({
                 section_id: s.id || `sec-${idx}`,
                 section_name: s.name,
@@ -3048,7 +3092,11 @@ export const tpoService = {
     );
 
     const totalStudents = students.length;
-    const activeExamsCount = exams.filter(e => e.is_active).length;
+    const now = new Date();
+    const activeExamsCount = exams.filter(e => {
+      if (!e.is_active || e.is_deleted) return false;
+      return getExamTimingStatus(e, now) === 'LIVE';
+    }).length;
     const totalAttempts = allAttempts.length;
 
     // Build student mapping for department & profile resolution
@@ -4609,8 +4657,9 @@ export const tpoService = {
     const percentage = finalMaxScore > 0 ? Math.round((totalScore / finalMaxScore) * 1000) / 10 : 0;
     const passed = percentage >= (exam.passing_percentage || 40);
 
+    const maxAllowedSwitches = exam.max_tab_switches_allowed || 3;
     const isMalpractice = statusOverride === 'TERMINATED_MALPRACTICE' ||
-      (exam.enable_tab_switch_detection && tabSwitchCount > (exam.max_tab_switches_allowed || 3));
+      (exam.enable_tab_switch_detection && tabSwitchCount >= maxAllowedSwitches);
 
     let tier: 'TIER_1' | 'TIER_2' | 'TIER_3' | 'MALPRACTICE';
     let tier_label: string;
@@ -5193,7 +5242,12 @@ export const tpoService = {
     // 3. Fetch all attempts by this student
     let studentAttempts: StudentExamAttempt[] = [];
     const localAll = getLocalAttempts().filter(
-      a => a.student_id === cleanEmail || a.student_id?.toLowerCase() === cleanEmail
+      a =>
+        a.student_id === cleanEmail ||
+        a.student_id?.toLowerCase() === cleanEmail ||
+        a.student_email?.toLowerCase() === cleanEmail ||
+        (studentEmail && a.student_id?.toLowerCase() === studentEmail.toLowerCase()) ||
+        (studentEmail && a.student_email?.toLowerCase() === studentEmail.toLowerCase())
     );
     studentAttempts = [...localAll];
 
@@ -5201,7 +5255,7 @@ export const tpoService = {
       const { data: cloudAttempts } = await supabase
         .from('student_exam_attempts')
         .select('*')
-        .or(`student_id.eq.${cleanEmail},student_id.eq.${studentEmail}`);
+        .or(`student_id.eq.${cleanEmail},student_id.eq.${studentEmail},student_email.eq.${cleanEmail},student_email.eq.${studentEmail}`);
       if (cloudAttempts && cloudAttempts.length > 0) {
         const attemptMap = new Map<string, StudentExamAttempt>();
         studentAttempts.forEach(a => attemptMap.set(a.id, a));
@@ -5215,7 +5269,7 @@ export const tpoService = {
       const { data: cloudMsgs } = await supabase
         .from('contact_messages')
         .select('message')
-        .like('subject', `B2B_ATTEMPT:%:${cleanEmail}`)
+        .or(`subject.like.B2B_ATTEMPT:%:${cleanEmail},subject.like.B2B_ATTEMPT:%:${studentEmail},email.eq.${cleanEmail}`)
         .order('created_at', { ascending: false });
 
       if (cloudMsgs && cloudMsgs.length > 0) {
@@ -5233,12 +5287,24 @@ export const tpoService = {
       }
     } catch {}
 
-    // Map attempts to exams
+    // Map attempts to exams: for each exam, pick the completed attempt if any, or latest in-progress
     const annotatedExams = exams.map(exam => {
-      const attempt = studentAttempts.find(a => a.mock_exam_id === exam.id) || null;
+      const examAttempts = studentAttempts.filter(a => a.mock_exam_id === exam.id);
+      let bestAttempt: StudentExamAttempt | null = null;
+      if (examAttempts.length > 0) {
+        examAttempts.sort((a, b) => {
+          const aDone = isAttemptCompleted(a) ? 1 : 0;
+          const bDone = isAttemptCompleted(b) ? 1 : 0;
+          if (aDone !== bDone) return bDone - aDone;
+          const aTime = new Date(a.submitted_at || a.updated_at || a.started_at || 0).getTime();
+          const bTime = new Date(b.submitted_at || b.updated_at || b.started_at || 0).getTime();
+          return bTime - aTime;
+        });
+        bestAttempt = examAttempts[0];
+      }
       return {
         ...exam,
-        attempt,
+        attempt: bestAttempt,
       };
     });
 
@@ -5251,4 +5317,7 @@ export const tpoService = {
       exams: annotatedExams,
     };
   },
+
+  isAttemptCompleted,
+  getExamTimingStatus,
 };

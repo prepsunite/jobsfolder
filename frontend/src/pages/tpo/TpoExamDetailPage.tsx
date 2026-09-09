@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import {
   ArrowLeft,
   Download,
@@ -208,10 +208,40 @@ export default function TpoExamDetailPage() {
           >
             <ArrowLeft className="w-4 h-4" /> Back to All Mock Exams
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32]">
               {exam.target_company}
             </span>
+            {(() => {
+              const timing = getExamTimingStatus(exam);
+              if (timing === 'LIVE') {
+                return (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    Live Assessment
+                  </span>
+                );
+              }
+              if (timing === 'UPCOMING') {
+                return (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    Scheduled (Starts {exam.start_time ? new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Soon'})
+                  </span>
+                );
+              }
+              if (timing === 'CONCLUDED') {
+                return (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                    Concluded ({exam.end_time ? new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Closed'})
+                  </span>
+                );
+              }
+              return (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  Draft
+                </span>
+              );
+            })()}
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {exam.title}
             </h1>
@@ -405,7 +435,12 @@ export default function TpoExamDetailPage() {
           overall_accuracy: Object.keys(selectedAttempt.responses || {}).length > 0 ? Math.round(((selectedAttempt.total_score || 0) / Object.keys(selectedAttempt.responses || {}).length) * 100) : (selectedAttempt.percentage || 0),
           time_spent_seconds: selectedAttempt.time_spent_seconds || 0,
           tab_switch_count: selectedAttempt.tab_switch_count || 0,
-          proctor_status: (selectedAttempt.tab_switch_count || 0) > 3 ? 'MALPRACTICE_TERMINATED' : (selectedAttempt.tab_switch_count || 0) > 0 ? 'WARNING' : 'CLEAN',
+          proctor_status:
+            selectedAttempt.status === 'TERMINATED_MALPRACTICE' || (selectedAttempt.tab_switch_count || 0) >= 3
+              ? 'MALPRACTICE_TERMINATED'
+              : (selectedAttempt.tab_switch_count || 0) > 0
+              ? 'WARNING'
+              : 'CLEAN',
           sections: exam?.sections?.map((s, idx) => ({
             section_id: s.id || `sec-${idx}`,
             section_name: s.name,

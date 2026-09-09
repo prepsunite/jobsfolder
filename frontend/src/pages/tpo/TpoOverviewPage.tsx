@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tpoService } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import {
   Users,
   Calendar,
@@ -250,32 +250,51 @@ export default function TpoOverviewPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {mockExams.slice(0, 4).map(exam => (
-                <div key={exam.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#FD4A32]/10 text-[#FD4A32]">
-                        {exam.target_company}
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">{exam.title}</h4>
+              {mockExams.slice(0, 4).map(exam => {
+                const timing = getExamTimingStatus(exam, now);
+                return (
+                  <div key={exam.id} className="py-3.5 flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#FD4A32]/10 text-[#FD4A32]">
+                          {exam.target_company}
+                        </span>
+                        {timing === 'LIVE' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            Live
+                          </span>
+                        )}
+                        {timing === 'CONCLUDED' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            Concluded
+                          </span>
+                        )}
+                        {timing === 'UPCOMING' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            Scheduled
+                          </span>
+                        )}
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">{exam.title}</h4>
+                      </div>
+                      <div className="text-xs text-slate-400 flex items-center gap-3">
+                        <span>{exam.duration_minutes} Mins</span>
+                        <span>•</span>
+                        <span>Total Marks: {exam.total_marks}</span>
+                        <span>•</span>
+                        <span>Target: {exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-400 flex items-center gap-3">
-                      <span>{exam.duration_minutes} Mins</span>
-                      <span>•</span>
-                      <span>Total Marks: {exam.total_marks}</span>
-                      <span>•</span>
-                      <span>Target: {exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}</span>
-                    </div>
-                  </div>
 
-                  <Link
-                    to={`/tpo/exams/${exam.id}`}
-                    className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors"
-                  >
-                    View Ranks →
-                  </Link>
-                </div>
-              ))}
+                    <Link
+                      to={`/tpo/exams/${exam.id}`}
+                      className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors"
+                    >
+                      View Ranks →
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

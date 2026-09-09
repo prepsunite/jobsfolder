@@ -427,17 +427,33 @@ function RichTextEditorInner({
         }
         if (hasImage) return true;
 
-        // Handle pasted test cases from ChatGPT or plain text
         const plainText = event.clipboardData?.getData('text/plain');
-        if (
-          plainText &&
-          (
-            plainText.includes('Test Case') ||
-            (plainText.includes('Input:') && plainText.includes('Output:'))
-          )
-        ) {
-          event.preventDefault();
+        if (!plainText) return false;
 
+        // 1. If pasting a full Markdown question or text with markdown elements (headings, codeblocks, etc.)
+        if (looksLikeMarkdown(plainText) || /^#{1,6}\s/m.test(plainText)) {
+          event.preventDefault();
+          try {
+            const parsedHTML = marked.parse(plainText);
+            const htmlString = typeof parsedHTML === 'string' ? parsedHTML : String(parsedHTML);
+            editor?.commands.insertContent(htmlString);
+            return true;
+          } catch (err) {
+            console.warn('[RichTextEditor] Markdown paste parse fallback:', err);
+            return false;
+          }
+        }
+
+        // 2. Handle ONLY pure test case blocks (not full questions with prose/headings)
+        const isPureTestCaseOnly = (
+          (plainText.trim().startsWith('Test Case') || plainText.trim().startsWith('Input:')) &&
+          !/^#{1,6}\s/m.test(plainText) &&
+          !plainText.includes('### Constraints') &&
+          !plainText.includes('### Test Cases')
+        );
+
+        if (isPureTestCaseOnly) {
+          event.preventDefault();
           const cases = parseChatGPTToCases(plainText);
           const node = view.state.schema.nodes.testCaseBox?.create({ cases });
           if (node) {
