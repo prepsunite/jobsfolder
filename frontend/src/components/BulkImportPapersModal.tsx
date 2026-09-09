@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Upload,
@@ -16,6 +16,7 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  FileText,
 } from 'lucide-react';
 import type { DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
@@ -145,7 +146,7 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
         let isFree = false;
         if (accessMode === 'free') isFree = true;
         else if (accessMode === 'paid') isFree = false;
-        else isFree = idx < 2; // standard
+        else isFree = idx < 2;
 
         return {
           title: item.title || `Question ${idx + 1}`,
@@ -236,10 +237,11 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
   return [];
 }
 
-export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
-  const caseCards = (q.testCases || []).map((c, idx) => `
+/** Formats a single question into rich HTML with side-by-side test cases */
+export function formatQuestionContentToHtml(q: ParsedPaperQuestion, idx?: number): string {
+  const caseCards = (q.testCases || []).map((c, cIdx) => `
     <div class="test-case-item" data-type="test-case">
-      <div class="test-case-header">${c.title || `Test Case ${idx + 1}`}</div>
+      <div class="test-case-header">${c.title || `Test Case ${cIdx + 1}`}</div>
       <div class="test-case-io-grid">
         <div class="test-case-section">
           <span class="test-case-label">Input:</span>
@@ -255,10 +257,12 @@ export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
 
   const constraintsList = (q.constraints && q.constraints.length > 0)
     ? `
-      <h3>Constraints</h3>
-      <ul>
-        ${q.constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
-      </ul>
+      <div class="my-3">
+        <h3 class="text-xs font-bold text-[#FD4A32] uppercase tracking-wider mb-1.5">Constraints</h3>
+        <ul class="list-disc pl-5 space-y-1 text-xs font-mono text-gray-700 dark:text-gray-300">
+          ${q.constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
+        </ul>
+      </div>
     `
     : '';
 
@@ -275,11 +279,41 @@ export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
     .replace(/\n\n+/g, '</p><p>')
     .replace(/\n/g, '<br>');
 
+  const badge = typeof idx === 'number'
+    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] mr-2">Question ${idx + 1}</span>`
+    : '';
+
   return `
-    <h1>${escapeHtml(q.title)}</h1>
-    <p>${formattedDesc}</p>
-    ${constraintsList}
-    ${testCasesBox}
+    <div class="question-block mb-10 pb-8 border-b border-[#E9ECEF] dark:border-[#242424] last:border-b-0">
+      <div class="flex items-center gap-2 mb-2">
+        ${badge}
+        <h2 class="text-lg sm:text-xl font-display font-extrabold text-[#121417] dark:text-white m-0">${escapeHtml(q.title)}</h2>
+      </div>
+      <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed my-3 font-sans">
+        <p>${formattedDesc}</p>
+      </div>
+      ${constraintsList}
+      ${testCasesBox}
+    </div>
+  `.trim();
+}
+
+/** Formats an entire batch of questions into a single comprehensive HTML document */
+export function formatBatchToSingleFileHtml(
+  questions: ParsedPaperQuestion[],
+  batchTitle: string,
+  companyName: string
+): string {
+  const questionsHtml = questions.map((q, idx) => formatQuestionContentToHtml(q, idx)).join('\n\n');
+
+  return `
+    <div class="batch-document-container">
+      <div class="mb-8 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
+        <h1 class="text-2xl sm:text-3xl font-display font-black text-[#121417] dark:text-white mb-1.5">${escapeHtml(batchTitle)}</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400 font-sans">${escapeHtml(companyName)} Campus Placement Series • ${questions.length} Verified Coding Problems</p>
+      </div>
+      ${questionsHtml}
+    </div>
   `.trim();
 }
 
@@ -293,15 +327,15 @@ export default function BulkImportPapersModal({
 }: BulkImportPapersModalProps) {
   const [inputText, setInputText] = useState<string>('');
   const [accessMode, setAccessMode] = useState<'standard' | 'free' | 'paid'>('standard');
-  const [destMode, setDestMode] = useState<'new-folder' | 'root' | 'existing-folder'>('new-folder');
-  const [newFolderName, setNewFolderName] = useState<string>(`${companyName} Coding Round 2026`);
-  const [selectedFolderId, setSelectedFolderId] = useState<string>('');
+  const [structureMode, setStructureMode] = useState<'single-file' | 'multi-file'>('single-file');
+  const [singleFileTitle, setSingleFileTitle] = useState<string>('');
+  const [fileEmoji, setFileEmoji] = useState<string>('⚡');
+  const [targetFolderId, setTargetFolderId] = useState<string>('ROOT');
   const [copiedTemplate, setCopiedTemplate] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'input' | 'preview'>('input');
-  const [expandedPreviewIndex, setExpandedPreviewIndex] = useState<number | null>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Filter available existing folder tabs (tabs with children or root tabs)
+  // Filter available existing folder tabs
   const existingFolders = useMemo(() => {
     return currentTabs.filter(t => t.children && t.children.length > 0);
   }, [currentTabs]);
@@ -310,6 +344,17 @@ export default function BulkImportPapersModal({
   const parsedQuestions = useMemo(() => {
     return parseBatchQuestions(inputText, accessMode);
   }, [inputText, accessMode]);
+
+  // Auto-generate sensible default title when questions are parsed
+  useEffect(() => {
+    if (parsedQuestions.length > 0 && !singleFileTitle) {
+      const firstQ = parsedQuestions[0]?.title || '';
+      const matchQNum = firstQ.match(/Q(\d+)/i);
+      const startNum = matchQNum ? matchQNum[1] : '1';
+      const endNum = parseInt(startNum, 10) + parsedQuestions.length - 1;
+      setSingleFileTitle(`${companyName} Batch: Coding Questions (Q${startNum}–Q${endNum})`);
+    }
+  }, [parsedQuestions, companyName, singleFileTitle]);
 
   if (!isOpen) return null;
 
@@ -327,40 +372,55 @@ export default function BulkImportPapersModal({
     setIsSubmitting(true);
 
     try {
-      // 1. Build DocTabNodes for each parsed question
-      const questionNodes: DocTabNode[] = parsedQuestions.map((q, idx) => ({
-        id: `q-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
-        title: q.title,
-        emoji: q.emoji || '⚡',
-        content: formatQuestionContentToHtml(q),
-        isFree: q.isFree,
-      }));
+      const finalTitle = singleFileTitle.trim() || `${companyName} Batch Coding Questions`;
 
       let updatedTabs: DocTabNode[] = [];
 
-      if (destMode === 'new-folder') {
+      if (structureMode === 'single-file') {
+        // Mode 1: ALL QUESTIONS IN ONE SINGLE PROPER FILE
+        const singleNode: DocTabNode = {
+          id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          title: finalTitle,
+          emoji: fileEmoji || '⚡',
+          content: formatBatchToSingleFileHtml(parsedQuestions, finalTitle, companyName),
+          isFree: accessMode === 'free',
+        };
+
+        if (targetFolderId !== 'ROOT') {
+          // Append into existing folder
+          updatedTabs = currentTabs.map(tab => {
+            if (tab.id === targetFolderId) {
+              return {
+                ...tab,
+                children: [...(tab.children || []), singleNode],
+              };
+            }
+            return tab;
+          });
+        } else {
+          // Add to document root
+          updatedTabs = [...currentTabs, singleNode];
+        }
+      } else {
+        // Mode 2: Multi-file (Separate file per question)
+        const questionNodes: DocTabNode[] = parsedQuestions.map((q, idx) => ({
+          id: `q-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+          title: q.title,
+          emoji: q.emoji || '⚡',
+          content: formatQuestionContentToHtml(q),
+          isFree: q.isFree,
+        }));
+
         const folderNode: DocTabNode = {
           id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          title: newFolderName.trim() || `${companyName} Coding Series`,
+          title: finalTitle,
           emoji: '📁',
-          content: `### ${newFolderName.trim() || companyName}\n\nThis section contains ${questionNodes.length} verified interview questions asked during ${companyName} campus recruitment drives.`,
+          content: `### ${finalTitle}\n\nContains ${questionNodes.length} verified coding questions for ${companyName}.`,
           isFree: accessMode === 'free',
           children: questionNodes,
         };
+
         updatedTabs = [...currentTabs, folderNode];
-      } else if (destMode === 'existing-folder' && selectedFolderId) {
-        updatedTabs = currentTabs.map(tab => {
-          if (tab.id === selectedFolderId) {
-            return {
-              ...tab,
-              children: [...(tab.children || []), ...questionNodes],
-            };
-          }
-          return tab;
-        });
-      } else {
-        // Root level
-        updatedTabs = [...currentTabs, ...questionNodes];
       }
 
       onImport(updatedTabs);
@@ -371,6 +431,11 @@ export default function BulkImportPapersModal({
       setIsSubmitting(false);
     }
   };
+
+  const previewSingleFileHtml = useMemo(() => {
+    const finalTitle = singleFileTitle.trim() || `${companyName} Batch Coding Questions`;
+    return formatBatchToSingleFileHtml(parsedQuestions, finalTitle, companyName);
+  }, [parsedQuestions, singleFileTitle, companyName]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs animate-fadeIn font-sans">
@@ -387,7 +452,7 @@ export default function BulkImportPapersModal({
               Bulk Import Coding Questions — {companyName}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Paste batches of 10–50 questions from chat or ChatGPT. Automatically extracts titles, constraints, and side-by-side test case cards.
+              Add entire batches directly into a <strong>single clean document</strong> with verified side-by-side test case cards.
             </p>
           </div>
 
@@ -402,57 +467,86 @@ export default function BulkImportPapersModal({
 
         {/* TOP CONFIGURATION STRIP */}
         <div className="p-3 sm:px-5 sm:py-3.5 bg-[#F8F9FA] dark:bg-[#1A1A1A] border-b border-[#E9ECEF] dark:border-[#2E2E2E] flex flex-wrap items-center justify-between gap-3 text-xs">
-          {/* Target Placement */}
+          {/* Structure Mode: Single File vs Multi-File */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-[#121417] dark:text-white shrink-0">Placement:</span>
-            <select
-              value={destMode}
-              onChange={e => setDestMode(e.target.value as any)}
-              className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2.5 py-1 text-xs font-semibold text-[#121417] dark:text-white focus:outline-none cursor-pointer"
-            >
-              <option value="new-folder">📁 Create New Folder for Batch</option>
-              {existingFolders.length > 0 && (
-                <option value="existing-folder">📂 Add to Existing Folder</option>
-              )}
-              <option value="root">📄 Add Directly to Root Tree</option>
-            </select>
-
-            {destMode === 'new-folder' && (
-              <input
-                type="text"
-                value={newFolderName}
-                onChange={e => setNewFolderName(e.target.value)}
-                placeholder="Folder title..."
-                className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2.5 py-1 text-xs text-[#121417] dark:text-white focus:outline-none w-48 sm:w-60 font-semibold"
-              />
-            )}
-
-            {destMode === 'existing-folder' && existingFolders.length > 0 && (
-              <select
-                value={selectedFolderId || existingFolders[0]?.id}
-                onChange={e => setSelectedFolderId(e.target.value)}
-                className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2.5 py-1 text-xs text-[#121417] dark:text-white focus:outline-none cursor-pointer"
+            <span className="font-bold text-[#121417] dark:text-white shrink-0">Structure:</span>
+            <div className="inline-flex rounded-lg p-0.5 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E]">
+              <button
+                type="button"
+                onClick={() => setStructureMode('single-file')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  structureMode === 'single-file'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
               >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Single File (All in 1)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStructureMode('multi-file')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  structureMode === 'multi-file'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Separate Files (1 per Q)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* File / Folder Title input */}
+          <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+            <input
+              type="text"
+              value={fileEmoji}
+              onChange={e => setFileEmoji(e.target.value)}
+              className="w-9 text-center bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md py-1 text-sm"
+              title="Emoji icon"
+              maxLength={2}
+            />
+            <input
+              type="text"
+              value={singleFileTitle}
+              onChange={e => setSingleFileTitle(e.target.value)}
+              placeholder="e.g. Accenture Batch 1: Coding Questions (Q1–Q10)"
+              className="flex-1 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-3 py-1 text-xs text-[#121417] dark:text-white focus:outline-none font-semibold"
+            />
+          </div>
+
+          {/* Placement / Target */}
+          {existingFolders.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-[#121417] dark:text-white shrink-0">In:</span>
+              <select
+                value={targetFolderId}
+                onChange={e => setTargetFolderId(e.target.value)}
+                className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2 py-1 text-xs text-[#121417] dark:text-white focus:outline-none cursor-pointer"
+              >
+                <option value="ROOT">📄 Root Level</option>
                 {existingFolders.map(f => (
                   <option key={f.id} value={f.id}>
-                    {f.emoji || '📁'} {f.title} ({f.children?.length || 0} items)
+                    {f.emoji || '📁'} {f.title}
                   </option>
                 ))}
               </select>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Access Policy Selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="font-bold text-[#121417] dark:text-white shrink-0">Access:</span>
             <select
               value={accessMode}
               onChange={e => setAccessMode(e.target.value as any)}
               className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-md px-2.5 py-1 text-xs font-semibold text-[#121417] dark:text-white focus:outline-none cursor-pointer"
             >
-              <option value="standard">⚡ First 2 Free, rest Paid (Standard)</option>
-              <option value="paid">🔒 All Paid (Locked behind Paywall)</option>
-              <option value="free">🔓 All Free (Public Access)</option>
+              <option value="paid">🔒 All Paid (Locked)</option>
+              <option value="free">🔓 All Free (Public)</option>
+              <option value="standard">⚡ First 2 Free, rest Paid</option>
             </select>
           </div>
         </div>
@@ -483,7 +577,7 @@ export default function BulkImportPapersModal({
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Live Visual Preview</span>
+              <span>Live Visual Preview ({structureMode === 'single-file' ? 'Single File' : 'Multi-Files'})</span>
               {parsedQuestions.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
                   {parsedQuestions.length}
@@ -540,7 +634,9 @@ export default function BulkImportPapersModal({
                 {parsedQuestions.length > 0 ? (
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Successfully detected {parsedQuestions.length} coding question(s)! Click "Live Visual Preview" to verify.</span>
+                    <span>
+                      Detected {parsedQuestions.length} coding question(s)! Will be saved as <strong>1 single file</strong>: "{singleFileTitle}".
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-gray-500">
@@ -553,30 +649,27 @@ export default function BulkImportPapersModal({
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs text-gray-500 pb-2 border-b border-[#E9ECEF] dark:border-[#242424]">
-                <span>Reviewing {parsedQuestions.length} parsed question(s) before importing:</span>
-                <button
-                  type="button"
-                  onClick={() => setExpandedPreviewIndex(expandedPreviewIndex !== null ? null : 0)}
-                  className="text-purple-600 dark:text-purple-400 font-bold hover:underline"
-                >
-                  {expandedPreviewIndex !== null ? 'Collapse Renderers' : 'Expand First Question'}
-                </button>
+                <span>
+                  Previewing <strong>{structureMode === 'single-file' ? 'Single Combined Document' : `${parsedQuestions.length} Separate Files`}</strong> ({parsedQuestions.length} questions):
+                </span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">
+                  {structureMode === 'single-file' ? '📄 Single File Mode' : '📁 Multi-File Mode'}
+                </span>
               </div>
 
-              {parsedQuestions.map((q, idx) => {
-                const isExpanded = expandedPreviewIndex === idx;
-                const htmlPreview = formatQuestionContentToHtml(q);
-
-                return (
+              {structureMode === 'single-file' ? (
+                /* SINGLE FILE PREVIEW */
+                <div className="p-4 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
+                  <ContentRenderer content={previewSingleFileHtml} />
+                </div>
+              ) : (
+                /* MULTI FILE PREVIEW */
+                parsedQuestions.map((q, idx) => (
                   <div
                     key={idx}
-                    className="border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden bg-[#F8F9FA] dark:bg-[#0C0C0C] transition-all"
+                    className="border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden bg-[#F8F9FA] dark:bg-[#0C0C0C]"
                   >
-                    {/* Item Header */}
-                    <div
-                      onClick={() => setExpandedPreviewIndex(isExpanded ? null : idx)}
-                      className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                    >
+                    <div className="p-3.5 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="text-base">{q.emoji || '⚡'}</span>
                         <div className="truncate">
@@ -587,38 +680,15 @@ export default function BulkImportPapersModal({
                             <span>{q.constraints?.length || 0} Constraints</span>
                             <span>•</span>
                             <span className="text-purple-600 dark:text-purple-400 font-bold">
-                              {q.testCases?.length || 0} Side-by-Side Test Cases
+                              {q.testCases?.length || 0} Test Cases
                             </span>
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {q.isFree ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[10px] font-bold">
-                            <Unlock className="w-2.5 h-2.5" /> Free
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[10px] font-bold">
-                            <Lock className="w-2.5 h-2.5" /> Paid
-                          </span>
-                        )}
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                      </div>
                     </div>
-
-                    {/* Expandable Rendered Question Preview */}
-                    {isExpanded && (
-                      <div className="p-4 sm:p-6 border-t border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] animate-fadeIn">
-                        <div className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">
-                          Live Rendered Document View:
-                        </div>
-                        <ContentRenderer content={htmlPreview} />
-                      </div>
-                    )}
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           )}
         </div>
@@ -628,17 +698,15 @@ export default function BulkImportPapersModal({
           <div className="text-xs text-gray-500">
             {parsedQuestions.length > 0 ? (
               <span>
-                Ready to import <strong>{parsedQuestions.length}</strong> question(s) into{' '}
+                Ready to import <strong>{parsedQuestions.length}</strong> questions into{' '}
                 <span className="text-purple-600 dark:text-purple-400 font-bold">
-                  {destMode === 'new-folder'
-                    ? `folder "${newFolderName || 'New Folder'}"`
-                    : destMode === 'existing-folder'
-                    ? 'selected folder'
-                    : 'document root'}
+                  {structureMode === 'single-file'
+                    ? `1 single file: "${singleFileTitle}"`
+                    : `separate files in folder`}
                 </span>.
               </span>
             ) : (
-              <span>Paste questions or copy the sample template to start.</span>
+              <span>Paste questions to start.</span>
             )}
           </div>
 
@@ -657,7 +725,13 @@ export default function BulkImportPapersModal({
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
             >
               <Upload className="w-4 h-4" />
-              <span>{isSubmitting ? 'Importing...' : `Import ${parsedQuestions.length} Questions`}</span>
+              <span>
+                {isSubmitting
+                  ? 'Importing...'
+                  : structureMode === 'single-file'
+                  ? `Import as 1 File (${parsedQuestions.length} Questions)`
+                  : `Import as ${parsedQuestions.length} Files`}
+              </span>
             </button>
           </div>
         </div>
