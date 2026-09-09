@@ -30,12 +30,21 @@ function escapeHtml(str: string): string {
 
 function parseTestCasesFromText(rawText: string) {
   if (!rawText?.trim()) return [];
-  const regex = /(?:Test\s*Case\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:Test\s*Case\s*\d+|$))/gi;
-  const matches = [...rawText.matchAll(regex)];
+  const clean = rawText
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p>/gi, '\n\n')
+    .replace(/<\/?p>/gi, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim();
+
+  const regex = /(?:(?:Test\s*Case|Example|Sample)\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:(?:Test\s*Case|Example|Sample)\s*\d+|$))/gi;
+  const matches = [...clean.matchAll(regex)];
 
   if (matches.length === 0) {
-    const inputMatch = rawText.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
-    const outputMatch = rawText.match(/Output:?\s*([\s\S]*?)$/i);
+    const inputMatch = clean.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
+    const outputMatch = clean.match(/Output:?\s*([\s\S]*?)$/i);
     if (inputMatch || outputMatch) {
       return [{
         title: 'Test Case 1',
@@ -93,8 +102,12 @@ export function transformRawMarkdownToBeautifulHtml(raw: string): string {
   // 2. Also strip Setext markdown heading underlines where a line of text is immediately followed by ===== or -----
   text = text.replace(/^([^\n]+)\n[=\-]{5,}\s*$/gm, '## $1');
 
-  // 3. Convert any "### Test Cases" blocks into styled HTML cards
-  text = text.replace(/(?:###?\s*Test\s*Cases\s*\n)([\s\S]*?)(?=(?:\n#{1,3}\s*|\n[=\-]{5,}|$))/gi, (match, caseBlock) => {
+  // 3. Convert any Test Cases blocks (### Test Cases, ## Test Cases, **Test Cases**, Test Cases\n, Test Cases<br>) into styled HTML cards
+  text = text.replace(/(?:(?:^|\n|<p>|<br\s*\/?>)(?:#{1,4}|\*\*|)\s*(?:Test\s*Cases|Example\s*Cases|Examples)\s*:?\s*\*?\*?\s*(?:\n|<br\s*\/?>))([\s\S]*?)(?=(?:\n#{1,4}\s*|\n[=\-]{5,}|$|<\/p>|<\/div>|<div class="question-block))/gi, (match, caseBlock) => {
+    // If it already contains test-case-group, do not re-transform
+    if (caseBlock.includes('test-case-group') || caseBlock.includes('data-type="test-case-box"')) {
+      return match;
+    }
     const cases = parseTestCasesFromText(caseBlock);
     if (cases.length > 0) {
       return generateTestCaseBoxHtml(cases);
@@ -108,7 +121,7 @@ export function transformRawMarkdownToBeautifulHtml(raw: string): string {
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&amp;/g, '&');
-    if (unescaped.includes('Test Case') || (unescaped.includes('Input:') && unescaped.includes('Output:'))) {
+    if (unescaped.includes('Test Case') || unescaped.includes('Example') || (unescaped.includes('Input:') && unescaped.includes('Output:'))) {
       const cases = parseTestCasesFromText(unescaped);
       if (cases.length > 0) {
         return generateTestCaseBoxHtml(cases);

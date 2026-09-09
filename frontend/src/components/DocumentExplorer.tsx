@@ -58,9 +58,35 @@ export default function DocumentExplorer({
   // Local tab state — keeps admin edits fast without prop round-trips
   const [localTabs, setLocalTabs] = useState<DocTabNode[]>(() => cloneTree(tabs));
 
-  // Sync from parent when tabs change externally (e.g. exam switch)
+  const [selectedNodeId, setSelectedNodeId] = useState<string>(() => {
+    const flat = flattenNodes(tabs);
+    return flat[0]?.id || '';
+  });
+
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(() => {
+    const map: Record<string, boolean> = {};
+    const expand = (nodes: DocTabNode[]) => nodes.forEach(n => { map[n.id] = true; if (n.children) expand(n.children); });
+    expand(tabs);
+    return map;
+  });
+
+  // Sync from parent when tabs change externally (e.g. exam switch or refresh)
   useEffect(() => {
-    setLocalTabs(cloneTree(tabs));
+    const cloned = cloneTree(tabs);
+    setLocalTabs(cloned);
+    if (cloned.length > 0) {
+      const flat = flattenNodes(cloned);
+      setSelectedNodeId(prev => {
+        if (prev && flat.some(n => n.id === prev)) return prev;
+        return flat[0]?.id || '';
+      });
+      setExpandedIds(prev => {
+        const map = { ...prev };
+        const expand = (nodes: DocTabNode[]) => nodes.forEach(n => { map[n.id] = true; if (n.children) expand(n.children); });
+        expand(cloned);
+        return map;
+      });
+    }
   }, [tabs]);
 
   const persist = useCallback((newTabs: DocTabNode[]) => {
@@ -80,14 +106,6 @@ export default function DocumentExplorer({
     persist(updated);
     onToggleExamPublic?.(makeFree);
   };
-
-  const [selectedNodeId, setSelectedNodeId] = useState<string>(() => tabs[0]?.id || '');
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    const expand = (nodes: DocTabNode[]) => nodes.forEach(n => { map[n.id] = true; if (n.children) expand(n.children); });
-    expand(tabs);
-    return map;
-  });
   const [searchQuery, setSearchQuery] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -492,6 +510,7 @@ export default function DocumentExplorer({
                 {/* Rich text editor for content */}
                 <div className="flex-1 p-4">
                   <RichTextEditor
+                    key={activeNode.id}
                     title={`Editing: ${activeNode.title}`}
                     value={activeNode.content}
                     onChange={handleContentChange}

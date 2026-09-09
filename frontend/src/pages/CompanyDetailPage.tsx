@@ -722,6 +722,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                   onToggleExamPublic={handleToggleExamPublic}
                   onUpdateTabs={async (updatedTabs) => {
                     if (currentExam) {
+                      queryClient.setQueryData<ExamItem[]>(['live-exams', slug, user?.email], (old) => {
+                        if (!old) return old;
+                        return old.map(e => e.id === currentExam.id ? { ...e, paperTabs: updatedTabs } : e);
+                      });
                       await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
                       queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                     }
@@ -928,6 +932,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
               onToggleExamPublic={handleToggleExamPublic}
               onUpdateTabs={async (updatedTabs) => {
                 if (currentExam) {
+                  queryClient.setQueryData<ExamItem[]>(['live-exams', slug, user?.email], (old) => {
+                    if (!old) return old;
+                    return old.map(e => e.id === currentExam.id ? { ...e, paperTabs: updatedTabs } : e);
+                  });
                   await PaperService.savePaperTabNodes(currentExam.id, updatedTabs);
                   queryClient.invalidateQueries({ queryKey: ['live-exams', slug] });
                 }

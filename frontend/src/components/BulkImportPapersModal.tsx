@@ -125,11 +125,18 @@ export function cleanQuestionTitle(rawTitle: string, defaultIdx: number): string
 
 function parseChatGPTToCases(text: string): Array<{ title: string; input: string; output: string }> {
   if (!text?.trim()) return [];
-  const regex = /(?:Test\s*Case\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:Test\s*Case\s*\d+|$))/gi;
-  const matches = [...text.matchAll(regex)];
+  // Strip html breaks or paragraph tags
+  const clean = text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p>/gi, '\n\n')
+    .replace(/<\/?p>/gi, '')
+    .trim();
+
+  const regex = /(?:(?:Test\s*Case|Example|Sample)\s*(\d+)[:\s]*)([\s\S]*?)(?=(?:(?:Test\s*Case|Example|Sample)\s*\d+|$))/gi;
+  const matches = [...clean.matchAll(regex)];
   if (matches.length === 0) {
-    const inputMatch = text.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
-    const outputMatch = text.match(/Output:?\s*([\s\S]*?)$/i);
+    const inputMatch = clean.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
+    const outputMatch = clean.match(/Output:?\s*([\s\S]*?)$/i);
     if (inputMatch || outputMatch) {
       return [{
         title: 'Test Case 1',
@@ -183,7 +190,7 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
 
   // 2. Identify questions by heading regex:
   // Matches "# Q1. Title", "Q1. Title", "### Q1: Title", "Question 1: Title", "Question 1. Title", etc.
-  const questionRegex = /(?:^|\n)(?:[=\-]{5,}\s*\n)?\s*(?:#{1,3}\s*)?((?:Q\d+|Question\s*\d+)[\.:\s\-][^\n\r]+)([\s\S]*?)(?=(?:\n\s*(?:[=\-]{5,}\s*\n)?\s*(?:#{1,3}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-])|$)/gi;
+  const questionRegex = /(?:^|\n)(?:[=\-]{5,}\s*\n)?\s*(?:#{1,4}\s*)?((?:Q\d+|Question\s*\d+)[\.:\s\-][^\n\r]+)([\s\S]*?)(?=(?:\n\s*(?:[=\-]{5,}\s*\n)?\s*(?:#{1,4}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-])|$)/gi;
   const matches = [...text.matchAll(questionRegex)];
 
   if (matches.length > 0) {
@@ -195,35 +202,46 @@ export function parseBatchQuestions(rawText: string, accessMode: 'standard' | 'f
       // Check if first line of body is also a title line (e.g. user pasted Question 1 \n Q1. Title)
       const bodyLines = body.split('\n');
       const firstLine = bodyLines[0]?.trim() || '';
-      if (/^(?:#{1,3}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-]/i.test(firstLine)) {
+      if (/^(?:#{1,4}\s*)?(?:Q\d+|Question\s*\d+)[\.:\s\-]/i.test(firstLine)) {
         if (/^Q\d+\.\s*Question\s*\d+$/i.test(title) || /^Q\d+$/i.test(title)) {
           title = cleanQuestionTitle(firstLine, idx + 1);
         }
         body = bodyLines.slice(1).join('\n').trim();
       }
 
-      // Constraints
+      // Constraints — supports ### Constraints, ## Constraints, # Constraints, **Constraints**, Constraints:, Constraints
       let constraints: string[] = [];
-      const constraintsMatch = body.match(/###?\s*Constraints\s*([\s\S]*?)(?=(?:###?\s*Test\s*Cases|$))/i);
-      if (constraintsMatch) {
-        constraints = constraintsMatch[1]
+      const constraintsSplitRegex = /(?:^|\n)(?:(?:#{1,4}|\*\*|)\s*Constraints\s*:?\s*\*?\*?\s*(?:\n|$))/i;
+      const testCasesSplitRegex = /(?:^|\n)(?:(?:#{1,4}|\*\*|)\s*(?:Test\s*Cases|Example\s*Cases|Examples)\s*:?\s*\*?\*?\s*(?:\n|$))/i;
+
+      const partsAfterConstraints = body.split(constraintsSplitRegex);
+      let description = partsAfterConstraints[0].trim();
+      let remaining = partsAfterConstraints[1] || '';
+
+      if (remaining) {
+        const partsAfterTestCases = remaining.split(testCasesSplitRegex);
+        const constraintsText = partsAfterTestCases[0]?.trim() || '';
+        constraints = constraintsText
           .split('\n')
           .map(l => l.trim().replace(/^[-*•]\s*/, '').trim())
           .filter(Boolean);
+        remaining = partsAfterTestCases[1] || '';
+      } else {
+        // If there was no Constraints section, check if Test Cases directly follows description
+        const partsAfterTestCases = description.split(testCasesSplitRegex);
+        if (partsAfterTestCases.length > 1) {
+          description = partsAfterTestCases[0].trim();
+          remaining = partsAfterTestCases[1] || '';
+        }
       }
 
       // Test cases
       let testCases: Array<{ input: string; output: string; title?: string }> = [];
-      const testCasesMatch = body.match(/###?\s*Test\s*Cases\s*([\s\S]*?)$/i);
-      if (testCasesMatch) {
-        testCases = parseChatGPTToCases(testCasesMatch[1]);
+      if (remaining.trim()) {
+        testCases = parseChatGPTToCases(remaining.trim());
       }
 
-      // Description
-      const descPart = body
-        .split(/###?\s*Constraints/i)[0]
-        .split(/###?\s*Test\s*Cases/i)[0];
-      const description = descPart.replace(/^[=\-\s]+/, '').replace(/[=\-\s]+$/, '').trim();
+      description = description.replace(/^[=\-\s]+/, '').replace(/[=\-\s]+$/, '').trim();
 
       let isFree = false;
       if (accessMode === 'free') isFree = true;
@@ -441,11 +459,13 @@ export default function BulkImportPapersModal({
         finalTargetId = targetNode.id;
         const existingContent = (targetNode.content || '').trim();
         const isPlaceholder = !existingContent ||
-          /^(?:###\s*[^\n]+\s*)?(?:Write content here\.?|No content added yet\.?)?$/i.test(existingContent);
+          /^(?:<p>\s*(?:<br\s*\/?>)?\s*<\/p>|\s*|###\s*[^\n]+\s*|(?:Write content here\.?|No content added yet\.?))*$/i.test(existingContent);
 
         const combined = isPlaceholder
           ? newQuestionsHtml
           : `${existingContent}\n\n<div class="my-10 border-b border-[#E9ECEF] dark:border-[#242424]"></div>\n\n${newQuestionsHtml}`;
+
+        const formattedCompany = companyName ? (companyName.charAt(0).toUpperCase() + companyName.slice(1)) : 'Company';
 
         // If target file title is a default like "New File" or "New Section", rename it nicely
         const isDefaultTitle = /^New\s*(?:File|Section|Subtab)(?:\s*\d+)?$/i.test(targetNode.title.trim());
@@ -455,7 +475,7 @@ export default function BulkImportPapersModal({
           const matchQNum = firstQ.match(/Q(\d+)/i);
           const startNum = matchQNum ? matchQNum[1] : '1';
           const endNum = parseInt(startNum, 10) + parsedQuestions.length - 1;
-          updatedTitle = `${companyName} Batch (Q${startNum}–Q${endNum})`;
+          updatedTitle = `${formattedCompany} Batch (Q${startNum}–Q${endNum})`;
         }
 
         updatedTabs = updateNode(currentTabs, targetNode.id, {
@@ -464,7 +484,8 @@ export default function BulkImportPapersModal({
         });
       } else if (destMode === 'new-file') {
         // CREATE A NEW SINGLE FILE
-        const finalTitle = newFileTitle.trim() || `${companyName} Batch Questions`;
+        const formattedCompany = companyName ? (companyName.charAt(0).toUpperCase() + companyName.slice(1)) : 'Company';
+        const finalTitle = newFileTitle.trim() || `${formattedCompany} Batch Questions`;
         const singleNode: DocTabNode = {
           id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           title: finalTitle,
