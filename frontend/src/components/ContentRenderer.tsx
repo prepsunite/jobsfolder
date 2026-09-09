@@ -127,11 +127,11 @@ export default function ContentRenderer({
                       <div className="test-case-header">{c.title || `Test Case ${idx + 1}`}</div>
                       <div className="test-case-io-grid">
                         <div className="test-case-section">
-                          <span className="test-case-label">Input:</span>
+                          <span className="test-case-label">Input</span>
                           <pre className="test-case-code test-case-input-val">{c.input}</pre>
                         </div>
                         <div className="test-case-section">
-                          <span className="test-case-label">Output:</span>
+                          <span className="test-case-label">Output</span>
                           <pre className="test-case-code test-case-output-val">{c.output}</pre>
                         </div>
                       </div>
