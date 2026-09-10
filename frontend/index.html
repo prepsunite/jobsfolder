@@ -48,7 +48,88 @@
         } catch (e) {}
       })();
     </script>
-    <div id="root"></div>
+    <style>
+      /* ── 0ms Instant Loading Screen (Supabase Style) ── */
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        user-select: none;
+      }
+      .dark #initial-loader {
+        background: #0C0C0C;
+      }
+      @keyframes initial-photon-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes initial-glow-pulse {
+        0%, 100% { transform: scale(0.92); opacity: 0.4; filter: blur(28px); }
+        50% { transform: scale(1.1); opacity: 0.9; filter: blur(36px); }
+      }
+      @keyframes initial-contour-travel {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -100; }
+      }
+      .initial-aura {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border-radius: 9999px;
+        background: rgba(253, 74, 50, 0.22);
+        filter: blur(32px);
+        pointer-events: none;
+        animation: initial-glow-pulse 2.4s ease-in-out infinite;
+      }
+      .initial-beam {
+        width: 100%;
+        height: 100%;
+        transform-origin: center;
+        animation: initial-photon-spin 1.6s linear infinite;
+        background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(253, 74, 50, 0.1) 60deg, rgba(253, 74, 50, 0.45) 180deg, rgba(253, 74, 50, 0.85) 280deg, #FD4A32 330deg, #FFA07A 352deg, #FFFFFF 360deg);
+      }
+      .initial-stroke {
+        stroke-dasharray: 40 10 40 10;
+        animation: initial-contour-travel 2.4s linear infinite;
+      }
+    </style>
+    <div id="root">
+      <div id="initial-loader">
+        <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+          <div class="initial-aura"></div>
+          <div style="position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 200 200" style="width:100%;height:100%;overflow:visible;" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <clipPath id="initial-logo-clip">
+                  <path d="M 89.00 28.00 L 111.00 28.00 L 111.00 73.44 L 143.13 41.31 L 158.69 56.87 L 126.56 89.00 L 172.00 89.00 L 172.00 111.00 L 126.56 111.00 L 158.69 143.13 L 143.13 158.69 L 111.00 126.56 L 111.00 172.00 L 89.00 172.00 L 89.00 126.56 L 56.87 158.69 L 41.31 143.13 L 73.44 111.00 L 28.00 111.00 L 28.00 89.00 L 73.44 89.00 L 41.31 56.87 L 56.87 41.31 L 89.00 73.44 Z" />
+                </clipPath>
+                <filter id="initial-glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur1" />
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur2" />
+                  <feMerge>
+                    <feMergeNode in="blur2" />
+                    <feMergeNode in="blur1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <path d="M 89.00 28.00 L 111.00 28.00 L 111.00 73.44 L 143.13 41.31 L 158.69 56.87 L 126.56 89.00 L 172.00 89.00 L 172.00 111.00 L 126.56 111.00 L 158.69 143.13 L 143.13 158.69 L 111.00 126.56 L 111.00 172.00 L 89.00 172.00 L 89.00 126.56 L 56.87 158.69 L 41.31 143.13 L 73.44 111.00 L 28.00 111.00 L 28.00 89.00 L 73.44 89.00 L 41.31 56.87 L 56.87 41.31 L 89.00 73.44 Z" fill="rgba(253,74,50,0.05)" stroke="rgba(253,74,50,0.18)" stroke-width="2" stroke-linejoin="round" />
+              <g clip-path="url(#initial-logo-clip)">
+                <foreignObject x="0" y="0" width="200" height="200">
+                  <div class="initial-beam"></div>
+                </foreignObject>
+              </g>
+              <path d="M 89.00 28.00 L 111.00 28.00 L 111.00 73.44 L 143.13 41.31 L 158.69 56.87 L 126.56 89.00 L 172.00 89.00 L 172.00 111.00 L 126.56 111.00 L 158.69 143.13 L 143.13 158.69 L 111.00 126.56 L 111.00 172.00 L 89.00 172.00 L 89.00 126.56 L 56.87 158.69 L 41.31 143.13 L 73.44 111.00 L 28.00 111.00 L 28.00 89.00 L 73.44 89.00 L 41.31 56.87 L 56.87 41.31 L 89.00 73.44 Z" pathLength="100" fill="none" stroke="#FD4A32" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="initial-stroke" filter="url(#initial-glow)" />
+              <path d="M 89.00 28.00 L 111.00 28.00 L 111.00 73.44 L 143.13 41.31 L 158.69 56.87 L 126.56 89.00 L 172.00 89.00 L 172.00 111.00 L 126.56 111.00 L 158.69 143.13 L 143.13 158.69 L 111.00 126.56 L 111.00 172.00 L 89.00 172.00 L 89.00 126.56 L 56.87 158.69 L 41.31 143.13 L 73.44 111.00 L 28.00 111.00 L 28.00 89.00 L 73.44 89.00 L 41.31 56.87 L 56.87 41.31 L 89.00 73.44 Z" pathLength="100" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="initial-stroke" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

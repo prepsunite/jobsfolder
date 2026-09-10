@@ -737,13 +737,13 @@ pre.test-case-code {
     stroke-dashoffset: 0;
   }
   100% {
-    stroke-dashoffset: -903.1;
+    stroke-dashoffset: -100;
   }
 }
 
 .animate-logo-contour {
-  stroke-dasharray: 140 763.1;
-  animation: logo-contour-travel 2.2s linear infinite;
+  stroke-dasharray: 40 10 40 10;
+  animation: logo-contour-travel 2.4s linear infinite;
 }
 
 
