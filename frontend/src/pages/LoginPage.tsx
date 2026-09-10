@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConsent } from '@/contexts/ConsentContext';
+import LoadingScreen from '@/components/LoadingScreen';
 import {
   ShieldCheck,
   Sparkles,
@@ -78,12 +79,7 @@ export default function LoginPage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-        <div className="w-8 h-8 border-2 border-[#FD4A32] border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">Verifying Session...</span>
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} size="md" />;
   }
 
   return (

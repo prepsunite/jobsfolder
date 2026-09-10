@@ -27,6 +27,7 @@ import {
   AlertCircle,
   BarChart3,
 } from 'lucide-react';
+import LogoLoader from '@/components/LogoLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/tpo.service';
@@ -568,11 +569,8 @@ export default function StudentExamsPage() {
 
       {/* ── EXAMS GRID / EMPTY STATE ── */}
       {isExamsLoading ? (
-        <div className="py-24 text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#FD4A32]/20 border-t-[#FD4A32] rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Syncing campus placement mock drives...
-          </p>
+        <div className="py-24 flex items-center justify-center">
+          <LogoLoader size="md" />
         </div>
       ) : displayedExams.length === 0 ? (
         <div className="py-16 px-4 text-center rounded-2xl bg-gray-50/60 dark:bg-[#141517] border border-gray-200/80 dark:border-[#27292e] space-y-3 max-w-2xl mx-auto">

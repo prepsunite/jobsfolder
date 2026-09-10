@@ -5,7 +5,8 @@ import type { ExamWithCompany } from '@/services/exam.service';
 import { examService } from '@/services/exam.service';
 import { companyService } from '@/services/company.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Search, Loader2, Plus, XCircle, Building2 } from 'lucide-react';
+import { BookOpen, Search, Plus, XCircle, Building2 } from 'lucide-react';
+import LogoLoader from '@/components/LogoLoader';
 
 export default function QuestionsPage() {
   const { role } = useAuth();
@@ -129,8 +130,8 @@ export default function QuestionsPage() {
 
       {/* COMPANY EXAM CARDS GRID */}
       {isLoadingExams ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-[#FD4A32] dark:text-[#FD4A32] animate-spin" />
+        <div className="flex items-center justify-center py-20">
+          <LogoLoader size="md" />
         </div>
       ) : exams.length === 0 ? (
         <div className="text-center py-16 bg-[#F8F9FA] dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">

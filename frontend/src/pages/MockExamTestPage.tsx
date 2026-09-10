@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import LoadingScreen from '@/components/LoadingScreen';
+import LogoLoader from '@/components/LogoLoader';
 import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -780,11 +782,7 @@ export default function MockExamTestPage() {
   // ==========================================
   if (testPhase === 'INSTRUCTIONS') {
     if (examLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#FD4A32]" />
-        </div>
-      );
+      return <LoadingScreen fullScreen size="md" />;
     }
 
     if (!exam) {

@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, LayoutDashboard, Building2 } from 'lucide-react';
 
+import LoadingScreen from '@/components/LoadingScreen';
+
 const PUBLIC_ROUTES = [
   '/',
   '/login',
@@ -52,14 +54,9 @@ export default function RootLayout() {
 
   const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);
 
-  // While checking Supabase session, render a clean loader
+  // While checking Supabase session, render the animated orange light logo loading screen
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-[#141517] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-        <div className="w-10 h-10 border-4 border-[#FD4A32]/20 border-t-[#FD4A32] rounded-full animate-spin" />
-        <span className="text-xs font-bold text-[#747878] uppercase tracking-wider">Verifying Session...</span>
-      </div>
-    );
+    return <LoadingScreen fullScreen size="md" />;
   }
 
   // Standalone Distraction-Free Exam Taking Mode (Zero Website Sidebar, Header, or Menu)

@@ -20,6 +20,7 @@ import {
   BookmarkCheck,
   ThumbsUp,
 } from 'lucide-react';
+import LogoLoader from '@/components/LogoLoader';
 
 export default function ExperiencesPage() {
   const { role } = useAuth();
@@ -295,9 +296,8 @@ export default function ExperiencesPage() {
 
       {/* Feed List */}
       {isLoading ? (
-        <div className="p-12 text-center text-[#868E96] flex items-center justify-center gap-2 text-xs">
-          <Loader2 className="w-4 h-4 animate-spin text-[#FD4A32]" />
-          <span>Loading interview reports...</span>
+        <div className="py-16 flex items-center justify-center">
+          <LogoLoader size="md" />
         </div>
       ) : filteredExperiences.length === 0 ? (
         <div className="p-12 text-center rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] space-y-2">

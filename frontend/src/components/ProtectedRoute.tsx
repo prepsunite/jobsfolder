@@ -1,7 +1,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
+import LogoLoader from '@/components/LogoLoader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,14 +20,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const isEffectiveAdmin = isAdmin || isSuperAdminEmail(user?.email);
 
-  // Show clean spinner during initial Supabase auth handshake
+  // Show animated orange light logo loader during initial Supabase auth handshake
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 animate-fadeIn">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FD4A32] dark:text-[#FD4A32]" />
-        <span className="text-xs font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-          Verifying Access...
-        </span>
+      <div className="min-h-[60vh] flex items-center justify-center p-8 animate-fadeIn">
+        <LogoLoader size="md" />
       </div>
     );
   }

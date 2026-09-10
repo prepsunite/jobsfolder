@@ -559,3 +559,192 @@ pre.test-case-code {
   box-shadow: 0 20px 40px -15px rgba(253, 74, 50, 0.15), 0 0 1px 1px rgba(255, 255, 255, 0.1) inset;
 }
 
+/* ═══════════════════════════════════════════════════
+   🔥 Orange Light Logo Loader Animations
+══════════════════════════════════════════════════════ */
+@keyframes orange-glow-pulse {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.45;
+    filter: blur(28px);
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.95;
+    filter: blur(38px);
+  }
+}
+
+@keyframes photon-beam-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes counter-ring-spin {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes logo-shimmer {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+  }
+  60% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(250%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes laser-scan {
+  0% {
+    left: -35%;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    left: 105%;
+    opacity: 0;
+  }
+}
+
+@keyframes particle-orbit-1 {
+  0% {
+    transform: rotate(0deg) translateX(38px) rotate(0deg) scale(0.8);
+    opacity: 0.3;
+  }
+  50% {
+    transform: rotate(180deg) translateX(44px) rotate(-180deg) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) translateX(38px) rotate(-360deg) scale(0.8);
+    opacity: 0.3;
+  }
+}
+
+@keyframes particle-orbit-2 {
+  0% {
+    transform: rotate(120deg) translateX(32px) rotate(-120deg) scale(1.1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotate(300deg) translateX(26px) rotate(-300deg) scale(0.6);
+    opacity: 0.2;
+  }
+  100% {
+    transform: rotate(480deg) translateX(32px) rotate(-480deg) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes particle-orbit-3 {
+  0% {
+    transform: rotate(240deg) translateX(42px) rotate(-240deg) scale(0.6);
+    opacity: 0.4;
+  }
+  50% {
+    transform: rotate(60deg) translateX(50px) rotate(-60deg) scale(1.3);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(-120deg) translateX(42px) rotate(120deg) scale(0.6);
+    opacity: 0.4;
+  }
+}
+
+@keyframes logo-heartbeat {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(253, 74, 50, 0.4)) drop-shadow(0 0 20px rgba(253, 74, 50, 0.2));
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 18px rgba(253, 74, 50, 0.85)) drop-shadow(0 0 35px rgba(253, 74, 50, 0.45));
+  }
+}
+
+@keyframes text-glow-pulse {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(253, 74, 50, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 16px rgba(253, 74, 50, 0.6), 0 0 24px rgba(253, 74, 50, 0.3);
+  }
+}
+
+.animate-orange-glow {
+  animation: orange-glow-pulse 2.4s ease-in-out infinite;
+}
+
+.animate-photon-beam {
+  animation: photon-beam-spin 1.6s linear infinite;
+}
+
+.animate-counter-ring {
+  animation: counter-ring-spin 6s linear infinite;
+}
+
+.animate-logo-shimmer {
+  animation: logo-shimmer 2.5s ease-in-out infinite;
+}
+
+.animate-laser-scan {
+  animation: laser-scan 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-particle-1 {
+  animation: particle-orbit-1 3.2s ease-in-out infinite;
+}
+
+.animate-particle-2 {
+  animation: particle-orbit-2 4s ease-in-out infinite;
+}
+
+.animate-particle-3 {
+  animation: particle-orbit-3 2.8s ease-in-out infinite;
+}
+
+.animate-logo-heartbeat {
+  animation: logo-heartbeat 2.4s ease-in-out infinite;
+}
+
+.animate-text-glow {
+  animation: text-glow-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes logo-contour-travel {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -903.1;
+  }
+}
+
+.animate-logo-contour {
+  stroke-dasharray: 140 763.1;
+  animation: logo-contour-travel 2.2s linear infinite;
+}
+
+
+

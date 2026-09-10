@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CompanyCard from '@/components/CompanyCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, Building2, SlidersHorizontal, Loader2, Plus, XCircle } from 'lucide-react';
+import { Search, Building2, SlidersHorizontal, Plus, XCircle } from 'lucide-react';
 import type { Company } from '@/types/company';
+import LogoLoader from '@/components/LogoLoader';
 
 import { companyService } from '@/services/company.service';
 
@@ -148,8 +149,8 @@ export default function CompaniesPage() {
 
       {/* Grid Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-[#FD4A32] dark:text-[#FD4A32] animate-spin" />
+        <div className="flex items-center justify-center py-20">
+          <LogoLoader size="md" />
         </div>
       ) : companies.length === 0 ? (
         <div className="text-center py-16 bg-[#F8F9FA] dark:bg-[#141414] rounded-lg border border-[#E9ECEF] dark:border-[#242424]">

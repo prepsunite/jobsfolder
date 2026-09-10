@@ -13,6 +13,7 @@ import {
 import type { MockExam, CollegeBatch } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
 import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
+import LogoLoader from '@/components/LogoLoader';
 
 export default function TpoExamsPage() {
   const { collegeId, currentCollege } = useOutletContext<{
@@ -127,7 +128,9 @@ export default function TpoExamsPage() {
 
       {/* Grid of Mock Exams */}
       {isLoading ? (
-        <div className="py-20 text-center text-xs text-slate-400">Loading mock exams...</div>
+        <div className="py-20 flex items-center justify-center">
+          <LogoLoader size="md" />
+        </div>
       ) : filteredExams.length === 0 ? (
         <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-600 flex items-center justify-center mx-auto">
