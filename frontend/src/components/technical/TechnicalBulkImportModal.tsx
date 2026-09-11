@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Upload, Check, Copy, AlertCircle, CheckCircle2, FileCode, Layers } from 'lucide-react';
+import { X, Upload, Check, Copy, AlertCircle, CheckCircle2, FileCode } from 'lucide-react';
 import { technicalService } from '@/services/technical.service';
-import type { ProgrammingProblem, ProgrammingTopic } from '@/types/technical';
+import type { ProgrammingTopic, TechnicalTrack } from '@/types/technical';
 
 interface TechnicalBulkImportModalProps {
   isOpen: boolean;
@@ -9,9 +9,10 @@ interface TechnicalBulkImportModalProps {
   onSuccess: () => void;
   defaultTopicId?: string;
   topics: ProgrammingTopic[];
+  track?: TechnicalTrack;
 }
 
-const SAMPLE_JSON_TEMPLATE = `[
+const SAMPLE_PROBLEM_TEMPLATE = `[
   {
     "title": "Count Digits in an Integer",
     "topicId": "digit-manipulation",
@@ -43,8 +44,24 @@ const SAMPLE_JSON_TEMPLATE = `[
     "hints": [
       "Remember to handle N = 0 as a special edge case with 1 digit.",
       "Negative numbers should be converted using absolute value before counting."
+    ]
+  }
+]`;
+
+const SAMPLE_MCQ_TEMPLATE = `[
+  {
+    "topicId": "mcq-c-programming",
+    "topicCategory": "C_PROGRAMMING",
+    "question": "What will be the output of the following C code snippet?\\n\\n#include <stdio.h>\\nint main() {\\n    int x = 5;\\n    printf(\\"%d %d %d\\", x++, x, ++x);\\n    return 0;\\n}",
+    "options": [
+      "5 6 7",
+      "7 7 7",
+      "Undefined behavior",
+      "5 5 7"
     ],
-    "companyTags": ["TCS NQT", "Infosys", "Wipro"]
+    "correctOptionIndex": 2,
+    "difficulty": "MEDIUM",
+    "explanation": "Modifying a variable multiple times without an intervening sequence point results in undefined behavior according to the ANSI C standard."
   }
 ]`;
 
@@ -54,7 +71,9 @@ export default function TechnicalBulkImportModal({
   onSuccess,
   defaultTopicId,
   topics,
+  track = 'PROGRAMMING_150',
 }: TechnicalBulkImportModalProps) {
+  const isMcqMode = track === 'TECHNICAL_MCQS';
   const [selectedTopicId, setSelectedTopicId] = useState<string>(defaultTopicId || 'AUTO');
   const [jsonText, setJsonText] = useState<string>('');
   const [copiedTemplate, setCopiedTemplate] = useState<boolean>(false);
@@ -63,21 +82,27 @@ export default function TechnicalBulkImportModal({
 
   if (!isOpen) return null;
 
+  const currentTemplate = isMcqMode ? SAMPLE_MCQ_TEMPLATE : SAMPLE_PROBLEM_TEMPLATE;
+
   // Real-time JSON validation
-  let parsedProblems: any[] = [];
+  let parsedItems: any[] = [];
   let parseError: string | null = null;
 
   if (jsonText.trim()) {
     try {
       const parsed = JSON.parse(jsonText);
-      parsedProblems = Array.isArray(parsed) ? parsed : [parsed];
-      if (parsedProblems.length === 0) {
+      parsedItems = Array.isArray(parsed) ? parsed : [parsed];
+      if (parsedItems.length === 0) {
         parseError = 'The JSON array is empty.';
+      } else if (isMcqMode) {
+        const missing = parsedItems.filter(item => !item.question || !Array.isArray(item.options));
+        if (missing.length > 0) {
+          parseError = `${missing.length} MCQ(s) are missing required 'question' or 'options' array.`;
+        }
       } else {
-        // Validate each item has at least a title
-        const missingTitles = parsedProblems.filter(p => !p.title);
+        const missingTitles = parsedItems.filter(p => !p.title);
         if (missingTitles.length > 0) {
-          parseError = `${missingTitles.length} problem(s) are missing a "title" field.`;
+          parseError = `${missingTitles.length} problem(s) are missing a 'title' field.`;
         }
       }
     } catch (e: any) {
@@ -86,34 +111,50 @@ export default function TechnicalBulkImportModal({
   }
 
   const handleCopyTemplate = () => {
-    navigator.clipboard.writeText(SAMPLE_JSON_TEMPLATE);
+    navigator.clipboard.writeText(currentTemplate);
     setCopiedTemplate(true);
     if (!jsonText.trim()) {
-      setJsonText(SAMPLE_JSON_TEMPLATE);
+      setJsonText(currentTemplate);
     }
     setTimeout(() => setCopiedTemplate(false), 2500);
   };
 
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!jsonText.trim() || parseError || parsedProblems.length === 0) return;
+    if (!jsonText.trim() || parseError || parsedItems.length === 0) return;
 
     setIsSubmitting(true);
     try {
-      // If target topic override is set and not 'AUTO', apply to all
-      const itemsToImport = parsedProblems.map(p => {
-        const finalTopicId = selectedTopicId !== 'AUTO' ? selectedTopicId : (p.topicId || defaultTopicId || 'syntax-operators');
-        return {
-          ...p,
-          topicId: finalTopicId,
-        };
-      });
+      if (isMcqMode) {
+        const itemsToImport = parsedItems.map(m => {
+          const finalTopicId = selectedTopicId !== 'AUTO' ? selectedTopicId : (m.topicId || defaultTopicId || 'mcq-c-programming');
+          return {
+            ...m,
+            topicId: finalTopicId,
+          };
+        });
 
-      const result = await technicalService.importProgrammingProblems(itemsToImport);
-      setImportReport({
-        success: result.importedCount,
-        message: `Successfully imported ${result.importedCount} coding problem(s)!`,
-      });
+        const result = await technicalService.importTechnicalMcqs(itemsToImport);
+        setImportReport({
+          success: result.importedCount,
+          message: `Successfully imported ${result.importedCount} MCQ(s) to Supabase!`,
+        });
+      } else {
+        const itemsToImport = parsedItems.map(p => {
+          const finalTopicId = selectedTopicId !== 'AUTO' ? selectedTopicId : (p.topicId || defaultTopicId || 'syntax-operators');
+          return {
+            ...p,
+            topicId: finalTopicId,
+            track,
+          };
+        });
+
+        const result = await technicalService.importProgrammingProblems(itemsToImport, track as any);
+        setImportReport({
+          success: result.importedCount,
+          message: `Successfully imported ${result.importedCount} coding problem(s) to Supabase!`,
+        });
+      }
       onSuccess();
     } catch (err: any) {
       setImportReport({
@@ -124,6 +165,16 @@ export default function TechnicalBulkImportModal({
       setIsSubmitting(false);
     }
   };
+
+  const modalTitle = isMcqMode
+    ? 'Import Technical MCQs'
+    : track === 'CAMPUS_DSA'
+    ? 'Import Campus DSA Problems'
+    : 'Import Programming 150 Problems';
+
+  const modalDescription = isMcqMode
+    ? 'Paste a JSON array of multiple-choice questions with options, correctOptionIndex (0-3), and explanation.'
+    : 'Paste a JSON array of coding problems with constraints, two test cases (Example 1 & Example 2), and multi-language code.';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn font-sans">
@@ -136,10 +187,10 @@ export default function TechnicalBulkImportModal({
               <span>Admin Bulk JSON Import</span>
             </div>
             <h2 className="font-display font-extrabold text-lg sm:text-xl text-[#121417] dark:text-white">
-              Import Programming 150 Problems
+              {modalTitle}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Bulk paste JSON problems with constraints, two test cases (Example 1 &amp; Example 2), and multi-language code.
+              {modalDescription}
             </p>
           </div>
 
@@ -169,7 +220,7 @@ export default function TechnicalBulkImportModal({
                 <option value="AUTO">Auto-detect from "topicId" in JSON</option>
                 {topics.map(t => (
                   <option key={t.id} value={t.id}>
-                    {t.cluster} — {t.title}
+                    {t.cluster ? `${t.cluster} — ` : ''}{t.title}
                   </option>
                 ))}
               </select>
@@ -179,7 +230,7 @@ export default function TechnicalBulkImportModal({
             <button
               type="button"
               onClick={handleCopyTemplate}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono font-bold bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#CCCCCC] hover:border-[#FD4A32] transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono font-bold bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#CCCCCC] hover:border-purple-500 transition-colors cursor-pointer shrink-0"
               title="Copy verified JSON template structure"
             >
               {copiedTemplate ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -202,7 +253,7 @@ export default function TechnicalBulkImportModal({
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Valid JSON: {parsedProblems.length} problem(s) detected</span>
+                    <span>Valid JSON: {parsedItems.length} {isMcqMode ? 'MCQ(s)' : 'problem(s)'} detected</span>
                   </span>
                 )
               )}
@@ -215,7 +266,7 @@ export default function TechnicalBulkImportModal({
                 setJsonText(e.target.value);
                 setImportReport(null);
               }}
-              placeholder={`[\n  {\n    "title": "Problem Title",\n    "topicId": "syntax-operators",\n    "level": "BASIC",\n    "description": "...",\n    "constraints": ["1 <= N <= 10^5"],\n    "testCases": [\n      { "input": "...", "output": "...", "explanation": "..." },\n      { "input": "...", "output": "...", "explanation": "..." }\n    ],\n    "solutions": { "java": "...", "python": "...", "cpp": "...", "c": "..." }\n  }\n]`}
+              placeholder={currentTemplate}
               className="w-full p-3 rounded-lg bg-[#0C0C0C] border border-[#242424] text-gray-200 font-mono text-xs focus:outline-none focus:border-purple-500 custom-scrollbar leading-relaxed"
             />
           </div>
@@ -249,11 +300,11 @@ export default function TechnicalBulkImportModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !jsonText.trim() || !!parseError || parsedProblems.length === 0}
+              disabled={isSubmitting || !jsonText.trim() || !!parseError || parsedItems.length === 0}
               className="px-4 py-1.5 rounded-md text-xs font-display font-bold bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:pointer-events-none text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>{isSubmitting ? 'Importing...' : `Import ${parsedProblems.length || ''} Problems`}</span>
+              <span>{isSubmitting ? 'Importing...' : `Import ${parsedItems.length || ''} ${isMcqMode ? 'MCQs' : 'Problems'}`}</span>
             </button>
           </div>
         </form>

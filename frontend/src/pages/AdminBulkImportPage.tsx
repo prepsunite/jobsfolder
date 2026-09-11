@@ -9,7 +9,10 @@ import {
   Eye,
   Sparkles,
   FileCode,
-  Layers
+  Layers,
+  Code2,
+  Brain,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -293,6 +296,28 @@ export default function AdminBulkImportPage() {
             <span>Load Sample JSON</span>
           </button>
         </div>
+      </div>
+
+      {/* Module Switcher Tabs */}
+      <div className="flex items-center gap-2 p-1.5 bg-[#F8F9FA] dark:bg-[#1A1A1A] rounded-xl border border-[#E9ECEF] dark:border-[#2E2E2E] w-fit">
+        <span className="px-3.5 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-xs cursor-default">
+          <Brain className="w-3.5 h-3.5" />
+          <span>Aptitude &amp; Reasoning</span>
+        </span>
+        <Link
+          to="/admin/technical"
+          className="px-3.5 py-1.5 text-[#868E96] hover:text-[#121417] dark:hover:text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
+        >
+          <Code2 className="w-3.5 h-3.5" />
+          <span>Technical Hub (Coding &amp; MCQs)</span>
+        </Link>
+        <Link
+          to="/admin/interview"
+          className="px-3.5 py-1.5 text-[#868E96] hover:text-[#121417] dark:hover:text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Interview Prep (Q&amp;A)</span>
+        </Link>
       </div>
 
       {/* Main Grid: Upload Controls + Subtopic Selection */}

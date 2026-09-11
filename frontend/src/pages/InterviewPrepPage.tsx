@@ -31,9 +31,11 @@ import {
   Eye,
   EyeOff,
   X,
+  Upload,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { interviewService } from '@/services/interview.service';
+import InterviewBulkImportModal from '@/components/interview/InterviewBulkImportModal';
 import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/types/interview';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
@@ -86,6 +88,7 @@ export default function InterviewPrepPage() {
   const [editingTopic, setEditingTopic] = useState<Partial<InterviewTopic> | null>(null);
   const [isEditingQuestion, setIsEditingQuestion] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Partial<InterviewQuestion> | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   // Query All Questions (Supabase-first)
   const { data: allQuestions = [], refetch: refetchQuestions } = useQuery({
@@ -401,14 +404,25 @@ export default function InterviewPrepPage() {
 
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <button
-                  type="button"
-                  onClick={(e) => openQuestionEditor(e)}
-                  className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Question</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => openQuestionEditor(e)}
+                    className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Question</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkModal(true)}
+                    className="px-2.5 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                    title="Bulk import questions from JSON"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Bulk Import (JSON)</span>
+                  </button>
+                </>
               )}
               <span className="text-xs text-[#868E96] dark:text-[#555555]">
                 Interview Practice Mode
@@ -500,7 +514,37 @@ export default function InterviewPrepPage() {
 
           {/* Questions Accordion List */}
           <div className="space-y-4">
-            {filteredActiveQuestions.length === 0 ? (
+            {activeTopicQuestions.length === 0 ? (
+              <div className="p-12 text-center rounded-xl border-2 border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] space-y-3">
+                <HelpCircle className="w-10 h-10 text-[#868E96] mx-auto opacity-50" />
+                <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                  No questions in this interview topic yet
+                </h3>
+                <p className="text-xs text-[#868E96] dark:text-[#777777] max-w-sm mx-auto">
+                  Add questions individually or use the Bulk Importer to paste a JSON array of interview Q&As directly into Supabase.
+                </p>
+                {isAdmin && (
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={(e) => openQuestionEditor(e)}
+                      className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Question</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkModal(true)}
+                      className="px-3.5 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Bulk Import (JSON)</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : filteredActiveQuestions.length === 0 ? (
               <div className="p-10 text-center rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
                 <HelpCircle className="w-8 h-8 text-[#868E96] mx-auto mb-2 opacity-50" />
                 <p className="text-sm font-semibold text-[#868E96] dark:text-[#555555]">
@@ -543,15 +587,6 @@ export default function InterviewPrepPage() {
                               Very High Frequency
                             </span>
                           )}
-
-                          {q.companyTags?.map(tag => (
-                            <span
-                              key={tag}
-                              className="text-[9px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-1.5 py-0.5 rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
                         </div>
 
                         <h3 className="font-display font-bold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] leading-snug">
@@ -904,15 +939,26 @@ export default function InterviewPrepPage() {
               </div>
 
               {isAdmin && (
-                <button
-                  type="button"
-                  onClick={(e) => openTopicEditor(e)}
-                  className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
-                  title="Add New Interview Topic"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Topic</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => openTopicEditor(e)}
+                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                    title="Add New Interview Topic"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Topic</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkModal(true)}
+                    className="px-3 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
+                    title="Bulk import interview questions from JSON"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Bulk Import (JSON)</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -1289,6 +1335,20 @@ export default function InterviewPrepPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 💻 ADMIN BULK JSON IMPORT MODAL */}
+      {showBulkModal && (
+        <InterviewBulkImportModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          onSuccess={() => {
+            refetchQuestions();
+          }}
+          defaultTopicId={activeTopic?.id}
+          defaultCategory={activeCategory}
+          topics={topics}
+        />
       )}
     </div>
   );

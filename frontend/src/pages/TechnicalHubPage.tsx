@@ -45,6 +45,7 @@ import {
   Plus,
   Edit2,
   Trash2,
+  Upload,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
@@ -672,14 +673,25 @@ export default function TechnicalHubPage() {
 
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <button
-                  type="button"
-                  onClick={(e) => activeTrack === 'TECHNICAL_MCQS' ? openMcqEditor(e) : openProblemEditor(e)}
-                  className="px-2.5 py-1 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{activeTrack === 'TECHNICAL_MCQS' ? 'Add MCQ' : 'Add Problem'}</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => activeTrack === 'TECHNICAL_MCQS' ? openMcqEditor(e) : openProblemEditor(e)}
+                    className="px-2.5 py-1 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{activeTrack === 'TECHNICAL_MCQS' ? 'Add MCQ' : 'Add Problem'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkModal(true)}
+                    className="px-2.5 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Bulk import questions for this topic (JSON)"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Bulk Import (JSON)</span>
+                  </button>
+                </>
               )}
               <span className="text-xs text-[#868E96] dark:text-[#555555]">
                 Topic Practice Mode
@@ -861,7 +873,37 @@ export default function TechnicalHubPage() {
           {/* 4. Full-Width Questions / MCQs List */}
           {activeTrack === 'TECHNICAL_MCQS' ? (
             <div className="space-y-4">
-              {filteredMcqs.length === 0 ? (
+              {activeTopic && activeTopicMcqs.length === 0 ? (
+                <div className="p-12 text-center rounded-xl border-2 border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] space-y-3">
+                  <HelpCircle className="w-10 h-10 text-[#868E96] mx-auto opacity-50" />
+                  <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                    No MCQs in this topic yet
+                  </h3>
+                  <p className="text-xs text-[#868E96] dark:text-[#777777] max-w-sm mx-auto">
+                    Add multiple-choice questions individually or use Bulk Import to paste a JSON array of MCQs with options and explanations.
+                  </p>
+                  {isAdmin && (
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => openMcqEditor(e)}
+                        className="px-3.5 py-1.5 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add MCQ</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowBulkModal(true)}
+                        className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Bulk Import (JSON)</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : filteredMcqs.length === 0 ? (
                 <div className="p-10 text-center rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
                   <HelpCircle className="w-8 h-8 text-[#868E96] mx-auto mb-2 opacity-50" />
                   <p className="text-sm font-semibold text-[#868E96] dark:text-[#555555]">
@@ -1032,7 +1074,37 @@ export default function TechnicalHubPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredProblems.length === 0 ? (
+              {activeTopic && activeTopicProblems.length === 0 ? (
+                <div className="p-12 text-center rounded-xl border-2 border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] space-y-3">
+                  <Code2 className="w-10 h-10 text-[#868E96] mx-auto opacity-50" />
+                  <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                    No coding problems in this topic yet
+                  </h3>
+                  <p className="text-xs text-[#868E96] dark:text-[#777777] max-w-sm mx-auto">
+                    Add problems individually or use Bulk Import to paste a JSON array of coding problems with solutions and test cases.
+                  </p>
+                  {isAdmin && (
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => openProblemEditor(e)}
+                        className="px-3.5 py-1.5 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Problem</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowBulkModal(true)}
+                        className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Bulk Import (JSON)</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : filteredProblems.length === 0 ? (
                 <div className="p-10 text-center rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
                   <Code2 className="w-8 h-8 text-[#868E96] mx-auto mb-2" />
                   <p className="text-sm font-semibold text-[#868E96] dark:text-[#555555]">
@@ -1521,15 +1593,15 @@ export default function TechnicalHubPage() {
                 </button>
               )}
 
-              {isAdmin && activeTrack === 'PROGRAMMING_150' && (
+              {isAdmin && (
                 <button
                   type="button"
                   onClick={() => setShowBulkModal(true)}
                   className="px-3 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 rounded-md text-xs font-display font-bold transition-all border border-purple-500/30 flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
-                  title="Bulk import programming questions (JSON)"
+                  title="Bulk import questions from JSON"
                 >
-                  <FileCode className="w-3.5 h-3.5" />
-                  <span>Bulk JSON</span>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Bulk Import (JSON)</span>
                 </button>
               )}
             </div>
@@ -2102,6 +2174,26 @@ export default function TechnicalHubPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 💻 ADMIN BULK JSON IMPORT MODAL */}
+      {showBulkModal && (
+        <TechnicalBulkImportModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          onSuccess={() => {
+            if (activeTrack === 'TECHNICAL_MCQS') {
+              refetchMcqs();
+            } else if (activeTrack === 'CAMPUS_DSA') {
+              refetchDsa();
+            } else {
+              refetchP150();
+            }
+          }}
+          defaultTopicId={activeTopic?.id}
+          topics={topics}
+          track={activeTrack}
+        />
       )}
     </div>
   );
