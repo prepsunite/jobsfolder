@@ -898,14 +898,6 @@ export default function TechnicalHubPage() {
                           <span className="text-[10px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-semibold">
                             {mcq.topic}
                           </span>
-                          {mcq.companyTags?.map(tag => (
-                            <span
-                              key={tag}
-                              className="text-[9px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-1.5 py-0.5 rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -1096,15 +1088,6 @@ export default function TechnicalHubPage() {
                             />
                             <span>{problem.level}</span>
                           </span>
-
-                          {problem.companyTags?.map(tag => (
-                            <span
-                              key={tag}
-                              className="text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded font-medium"
-                            >
-                              {tag}
-                            </span>
-                          ))}
                         </div>
 
                         <div className="flex items-center gap-2">
