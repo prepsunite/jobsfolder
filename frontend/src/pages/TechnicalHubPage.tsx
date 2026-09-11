@@ -76,7 +76,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 };
 
 export default function TechnicalHubPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const trackParam = searchParams.get('track');
@@ -162,6 +162,17 @@ export default function TechnicalHubPage() {
     queryKey: ['technical-mcqs'],
     queryFn: () => technicalService.getTechnicalMcqs(),
   });
+
+  // Hydrate user progress from Supabase on mount / when user changes
+  useEffect(() => {
+    if (user?.email && user.email !== 'guest@prepunite.com') {
+      technicalService.fetchAndSyncFromSupabase(user.email).then(() => {
+        setMcqProgress(technicalService.getMcqProgress());
+        refetchP150();
+        refetchDsa();
+      });
+    }
+  }, [user?.email, refetchP150, refetchDsa]);
 
   // Active list based on track
   const currentProblems = useMemo(() => {
@@ -365,7 +376,7 @@ export default function TechnicalHubPage() {
         selectedOption: optIdx,
         timestamp: Date.now(),
       };
-      technicalService.saveMcqProgress(mcq.id, updated);
+      technicalService.saveMcqProgress(mcq.id, updated, user?.email);
       setMcqProgress(prev => ({ ...prev, [mcq.id]: updated }));
     } else {
       audioEffects.playErrorBuzz();
@@ -378,7 +389,7 @@ export default function TechnicalHubPage() {
         selectedOption: optIdx,
         timestamp: Date.now(),
       };
-      technicalService.saveMcqProgress(mcq.id, updated);
+      technicalService.saveMcqProgress(mcq.id, updated, user?.email);
       setMcqProgress(prev => ({ ...prev, [mcq.id]: updated }));
     }
   };
@@ -392,7 +403,7 @@ export default function TechnicalHubPage() {
 
   const handleToggleSolve = (problemId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    technicalService.toggleProblemSolved(problemId);
+    technicalService.toggleProblemSolved(problemId, user?.email, activeTrack);
     if (activeTrack === 'PROGRAMMING_150') refetchP150();
     else refetchDsa();
     if (selectedProblem && selectedProblem.id === problemId) {

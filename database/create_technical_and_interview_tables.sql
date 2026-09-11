@@ -278,3 +278,74 @@ GRANT ALL ON public.interview_topics TO service_role;
 GRANT SELECT ON public.interview_questions TO anon, authenticated;
 GRANT ALL ON public.interview_questions TO authenticated;
 GRANT ALL ON public.interview_questions TO service_role;
+
+-- ====================================================================
+-- 10. USER PROGRESS & SELECTION RECORDING TABLES
+-- ====================================================================
+
+-- 10.1 Technical Problems Solved Progress
+CREATE TABLE IF NOT EXISTS public.user_technical_progress (
+    user_email TEXT NOT NULL,
+    problem_id TEXT NOT NULL,
+    track TEXT NOT NULL DEFAULT 'PROGRAMMING_150',
+    is_solved BOOLEAN DEFAULT TRUE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    last_attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    PRIMARY KEY (user_email, problem_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_technical_progress_email ON public.user_technical_progress(user_email);
+CREATE INDEX IF NOT EXISTS idx_user_technical_progress_track ON public.user_technical_progress(track);
+
+-- 10.2 Technical MCQs Selected Option & Solution Progress
+CREATE TABLE IF NOT EXISTS public.user_mcq_progress (
+    user_email TEXT NOT NULL,
+    mcq_id TEXT NOT NULL,
+    is_solved BOOLEAN DEFAULT FALSE NOT NULL,
+    selected_option INT,
+    wrong_picks JSONB DEFAULT '[]'::JSONB NOT NULL,
+    last_attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    PRIMARY KEY (user_email, mcq_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_mcq_progress_email ON public.user_mcq_progress(user_email);
+
+-- 10.3 Interview Questions Mastered Progress
+CREATE TABLE IF NOT EXISTS public.user_interview_progress (
+    user_email TEXT NOT NULL,
+    question_id TEXT NOT NULL,
+    is_mastered BOOLEAN DEFAULT TRUE NOT NULL,
+    mastered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    PRIMARY KEY (user_email, question_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_interview_progress_email ON public.user_interview_progress(user_email);
+
+-- Enable RLS on User Progress Tables
+ALTER TABLE public.user_technical_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_mcq_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_interview_progress ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated and anon users to manage their own progress records
+DROP POLICY IF EXISTS "Users can manage own technical progress" ON public.user_technical_progress;
+CREATE POLICY "Users can manage own technical progress"
+  ON public.user_technical_progress FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users can manage own mcq progress" ON public.user_mcq_progress;
+CREATE POLICY "Users can manage own mcq progress"
+  ON public.user_mcq_progress FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users can manage own interview progress" ON public.user_interview_progress;
+CREATE POLICY "Users can manage own interview progress"
+  ON public.user_interview_progress FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+GRANT ALL ON public.user_technical_progress TO anon, authenticated, service_role;
+GRANT ALL ON public.user_mcq_progress TO anon, authenticated, service_role;
+GRANT ALL ON public.user_interview_progress TO anon, authenticated, service_role;
+

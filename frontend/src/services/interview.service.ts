@@ -38,7 +38,7 @@ export const interviewService = {
     }
   },
 
-  toggleQuestionMastered(questionId: string): boolean {
+  toggleQuestionMastered(questionId: string, userEmail?: string): boolean {
     const masteredSet = this.getMasteredQuestionIds();
     let isNowMastered = false;
     if (masteredSet.has(questionId)) {
@@ -51,7 +51,53 @@ export const interviewService = {
     try {
       localStorage.setItem(MASTERED_INTERVIEW_KEY, JSON.stringify(Array.from(masteredSet)));
     } catch {}
+
+    if (userEmail && userEmail !== 'guest@prepunite.com') {
+      if (isNowMastered) {
+        supabase
+          .from('user_interview_progress')
+          .upsert({
+            user_email: userEmail,
+            question_id: questionId,
+            is_mastered: true,
+            mastered_at: new Date().toISOString(),
+          }, { onConflict: 'user_email,question_id' })
+          .then(({ error }) => {
+            if (error) console.warn('Supabase interview progress sync failed:', error.message);
+          });
+      } else {
+        supabase
+          .from('user_interview_progress')
+          .delete()
+          .eq('user_email', userEmail)
+          .eq('question_id', questionId)
+          .then(({ error }) => {
+            if (error) console.warn('Supabase interview progress delete failed:', error.message);
+          });
+      }
+    }
+
     return isNowMastered;
+  },
+
+  async fetchAndSyncFromSupabase(userEmail?: string): Promise<void> {
+    if (!userEmail || userEmail === 'guest@prepunite.com' || typeof window === 'undefined') return;
+
+    try {
+      const { data } = await supabase
+        .from('user_interview_progress')
+        .select('question_id')
+        .eq('user_email', userEmail)
+        .eq('is_mastered', true);
+
+      if (data && data.length > 0) {
+        const currentSet = this.getMasteredQuestionIds();
+        data.forEach(r => currentSet.add(r.question_id));
+        localStorage.setItem(MASTERED_INTERVIEW_KEY, JSON.stringify(Array.from(currentSet)));
+      }
+    } catch (e) {
+      console.warn('Failed to fetch interview progress from Supabase:', e);
+    }
   },
 
   // ─── TOPIC CRUD (Supabase-First with Seed Fallback) ─────────────────────────

@@ -53,7 +53,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 };
 
 export default function InterviewPrepPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
@@ -199,10 +199,19 @@ export default function InterviewPrepPage() {
     });
   }, [activeTopicQuestions, selectedStatus, searchQuery]);
 
+  // Hydrate user progress from Supabase on mount / when user changes
+  useEffect(() => {
+    if (user?.email && user.email !== 'guest@prepunite.com') {
+      interviewService.fetchAndSyncFromSupabase(user.email).then(() => {
+        refetchQuestions();
+      });
+    }
+  }, [user?.email, refetchQuestions]);
+
   // Handlers
   const handleToggleMastered = (questionId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    interviewService.toggleQuestionMastered(questionId);
+    interviewService.toggleQuestionMastered(questionId, user?.email);
     refetchQuestions();
   };
 

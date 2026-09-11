@@ -65,13 +65,29 @@ export const technicalService = {
     }
   },
 
-  saveMcqProgress(mcqId: string, progress: TechnicalMcqProgress): void {
+  saveMcqProgress(mcqId: string, progress: TechnicalMcqProgress, userEmail?: string): void {
     const existing = this.getMcqProgress();
     existing[mcqId] = progress;
     try {
       localStorage.setItem(SOLVED_MCQS_KEY, JSON.stringify(existing));
     } catch (e) {
       console.error('Failed to save MCQ progress to localStorage:', e);
+    }
+
+    if (userEmail && userEmail !== 'guest@prepunite.com') {
+      supabase
+        .from('user_mcq_progress')
+        .upsert({
+          user_email: userEmail,
+          mcq_id: mcqId,
+          is_solved: !!progress.solved,
+          selected_option: typeof progress.selectedOption === 'number' ? progress.selectedOption : null,
+          wrong_picks: progress.wrongPicks || [],
+          last_attempted_at: new Date().toISOString(),
+        }, { onConflict: 'user_email,mcq_id' })
+        .then(({ error }) => {
+          if (error) console.warn('Supabase MCQ progress sync failed:', error.message);
+        });
     }
   },
 
@@ -86,7 +102,7 @@ export const technicalService = {
     }
   },
 
-  toggleProblemSolved(problemId: string): boolean {
+  toggleProblemSolved(problemId: string, userEmail?: string, track: TechnicalTrack = 'PROGRAMMING_150'): boolean {
     const solvedSet = this.getSolvedProblemIds();
     let isNowSolved = false;
     if (solvedSet.has(problemId)) {
@@ -99,7 +115,74 @@ export const technicalService = {
     try {
       localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
     } catch {}
+
+    if (userEmail && userEmail !== 'guest@prepunite.com') {
+      if (isNowSolved) {
+        supabase
+          .from('user_technical_progress')
+          .upsert({
+            user_email: userEmail,
+            problem_id: problemId,
+            track,
+            is_solved: true,
+            completed_at: new Date().toISOString(),
+            last_attempted_at: new Date().toISOString(),
+          }, { onConflict: 'user_email,problem_id' })
+          .then(({ error }) => {
+            if (error) console.warn('Supabase technical problem progress sync failed:', error.message);
+          });
+      } else {
+        supabase
+          .from('user_technical_progress')
+          .delete()
+          .eq('user_email', userEmail)
+          .eq('problem_id', problemId)
+          .then(({ error }) => {
+            if (error) console.warn('Supabase technical problem progress delete failed:', error.message);
+          });
+      }
+    }
+
     return isNowSolved;
+  },
+
+  async fetchAndSyncFromSupabase(userEmail?: string): Promise<void> {
+    if (!userEmail || userEmail === 'guest@prepunite.com' || typeof window === 'undefined') return;
+
+    try {
+      // Sync Solved Problems
+      const { data: probData } = await supabase
+        .from('user_technical_progress')
+        .select('problem_id')
+        .eq('user_email', userEmail)
+        .eq('is_solved', true);
+
+      if (probData && probData.length > 0) {
+        const currentSet = this.getSolvedProblemIds();
+        probData.forEach(r => currentSet.add(r.problem_id));
+        localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(currentSet)));
+      }
+
+      // Sync MCQ Progress
+      const { data: mcqData } = await supabase
+        .from('user_mcq_progress')
+        .select('*')
+        .eq('user_email', userEmail);
+
+      if (mcqData && mcqData.length > 0) {
+        const currentMcqMap = this.getMcqProgress();
+        mcqData.forEach(r => {
+          currentMcqMap[r.mcq_id] = {
+            solved: r.is_solved,
+            selectedOption: r.selected_option,
+            wrongPicks: Array.isArray(r.wrong_picks) ? r.wrong_picks : [],
+          };
+        });
+        localStorage.setItem(SOLVED_MCQS_KEY, JSON.stringify(currentMcqMap));
+      }
+    } catch (e) {
+      console.warn('Failed to fetch technical progress from Supabase:', e);
+    }
   },
 
   // ─── Custom Imported Problems (LocalStorage Fallback / Cache) ─────────────

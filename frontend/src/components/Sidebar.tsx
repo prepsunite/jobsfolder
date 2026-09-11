@@ -524,6 +524,42 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       Import
                     </span>
                   </Link>
+
+                  <Link
+                    to="/admin/technical"
+                    onClick={onClose}
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                      location.pathname.startsWith('/admin/technical')
+                        ? 'bg-indigo-900/10 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Code2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>Technical Hub</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                      Tech
+                    </span>
+                  </Link>
+
+                  <Link
+                    to="/admin/interview"
+                    onClick={onClose}
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                      location.pathname.startsWith('/admin/interview')
+                        ? 'bg-teal-900/10 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-500/30'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <MessageSquareQuote className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                      <span>Interview Prep</span>
+                    </div>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300">
+                      Prep
+                    </span>
+                  </Link>
                 </div>
               )}
             </>
