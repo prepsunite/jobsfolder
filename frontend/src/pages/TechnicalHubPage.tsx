@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -51,6 +51,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
 import audioEffects from '@/utils/audioEffects';
 import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImportModal';
+import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
@@ -137,6 +138,32 @@ export default function TechnicalHubPage() {
   useEffect(() => {
     setSelectedItemIds(new Set());
   }, [topicParam, activeTrack]);
+
+  // Pagination State matching Aptitude
+  const [currentPage, setCurrentPage] = useState(1);
+  const QUESTIONS_PER_PAGE = 10;
+  const listTopRef = useRef<HTMLDivElement>(null);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (listTopRef.current) {
+      const yOffset = -24;
+      const elementPosition = listTopRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY + yOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Reset pagination on filter or topic change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [topicParam, activeTrack, selectedLevel, selectedStatus, selectedStage, searchQuery]);
+
+  // Cheatcode / Tips Modal State
+  const [showCheatcodeModal, setShowCheatcodeModal] = useState(false);
 
   // Technical MCQ Progress & State
   const [mcqProgress, setMcqProgress] = useState<Record<string, TechnicalMcqProgress>>(() =>
@@ -385,6 +412,9 @@ export default function TechnicalHubPage() {
       return true;
     });
   }, [activeTopic, activeTopicMcqs, mcqs, selectedStatus, searchQuery, mcqProgress, isAdmin]);
+
+  const currentFilteredListLength = activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length : filteredProblems.length;
+  const totalPages = Math.ceil(currentFilteredListLength / QUESTIONS_PER_PAGE);
 
   const handleSelectMcqOption = (mcq: TechnicalMcq, optIdx: number) => {
     const isCorrect = optIdx === mcq.correctOptionIndex;
@@ -786,18 +816,34 @@ export default function TechnicalHubPage() {
                 </p>
               </div>
 
-              {/* Solved Counter & Radial / Bar */}
-              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E9ECEF] dark:border-[#242424]">
-                <span className="text-[11px] font-mono text-[#868E96] dark:text-[#777777]">
-                  Topic Progress
-                </span>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-display font-extrabold text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400">
-                    {activeTopicSolvedCount}
+              {/* Solved Counter & Visual Progress matching Aptitude */}
+              <div className="flex flex-col sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E9ECEF] dark:border-[#242424] gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-36 sm:w-44 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                      style={{ width: `${topicPercentage}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                    {activeTopicSolvedCount} / {activeTopicTotalCount} ({topicPercentage}%)
                   </span>
-                  <span className="font-display text-xs text-[#868E96]">
-                    / {activeTopicTotalCount} ({topicPercentage}%)
-                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setShowCheatcodeModal(true)}
+                    className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/25 transition-all cursor-pointer shadow-2xs"
+                    title="View topic formulas, tips, and key syntax"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-[#FD4A32]" />
+                    <span>Topic Tips</span>
+                  </button>
+
+                  <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#1C1C1C] text-[#868E96] dark:text-[#CCCCCC] text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424]">
+                    {currentFilteredListLength} {activeTrack === 'TECHNICAL_MCQS' ? 'MCQs' : 'Problems'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -972,9 +1018,42 @@ export default function TechnicalHubPage() {
             </div>
           )}
 
+          {/* 📄 CENTERED TOP PAGINATION */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center pt-2.5 pb-1">
+              <div className="inline-flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                  aria-label="Previous Page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
+                </button>
+
+                <span className="px-3.5 py-1.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                  aria-label="Next Page"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* 4. Full-Width Questions / MCQs List */}
           {activeTrack === 'TECHNICAL_MCQS' ? (
-            <div className="space-y-4">
+            <div className="space-y-4" ref={listTopRef}>
               {activeTopic && activeTopicMcqs.length === 0 ? (
                 <div className="p-12 text-center rounded-xl border-2 border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] space-y-3">
                   <HelpCircle className="w-10 h-10 text-[#868E96] mx-auto opacity-50" />
@@ -1023,7 +1102,10 @@ export default function TechnicalHubPage() {
                   </button>
                 </div>
               ) : (
-                filteredMcqs.map((mcq, idx) => {
+                filteredMcqs
+                  .slice((currentPage - 1) * QUESTIONS_PER_PAGE, currentPage * QUESTIONS_PER_PAGE)
+                  .map((mcq, idx) => {
+                  const globalIdx = (currentPage - 1) * QUESTIONS_PER_PAGE + idx;
                   const prog = mcqProgress[mcq.id];
                   const isSolved = prog?.solved ?? false;
                   const wrongPicks = prog?.wrongPicks ?? [];
@@ -1050,7 +1132,7 @@ export default function TechnicalHubPage() {
                           )}
 
                           <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
-                            Q{idx + 1}
+                            Q{globalIdx + 1}
                           </span>
                           <span className="text-[10px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-semibold">
                             {mcq.topic}
@@ -1207,7 +1289,7 @@ export default function TechnicalHubPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4" ref={listTopRef}>
               {activeTopic && activeTopicProblems.length === 0 ? (
                 <div className="p-12 text-center rounded-xl border-2 border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] space-y-3">
                   <Code2 className="w-10 h-10 text-[#868E96] mx-auto opacity-50" />
@@ -1257,7 +1339,10 @@ export default function TechnicalHubPage() {
                   </button>
                 </div>
               ) : (
-                filteredProblems.map((problem, index) => {
+                filteredProblems
+                  .slice((currentPage - 1) * QUESTIONS_PER_PAGE, currentPage * QUESTIONS_PER_PAGE)
+                  .map((problem, index) => {
+                  const globalIdx = (currentPage - 1) * QUESTIONS_PER_PAGE + index;
                   const isSolved = problem.solved;
                   const isExpanded = expandedSolutions[problem.id] ?? false;
                   const activeLang = problemLanguages[problem.id] || 'java';
@@ -1284,7 +1369,7 @@ export default function TechnicalHubPage() {
                           )}
 
                           <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
-                            Question #{index + 1}
+                            Question #{globalIdx + 1}
                           </span>
 
                           <span
@@ -1534,6 +1619,52 @@ export default function TechnicalHubPage() {
                   );
                 })
               )}
+            </div>
+          )}
+
+          {/* 📄 BOTTOM NUMBERED PAGINATION */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-6 pb-2">
+              <button
+                type="button"
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-9 h-9 rounded-full border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                aria-label="Previous Page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-1.5 px-2">
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const page = i + 1;
+                  const isActive = currentPage === page;
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => handlePageChange(page)}
+                      className={`flex items-center justify-center min-w-[36px] h-[36px] px-2 rounded-full font-display font-bold text-xs transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/20 scale-105'
+                          : 'bg-transparent text-[#868E96] dark:text-[#888888] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-9 h-9 rounded-full border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                aria-label="Next Page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
@@ -2359,6 +2490,18 @@ export default function TechnicalHubPage() {
           defaultTopicId={activeTopic?.id}
           topics={topics}
           track={activeTrack}
+        />
+      )}
+
+      {/* 💡 TOPIC CHEATCODE / TIPS MODAL */}
+      {activeTopic && (
+        <TopicCheatcodeModal
+          isOpen={showCheatcodeModal}
+          onClose={() => setShowCheatcodeModal(false)}
+          topicId={activeTopic.id}
+          topicName={activeTopic.title}
+          categoryTitle={activeTrack === 'TECHNICAL_MCQS' ? 'Technical MCQs' : activeTrack === 'CAMPUS_DSA' ? 'Campus DSA' : 'Programming 150'}
+          fallbackFormulas={activeTopic.tips || []}
         />
       )}
     </div>
