@@ -122,6 +122,22 @@ export default function TechnicalHubPage() {
   const [isEditingMcq, setIsEditingMcq] = useState(false);
   const [editingMcq, setEditingMcq] = useState<Partial<TechnicalMcq> | null>(null);
 
+  // Admin Multi-Select State
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+
+  const toggleItemSelection = (id: string) => {
+    setSelectedItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    setSelectedItemIds(new Set());
+  }, [topicParam, activeTrack]);
+
   // Technical MCQ Progress & State
   const [mcqProgress, setMcqProgress] = useState<Record<string, TechnicalMcqProgress>>(() =>
     technicalService.getMcqProgress()
@@ -327,6 +343,7 @@ export default function TechnicalHubPage() {
   const filteredProblems = useMemo(() => {
     const list = activeTopic ? activeTopicProblems : currentProblems;
     return list.filter(p => {
+      if (!isAdmin && p.is_hidden) return false;
       if (selectedLevel !== 'ALL' && p.level !== selectedLevel) return false;
       if (selectedStatus === 'SOLVED' && !p.solved) return false;
       if (selectedStatus === 'UNSOLVED' && p.solved) return false;
@@ -341,12 +358,13 @@ export default function TechnicalHubPage() {
       }
       return true;
     });
-  }, [activeTopic, activeTopicProblems, currentProblems, selectedLevel, selectedStatus, selectedCategory, searchQuery]);
+  }, [activeTopic, activeTopicProblems, currentProblems, selectedLevel, selectedStatus, selectedCategory, searchQuery, isAdmin]);
 
   // Filtered MCQs
   const filteredMcqs = useMemo(() => {
     const list = activeTopic ? activeTopicMcqs : mcqs;
     return list.filter(mcq => {
+      if (!isAdmin && mcq.is_hidden) return false;
       const prog = mcqProgress[mcq.id];
       const isSolved = prog?.solved ?? false;
       const isRetry = !isSolved && (prog?.wrongPicks?.length ?? 0) > 0;
@@ -366,7 +384,7 @@ export default function TechnicalHubPage() {
 
       return true;
     });
-  }, [activeTopic, activeTopicMcqs, mcqs, mcqProgress, selectedStatus, searchQuery]);
+  }, [activeTopic, activeTopicMcqs, mcqs, selectedStatus, searchQuery, mcqProgress, isAdmin]);
 
   const handleSelectMcqOption = (mcq: TechnicalMcq, optIdx: number) => {
     const isCorrect = optIdx === mcq.correctOptionIndex;
@@ -653,6 +671,53 @@ export default function TechnicalHubPage() {
     refetchMcqs();
   };
 
+  // ─── ADMIN BULK & VISIBILITY ACTIONS ──────────────────────────────────────
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const currentList = activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs : filteredProblems;
+      setSelectedItemIds(new Set(currentList.map(item => item.id)));
+    } else {
+      setSelectedItemIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItemIds.size === 0) return;
+    const count = selectedItemIds.size;
+    const itemLabel = activeTrack === 'TECHNICAL_MCQS' ? 'MCQ(s)' : 'problem(s)';
+    if (!window.confirm(`Are you sure you want to delete ${count} selected ${itemLabel}? This action cannot be undone.`)) return;
+
+    const idsToDelete = Array.from(selectedItemIds);
+    if (activeTrack === 'TECHNICAL_MCQS') {
+      await technicalService.bulkDeleteTechnicalMcqs(idsToDelete);
+      refetchMcqs();
+    } else {
+      await technicalService.bulkDeleteProgrammingProblems(idsToDelete);
+      if (activeTrack === 'CAMPUS_DSA') refetchDsa();
+      else refetchP150();
+    }
+    setSelectedItemIds(new Set());
+  };
+
+  const handleToggleProblemVisibility = async (problem: ProgrammingProblem) => {
+    const nextHidden = !problem.is_hidden;
+    await technicalService.saveProgrammingProblem({
+      ...problem,
+      is_hidden: nextHidden,
+    });
+    if (activeTrack === 'CAMPUS_DSA') refetchDsa();
+    else refetchP150();
+  };
+
+  const handleToggleMcqVisibility = async (mcq: TechnicalMcq) => {
+    const nextHidden = !mcq.is_hidden;
+    await technicalService.saveTechnicalMcq({
+      ...mcq,
+      is_hidden: nextHidden,
+    });
+    refetchMcqs();
+  };
+
   return (
     <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
       {/* ────────────────────────────────────────────────────────────────────────
@@ -870,6 +935,43 @@ export default function TechnicalHubPage() {
             </div>
           )}
 
+          {/* Admin Bulk Actions */}
+          {isAdmin && (activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length > 0 : filteredProblems.length > 0) && (
+            <div className="flex items-center gap-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedItemIds.size > 0 &&
+                    selectedItemIds.size === (activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length : filteredProblems.length)
+                  }
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                />
+                <span className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
+                  Select All
+                </span>
+              </label>
+
+              {selectedItemIds.size > 0 && (
+                <>
+                  <div className="w-px h-4 bg-[#E9ECEF] dark:bg-[#242424]"></div>
+                  <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555]">
+                    {selectedItemIds.size} selected
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-xs font-display font-bold transition-colors flex items-center gap-1 border border-rose-500/20 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Delete Selected</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           {/* 4. Full-Width Questions / MCQs List */}
           {activeTrack === 'TECHNICAL_MCQS' ? (
             <div className="space-y-4">
@@ -930,16 +1032,36 @@ export default function TechnicalHubPage() {
                   return (
                     <div
                       key={mcq.id}
-                      className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#FD4A32]/40 transition-all duration-300 space-y-4 shadow-xs"
+                      className={`p-5 sm:p-6 rounded-xl border transition-all duration-300 space-y-4 shadow-xs relative ${
+                        mcq.is_hidden
+                          ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                          : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/40 text-[#121417] dark:text-[#FFFFFF]'
+                      } ${selectedItemIds.has(mcq.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                     >
                       <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {isAdmin && (
+                            <input
+                              type="checkbox"
+                              checked={selectedItemIds.has(mcq.id)}
+                              onChange={() => toggleItemSelection(mcq.id)}
+                              className="w-4 h-4 mr-1 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                            />
+                          )}
+
                           <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
                             Q{idx + 1}
                           </span>
                           <span className="text-[10px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-semibold">
                             {mcq.topic}
                           </span>
+
+                          {mcq.is_hidden && (
+                            <span className="text-[9px] font-display font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                              <EyeOff className="w-3 h-3" />
+                              <span>Hidden</span>
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -963,8 +1085,20 @@ export default function TechnicalHubPage() {
                             <div className="flex items-center gap-1 ml-2 border-l border-gray-200 dark:border-gray-800 pl-2">
                               <button
                                 type="button"
+                                onClick={() => handleToggleMcqVisibility(mcq)}
+                                className={`p-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${
+                                  mcq.is_hidden
+                                    ? 'bg-amber-500/20 text-amber-600 border border-amber-500/40'
+                                    : 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/40'
+                                }`}
+                                title={mcq.is_hidden ? 'Publish MCQ' : 'Hide MCQ'}
+                              >
+                                {mcq.is_hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                type="button"
                                 onClick={(e) => openMcqEditor(e, mcq)}
-                                className="p-1 text-gray-500 hover:text-blue-500 rounded"
+                                className="p-1 rounded bg-blue-500/20 text-blue-600 border border-blue-500/40 hover:bg-blue-500/30 transition-all"
                                 title="Edit MCQ"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -972,7 +1106,7 @@ export default function TechnicalHubPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteMcq(mcq.id)}
-                                className="p-1 text-gray-500 hover:text-rose-500 rounded"
+                                className="p-1 rounded bg-rose-500/20 text-rose-600 border border-rose-500/40 hover:bg-rose-500/30 transition-all"
                                 title="Delete MCQ"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1132,10 +1266,23 @@ export default function TechnicalHubPage() {
                   return (
                     <div
                       key={problem.id}
-                      className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#FD4A32]/40 transition-all duration-300 space-y-4 shadow-xs"
+                      className={`p-5 sm:p-6 rounded-xl border transition-all duration-300 space-y-4 shadow-xs relative ${
+                        problem.is_hidden
+                          ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                          : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/40 text-[#121417] dark:text-[#FFFFFF]'
+                      } ${selectedItemIds.has(problem.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                     >
                       <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {isAdmin && (
+                            <input
+                              type="checkbox"
+                              checked={selectedItemIds.has(problem.id)}
+                              onChange={() => toggleItemSelection(problem.id)}
+                              className="w-4 h-4 mr-1 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                            />
+                          )}
+
                           <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
                             Question #{index + 1}
                           </span>
@@ -1160,6 +1307,13 @@ export default function TechnicalHubPage() {
                             />
                             <span>{problem.level}</span>
                           </span>
+
+                          {problem.is_hidden && (
+                            <span className="text-[9px] font-display font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                              <EyeOff className="w-3 h-3" />
+                              <span>Hidden</span>
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -1190,8 +1344,20 @@ export default function TechnicalHubPage() {
                             <div className="flex items-center gap-1 ml-2 border-l border-gray-200 dark:border-gray-800 pl-2">
                               <button
                                 type="button"
+                                onClick={() => handleToggleProblemVisibility(problem)}
+                                className={`p-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${
+                                  problem.is_hidden
+                                    ? 'bg-amber-500/20 text-amber-600 border border-amber-500/40'
+                                    : 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/40'
+                                }`}
+                                title={problem.is_hidden ? 'Publish Problem' : 'Hide Problem'}
+                              >
+                                {problem.is_hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                type="button"
                                 onClick={(e) => openProblemEditor(e, problem)}
-                                className="p-1 text-gray-500 hover:text-blue-500 rounded"
+                                className="p-1 rounded bg-blue-500/20 text-blue-600 border border-blue-500/40 hover:bg-blue-500/30 transition-all"
                                 title="Edit Problem"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -1199,7 +1365,7 @@ export default function TechnicalHubPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteProblem(problem.id)}
-                                className="p-1 text-gray-500 hover:text-rose-500 rounded"
+                                className="p-1 rounded bg-rose-500/20 text-rose-600 border border-rose-500/40 hover:bg-rose-500/30 transition-all"
                                 title="Delete Problem"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

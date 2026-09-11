@@ -328,16 +328,38 @@ export const interviewService = {
     try {
       const { error } = await supabase
         .from('interview_questions')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', questionId);
 
       if (error) throw error;
     } catch (e) {
-      console.warn('Failed to soft delete interview question on Supabase:', e);
+      console.warn('Failed to delete interview question from Supabase:', e);
     }
 
     const existing = this.getImportedQuestions();
     const filtered = existing.filter(q => q.id !== questionId);
+    try {
+      localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(filtered));
+    } catch {}
+    return true;
+  },
+
+  async bulkDeleteInterviewQuestions(questionIds: string[]): Promise<boolean> {
+    if (!questionIds || questionIds.length === 0) return true;
+    try {
+      const { error } = await supabase
+        .from('interview_questions')
+        .delete()
+        .in('id', questionIds);
+
+      if (error) throw error;
+    } catch (e) {
+      console.warn('Failed to bulk delete interview questions from Supabase:', e);
+    }
+
+    const existing = this.getImportedQuestions();
+    const idSet = new Set(questionIds);
+    const filtered = existing.filter(q => !idSet.has(q.id));
     try {
       localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(filtered));
     } catch {}

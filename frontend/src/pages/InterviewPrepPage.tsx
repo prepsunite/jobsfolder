@@ -90,6 +90,22 @@ export default function InterviewPrepPage() {
   const [editingQuestion, setEditingQuestion] = useState<Partial<InterviewQuestion> | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
 
+  // Admin Multi-Select State
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+
+  const toggleQuestionSelection = (id: string) => {
+    setSelectedQuestionIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    setSelectedQuestionIds(new Set());
+  }, [topicParam, activeCategory]);
+
   // Query All Questions (Supabase-first)
   const { data: allQuestions = [], refetch: refetchQuestions } = useQuery({
     queryKey: ['interview-prep-questions'],
@@ -186,6 +202,7 @@ export default function InterviewPrepPage() {
   // Filtered active questions (search + status)
   const filteredActiveQuestions = useMemo(() => {
     return activeTopicQuestions.filter(q => {
+      if (!isAdmin && q.is_hidden) return false;
       const matchStatus =
         selectedStatus === 'ALL' ||
         (selectedStatus === 'MASTERED' && q.mastered) ||
@@ -200,7 +217,7 @@ export default function InterviewPrepPage() {
 
       return matchStatus && matchSearch;
     });
-  }, [activeTopicQuestions, selectedStatus, searchQuery]);
+  }, [activeTopicQuestions, selectedStatus, searchQuery, isAdmin]);
 
   // Hydrate user progress from Supabase on mount / when user changes
   useEffect(() => {
@@ -384,6 +401,35 @@ export default function InterviewPrepPage() {
     refetchQuestions();
   };
 
+  // ─── ADMIN BULK & VISIBILITY ACTIONS ──────────────────────────────────────
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedQuestionIds(new Set(filteredActiveQuestions.map(item => item.id)));
+    } else {
+      setSelectedQuestionIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedQuestionIds.size === 0) return;
+    const count = selectedQuestionIds.size;
+    if (!window.confirm(`Are you sure you want to delete ${count} selected question(s)? This action cannot be undone.`)) return;
+
+    const idsToDelete = Array.from(selectedQuestionIds);
+    await interviewService.bulkDeleteInterviewQuestions(idsToDelete);
+    refetchQuestions();
+    setSelectedQuestionIds(new Set());
+  };
+
+  const handleToggleQuestionVisibility = async (question: InterviewQuestion) => {
+    const nextHidden = !question.is_hidden;
+    await interviewService.saveInterviewQuestion({
+      ...question,
+      is_hidden: nextHidden,
+    });
+    refetchQuestions();
+  };
+
   return (
     <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
       {/* ────────────────────────────────────────────────────────────────────────
@@ -512,6 +558,43 @@ export default function InterviewPrepPage() {
             </div>
           </div>
 
+          {/* Admin Bulk Actions */}
+          {isAdmin && filteredActiveQuestions.length > 0 && (
+            <div className="flex items-center gap-3 bg-[#F8F9FA] dark:bg-[#0C0C0C] px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424]">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedQuestionIds.size > 0 &&
+                    selectedQuestionIds.size === filteredActiveQuestions.length
+                  }
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                />
+                <span className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
+                  Select All
+                </span>
+              </label>
+
+              {selectedQuestionIds.size > 0 && (
+                <>
+                  <div className="w-px h-4 bg-[#E9ECEF] dark:bg-[#242424]"></div>
+                  <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555]">
+                    {selectedQuestionIds.size} selected
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded text-xs font-display font-bold transition-colors flex items-center gap-1 border border-rose-500/20 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Delete Selected</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Questions Accordion List */}
           <div className="space-y-4">
             {activeTopicQuestions.length === 0 ? (
@@ -568,7 +651,11 @@ export default function InterviewPrepPage() {
                 return (
                   <div
                     key={q.id}
-                    className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-purple-500/40 transition-all duration-300 shadow-xs overflow-hidden"
+                    className={`rounded-xl border transition-all duration-300 shadow-xs overflow-hidden ${
+                      q.is_hidden
+                        ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-purple-500/40 text-[#121417] dark:text-[#FFFFFF]'
+                    } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                   >
                     {/* Header Row */}
                     <div
@@ -577,6 +664,19 @@ export default function InterviewPrepPage() {
                     >
                       <div className="space-y-2 flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {isAdmin && (
+                            <input
+                              type="checkbox"
+                              checked={selectedQuestionIds.has(q.id)}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                toggleQuestionSelection(q.id);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 mr-1 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                            />
+                          )}
+
                           <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-display font-bold text-[10px] tracking-tight border border-purple-500/25">
                             Q{idx + 1}
                           </span>
@@ -585,6 +685,13 @@ export default function InterviewPrepPage() {
                             <span className="text-[9px] font-display font-bold bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded flex items-center gap-1">
                               <Zap className="w-2.5 h-2.5" />
                               Very High Frequency
+                            </span>
+                          )}
+
+                          {q.is_hidden && (
+                            <span className="text-[9px] font-display font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                              <EyeOff className="w-3 h-3" />
+                              <span>Hidden</span>
                             </span>
                           )}
                         </div>
@@ -622,16 +729,37 @@ export default function InterviewPrepPage() {
                           <div className="flex items-center gap-1 border-l border-gray-200 dark:border-gray-800 pl-2">
                             <button
                               type="button"
-                              onClick={(e) => openQuestionEditor(e, q)}
-                              className="p-1 text-gray-500 hover:text-blue-500 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleQuestionVisibility(q);
+                              }}
+                              className={`p-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${
+                                q.is_hidden
+                                  ? 'bg-amber-500/20 text-amber-600 border border-amber-500/40'
+                                  : 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/40'
+                              }`}
+                              title={q.is_hidden ? 'Publish Question' : 'Hide Question'}
+                            >
+                              {q.is_hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openQuestionEditor(e, q);
+                              }}
+                              className="p-1 rounded bg-blue-500/20 text-blue-600 border border-blue-500/40 hover:bg-blue-500/30 transition-all"
                               title="Edit Question"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id); }}
-                              className="p-1 text-gray-500 hover:text-rose-500 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteQuestion(q.id);
+                              }}
+                              className="p-1 rounded bg-rose-500/20 text-rose-600 border border-rose-500/40 hover:bg-rose-500/30 transition-all"
                               title="Delete Question"
                             >
                               <Trash2 className="w-3.5 h-3.5" />

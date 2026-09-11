@@ -441,17 +441,39 @@ export const technicalService = {
     try {
       const { error } = await supabase
         .from('technical_problems')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', problemId);
 
       if (error) throw error;
     } catch (e) {
-      console.warn('Failed to soft delete problem on Supabase:', e);
+      console.warn('Failed to delete problem from Supabase:', e);
     }
 
     // Also remove from localStorage if present
     const existing = this.getImportedProblems();
     const filtered = existing.filter(p => p.id !== problemId);
+    try {
+      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(filtered));
+    } catch {}
+    return true;
+  },
+
+  async bulkDeleteProgrammingProblems(problemIds: string[]): Promise<boolean> {
+    if (!problemIds || problemIds.length === 0) return true;
+    try {
+      const { error } = await supabase
+        .from('technical_problems')
+        .delete()
+        .in('id', problemIds);
+
+      if (error) throw error;
+    } catch (e) {
+      console.warn('Failed to bulk delete problems from Supabase:', e);
+    }
+
+    const existing = this.getImportedProblems();
+    const idSet = new Set(problemIds);
+    const filtered = existing.filter(p => !idSet.has(p.id));
     try {
       localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(filtered));
     } catch {}
@@ -603,16 +625,38 @@ export const technicalService = {
     try {
       const { error } = await supabase
         .from('technical_mcqs')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', mcqId);
 
       if (error) throw error;
     } catch (e) {
-      console.warn('Failed to soft delete MCQ on Supabase:', e);
+      console.warn('Failed to delete technical MCQ from Supabase:', e);
     }
 
     const existing = this.getImportedMcqs();
     const filtered = existing.filter(m => m.id !== mcqId);
+    try {
+      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(filtered));
+    } catch {}
+    return true;
+  },
+
+  async bulkDeleteTechnicalMcqs(mcqIds: string[]): Promise<boolean> {
+    if (!mcqIds || mcqIds.length === 0) return true;
+    try {
+      const { error } = await supabase
+        .from('technical_mcqs')
+        .delete()
+        .in('id', mcqIds);
+
+      if (error) throw error;
+    } catch (e) {
+      console.warn('Failed to bulk delete MCQs from Supabase:', e);
+    }
+
+    const existing = this.getImportedMcqs();
+    const idSet = new Set(mcqIds);
+    const filtered = existing.filter(m => !idSet.has(m.id));
     try {
       localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(filtered));
     } catch {}
