@@ -89,6 +89,16 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     category: 'ARRAYS',
     order: 9,
   },
+  {
+    id: 'hashing-frequency',
+    title: '1D Arrays: Hashing & Frequency Maps',
+    cluster: 'Stage 4: 1D Arrays',
+    description: 'Direct-index frequency arrays, HashMap lookups, Two Sum in O(N), first non-repeating element, and prefix map lookups.',
+    iconName: 'Database',
+    category: 'ARRAYS',
+    order: 10,
+    track: 'PROGRAMMING_150',
+  },
 
   // ── STAGE 5: MATRICES & STRING MANIPULATION ──
   {
@@ -98,7 +108,7 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     description: 'Matrix multiplication, in-place transpose, 90° clockwise rotation, and spiral boundary traversal.',
     iconName: 'Grid',
     category: 'ARRAYS',
-    order: 10,
+    order: 11,
   },
   {
     id: 'strings-fundamentals',
@@ -107,7 +117,7 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     description: 'String length without library calls, vowel/consonant counts, word reversal, and case toggling.',
     iconName: 'Type',
     category: 'STRINGS',
-    order: 11,
+    order: 12,
   },
   {
     id: 'strings-algorithms',
@@ -116,7 +126,7 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     description: 'Valid Anagram verification, Run-Length Encoding (RLE), longest common prefix, and first non-repeating char.',
     iconName: 'Sparkles',
     category: 'STRINGS',
-    order: 12,
+    order: 13,
   },
 
   // ── STAGE 6: RECURSION, SEARCHING & BIT HACKS ──
@@ -127,7 +137,7 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     description: '1 to N recursion, Tower of Hanoi puzzle, recursive array sum, and Power Set generation.',
     iconName: 'Cpu',
     category: 'RECURSION',
-    order: 13,
+    order: 14,
   },
   {
     id: 'searching-sorting',
@@ -136,7 +146,7 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     description: 'Binary search with overflow guards, rotated sorted search, bubble sort, selection sort, and merge sort.',
     iconName: 'Search',
     category: 'SEARCHING_SORTING',
-    order: 14,
+    order: 15,
   },
   {
     id: 'bit-manipulation',
@@ -145,7 +155,7 @@ export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
     description: 'Even/odd check, powers of two, Brian Kernighan\'s bit counter, XOR cancellations, and in-place swaps.',
     iconName: 'Binary',
     category: 'BIT_MANIPULATION',
-    order: 15,
+    order: 16,
     track: 'PROGRAMMING_150',
   },
 ];
@@ -1789,7 +1799,153 @@ int findMissing(const std::vector<int>& arr, int n) {
   },
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TOPIC 10: 2D ARRAYS & MATRIX MATHEMATICS
+  // TOPIC 10: 1D ARRAYS: HASHING & FREQUENCY COUNTING
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: 'p150-hf-1',
+    title: 'Find the Majority Element / Most Frequent Element',
+    slug: 'majority-element-frequency-hash',
+    track: 'PROGRAMMING_150',
+    level: 'BASIC',
+    category: 'ARRAYS',
+    categoryLabel: 'Hashing & Frequency Maps',
+    topicId: 'hashing-frequency',
+    description: 'Given an array nums of size n, return the majority element that appears more than ⌊n / 2⌋ times (or the element with highest frequency).',
+    constraints: ['1 <= nums.length <= 10^5', '-10^9 <= nums[i] <= 10^9'],
+    sampleInput: 'nums = [3, 2, 3]',
+    sampleOutput: '3',
+    testCases: [
+      {
+        "input": "nums = [3, 2, 3]",
+        "output": "3",
+        "explanation": "Element 3 occurs 2 times out of 3, which is > 1.5."
+      },
+      {
+        "input": "nums = [2, 2, 1, 1, 1, 2, 2]",
+        "output": "2",
+        "explanation": "Element 2 occurs 4 times out of 7."
+      }
+    ],
+    explanation: 'We can track frequencies using a HashMap in O(N) time and O(N) space, or use Boyer-Moore Voting Algorithm in O(N) time and O(1) space.',
+    solutions: {
+      java: `import java.util.HashMap;
+
+public class Solution {
+    public static int majorityElement(int[] nums) {
+        int candidate = nums[0], count = 0;
+        for (int num : nums) {
+            if (count == 0) candidate = num;
+            count += (num == candidate) ? 1 : -1;
+        }
+        return candidate;
+    }
+}`,
+      python: `def majority_element(nums: list[int]) -> int:
+    candidate, count = nums[0], 0
+    for num in nums:
+        if count == 0:
+            candidate = num
+        count += 1 if num == candidate else -1
+    return candidate`,
+      cpp: `#include <vector>
+
+int majorityElement(const std::vector<int>& nums) {
+    int candidate = nums[0], count = 0;
+    for (int num : nums) {
+        if (count == 0) candidate = num;
+        count += (num == candidate) ? 1 : -1;
+    }
+    return candidate;
+}`,
+      c: `int majorityElement(int nums[], int n) {
+    int candidate = nums[0], count = 0;
+    for (int i = 0; i < n; i++) {
+        if (count == 0) candidate = nums[i];
+        count += (nums[i] == candidate) ? 1 : -1;
+    }
+    return candidate;
+}`
+    },
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(1)',
+    hints: ['Count cancellations: if you pair distinct elements, the majority element always survives.'],
+    companyTags: ['TCS NQT', 'Infosys', 'Amazon', 'Cognizant']
+  },
+  {
+    id: 'p150-hf-2',
+    title: 'Two Sum: Find Pair with Given Target in O(N) via Hashing',
+    slug: 'two-sum-target-hashing',
+    track: 'PROGRAMMING_150',
+    level: 'MEDIUM',
+    category: 'ARRAYS',
+    categoryLabel: 'Hashing & Frequency Maps',
+    topicId: 'hashing-frequency',
+    description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target in O(N) time.',
+    constraints: ['2 <= nums.length <= 10^5', '-10^9 <= nums[i] <= 10^9', '-10^9 <= target <= 10^9'],
+    sampleInput: 'nums = [2, 7, 11, 15], target = 9',
+    sampleOutput: '[0, 1]',
+    testCases: [
+      {
+        "input": "nums = [2, 7, 11, 15], target = 9",
+        "output": "[0, 1]",
+        "explanation": "nums[0] + nums[1] = 2 + 7 = 9."
+      },
+      {
+        "input": "nums = [3, 2, 4], target = 6",
+        "output": "[1, 2]",
+        "explanation": "nums[1] + nums[2] = 2 + 4 = 6."
+      }
+    ],
+    explanation: 'As you iterate through the array, check if complement = target - nums[i] already exists in the Hash Table. If yes, return current index and complement index. If no, insert nums[i] into the map.',
+    solutions: {
+      java: `import java.util.HashMap;
+import java.util.Map;
+
+public class Solution {
+    public static int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+            if (map.containsKey(complement)) {
+                return new int[] { map.get(complement), i };
+            }
+            map.put(nums[i], i);
+        }
+        return new int[] { -1, -1 };
+    }
+}`,
+      python: `def two_sum(nums: list[int], target: int) -> list[int]:
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []`,
+      cpp: `#include <vector>
+#include <unordered_map>
+
+std::vector<int> twoSum(const std::vector<int>& nums, int target) {
+    std::unordered_map<int, int> seen;
+    for (int i = 0; i < (int)nums.size(); i++) {
+        int complement = target - nums[i];
+        if (seen.find(complement) != seen.end()) {
+            return { seen[complement], i };
+        }
+        seen[nums[i]] = i;
+    }
+    return {};
+}`,
+      c: `// In C, use a direct-address bucket or sort-and-two-pointers`
+    },
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(N)',
+    hints: ['Store previously visited numbers in a hash map where key is number and value is index.'],
+    companyTags: ['TCS NQT', 'Amazon', 'Accenture', 'Capgemini']
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TOPIC 11: 2D ARRAYS & MATRIX MATHEMATICS
   // ──────────────────────────────────────────────────────────────────────────
   {
     id: 'p150-14',

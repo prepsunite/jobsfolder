@@ -242,7 +242,7 @@ export default function TechnicalHubPage() {
   const stages = useMemo(() => {
     const rawClusters = Array.from(new Set(currentCategoryTopics.map(t => t.cluster)));
     if (activeTrack === 'PROGRAMMING_150') {
-      return rawClusters;
+      return ['All Stages', ...rawClusters];
     }
     if (activeTrack === 'CAMPUS_DSA') {
       return ['All Patterns', ...rawClusters];
@@ -254,8 +254,10 @@ export default function TechnicalHubPage() {
   useEffect(() => {
     if (stages.length > 0) {
       if (activeTrack === 'PROGRAMMING_150') {
-        if (!selectedStage || !stages.includes(selectedStage) || selectedStage.startsWith('All')) {
-          setSelectedStage(stages[0]);
+        if (!selectedStage || !stages.includes(selectedStage)) {
+          // Default to Stage 1 initially, but allow user to select 'All Stages'
+          const stage1 = stages.find(s => s.toLowerCase().includes('stage 1')) || stages[0];
+          setSelectedStage(stage1);
         }
       } else if (activeTrack === 'CAMPUS_DSA') {
         if (!selectedStage || !stages.includes(selectedStage)) {
@@ -274,6 +276,7 @@ export default function TechnicalHubPage() {
     return currentCategoryTopics.filter(t => {
       const isAll =
         !selectedStage ||
+        selectedStage === 'All Stages' ||
         selectedStage === 'All Topics' ||
         selectedStage === 'All Patterns' ||
         selectedStage === 'ALL';
@@ -1097,7 +1100,7 @@ export default function TechnicalHubPage() {
                           {problem.companyTags?.map(tag => (
                             <span
                               key={tag}
-                              className="text-[10px] font-mono text-[#868E96] dark:text-[#777777] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded"
+                              className="text-[10px] font-mono text-purple-700 dark:text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded font-medium"
                             >
                               {tag}
                             </span>
