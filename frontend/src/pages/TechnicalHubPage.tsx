@@ -1996,7 +1996,7 @@ export default function TechnicalHubPage() {
           </div>
 
           {/* 📁 3. TOPIC DIRECTORY CARDS */}
-          <div className={`grid gap-3 ${activeTrack === 'PROGRAMMING_150' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
             {filteredTopics.length === 0 ? (
               <div className="col-span-full p-10 text-center rounded-xl border border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
                 <Code2 className="w-8 h-8 text-[#868E96] mx-auto mb-2 opacity-50" />
@@ -2061,26 +2061,42 @@ export default function TechnicalHubPage() {
                         topic.is_hidden
                           ? 'border-amber-500/40 opacity-75'
                           : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/60 dark:hover:border-[#FD4A32]/60'
-                      } rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden`}
+                      } rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden h-full`}
                     >
-                      <div>
-                        {/* Top: Stage Badge, Solved Count, Admin Actions */}
-                        <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-extrabold tracking-wider uppercase bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25">
-                              Stage {stageNum}
-                            </span>
-                            {topic.is_hidden && (
-                              <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
-                                Hidden
-                              </span>
-                            )}
+                      <div className="flex-1 flex flex-col">
+                        {/* Top: Icon, Stage Badge, Title, Solved Count & Admin Controls */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FD4A32]/15 via-[#FD4A32]/10 to-transparent border border-[#FD4A32]/25 text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 group-hover:bg-[#FD4A32] group-hover:text-white duration-200 shadow-2xs">
+                              <TopicIcon className="w-5 h-5" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-extrabold tracking-wider uppercase bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25">
+                                  Stage {stageNum}
+                                </span>
+                                <span className="text-[10px] font-mono text-[#868E96] dark:text-[#666666]">
+                                  {topic.subtopics?.length || 1} {topic.subtopics?.length === 1 ? 'Module' : 'Modules'}
+                                </span>
+                                {topic.is_hidden && (
+                                  <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                    Hidden
+                                  </span>
+                                )}
+                              </div>
+
+                              <h3 className="font-display font-extrabold text-base sm:text-[17px] text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors leading-snug">
+                                {topic.title || topic.name}
+                              </h3>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 shrink-0">
                             {solvedCount > 0 && (
-                              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                                {solvedCount}/{totalCount} Solved
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                <span>{solvedCount}/{totalCount}</span>
                               </span>
                             )}
 
@@ -2115,38 +2131,33 @@ export default function TechnicalHubPage() {
                           </div>
                         </div>
 
-                        {/* Middle: Icon & Title & Description */}
-                        <div className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 group-hover:bg-[#FD4A32] group-hover:text-white transition-colors duration-200">
-                            <TopicIcon className="w-4.5 h-4.5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-display font-extrabold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors leading-snug">
-                              {topic.title || topic.name}
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                              {topic.description}
-                            </p>
-                          </div>
-                        </div>
+                        {/* Middle: Description with fixed min-height for uniform alignment */}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2.5 line-clamp-2 leading-relaxed min-h-[34px] flex items-center">
+                          {topic.description}
+                        </p>
 
-                        {/* Subtopics List */}
+                        {/* Curriculum Modules Section with uniform min-height */}
                         {topic.subtopics && topic.subtopics.length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
-                            <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#666666]">
-                              Modules ({topic.subtopics.length}):
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
+                          <div className="mt-3.5 pt-3 border-t border-[#E9ECEF]/70 dark:border-[#242424] flex-1 flex flex-col justify-start">
+                            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#868E96] dark:text-[#666666] mb-2 font-bold">
+                              <span>Curriculum Modules</span>
+                              <span className="font-mono text-[#FD4A32] font-semibold">{countText}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 min-h-[58px] content-start">
                               {topic.subtopics.map(sub => {
                                 const subCount = p150Problems.filter(p => p.topicId === sub.id).length;
                                 return (
                                   <span
                                     key={sub.id}
-                                    className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-[#F8F9FA] dark:bg-[#1C1C1C] text-[#555555] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#282828]"
+                                    className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#1C1C1C] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#282828] group-hover:border-[#FD4A32]/30 transition-colors"
                                   >
-                                    <span className="w-1 h-1 rounded-full bg-[#FD4A32]"></span>
-                                    <span>{sub.title}</span>
-                                    {subCount > 0 && <span className="text-[9px] opacity-75 font-bold">({subCount})</span>}
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32]/70 shrink-0"></span>
+                                    <span className="font-semibold">{sub.title}</span>
+                                    {subCount > 0 && (
+                                      <span className="text-[10px] font-mono font-bold text-[#868E96] dark:text-[#777777] bg-black/5 dark:bg-white/5 px-1 rounded">
+                                        {subCount}
+                                      </span>
+                                    )}
                                   </span>
                                 );
                               })}
@@ -2156,11 +2167,11 @@ export default function TechnicalHubPage() {
                       </div>
 
                       {/* Bottom: Progress Bar & CTA */}
-                      <div className="mt-4 pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-2">
+                      <div className="mt-4 pt-3.5 border-t border-[#E9ECEF] dark:border-[#242424] space-y-2.5">
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-[10px] font-mono">
-                            <span className="text-[#868E96] dark:text-[#666666]">Stage Progress</span>
-                            <span className="font-bold text-[#121417] dark:text-white">{pct}%</span>
+                            <span className="text-[#868E96] dark:text-[#666666] font-medium">Stage Mastery</span>
+                            <span className="font-bold text-[#121417] dark:text-white">{pct}% ({solvedCount}/{totalCount} Solved)</span>
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
                             <div
@@ -2171,10 +2182,12 @@ export default function TechnicalHubPage() {
                         </div>
 
                         <div className="flex items-center justify-between pt-1">
-                          <span className="text-xs font-mono font-semibold text-[#868E96] dark:text-[#888888]">
-                            {countText}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-[#FD4A32] group-hover:translate-x-0.5 transition-transform">
+                          <div className="flex items-center gap-1.5 text-xs font-mono text-[#868E96] dark:text-[#888888]">
+                            <BookOpen className="w-3.5 h-3.5 text-[#FD4A32]" />
+                            <span className="font-semibold">{countText}</span>
+                          </div>
+
+                          <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-[#FD4A32] group-hover:translate-x-0.5 transition-transform bg-[#FD4A32]/10 hover:bg-[#FD4A32] hover:text-white px-3 py-1 rounded-md border border-[#FD4A32]/25 group-hover:bg-[#FD4A32] group-hover:text-white">
                             <span>Open Stage</span>
                             <ChevronRight className="w-3.5 h-3.5" />
                           </span>
