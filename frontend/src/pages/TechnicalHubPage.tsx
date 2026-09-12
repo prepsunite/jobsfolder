@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -191,7 +191,7 @@ export default function TechnicalHubPage() {
   });
 
   // Query Live Topic Question Counts (Supabase-first)
-  const { data: liveCountMap = {} } = useQuery<Record<string, number>>({
+  const { data: liveCountMap = {}, refetch: refetchCounts } = useQuery<Record<string, number>>({
     queryKey: ['technical-topic-counts', activeTrack],
     queryFn: () => technicalService.getTopicCountsMap(activeTrack),
   });
@@ -213,6 +213,34 @@ export default function TechnicalHubPage() {
     queryKey: ['technical-mcqs'],
     queryFn: () => technicalService.getTechnicalMcqs(),
   });
+
+  // Unified Bulk Import / Storage Update Refetcher
+  const handleBulkImportSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
+    queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
+    queryClient.invalidateQueries({ queryKey: ['technical-mcqs'] });
+    queryClient.invalidateQueries({ queryKey: ['technical-topic-counts'] });
+    refetchP150();
+    refetchDsa();
+    refetchMcqs();
+    refetchCounts();
+  }, [queryClient, refetchP150, refetchDsa, refetchMcqs, refetchCounts]);
+
+  // Listen to cross-tab / local storage updates
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
+      queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
+      queryClient.invalidateQueries({ queryKey: ['technical-mcqs'] });
+      queryClient.invalidateQueries({ queryKey: ['technical-topic-counts'] });
+      refetchP150();
+      refetchDsa();
+      refetchMcqs();
+      refetchCounts();
+    };
+    window.addEventListener('prepunite-storage-update', handleStorageUpdate);
+    return () => window.removeEventListener('prepunite-storage-update', handleStorageUpdate);
+  }, [queryClient, refetchP150, refetchDsa, refetchMcqs, refetchCounts]);
 
   // Hydrate user progress from Supabase on mount / when user changes
   useEffect(() => {
@@ -2043,11 +2071,11 @@ export default function TechnicalHubPage() {
                   );
                   solvedCount = topicProblems.filter(p => p.solved).length;
                   let totalCount = topicProblems.length;
-                  if (liveCount > 0) {
+                  if (liveCount > totalCount) {
                     totalCount = liveCount;
                   } else if (topic.subtopicIds) {
                     const subCount = topic.subtopicIds.reduce((sum, sId) => sum + (liveCountMap[sId] ?? 0), 0);
-                    if (subCount > 0) totalCount = Math.max(totalCount, subCount);
+                    if (subCount > totalCount) totalCount = subCount;
                   }
                   countText = `${totalCount} Problems`;
                   const stageNum = topic.stageNumber || parseInt(topic.id.replace('stage-', ''), 10) || 1;
@@ -2242,19 +2270,6 @@ export default function TechnicalHubPage() {
             )}
           </div>
         </>
-      )}
-
-      {/* 💻 ADMIN BULK JSON IMPORT MODAL */}
-      {showBulkModal && (
-        <TechnicalBulkImportModal
-          isOpen={showBulkModal}
-          onClose={() => setShowBulkModal(false)}
-          onSuccess={() => {
-            refetchP150();
-          }}
-          defaultTopicId={activeTopic?.id}
-          topics={topics}
-        />
       )}
 
       {/* 🛠️ ADMIN TOPIC EDITOR MODAL */}
@@ -2689,15 +2704,7 @@ export default function TechnicalHubPage() {
         <TechnicalBulkImportModal
           isOpen={showBulkModal}
           onClose={() => setShowBulkModal(false)}
-          onSuccess={() => {
-            if (activeTrack === 'TECHNICAL_MCQS') {
-              refetchMcqs();
-            } else if (activeTrack === 'CAMPUS_DSA') {
-              refetchDsa();
-            } else {
-              refetchP150();
-            }
-          }}
+          onSuccess={handleBulkImportSuccess}
           defaultTopicId={activeTopic?.id}
           topics={topics}
           track={activeTrack}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Upload, Check, Copy, AlertCircle, CheckCircle2, FileCode } from 'lucide-react';
-import { technicalService } from '@/services/technical.service';
+import { X, Upload, Check, Copy, AlertCircle, CheckCircle2, FileCode, AlertTriangle, CloudCheck, CloudOff } from 'lucide-react';
+import { technicalService, type TechnicalImportReport } from '@/services/technical.service';
 import type { ProgrammingTopic, TechnicalTrack } from '@/types/technical';
+import { safeJsonParse } from '@/utils/questionParser';
 
 interface TechnicalBulkImportModalProps {
   isOpen: boolean;
@@ -77,20 +78,20 @@ export default function TechnicalBulkImportModal({
   const [selectedTopicId, setSelectedTopicId] = useState<string>(defaultTopicId || 'AUTO');
   const [jsonText, setJsonText] = useState<string>('');
   const [copiedTemplate, setCopiedTemplate] = useState<boolean>(false);
-  const [importReport, setImportReport] = useState<{ success: number; message?: string } | null>(null);
+  const [importReport, setImportReport] = useState<TechnicalImportReport | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
   const currentTemplate = isMcqMode ? SAMPLE_MCQ_TEMPLATE : SAMPLE_PROBLEM_TEMPLATE;
 
-  // Real-time JSON validation
+  // Real-time JSON validation using safeJsonParse
   let parsedItems: any[] = [];
   let parseError: string | null = null;
 
   if (jsonText.trim()) {
     try {
-      const parsed = JSON.parse(jsonText);
+      const parsed = safeJsonParse(jsonText);
       parsedItems = Array.isArray(parsed) ? parsed : [parsed];
       if (parsedItems.length === 0) {
         parseError = 'The JSON array is empty.';
@@ -135,10 +136,10 @@ export default function TechnicalBulkImportModal({
         });
 
         const result = await technicalService.importTechnicalMcqs(itemsToImport);
-        setImportReport({
-          success: result.importedCount,
-          message: `Successfully imported ${result.importedCount} MCQ(s) to Supabase!`,
-        });
+        setImportReport(result);
+        if (result.success > 0) {
+          onSuccess();
+        }
       } else {
         const itemsToImport = parsedItems.map(p => {
           const finalTopicId = selectedTopicId !== 'AUTO' ? selectedTopicId : (p.topicId || defaultTopicId || 'syntax-operators');
@@ -150,16 +151,19 @@ export default function TechnicalBulkImportModal({
         });
 
         const result = await technicalService.importProgrammingProblems(itemsToImport, track as any);
-        setImportReport({
-          success: result.importedCount,
-          message: `Successfully imported ${result.importedCount} coding problem(s) to Supabase!`,
-        });
+        setImportReport(result);
+        if (result.success > 0) {
+          onSuccess();
+        }
       }
-      onSuccess();
     } catch (err: any) {
       setImportReport({
         success: 0,
-        message: `Import failed: ${err.message || err}`,
+        importedCount: 0,
+        duplicates: 0,
+        invalid: 1,
+        errors: [{ itemIndex: 1, reason: err.message || 'Import operation encountered an unexpected error.' }],
+        supabaseSynced: false,
       });
     } finally {
       setIsSubmitting(false);
@@ -273,19 +277,61 @@ export default function TechnicalBulkImportModal({
 
           {/* Import Result Notification */}
           {importReport && (
-            <div
-              className={`p-3.5 rounded-lg border flex items-center gap-2.5 text-xs font-sans ${
-                importReport.success > 0
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
-              }`}
-            >
-              {importReport.success > 0 ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+            <div className="space-y-2">
+              <div
+                className={`p-3.5 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs font-sans ${
+                  importReport.success > 0
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200'
+                    : importReport.duplicates > 0
+                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-200'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {importReport.success > 0 ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  ) : importReport.duplicates > 0 ? (
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                  )}
+                  <span className="font-semibold">
+                    {importReport.success > 0 && `${importReport.success} item(s) successfully imported & live! `}
+                    {importReport.duplicates > 0 && `${importReport.duplicates} duplicate(s) skipped. `}
+                    {importReport.invalid > 0 && `${importReport.invalid} item(s) had errors.`}
+                    {importReport.success === 0 && importReport.duplicates === 0 && importReport.invalid === 0 && 'No changes were made.'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[11px] font-mono text-gray-500 dark:text-gray-400">
+                  {importReport.supabaseSynced ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                      <CloudCheck className="w-3.5 h-3.5" />
+                      <span>Synced to Supabase</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400">
+                      <CloudOff className="w-3.5 h-3.5" />
+                      <span>Active in Local Cache</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Detailed Duplicate or Error Details */}
+              {importReport.errors && importReport.errors.length > 0 && (
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-[#111111] border border-[#E9ECEF] dark:border-[#222222] max-h-36 overflow-y-auto space-y-1 custom-scrollbar text-[11px] font-mono">
+                  <div className="font-bold text-gray-700 dark:text-gray-300 pb-1 border-b border-gray-200 dark:border-gray-800">
+                    Import Notices & Skipped Items ({importReport.errors.length}):
+                  </div>
+                  {importReport.errors.map((err, eIdx) => (
+                    <div key={eIdx} className="text-gray-600 dark:text-gray-400 flex items-start gap-1.5">
+                      <span className="text-amber-500 font-bold shrink-0">#{err.itemIndex}</span>
+                      <span className="truncate">{err.title ? `"${err.title}" — ` : ''}{err.reason}</span>
+                    </div>
+                  ))}
+                </div>
               )}
-              <span>{importReport.message}</span>
             </div>
           )}
 
