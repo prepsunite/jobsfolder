@@ -75,7 +75,7 @@ export default function TechnicalBulkImportModal({
   track = 'PROGRAMMING_150',
 }: TechnicalBulkImportModalProps) {
   const isMcqMode = track === 'TECHNICAL_MCQS';
-  const [selectedTopicId, setSelectedTopicId] = useState<string>(defaultTopicId || 'AUTO');
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('AUTO');
   const [jsonText, setJsonText] = useState<string>('');
   const [copiedTemplate, setCopiedTemplate] = useState<boolean>(false);
   const [importReport, setImportReport] = useState<TechnicalImportReport | null>(null);

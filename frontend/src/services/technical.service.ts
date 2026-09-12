@@ -615,6 +615,8 @@ export const technicalService = {
       ? Math.max(...existingProblems.map(p => p.sort_order || 0))
       : 0;
 
+    const storedImported = this.getImportedProblems();
+
     newProblems.forEach((p, idx) => {
       const itemIndex = idx + 1;
       if (!p || !p.title || !p.title.trim()) {
@@ -625,7 +627,104 @@ export const technicalService = {
 
       const cleanTitle = p.title.trim();
       const normTitle = cleanTitle.toLowerCase();
-      const fingerprint = computeSha256Hex(`${cleanTitle}:${p.description?.trim() || ''}`);
+      const resolvedDescription = p.description || (p as any).problemStatement || (p as any).statement || (p as any).problem_statement || '';
+      const fingerprint = computeSha256Hex(`${cleanTitle}:${resolvedDescription.trim()}`);
+
+      const resolvedTopicId = p.topicId || (p as any).topic_id || 'syntax-operators';
+      const resolvedLevel = ((p.level || (p as any).difficulty || 'MEDIUM') as string).toUpperCase() as ProblemLevel;
+      const resolvedSolutions = p.solutions || (p as any).solution || {
+        java: '// Java solution',
+        python: '# Python solution',
+        cpp: '// C++ solution',
+        c: '// C solution',
+      };
+      const resolvedConstraints = Array.isArray(p.constraints)
+        ? p.constraints
+        : (typeof p.constraints === 'string' ? (p.constraints as string).split('\n').map(s => s.trim()).filter(Boolean) : []);
+      const testCases = p.testCases || (p as any).test_cases || (p.sampleInput || p.sampleOutput ? [{ input: p.sampleInput || '', output: p.sampleOutput || '', explanation: p.explanation || '' }] : []);
+
+      let resolvedCategory: ProblemCategory = (p.category || 'SYNTAX_BASICS') as ProblemCategory;
+      let resolvedCategoryLabel = p.categoryLabel || (p as any).category_label || 'General Programming';
+      if (resolvedTopicId.includes('string')) {
+        resolvedCategory = 'STRINGS';
+        resolvedCategoryLabel = 'Strings & Text Processing';
+      } else if (resolvedTopicId.includes('matri') || resolvedTopicId.includes('grid')) {
+        resolvedCategory = 'MATRICES';
+        resolvedCategoryLabel = '2D Arrays & Matrices';
+      } else if (resolvedTopicId.includes('array')) {
+        resolvedCategory = 'ARRAYS';
+        resolvedCategoryLabel = 'Arrays & Hashing';
+      } else if (resolvedTopicId.includes('pattern')) {
+        resolvedCategory = 'PATTERNS';
+        resolvedCategoryLabel = 'Pattern Programming';
+      } else if (resolvedTopicId.includes('digit') || resolvedTopicId.includes('prime') || resolvedTopicId.includes('special-numbers')) {
+        resolvedCategory = 'MATH_LOGIC';
+        resolvedCategoryLabel = 'Number Logic & Math';
+      }
+
+      const buildNormalized = (probId: string): ProgrammingProblem => ({
+        id: probId,
+        track,
+        topicId: resolvedTopicId,
+        title: cleanTitle,
+        slug: p.slug || cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        level: resolvedLevel,
+        category: resolvedCategory,
+        categoryLabel: resolvedCategoryLabel,
+        description: resolvedDescription,
+        constraints: resolvedConstraints,
+        testCases,
+        sampleInput: testCases[0]?.input || p.sampleInput || (p as any).sample_input || '',
+        sampleOutput: testCases[0]?.output || p.sampleOutput || (p as any).sample_output || '',
+        explanation: p.explanation || '',
+        solutions: resolvedSolutions,
+        timeComplexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
+        spaceComplexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
+        hints: Array.isArray(p.hints) ? p.hints : (typeof p.hints === 'string' ? [p.hints] : []),
+        companyTags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : []),
+        is_hidden: !!p.is_hidden,
+        is_deleted: false,
+        sort_order: p.sort_order || maxSortOrder,
+        solved: solvedSet.has(probId),
+      });
+
+      const buildDbPayload = (norm: ProgrammingProblem) => ({
+        id: norm.id,
+        topic_id: norm.topicId,
+        track: norm.track,
+        title: norm.title,
+        slug: norm.slug,
+        level: norm.level,
+        category: norm.category,
+        category_label: norm.categoryLabel,
+        description: norm.description,
+        constraints: norm.constraints,
+        test_cases: norm.testCases,
+        sample_input: norm.sampleInput,
+        sample_output: norm.sampleOutput,
+        explanation: norm.explanation,
+        solutions: norm.solutions,
+        time_complexity: norm.timeComplexity,
+        space_complexity: norm.spaceComplexity,
+        hints: norm.hints,
+        company_tags: norm.companyTags,
+        is_hidden: norm.is_hidden,
+        is_deleted: false,
+        sort_order: norm.sort_order,
+      });
+
+      // Check if problem already exists in local imported cache (Update in-place)
+      const existingImportedIdx = storedImported.findIndex(
+        item => item.title.trim().toLowerCase() === normTitle
+      );
+      if (existingImportedIdx !== -1) {
+        const existingId = storedImported[existingImportedIdx].id;
+        const updated = buildNormalized(existingId);
+        storedImported[existingImportedIdx] = updated;
+        dbPayloads.push(buildDbPayload(updated));
+        report.success++;
+        return;
+      }
 
       // Fast Deduplication Check matching Aptitude
       if (existingTitles.has(normTitle) || existingFingerprints.has(fingerprint)) {
@@ -642,77 +741,20 @@ export const technicalService = {
       existingFingerprints.add(fingerprint);
       maxSortOrder++;
 
-      const id = p.id || `custom-${track.toLowerCase()}-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
-      const slug = p.slug || cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const testCases = p.testCases || (p as any).test_cases || (p.sampleInput || p.sampleOutput ? [{ input: p.sampleInput || '', output: p.sampleOutput || '', explanation: p.explanation || '' }] : []);
-      const resolvedTopicId = p.topicId || (p as any).topic_id || 'syntax-operators';
-
-      const normalized: ProgrammingProblem = {
-        id,
-        track,
-        topicId: resolvedTopicId,
-        title: cleanTitle,
-        slug,
-        level: (p.level || 'MEDIUM') as ProblemLevel,
-        category: (p.category || 'SYNTAX_BASICS') as ProblemCategory,
-        categoryLabel: p.categoryLabel || (p as any).category_label || 'General Programming',
-        description: p.description || '',
-        constraints: Array.isArray(p.constraints) ? p.constraints : [],
-        testCases,
-        sampleInput: testCases[0]?.input || p.sampleInput || (p as any).sample_input || '',
-        sampleOutput: testCases[0]?.output || p.sampleOutput || (p as any).sample_output || '',
-        explanation: p.explanation || '',
-        solutions: p.solutions || { java: '// Java solution', python: '# Python solution', cpp: '// C++ solution', c: '// C solution' },
-        timeComplexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
-        spaceComplexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
-        hints: Array.isArray(p.hints) ? p.hints : [],
-        companyTags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : ['Campus Placement']),
-        is_hidden: !!p.is_hidden,
-        is_deleted: false,
-        sort_order: p.sort_order || maxSortOrder,
-        solved: solvedSet.has(id),
-      };
-
-      const dbPayload = {
-        id: normalized.id,
-        topic_id: normalized.topicId,
-        track: normalized.track,
-        title: normalized.title,
-        slug: normalized.slug,
-        level: normalized.level,
-        category: normalized.category,
-        category_label: normalized.categoryLabel,
-        description: normalized.description,
-        constraints: normalized.constraints,
-        test_cases: normalized.testCases,
-        sample_input: normalized.sampleInput,
-        sample_output: normalized.sampleOutput,
-        explanation: normalized.explanation,
-        solutions: normalized.solutions,
-        time_complexity: normalized.timeComplexity,
-        space_complexity: normalized.spaceComplexity,
-        hints: normalized.hints,
-        company_tags: normalized.companyTags,
-        is_hidden: normalized.is_hidden,
-        is_deleted: false,
-        sort_order: normalized.sort_order,
-      };
-
+      const newId = p.id || `custom-${track.toLowerCase()}-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
+      const normalized = buildNormalized(newId);
       validNewProblems.push(normalized);
-      dbPayloads.push(dbPayload);
+      dbPayloads.push(buildDbPayload(normalized));
       report.success++;
     });
 
     // 2. Persist to localStorage immediately (guarantees instantaneous reactive UI display)
-    if (validNewProblems.length > 0) {
-      try {
-        const stored = this.getImportedProblems();
-        const combined = [...stored, ...validNewProblems];
-        localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(combined));
-        window.dispatchEvent(new Event('prepunite-storage-update'));
-      } catch (storageErr) {
-        console.warn('LocalStorage save error:', storageErr);
-      }
+    try {
+      const mergedStorage = [...storedImported, ...validNewProblems];
+      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(mergedStorage));
+      window.dispatchEvent(new Event('prepunite-storage-update'));
+    } catch (storageErr) {
+      console.warn('LocalStorage save error:', storageErr);
     }
 
     // 3. Sync to Supabase in parallel

@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
+import { STAGE_SUBTOPIC_TO_STAGE_MAP } from '@/services/programmingTopicsData';
 import audioEffects from '@/utils/audioEffects';
 import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImportModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
@@ -393,7 +394,8 @@ export default function TechnicalHubPage() {
     }
     return p150Problems.filter(p => 
       p.topicId === activeTopic.id || 
-      (activeTopic.subtopicIds && !!p.topicId && activeTopic.subtopicIds.includes(p.topicId))
+      (activeTopic.subtopicIds && !!p.topicId && activeTopic.subtopicIds.includes(p.topicId)) ||
+      (!!p.topicId && STAGE_SUBTOPIC_TO_STAGE_MAP[p.topicId] === activeTopic.id)
     );
   }, [activeTopic, activeTrack, p150Problems, dsaProblems]);
 

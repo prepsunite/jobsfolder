@@ -15,9 +15,18 @@ export const STAGE_SUBTOPIC_TO_STAGE_MAP: Record<string, string> = {
   'matrices-grid': 'stage-5',
   'strings-fundamentals': 'stage-5',
   'strings-algorithms': 'stage-5',
+  'strings-basics': 'stage-5',
+  'strings-palindromes': 'stage-5',
+  'strings-word-parsing': 'stage-5',
   'recursion-backtracking': 'stage-6',
   'searching-sorting': 'stage-6',
   'bit-manipulation': 'stage-6',
+  'stage-1': 'stage-1',
+  'stage-2': 'stage-2',
+  'stage-3': 'stage-3',
+  'stage-4': 'stage-4',
+  'stage-5': 'stage-5',
+  'stage-6': 'stage-6',
 };
 
 export const STAGE_ID_TO_SUBTOPIC_IDS: Record<string, string[]> = {
@@ -25,7 +34,7 @@ export const STAGE_ID_TO_SUBTOPIC_IDS: Record<string, string[]> = {
   'stage-2': ['digit-manipulation', 'primes-divisibility', 'special-numbers'],
   'stage-3': ['patterns'],
   'stage-4': ['arrays-fundamentals', 'arrays-two-pointers', 'arrays-subarrays', 'hashing-frequency'],
-  'stage-5': ['matrices-grid', 'strings-fundamentals', 'strings-algorithms'],
+  'stage-5': ['matrices-grid', 'strings-fundamentals', 'strings-algorithms', 'strings-basics', 'strings-palindromes', 'strings-word-parsing'],
   'stage-6': ['recursion-backtracking', 'searching-sorting', 'bit-manipulation'],
 };
 
