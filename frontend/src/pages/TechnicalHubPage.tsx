@@ -2061,10 +2061,10 @@ export default function TechnicalHubPage() {
                         topic.is_hidden
                           ? 'border-amber-500/40 opacity-75'
                           : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/60 dark:hover:border-[#FD4A32]/60'
-                      } rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden h-full`}
+                      } rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden`}
                     >
-                      <div className="flex-1 flex flex-col">
-                        {/* Top: Icon, Stage Badge, Title, Solved Count & Admin Controls */}
+                      <div>
+                        {/* Top: Icon, Title, Solved Count & Admin Controls */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3 min-w-0 flex-1">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FD4A32]/15 via-[#FD4A32]/10 to-transparent border border-[#FD4A32]/25 text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 group-hover:bg-[#FD4A32] group-hover:text-white duration-200 shadow-2xs">
@@ -2072,23 +2072,16 @@ export default function TechnicalHubPage() {
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-extrabold tracking-wider uppercase bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25">
-                                  Stage {stageNum}
-                                </span>
-                                <span className="text-[10px] font-mono text-[#868E96] dark:text-[#666666]">
-                                  {topic.subtopics?.length || 1} {topic.subtopics?.length === 1 ? 'Module' : 'Modules'}
-                                </span>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-display font-extrabold text-base sm:text-[17px] text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors leading-snug">
+                                  {topic.title || topic.name}
+                                </h3>
                                 {topic.is_hidden && (
                                   <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
                                     Hidden
                                   </span>
                                 )}
                               </div>
-
-                              <h3 className="font-display font-extrabold text-base sm:text-[17px] text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors leading-snug">
-                                {topic.title || topic.name}
-                              </h3>
                             </div>
                           </div>
 
@@ -2131,39 +2124,10 @@ export default function TechnicalHubPage() {
                           </div>
                         </div>
 
-                        {/* Middle: Description with fixed min-height for uniform alignment */}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2.5 line-clamp-2 leading-relaxed min-h-[34px] flex items-center">
+                        {/* Middle: Description */}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2.5 line-clamp-2 leading-relaxed">
                           {topic.description}
                         </p>
-
-                        {/* Curriculum Modules Section with uniform min-height */}
-                        {topic.subtopics && topic.subtopics.length > 0 && (
-                          <div className="mt-3.5 pt-3 border-t border-[#E9ECEF]/70 dark:border-[#242424] flex-1 flex flex-col justify-start">
-                            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#868E96] dark:text-[#666666] mb-2 font-bold">
-                              <span>Curriculum Modules</span>
-                              <span className="font-mono text-[#FD4A32] font-semibold">{countText}</span>
-                            </div>
-                            <div className="flex flex-wrap gap-1.5 min-h-[58px] content-start">
-                              {topic.subtopics.map(sub => {
-                                const subCount = p150Problems.filter(p => p.topicId === sub.id).length;
-                                return (
-                                  <span
-                                    key={sub.id}
-                                    className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#1C1C1C] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#282828] group-hover:border-[#FD4A32]/30 transition-colors"
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32]/70 shrink-0"></span>
-                                    <span className="font-semibold">{sub.title}</span>
-                                    {subCount > 0 && (
-                                      <span className="text-[10px] font-mono font-bold text-[#868E96] dark:text-[#777777] bg-black/5 dark:bg-white/5 px-1 rounded">
-                                        {subCount}
-                                      </span>
-                                    )}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
 
                       {/* Bottom: Progress Bar & CTA */}
