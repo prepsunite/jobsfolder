@@ -99,6 +99,7 @@ export default function TechnicalHubPage() {
     setSelectedLevel('ALL');
     setSelectedStatus('ALL');
     setSelectedStage('');
+    setSelectedSubtopic('ALL');
     setSearchQuery('');
   };
 
@@ -106,6 +107,7 @@ export default function TechnicalHubPage() {
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'UNSOLVED' | 'SOLVED' | 'RETRY'>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStage, setSelectedStage] = useState<string>('');
+  const [selectedSubtopic, setSelectedSubtopic] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProblem, setSelectedProblem] = useState<ProgrammingProblem | null>(null);
   const [expandedSolutions, setExpandedSolutions] = useState<Record<string, boolean>>({});
@@ -157,10 +159,15 @@ export default function TechnicalHubPage() {
     }
   };
 
+  // Reset subtopic when track or topic changes
+  useEffect(() => {
+    setSelectedSubtopic('ALL');
+  }, [topicParam, activeTrack]);
+
   // Reset pagination on filter or topic change
   useEffect(() => {
     setCurrentPage(1);
-  }, [topicParam, activeTrack, selectedLevel, selectedStatus, selectedStage, searchQuery]);
+  }, [topicParam, activeTrack, selectedLevel, selectedStatus, selectedStage, selectedSubtopic, searchQuery]);
 
   // Cheatcode / Tips Modal State
   const [showCheatcodeModal, setShowCheatcodeModal] = useState(false);
@@ -318,6 +325,19 @@ export default function TechnicalHubPage() {
   // Filtered topics for directory
   const filteredTopics = useMemo(() => {
     return currentCategoryTopics.filter(t => {
+      if (activeTrack === 'PROGRAMMING_150') {
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchesTitle = (t.title || t.name || '').toLowerCase().includes(q);
+          const matchesDesc = (t.description || '').toLowerCase().includes(q);
+          const matchesCluster = (t.cluster || '').toLowerCase().includes(q);
+          const matchesSubtopics = t.subtopics?.some(sub => 
+            sub.title.toLowerCase().includes(q) || (sub.description || '').toLowerCase().includes(q)
+          );
+          return matchesTitle || matchesDesc || matchesCluster || matchesSubtopics;
+        }
+        return true;
+      }
       const isAll =
         !selectedStage ||
         selectedStage === 'All Stages' ||
@@ -335,7 +355,7 @@ export default function TechnicalHubPage() {
       }
       return true;
     });
-  }, [currentCategoryTopics, selectedStage, searchQuery]);
+  }, [currentCategoryTopics, selectedStage, searchQuery, activeTrack]);
 
   // Active topic problems
   const activeTopicProblems = useMemo(() => {
@@ -343,7 +363,10 @@ export default function TechnicalHubPage() {
     if (activeTrack === 'CAMPUS_DSA') {
       return dsaProblems.filter(p => p.topicId === activeTopic.id);
     }
-    return p150Problems.filter(p => p.topicId === activeTopic.id);
+    return p150Problems.filter(p => 
+      p.topicId === activeTopic.id || 
+      (activeTopic.subtopicIds && !!p.topicId && activeTopic.subtopicIds.includes(p.topicId))
+    );
   }, [activeTopic, activeTrack, p150Problems, dsaProblems]);
 
   // Active topic MCQs
@@ -371,6 +394,7 @@ export default function TechnicalHubPage() {
     const list = activeTopic ? activeTopicProblems : currentProblems;
     return list.filter(p => {
       if (!isAdmin && p.is_hidden) return false;
+      if (selectedSubtopic !== 'ALL' && p.topicId !== selectedSubtopic) return false;
       if (selectedLevel !== 'ALL' && p.level !== selectedLevel) return false;
       if (selectedStatus === 'SOLVED' && !p.solved) return false;
       if (selectedStatus === 'UNSOLVED' && p.solved) return false;
@@ -385,7 +409,7 @@ export default function TechnicalHubPage() {
       }
       return true;
     });
-  }, [activeTopic, activeTopicProblems, currentProblems, selectedLevel, selectedStatus, selectedCategory, searchQuery, isAdmin]);
+  }, [activeTopic, activeTopicProblems, currentProblems, selectedSubtopic, selectedLevel, selectedStatus, selectedCategory, searchQuery, isAdmin]);
 
   // Filtered MCQs
   const filteredMcqs = useMemo(() => {
@@ -492,6 +516,7 @@ export default function TechnicalHubPage() {
     setSearchQuery('');
     setSelectedLevel('ALL');
     setSelectedStatus('ALL');
+    setSelectedSubtopic('ALL');
   };
 
   const clearSelectedTopic = () => {
@@ -502,6 +527,7 @@ export default function TechnicalHubPage() {
     setSearchQuery('');
     setSelectedLevel('ALL');
     setSelectedStatus('ALL');
+    setSelectedSubtopic('ALL');
   };
 
   // ─── ADMIN TOPIC ACTIONS ──────────────────────────────────────────────────
@@ -814,6 +840,18 @@ export default function TechnicalHubPage() {
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-sans max-w-xl">
                   {activeTopic.description}
                 </p>
+                {activeTopic.subtopics && activeTopic.subtopics.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px] text-[#868E96] dark:text-[#888888]">
+                    <span className="font-semibold text-[#121417] dark:text-[#DDDDDD]">Contains:</span>
+                    {activeTopic.subtopics.map((sub, sIdx) => (
+                      <span key={sub.id} className="font-medium inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32]"></span>
+                        <span>{sub.title}</span>
+                        {sIdx < (activeTopic.subtopics?.length ?? 0) - 1 ? <span className="opacity-40">•</span> : null}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Solved Counter & Visual Progress matching Aptitude */}
@@ -911,6 +949,45 @@ export default function TechnicalHubPage() {
             </div>
           ) : (
             <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
+              {/* In-Stage Subtopic Filter Pills */}
+              {activeTopic?.subtopics && activeTopic.subtopics.length > 1 && (
+                <div className="flex items-center gap-1.5 flex-wrap pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                    Module:
+                  </span>
+                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-wrap gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSubtopic('ALL')}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        selectedSubtopic === 'ALL'
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      All Modules ({activeTopicProblems.length})
+                    </button>
+                    {activeTopic.subtopics.map(sub => {
+                      const count = activeTopicProblems.filter(p => p.topicId === sub.id).length;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setSelectedSubtopic(sub.id)}
+                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                            selectedSubtopic === sub.id
+                              ? 'bg-[#FD4A32] text-white shadow-xs'
+                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                          }`}
+                        >
+                          {sub.title} {count > 0 ? `(${count})` : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center flex-wrap gap-4">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -1372,6 +1449,12 @@ export default function TechnicalHubPage() {
                             Question #{globalIdx + 1}
                           </span>
 
+                          {activeTopic?.subtopics && (
+                            <span className="text-[10px] font-mono text-[#868E96] dark:text-[#888888] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-medium">
+                              {activeTopic.subtopics.find(s => s.id === problem.topicId)?.title || problem.categoryLabel || problem.topicId}
+                            </span>
+                          )}
+
                           <span
                             className={`inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
                               problem.level === 'BASIC'
@@ -1828,22 +1911,30 @@ export default function TechnicalHubPage() {
 
           {/* 🏷️ 2. STAGE CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ACTIONS */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-              {stages.map(st => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setSelectedStage(st)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
-                    selectedStage === st
-                      ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                      : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-                  }`}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
+            {activeTrack !== 'PROGRAMMING_150' ? (
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
+                {stages.map(st => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setSelectedStage(st)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                      selectedStage === st
+                        ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
+                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 py-1">
+                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#777777]">
+                  6 Progressive Milestones • Master coding fundamentals to placement-ready patterns
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
               <div className="relative w-48 sm:w-56">
@@ -1852,7 +1943,7 @@ export default function TechnicalHubPage() {
                   type="text"
                   placeholder={
                     activeTrack === 'PROGRAMMING_150'
-                      ? 'Search topics...'
+                      ? 'Search stages or topics...'
                       : activeTrack === 'CAMPUS_DSA'
                       ? 'Search patterns...'
                       : 'Search MCQ topics...'
@@ -1905,7 +1996,7 @@ export default function TechnicalHubPage() {
           </div>
 
           {/* 📁 3. TOPIC DIRECTORY CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <div className={`grid gap-3 ${activeTrack === 'PROGRAMMING_150' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
             {filteredTopics.length === 0 ? (
               <div className="col-span-full p-10 text-center rounded-xl border border-dashed border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
                 <Code2 className="w-8 h-8 text-[#868E96] mx-auto mb-2 opacity-50" />
@@ -1945,9 +2036,152 @@ export default function TechnicalHubPage() {
                   solvedCount = topicProblems.filter(p => p.solved).length;
                   countText = `${liveCount > 0 ? liveCount : topicProblems.length} Problems`;
                 } else {
-                  const topicProblems = p150Problems.filter(p => p.topicId === topic.id);
+                  // PROGRAMMING_150: match topic.id or subtopicIds
+                  const topicProblems = p150Problems.filter(p => 
+                    p.topicId === topic.id || 
+                    (topic.subtopicIds && !!p.topicId && topic.subtopicIds.includes(p.topicId))
+                  );
                   solvedCount = topicProblems.filter(p => p.solved).length;
-                  countText = `${liveCount > 0 ? liveCount : topicProblems.length} Problems`;
+                  let totalCount = topicProblems.length;
+                  if (liveCount > 0) {
+                    totalCount = liveCount;
+                  } else if (topic.subtopicIds) {
+                    const subCount = topic.subtopicIds.reduce((sum, sId) => sum + (liveCountMap[sId] ?? 0), 0);
+                    if (subCount > 0) totalCount = Math.max(totalCount, subCount);
+                  }
+                  countText = `${totalCount} Problems`;
+                  const stageNum = topic.stageNumber || parseInt(topic.id.replace('stage-', ''), 10) || 1;
+                  const pct = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
+
+                  return (
+                    <div
+                      key={topic.id}
+                      onClick={() => selectTopic(topic.id)}
+                      className={`group flex flex-col justify-between p-5 bg-white dark:bg-[#141414] hover:bg-[#FAFAFA] dark:hover:bg-[#181818] border ${
+                        topic.is_hidden
+                          ? 'border-amber-500/40 opacity-75'
+                          : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/60 dark:hover:border-[#FD4A32]/60'
+                      } rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden`}
+                    >
+                      <div>
+                        {/* Top: Stage Badge, Solved Count, Admin Actions */}
+                        <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-extrabold tracking-wider uppercase bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25">
+                              Stage {stageNum}
+                            </span>
+                            {topic.is_hidden && (
+                              <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                Hidden
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {solvedCount > 0 && (
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                                {solvedCount}/{totalCount} Solved
+                              </span>
+                            )}
+
+                            {isAdmin && (
+                              <div className="flex items-center gap-1 border-r border-[#E9ECEF] dark:border-[#242424] pr-2 mr-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleTopicHide(e, topic)}
+                                  className="p-1 rounded text-gray-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                  title={topic.is_hidden ? 'Make Visible' : 'Hide Topic'}
+                                >
+                                  {topic.is_hidden ? <EyeOff className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => openTopicEditor(e, topic)}
+                                  className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                  title="Edit Topic Details"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteTopic(e, topic)}
+                                  className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                  title="Delete Topic"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Middle: Icon & Title & Description */}
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 group-hover:bg-[#FD4A32] group-hover:text-white transition-colors duration-200">
+                            <TopicIcon className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-display font-extrabold text-sm sm:text-base text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors leading-snug">
+                              {topic.title || topic.name}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                              {topic.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Subtopics List */}
+                        {topic.subtopics && topic.subtopics.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
+                            <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#666666]">
+                              Modules ({topic.subtopics.length}):
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {topic.subtopics.map(sub => {
+                                const subCount = p150Problems.filter(p => p.topicId === sub.id).length;
+                                return (
+                                  <span
+                                    key={sub.id}
+                                    className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-[#F8F9FA] dark:bg-[#1C1C1C] text-[#555555] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#282828]"
+                                  >
+                                    <span className="w-1 h-1 rounded-full bg-[#FD4A32]"></span>
+                                    <span>{sub.title}</span>
+                                    {subCount > 0 && <span className="text-[9px] opacity-75 font-bold">({subCount})</span>}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom: Progress Bar & CTA */}
+                      <div className="mt-4 pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-2">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] font-mono">
+                            <span className="text-[#868E96] dark:text-[#666666]">Stage Progress</span>
+                            <span className="font-bold text-[#121417] dark:text-white">{pct}%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-xs font-mono font-semibold text-[#868E96] dark:text-[#888888]">
+                            {countText}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-[#FD4A32] group-hover:translate-x-0.5 transition-transform">
+                            <span>Open Stage</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
                 }
 
                 return (

@@ -49,6 +49,9 @@ export interface ProgrammingTopic {
   is_hidden?: boolean;
   tips?: string[];
   totalProblems?: number;
+  subtopicIds?: string[];
+  subtopics?: { id: string; title: string; description?: string }[];
+  stageNumber?: number;
   created_at?: string;
   updated_at?: string;
 }

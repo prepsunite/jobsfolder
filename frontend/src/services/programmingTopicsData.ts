@@ -1,6 +1,185 @@
 import type { ProgrammingTopic, ProgrammingProblem } from '@/types/technical';
 
-export const PROGRAMMING_TOPICS: ProgrammingTopic[] = [
+// ── STAGE TO SUBTOPIC MAPPINGS ──
+export const STAGE_SUBTOPIC_TO_STAGE_MAP: Record<string, string> = {
+  'syntax-operators': 'stage-1',
+  'conditionals-loops': 'stage-1',
+  'digit-manipulation': 'stage-2',
+  'primes-divisibility': 'stage-2',
+  'special-numbers': 'stage-2',
+  'patterns': 'stage-3',
+  'arrays-fundamentals': 'stage-4',
+  'arrays-two-pointers': 'stage-4',
+  'arrays-subarrays': 'stage-4',
+  'hashing-frequency': 'stage-4',
+  'matrices-grid': 'stage-5',
+  'strings-fundamentals': 'stage-5',
+  'strings-algorithms': 'stage-5',
+  'recursion-backtracking': 'stage-6',
+  'searching-sorting': 'stage-6',
+  'bit-manipulation': 'stage-6',
+};
+
+export const STAGE_ID_TO_SUBTOPIC_IDS: Record<string, string[]> = {
+  'stage-1': ['syntax-operators', 'conditionals-loops'],
+  'stage-2': ['digit-manipulation', 'primes-divisibility', 'special-numbers'],
+  'stage-3': ['patterns'],
+  'stage-4': ['arrays-fundamentals', 'arrays-two-pointers', 'arrays-subarrays', 'hashing-frequency'],
+  'stage-5': ['matrices-grid', 'strings-fundamentals', 'strings-algorithms'],
+  'stage-6': ['recursion-backtracking', 'searching-sorting', 'bit-manipulation'],
+};
+
+// ── 6 MILESTONE STAGES FOR PROGRAMMING 150 ──
+export const PROGRAMMING_150_STAGES: ProgrammingTopic[] = [
+  {
+    id: 'stage-1',
+    title: 'Stage 1: Language & Control Flow Foundations',
+    name: 'Stage 1: Language & Control Flow Foundations',
+    cluster: 'Stage 1',
+    description: 'Syntax & Typecasting • Operator Precedence • Conditionals & Iteration Loops',
+    iconName: 'Terminal',
+    category: 'SYNTAX_BASICS',
+    track: 'PROGRAMMING_150',
+    order: 1,
+    sort_order: 1,
+    stageNumber: 1,
+    subtopicIds: ['syntax-operators', 'conditionals-loops'],
+    subtopics: [
+      { id: 'syntax-operators', title: 'Syntax, Operators & Typecasting', description: 'Data types, fast I/O, arithmetic & bitwise operator precedence, typecasting, ASCII arithmetic.' },
+      { id: 'conditionals-loops', title: 'Conditionals & Iteration Loops', description: 'If-else branches, switch-case calculators, while/for loops, break/continue, summation logic.' },
+    ],
+    tips: [
+      'Bitwise trick: `n & (n - 1)` clears the lowest set bit in O(1).',
+      'Leap year rule: divisible by 4, but not by 100 unless also divisible by 400.',
+      'ASCII values: 0-9 is 48-57, A-Z is 65-90, a-z is 97-122.',
+      'Always watch for integer overflow when multiplying large values in Java/C++ (use long/long long).'
+    ]
+  },
+  {
+    id: 'stage-2',
+    title: 'Stage 2: Mathematical & Number Logic',
+    name: 'Stage 2: Mathematical & Number Logic',
+    cluster: 'Stage 2',
+    description: 'Digit Extraction • Primes & Divisibility • Euclidean GCD/LCM • Special Numbers',
+    iconName: 'Hash',
+    category: 'NUMBER_LOGIC',
+    track: 'PROGRAMMING_150',
+    order: 2,
+    sort_order: 2,
+    stageNumber: 2,
+    subtopicIds: ['digit-manipulation', 'primes-divisibility', 'special-numbers'],
+    subtopics: [
+      { id: 'digit-manipulation', title: 'Digit Extraction & Manipulation', description: 'Modulo 10 extractions, counting digits, reversing integers, digital roots, palindrome numbers.' },
+      { id: 'primes-divisibility', title: 'Primes, Divisibility & Euclidean Math', description: 'Prime checks in O(sqrt(N)), Sieve of Eratosthenes, Euclidean GCD/LCM, divisor extraction.' },
+      { id: 'special-numbers', title: 'Special Numbers & Sequences', description: 'Armstrong, Strong, Harshad, Perfect, Automorphic numbers, Fibonacci sequence.' },
+    ],
+    tips: [
+      'Digital root: `num == 0 ? 0 : (num % 9 == 0 ? 9 : num % 9)`.',
+      'Euclidean GCD: `gcd(a, b) = gcd(b, a % b)`. LCM: `(a / gcd(a, b)) * b` to prevent overflow.',
+      'Prime check optimization: test up to sqrt(N) in steps of 6 (6k +/- 1).',
+      'Armstrong number: sum of each digit raised to the power of the number of digits.'
+    ]
+  },
+  {
+    id: 'stage-3',
+    title: 'Stage 3: 2D Grid & Pattern Programming',
+    name: 'Stage 3: 2D Grid & Pattern Programming',
+    cluster: 'Stage 3',
+    description: 'Star Pyramids • Number Triangles • Inverted & Hollow Patterns • Symmetric Grids',
+    iconName: 'Grid',
+    category: 'PATTERNS',
+    track: 'PROGRAMMING_150',
+    order: 3,
+    sort_order: 3,
+    stageNumber: 3,
+    subtopicIds: ['patterns'],
+    subtopics: [
+      { id: 'patterns', title: 'Star, Number & Symmetric Patterns', description: 'Pyramids, inverted pyramids, hollow shapes, Floyd\'s triangle, Pascal\'s triangle, butterfly patterns.' },
+    ],
+    tips: [
+      'Always split 2D patterns into rows (outer loop) and spaces + characters (inner loops).',
+      'For symmetric diamonds, print row by row with `Math.abs(n - i)` spaces.',
+      'Floyd\'s triangle: keep a continuous running counter across nested loops.'
+    ]
+  },
+  {
+    id: 'stage-4',
+    title: 'Stage 4: Linear Data Structures: 1D Arrays',
+    name: 'Stage 4: Linear Data Structures: 1D Arrays',
+    cluster: 'Stage 4',
+    description: 'Linear Scans • Two Pointers • In-Place Transforms • Subarrays & Kadane • Frequency Maps',
+    iconName: 'Layers',
+    category: 'ARRAYS',
+    track: 'PROGRAMMING_150',
+    order: 4,
+    sort_order: 4,
+    stageNumber: 4,
+    subtopicIds: ['arrays-fundamentals', 'arrays-two-pointers', 'arrays-subarrays', 'hashing-frequency'],
+    subtopics: [
+      { id: 'arrays-fundamentals', title: '1D Arrays: Fundamentals & Linear Scans', description: 'Min/Max search, in-place reversal, sorted verification, frequency tables.' },
+      { id: 'arrays-two-pointers', title: '1D Arrays: Two Pointers & Transformations', description: 'Second largest, in-place duplicate removal, moving zeroes, array rotation by K.' },
+      { id: 'arrays-subarrays', title: '1D Arrays: Subarrays & Classic Patterns', description: 'Kadane\'s algorithm, missing numbers, leader elements, running prefix sums.' },
+      { id: 'hashing-frequency', title: '1D Arrays: Hashing & Frequency Maps', description: 'Direct-index frequency arrays, HashMap lookups, Two Sum in O(N).' },
+    ],
+    tips: [
+      'Kadane\'s algorithm finds maximum subarray sum in O(N) time and O(1) space.',
+      'Two pointers in-place: slow pointer for unique position, fast pointer for scanning.',
+      'Two Sum in O(N): use a hash map storing `target - current_val`.'
+    ]
+  },
+  {
+    id: 'stage-5',
+    title: 'Stage 5: Matrices & String Manipulation',
+    name: 'Stage 5: Matrices & String Manipulation',
+    cluster: 'Stage 5',
+    description: '2D Matrix Math & Rotations • String Traversals & ASCII • Anagrams & Substrings',
+    iconName: 'Type',
+    category: 'STRINGS',
+    track: 'PROGRAMMING_150',
+    order: 5,
+    sort_order: 5,
+    stageNumber: 5,
+    subtopicIds: ['matrices-grid', 'strings-fundamentals', 'strings-algorithms'],
+    subtopics: [
+      { id: 'matrices-grid', title: '2D Arrays & Matrix Mathematics', description: 'Matrix multiplication, in-place transpose, 90° clockwise rotation, spiral boundary traversal.' },
+      { id: 'strings-fundamentals', title: 'Strings: Fundamentals & ASCII Logic', description: 'String length without library calls, vowel/consonant counts, word reversal, case toggling.' },
+      { id: 'strings-algorithms', title: 'Strings: Anagrams, Substrings & Compression', description: 'Valid Anagram verification, Run-Length Encoding (RLE), longest common prefix.' },
+    ],
+    tips: [
+      'Rotate matrix 90° clockwise: first transpose the matrix in-place, then reverse each row.',
+      'Spiral matrix traversal: maintain four boundaries (top, bottom, left, right) and shrink inward.',
+      'Anagram check: direct frequency array of size 26 or 256 for O(N) time.'
+    ]
+  },
+  {
+    id: 'stage-6',
+    title: 'Stage 6: Recursion, Search & Advanced Logic',
+    name: 'Stage 6: Recursion, Search & Advanced Logic',
+    cluster: 'Stage 6',
+    description: 'Recursion Mechanics • Backtracking & Subsets • Binary Search • Bit Manipulation Hacks',
+    iconName: 'Cpu',
+    category: 'RECURSION',
+    track: 'PROGRAMMING_150',
+    order: 6,
+    sort_order: 6,
+    stageNumber: 6,
+    subtopicIds: ['recursion-backtracking', 'searching-sorting', 'bit-manipulation'],
+    subtopics: [
+      { id: 'recursion-backtracking', title: 'Recursion & Backtracking Basics', description: '1 to N recursion, Tower of Hanoi puzzle, recursive array sum, Power Set generation.' },
+      { id: 'searching-sorting', title: 'Searching & Sorting Algorithms', description: 'Binary search with overflow guards, rotated sorted search, bubble sort, selection sort, merge sort.' },
+      { id: 'bit-manipulation', title: 'Bit Manipulation Hacks & Math Tricks', description: 'Even/odd check, powers of two, Brian Kernighan\'s bit counter, XOR cancellations.' },
+    ],
+    tips: [
+      'Binary search mid calculation: `mid = low + (high - low) / 2` to prevent 32-bit overflow.',
+      'XOR properties: `x ^ x = 0`, `x ^ 0 = x`. Perfect for finding single non-duplicate element.',
+      'Tower of Hanoi: 2^N - 1 total moves; solve by moving N-1 disks to helper, Nth to target, N-1 to target.'
+    ]
+  }
+];
+
+export const PROGRAMMING_TOPICS: ProgrammingTopic[] = PROGRAMMING_150_STAGES;
+
+export const PROGRAMMING_MICRO_TOPICS: ProgrammingTopic[] = [
   // ── STAGE 1: LANGUAGE & CONTROL FLOW FOUNDATIONS ──
   {
     id: 'syntax-operators',

@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack } from '@/types/technical';
-import { PROGRAMMING_TOPICS, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, PROGRAMMING_150_EXPANDED_SEED } from './programmingTopicsData';
+import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, PROGRAMMING_150_EXPANDED_SEED } from './programmingTopicsData';
 
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
 const IMPORTED_PROBLEMS_KEY = 'prepunite_imported_programming_problems';
@@ -198,6 +198,48 @@ export const technicalService = {
 
   // ─── TOPIC CRUD (Supabase-First with Seed Fallback) ─────────────────────────
   async getTopicsForTrack(track: TechnicalTrack): Promise<ProgrammingTopic[]> {
+    if (track === 'PROGRAMMING_150') {
+      try {
+        const { data, error } = await supabase
+          .from('technical_topics')
+          .select('*')
+          .eq('track', 'PROGRAMMING_150')
+          .order('sort_order', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const hasStages = data.some((d: any) => d.id?.startsWith('stage-'));
+          if (hasStages) {
+            return data.map((d: any) => {
+              const staticStage = PROGRAMMING_150_STAGES.find(s => s.id === d.id);
+              return {
+                id: d.id,
+                title: d.name || d.title || staticStage?.title || d.id,
+                name: d.name || d.title || staticStage?.title || d.id,
+                cluster: d.cluster || staticStage?.cluster || 'Stage',
+                description: d.description || staticStage?.description || '',
+                iconName: d.icon_name || d.iconName || staticStage?.iconName || 'Terminal',
+                icon_name: d.icon_name || staticStage?.iconName || 'Terminal',
+                category: d.category || staticStage?.category || 'SYNTAX_BASICS',
+                track: 'PROGRAMMING_150' as TechnicalTrack,
+                order: d.sort_order || staticStage?.order || 0,
+                sort_order: d.sort_order || staticStage?.order || 0,
+                is_hidden: d.is_hidden || false,
+                tips: Array.isArray(d.tips) && d.tips.length > 0 ? d.tips : staticStage?.tips || [],
+                subtopicIds: staticStage?.subtopicIds || [],
+                subtopics: staticStage?.subtopics || [],
+                stageNumber: staticStage?.stageNumber,
+                created_at: d.created_at,
+                updated_at: d.updated_at,
+              };
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to query technical_topics from Supabase, using fallback stages:', err);
+      }
+      return PROGRAMMING_150_STAGES;
+    }
+
     try {
       const { data, error } = await supabase
         .from('technical_topics')
@@ -231,7 +273,7 @@ export const technicalService = {
     // Fallback seed
     if (track === 'CAMPUS_DSA') return CAMPUS_DSA_TOPICS;
     if (track === 'TECHNICAL_MCQS') return TECHNICAL_MCQ_TOPICS;
-    return PROGRAMMING_TOPICS;
+    return PROGRAMMING_150_STAGES;
   },
 
   async getAllTopics(): Promise<ProgrammingTopic[]> {
