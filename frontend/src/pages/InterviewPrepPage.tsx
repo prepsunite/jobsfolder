@@ -920,9 +920,41 @@ export default function InterviewPrepPage() {
                     {/* Collapsible Answer Body */}
                     {isExpanded && (
                       <div className="p-5 pt-0 border-t border-[#E9ECEF] dark:border-[#242424] space-y-4 animate-fadeIn text-xs sm:text-sm">
-                        {/* Bullet Points Quick Revision Box */}
+                        {/* 1. Full In-Depth Answer / Explanation */}
+                        <div className="space-y-1.5 pt-4">
+                          <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
+                            Explanation &amp; Comprehensive Answer:
+                          </span>
+                          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#212529] dark:text-[#E9ECEF] whitespace-pre-line leading-relaxed font-sans text-xs sm:text-sm">
+                            {q.answer}
+                          </div>
+                        </div>
+
+                        {/* 2. Code / Example */}
+                        {q.codeSnippet && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
+                                Code / Example ({q.codeSnippet.language}):
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(q.codeSnippet!.code, q.id)}
+                                className="flex items-center gap-1 text-[11px] font-mono text-gray-500 hover:text-purple-600 transition-colors cursor-pointer"
+                              >
+                                {copiedId === q.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                <span>{copiedId === q.id ? 'Copied' : 'Copy'}</span>
+                              </button>
+                            </div>
+                            <div className="p-3.5 rounded-lg bg-[#0A0A0A] border border-[#242424] font-mono text-xs text-emerald-400 overflow-x-auto">
+                              <pre>{q.codeSnippet.code}</pre>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3. Key Takeaways for Quick Revision */}
                         {q.bulletPoints && q.bulletPoints.length > 0 && (
-                          <div className="p-3.5 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/20 space-y-1.5 mt-4">
+                          <div className="p-3.5 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/20 space-y-1.5">
                             <span className="font-display font-bold text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
                               Key Takeaways for Quick Revision:
                             </span>
@@ -936,39 +968,7 @@ export default function InterviewPrepPage() {
                           </div>
                         )}
 
-                        {/* Full In-Depth Answer */}
-                        <div className="space-y-1.5 pt-2">
-                          <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
-                            Comprehensive Interview Answer:
-                          </span>
-                          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#212529] dark:text-[#E9ECEF] whitespace-pre-line leading-relaxed font-sans text-xs sm:text-sm">
-                            {q.answer}
-                          </div>
-                        </div>
-
-                        {/* Code Snippet */}
-                        {q.codeSnippet && (
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block font-display">
-                                Code / Query Example ({q.codeSnippet.language}):
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleCopy(q.codeSnippet!.code, q.id)}
-                                className="flex items-center gap-1 text-[11px] font-mono text-gray-500 hover:text-purple-600 transition-colors"
-                              >
-                                {copiedId === q.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                                <span>{copiedId === q.id ? 'Copied' : 'Copy'}</span>
-                              </button>
-                            </div>
-                            <div className="p-3.5 rounded-lg bg-[#0A0A0A] border border-[#242424] font-mono text-xs text-emerald-400 overflow-x-auto">
-                              <pre>{q.codeSnippet.code}</pre>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Pro Tip */}
+                        {/* 4. Pro Tip */}
                         {q.proTip && (
                           <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 space-y-1 text-xs">
                             <span className="font-bold flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wider">
