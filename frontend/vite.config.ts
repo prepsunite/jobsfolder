@@ -16,6 +16,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (id.includes('interviewSeedData')) {
+            return 'interview-seed-data';
+          }
           if (id.includes('node_modules')) {
             if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('rehype-raw')) {
               return 'markdown-vendor';

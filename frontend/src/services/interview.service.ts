@@ -1,7 +1,19 @@
 import { supabase } from '@/lib/supabase';
 import type { InterviewQuestion, CoreCsSubject, InterviewCategory, InterviewTopic } from '@/types/interview';
 import { ALL_INTERVIEW_TOPICS, CORE_CS_TOPICS, HR_BEHAVIORAL_TOPICS, PROJECT_DEFENSE_TOPICS } from './interviewTopicsData';
-import { ALL_INTERVIEW_SEED_QUESTIONS } from './interviewSeedData';
+
+let cachedOfflineSeed: InterviewQuestion[] | null = null;
+async function getOfflineSeedQuestions(): Promise<InterviewQuestion[]> {
+  if (cachedOfflineSeed) return cachedOfflineSeed;
+  try {
+    const mod = await import('./interviewSeedData');
+    cachedOfflineSeed = mod.ALL_INTERVIEW_SEED_QUESTIONS || [];
+    return cachedOfflineSeed;
+  } catch (err) {
+    console.error('Failed to dynamically load interview seed data:', err);
+    return [];
+  }
+}
 
 const MASTERED_INTERVIEW_KEY = 'prepunite_mastered_interview_questions';
 
@@ -314,8 +326,9 @@ export const interviewService = {
       console.error('Failed to query interview_questions from Supabase:', e);
     }
 
-    // Offline seed fallback for zero latency and offline resilience
-    return ALL_INTERVIEW_SEED_QUESTIONS.map(q => ({
+    // Offline seed fallback for zero latency and offline resilience (lazy loaded)
+    const seed = await getOfflineSeedQuestions();
+    return seed.map(q => ({
       ...q,
       mastered: masteredSet.has(q.id),
     }));
@@ -492,8 +505,9 @@ export const interviewService = {
       console.warn('Failed to calculate interview topic counts map:', err);
     }
 
-    // Seed fallback count
-    ALL_INTERVIEW_SEED_QUESTIONS.forEach(q => {
+    // Seed fallback count (lazy loaded)
+    const seed = await getOfflineSeedQuestions();
+    seed.forEach(q => {
       if (q.category === category && (q.topic_id || (q as any).topicId)) {
         const tid = (q.topic_id || (q as any).topicId) as string;
         countMap[tid] = (countMap[tid] || 0) + 1;
