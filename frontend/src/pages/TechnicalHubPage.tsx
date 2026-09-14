@@ -938,16 +938,6 @@ export default function TechnicalHubPage() {
                     ))}
                   </div>
                 )}
-                {activeTopic.tips && activeTopic.tips.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1.5 text-[11px]">
-                    {activeTopic.tips.map((tip, tIdx) => (
-                      <span key={tIdx} className="font-medium px-2 py-0.5 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20 inline-flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-[#FD4A32]" />
-                        <span>{tip}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Solved Counter & Visual Progress matching Aptitude */}
@@ -985,7 +975,7 @@ export default function TechnicalHubPage() {
 
           {/* 3. Filter Bar & Search inside topic */}
           {activeTrack === 'TECHNICAL_MCQS' ? (
-            <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
+            <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center flex-wrap gap-4">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -1067,36 +1057,6 @@ export default function TechnicalHubPage() {
                   >
                     {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   </button>
-                </div>
-              </div>
-
-              {/* Question Type Filter Row for MCQs */}
-              <div className="flex items-center gap-2 flex-wrap pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424]">
-                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                  Question Type:
-                </span>
-                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-wrap gap-0.5">
-                  {[
-                    { id: 'ALL', label: 'All Types' },
-                    { id: 'CONCEPTUAL', label: 'Theory / Standards' },
-                    { id: 'OUTPUT_PREDICTION', label: 'Output Trace' },
-                    { id: 'FIND_ERROR', label: 'Find Bug' },
-                    { id: 'SYNTAX_RULE', label: 'Syntax Rules' },
-                    { id: 'CODE_COMPLETION', label: 'Code Fill' },
-                  ].map(item => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setSelectedQuestionType(item.id)}
-                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                        selectedQuestionType === item.id
-                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>
@@ -2392,15 +2352,6 @@ export default function TechnicalHubPage() {
                           {topic.description}
                         </p>
 
-                        {topic.tips && topic.tips.length > 0 && (
-                          <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
-                            {topic.tips.slice(0, 2).map((tip, idx) => (
-                              <span key={idx} className="text-[10px] font-medium font-sans px-2 py-0.5 rounded bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#555555] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2A2A2A]">
-                                {tip}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
 
                       {/* Bottom: Progress Bar & CTA */}
