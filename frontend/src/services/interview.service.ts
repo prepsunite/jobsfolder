@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { InterviewQuestion, CoreCsSubject, InterviewCategory, InterviewTopic } from '@/types/interview';
 import { ALL_INTERVIEW_TOPICS, CORE_CS_TOPICS, HR_BEHAVIORAL_TOPICS, PROJECT_DEFENSE_TOPICS } from './interviewTopicsData';
+import { ALL_INTERVIEW_SEED_QUESTIONS } from './interviewSeedData';
 
 const MASTERED_INTERVIEW_KEY = 'prepunite_mastered_interview_questions';
 
@@ -294,7 +295,11 @@ export const interviewService = {
       console.error('Failed to query interview_questions from Supabase:', e);
     }
 
-    return [];
+    // Offline seed fallback for zero latency and offline resilience
+    return ALL_INTERVIEW_SEED_QUESTIONS.map(q => ({
+      ...q,
+      mastered: masteredSet.has(q.id),
+    }));
   },
 
   async getQuestionsForTopic(topicId: string): Promise<InterviewQuestion[]> {
@@ -456,7 +461,7 @@ export const interviewService = {
         .eq('category', category)
         .eq('is_deleted', false);
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         data.forEach((row: any) => {
           if (row.topic_id) {
             countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
@@ -467,6 +472,14 @@ export const interviewService = {
     } catch (err) {
       console.warn('Failed to calculate interview topic counts map:', err);
     }
+
+    // Seed fallback count
+    ALL_INTERVIEW_SEED_QUESTIONS.forEach(q => {
+      if (q.category === category && (q.topic_id || (q as any).topicId)) {
+        const tid = (q.topic_id || (q as any).topicId) as string;
+        countMap[tid] = (countMap[tid] || 0) + 1;
+      }
+    });
 
     return countMap;
   },

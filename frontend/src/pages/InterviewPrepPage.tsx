@@ -32,6 +32,9 @@ import {
   EyeOff,
   X,
   Upload,
+  Coffee,
+  Terminal,
+  Code,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { interviewService } from '@/services/interview.service';
@@ -53,6 +56,9 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
   ShieldCheck,
   BookOpen,
   MessageSquareQuote,
+  Coffee,
+  Terminal,
+  Code,
 };
 
 export default function InterviewPrepPage() {
@@ -76,10 +82,12 @@ export default function InterviewPrepPage() {
     setSelectedCluster('All Topics');
     setSearchQuery('');
     setSelectedStatus('ALL');
+    setSelectedDifficulty('ALL');
   };
 
   const [selectedCluster, setSelectedCluster] = useState<string>('All Topics');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'MASTERED' | 'UNMASTERED'>('ALL');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'ALL' | 'EASY' | 'MEDIUM' | 'HARD'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedQuestionIds, setExpandedQuestionIds] = useState<Record<string, boolean>>({});
@@ -128,7 +136,7 @@ export default function InterviewPrepPage() {
   // Reset pagination on filter or topic change
   useEffect(() => {
     setCurrentPage(1);
-  }, [topicParam, activeCategory, selectedStatus, selectedCluster, searchQuery]);
+  }, [topicParam, activeCategory, selectedStatus, selectedDifficulty, selectedCluster, searchQuery]);
 
   // Cheatcode / Tips Modal State
   const [showCheatcodeModal, setShowCheatcodeModal] = useState(false);
@@ -226,7 +234,7 @@ export default function InterviewPrepPage() {
       ? Math.round((activeTopicMasteredCount / activeTopicQuestions.length) * 100)
       : 0;
 
-  // Filtered active questions (search + status)
+  // Filtered active questions (search + status + difficulty)
   const filteredActiveQuestions = useMemo(() => {
     return activeTopicQuestions.filter(q => {
       if (!isAdmin && q.is_hidden) return false;
@@ -235,6 +243,10 @@ export default function InterviewPrepPage() {
         (selectedStatus === 'MASTERED' && q.mastered) ||
         (selectedStatus === 'UNMASTERED' && !q.mastered);
 
+      const matchDifficulty =
+        selectedDifficulty === 'ALL' ||
+        q.difficulty === selectedDifficulty;
+
       const matchSearch =
         !searchQuery.trim() ||
         q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -242,9 +254,9 @@ export default function InterviewPrepPage() {
         q.bulletPoints?.some(bp => bp.toLowerCase().includes(searchQuery.toLowerCase())) ||
         q.companyTags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchStatus && matchSearch;
+      return matchStatus && matchDifficulty && matchSearch;
     });
-  }, [activeTopicQuestions, selectedStatus, searchQuery, isAdmin]);
+  }, [activeTopicQuestions, selectedStatus, selectedDifficulty, searchQuery, isAdmin]);
 
   const totalPages = Math.ceil(filteredActiveQuestions.length / QUESTIONS_PER_PAGE);
 
@@ -284,6 +296,7 @@ export default function InterviewPrepPage() {
     setSearchParams({ category: paramVal, topic: topicId });
     setSearchQuery('');
     setSelectedStatus('ALL');
+    setSelectedDifficulty('ALL');
   };
 
   const clearSelectedTopic = () => {
@@ -293,6 +306,7 @@ export default function InterviewPrepPage() {
     setSearchParams({ category: paramVal });
     setSearchQuery('');
     setSelectedStatus('ALL');
+    setSelectedDifficulty('ALL');
   };
 
   // ─── ADMIN TOPIC ACTIONS ──────────────────────────────────────────────────
@@ -563,35 +577,66 @@ export default function InterviewPrepPage() {
 
           {/* Filter Bar */}
           <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                  Status:
-                </span>
-                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                  {[
-                    { id: 'ALL', label: 'All Questions' },
-                    { id: 'UNMASTERED', label: 'Unmastered' },
-                    { id: 'MASTERED', label: `Mastered (${activeTopicMasteredCount})` },
-                  ].map(item => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setSelectedStatus(item.id as any)}
-                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                        selectedStatus === item.id
-                          ? 'bg-purple-600 text-white shadow-xs'
-                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Difficulty Filter */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                    Difficulty:
+                  </span>
+                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                    {[
+                      { id: 'ALL', label: 'All' },
+                      { id: 'EASY', label: 'Easy' },
+                      { id: 'MEDIUM', label: 'Medium' },
+                      { id: 'HARD', label: 'Tricky Hard' },
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedDifficulty(item.id as any)}
+                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                          selectedDifficulty === item.id
+                            ? 'bg-purple-600 text-white shadow-xs'
+                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                    Status:
+                  </span>
+                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                    {[
+                      { id: 'ALL', label: 'All' },
+                      { id: 'UNMASTERED', label: 'Unmastered' },
+                      { id: 'MASTERED', label: `Mastered (${activeTopicMasteredCount})` },
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedStatus(item.id as any)}
+                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                          selectedStatus === item.id
+                            ? 'bg-purple-600 text-white shadow-xs'
+                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {/* In-Topic Search */}
-              <div className="relative w-48 sm:w-56">
+              <div className="relative w-full md:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
                 <input
                   type="text"
@@ -763,10 +808,27 @@ export default function InterviewPrepPage() {
                             Q{globalIdx + 1}
                           </span>
 
-                          {q.frequency === 'VERY_HIGH' && (
-                            <span className="text-[9px] font-display font-bold bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded flex items-center gap-1">
+                          {q.difficulty === 'EASY' && (
+                            <span className="text-[9px] font-display font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 px-2 py-0.5 rounded">
+                              Easy
+                            </span>
+                          )}
+                          {q.difficulty === 'MEDIUM' && (
+                            <span className="text-[9px] font-display font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded">
+                              Medium
+                            </span>
+                          )}
+                          {q.difficulty === 'HARD' && (
+                            <span className="text-[9px] font-display font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25 px-2 py-0.5 rounded flex items-center gap-1">
                               <Zap className="w-2.5 h-2.5" />
-                              Very High Frequency
+                              Tricky Hard
+                            </span>
+                          )}
+
+                          {q.frequency === 'VERY_HIGH' && (
+                            <span className="text-[9px] font-display font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25 px-2 py-0.5 rounded flex items-center gap-1">
+                              <Zap className="w-2.5 h-2.5" />
+                              High Frequency
                             </span>
                           )}
 

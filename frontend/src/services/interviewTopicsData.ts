@@ -41,6 +41,38 @@ export const CORE_CS_TOPICS: InterviewTopic[] = [
     description: 'OSI 7 layers, TCP 3-way handshake, UDP, DNS flow, and HTTP/HTTPS encryption.',
     iconName: 'Network',
   },
+  {
+    id: 'topic-java',
+    title: 'Java Programming',
+    category: 'CORE_CS',
+    cluster: 'Programming Languages',
+    description: 'JVM architecture, OOP principles, memory model (Stack vs Heap), Garbage Collection, and tricky compilation traps.',
+    iconName: 'Coffee',
+  },
+  {
+    id: 'topic-c',
+    title: 'C Programming',
+    category: 'CORE_CS',
+    cluster: 'Programming Languages',
+    description: 'Memory layout, pointers & function pointers, dynamic memory (malloc/free), storage classes, struct padding, and undefined behavior.',
+    iconName: 'Cpu',
+  },
+  {
+    id: 'topic-cpp',
+    title: 'C++ Programming',
+    category: 'CORE_CS',
+    cluster: 'Programming Languages',
+    description: 'vtable/vptr, virtual destructors, copy vs move semantics, RAII, smart pointers, diamond problem, and STL internals.',
+    iconName: 'Layers',
+  },
+  {
+    id: 'topic-python',
+    title: 'Python Programming',
+    category: 'CORE_CS',
+    cluster: 'Programming Languages',
+    description: 'CPython internals, GIL, mutable vs immutable, decorators & closures, generators, memory management & cyclic GC, and dunder methods.',
+    iconName: 'Terminal',
+  },
 ];
 
 export const HR_BEHAVIORAL_TOPICS: InterviewTopic[] = [
