@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack, CampusDsaStage, CampusDsaProblem } from '@/types/technical';
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, PROGRAMMING_150_EXPANDED_SEED, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
 import { CAMPUS_DSA_ROADMAP_STAGES, ALL_CAMPUS_DSA_PROBLEMS } from './campusDsaRoadmapData';
+import { C_PROGRAMMING_MCQ_SEED } from './technicalMcqSeedData';
 import { computeSha256Hex } from '@/utils/questionParser';
 
 export interface TechnicalImportReport {
@@ -882,7 +883,12 @@ export const technicalService = {
       console.error('Failed to query technical_mcqs from Supabase:', e);
     }
 
-    return [];
+    // High-quality offline / hydration fallback
+    const fallbackList = C_PROGRAMMING_MCQ_SEED;
+    if (topicId) {
+      return fallbackList.filter(m => m.topicId === topicId);
+    }
+    return fallbackList;
   },
 
   async saveTechnicalMcq(m: Partial<TechnicalMcq>): Promise<{ success: boolean; error?: string }> {

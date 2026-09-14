@@ -458,6 +458,8 @@ export default function TechnicalHubPage() {
       if (selectedStatus === 'UNSOLVED' && isSolved) return false;
       if (selectedStatus === 'RETRY' && !isRetry) return false;
 
+      if (selectedLevel !== 'ALL' && mcq.difficulty !== selectedLevel) return false;
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesQ = mcq.question.toLowerCase().includes(q);
@@ -469,7 +471,7 @@ export default function TechnicalHubPage() {
 
       return true;
     });
-  }, [activeTopic, activeTopicMcqs, mcqs, selectedStatus, searchQuery, mcqProgress, isAdmin]);
+  }, [activeTopic, activeTopicMcqs, mcqs, selectedStatus, selectedLevel, searchQuery, mcqProgress, isAdmin]);
 
   const currentFilteredListLength = activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length : filteredProblems.length;
   const totalPages = Math.ceil(currentFilteredListLength / QUESTIONS_PER_PAGE);
@@ -1306,6 +1308,29 @@ export default function TechnicalHubPage() {
                             {mcq.topic}
                           </span>
 
+                          {mcq.difficulty && (
+                            <span
+                              className={`inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
+                                mcq.difficulty === 'BASIC'
+                                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                                  : mcq.difficulty === 'MEDIUM'
+                                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                                  : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30'
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  mcq.difficulty === 'BASIC'
+                                    ? 'bg-emerald-500'
+                                    : mcq.difficulty === 'MEDIUM'
+                                    ? 'bg-amber-500'
+                                    : 'bg-rose-500'
+                                } animate-pulse`}
+                              />
+                              <span>{mcq.difficulty}</span>
+                            </span>
+                          )}
+
                           {mcq.is_hidden && (
                             <span className="text-[9px] font-display font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
                               <EyeOff className="w-3 h-3" />
@@ -1410,6 +1435,21 @@ export default function TechnicalHubPage() {
                           );
                         })}
                       </div>
+
+                      {/* Company Tags */}
+                      {mcq.companyTags && mcq.companyTags.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider font-display">
+                            <Building2 className="w-3 h-3 text-[#868E96] dark:text-[#777777]" />
+                            <span>Companies:</span>
+                          </span>
+                          {mcq.companyTags.map(tag => (
+                            <span key={tag} className="text-[10px] font-medium font-sans px-2 py-0.5 rounded bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2C2C2C]">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Footer: View Explanation Toggle & Live Status */}
                       <div className="flex items-center justify-between pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
