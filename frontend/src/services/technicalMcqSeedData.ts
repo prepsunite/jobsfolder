@@ -1832,3 +1832,1815 @@ export const C_PROGRAMMING_MCQ_SEED: TechnicalMcq[] = [
     "is_deleted": false
   }
 ];
+
+export const CPP_PROGRAMMING_MCQ_SEED: TechnicalMcq[] = [
+  {
+    "id": "cpp-mcq-01",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which of the following statements is FALSE regarding references in C++ compared to pointers?",
+    "options": [
+      "A reference cannot be NULL and must be initialized upon declaration.",
+      "Once a reference is bound to an object, it cannot be rebound to refer to another object.",
+      "A reference has its own distinct memory address independent of the referred object.",
+      "A reference does not require the dereference operator (*) to access its value."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "In C++, a reference is an alias for an existing object. Taking the address of a reference (&ref) yields the address of the referenced object itself, not a separate address for the reference. References must be initialized, cannot be reseated, and cannot be NULL.",
+    "companyTags": [
+      "TCS Digital",
+      "Cognizant",
+      "Wipro"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Cognizant",
+      "Wipro"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 1,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-02",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "Which C++ cast operator is used to cast away 'const' or 'volatile' qualifiers from a variable?",
+    "options": [
+      "static_cast",
+      "dynamic_cast",
+      "reinterpret_cast",
+      "const_cast"
+    ],
+    "correctOptionIndex": 3,
+    "correct_option_index": 3,
+    "explanation": "const_cast is explicitly designed to add or remove the 'const' or 'volatile' cv-qualifiers from a pointer or reference type. Using static_cast or dynamic_cast to strip constness results in a compilation error.",
+    "companyTags": [
+      "Infosys SP",
+      "Capgemini",
+      "Accenture"
+    ],
+    "company_tags": [
+      "Infosys SP",
+      "Capgemini",
+      "Accenture"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 2,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-03",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following C++ program with reference modification?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nvoid modify(int &a, int b = 5) {\n    a += b;\n}\n\nint main() {\n    int x = 10;\n    modify(x);\n    modify(x, 15);\n    cout << x << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nvoid modify(int &a, int b = 5) {\n    a += b;\n}\n\nint main() {\n    int x = 10;\n    modify(x);\n    modify(x, 15);\n    cout << x << endl;\n    return 0;\n}",
+    "options": [
+      "10",
+      "25",
+      "30",
+      "35"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "1. Initially x = 10.\n2. In `modify(x)`, default parameter b = 5 is used, so x is passed by reference and becomes 10 + 5 = 15.\n3. In `modify(x, 15)`, b is explicitly 15, so x becomes 15 + 15 = 30.\n4. Output is 30.",
+    "companyTags": [
+      "TCS Prime",
+      "Mindtree",
+      "LTI"
+    ],
+    "company_tags": [
+      "TCS Prime",
+      "Mindtree",
+      "LTI"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 3,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-04",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What happens when compiling and executing the following C++ code?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nint& getLocal() {\n    int val = 42;\n    return val;\n}\n\nint main() {\n    int &ref = getLocal();\n    cout << ref << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nint& getLocal() {\n    int val = 42;\n    return val;\n}\n\nint main() {\n    int &ref = getLocal();\n    cout << ref << endl;\n    return 0;\n}",
+    "options": [
+      "Prints 42 reliably under all compilers.",
+      "Compilation error because local variables cannot be returned.",
+      "Runtime crash immediately upon returning from getLocal.",
+      "Undefined behavior due to returning a reference to a local stack variable that goes out of scope."
+    ],
+    "correctOptionIndex": 3,
+    "correct_option_index": 3,
+    "explanation": "Returning a reference to a local automatic stack variable (`val`) invokes undefined behavior. Once `getLocal()` finishes, the stack frame is deallocated. Any subsequent read through `ref` accesses a dangling reference.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Qualcomm"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Qualcomm"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 4,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-05",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the key requirement for 'dynamic_cast' to succeed when downcasting a Base pointer to a Derived pointer at runtime?",
+    "options": [
+      "The Base class must have a public default constructor.",
+      "The Base class must be polymorphic (contain at least one virtual function).",
+      "The Derived class must use multiple inheritance.",
+      "The Base class must not contain any private data members."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "dynamic_cast relies on Run-Time Type Information (RTTI), which is generated by the compiler only for polymorphic classes (classes containing at least one virtual function). Attempting dynamic_cast on a non-polymorphic base class causes a compile-time error.",
+    "companyTags": [
+      "Microsoft",
+      "Goldman Sachs",
+      "Morgan Stanley"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Goldman Sachs",
+      "Morgan Stanley"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 5,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-06",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which constructor is invoked when an existing object is used to initialize a new object of the same class?",
+    "codeSnippet": "MyClass obj1;\nMyClass obj2 = obj1;",
+    "code_snippet": "MyClass obj1;\nMyClass obj2 = obj1;",
+    "options": [
+      "Default constructor",
+      "Copy constructor",
+      "Conversion constructor",
+      "Move assignment operator"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "When an object is initialized at declaration time with another object of the same class (like `MyClass obj2 = obj1;`), the copy constructor is invoked. This is initialization, not assignment (which uses `operator=`).",
+    "companyTags": [
+      "TCS Ninja",
+      "Accenture",
+      "Infosys"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Accenture",
+      "Infosys"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 6,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-07",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the exact output of this constructor/destructor lifecycle program?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Sample {\npublic:\n    Sample() { cout << \"C \"; }\n    ~Sample() { cout << \"D \"; }\n};\n\nint main() {\n    Sample s1;\n    {\n        Sample s2;\n    }\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Sample {\npublic:\n    Sample() { cout << \"C \"; }\n    ~Sample() { cout << \"D \"; }\n};\n\nint main() {\n    Sample s1;\n    {\n        Sample s2;\n    }\n    return 0;\n}",
+    "options": [
+      "C C D D ",
+      "C D C D ",
+      "C C D ",
+      "D D C C "
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "1. `s1` is constructed -> prints \"C \".\n2. Inside the inner block, `s2` is constructed -> prints \"C \".\n3. Inner block terminates: `s2` goes out of scope and is destroyed -> prints \"D \".\n4. `main()` returns: `s1` goes out of scope and is destroyed -> prints \"D \".\nOverall output is `C C D D `.",
+    "companyTags": [
+      "Cognizant GenC",
+      "HCL",
+      "Wipro"
+    ],
+    "company_tags": [
+      "Cognizant GenC",
+      "HCL",
+      "Wipro"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 7,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-08",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "In what order are member variables initialized in a C++ class with a member initializer list?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Test {\n    int a;\n    int b;\npublic:\n    Test(int val) : b(val), a(b + 5) {\n        cout << a << \" \" << b << endl;\n    }\n};\n\nint main() {\n    Test t(10);\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Test {\n    int a;\n    int b;\npublic:\n    Test(int val) : b(val), a(b + 5) {\n        cout << a << \" \" << b << endl;\n    }\n};\n\nint main() {\n    Test t(10);\n    return 0;\n}",
+    "options": [
+      "15 10",
+      "GarbageValue 10",
+      "10 15",
+      "Compilation error"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In C++, member variables are initialized strictly in the order they are declared in the class declaration, NOT in the order they appear in the constructor initializer list. Since `a` is declared before `b`, `a(b + 5)` executes first when `b` holds garbage/uninitialized data. Hence `a` gets a garbage value and `b` gets 10.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "DE Shaw"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 8,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-09",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "What is the purpose of declaring a single-argument constructor as 'explicit' in C++?",
+    "codeSnippet": "class Complex {\npublic:\n    explicit Complex(double r) { ... }\n};",
+    "code_snippet": "class Complex {\npublic:\n    explicit Complex(double r) { ... }\n};",
+    "options": [
+      "It prevents the class from being inherited by child classes.",
+      "It prevents the compiler from using the constructor for implicit type conversions.",
+      "It forces the compiler to inline the constructor body.",
+      "It ensures the constructor can only be called through a pointer."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "The `explicit` keyword on a constructor prevents unintended implicit type conversions and copy-initialization syntax (such as `Complex c = 3.5;`). It requires direct initialization like `Complex c(3.5);` or explicit casting `Complex(3.5)`.",
+    "companyTags": [
+      "Adobe",
+      "Microsoft",
+      "Oracle"
+    ],
+    "company_tags": [
+      "Adobe",
+      "Microsoft",
+      "Oracle"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 9,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-10",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Identify the critical flaw in the custom copy constructor below:",
+    "codeSnippet": "class Buffer {\n    int* data;\npublic:\n    Buffer(const Buffer b) { // Line 4\n        data = new int(*b.data);\n    }\n};",
+    "code_snippet": "class Buffer {\n    int* data;\npublic:\n    Buffer(const Buffer b) { // Line 4\n        data = new int(*b.data);\n    }\n};",
+    "options": [
+      "Memory leak because delete is not called inside the copy constructor.",
+      "Compilation error on Line 4 because a copy constructor cannot take its parameter by value (infinite recursion).",
+      "Run-time segmentation fault because *b.data is a const pointer.",
+      "Buffer overflow if b.data exceeds sizeof(int)."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "A copy constructor parameter MUST be passed by reference (e.g., `const Buffer& b`). If passed by value (`const Buffer b`), passing the argument to the copy constructor would itself require invoking the copy constructor, leading to infinite compilation recursion.",
+    "companyTags": [
+      "Google",
+      "Bloomberg",
+      "Tower Research"
+    ],
+    "company_tags": [
+      "Google",
+      "Bloomberg",
+      "Tower Research"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 10,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-11",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the default access specifier for members of a 'class' versus members of a 'struct' in C++?",
+    "options": [
+      "class is public by default; struct is private by default.",
+      "class is private by default; struct is public by default.",
+      "Both class and struct are private by default.",
+      "Both class and struct are public by default."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In C++, the only syntactic differences between `class` and `struct` are defaults: `class` members and base class inheritance default to `private`, whereas `struct` members and base class inheritance default to `public`.",
+    "companyTags": [
+      "TCS",
+      "Cognizant",
+      "Infosys"
+    ],
+    "company_tags": [
+      "TCS",
+      "Cognizant",
+      "Infosys"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 11,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-12",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "Which of the following is TRUE about a 'friend' function in C++?",
+    "options": [
+      "A friend function is a member of the class and has a hidden 'this' pointer.",
+      "A friend function can access private and protected members of the granting class.",
+      "Friendship is automatically inherited by derived classes.",
+      "If class A is a friend of class B, then class B is automatically a friend of class A."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "A friend function is a non-member function granted privileged access to private and protected members of a class. Friendship is neither inherited nor symmetric (transitive).",
+    "companyTags": [
+      "Wipro",
+      "Tech Mahindra",
+      "Accenture"
+    ],
+    "company_tags": [
+      "Wipro",
+      "Tech Mahindra",
+      "Accenture"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 12,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-13",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following program featuring a 'mutable' member?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Counter {\n    mutable int count;\npublic:\n    Counter() : count(0) {}\n    void increment() const {\n        count++;\n    }\n    int get() const { return count; }\n};\n\nint main() {\n    const Counter c;\n    c.increment();\n    c.increment();\n    cout << c.get() << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Counter {\n    mutable int count;\npublic:\n    Counter() : count(0) {}\n    void increment() const {\n        count++;\n    }\n    int get() const { return count; }\n};\n\nint main() {\n    const Counter c;\n    c.increment();\n    c.increment();\n    cout << c.get() << endl;\n    return 0;\n}",
+    "options": [
+      "Compilation error: cannot call increment() on a const object.",
+      "Compilation error: cannot modify count inside a const member function.",
+      "2",
+      "0"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "The `mutable` keyword allows a class member variable to be modified even within `const` member functions and on `const` object instances. `c.increment()` legally mutates `count` twice, so `c.get()` outputs 2.",
+    "companyTags": [
+      "Morgan Stanley",
+      "Societe Generale",
+      "Barclays"
+    ],
+    "company_tags": [
+      "Morgan Stanley",
+      "Societe Generale",
+      "Barclays"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 13,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-14",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What is wrong with the following C++ code involving static member functions?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Math {\n    int factor = 2;\npublic:\n    static int multiply(int x) {\n        return x * factor;\n    }\n};\n\nint main() {\n    cout << Math::multiply(5) << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Math {\n    int factor = 2;\npublic:\n    static int multiply(int x) {\n        return x * factor;\n    }\n};\n\nint main() {\n    cout << Math::multiply(5) << endl;\n    return 0;\n}",
+    "options": [
+      "Static member functions cannot take parameters.",
+      "Cannot invoke Math::multiply without instantiating Math.",
+      "Compile error: static member function 'multiply' cannot access non-static member 'factor'.",
+      "factor cannot have an in-class initializer."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "Static member functions in C++ do not receive an implicit `this` pointer and are not associated with any particular object instance. Therefore, they cannot access non-static data members (like `factor`) or non-static member functions directly.",
+    "companyTags": [
+      "Samsung",
+      "Capgemini",
+      "LTI"
+    ],
+    "company_tags": [
+      "Samsung",
+      "Capgemini",
+      "LTI"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 14,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-15",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "In protected inheritance (`class Derived : protected Base`), how do the public and protected members of Base appear within Derived and to outside code?",
+    "options": [
+      "Base public and protected members both become protected in Derived; inaccessible to outside code.",
+      "Base public members stay public; Base protected members become private.",
+      "All Base members become private in Derived.",
+      "Base public members become private; protected members stay protected."
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "Under protected inheritance, public and protected members of Base both become `protected` members inside Derived. Consequently, they are accessible to Derived and its future subclasses, but are completely hidden from external users (outside code) of Derived.",
+    "companyTags": [
+      "Cisco",
+      "Qualcomm",
+      "NVIDIA"
+    ],
+    "company_tags": [
+      "Cisco",
+      "Qualcomm",
+      "NVIDIA"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 15,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-16",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which C++ feature directly solves the ambiguity and duplicate subobject problem of the 'Diamond of Death' in multiple inheritance?",
+    "options": [
+      "Abstract interfaces",
+      "Virtual base classes (`virtual public Base`)",
+      "Friend inheritance",
+      "Dynamic casting"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Virtual base classes (`class B : virtual public A`) ensure that only a single shared instance of the base class subobject exists in the most derived class, resolving ambiguity and duplicate state.",
+    "companyTags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Cognizant"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 16,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-17",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of constructor invocations in this multiple inheritance hierarchy?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass A { public: A() { cout << \"A\"; } };\nclass B { public: B() { cout << \"B\"; } };\nclass C : public B, public A {\npublic:\n    C() { cout << \"C\"; }\n};\n\nint main() {\n    C obj;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass A { public: A() { cout << \"A\"; } };\nclass B { public: B() { cout << \"B\"; } };\nclass C : public B, public A {\npublic:\n    C() { cout << \"C\"; }\n};\n\nint main() {\n    C obj;\n    return 0;\n}",
+    "options": [
+      "ABC",
+      "BAC",
+      "CBA",
+      "CAB"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Base class constructors are called strictly in the order of their appearance in the class derivation list (`class C : public B, public A`), NOT the order in C's constructor initializer list. B is declared first, then A, and finally C's own constructor body executes. Output is BAC.",
+    "companyTags": [
+      "Amazon",
+      "Optum",
+      "Paytm"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Optum",
+      "Paytm"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 17,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-18",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What happens when passing a Derived object by value to a function expecting a Base object (Object Slicing)?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Base {\npublic:\n    virtual void show() { cout << \"Base \"; }\n};\n\nclass Derived : public Base {\npublic:\n    void show() override { cout << \"Derived \"; }\n};\n\nvoid print(Base b) {\n    b.show();\n}\n\nint main() {\n    Derived d;\n    print(d);\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Base {\npublic:\n    virtual void show() { cout << \"Base \"; }\n};\n\nclass Derived : public Base {\npublic:\n    void show() override { cout << \"Derived \"; }\n};\n\nvoid print(Base b) {\n    b.show();\n}\n\nint main() {\n    Derived d;\n    print(d);\n    return 0;\n}",
+    "options": [
+      "Derived ",
+      "Base ",
+      "Compilation error: cannot convert Derived to Base by value",
+      "Undefined Behavior"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Because `print(Base b)` accepts `Base` by value, object slicing occurs. The Derived portion of `d` is sliced away, copying only the `Base` subobject into `b`. The vptr inside `b` points to `Base`'s vtable, printing `Base `.",
+    "companyTags": [
+      "Microsoft",
+      "Adobe",
+      "Intuit"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Adobe",
+      "Intuit"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 18,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-19",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Why does the following code fail to compile?",
+    "codeSnippet": "class Base {\nprivate:\n    int secret = 100;\n};\n\nclass Derived : public Base {\npublic:\n    void display() {\n        cout << secret << endl;\n    }\n};",
+    "code_snippet": "class Base {\nprivate:\n    int secret = 100;\n};\n\nclass Derived : public Base {\npublic:\n    void display() {\n        cout << secret << endl;\n    }\n};",
+    "options": [
+      "Derived must use private inheritance.",
+      "secret is private in Base and cannot be accessed directly by Derived member functions.",
+      "Base needs a virtual destructor.",
+      "cout cannot print integer member variables."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Private members of a base class are private to that base class and can NEVER be accessed directly by derived classes. To allow derived class access while hiding from the public, `secret` must be declared as `protected`.",
+    "companyTags": [
+      "TCS Ninja",
+      "Infosys",
+      "Wipro"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Infosys",
+      "Wipro"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 19,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-20",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "In a diamond inheritance hierarchy with a virtual base class, which class is responsible for invoking the constructor of the virtual base class?",
+    "codeSnippet": "class Top { ... };\nclass Left : virtual public Top { ... };\nclass Right : virtual public Top { ... };\nclass Bottom : public Left, public Right { ... };",
+    "code_snippet": "class Top { ... };\nclass Left : virtual public Top { ... };\nclass Right : virtual public Top { ... };\nclass Bottom : public Left, public Right { ... };",
+    "options": [
+      "Left, because it is the first base class declared in Bottom.",
+      "Both Left and Right call it sequentially.",
+      "The most derived class (Bottom) directly invokes Top's constructor.",
+      "The compiler invokes it through an anonymous wrapper."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "In C++, the most derived class (here, `Bottom`) is directly responsible for initializing any virtual base classes (`Top`). Intermediate classes (`Left` and `Right`) suppress their calls to `Top`'s constructor when `Bottom` is instantiated.",
+    "companyTags": [
+      "DE Shaw",
+      "Goldman Sachs",
+      "Google"
+    ],
+    "company_tags": [
+      "DE Shaw",
+      "Goldman Sachs",
+      "Google"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 20,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-21",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What makes a C++ class an 'Abstract Class'?",
+    "options": [
+      "Declaring all member variables as private.",
+      "Declaring at least one pure virtual function (`virtual void func() = 0;`).",
+      "Inheriting from more than two base classes.",
+      "Making the class destructor private."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "A class containing at least one pure virtual function (`= 0`) is an Abstract Class. Instances of abstract classes cannot be directly instantiated.",
+    "companyTags": [
+      "Accenture",
+      "TCS",
+      "Capgemini"
+    ],
+    "company_tags": [
+      "Accenture",
+      "TCS",
+      "Capgemini"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 21,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-22",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following virtual function dispatch code?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Base {\npublic:\n    virtual void print() { cout << \"Base \"; }\n};\n\nclass Derived : public Base {\npublic:\n    void print() override { cout << \"Derived \"; }\n};\n\nint main() {\n    Base* ptr = new Derived();\n    ptr->print();\n    delete ptr;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Base {\npublic:\n    virtual void print() { cout << \"Base \"; }\n};\n\nclass Derived : public Base {\npublic:\n    void print() override { cout << \"Derived \"; }\n};\n\nint main() {\n    Base* ptr = new Derived();\n    ptr->print();\n    delete ptr;\n    return 0;\n}",
+    "options": [
+      "Base ",
+      "Derived ",
+      "Base Derived ",
+      "Compilation error"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Since `print()` is virtual in `Base` and overridden in `Derived`, calling `ptr->print()` uses runtime dynamic dispatch through `ptr`'s `vptr` and invokes `Derived::print()`, printing `Derived `.",
+    "companyTags": [
+      "Cognizant",
+      "HCL",
+      "Mindtree"
+    ],
+    "company_tags": [
+      "Cognizant",
+      "HCL",
+      "Mindtree"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 22,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-23",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What catastrophic issue exists when deleting an object of derived type via a base pointer with a non-virtual destructor?",
+    "codeSnippet": "class Base { public: ~Base() {} };\nclass Derived : public Base {\n    int* arr = new int[100];\npublic:\n    ~Derived() { delete[] arr; }\n};\n\nBase* b = new Derived();\ndelete b; // What happens?",
+    "code_snippet": "class Base { public: ~Base() {} };\nclass Derived : public Base {\n    int* arr = new int[100];\npublic:\n    ~Derived() { delete[] arr; }\n};\n\nBase* b = new Derived();\ndelete b; // What happens?",
+    "options": [
+      "The program will not compile.",
+      "Only Derived's destructor runs, leaking Base members.",
+      "Undefined behavior and memory leak: Derived's destructor is never called.",
+      "delete b automatically resolves Derived's destructor via RTTI."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "If a base class destructor is not declared `virtual`, deleting a derived object via a base pointer invokes undefined behavior according to the C++ standard. In practice, only `~Base()` executes, bypassing `~Derived()`, which leaks `arr`.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Oracle"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Oracle"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 23,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-24",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of calling a virtual function from inside a base class constructor?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Base {\npublic:\n    Base() { test(); }\n    virtual void test() { cout << \"Base \"; }\n};\n\nclass Derived : public Base {\npublic:\n    void test() override { cout << \"Derived \"; }\n};\n\nint main() {\n    Derived d;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Base {\npublic:\n    Base() { test(); }\n    virtual void test() { cout << \"Base \"; }\n};\n\nclass Derived : public Base {\npublic:\n    void test() override { cout << \"Derived \"; }\n};\n\nint main() {\n    Derived d;\n    return 0;\n}",
+    "options": [
+      "Derived ",
+      "Base ",
+      "Base Derived ",
+      "Pure virtual method called crash"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In C++, during the execution of a Base constructor, the Derived portion of the object has not yet been constructed. Hence, the vptr points to the Base vtable, and virtual dispatch calls `Base::test()`, printing `Base `.",
+    "companyTags": [
+      "Qualcomm",
+      "NVIDIA",
+      "Microsoft"
+    ],
+    "company_tags": [
+      "Qualcomm",
+      "NVIDIA",
+      "Microsoft"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 24,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-25",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "On a 64-bit platform, what is `sizeof(Sample)` assuming standard 8-byte pointer alignment?",
+    "codeSnippet": "class Sample {\n    int x; // 4 bytes\n    virtual void func() {}\n};",
+    "code_snippet": "class Sample {\n    int x; // 4 bytes\n    virtual void func() {}\n};",
+    "options": [
+      "4 bytes",
+      "8 bytes",
+      "12 bytes",
+      "16 bytes"
+    ],
+    "correctOptionIndex": 3,
+    "correct_option_index": 3,
+    "explanation": "The virtual function adds a hidden `vptr` pointer (8 bytes on 64-bit architecture). `x` takes 4 bytes. Due to structure alignment padding to match the 8-byte alignment requirement of the `vptr`, 4 bytes of padding are added: 8 (vptr) + 4 (int) + 4 (padding) = 16 bytes.",
+    "companyTags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Adobe"
+    ],
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Adobe"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 25,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-26",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "What is the difference between the C++11 'override' and 'final' contextual keywords for virtual functions?",
+    "options": [
+      "override forces runtime binding; final forces compile-time inline binding.",
+      "override ensures a function matches a base virtual signature; final prevents further overriding in derived classes.",
+      "override can only be used on constructors; final can only be used on destructors.",
+      "final makes a function private; override makes it protected."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`override` instructs the compiler to verify that a base virtual function with the exact same signature exists (preventing subtle mismatch bugs). `final` prevents any derived class from further overriding that virtual function (or inheriting from a class if applied to a class declaration).",
+    "companyTags": [
+      "Bloomberg",
+      "Amazon",
+      "Apple"
+    ],
+    "company_tags": [
+      "Bloomberg",
+      "Amazon",
+      "Apple"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 26,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-27",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which of the following operators CANNOT be overloaded in C++?",
+    "options": [
+      "[] (array subscript)",
+      "-> (member selection)",
+      ". (member access) and :: (scope resolution)",
+      "() (function call)"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "In C++, the following operators cannot be overloaded: `.` (dot), `.*` (pointer-to-member), `::` (scope resolution), `?:` (ternary conditional), and `sizeof`.",
+    "companyTags": [
+      "TCS",
+      "Infosys",
+      "Wipro"
+    ],
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 27,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-28",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "How does the C++ compiler distinguish between prefix increment `++obj` and postfix increment `obj++` in operator overloading?",
+    "options": [
+      "The postfix operator uses the keyword `post`.",
+      "The postfix operator takes a dummy `int` parameter (`operator++(int)`).",
+      "The prefix operator takes a dummy `int` parameter (`operator++(int)`).",
+      "By checking the return type: prefix returns void, postfix returns int."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "C++ disambiguates post-increment by requiring a dummy (unused) `int` argument in the signature: `ReturnType operator++(int);`. Prefix increment takes no arguments: `ReturnType& operator++();`.",
+    "companyTags": [
+      "Tech Mahindra",
+      "Cognizant",
+      "LTI"
+    ],
+    "company_tags": [
+      "Tech Mahindra",
+      "Cognizant",
+      "LTI"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 28,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-29",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following custom addition operator code?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Point {\n    int val;\npublic:\n    Point(int v) : val(v) {}\n    Point operator+(const Point& p) {\n        return Point(this->val * 2 + p.val);\n    }\n    int get() const { return val; }\n};\n\nint main() {\n    Point p1(3), p2(4);\n    Point p3 = p1 + p2;\n    cout << p3.get() << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Point {\n    int val;\npublic:\n    Point(int v) : val(v) {}\n    Point operator+(const Point& p) {\n        return Point(this->val * 2 + p.val);\n    }\n    int get() const { return val; }\n};\n\nint main() {\n    Point p1(3), p2(4);\n    Point p3 = p1 + p2;\n    cout << p3.get() << endl;\n    return 0;\n}",
+    "options": [
+      "7",
+      "10",
+      "14",
+      "Compilation error"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "The overloaded `+` evaluates `this->val * 2 + p.val`. Here `p1` is `this` (`val = 3`) and `p2` is `p` (`val = 4`). Calculation: 3 * 2 + 4 = 10.",
+    "companyTags": [
+      "Capgemini",
+      "Accenture",
+      "TCS Digital"
+    ],
+    "company_tags": [
+      "Capgemini",
+      "Accenture",
+      "TCS Digital"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 29,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-30",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Why must stream insertion `operator<<` (for `cout << obj;`) typically be overloaded as a non-member (often friend) function rather than a member function?",
+    "options": [
+      "Member functions cannot return references.",
+      "The left-hand operand is `std::ostream&`, not the user-defined class object.",
+      "Stream operators cannot access private variables.",
+      "C++ forbids overloading bitwise shift operators as class members."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In an expression like `cout << obj;`, the left-hand operand is `cout` (an instance of `std::ostream`). If overloaded as a member function, it would have to belong to `std::ostream` (which users cannot modify). Therefore, it must be a standalone non-member function taking `ostream&` as its first parameter.",
+    "companyTags": [
+      "Amazon",
+      "Flipkart",
+      "Cisco"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Flipkart",
+      "Cisco"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 30,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-31",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CODE_COMPLETION",
+    "question_type": "CODE_COMPLETION",
+    "question": "In a robust copy-assignment operator (`operator=`), which check is essential to prevent memory corruption when assigning an object to itself?",
+    "codeSnippet": "Array& Array::operator=(const Array& other) {\n    // Which line belongs here?\n    delete[] data;\n    data = new int[other.size];\n    ...\n    return *this;\n}",
+    "code_snippet": "Array& Array::operator=(const Array& other) {\n    // Which line belongs here?\n    delete[] data;\n    data = new int[other.size];\n    ...\n    return *this;\n}",
+    "options": [
+      "if (data == other.data) return *this;",
+      "if (this == &other) return *this;",
+      "if (sizeof(*this) == sizeof(other)) return *this;",
+      "if (other.data != nullptr) return *this;"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Self-assignment check (`if (this == &other) return *this;`) is critical. Without it, `a = a;` would execute `delete[] data;`, deallocating its own memory before trying to read from `other.data`, causing undefined behavior.",
+    "companyTags": [
+      "Microsoft",
+      "Goldman Sachs",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Goldman Sachs",
+      "DE Shaw"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 31,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-32",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "At what stage does the C++ compiler generate executable code for a template function or class?",
+    "options": [
+      "At runtime when the function is first invoked.",
+      "During compile time when the template is instantiated with concrete types.",
+      "During preprocessing before code parsing.",
+      "During linking when object files are merged."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "C++ templates are instantiated at compile time. The compiler generates specialized machine code for each unique set of template arguments used in the codebase.",
+    "companyTags": [
+      "TCS Ninja",
+      "Infosys",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Infosys",
+      "Cognizant"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 32,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-33",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following template specialization program?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\ntemplate <typename T>\nvoid print(T val) {\n    cout << \"General \";\n}\n\ntemplate <>\nvoid print<int>(int val) {\n    cout << \"Specialized \";\n}\n\nint main() {\n    print(10);\n    print(3.14);\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\ntemplate <typename T>\nvoid print(T val) {\n    cout << \"General \";\n}\n\ntemplate <>\nvoid print<int>(int val) {\n    cout << \"Specialized \";\n}\n\nint main() {\n    print(10);\n    print(3.14);\n    return 0;\n}",
+    "options": [
+      "General General ",
+      "Specialized Specialized ",
+      "Specialized General ",
+      "General Specialized "
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "`print(10)` passes an `int`, matching the full template specialization `print<int>`, so it prints `Specialized `. `print(3.14)` passes a `double`, matching the generic template, printing `General `.",
+    "companyTags": [
+      "Adobe",
+      "Oracle",
+      "Cisco"
+    ],
+    "company_tags": [
+      "Adobe",
+      "Oracle",
+      "Cisco"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 33,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-34",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What issue occurs if a template class declaration is placed in a `.h` file and its member function definitions are placed in a separate `.cpp` file?",
+    "options": [
+      "Compilation error: templates cannot be declared inside header files.",
+      "Linker error (unresolved external symbol) in translation units that instantiate the template.",
+      "Runtime segmentation fault upon instantiation.",
+      "The compiler automatically inlines all methods into the executable without issue."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Because templates are compiled upon instantiation, the compiler needs access to the full template definitions in each translation unit where they are used. Placing definitions in a `.cpp` file prevents other files from instantiating them, causing a linker error.",
+    "companyTags": [
+      "Google",
+      "Amazon",
+      "Samsung"
+    ],
+    "company_tags": [
+      "Google",
+      "Amazon",
+      "Samsung"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 34,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-35",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "What is a 'non-type template parameter' in C++?",
+    "codeSnippet": "template <typename T, int Size>\nclass FixedArray { ... };",
+    "code_snippet": "template <typename T, int Size>\nclass FixedArray { ... };",
+    "options": [
+      "A parameter that can accept any custom class without copy constructors.",
+      "A parameter whose value is a compile-time constant (such as an integer, pointer, or enum) rather than a type.",
+      "A parameter evaluated dynamically at runtime via RTTI.",
+      "A variadic template pack parameter."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Non-type template parameters represent compile-time constant values (e.g., integral types, pointers, references, or enums like `int Size` in `std::array<T, N>`) rather than data types.",
+    "companyTags": [
+      "Qualcomm",
+      "NVIDIA",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Qualcomm",
+      "NVIDIA",
+      "DE Shaw"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 35,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-36",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which C++ smart pointer represents exclusive ownership of a dynamically allocated resource and cannot be copied?",
+    "options": [
+      "std::shared_ptr",
+      "std::weak_ptr",
+      "std::unique_ptr",
+      "std::auto_ptr"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "`std::unique_ptr` enforces strict single/exclusive ownership. Its copy constructor and copy assignment operators are explicitly deleted (`= delete`). Ownership can only be transferred via move semantics (`std::move`).",
+    "companyTags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Accenture"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Accenture"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 36,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-37",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the primary role of 'std::weak_ptr' in modern C++?",
+    "options": [
+      "To speed up allocation performance of unique_ptr.",
+      "To break cyclic references (circular dependencies) between std::shared_ptr instances.",
+      "To allow raw pointer arithmetic on shared memory.",
+      "To automatically serialize objects to disk."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "When two objects reference each other with `std::shared_ptr`, a circular reference occurs, preventing the reference count from ever reaching zero (causing a permanent memory leak). `std::weak_ptr` holds a non-owning reference to break the cycle.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Paytm"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Paytm"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 37,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-38",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following lambda expression with capture by value?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 10;\n    auto func = [a]() mutable {\n        a += 5;\n        cout << a << \" \";\n    };\n    func();\n    cout << a << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 10;\n    auto func = [a]() mutable {\n        a += 5;\n        cout << a << \" \";\n    };\n    func();\n    cout << a << endl;\n    return 0;\n}",
+    "options": [
+      "15 15",
+      "15 10",
+      "10 10",
+      "Compilation error"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "The lambda captures `a` by value (`[a]`). Inside the lambda, `a` is an internal copy. The `mutable` keyword allows modifying this copy, printing `15 `. However, the original `a` in `main()` remains untouched (`10`). Output: `15 10`.",
+    "companyTags": [
+      "Microsoft",
+      "Adobe",
+      "Cognizant GenC Next"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Adobe",
+      "Cognizant GenC Next"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 38,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-39",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What happens when moving from a `std::unique_ptr`?",
+    "codeSnippet": "#include <iostream>\n#include <memory>\nusing namespace std;\n\nint main() {\n    unique_ptr<int> p1 = make_unique<int>(100);\n    unique_ptr<int> p2 = move(p1);\n    if (!p1) {\n        cout << \"Null \";\n    }\n    cout << *p2 << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\n#include <memory>\nusing namespace std;\n\nint main() {\n    unique_ptr<int> p1 = make_unique<int>(100);\n    unique_ptr<int> p2 = move(p1);\n    if (!p1) {\n        cout << \"Null \";\n    }\n    cout << *p2 << endl;\n    return 0;\n}",
+    "options": [
+      "100 100",
+      "Null 100",
+      "Null Null",
+      "Crash at runtime"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`std::move(p1)` transfers the underlying pointer ownership to `p2`. After the move, `p1` becomes empty (`nullptr`), while `p2` holds the allocated value `100`. The output is `Null 100`.",
+    "companyTags": [
+      "Oracle",
+      "Goldman Sachs",
+      "Intuit"
+    ],
+    "company_tags": [
+      "Oracle",
+      "Goldman Sachs",
+      "Intuit"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 39,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-40",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What is the bug in the following C++ code involving auto and rvalue references?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int x = 10;\n    int&& r1 = 20; // OK\n    int&& r2 = x;  // Line 7\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int x = 10;\n    int&& r1 = 20; // OK\n    int&& r2 = x;  // Line 7\n    return 0;\n}",
+    "options": [
+      "Line 6 is invalid; rvalue references cannot bind to literals.",
+      "Line 7 fails to compile: an rvalue reference (int&&) cannot bind to an lvalue (x).",
+      "x must be declared const to bind to an rvalue reference.",
+      "Cannot have two rvalue references in the same scope."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "An rvalue reference (`int&&`) can only bind to temporary rvalues (like literals or temporary objects), NOT to named lvalues (`x`). To bind an lvalue to an rvalue reference, one must explicitly cast it via `std::move(x)`.",
+    "companyTags": [
+      "Amazon",
+      "Uber",
+      "Tower Research"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Uber",
+      "Tower Research"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 40,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-41",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the key advantage of 'std::make_shared' over directly writing 'std::shared_ptr<T>(new T(...))'?",
+    "options": [
+      "std::make_shared prevents multithreaded race conditions entirely.",
+      "std::make_shared performs a single combined heap allocation for both the managed object and the control block.",
+      "std::make_shared enables dynamic casting to derived classes automatically.",
+      "std::make_shared bypasses the class constructor for faster performance."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`std::make_shared` allocates memory for both the control block (reference counters) and the object in a single contiguous memory allocation, improving cache locality and reducing heap allocation overhead compared to `shared_ptr(new T)`, which requires two separate allocations.",
+    "companyTags": [
+      "DE Shaw",
+      "Google",
+      "Bloomberg"
+    ],
+    "company_tags": [
+      "DE Shaw",
+      "Google",
+      "Bloomberg"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 41,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-42",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What underlying data structure is typically used to implement 'std::map' in standard C++ libraries?",
+    "options": [
+      "Hash table with bucket chaining",
+      "Red-Black Tree (Self-balancing Binary Search Tree)",
+      "Doubly linked list with skip pointers",
+      "Dynamic contiguous array"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`std::map` is ordered and guarantees $O(\\log n)$ search, insertion, and deletion. It is almost universally implemented as a Red-Black Tree. In contrast, `std::unordered_map` is based on hash tables.",
+    "companyTags": [
+      "TCS Prime",
+      "Cognizant",
+      "Infosys"
+    ],
+    "company_tags": [
+      "TCS Prime",
+      "Cognizant",
+      "Infosys"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 42,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-43",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the difference between `v.size()` and `v.capacity()` for a `std::vector` in C++?",
+    "options": [
+      "size is the allocated memory in bytes; capacity is the number of elements.",
+      "size is the number of elements currently stored; capacity is the total number of elements it can hold before needing reallocation.",
+      "size is fixed at compile time; capacity grows dynamically.",
+      "They are always identical."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`size()` returns the actual count of elements currently in the vector. `capacity()` returns the count of elements the vector can hold in its currently allocated memory buffer before a new, larger buffer must be allocated.",
+    "companyTags": [
+      "Accenture",
+      "Wipro",
+      "HCL"
+    ],
+    "company_tags": [
+      "Accenture",
+      "Wipro",
+      "HCL"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 43,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-44",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of inserting duplicate keys into a `std::map` using the `insert()` method?",
+    "codeSnippet": "#include <iostream>\n#include <map>\nusing namespace std;\n\nint main() {\n    map<int, string> m;\n    m.insert({1, \"Apple\"});\n    m.insert({1, \"Banana\"});\n    cout << m[1] << \" \" << m.size() << endl;\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\n#include <map>\nusing namespace std;\n\nint main() {\n    map<int, string> m;\n    m.insert({1, \"Apple\"});\n    m.insert({1, \"Banana\"});\n    cout << m[1] << \" \" << m.size() << endl;\n    return 0;\n}",
+    "options": [
+      "Banana 1",
+      "Apple 1",
+      "Banana 2",
+      "Compilation error"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`map::insert()` inserts an element only if the key does not already exist. Because key 1 already exists with value \"Apple\", the second insert fails silently and is ignored. `m[1]` remains \"Apple\", and `m.size()` is 1.",
+    "companyTags": [
+      "Amazon",
+      "Flipkart",
+      "Walmart"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Flipkart",
+      "Walmart"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 44,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-45",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Why is the loop below dangerous (Iterator Invalidation bug)?",
+    "codeSnippet": "#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> v = {1, 2, 3, 4, 5};\n    for (auto it = v.begin(); it != v.end(); ++it) {\n        if (*it == 3) {\n            v.erase(it);\n        }\n    }\n    return 0;\n}",
+    "code_snippet": "#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> v = {1, 2, 3, 4, 5};\n    for (auto it = v.begin(); it != v.end(); ++it) {\n        if (*it == 3) {\n            v.erase(it);\n        }\n    }\n    return 0;\n}",
+    "options": [
+      "vector does not support the erase() method.",
+      "erase(it) invalidates 'it' and all subsequent iterators; continuing the loop causes undefined behavior.",
+      "auto cannot deduce vector iterator types.",
+      "v.end() is evaluated once before the loop starts and never updates."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`v.erase(it)` invalidates the iterator `it` and all iterators after it. Performing `++it` on an invalidated iterator causes undefined behavior (often crashing). The safe idiom is `it = v.erase(it);` or `std::erase(v, 3)` in C++20.",
+    "companyTags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Microsoft"
+    ],
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Microsoft"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 45,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-46",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which C++ STL container guarantees that inserting an element NEVER invalidates existing pointers, references, or iterators to other elements?",
+    "options": [
+      "std::vector",
+      "std::deque",
+      "std::list",
+      "std::string"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "`std::list` is implemented as a doubly linked list. Because each node is allocated independently on the heap, inserting or erasing elements does not reallocate or move existing nodes, guaranteeing pointer/reference/iterator stability.",
+    "companyTags": [
+      "Cisco",
+      "NVIDIA",
+      "Qualcomm"
+    ],
+    "company_tags": [
+      "Cisco",
+      "NVIDIA",
+      "Qualcomm"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 46,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-47",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the difference between `delete ptr;` and `delete[] ptr;` in C++?",
+    "options": [
+      "delete is for primitive types; delete[] is for user-defined classes.",
+      "delete deallocates a single object; delete[] invokes destructors for each element of an array and deallocates the array.",
+      "delete is deprecated in C++11; delete[] is the standard replacement.",
+      "They are completely interchangeable under modern compilers."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`new[]` allocates an array and records the element count (cookie). Calling `delete[]` invokes the destructor on every single element before freeing the memory buffer. Calling `delete` on an array pointer invokes undefined behavior.",
+    "companyTags": [
+      "TCS",
+      "Accenture",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS",
+      "Accenture",
+      "Cognizant"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 47,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-48",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output when an exception unwinds the stack in C++?",
+    "codeSnippet": "#include <iostream>\nusing namespace std;\n\nclass Trace {\npublic:\n    ~Trace() { cout << \"Destruct \"; }\n};\n\nvoid test() {\n    Trace t;\n    throw 20;\n}\n\nint main() {\n    try {\n        test();\n    } catch (int e) {\n        cout << \"Caught: \" << e << endl;\n    }\n    return 0;\n}",
+    "code_snippet": "#include <iostream>\nusing namespace std;\n\nclass Trace {\npublic:\n    ~Trace() { cout << \"Destruct \"; }\n};\n\nvoid test() {\n    Trace t;\n    throw 20;\n}\n\nint main() {\n    try {\n        test();\n    } catch (int e) {\n        cout << \"Caught: \" << e << endl;\n    }\n    return 0;\n}",
+    "options": [
+      "Caught: 20 Destruct ",
+      "Destruct Caught: 20",
+      "Caught: 20 ",
+      "Abnormal program termination"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Stack unwinding guarantees that as the stack frame of `test()` is exited due to an unhandled exception, local automatic objects (`t`) have their destructors called before the exception handler (`catch`) executes. Output: `Destruct Caught: 20`.",
+    "companyTags": [
+      "Amazon",
+      "Microsoft",
+      "Adobe"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Microsoft",
+      "Adobe"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 48,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-49",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "Why should destructors NEVER throw exceptions in C++?",
+    "options": [
+      "Because destructors cannot have try-catch blocks.",
+      "If an exception is thrown from a destructor during stack unwinding of another exception, `std::terminate()` is immediately called.",
+      "Because destructors do not have return types.",
+      "Throwing an exception leaves the destructor in an infinite loop."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "If a destructor throws an exception while the stack is already unwinding due to an active in-flight exception, C++ cannot handle two active exceptions simultaneously and immediately aborts the program via `std::terminate()`. In C++11 and later, destructors are `noexcept(true)` by default.",
+    "companyTags": [
+      "DE Shaw",
+      "Morgan Stanley",
+      "Google"
+    ],
+    "company_tags": [
+      "DE Shaw",
+      "Morgan Stanley",
+      "Google"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 49,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "cpp-mcq-50",
+    "topicId": "mcq-cpp-programming",
+    "topic_id": "mcq-cpp-programming",
+    "topic": "C++ Language",
+    "topic_name": "C++ Language",
+    "topicCategory": "CPP_PROGRAMMING",
+    "topic_category": "CPP_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the 'Rule of Zero' in modern C++ software architecture?",
+    "options": [
+      "A class should never have zero members.",
+      "All pointers in a class must be initialized to 0/nullptr.",
+      "Classes that manage resources should rely on existing RAII types (smart pointers, containers) and declare ZERO custom destructor, copy, or move operations.",
+      "Every virtual function must be assigned to = 0."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "The Rule of Zero states that if a class does not directly manage raw resources (and instead composes standard RAII wrappers like `std::string`, `std::vector`, or `std::unique_ptr`), it should declare NONE of the special member functions (destructor, copy/move constructors, copy/move assignment). The compiler-generated defaults will correctly and safely manage lifetime.",
+    "companyTags": [
+      "Microsoft",
+      "Google",
+      "Bloomberg"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Google",
+      "Bloomberg"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 50,
+    "is_hidden": false,
+    "is_deleted": false
+  }
+];
+
+export const ALL_TECHNICAL_MCQ_SEEDS: TechnicalMcq[] = [
+  ...C_PROGRAMMING_MCQ_SEED,
+  ...CPP_PROGRAMMING_MCQ_SEED,
+];
