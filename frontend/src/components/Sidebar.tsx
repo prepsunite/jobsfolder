@@ -32,6 +32,7 @@ import {
   Cpu,
   HelpCircle,
   Briefcase,
+  Flame,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -84,7 +85,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
   const technicalTracks = [
     { name: 'Programming 150', href: '/technical?track=programming-150', track: 'programming-150', icon: Code2, badge: '150' },
-    { name: 'Campus DSA Core', href: '/technical?track=campus-dsa', track: 'campus-dsa', icon: Layers, badge: 'Patterns' },
+    { name: 'Campus DSA Roadmap', href: '/technical?track=campus-dsa', track: 'campus-dsa', icon: Flame, badge: 'LeetCode' },
     { name: 'Technical MCQs', href: '/technical?track=mcqs', track: 'mcqs', icon: HelpCircle, badge: 'OA' },
   ];
 

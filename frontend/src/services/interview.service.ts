@@ -234,8 +234,48 @@ export const interviewService = {
     }
   },
 
-  // ─── QUESTIONS CRUD ───────────────────────────────────────────────────────
+  // ─── Direct Supabase Sync & LocalStorage Migration ────────────────────────
+  async syncPendingLocalStorageToSupabase(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('prepunite_imported_interview_questions');
+      if (stored) {
+        const raw = JSON.parse(stored);
+        if (Array.isArray(raw) && raw.length > 0) {
+          const payloads = raw.map(q => ({
+            id: q.id,
+            topic_id: q.topic_id || q.topicId || 'topic-dbms',
+            title: q.title?.trim() || '',
+            category: q.category || 'CORE_CS',
+            subject: q.subject || null,
+            subject_label: q.subject_label || q.subjectLabel || null,
+            answer: q.answer?.trim() || '',
+            bullet_points: Array.isArray(q.bullet_points) ? q.bullet_points : (Array.isArray(q.bulletPoints) ? q.bulletPoints : []),
+            code_snippet: q.code_snippet || q.codeSnippet || null,
+            pro_tip: q.pro_tip || q.proTip || '',
+            company_tags: Array.isArray(q.company_tags) ? q.company_tags : (Array.isArray(q.companyTags) ? q.companyTags : []),
+            frequency: q.frequency || 'MEDIUM',
+            difficulty: q.difficulty || 'MEDIUM',
+            is_hidden: !!q.is_hidden,
+            is_deleted: false,
+            sort_order: q.sort_order || 0,
+          }));
+          const { error } = await supabase.from('interview_questions').upsert(payloads, { onConflict: 'id' });
+          if (!error) {
+            localStorage.removeItem('prepunite_imported_interview_questions');
+          }
+        } else {
+          localStorage.removeItem('prepunite_imported_interview_questions');
+        }
+      }
+    } catch (e) {
+      console.warn('Interview local storage sync to Supabase note:', e);
+    }
+  },
+
+  // ─── QUESTIONS CRUD (Pure Supabase, matching Aptitude) ─────────────────────
   async getAllQuestions(): Promise<InterviewQuestion[]> {
+    await this.syncPendingLocalStorageToSupabase();
     const masteredSet = this.getMasteredQuestionIds();
 
     try {
@@ -246,19 +286,15 @@ export const interviewService = {
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
-      if (!error && data && data.length > 0) {
+      if (error) throw error;
+      if (data && data.length > 0) {
         return data.map(d => normalizeDbQuestion(d, masteredSet));
       }
     } catch (e) {
-      console.warn('Failed to query interview_questions from Supabase, falling back:', e);
+      console.error('Failed to query interview_questions from Supabase:', e);
     }
 
-    const imported = this.getImportedQuestions();
-    const all = [...INTERVIEW_QUESTIONS_SEED, ...imported];
-    return all.map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    return [];
   },
 
   async getQuestionsForTopic(topicId: string): Promise<InterviewQuestion[]> {
@@ -289,16 +325,16 @@ export const interviewService = {
     const id = q.id || `custom-int-${Date.now()}`;
     const payload = {
       id,
-      topic_id: q.topicId || q.topic_id || 'topic-dbms',
+      topic_id: q.topicId || (q as any).topic_id || 'topic-dbms',
       title: q.title.trim(),
       category: q.category || 'CORE_CS',
       subject: q.subject || null,
-      subject_label: q.subjectLabel || q.subject_label || null,
+      subject_label: q.subjectLabel || (q as any).subject_label || null,
       answer: q.answer.trim(),
-      bullet_points: Array.isArray(q.bulletPoints) ? q.bulletPoints : (Array.isArray(q.bullet_points) ? q.bullet_points : []),
-      code_snippet: q.codeSnippet || q.code_snippet || null,
-      pro_tip: q.proTip || q.pro_tip || '',
-      company_tags: Array.isArray(q.companyTags) ? q.companyTags : (Array.isArray(q.company_tags) ? q.company_tags : []),
+      bullet_points: Array.isArray(q.bulletPoints) ? q.bulletPoints : (Array.isArray((q as any).bullet_points) ? (q as any).bullet_points : []),
+      code_snippet: q.codeSnippet || (q as any).code_snippet || null,
+      pro_tip: q.proTip || (q as any).pro_tip || '',
+      company_tags: Array.isArray(q.companyTags) ? q.companyTags : (Array.isArray((q as any).company_tags) ? (q as any).company_tags : []),
       frequency: q.frequency || 'MEDIUM',
       difficulty: q.difficulty || 'MEDIUM',
       is_hidden: !!q.is_hidden,
@@ -314,13 +350,8 @@ export const interviewService = {
       if (error) throw error;
       return { success: true };
     } catch (err: any) {
-      console.warn('Supabase interview question upsert error, syncing to localStorage fallback:', err);
-      const existing = this.getImportedQuestions();
-      const updated = [payload as any, ...existing.filter(item => item.id !== id)];
-      try {
-        localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(updated));
-      } catch {}
-      return { success: true };
+      console.error('Supabase interview question upsert error:', err);
+      return { success: false, error: err.message || 'Failed to save question to Supabase' };
     }
   },
 
@@ -328,20 +359,15 @@ export const interviewService = {
     try {
       const { error } = await supabase
         .from('interview_questions')
-        .delete()
+        .update({ is_deleted: true })
         .eq('id', questionId);
 
       if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('Failed to delete interview question from Supabase:', e);
+      console.error('Failed to delete interview question from Supabase:', e);
+      return false;
     }
-
-    const existing = this.getImportedQuestions();
-    const filtered = existing.filter(q => q.id !== questionId);
-    try {
-      localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(filtered));
-    } catch {}
-    return true;
   },
 
   async bulkDeleteInterviewQuestions(questionIds: string[]): Promise<boolean> {
@@ -349,82 +375,74 @@ export const interviewService = {
     try {
       const { error } = await supabase
         .from('interview_questions')
-        .delete()
+        .update({ is_deleted: true })
         .in('id', questionIds);
 
       if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('Failed to bulk delete interview questions from Supabase:', e);
-    }
-
-    const existing = this.getImportedQuestions();
-    const idSet = new Set(questionIds);
-    const filtered = existing.filter(q => !idSet.has(q.id));
-    try {
-      localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify(filtered));
-    } catch {}
-    return true;
-  },
-
-  getImportedQuestions(): InterviewQuestion[] {
-    if (typeof window === 'undefined') return [];
-    try {
-      const stored = localStorage.getItem('prepunite_imported_interview_questions');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
+      console.error('Failed to bulk delete interview questions from Supabase:', e);
+      return false;
     }
   },
 
   async importInterviewQuestions(newQuestions: Partial<InterviewQuestion>[]): Promise<{ importedCount: number }> {
-    let count = 0;
+    if (!Array.isArray(newQuestions) || newQuestions.length === 0) {
+      return { importedCount: 0 };
+    }
+
+    const existingQuestions = await this.getAllQuestions();
+    const existingTitles = new Set(existingQuestions.map(q => q.title.trim().toLowerCase()));
+
     const dbPayloads: any[] = [];
-    const localPayloads: InterviewQuestion[] = [];
+    let maxSortOrder = existingQuestions.length > 0
+      ? Math.max(...existingQuestions.map(q => q.sort_order || 0))
+      : 0;
 
     newQuestions.forEach((q, idx) => {
-      if (!q.title || !q.answer) return;
+      if (!q || !q.title || !q.answer || !q.title.trim() || !q.answer.trim()) return;
+      const cleanTitle = q.title.trim();
+      const normTitle = cleanTitle.toLowerCase();
+
+      if (existingTitles.has(normTitle)) {
+        return;
+      }
+      existingTitles.add(normTitle);
+      maxSortOrder++;
+
       const id = q.id || `custom-int-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
-      const payload = {
+      dbPayloads.push({
         id,
-        topic_id: q.topicId || q.topic_id || 'topic-dbms',
-        title: q.title.trim(),
+        topic_id: q.topicId || (q as any).topic_id || 'topic-dbms',
+        title: cleanTitle,
         category: q.category || 'CORE_CS',
         subject: q.subject || null,
-        subject_label: q.subjectLabel || q.subject_label || null,
-        bullet_points: Array.isArray(q.bulletPoints) ? q.bulletPoints : (Array.isArray(q.bullet_points) ? q.bullet_points : []),
+        subject_label: q.subjectLabel || (q as any).subject_label || null,
+        bullet_points: Array.isArray(q.bulletPoints) ? q.bulletPoints : (Array.isArray((q as any).bullet_points) ? (q as any).bullet_points : []),
         answer: q.answer.trim(),
-        code_snippet: q.codeSnippet || q.code_snippet || null,
-        pro_tip: q.proTip || q.pro_tip || '',
-        company_tags: Array.isArray(q.companyTags) ? q.companyTags : (Array.isArray(q.company_tags) ? q.company_tags : []),
+        code_snippet: q.codeSnippet || (q as any).code_snippet || null,
+        pro_tip: q.proTip || (q as any).pro_tip || '',
+        company_tags: Array.isArray(q.companyTags) ? q.companyTags : (Array.isArray((q as any).company_tags) ? (q as any).company_tags : []),
         frequency: q.frequency || 'MEDIUM',
         difficulty: q.difficulty || 'MEDIUM',
         is_hidden: !!q.is_hidden,
         is_deleted: false,
-        sort_order: q.sort_order || 0,
-      };
-
-      dbPayloads.push(payload);
-      localPayloads.push(payload as any);
-      count++;
+        sort_order: q.sort_order || maxSortOrder,
+      });
     });
 
     if (dbPayloads.length > 0) {
-      try {
-        const { error } = await supabase
-          .from('interview_questions')
-          .upsert(dbPayloads, { onConflict: 'id' });
+      const { error } = await supabase
+        .from('interview_questions')
+        .upsert(dbPayloads, { onConflict: 'id' });
 
-        if (error) throw error;
-      } catch (err) {
-        console.warn('Batch Supabase interview import failed, caching locally:', err);
-        const existing = this.getImportedQuestions();
-        try {
-          localStorage.setItem('prepunite_imported_interview_questions', JSON.stringify([...existing, ...localPayloads]));
-        } catch {}
+      if (error) {
+        console.error('Supabase interview_questions upsert error:', error);
+        throw new Error(`Supabase database error: ${error.message || (error as any).details || error}`);
       }
     }
 
-    return { importedCount: count };
+    return { importedCount: dbPayloads.length };
   },
 
   // ─── LIVE TOPIC QUESTION COUNTS MAP ───────────────────────────────────────
@@ -446,13 +464,9 @@ export const interviewService = {
         });
         return countMap;
       }
-    } catch {}
-
-    INTERVIEW_QUESTIONS_SEED.forEach(q => {
-      if (q.category === category && q.topicId) {
-        countMap[q.topicId] = (countMap[q.topicId] || 0) + 1;
-      }
-    });
+    } catch (err) {
+      console.warn('Failed to calculate interview topic counts map:', err);
+    }
 
     return countMap;
   },

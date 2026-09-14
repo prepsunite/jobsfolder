@@ -140,3 +140,35 @@ export interface TechnicalMcqProgress {
   selectedOption?: number;
   timestamp?: number;
 }
+
+export type DsaDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
+export interface CampusDsaProblem {
+  id: string;
+  leetcodeNumber: number;
+  title: string;
+  slug: string;
+  leetcodeUrl: string;
+  difficulty: DsaDifficulty;
+  stageId: string;
+  stageTitle: string;
+  pattern: string;
+  companyTags: string[];
+  keyIntuition: string;
+  solved?: boolean;
+  order?: number;
+}
+
+export interface CampusDsaStage {
+  id: string;
+  stageNumber: number;
+  title: string;
+  cluster: string;
+  description: string;
+  iconName: string;
+  corePattern: string;
+  estimatedHours?: string;
+  problemCount?: number;
+  problems: CampusDsaProblem[];
+}
+

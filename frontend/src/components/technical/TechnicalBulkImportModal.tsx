@@ -304,17 +304,17 @@ export default function TechnicalBulkImportModal({
                 </div>
 
                 <div className="flex items-center gap-1.5 text-[11px] font-mono text-gray-500 dark:text-gray-400">
-                  {importReport.supabaseSynced ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  {importReport.supabaseSynced && importReport.success > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                       <CloudCheck className="w-3.5 h-3.5" />
-                      <span>Synced to Supabase</span>
+                      <span>Saved to Supabase</span>
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400">
+                  ) : importReport.invalid > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
                       <CloudOff className="w-3.5 h-3.5" />
-                      <span>Active in Local Cache</span>
+                      <span>Supabase Write Error</span>
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

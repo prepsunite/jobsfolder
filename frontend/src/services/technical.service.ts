@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
-import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack } from '@/types/technical';
+import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack, CampusDsaStage, CampusDsaProblem } from '@/types/technical';
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, PROGRAMMING_150_EXPANDED_SEED, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
+import { CAMPUS_DSA_ROADMAP_STAGES, ALL_CAMPUS_DSA_PROBLEMS } from './campusDsaRoadmapData';
 import { computeSha256Hex } from '@/utils/questionParser';
 
 export interface TechnicalImportReport {
@@ -13,7 +14,6 @@ export interface TechnicalImportReport {
 }
 
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
-const IMPORTED_PROBLEMS_KEY = 'prepunite_imported_programming_problems';
 const SOLVED_MCQS_KEY = 'prepunite_solved_technical_mcqs';
 
 const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem => ({
@@ -195,18 +195,76 @@ export const technicalService = {
     }
   },
 
-  // ─── Custom Imported Problems (LocalStorage Fallback / Cache) ─────────────
-  getImportedProblems(): ProgrammingProblem[] {
-    if (typeof window === 'undefined') return [];
+  // ─── Direct Supabase Sync & LocalStorage Migration ────────────────────────
+  async syncPendingLocalStorageToSupabase(): Promise<void> {
+    if (typeof window === 'undefined') return;
     try {
-      const stored = localStorage.getItem(IMPORTED_PROBLEMS_KEY);
-      if (!stored) return [];
-      const raw = JSON.parse(stored);
-      if (!Array.isArray(raw)) return [];
-      const solvedSet = this.getSolvedProblemIds();
-      return raw.map(item => normalizeDbProblem(item, solvedSet));
-    } catch {
-      return [];
+      const stored = localStorage.getItem('prepunite_imported_programming_problems');
+      if (stored) {
+        const raw = JSON.parse(stored);
+        if (Array.isArray(raw) && raw.length > 0) {
+          const payloads = raw.map(p => ({
+            id: p.id,
+            topic_id: p.topicId || p.topic_id || 'syntax-operators',
+            track: p.track || 'PROGRAMMING_150',
+            title: p.title,
+            slug: p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+            level: p.level || 'MEDIUM',
+            category: p.category || 'SYNTAX_BASICS',
+            category_label: p.categoryLabel || p.category_label || 'General Programming',
+            description: p.description || '',
+            constraints: Array.isArray(p.constraints) ? p.constraints : [],
+            test_cases: p.testCases || p.test_cases || [],
+            sample_input: p.sampleInput || p.sample_input || '',
+            sample_output: p.sampleOutput || p.sample_output || '',
+            explanation: p.explanation || '',
+            solutions: p.solutions || {},
+            time_complexity: p.timeComplexity || p.time_complexity || 'O(N)',
+            space_complexity: p.spaceComplexity || p.space_complexity || 'O(1)',
+            hints: Array.isArray(p.hints) ? p.hints : [],
+            company_tags: [],
+            is_hidden: !!p.is_hidden,
+            is_deleted: false,
+            sort_order: p.sort_order || 0,
+          }));
+          const { error } = await supabase.from('technical_problems').upsert(payloads, { onConflict: 'id' });
+          if (!error) {
+            localStorage.removeItem('prepunite_imported_programming_problems');
+          }
+        } else {
+          localStorage.removeItem('prepunite_imported_programming_problems');
+        }
+      }
+
+      const storedMcqs = localStorage.getItem('prepunite_imported_technical_mcqs');
+      if (storedMcqs) {
+        const rawMcqs = JSON.parse(storedMcqs);
+        if (Array.isArray(rawMcqs) && rawMcqs.length > 0) {
+          const payloads = rawMcqs.map(m => ({
+            id: m.id,
+            topic_id: m.topicId || m.topic_id,
+            category: m.category || 'C_PROGRAMMING',
+            category_label: m.categoryLabel || m.category_label || 'C Programming',
+            question: m.question,
+            options: m.options,
+            correct_option_index: m.correctOptionIndex ?? m.correct_option_index ?? 0,
+            explanation: m.explanation || '',
+            difficulty: m.difficulty || 'MEDIUM',
+            company_tags: [],
+            is_hidden: !!m.is_hidden,
+            is_deleted: false,
+            sort_order: m.sort_order || 0,
+          }));
+          const { error } = await supabase.from('technical_mcqs').upsert(payloads, { onConflict: 'id' });
+          if (!error) {
+            localStorage.removeItem('prepunite_imported_technical_mcqs');
+          }
+        } else {
+          localStorage.removeItem('prepunite_imported_technical_mcqs');
+        }
+      }
+    } catch (e) {
+      console.warn('Local storage sync to Supabase note:', e);
     }
   },
 
@@ -221,9 +279,9 @@ export const technicalService = {
           .order('sort_order', { ascending: true });
 
         if (!error && data && data.length > 0) {
-          const hasStages = data.some((d: any) => d.id?.startsWith('stage-'));
-          if (hasStages) {
-            return data.map((d: any) => {
+          const stageRows = data.filter((d: any) => d.id?.startsWith('stage-'));
+          if (stageRows.length > 0) {
+            return stageRows.map((d: any) => {
               const staticStage = PROGRAMMING_150_STAGES.find(s => s.id === d.id);
               return {
                 id: d.id,
@@ -382,11 +440,11 @@ export const technicalService = {
     }
   },
 
-  // ─── PROGRAMMING PROBLEMS CRUD ──────────────────────────────────────────
+  // ─── PROGRAMMING PROBLEMS CRUD (Pure Supabase, matching Aptitude) ─────────
   async getProgramming150Problems(): Promise<ProgrammingProblem[]> {
+    await this.syncPendingLocalStorageToSupabase();
     const solvedSet = this.getSolvedProblemIds();
 
-    let dbProblems: ProgrammingProblem[] = [];
     try {
       const { data, error } = await supabase
         .from('technical_problems')
@@ -396,42 +454,20 @@ export const technicalService = {
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
-      if (!error && data && data.length > 0) {
-        dbProblems = data.map(d => normalizeDbProblem(d, solvedSet));
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data.map(d => normalizeDbProblem(d, solvedSet));
       }
     } catch (e) {
-      console.warn('Failed to query technical_problems from Supabase:', e);
+      console.error('Failed to query technical_problems from Supabase:', e);
     }
 
-    // Unify Supabase problems + Local Imported problems + Seed problems
-    const imported = this.getImportedProblems().filter(p => (p.track || 'PROGRAMMING_150') === 'PROGRAMMING_150');
-    const allCandidates = [...dbProblems, ...imported, ...PROGRAMMING_150_EXPANDED_SEED];
-
-    const seenIds = new Set<string>();
-    const seenTitles = new Set<string>();
-    const unified: ProgrammingProblem[] = [];
-
-    for (const p of allCandidates) {
-      if (!p || !p.title || p.is_deleted) continue;
-      const normalizedTitle = p.title.trim().toLowerCase();
-      if (seenIds.has(p.id) || seenTitles.has(normalizedTitle)) continue;
-
-      seenIds.add(p.id);
-      seenTitles.add(normalizedTitle);
-      unified.push({
-        ...p,
-        solved: solvedSet.has(p.id),
-      });
-    }
-
-    unified.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    return unified;
+    return [];
   },
 
   async getCampusDsaProblems(): Promise<ProgrammingProblem[]> {
     const solvedSet = this.getSolvedProblemIds();
 
-    let dbProblems: ProgrammingProblem[] = [];
     try {
       const { data, error } = await supabase
         .from('technical_problems')
@@ -441,36 +477,15 @@ export const technicalService = {
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
-      if (!error && data && data.length > 0) {
-        dbProblems = data.map(d => normalizeDbProblem(d, solvedSet));
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data.map(d => normalizeDbProblem(d, solvedSet));
       }
     } catch (e) {
-      console.warn('Failed to query Campus DSA problems from Supabase:', e);
+      console.error('Failed to query Campus DSA problems from Supabase:', e);
     }
 
-    // Unify Supabase + Local Imported + Seed
-    const imported = this.getImportedProblems().filter(p => p.track === 'CAMPUS_DSA');
-    const allCandidates = [...dbProblems, ...imported, ...CAMPUS_DSA_SEED];
-
-    const seenIds = new Set<string>();
-    const seenTitles = new Set<string>();
-    const unified: ProgrammingProblem[] = [];
-
-    for (const p of allCandidates) {
-      if (!p || !p.title || p.is_deleted) continue;
-      const normalizedTitle = p.title.trim().toLowerCase();
-      if (seenIds.has(p.id) || seenTitles.has(normalizedTitle)) continue;
-
-      seenIds.add(p.id);
-      seenTitles.add(normalizedTitle);
-      unified.push({
-        ...p,
-        solved: solvedSet.has(p.id),
-      });
-    }
-
-    unified.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    return unified;
+    return [];
   },
 
   async getProblemsByTopic(topicId: string): Promise<ProgrammingProblem[]> {
@@ -506,20 +521,11 @@ export const technicalService = {
       time_complexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
       space_complexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
       hints: Array.isArray(p.hints) ? p.hints : [],
-      company_tags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : ['Campus Placement']),
+      company_tags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : []),
       is_hidden: !!p.is_hidden,
       is_deleted: false,
       sort_order: p.sort_order || 0,
     };
-
-    // Update localStorage first (instant local persistence)
-    const existing = this.getImportedProblems();
-    const normalized = normalizeDbProblem(payload, this.getSolvedProblemIds());
-    const updated = [normalized, ...existing.filter(item => item.id !== id)];
-    try {
-      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(updated));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch {}
 
     try {
       const { error } = await supabase
@@ -529,8 +535,8 @@ export const technicalService = {
       if (error) throw error;
       return { success: true };
     } catch (err: any) {
-      console.warn('Supabase problem upsert error, synced locally:', err);
-      return { success: true };
+      console.error('Supabase problem upsert error:', err);
+      return { success: false, error: err.message || 'Failed to save to Supabase' };
     }
   },
 
@@ -538,21 +544,15 @@ export const technicalService = {
     try {
       const { error } = await supabase
         .from('technical_problems')
-        .delete()
+        .update({ is_deleted: true })
         .eq('id', problemId);
 
       if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('Failed to delete problem from Supabase:', e);
+      console.error('Failed to delete problem from Supabase:', e);
+      return false;
     }
-
-    const existing = this.getImportedProblems();
-    const filtered = existing.filter(p => p.id !== problemId);
-    try {
-      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(filtered));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch {}
-    return true;
   },
 
   async bulkDeleteProgrammingProblems(problemIds: string[]): Promise<boolean> {
@@ -560,22 +560,15 @@ export const technicalService = {
     try {
       const { error } = await supabase
         .from('technical_problems')
-        .delete()
+        .update({ is_deleted: true })
         .in('id', problemIds);
 
       if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('Failed to bulk delete problems from Supabase:', e);
+      console.error('Failed to bulk delete problems from Supabase:', e);
+      return false;
     }
-
-    const existing = this.getImportedProblems();
-    const idSet = new Set(problemIds);
-    const filtered = existing.filter(p => !idSet.has(p.id));
-    try {
-      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(filtered));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch {}
-    return true;
   },
 
   async importProgrammingProblems(
@@ -588,7 +581,7 @@ export const technicalService = {
       duplicates: 0,
       invalid: 0,
       errors: [],
-      supabaseSynced: false,
+      supabaseSynced: true,
     };
 
     if (!Array.isArray(newProblems) || newProblems.length === 0) {
@@ -597,7 +590,7 @@ export const technicalService = {
       return report;
     }
 
-    // 1. Fetch current problems for duplicate detection
+    // 1. Fetch current problems from Supabase for duplicate detection
     const existingProblems = track === 'CAMPUS_DSA'
       ? await this.getCampusDsaProblems()
       : await this.getProgramming150Problems();
@@ -607,15 +600,10 @@ export const technicalService = {
       existingProblems.map(p => computeSha256Hex(`${p.title.trim()}:${p.description?.trim() || ''}`))
     );
 
-    const validNewProblems: ProgrammingProblem[] = [];
     const dbPayloads: any[] = [];
-    const solvedSet = this.getSolvedProblemIds();
-
     let maxSortOrder = existingProblems.length > 0
       ? Math.max(...existingProblems.map(p => p.sort_order || 0))
       : 0;
-
-    const storedImported = this.getImportedProblems();
 
     newProblems.forEach((p, idx) => {
       const itemIndex = idx + 1;
@@ -629,6 +617,21 @@ export const technicalService = {
       const normTitle = cleanTitle.toLowerCase();
       const resolvedDescription = p.description || (p as any).problemStatement || (p as any).statement || (p as any).problem_statement || '';
       const fingerprint = computeSha256Hex(`${cleanTitle}:${resolvedDescription.trim()}`);
+
+      // Deduplication Check matching Aptitude
+      if (existingTitles.has(normTitle) || existingFingerprints.has(fingerprint)) {
+        report.duplicates++;
+        report.errors.push({
+          itemIndex,
+          title: cleanTitle,
+          reason: 'Duplicate problem (already exists in track syllabus)',
+        });
+        return;
+      }
+
+      existingTitles.add(normTitle);
+      existingFingerprints.add(fingerprint);
+      maxSortOrder++;
 
       const resolvedTopicId = p.topicId || (p as any).topic_id || 'syntax-operators';
       const resolvedLevel = ((p.level || (p as any).difficulty || 'MEDIUM') as string).toUpperCase() as ProblemLevel;
@@ -662,102 +665,35 @@ export const technicalService = {
         resolvedCategoryLabel = 'Number Logic & Math';
       }
 
-      const buildNormalized = (probId: string): ProgrammingProblem => ({
-        id: probId,
+      const newId = p.id || `custom-${track.toLowerCase()}-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
+
+      dbPayloads.push({
+        id: newId,
+        topic_id: resolvedTopicId,
         track,
-        topicId: resolvedTopicId,
         title: cleanTitle,
         slug: p.slug || cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         level: resolvedLevel,
         category: resolvedCategory,
-        categoryLabel: resolvedCategoryLabel,
+        category_label: resolvedCategoryLabel,
         description: resolvedDescription,
         constraints: resolvedConstraints,
-        testCases,
-        sampleInput: testCases[0]?.input || p.sampleInput || (p as any).sample_input || '',
-        sampleOutput: testCases[0]?.output || p.sampleOutput || (p as any).sample_output || '',
+        test_cases: testCases,
+        sample_input: testCases[0]?.input || p.sampleInput || (p as any).sample_input || '',
+        sample_output: testCases[0]?.output || p.sampleOutput || (p as any).sample_output || '',
         explanation: p.explanation || '',
         solutions: resolvedSolutions,
-        timeComplexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
-        spaceComplexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
+        time_complexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
+        space_complexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
         hints: Array.isArray(p.hints) ? p.hints : (typeof p.hints === 'string' ? [p.hints] : []),
-        companyTags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : []),
+        company_tags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : []),
         is_hidden: !!p.is_hidden,
         is_deleted: false,
         sort_order: p.sort_order || maxSortOrder,
-        solved: solvedSet.has(probId),
       });
-
-      const buildDbPayload = (norm: ProgrammingProblem) => ({
-        id: norm.id,
-        topic_id: norm.topicId,
-        track: norm.track,
-        title: norm.title,
-        slug: norm.slug,
-        level: norm.level,
-        category: norm.category,
-        category_label: norm.categoryLabel,
-        description: norm.description,
-        constraints: norm.constraints,
-        test_cases: norm.testCases,
-        sample_input: norm.sampleInput,
-        sample_output: norm.sampleOutput,
-        explanation: norm.explanation,
-        solutions: norm.solutions,
-        time_complexity: norm.timeComplexity,
-        space_complexity: norm.spaceComplexity,
-        hints: norm.hints,
-        company_tags: norm.companyTags,
-        is_hidden: norm.is_hidden,
-        is_deleted: false,
-        sort_order: norm.sort_order,
-      });
-
-      // Check if problem already exists in local imported cache (Update in-place)
-      const existingImportedIdx = storedImported.findIndex(
-        item => item.title.trim().toLowerCase() === normTitle
-      );
-      if (existingImportedIdx !== -1) {
-        const existingId = storedImported[existingImportedIdx].id;
-        const updated = buildNormalized(existingId);
-        storedImported[existingImportedIdx] = updated;
-        dbPayloads.push(buildDbPayload(updated));
-        report.success++;
-        return;
-      }
-
-      // Fast Deduplication Check matching Aptitude
-      if (existingTitles.has(normTitle) || existingFingerprints.has(fingerprint)) {
-        report.duplicates++;
-        report.errors.push({
-          itemIndex,
-          title: cleanTitle,
-          reason: 'Duplicate problem (already exists in track syllabus)',
-        });
-        return;
-      }
-
-      existingTitles.add(normTitle);
-      existingFingerprints.add(fingerprint);
-      maxSortOrder++;
-
-      const newId = p.id || `custom-${track.toLowerCase()}-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
-      const normalized = buildNormalized(newId);
-      validNewProblems.push(normalized);
-      dbPayloads.push(buildDbPayload(normalized));
-      report.success++;
     });
 
-    // 2. Persist to localStorage immediately (guarantees instantaneous reactive UI display)
-    try {
-      const mergedStorage = [...storedImported, ...validNewProblems];
-      localStorage.setItem(IMPORTED_PROBLEMS_KEY, JSON.stringify(mergedStorage));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch (storageErr) {
-      console.warn('LocalStorage save error:', storageErr);
-    }
-
-    // 3. Sync to Supabase in parallel
+    // 2. Insert/Upsert DIRECTLY to Supabase (pure Supabase single source of truth, matching Aptitude)
     if (dbPayloads.length > 0) {
       try {
         const { error } = await supabase
@@ -765,37 +701,36 @@ export const technicalService = {
           .upsert(dbPayloads, { onConflict: 'id' });
 
         if (error) {
-          console.warn('Supabase technical_problems upsert notice:', error.message || error);
+          console.error('Supabase technical_problems upsert error:', error);
+          report.invalid += dbPayloads.length;
+          report.errors.push({
+            itemIndex: 1,
+            reason: `Supabase database error: ${error.message || error.details || error}`,
+          });
           report.supabaseSynced = false;
-        } else {
-          report.supabaseSynced = true;
+          return report;
         }
-      } catch (syncErr) {
-        console.warn('Supabase technical_problems sync notice:', syncErr);
+
+        report.success = dbPayloads.length;
+        report.importedCount = report.success;
+        report.supabaseSynced = true;
+      } catch (syncErr: any) {
+        console.error('Supabase technical_problems sync exception:', syncErr);
+        report.invalid += dbPayloads.length;
+        report.errors.push({
+          itemIndex: 1,
+          reason: `Supabase sync failure: ${syncErr.message || syncErr}`,
+        });
         report.supabaseSynced = false;
+        return report;
       }
     }
 
-    report.importedCount = report.success;
     return report;
   },
 
-  // ─── TECHNICAL MCQS CRUD ──────────────────────────────────────────────────
-  getImportedMcqs(): TechnicalMcq[] {
-    if (typeof window === 'undefined') return [];
-    try {
-      const stored = localStorage.getItem('prepunite_imported_technical_mcqs');
-      if (!stored) return [];
-      const raw = JSON.parse(stored);
-      if (!Array.isArray(raw)) return [];
-      return raw.map(item => normalizeDbMcq(item));
-    } catch {
-      return [];
-    }
-  },
-
+  // ─── TECHNICAL MCQS CRUD (Pure Supabase, matching Aptitude) ───────────────
   async getTechnicalMcqs(topicId?: string): Promise<TechnicalMcq[]> {
-    let dbMcqs: TechnicalMcq[] = [];
     try {
       let query = supabase
         .from('technical_mcqs')
@@ -809,36 +744,15 @@ export const technicalService = {
       }
 
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
-        dbMcqs = data.map(normalizeDbMcq);
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data.map(normalizeDbMcq);
       }
     } catch (e) {
-      console.warn('Failed to query technical_mcqs from Supabase:', e);
+      console.error('Failed to query technical_mcqs from Supabase:', e);
     }
 
-    // Unify Supabase MCQs + Local Imported MCQs + Seed MCQs
-    const imported = this.getImportedMcqs();
-    const allCandidates = [...dbMcqs, ...imported, ...TECHNICAL_MCQS_SEED];
-
-    const seenIds = new Set<string>();
-    const seenQuestions = new Set<string>();
-    const unified: TechnicalMcq[] = [];
-
-    for (const m of allCandidates) {
-      if (!m || !m.question || m.is_deleted) continue;
-      const normQ = m.question.trim().toLowerCase();
-      if (seenIds.has(m.id) || seenQuestions.has(normQ)) continue;
-
-      seenIds.add(m.id);
-      seenQuestions.add(normQ);
-      unified.push(m);
-    }
-
-    unified.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    if (topicId) {
-      return unified.filter(m => m.topicId === topicId);
-    }
-    return unified;
+    return [];
   },
 
   async saveTechnicalMcq(m: Partial<TechnicalMcq>): Promise<{ success: boolean; error?: string }> {
@@ -864,15 +778,6 @@ export const technicalService = {
       sort_order: m.sort_order || 0,
     };
 
-    // Update localStorage immediately
-    const existing = this.getImportedMcqs();
-    const normalized = normalizeDbMcq(payload);
-    const updated = [normalized, ...existing.filter(item => item.id !== id)];
-    try {
-      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(updated));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch {}
-
     try {
       const { error } = await supabase
         .from('technical_mcqs')
@@ -881,8 +786,8 @@ export const technicalService = {
       if (error) throw error;
       return { success: true };
     } catch (err: any) {
-      console.warn('Supabase MCQ upsert error, synced locally:', err);
-      return { success: true };
+      console.error('Supabase MCQ upsert error:', err);
+      return { success: false, error: err.message || 'Failed to save MCQ to Supabase' };
     }
   },
 
@@ -890,21 +795,15 @@ export const technicalService = {
     try {
       const { error } = await supabase
         .from('technical_mcqs')
-        .delete()
+        .update({ is_deleted: true })
         .eq('id', mcqId);
 
       if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('Failed to delete technical MCQ from Supabase:', e);
+      console.error('Failed to delete technical MCQ from Supabase:', e);
+      return false;
     }
-
-    const existing = this.getImportedMcqs();
-    const filtered = existing.filter(m => m.id !== mcqId);
-    try {
-      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(filtered));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch {}
-    return true;
   },
 
   async bulkDeleteTechnicalMcqs(mcqIds: string[]): Promise<boolean> {
@@ -912,22 +811,15 @@ export const technicalService = {
     try {
       const { error } = await supabase
         .from('technical_mcqs')
-        .delete()
+        .update({ is_deleted: true })
         .in('id', mcqIds);
 
       if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('Failed to bulk delete MCQs from Supabase:', e);
+      console.error('Failed to bulk delete MCQs from Supabase:', e);
+      return false;
     }
-
-    const existing = this.getImportedMcqs();
-    const idSet = new Set(mcqIds);
-    const filtered = existing.filter(m => !idSet.has(m.id));
-    try {
-      localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(filtered));
-      window.dispatchEvent(new Event('prepunite-storage-update'));
-    } catch {}
-    return true;
   },
 
   async importTechnicalMcqs(newMcqs: Partial<TechnicalMcq>[]): Promise<TechnicalImportReport> {
@@ -937,7 +829,7 @@ export const technicalService = {
       duplicates: 0,
       invalid: 0,
       errors: [],
-      supabaseSynced: false,
+      supabaseSynced: true,
     };
 
     if (!Array.isArray(newMcqs) || newMcqs.length === 0) {
@@ -950,9 +842,7 @@ export const technicalService = {
     const existingMcqs = await this.getTechnicalMcqs();
     const existingQuestions = new Set(existingMcqs.map(m => m.question.trim().toLowerCase()));
 
-    const validNewMcqs: TechnicalMcq[] = [];
     const dbPayloads: any[] = [];
-
     let maxSortOrder = existingMcqs.length > 0
       ? Math.max(...existingMcqs.map(m => m.sort_order || 0))
       : 0;
@@ -982,55 +872,23 @@ export const technicalService = {
       maxSortOrder++;
 
       const id = m.id || `custom-mcq-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
-      const normalized: TechnicalMcq = {
+      dbPayloads.push({
         id,
-        topic: m.topic || (m as any).topic_name || 'General',
-        topicCategory: m.topicCategory || (m as any).topic_category || 'C_PROGRAMMING',
-        topicId: m.topicId || (m as any).topic_id || 'mcq-c-programming',
+        topic_id: m.topicId || (m as any).topic_id || 'mcq-c-programming',
+        topic_name: m.topic || (m as any).topic_name || 'General',
+        topic_category: m.topicCategory || (m as any).topic_category || 'C_PROGRAMMING',
         question: cleanQ,
-        codeSnippet: m.codeSnippet || (m as any).code_snippet || null,
+        code_snippet: m.codeSnippet || (m as any).code_snippet || null,
         options: Array.isArray(m.options) ? m.options : ['A', 'B', 'C', 'D'],
-        correctOptionIndex: typeof m.correctOptionIndex === 'number' ? m.correctOptionIndex : ((m as any).correct_option_index ?? 0),
+        correct_option_index: typeof m.correctOptionIndex === 'number' ? m.correctOptionIndex : ((m as any).correct_option_index ?? 0),
         explanation: m.explanation || '',
-        companyTags: Array.isArray(m.companyTags) ? m.companyTags : (Array.isArray((m as any).company_tags) ? (m as any).company_tags : []),
+        company_tags: Array.isArray(m.companyTags) ? m.companyTags : (Array.isArray((m as any).company_tags) ? (m as any).company_tags : []),
         difficulty: m.difficulty || 'MEDIUM',
         is_hidden: !!m.is_hidden,
         is_deleted: false,
         sort_order: m.sort_order || maxSortOrder,
-      };
-
-      const dbPayload = {
-        id: normalized.id,
-        topic_id: normalized.topicId,
-        topic_name: normalized.topic,
-        topic_category: normalized.topicCategory,
-        question: normalized.question,
-        code_snippet: normalized.codeSnippet,
-        options: normalized.options,
-        correct_option_index: normalized.correctOptionIndex,
-        explanation: normalized.explanation,
-        company_tags: normalized.companyTags,
-        difficulty: normalized.difficulty,
-        is_hidden: normalized.is_hidden,
-        is_deleted: false,
-        sort_order: normalized.sort_order,
-      };
-
-      validNewMcqs.push(normalized);
-      dbPayloads.push(dbPayload);
-      report.success++;
+      });
     });
-
-    if (validNewMcqs.length > 0) {
-      try {
-        const stored = this.getImportedMcqs();
-        const combined = [...stored, ...validNewMcqs];
-        localStorage.setItem('prepunite_imported_technical_mcqs', JSON.stringify(combined));
-        window.dispatchEvent(new Event('prepunite-storage-update'));
-      } catch (storageErr) {
-        console.warn('LocalStorage MCQ save error:', storageErr);
-      }
-    }
 
     if (dbPayloads.length > 0) {
       try {
@@ -1039,18 +897,31 @@ export const technicalService = {
           .upsert(dbPayloads, { onConflict: 'id' });
 
         if (error) {
-          console.warn('Supabase technical_mcqs upsert notice:', error.message || error);
+          console.error('Supabase technical_mcqs upsert error:', error);
+          report.invalid += dbPayloads.length;
+          report.errors.push({
+            itemIndex: 1,
+            reason: `Supabase database error: ${error.message || error.details || error}`,
+          });
           report.supabaseSynced = false;
-        } else {
-          report.supabaseSynced = true;
+          return report;
         }
-      } catch (syncErr) {
-        console.warn('Supabase technical_mcqs sync notice:', syncErr);
+
+        report.success = dbPayloads.length;
+        report.importedCount = report.success;
+        report.supabaseSynced = true;
+      } catch (syncErr: any) {
+        console.error('Supabase technical_mcqs sync exception:', syncErr);
+        report.invalid += dbPayloads.length;
+        report.errors.push({
+          itemIndex: 1,
+          reason: `Supabase sync failure: ${syncErr.message || syncErr}`,
+        });
         report.supabaseSynced = false;
+        return report;
       }
     }
 
-    report.importedCount = report.success;
     return report;
   },
 
@@ -1090,20 +961,60 @@ export const technicalService = {
     return countMap;
   },
 
+  getCampusDsaRoadmap(): CampusDsaStage[] {
+    const solvedSet = this.getSolvedProblemIds();
+    return CAMPUS_DSA_ROADMAP_STAGES.map(stage => ({
+      ...stage,
+      problemCount: stage.problems.length,
+      problems: stage.problems.map(p => ({
+        ...p,
+        solved: solvedSet.has(p.id),
+      })),
+    }));
+  },
+
+  getCampusDsaStats() {
+    const solvedSet = this.getSolvedProblemIds();
+    const allProblems = ALL_CAMPUS_DSA_PROBLEMS;
+    const total = allProblems.length;
+    let solved = 0;
+    const byDifficulty: Record<string, { total: number; solved: number }> = {
+      EASY: { total: 0, solved: 0 },
+      MEDIUM: { total: 0, solved: 0 },
+      HARD: { total: 0, solved: 0 },
+    };
+
+    allProblems.forEach(p => {
+      const isSolved = solvedSet.has(p.id);
+      if (isSolved) solved++;
+      if (byDifficulty[p.difficulty]) {
+        byDifficulty[p.difficulty].total++;
+        if (isSolved) byDifficulty[p.difficulty].solved++;
+      }
+    });
+
+    return {
+      total,
+      solved,
+      percentage: total > 0 ? Math.round((solved / total) * 100) : 0,
+      byDifficulty,
+    };
+  },
+
   async getStats() {
     const p150 = await this.getProgramming150Problems();
-    const dsa = await this.getCampusDsaProblems();
+    const dsaStats = this.getCampusDsaStats();
     const mcqs = await this.getTechnicalMcqs();
     const mcqProgress = this.getMcqProgress();
     const mcqSolved = Object.values(mcqProgress).filter(p => p.solved).length;
     const p150Solved = p150.filter(p => p.solved).length;
-    const dsaSolved = dsa.filter(p => p.solved).length;
-    const totalCoding = p150.length + dsa.length;
+    const dsaSolved = dsaStats.solved;
+    const totalCoding = p150.length + dsaStats.total;
     const totalSolved = p150Solved + dsaSolved;
     return {
       p150Total: p150.length,
       p150Solved,
-      dsaTotal: dsa.length,
+      dsaTotal: dsaStats.total,
       dsaSolved,
       mcqTotal: mcqs.length,
       mcqSolved,

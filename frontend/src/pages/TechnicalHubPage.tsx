@@ -46,6 +46,7 @@ import {
   Edit2,
   Trash2,
   Upload,
+  Flame,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
@@ -53,6 +54,7 @@ import { STAGE_SUBTOPIC_TO_STAGE_MAP } from '@/services/programmingTopicsData';
 import audioEffects from '@/utils/audioEffects';
 import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImportModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
+import CampusDsaRoadmapView from '@/components/technical/CampusDsaRoadmapView';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
@@ -806,10 +808,54 @@ export default function TechnicalHubPage() {
 
   return (
     <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
-      {/* ────────────────────────────────────────────────────────────────────────
-          TOPIC QUESTIONS VIEW (When a Topic is Selected in Any Track)
-      ──────────────────────────────────────────────────────────────────────── */}
-      {activeTopic ? (
+      {/* 🧭 Top Track Navigation Switcher */}
+      <div className="flex items-center gap-1.5 p-1 bg-[#F1F3F5] dark:bg-[#141414] rounded-xl border border-[#E9ECEF] dark:border-[#242424] max-w-fit">
+        <button
+          type="button"
+          onClick={() => handleTrackChange('PROGRAMMING_150')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTrack === 'PROGRAMMING_150'
+              ? 'bg-white dark:bg-[#202020] text-[#121417] dark:text-white shadow-xs'
+              : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+          }`}
+        >
+          <Code2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+          <span>Programming 150</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTrackChange('CAMPUS_DSA')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTrack === 'CAMPUS_DSA'
+              ? 'bg-white dark:bg-[#202020] text-[#121417] dark:text-white shadow-xs'
+              : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+          }`}
+        >
+          <Flame className="w-3.5 h-3.5 text-[#FFA116]" />
+          <span>Campus DSA Roadmap</span>
+          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FFA116]/10 text-[#FFA116] border border-[#FFA116]/20">
+            LeetCode
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTrackChange('TECHNICAL_MCQS')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTrack === 'TECHNICAL_MCQS'
+              ? 'bg-white dark:bg-[#202020] text-[#121417] dark:text-white shadow-xs'
+              : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5 text-purple-500" />
+          <span>Technical MCQs</span>
+        </button>
+      </div>
+
+      {activeTrack === 'CAMPUS_DSA' ? (
+        <CampusDsaRoadmapView />
+      ) : activeTopic ? (
         <div className="space-y-6 animate-fadeIn">
           {/* 1. Breadcrumb & Navigation */}
           <div className="flex items-center justify-between">
@@ -1804,14 +1850,11 @@ export default function TechnicalHubPage() {
                 </div>
                 <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
                   {activeTrack === 'PROGRAMMING_150' && 'Programming 150'}
-                  {activeTrack === 'CAMPUS_DSA' && 'Campus DSA Core (Top 100 Patterns)'}
                   {activeTrack === 'TECHNICAL_MCQS' && 'Technical MCQs & Practice'}
                 </h1>
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-sans mt-0.5">
                   {activeTrack === 'PROGRAMMING_150' &&
                     'Structured 15-topic syllabus across 6 progressive stages building syntax foundations, loop mechanics, number logic, patterns, arrays, strings, and recursion.'}
-                  {activeTrack === 'CAMPUS_DSA' &&
-                    'Curated 15 repeatable campus placement patterns frequently tested in Amazon, TCS Prime, and Infosys SP.'}
                   {activeTrack === 'TECHNICAL_MCQS' &&
                     'Subject-wise campus placement MCQs across C, C++, C#, Java, Database, Networks, OS, and Data Structures.'}
                 </p>
@@ -1974,8 +2017,6 @@ export default function TechnicalHubPage() {
                   placeholder={
                     activeTrack === 'PROGRAMMING_150'
                       ? 'Search stages or topics...'
-                      : activeTrack === 'CAMPUS_DSA'
-                      ? 'Search patterns...'
                       : 'Search MCQ topics...'
                   }
                   value={searchQuery}
@@ -2039,8 +2080,6 @@ export default function TechnicalHubPage() {
                     setSelectedStage(
                       activeTrack === 'PROGRAMMING_150'
                         ? stages[0] || 'Stage 1: Language & Control Flow'
-                        : activeTrack === 'CAMPUS_DSA'
-                        ? 'All Patterns'
                         : 'All Topics'
                     );
                     setSearchQuery('');
@@ -2061,10 +2100,6 @@ export default function TechnicalHubPage() {
                   const topicMcqs = mcqs.filter(m => m.topicId === topic.id);
                   solvedCount = topicMcqs.filter(m => mcqProgress[m.id]?.solved).length;
                   countText = `${liveCount > 0 ? liveCount : topicMcqs.length} MCQs`;
-                } else if (activeTrack === 'CAMPUS_DSA') {
-                  const topicProblems = dsaProblems.filter(p => p.topicId === topic.id);
-                  solvedCount = topicProblems.filter(p => p.solved).length;
-                  countText = `${liveCount > 0 ? liveCount : topicProblems.length} Problems`;
                 } else {
                   // PROGRAMMING_150: match topic.id or subtopicIds
                   const topicProblems = p150Problems.filter(p => 
