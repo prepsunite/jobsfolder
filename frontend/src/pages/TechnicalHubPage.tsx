@@ -977,77 +977,93 @@ export default function TechnicalHubPage() {
           {activeTrack === 'TECHNICAL_MCQS' ? (
             <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
               <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-                  {/* Difficulty Filter */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                      Difficulty:
-                    </span>
-                    <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                      {[
-                        { id: 'ALL', label: 'All Levels' },
-                        { id: 'BASIC', label: 'Basic' },
-                        { id: 'MEDIUM', label: 'Medium' },
-                        { id: 'HARD', label: 'Hard' },
-                      ].map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setSelectedLevel(item.id)}
-                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                            selectedLevel === item.id
-                              ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Status Filter */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                      Status:
-                    </span>
-                    <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                      {[
-                        { id: 'ALL', label: 'All' },
-                        { id: 'UNSOLVED', label: 'Unsolved' },
-                        { id: 'SOLVED', label: `Solved (${activeTopicSolvedCount})` },
-                        { id: 'RETRY', label: 'Needs Retry' },
-                      ].map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setSelectedStatus(item.id as any)}
-                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                            selectedStatus === item.id
-                              ? 'bg-[#FD4A32] text-white shadow-xs'
-                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
+                {/* Left: Difficulty Filter */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                    Difficulty:
+                  </span>
+                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                    {[
+                      { id: 'ALL', label: 'All Levels' },
+                      { id: 'BASIC', label: 'Basic' },
+                      { id: 'MEDIUM', label: 'Medium' },
+                      { id: 'HARD', label: 'Hard' },
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedLevel(item.id)}
+                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                          selectedLevel === item.id
+                            ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Sound FX Toggle */}
-                <button
-                  type="button"
-                  onClick={handleToggleSound}
-                  className={`p-1.5 rounded-md border text-xs transition-all cursor-pointer ${
-                    isMuted
-                      ? 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96]'
-                      : 'bg-[#FD4A32]/10 border-[#FD4A32]/30 text-[#FD4A32]'
-                  }`}
-                  title={isMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
-                >
-                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                </button>
+                {/* Middle: Integrated Pagination */}
+                {totalPages > 1 ? (
+                  <div className="inline-flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                      aria-label="Previous Page"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>Prev</span>
+                    </button>
+
+                    <span className="px-3 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] whitespace-nowrap">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                      aria-label="Next Page"
+                    >
+                      <span>Next</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div />
+                )}
+
+                {/* Right: Status Filter (Without Retry) */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                    Status:
+                  </span>
+                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                    {[
+                      { id: 'ALL', label: 'All' },
+                      { id: 'UNSOLVED', label: 'Unsolved' },
+                      { id: 'SOLVED', label: `Solved (${activeTopicSolvedCount})` },
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedStatus(item.id as any)}
+                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                          selectedStatus === item.id
+                            ? 'bg-[#FD4A32] text-white shadow-xs'
+                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -1198,8 +1214,8 @@ export default function TechnicalHubPage() {
             </div>
           )}
 
-          {/* 📄 CENTERED TOP PAGINATION */}
-          {totalPages > 1 && (
+          {/* 📄 CENTERED TOP PAGINATION (FOR CODING TRACKS) */}
+          {activeTrack !== 'TECHNICAL_MCQS' && totalPages > 1 && (
             <div className="flex items-center justify-center pt-2.5 pb-1">
               <div className="inline-flex items-center gap-2">
                 <button
