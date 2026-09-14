@@ -70,24 +70,35 @@ const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem 
   };
 };
 
-const normalizeDbMcq = (d: any): TechnicalMcq => ({
-  id: d.id,
-  topic: d.topic_name || d.topic || 'General',
-  topicCategory: d.topic_category || d.topicCategory || 'C_PROGRAMMING',
-  topicId: d.topic_id || d.topicId,
-  question: d.question || '',
-  codeSnippet: d.code_snippet || d.codeSnippet || '',
-  options: Array.isArray(d.options) ? d.options : ['A', 'B', 'C', 'D'],
-  correctOptionIndex: typeof d.correct_option_index === 'number' ? d.correct_option_index : (d.correctOptionIndex ?? 0),
-  explanation: d.explanation || '',
-  companyTags: Array.isArray(d.company_tags) ? d.company_tags : (Array.isArray(d.companyTags) ? d.companyTags : []),
-  difficulty: d.difficulty || 'MEDIUM',
-  is_hidden: d.is_hidden || false,
-  is_deleted: d.is_deleted || false,
-  sort_order: d.sort_order || 0,
-  created_at: d.created_at,
-  updated_at: d.updated_at,
-});
+const normalizeDbMcq = (d: any): TechnicalMcq => {
+  const rawTags: string[] = Array.isArray(d.company_tags)
+    ? d.company_tags
+    : (Array.isArray(d.companyTags) ? d.companyTags : []);
+  const typeTag = rawTags.find((t: string) => t.startsWith('TYPE:'))?.replace('TYPE:', '') as any;
+  const companyTags = rawTags.filter((t: string) => !t.startsWith('TYPE:'));
+  const questionType = d.question_type || d.questionType || typeTag || (d.code_snippet ? 'OUTPUT_PREDICTION' : 'CONCEPTUAL');
+
+  return {
+    id: d.id,
+    topic: d.topic_name || d.topic || 'General',
+    topicCategory: d.topic_category || d.topicCategory || 'C_PROGRAMMING',
+    topicId: d.topic_id || d.topicId,
+    questionType,
+    question_type: questionType,
+    question: d.question || '',
+    codeSnippet: d.code_snippet || d.codeSnippet || '',
+    options: Array.isArray(d.options) ? d.options : ['A', 'B', 'C', 'D'],
+    correctOptionIndex: typeof d.correct_option_index === 'number' ? d.correct_option_index : (d.correctOptionIndex ?? 0),
+    explanation: d.explanation || '',
+    companyTags,
+    difficulty: d.difficulty || 'MEDIUM',
+    is_hidden: d.is_hidden || false,
+    is_deleted: d.is_deleted || false,
+    sort_order: d.sort_order || 0,
+    created_at: d.created_at,
+    updated_at: d.updated_at,
+  };
+};
 
 export const technicalService = {
   // ─── Technical MCQ Progress Management ────────────────────────────────────

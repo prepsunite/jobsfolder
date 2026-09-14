@@ -103,6 +103,13 @@ export interface ProgrammingProblem {
   keyIntuition?: string;
 }
 
+export type McqQuestionType =
+  | 'CONCEPTUAL'
+  | 'OUTPUT_PREDICTION'
+  | 'FIND_ERROR'
+  | 'SYNTAX_RULE'
+  | 'CODE_COMPLETION';
+
 export interface TechnicalMcq {
   id: string;
   topic: string;
@@ -121,6 +128,8 @@ export interface TechnicalMcq {
   topicId?: string;
   topic_id?: string;
   topic_name?: string;
+  questionType?: McqQuestionType;
+  question_type?: string;
   question: string;
   codeSnippet?: string;
   code_snippet?: string;

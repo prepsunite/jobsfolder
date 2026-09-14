@@ -103,6 +103,7 @@ export default function TechnicalHubPage() {
     setSelectedCategory('ALL');
     setSelectedLevel('ALL');
     setSelectedStatus('ALL');
+    setSelectedQuestionType('ALL');
     setSelectedStage('');
     setSelectedSubtopic('ALL');
     setSearchQuery('');
@@ -110,6 +111,7 @@ export default function TechnicalHubPage() {
 
   const [selectedLevel, setSelectedLevel] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'UNSOLVED' | 'SOLVED' | 'RETRY'>('ALL');
+  const [selectedQuestionType, setSelectedQuestionType] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStage, setSelectedStage] = useState<string>('');
   const [selectedSubtopic, setSelectedSubtopic] = useState<string>('ALL');
@@ -172,7 +174,7 @@ export default function TechnicalHubPage() {
   // Reset pagination on filter or topic change
   useEffect(() => {
     setCurrentPage(1);
-  }, [topicParam, activeTrack, selectedLevel, selectedStatus, selectedStage, selectedSubtopic, searchQuery]);
+  }, [topicParam, activeTrack, selectedLevel, selectedStatus, selectedStage, selectedSubtopic, selectedQuestionType, searchQuery]);
 
   // Cheatcode / Tips Modal State
   const [showCheatcodeModal, setShowCheatcodeModal] = useState(false);
@@ -459,6 +461,7 @@ export default function TechnicalHubPage() {
       if (selectedStatus === 'RETRY' && !isRetry) return false;
 
       if (selectedLevel !== 'ALL' && mcq.difficulty !== selectedLevel) return false;
+      if (selectedQuestionType !== 'ALL' && mcq.questionType !== selectedQuestionType && mcq.question_type !== selectedQuestionType) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -471,7 +474,7 @@ export default function TechnicalHubPage() {
 
       return true;
     });
-  }, [activeTopic, activeTopicMcqs, mcqs, selectedStatus, selectedLevel, searchQuery, mcqProgress, isAdmin]);
+  }, [activeTopic, activeTopicMcqs, mcqs, selectedStatus, selectedLevel, selectedQuestionType, searchQuery, mcqProgress, isAdmin]);
 
   const currentFilteredListLength = activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length : filteredProblems.length;
   const totalPages = Math.ceil(currentFilteredListLength / QUESTIONS_PER_PAGE);
@@ -987,6 +990,33 @@ export default function TechnicalHubPage() {
                 <div className="flex items-center flex-wrap gap-4">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                      Difficulty:
+                    </span>
+                    <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                      {[
+                        { id: 'ALL', label: 'All Levels' },
+                        { id: 'BASIC', label: 'Basic' },
+                        { id: 'MEDIUM', label: 'Medium' },
+                        { id: 'HARD', label: 'Hard' },
+                      ].map(item => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setSelectedLevel(item.id)}
+                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                            selectedLevel === item.id
+                              ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
                       Status:
                     </span>
                     <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
@@ -1037,6 +1067,36 @@ export default function TechnicalHubPage() {
                   >
                     {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   </button>
+                </div>
+              </div>
+
+              {/* Question Type Filter Row for MCQs */}
+              <div className="flex items-center gap-2 flex-wrap pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424]">
+                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                  Question Type:
+                </span>
+                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-wrap gap-0.5">
+                  {[
+                    { id: 'ALL', label: 'All Types' },
+                    { id: 'CONCEPTUAL', label: 'Theory / Standards' },
+                    { id: 'OUTPUT_PREDICTION', label: 'Output Trace' },
+                    { id: 'FIND_ERROR', label: 'Find Bug' },
+                    { id: 'SYNTAX_RULE', label: 'Syntax Rules' },
+                    { id: 'CODE_COMPLETION', label: 'Code Fill' },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedQuestionType(item.id)}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        selectedQuestionType === item.id
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1328,6 +1388,30 @@ export default function TechnicalHubPage() {
                                 } animate-pulse`}
                               />
                               <span>{mcq.difficulty}</span>
+                            </span>
+                          )}
+
+                          {(mcq.questionType || mcq.question_type) && (
+                            <span
+                              className={`inline-flex items-center gap-1 text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
+                                (mcq.questionType || mcq.question_type) === 'CONCEPTUAL'
+                                  ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30'
+                                  : (mcq.questionType || mcq.question_type) === 'OUTPUT_PREDICTION'
+                                  ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30'
+                                  : (mcq.questionType || mcq.question_type) === 'FIND_ERROR'
+                                  ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30'
+                                  : (mcq.questionType || mcq.question_type) === 'SYNTAX_RULE'
+                                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                                  : 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/30'
+                              }`}
+                            >
+                              <span>
+                                {(mcq.questionType || mcq.question_type) === 'CONCEPTUAL' && 'Theory'}
+                                {(mcq.questionType || mcq.question_type) === 'OUTPUT_PREDICTION' && 'Output Trace'}
+                                {(mcq.questionType || mcq.question_type) === 'FIND_ERROR' && 'Find Bug'}
+                                {(mcq.questionType || mcq.question_type) === 'SYNTAX_RULE' && 'Syntax Rule'}
+                                {(mcq.questionType || mcq.question_type) === 'CODE_COMPLETION' && 'Code Fill'}
+                              </span>
                             </span>
                           )}
 
