@@ -515,100 +515,170 @@ export const CAMPUS_DSA_TOPICS: ProgrammingTopic[] = [
 // TECHNICAL MCQS: INDIA BIX STANDARD SUBJECT DIRECTORY
 // ============================================================================
 export const TECHNICAL_MCQ_TOPICS: ProgrammingTopic[] = [
-  // ── PROGRAMMING LANGUAGES ──
+  // ── CORE PROGRAMMING LANGUAGES ──
   {
     id: 'mcq-c-programming',
-    title: 'C Programming',
-    cluster: 'Programming Languages',
-    description: 'Pointers, arrays, structures, storage classes, preprocessor directives, and memory allocation.',
+    title: 'C Language',
+    name: 'C Language',
+    cluster: 'Core Programming Languages',
+    description: 'Pointers, memory layout, storage classes, preprocessor directives, and struct padding.',
     iconName: 'Terminal',
-    category: 'SYNTAX_BASICS',
+    category: 'C_PROGRAMMING',
     order: 1,
+    sort_order: 1,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Focus on pointer arithmetic, precedence of * and ++, and dynamic allocation (malloc/free).',
+      'Pay special attention to sizeof() evaluations and struct alignment padding.'
+    ],
   },
   {
     id: 'mcq-cpp-programming',
-    title: 'C++ Programming',
-    cluster: 'Programming Languages',
-    description: 'OOP concepts, constructors/destructors, virtual functions, templates, STL, and operator overloading.',
+    title: 'C++ Language',
+    name: 'C++ Language',
+    cluster: 'Core Programming Languages',
+    description: 'Virtual functions, vtable, templates, smart pointers, operator overloading, and STL containers.',
     iconName: 'Code2',
-    category: 'SYNTAX_BASICS',
+    category: 'CPP_PROGRAMMING',
     order: 2,
+    sort_order: 2,
     track: 'TECHNICAL_MCQS',
-  },
-  {
-    id: 'mcq-csharp-programming',
-    title: 'C# Programming',
-    cluster: 'Programming Languages',
-    description: 'CLR, garbage collection, value vs reference types, delegates & events, LINQ, and async/await.',
-    iconName: 'Hash',
-    category: 'SYNTAX_BASICS',
-    order: 3,
-    track: 'TECHNICAL_MCQS',
+    tips: [
+      'Master the diamond problem, virtual destructors, and vptr/vtable mechanics.',
+      'Review STL container complexities (vector reallocation vs list vs map/unordered_map).'
+    ],
   },
   {
     id: 'mcq-java-programming',
-    title: 'Java Programming',
-    cluster: 'Programming Languages',
-    description: 'String pool & immutability, collections framework, multithreading, exception handling, and JVM.',
+    title: 'Java Language',
+    name: 'Java Language',
+    cluster: 'Core Programming Languages',
+    description: 'JVM memory model, garbage collection, multithreading, string pool, and collections framework.',
     iconName: 'Code2',
+    category: 'JAVA_PROGRAMMING',
+    order: 3,
+    sort_order: 3,
+    track: 'TECHNICAL_MCQS',
+    tips: [
+      'Understand string immutability, StringBuilder vs StringBuffer, and == vs .equals().',
+      'Review HashMap internal working (buckets, hash collision, treeify threshold) and multithreading synchronizers.'
+    ],
+  },
+  {
+    id: 'mcq-python-programming',
+    title: 'Python Language',
+    name: 'Python Language',
+    cluster: 'Core Programming Languages',
+    description: 'Data types, list comprehensions, decorators, generators, lambda functions, and memory management.',
+    iconName: 'Binary',
     category: 'SYNTAX_BASICS',
     order: 4,
+    sort_order: 4,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Understand mutable vs immutable types (lists/dicts vs tuples/strings) and pass-by-object-reference.',
+      'Review decorators, generator expressions with yield, and Global Interpreter Lock (GIL) implications.'
+    ],
   },
 
-  // ── CORE COMPUTER SCIENCE ──
+  // ── CORE CS SUBJECTS ──
   {
-    id: 'mcq-database',
-    title: 'Database (DBMS & SQL)',
+    id: 'mcq-oops-concepts',
+    title: 'OOPs Concepts',
+    name: 'OOPs Concepts',
     cluster: 'Core CS Subjects',
-    description: 'Normalization (1NF-BCNF), ACID properties, transactions & locking, SQL joins, and indexing.',
-    iconName: 'Database',
-    category: 'ARRAYS',
+    description: 'Encapsulation, inheritance, polymorphism, abstraction, interface vs abstract class, and SOLID principles.',
+    iconName: 'Layers',
+    category: 'SYNTAX_BASICS',
     order: 5,
+    sort_order: 5,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Compare abstract classes vs interfaces and when to use composition over inheritance.',
+      'Review compile-time (overloading) vs runtime (overriding) polymorphism and SOLID design principles.'
+    ],
   },
   {
-    id: 'mcq-networking',
-    title: 'Computer Networks',
+    id: 'mcq-database-systems',
+    title: 'DBMS & SQL',
+    name: 'DBMS & SQL',
     cluster: 'Core CS Subjects',
-    description: 'OSI & TCP/IP layers, subnet mask calculation, routing protocols, DNS/HTTP/TCP handshake, and ARP.',
-    iconName: 'Network',
-    category: 'SYNTAX_BASICS',
+    description: 'ACID transactions, B-Tree indexes, normal forms, joins, triggers, and lock concurrency.',
+    iconName: 'Database',
+    category: 'DATABASE',
     order: 6,
+    sort_order: 6,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Master normalization rules from 1NF, 2NF, 3NF to BCNF and identifying candidate keys.',
+      'Understand ACID guarantees, serializability, two-phase locking (2PL), and SQL join differences.'
+    ],
   },
   {
     id: 'mcq-operating-systems',
     title: 'Operating Systems',
+    name: 'Operating Systems',
     cluster: 'Core CS Subjects',
-    description: 'Process scheduling, memory management & paging, semaphores & deadlocks, virtual memory, and fork().',
+    description: 'Process scheduling, deadlocks, paging, Belady\'s anomaly, semaphore vs mutex, and fork() calls.',
     iconName: 'Server',
-    category: 'SYNTAX_BASICS',
+    category: 'OPERATING_SYSTEMS',
     order: 7,
+    sort_order: 7,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Review Banker\'s algorithm, necessary deadlock conditions (mutual exclusion, hold & wait, no preemption, circular wait).',
+      'Understand page replacement algorithms (FIFO, LRU, Optimal) and CPU scheduling metrics.'
+    ],
+  },
+  {
+    id: 'mcq-computer-networks',
+    title: 'Computer Networks',
+    name: 'Computer Networks',
+    cluster: 'Core CS Subjects',
+    description: 'OSI layers, TCP handshake, subnetting, DNS routing, ARP, and HTTP status codes.',
+    iconName: 'Network',
+    category: 'NETWORKING',
+    order: 8,
+    sort_order: 8,
+    track: 'TECHNICAL_MCQS',
+    tips: [
+      'Remember OSI 7-layer responsibilities and protocol encapsulation (MAC, IP, TCP/UDP headers).',
+      'Calculate CIDR subnets, broadcast vs network addresses, and 3-way TCP handshake flags (SYN, SYN-ACK, ACK).'
+    ],
   },
 
-  // ── CAMPUS OA & STRUCTURES ──
+  // ── DATA STRUCTURES & LOGIC ──
   {
     id: 'mcq-data-structures',
-    title: 'Data Structures',
-    cluster: 'Campus OA & Structures',
-    description: 'Arrays, stacks, queues, linked lists, binary search trees, heaps, graphs, and hashing techniques.',
-    iconName: 'Layers',
-    category: 'ARRAYS',
-    order: 8,
+    title: 'Data Structures & Algorithms',
+    name: 'Data Structures & Algorithms',
+    cluster: 'Data Structures & Logic',
+    description: 'BST properties, stack vs queue amortized costs, graph representations, and hashing collisions.',
+    iconName: 'GitMerge',
+    category: 'DATA_STRUCTURES',
+    order: 9,
+    sort_order: 9,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Know asymptotic time and space complexities (Big-O, Omega, Theta) for all major data structures.',
+      'Review tree properties (AVL balance factor, red-black rules) and collision resolution methods.'
+    ],
   },
   {
     id: 'mcq-pseudo-code',
     title: 'Campus OA Pseudo-Code',
-    cluster: 'Campus OA & Structures',
-    description: 'Accenture, Capgemini, and Cognizant pseudo-code dry-runs, bitwise operators, and recursive calls.',
+    name: 'Campus OA Pseudo-Code',
+    cluster: 'Data Structures & Logic',
+    description: 'Accenture, Capgemini, TCS Prime bitwise half-adder dry runs and recursion traces.',
     iconName: 'Cpu',
-    category: 'BIT_MANIPULATION',
-    order: 9,
+    category: 'PSEUDO_CODE',
+    order: 10,
+    sort_order: 10,
     track: 'TECHNICAL_MCQS',
+    tips: [
+      'Trace bitwise shifts (<<, >>) and XOR tricks carefully; they are heavily tested in Accenture & Capgemini OAs.',
+      'Draw recursion trees on paper to track return values and static/global variable updates.'
+    ],
   },
 ];
 
