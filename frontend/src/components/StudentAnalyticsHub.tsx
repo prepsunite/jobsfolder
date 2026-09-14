@@ -614,7 +614,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
                   <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#242424]" strokeWidth={strokeWidth} fill="none" />
                   {intMastered > 0 && (
-                    <circle cx="35" cy="35" r={radius} className="stroke-purple-600 dark:stroke-purple-400 transition-all duration-700 ease-out" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={intDashOffset} strokeLinecap="round" fill="none" />
+                    <circle cx="35" cy="35" r={radius} className="stroke-[#FD4A32] dark:stroke-[#FD4A32] transition-all duration-700 ease-out" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={intDashOffset} strokeLinecap="round" fill="none" />
                   )}
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center text-center pointer-events-none">

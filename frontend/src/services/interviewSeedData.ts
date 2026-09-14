@@ -1,6 +1,6 @@
 import type { InterviewQuestion } from '@/types/interview';
 
-export const ALL_INTERVIEW_SEED_QUESTIONS: InterviewQuestion[] = [
+const RAW_SEED_QUESTIONS: any[] = [
   {
     "id": "int-java-001",
     "topic_id": "topic-java",
@@ -27118,5 +27118,5063 @@ export const ALL_INTERVIEW_SEED_QUESTIONS: InterviewQuestion[] = [
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 100
+  },
+  {
+    "id": "int-hr-intro-001",
+    "topic_id": "topic-hr-intro",
+    "title": "Tell me about yourself / Walk me through your resume.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Structure using Present-Past-Future: Current engineering background & core competencies -> Key technical project highlights & impact -> Why this company aligns with your career path.",
+    "bullet_points": [
+      "Keep it under 90-120 seconds.",
+      "Focus on technical problem-solving and measurable project outcomes.",
+      "Avoid repeating high school marks or reciting your CV word-for-word."
+    ],
+    "pro_tip": "Start directly with your engineering passions and what technical problems you love tackling.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-hr-intro-002",
+    "topic_id": "topic-hr-intro",
+    "title": "Why do you want to join our company?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Show deep company research: Cite their engineering blog, production scale (RPS, low latency), and how their tech stack matches your aspirations.",
+    "bullet_points": [
+      "Reference specific products, architectures, or recent engineering announcements.",
+      "Show how your fast learning curve will add immediate value in sprints.",
+      "Avoid generic praise like 'Fortune 500 company'."
+    ],
+    "pro_tip": "Name-drop a specific engineering challenge their team tackles (e.g. distributed transactions, edge caching).",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-hr-intro-003",
+    "topic_id": "topic-hr-intro",
+    "title": "Where do you see yourself in 5 years?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Demonstrate a realistic engineering trajectory: First 1-2 years mastering the codebase and CI/CD -> Years 3-4 taking end-to-end microservice ownership -> Year 5 stepping into tech leadership and mentoring.",
+    "bullet_points": [
+      "Focus on technical depth, system design, and team mentorship.",
+      "Avoid managerial titles if interviewing for an SDE track.",
+      "Show commitment to long-term growth within the company."
+    ],
+    "pro_tip": "Balance technical craftsmanship with leadership ambition.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-hr-intro-004",
+    "topic_id": "topic-hr-intro",
+    "title": "Why should we hire you over other candidates?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "The Triple Advantage: Solid CS fundamentals (DSA, OS, DBMS) + Proven bias for shipping deployed projects + Extreme ownership mindset.",
+    "bullet_points": [
+      "Focus on unique personal strengths rather than disparaging others.",
+      "Back every claim with tangible evidence (e.g., hackathon wins, GitHub commits).",
+      "Highlight fast ramp-up on unfamiliar tech stacks."
+    ],
+    "pro_tip": "Cite an example where you learned a library or framework in 48 hours to unblock a project.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-hr-intro-005",
+    "topic_id": "topic-hr-intro",
+    "title": "What are your greatest strengths as a developer?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Highlight a technical strength (first-principles debugging with logs/profilers) paired with an execution strength (clear API documentation and collaborative communication).",
+    "bullet_points": [
+      "Provide a concrete 30-second example for each strength.",
+      "Connect strengths to real agile team impact.",
+      "Avoid vague clich\u00e9s like 'hardworking'."
+    ],
+    "pro_tip": "Demonstrate relentless curiosity in tracking down subtle production bugs.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-hr-intro-006",
+    "topic_id": "topic-hr-intro",
+    "title": "What is your biggest weakness and how do you manage it?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Pick a genuine non-disqualifying area (e.g., premature optimization) and focus 70% of your answer on your active mitigation system (e.g., strict MVP two-pass engineering).",
+    "bullet_points": [
+      "Never use disguised strengths ('I work too hard').",
+      "Never state disqualifying traits ('I hate writing unit tests').",
+      "Detail the active habits and guardrails you use to manage it."
+    ],
+    "pro_tip": "Self-awareness and coachability are what interviewers evaluate here.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-hr-intro-007",
+    "topic_id": "topic-hr-intro",
+    "title": "Why did you choose computer science as your engineering major?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Describe the early spark of writing logic and seeing an instantaneous working application, leading to a passion for scalable system building.",
+    "bullet_points": [
+      "Share an authentic turning-point breakthrough project.",
+      "Demonstrate genuine passion beyond placement packages.",
+      "Show continuity with your ongoing GitHub open-source work."
+    ],
+    "pro_tip": "Highlight the intellectual thrill of algorithmic problem-solving.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-hr-intro-008",
+    "topic_id": "topic-hr-intro",
+    "title": "Tell me about your favorite technical subject in college and why.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Choose a foundational subject (e.g., DBMS or Operating Systems) and connect core theoretical principles (e.g., ACID transactions, WAL, indexing) to practical backend latency.",
+    "bullet_points": [
+      "Pick a core CS subject rather than an elective.",
+      "Mention specific technical mechanisms.",
+      "Relate theory to real projects you built."
+    ],
+    "pro_tip": "Be prepared for deep-dive technical follow-ups on your chosen subject.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-hr-intro-009",
+    "topic_id": "topic-hr-intro",
+    "title": "How do you stay updated with rapid changes in software technology?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Explain your structured learning diet: Engineering blogs (Uber, Netflix, Cloudflare), tracking framework release changelogs, and building weekend proof-of-concept repositories.",
+    "bullet_points": [
+      "Mention specific tech blogs and newsletters you read.",
+      "Cite a recent architectural trend you explored.",
+      "Emphasize learning by building small toy projects."
+    ],
+    "pro_tip": "Only mention technologies you can explain intelligently.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-hr-intro-010",
+    "topic_id": "topic-hr-intro",
+    "title": "Are you comfortable working in a different tech stack than your primary one?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Affirm technological agnosticism: Languages and frameworks are tools. Core engineering principles (DSA, concurrency, APIs, relational models) transfer seamlessly.",
+    "bullet_points": [
+      "Emphasize that foundations outlast framework trends.",
+      "Give an example of learning a new tool under tight deadlines.",
+      "Express enthusiasm for expanding your polyglot toolkit."
+    ],
+    "pro_tip": "Elite engineering teams value engineers who adapt to the right tool for the job.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-hr-intro-011",
+    "topic_id": "topic-hr-intro",
+    "title": "What are your salary expectations for this role?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "For fresher/campus hiring, emphasize mentorship and system scale while trusting the company's established competitive compensation framework.",
+    "bullet_points": [
+      "Express excitement for the learning curve and team impact.",
+      "Avoid rigid ultimatums that could price you out prematurely.",
+      "If pressed, reference industry market benchmarks for entry-level SDE."
+    ],
+    "pro_tip": "Show professionalism and focus on long-term career capital.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-hr-intro-012",
+    "topic_id": "topic-hr-intro",
+    "title": "Do you have any questions for us? (End of Interview)",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Ask 2-3 thoughtful engineering questions: Team's sprint cycle, most challenging production bottleneck faced recently, or how the team balances feature velocity with technical debt.",
+    "bullet_points": [
+      "Never say 'No questions'.",
+      "Inquire about engineering culture and deployment frequency.",
+      "Avoid asking about vacation days in early technical rounds."
+    ],
+    "pro_tip": "Insightful questions show high agency and intellectual engagement.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-hr-intro-013",
+    "topic_id": "topic-hr-intro",
+    "title": "Describe your ideal work environment.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Describe a culture with high psychological safety, rigorous code reviews, data-driven architecture debates, and blameless post-mortems.",
+    "bullet_points": [
+      "Emphasize collaboration over isolated silos.",
+      "Focus on code quality, testing standards, and peer learning.",
+      "Show enthusiasm for fast-paced agile teams."
+    ],
+    "pro_tip": "Focus on engineering culture and team trust rather than superficial office perks.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-hr-intro-014",
+    "topic_id": "topic-hr-intro",
+    "title": "How do you handle repetitive or mundane coding tasks?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Show an engineer's instinct to automate toil using shell scripts, code scaffolding generators, or GitHub Actions CI/CD workflows.",
+    "bullet_points": [
+      "Mention writing automation scripts to eliminate human error.",
+      "Show patience when compliance or manual checks are required.",
+      "Emphasize software quality consistency."
+    ],
+    "pro_tip": "Adopt the mantra: 'If you do it more than twice, automate it.'",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-hr-intro-015",
+    "topic_id": "topic-hr-intro",
+    "title": "What motivates you to write clean code every day?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Empathy for future engineers and team velocity: Code is read 10x more than written. Clean, self-documenting code with unit tests prevents regressions and accelerates onboarding.",
+    "bullet_points": [
+      "Cite SOLID principles, readability, and low coupling.",
+      "Mention comprehensive unit tests and meaningful naming.",
+      "Explain how maintainability reduces technical debt."
+    ],
+    "pro_tip": "Clean code is not perfectionism; it is an investment in team shipping speed.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-hr-intro-016",
+    "topic_id": "topic-hr-intro",
+    "title": "Have you ever contributed to an open-source project or participated in a hackathon?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Share a rapid prototyping experience under time pressure: Division of labor, handling third-party API outages with fallbacks, and delivering a functional MVP.",
+    "bullet_points": [
+      "Structure with Situation, Action, and Takeaway.",
+      "Highlight teamwork and overcoming unexpected blockers.",
+      "Provide GitHub links on your resume."
+    ],
+    "pro_tip": "Hackathons prove your ability to ship working software under intense constraints.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-hr-intro-017",
+    "topic_id": "topic-hr-intro",
+    "title": "How do you organize and prioritize your daily engineering tasks?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Break large user stories into 1-2 hour subtasks, prioritize high-impact blockers during peak cognitive hours, and keep PRs atomic for fast reviews.",
+    "bullet_points": [
+      "Break Epics into manageable subtasks.",
+      "Keep PRs under 300 lines for thorough code reviews.",
+      "Communicate blockers early during standups."
+    ],
+    "pro_tip": "Consistency and transparent communication build engineering reliability.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-hr-intro-018",
+    "topic_id": "topic-hr-intro",
+    "title": "What is your approach to learning a completely unfamiliar codebase?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Outside-in strategy: Review architecture diagrams -> Trace a single HTTP request through controller, service, and DB -> Run unit tests -> Pick up good-first-issues to learn PR flow.",
+    "bullet_points": [
+      "Trace one request flow from start to finish.",
+      "Use tests as executable documentation.",
+      "Submit documentation fixes to improve onboarding for the next dev."
+    ],
+    "pro_tip": "Show that you ramp up with autonomy and minimal hand-holding.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-hr-intro-019",
+    "topic_id": "topic-hr-intro",
+    "title": "Tell me about an engineering blog or podcast that recently inspired you.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Discuss an architectural deep dive (e.g., Cloudflare's eBPF packet filtering or Discord's migration from Python to Rust) and explain the engineering trade-offs learned.",
+    "bullet_points": [
+      "Choose a real post from a top tech engineering blog.",
+      "Explain the bottleneck and the chosen solution.",
+      "Relate the lesson to your architectural thinking."
+    ],
+    "pro_tip": "Demonstrates genuine passion for software engineering beyond coursework.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-hr-intro-020",
+    "topic_id": "topic-hr-intro",
+    "title": "How do you handle constructive criticism during code reviews?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Separate personal ego from code: Treat code reviews as collaborative learning. Understand the underlying pattern, update the PR with tests, and internalize the practice.",
+    "bullet_points": [
+      "Never take architectural feedback personally.",
+      "Ask clarifying questions if rationale is unclear.",
+      "View pull request comments as guardrails protecting production."
+    ],
+    "pro_tip": "Humility and coachability are top hiring signals for junior engineers.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-hr-intro-021",
+    "topic_id": "topic-hr-intro",
+    "title": "What is the most technically challenging bug you encountered in a project?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Walk through an analytical diagnosis: Symptom observed -> Initial hypothesis disproved -> Diagnostic logging/profiling -> Root cause found -> Regression test written.",
+    "bullet_points": [
+      "Pick a non-trivial concurrency, memory, or async bug.",
+      "Explain the systematic elimination of hypotheses.",
+      "Show how your fix permanently resolved the issue."
+    ],
+    "pro_tip": "Proves that you debug with first-principles reasoning rather than blind guesses.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-hr-intro-022",
+    "topic_id": "topic-hr-intro",
+    "title": "Tell me about a time you had to deliver a project under a tight deadline.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Ruthless scope prioritization: Distinguish non-negotiable core MVP workflows from cosmetic features, defer non-essential UI, and ensure zero compromise on data integrity.",
+    "bullet_points": [
+      "Differentiate core MVP from nice-to-have scope.",
+      "Maintain transparent communication with stakeholders.",
+      "Deliver commitments on time without cutting test coverage."
+    ],
+    "pro_tip": "Managing scope under pressure is what senior engineers do every sprint.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-hr-intro-023",
+    "topic_id": "topic-hr-intro",
+    "title": "What is your definition of success for your first 90 days at our company?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "30-60-90 Day Plan: First 30 days mastering dev setup and shipping first small fix -> Days 31-60 taking independent feature tickets and writing robust tests -> Days 61-90 driving a complete feature and supporting deployments.",
+    "bullet_points": [
+      "Structure into realistic 30, 60, and 90 day milestones.",
+      "Balance learning with measurable engineering contributions.",
+      "Aim for autonomous, reliable team contributions."
+    ],
+    "pro_tip": "Proves you are a self-starter who plans for rapid team integration.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-hr-intro-024",
+    "topic_id": "topic-hr-intro",
+    "title": "Are you willing to relocate or work in rotating shifts?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Express enthusiastic readiness to relocate to company engineering hubs to immerse yourself in high-caliber engineering teams and collaborative culture.",
+    "bullet_points": [
+      "State relocation readiness clearly.",
+      "Highlight eagerness to learn from senior peers in person.",
+      "Show operational flexibility for critical project milestones."
+    ],
+    "pro_tip": "Geographic agility is highly valued in campus hiring.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-hr-intro-025",
+    "topic_id": "topic-hr-intro",
+    "title": "If given multiple job offers, what criteria will you use to make your decision?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Evaluate based on: 1. Depth of engineering mentorship & code review culture, 2. Technical scale & architectural challenges, 3. Trust and ownership culture.",
+    "bullet_points": [
+      "Focus on learning curve and long-term career capital.",
+      "Avoid sounding purely transactional.",
+      "Show intentionality in your career direction."
+    ],
+    "pro_tip": "Demonstrates that you make thoughtful, principle-driven decisions.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-hr-star-001",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you took leadership on a project without having the official title.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Step up to fill an ownership vacuum by setting up sprint milestones, defining REST contracts between frontend and backend, and unblocking teammates.",
+    "bullet_points": [
+      "Highlight proactive initiative without being domineering.",
+      "Focus on process improvement and clearing hurdles for peers.",
+      "Demonstrate positive collective project outcomes."
+    ],
+    "pro_tip": "True leadership is empowering your teammates to succeed.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-hr-star-002",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a situation where you had to deal with an ambiguous technical requirement.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Tackle ambiguity with rapid wireframe mockups, stakeholder discovery sessions, and minimal PoCs to clarify data contracts before writing production code.",
+    "bullet_points": [
+      "Ask clarifying questions upfront.",
+      "Use mockups to translate vague ideas into concrete specs.",
+      "Save engineering hours by avoiding premature coding."
+    ],
+    "pro_tip": "Show that you don't freeze when specs are underspecified.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-hr-star-003",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time a project or deployment failed. How did you handle it?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Rapid containment by rolling back to the last stable snapshot -> Isolate foreign-key migration bug in local Docker -> Re-apply fix -> Document zero-downtime migration steps.",
+    "bullet_points": [
+      "Take collective ownership without finger-pointing.",
+      "Contain first, diagnose second, fix permanently third.",
+      "Document post-mortem preventions."
+    ],
+    "pro_tip": "In production incidents, calm root-cause analysis is critical.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-hr-star-004",
+    "topic_id": "topic-hr-star",
+    "title": "Give an example of when you went above and beyond for a project.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Voluntarily integrated Jest unit tests, Cypress E2E tests, and GitHub Actions CI pipelines even when only manual grading was required, catching 3 race conditions.",
+    "bullet_points": [
+      "Show passion for engineering craftsmanship.",
+      "Produce durable value (tests, CI/CD, documentation).",
+      "Demonstrate self-directed technical initiative."
+    ],
+    "pro_tip": "Effort that creates permanent leverage stands out.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-hr-star-005",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you persuaded your team to adopt your technical perspective.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Convinced team to adopt PostgreSQL over MongoDB for e-commerce transactions by writing a benchmark script showing phantom reads under concurrency in MongoDB.",
+    "bullet_points": [
+      "Persuade with empirical data and benchmarks, not ego.",
+      "Acknowledge dissenting perspectives fairly.",
+      "Focus on system correctness."
+    ],
+    "pro_tip": "Engineers respect empirical data over subjective opinions.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-hr-star-006",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a time when you had to manage competing priorities under tight deadlines.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Balanced semester exams with live symposium registration bug by time-boxing study blocks, pair-programming the hotfix in the evening, and keeping organizers updated.",
+    "bullet_points": [
+      "Demonstrate calendar time-boxing.",
+      "Keep stakeholders updated proactively.",
+      "Maintain high delivery standards under pressure."
+    ],
+    "pro_tip": "Show calm, disciplined time management.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-hr-star-007",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you identified a critical flaw in a design or plan early.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Identified that synchronous GPS validation in DB would crash under 5,000 req/min; proposed Redis geospatial indexing (GEOADD/GEODIST) in memory, achieving sub-20ms latency.",
+    "bullet_points": [
+      "Anticipate bottlenecks before writing code.",
+      "Propose a viable, tested alternative.",
+      "Validate with load testing tools (Locust/k6)."
+    ],
+    "pro_tip": "Catching flaws on the whiteboard saves weeks of engineering rework.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-hr-star-008",
+    "topic_id": "topic-hr-star",
+    "title": "Describe an instance where you stepped out of your comfort zone to solve a problem.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Mastered Docker multi-stage builds and AWS deployment in 48 hours when no team member had DevOps experience, automating deployments from 45 mins to 2 mins.",
+    "bullet_points": [
+      "Show eagerness to tackle unfamiliar domains.",
+      "Follow structured learning from official documentation.",
+      "Deliver measurable time savings."
+    ],
+    "pro_tip": "Software engineering requires continuous comfort with the unfamiliar.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-hr-star-009",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you simplified a complex process or piece of code.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Refactored 400 lines of nested `if-else` pricing logic using the Strategy Design Pattern and Factory, cutting cyclomatic complexity by 75% and enabling plug-and-play rules.",
+    "bullet_points": [
+      "Identify high cognitive complexity and regression risk.",
+      "Apply proven design patterns (Strategy, Factory, Open-Closed).",
+      "Prove correctness with comprehensive unit tests."
+    ],
+    "pro_tip": "Great engineers write code that is simple and easy to maintain.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-hr-star-010",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a time you received harsh feedback and how you responded.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: PR was rejected with 25 comments on missing input validation and tests; scheduled a 15-minute alignment call, addressed every comment, added 15 tests, and adopted the reviewer's checklist.",
+    "bullet_points": [
+      "Acknowledge initial emotions but pivot to constructive action.",
+      "Turn feedback into a reusable quality checklist.",
+      "Earn trust through responsive iteration."
+    ],
+    "pro_tip": "Coachability is one of the highest predictors of long-term success.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-hr-star-011",
+    "topic_id": "topic-hr-star",
+    "title": "Give an example of a time you handled a high-stress production outage or project emergency.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Online coding contest crashed due to infinite loop submissions; enforced OS cgroup 2-second process limits, killed orphaned workers, and added submission rate-limiting within 6 minutes.",
+    "bullet_points": [
+      "Contain the bleeding before investigating root causes.",
+      "Keep a cool head under live user pressure.",
+      "Enforce OS-level resource limits to prevent repeat crashes."
+    ],
+    "pro_tip": "Systematic triage under pressure separates senior engineers from amateurs.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-hr-star-012",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you had to make a technical decision with incomplete information.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Abstracted authentication behind an AuthProvider interface and defaulted to JWT while client finalized OAuth2 specs, allowing frontend and core feature development to proceed unblocked.",
+    "bullet_points": [
+      "Recognize reversible 'two-way door' decisions.",
+      "Use abstraction interfaces to defer third-party lock-in.",
+      "Maintain team velocity without reckless shortcuts."
+    ],
+    "pro_tip": "Clean abstractions insulate code from changing product specs.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-hr-star-013",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a situation where you had to collaborate with someone whose working style differed from yours.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Paired with a teammate who disliked documentation; established clear OpenAPI/Swagger contracts first, allowing them to code freely while enabling frontend integration against mock servers.",
+    "bullet_points": [
+      "Respect diverse working styles without friction.",
+      "Use contracts and APIs as clear boundaries.",
+      "Deliver integrated software on time."
+    ],
+    "pro_tip": "Contracts and clear boundaries allow different personalities to collaborate seamlessly.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-hr-star-014",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you sacrificed short-term speed for long-term code maintainability.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Spent 2 extra days implementing an event-driven pub/sub architecture for notifications instead of hardcoding email inside checkout, allowing SMS and WhatsApp integrations in hours later.",
+    "bullet_points": [
+      "Understand long-term architectural debt.",
+      "Adhere to Single Responsibility and Open-Closed principles.",
+      "Show how early architectural investment paid off massively."
+    ],
+    "pro_tip": "Preventing technical debt saves months of maintenance later.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-hr-star-015",
+    "topic_id": "topic-hr-star",
+    "title": "Give an example of a goal you set for yourself and how you achieved it.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Overcame fear of dynamic programming and graph algorithms by solving 2-3 pattern-based problems daily for 3 months, maintaining an intuition journal and boosting contest ratings.",
+    "bullet_points": [
+      "Demonstrate self-discipline and deliberate practice.",
+      "Focus on core patterns rather than rote memorization.",
+      "Achieve measurable technical progression."
+    ],
+    "pro_tip": "Consistency and structured pattern-learning yield mastery.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-hr-star-016",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you mentored or helped a fellow student or junior colleague.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Helped a struggling junior understand tree recursion using visual call-stack diagrams and base-case breakdowns, enabling them to solve problems independently in the college contest.",
+    "bullet_points": [
+      "Show patience, empathy, and pedagogy.",
+      "Teach problem-solving intuition over spoon-feeding answers.",
+      "Take pride in elevating team members."
+    ],
+    "pro_tip": "Senior engineering impact is multiplied through mentorship.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-hr-star-017",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a situation where you had to push back against an unreasonable request.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Stakeholder requested real-time video streaming 48 hours before demo; presented a visual infrastructure risk chart and offered an interactive wireframe demo while keeping core APIs stable.",
+    "bullet_points": [
+      "Push back diplomatically using objective risk data.",
+      "Offer viable alternatives or phased roadmaps.",
+      "Protect production stability."
+    ],
+    "pro_tip": "Saying 'no' with data protects both the team and the product.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-hr-star-018",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you automated a task that saved your team significant time.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Automated manual SSH deployments and DB dump scripts into a single Bash + Docker Compose webhook, reducing deployment time from 25 minutes to 90 seconds.",
+    "bullet_points": [
+      "Quantify time savings (25m -> 90s).",
+      "Eliminate manual configuration mistakes.",
+      "Demonstrate developer tooling initiative."
+    ],
+    "pro_tip": "Developer productivity engineering provides massive organizational leverage.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-hr-star-019",
+    "topic_id": "topic-hr-star",
+    "title": "Give an example of a time you resolved a difficult disagreement within your engineering team.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Resolved deadlock between Node.js vs Python backend by establishing objective evaluation criteria (WebSocket concurrency, team proficiency), leading to unanimous consensus on Node.js.",
+    "bullet_points": [
+      "Depersonalize technical disagreements.",
+      "Anchor debates on non-functional requirements.",
+      "Achieve complete team alignment."
+    ],
+    "pro_tip": "Disagreements should be resolved by system requirements, not seniority.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-hr-star-020",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about an ethical dilemma you faced in college or on a project.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Teammate proposed copying proprietary code to meet an assignment deadline; refused the shortcut, cited license risks, and worked late with the team to write clean original code.",
+    "bullet_points": [
+      "Never compromise on ethics or IP licensing.",
+      "Take personal responsibility to help the team succeed ethically.",
+      "Earn high marks legitimately."
+    ],
+    "pro_tip": "Integrity in software engineering is absolute.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-hr-star-021",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a time you noticed an edge-case bug that everyone else missed.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Spotted that a rating average formula lacked zero-check for new users, causing division-by-zero crashes; added defensive validation, fallback states, and parameterized tests.",
+    "bullet_points": [
+      "Spot boundary values (0, null, negatives).",
+      "Write tests proving edge cases are covered.",
+      "Advocate for defensive programming."
+    ],
+    "pro_tip": "Attention to edge cases prevents embarrassing production bugs.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-hr-star-022",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about a time you had to learn from someone younger or less experienced than you.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Learned an interactive Git rebase workflow from a first-year student, squashed messy branch histories, and invited the student to co-host a developer tooling session.",
+    "bullet_points": [
+      "Show humility and absence of ego.",
+      "Embrace better ideas regardless of hierarchy.",
+      "Celebrate peer contributions."
+    ],
+    "pro_tip": "Ego stunts growth; humility accelerates it.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-hr-star-023",
+    "topic_id": "topic-hr-star",
+    "title": "Give an example of how you handle context switching when interrupted by urgent requests.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Used `git stash --include-untracked`, wrote a 2-line state checkpoint note, switched branches to hotfix a broken form, and resumed the complex algorithm with zero ramp-up delay.",
+    "bullet_points": [
+      "Use tools like git stash and branch isolation.",
+      "Record context notes to avoid state loss.",
+      "Transition between tasks with calm efficiency."
+    ],
+    "pro_tip": "Structured context preservation minimizes productivity loss.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-hr-star-024",
+    "topic_id": "topic-hr-star",
+    "title": "Describe a time you had to present a technical project to a non-technical audience.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Pitched an IoT automated irrigation project to administrators using the analogy of a 'thermostat for soil', visual water-saving metrics, and a 1-minute live demo to secure grant funding.",
+    "bullet_points": [
+      "Translate jargon into relatable analogies.",
+      "Focus on cost, savings, and end-user benefits.",
+      "Use live visual demos for engagement."
+    ],
+    "pro_tip": "Bridging the gap between engineering and business is invaluable.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-hr-star-025",
+    "topic_id": "topic-hr-star",
+    "title": "Tell me about the most impactful lesson you learned from your college engineering journey.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "STAR: Transitioned from chasing fleeting frontend frameworks to mastering timeless fundamentals: OS concurrency, database indexing, networking protocols, and clean architecture.",
+    "bullet_points": [
+      "Prioritize fundamentals over superficial buzzwords.",
+      "Show mature reflection on engineering growth.",
+      "Express readiness for high-scale enterprise engineering."
+    ],
+    "pro_tip": "Strong foundations make learning any new framework effortless.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-hr-conflict-001",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you handle a disagreement with a teammate over technical implementation?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Focus on the problem, not personalities: 1. Listen actively to their rationale, 2. List the non-functional requirements (performance, maintainability, deadline), 3. Create a quick benchmark or prototype to test both approaches empirically, 4. Involve a senior engineer or tech lead if an objective tie-breaker is required.",
+    "bullet_points": [
+      "Depersonalize the debate and align on project goals.",
+      "Use empirical prototypes and benchmarks rather than arguments.",
+      "Commit 100% to the chosen approach once decided."
+    ],
+    "pro_tip": "Disagreements are healthy in engineering when guided by data and mutual respect.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-hr-conflict-002",
+    "topic_id": "topic-hr-conflict",
+    "title": "What do you do if a teammate is not pulling their weight or missing commitments?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Private, empathetic check-in first: 1. Have a 1-on-1 private conversation to inquire if they are facing personal blockers or technical difficulty, 2. Offer pair programming to help them get unblocked, 3. If the pattern persists, raise it transparently in sprint planning or with the team lead to reallocate task ownership before the deadline.",
+    "bullet_points": [
+      "Never embarrass a teammate publicly in standups.",
+      "Approach with empathy: assume they are stuck, not lazy.",
+      "Escalate professionally if project delivery is jeopardized."
+    ],
+    "pro_tip": "Address issues early before sprint deadlines are missed.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-hr-conflict-003",
+    "topic_id": "topic-hr-conflict",
+    "title": "Tell me about a time you received critical feedback you initially disagreed with.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Step back and seek to understand the broader context: 1. Avoid immediate defensive reactions, 2. Ask clarifying questions to understand their perspective and potential risks you overlooked, 3. Re-evaluate against the team's long-term standards, 4. Implement the suggestion and track whether outcomes improve.",
+    "bullet_points": [
+      "Recognize that feedback often considers wider architectural impact.",
+      "Ask for concrete examples to gain clarity.",
+      "Demonstrate high coachability and maturity."
+    ],
+    "pro_tip": "Senior engineers often see second-order effects that juniors overlook.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-hr-conflict-004",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you handle a situation where a client or product manager changes requirements mid-sprint?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Assess scope impact and communicate trade-offs: 1. Validate the business reason behind the change, 2. Calculate the technical effort and timeline impact, 3. Present clear options: swap out a lower-priority feature to keep the deadline, or extend the sprint timeline, 4. Document the agreed change in Jira.",
+    "bullet_points": [
+      "Don't say 'no' immediately; present trade-offs.",
+      "Protect the team from burnout by managing sprint scope.",
+      "Keep documentation and tickets updated."
+    ],
+    "pro_tip": "Product managers appreciate engineers who think in terms of business trade-offs.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-hr-conflict-005",
+    "topic_id": "topic-hr-conflict",
+    "title": "Describe a time you had to deliver bad news to a team lead or project manager.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Communicate early with solutions, not just problems: 1. Alert them as soon as a delay is certain\u2014never wait until deadline day, 2. Explain the root cause clearly without excuses, 3. Provide 2 viable mitigation paths (e.g., ship core MVP now, or push deadline by 2 days with full test suite).",
+    "bullet_points": [
+      "Bad news does not improve with age: escalate early.",
+      "Always pair problems with actionable solutions.",
+      "Take personal accountability for your deliverables."
+    ],
+    "pro_tip": "Managers respect transparency far more than last-minute surprises.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-hr-conflict-006",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you collaborate with remote or geographically distributed teammates?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Over-communicate asynchronously: 1. Write comprehensive PR descriptions and design docs with Loom walkthroughs, 2. Establish clear working overlap hours, 3. Respect time zones when scheduling synchronous meetings, 4. Maintain updated Jira statuses.",
+    "bullet_points": [
+      "Rely on thorough documentation and written RFCs.",
+      "Be responsive during agreed overlap windows.",
+      "Summarize synchronous discussions in writing for absent team members."
+    ],
+    "pro_tip": "Asynchronous documentation is the bedrock of world-class distributed teams.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-hr-conflict-007",
+    "topic_id": "topic-hr-conflict",
+    "title": "Tell me about a time a teammate made a major bug that took down production. How did you react?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Practice blameless post-mortem culture: 1. Focus 100% of initial energy on rollback and restoring service, 2. Conduct a blameless post-mortem asking 'What failed in our automated tests or CI pipeline that allowed this bug into production?', 3. Add automated guardrails to prevent it from ever happening again.",
+    "bullet_points": [
+      "Never blame an individual engineer; systems should prevent catastrophic failures.",
+      "Focus on containment first, then root cause.",
+      "Add integration tests and linting to the CI/CD pipeline."
+    ],
+    "pro_tip": "In top engineering cultures, the question is always 'How did our process fail?' not 'Who broke it?'",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-hr-conflict-008",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you handle working with a micro-managing lead or mentor?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Build trust through proactive transparency: 1. Send detailed end-of-day progress summaries before they ask, 2. Break tasks into visible sub-tasks on Jira, 3. Ask for clear expectations during 1-on-1s. As predictability and trust grow, micro-management naturally recedes.",
+    "bullet_points": [
+      "Proactive communication eliminates the anxiety behind micromanagement.",
+      "Deliver predictable results consistently.",
+      "Clarify definition of done upfront."
+    ],
+    "pro_tip": "Transparency builds autonomy: over-communicate until trust is established.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-hr-conflict-009",
+    "topic_id": "topic-hr-conflict",
+    "title": "What is your approach when you realize you won't be able to meet a promised deadline?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Early alert + Scope negotiation: 1. As soon as you project a delay, notify your manager with an updated estimate, 2. Explain what unexpected technical hurdle arose, 3. Propose shipping a reduced-scope MVP that satisfies the critical user journey.",
+    "bullet_points": [
+      "Never wait until the 11th hour to announce a delay.",
+      "Offer solutions: scope reduction, pair programming, or timeline extension.",
+      "Learn from the estimation miss for future planning."
+    ],
+    "pro_tip": "Estimates are probabilities, but communication is a commitment.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-hr-conflict-010",
+    "topic_id": "topic-hr-conflict",
+    "title": "Describe a time you had to mediate a dispute between two peers on your team.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Facilitate neutral ground: 1. Acknowledge the valid points of both sides, 2. Redirect focus from personal opinions to the user persona and project constraints, 3. Propose a time-boxed spike where both build a quick 1-hour prototype to evaluate objectively.",
+    "bullet_points": [
+      "Remain neutral and objective.",
+      "Anchor discussions on engineering constraints.",
+      "Encourage compromise and unified commitment."
+    ],
+    "pro_tip": "A great mediator helps both parties feel heard while keeping the project moving.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-hr-conflict-011",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you give constructive feedback to a peer without damaging the relationship?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Focus on code, not the person: 1. Use the 'I noticed' framing rather than 'You did wrong', 2. Reference established team style guides and performance benchmarks, 3. Offer a suggestion or link to documentation rather than a blunt critique.",
+    "bullet_points": [
+      "Praise good architectural decisions publicly; suggest improvements constructively.",
+      "Reference official guidelines or benchmarks.",
+      "Keep feedback specific and actionable."
+    ],
+    "pro_tip": "Framing feedback around shared standards removes personal sting.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-hr-conflict-012",
+    "topic_id": "topic-hr-conflict",
+    "title": "Tell me about a time you had to compromise on your code standards to meet a business deadline.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Document technical debt and schedule payback: 1. Acknowledge that shipping the feature by the market event was paramount, 2. Implement the simplest working solution while ensuring zero security vulnerabilities, 3. Create a Jira technical debt ticket immediately to refactor it in the following sprint.",
+    "bullet_points": [
+      "Understand that business context drives engineering priorities.",
+      "Never compromise on security or data integrity.",
+      "Track technical debt explicitly so it doesn't get forgotten."
+    ],
+    "pro_tip": "Engineering is the art of pragmatic trade-offs.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-hr-conflict-013",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you handle a situation where someone takes credit for your work?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Handle professionally and privately: 1. Avoid emotional confrontations in public meetings, 2. In a 1-on-1, calmly clarify your contributions and discuss how work should be presented moving forward, 3. Maintain visibility by committing with clear git author logs and speaking up during team demos.",
+    "bullet_points": [
+      "Handle 1-on-1 with calm professionalism.",
+      "Let your commit history, PRs, and documentation speak for themselves.",
+      "Present your own modules in sprint reviews."
+    ],
+    "pro_tip": "Focus on building undeniable visible impact through your work.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-hr-conflict-014",
+    "topic_id": "topic-hr-conflict",
+    "title": "What do you do if you inherit a legacy codebase with zero documentation?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "The Archeological Engineering Method: 1. Run the test suite to observe expected behaviors, 2. Trace the entry points (routes, controllers) with a debugger, 3. Write documentation as you discover workflows, 4. Add integration tests around critical paths before refactoring.",
+    "bullet_points": [
+      "Don't rewrite immediately; understand before changing.",
+      "Use tests as executable specifications.",
+      "Leave the codebase better documented than you found it."
+    ],
+    "pro_tip": "Never criticize legacy code before understanding the constraints under which it was built.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-hr-conflict-015",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you deal with a teammate who is resistant to adopting new tools or practices?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Demonstrate value through small pilots: 1. Understand their concerns (usually workflow disruption or reliability fears), 2. Show how the new tool solves a concrete pain point they face (e.g., automated formatting saves 20 mins of PR debates), 3. Offer to set up the configuration and provide a 10-minute demo.",
+    "bullet_points": [
+      "Respect their experience and address genuine transition costs.",
+      "Focus on friction reduction for them.",
+      "Win adoption by showing, not telling."
+    ],
+    "pro_tip": "People don't resist change; they resist friction and uncertainty.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-hr-conflict-016",
+    "topic_id": "topic-hr-conflict",
+    "title": "Tell me about a time you had to say 'no' to a feature request from a teammate or lead.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "The 'No, but here is how we can achieve the goal' approach: 1. Validate the intent behind the request, 2. Explain the architectural conflict or resource constraint, 3. Offer an alternative architectural approach that achieves 80% of the value with 20% of the complexity.",
+    "bullet_points": [
+      "Always explain the 'why' behind the refusal.",
+      "Provide a viable alternative.",
+      "Keep the focus on system stability and maintenance."
+    ],
+    "pro_tip": "A good engineer protects the system by saying 'no' to feature bloat.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-hr-conflict-017",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you maintain morale when a project you worked on for months gets cancelled?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Focus on the learning capital and reusable components: 1. Understand the business rationale behind the cancellation (e.g., market shift, budget reprioritization), 2. Document the architectural lessons and reusable modules created, 3. Carry the engineering skills forward into the next initiative.",
+    "bullet_points": [
+      "Depersonalize business decisions.",
+      "Harvest reusable code, libraries, and design patterns.",
+      "Maintain positive momentum towards the next challenge."
+    ],
+    "pro_tip": "Projects may be cancelled, but the engineering experience gained is permanent.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-hr-conflict-018",
+    "topic_id": "topic-hr-conflict",
+    "title": "What is your approach to handling customer escalations or high-priority bug reports?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Replicate, contain, and communicate: 1. Acknowledge receipt and replicate the issue with exact customer parameters, 2. Apply a temporary hotfix or feature toggle if needed to stop customer impact, 3. Perform root-cause analysis, write a regression test, and deploy the permanent fix.",
+    "bullet_points": [
+      "Empathy for customer impact drives urgent triage.",
+      "Use feature flags to disable faulty flows instantly.",
+      "Close the loop with a clear explanation and regression prevention."
+    ],
+    "pro_tip": "Customer trust is won during outages through fast, transparent action.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-hr-conflict-019",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you handle cultural differences when working in global, diverse engineering teams?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Active listening, curiosity, and respect: 1. Be mindful of direct vs indirect communication styles, 2. Avoid region-specific idioms or slang in written communication, 3. Clarify expectations in writing after meetings, 4. Celebrate team diversity and learn from different perspectives.",
+    "bullet_points": [
+      "Keep written documentation clear, concise, and jargon-free.",
+      "Be patient and open-minded with different communication norms.",
+      "Foster an inclusive environment where everyone feels comfortable speaking."
+    ],
+    "pro_tip": "Diversity of thought builds stronger, more resilient software architectures.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-hr-conflict-020",
+    "topic_id": "topic-hr-conflict",
+    "title": "Tell me about a time you had to take over a project midway from another developer.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Orderly transition and validation: 1. Schedule a thorough handover session covering architecture, deployment steps, and known technical debt, 2. Verify you can build and run tests locally before they leave, 3. Audit open PRs and issues, 4. Document updated ownership in team channels.",
+    "bullet_points": [
+      "Verify local build and test execution before handover ends.",
+      "Map out active dependencies and secrets/keys.",
+      "Take full ownership from day one without blaming previous owners."
+    ],
+    "pro_tip": "Smooth handovers prevent project momentum from stalling.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-hr-conflict-021",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you prevent burnout during periods of intense crunch time?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Ruthless prioritization and disciplined boundaries: 1. Focus on the 20% of tasks that drive 80% of milestone value, 2. Take short 5-minute walks to clear cognitive fatigue, 3. Ensure adequate sleep to prevent bug-inducing mental exhaustion, 4. Align with the team on sustainable pacing.",
+    "bullet_points": [
+      "Fatigued engineers write bugs that take twice as long to fix.",
+      "Prioritize tasks strictly by business urgency.",
+      "Communicate capacity limits proactively."
+    ],
+    "pro_tip": "Software engineering is a marathon, not a sprint.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-hr-conflict-022",
+    "topic_id": "topic-hr-conflict",
+    "title": "Describe a situation where an ambiguous error message in production took days to resolve.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Scientific method debugging: 1. Formulate testable hypotheses, 2. Add fine-grained structured logging and correlation IDs, 3. Isolate the environment delta (e.g., production data volume vs local mock data), 4. Find root cause (e.g., connection pool exhaustion under load) and patch permanently.",
+    "bullet_points": [
+      "Never debug randomly; form hypotheses and test them.",
+      "Use correlation IDs across distributed services.",
+      "Document the discovery in team runbooks."
+    ],
+    "pro_tip": "Structured logging turns impossible mysteries into solvable puzzles.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-hr-conflict-023",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you foster a culture of blameless post-mortems in a project?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Normalize learning from failure: 1. Start post-mortems by reiterating the prime directive: everyone did the best job they could with the information they had, 2. Ask 'What about our tooling or automated checks failed?', 3. Focus output entirely on action items and automated safeguards.",
+    "bullet_points": [
+      "Set the tone that human error is a symptom of systemic tool deficiency.",
+      "Focus on action items (linters, CI tests, alert thresholds).",
+      "Celebrate finding and fixing holes in the system."
+    ],
+    "pro_tip": "High-performing teams fail forward by strengthening their systems.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-hr-conflict-024",
+    "topic_id": "topic-hr-conflict",
+    "title": "What do you do when two senior engineers give you conflicting advice on an architecture design?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Facilitate alignment transparently: 1. Document both perspectives in an RFC or architectural comparison table listing pros, cons, and trade-offs, 2. Host a brief 15-minute sync with both engineers to discuss the trade-offs together, 3. Let them align on the best choice for the project constraints.",
+    "bullet_points": [
+      "Don't choose sides secretly; bring both perspectives into the open.",
+      "Use an RFC format comparing trade-offs objectively.",
+      "Let technical criteria guide the final consensus."
+    ],
+    "pro_tip": "Great engineers facilitate consensus by clarifying trade-offs.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-hr-conflict-025",
+    "topic_id": "topic-hr-conflict",
+    "title": "How do you celebrate project wins and acknowledge team contributions?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Specific, public recognition: 1. Give shout-outs in sprint reviews highlighting specific contributions of peers (e.g., 'X optimized our DB queries, saving 40% latency'), 2. Thank cross-functional partners (QA, Design, Product), 3. Take time as a team to reflect on how far the product has come.",
+    "bullet_points": [
+      "Be specific about what each person contributed.",
+      "Recognize non-code contributions (docs, QA, design).",
+      "Build team morale for future sprints."
+    ],
+    "pro_tip": "Recognition fuels long-term team motivation.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-hr-traps-001",
+    "topic_id": "topic-hr-traps",
+    "title": "Why have your grades or academic percentages dropped in a particular semester?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Own the setback, explain the context without whining, and show subsequent rebound: 1. Be honest (e.g., balancing intense technical projects, family situation, or difficulty adjusting to a new curriculum), 2. Detail the structural adjustments made (study routines, time-management), 3. Point to the academic rebound and strong engineering portfolio.",
+    "bullet_points": [
+      "Never blame professors or university grading policies.",
+      "Demonstrate self-correction and discipline.",
+      "Show that your technical competencies and problem-solving skills are top-tier."
+    ],
+    "pro_tip": "Hiring managers care about how you bounce back from setbacks, not perfection.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-hr-traps-002",
+    "topic_id": "topic-hr-traps",
+    "title": "Why is there a gap year in your education or resume?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Account for the time productively and honestly: 1. State the reason clearly (e.g., competitive exam preparation, health recovery, or building skills), 2. Highlight how you spent the time productively (learning data structures, building full-stack projects, earning certifications), 3. Reaffirm readiness and hunger to contribute.",
+    "bullet_points": [
+      "Be honest and confident\u2014never hide or fabricate reasons.",
+      "Emphasize productive skills gained during the interval.",
+      "Focus on your current technical readiness."
+    ],
+    "pro_tip": "Gaps are normal: confidence and productive utilization of time turn them into positives.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-hr-traps-003",
+    "topic_id": "topic-hr-traps",
+    "title": "What would your previous team or professors say is your biggest flaw?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Choose an authentic operational trait with active mitigation: 'My professors might say that early on, I took too much responsibility onto myself rather than delegating in group assignments. Over time, I learned that true leadership involves trusting teammates and distributing ownership, which resulted in much better final project outcomes.'",
+    "bullet_points": [
+      "Show that you listened to feedback from superiors.",
+      "Pair the flaw with a demonstrable shift in behavior.",
+      "Avoid superficial answers."
+    ],
+    "pro_tip": "Authenticity and behavioral growth impress interviewers.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-hr-traps-004",
+    "topic_id": "topic-hr-traps",
+    "title": "If you are offered a higher paying offer from a competitor, will you leave us?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Anchor on career capital over short-term increments: 'Compensation is important, but my priority as a software engineer is joining a team with rigorous technical mentorship, high-scale engineering challenges, and a culture of ownership. If I am growing technically and creating high impact here, I have zero reason to chase marginal short-term salary increments.'",
+    "bullet_points": [
+      "Don't sound naive, but don't sound mercenary.",
+      "Show that you value technical growth, engineering culture, and team impact.",
+      "Reassure the interviewer of your commitment."
+    ],
+    "pro_tip": "Companies invest heavily in training juniors; they look for loyalty and cultural fit.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-hr-traps-005",
+    "topic_id": "topic-hr-traps",
+    "title": "Are you planning on pursuing higher studies (MS / MBA) in the near future?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Focus on hands-on industry engineering: 'My immediate and medium-term focus for the next several years is working as an industry software engineer on real production systems. I believe hands-on experience solving production scalability problems and collaborating with senior architects is the most valuable learning phase for my career right now.'",
+    "bullet_points": [
+      "If you have no immediate plans, state clearly that your focus is industry engineering.",
+      "Avoid stating you are writing GRE/GMAT next semester.",
+      "Show enthusiasm for long-term growth within the company."
+    ],
+    "pro_tip": "Companies want to ensure their campus hires won't resign after 6 months to attend school.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-hr-traps-006",
+    "topic_id": "topic-hr-traps",
+    "title": "How do you handle working on a legacy system with outdated technologies?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Treat it as a system understanding and modernization opportunity: 1. Recognize that legacy systems drive crucial business revenue, 2. Understand the historical constraints and business logic before changing code, 3. Identify opportunities for incremental modernization, automated testing, and safe refactoring.",
+    "bullet_points": [
+      "Never badmouth legacy systems; they keep the business running.",
+      "Focus on understanding domain logic.",
+      "Emphasize writing tests before refactoring."
+    ],
+    "pro_tip": "Pragmatic engineers respect revenue-generating systems while incrementally improving them.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-hr-traps-007",
+    "topic_id": "topic-hr-traps",
+    "title": "What would you do if your manager asked you to deploy code with a known critical security flaw?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Diplomatic, data-driven escalation: 1. Assume positive intent (they may not understand the security severity), 2. Clearly explain the vulnerability, the attack vector, and potential financial/reputational damage in writing, 3. Propose a rapid mitigation (e.g., input sanitization or feature flag) that can be done in 1-2 hours, 4. If pressed, involve the security team or tech lead.",
+    "bullet_points": [
+      "Never blindly deploy known vulnerabilities that compromise user data.",
+      "Frame the objection around protecting the company from security breach.",
+      "Provide an immediate temporary workaround if possible."
+    ],
+    "pro_tip": "Engineering ethics and customer data protection are non-negotiable.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-hr-traps-008",
+    "topic_id": "topic-hr-traps",
+    "title": "Tell me about a time you had a personality clash with a team lead. How did it end?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Focus on communication adaptation: 1. Realize that differing communication styles often cause friction, 2. Adapt to their preferred communication medium (e.g., moving from verbal discussions to bulleted email updates), 3. Focus strictly on meeting project milestones and delivering high-quality code.",
+    "bullet_points": [
+      "Never paint the lead as a villain.",
+      "Take ownership of adapting your communication style.",
+      "Demonstrate that the project was delivered successfully."
+    ],
+    "pro_tip": "Adaptability across different management styles is a sign of high maturity.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-hr-traps-009",
+    "topic_id": "topic-hr-traps",
+    "title": "What is your dream company to work for?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Define your dream by the engineering environment, not just a brand name: 'My dream workplace is an engineering organization that builds high-throughput, low-latency distributed systems, values rigorous code reviews, encourages continuous learning, and empowers engineers to own features from design to deployment\u2014which is precisely what attracted me to this team.'",
+    "bullet_points": [
+      "Avoid naming a direct competitor (e.g., don't say Google if interviewing at Amazon).",
+      "Define the qualities of the dream engineering culture.",
+      "Connect those qualities directly to the company you are interviewing with."
+    ],
+    "pro_tip": "Anchor your dream on engineering quality rather than superficial prestige.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-hr-traps-010",
+    "topic_id": "topic-hr-traps",
+    "title": "Why did you choose our company instead of starting your own startup?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Value of scale and foundational mentorship: 'While I admire entrepreneurship, building a startup without first understanding production engineering at scale, enterprise reliability, and collaborative software architecture is like building a house without a foundation. Learning from seasoned senior engineers on high-scale systems here is the best possible foundation for my career.'",
+    "bullet_points": [
+      "Show respect for the craft of enterprise engineering at scale.",
+      "Highlight the desire to learn best practices and architectural rigor.",
+      "Show that you are fully committed to this role."
+    ],
+    "pro_tip": "Enterprise scale teaches disciplines that cannot be learned in isolation.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-hr-traps-011",
+    "topic_id": "topic-hr-traps",
+    "title": "Tell me about a time you were given an assignment with zero instructions and your lead was unavailable.",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Take structured initiative: 1. Review existing code, documentation, and PR history for similar features, 2. Formulate a reasonable technical approach and document your assumptions, 3. Build a prototype on a separate branch, 4. When the lead returns, present the prototype and ask for feedback on your assumptions.",
+    "bullet_points": [
+      "Show high agency and independence.",
+      "Document assumptions clearly to avoid misalignment.",
+      "Don't sit idle waiting for instructions."
+    ],
+    "pro_tip": "Hiring managers love self-starters who unblock themselves.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-hr-traps-012",
+    "topic_id": "topic-hr-traps",
+    "title": "How do you handle negative online reviews or public criticism of your company's product?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Filter signal from noise with engineering empathy: 1. Understand that customer frustration usually stems from genuine UX friction or system latency, 2. Analyze user reports to identify reproducible bug patterns, 3. Advocate for paying down technical debt to fix the root causes.",
+    "bullet_points": [
+      "Avoid getting defensive about product criticism.",
+      "Treat feedback as diagnostic data.",
+      "Focus on engineering fixes that improve customer experience."
+    ],
+    "pro_tip": "Customer complaints are free usability testing.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-hr-traps-013",
+    "topic_id": "topic-hr-traps",
+    "title": "If you catch a coworker cheating on their work or falsifying test results, what would you do?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Protect system integrity: 1. Verify facts first to avoid false accusations, 2. Speak to the coworker privately and urge them to rectify the test results, 3. If they refuse, report the issue to the tech lead or engineering manager because false test results can cause catastrophic production outages.",
+    "bullet_points": [
+      "Integrity in test results is critical for system safety.",
+      "Encourage self-correction first if appropriate.",
+      "Protect the production system and company integrity."
+    ],
+    "pro_tip": "False test results in engineering can lead to legal and financial catastrophe.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-hr-traps-014",
+    "topic_id": "topic-hr-traps",
+    "title": "What is the most boring project you ever worked on, and how did you stay engaged?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Find mastery in fundamentals: 1. Acknowledge that data cleaning, documentation, or legacy migrations can feel repetitive, 2. Gamify the process by writing automation scripts to speed it up, 3. Focus on the value the task provided to downstream users or teammates.",
+    "bullet_points": [
+      "Never complain that a task was beneath you.",
+      "Show an instinct to automate repetitive toil.",
+      "Find satisfaction in craftsmanship regardless of task glamor."
+    ],
+    "pro_tip": "Discipline is doing what needs to be done with excellence even when it isn't exciting.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-hr-traps-015",
+    "topic_id": "topic-hr-traps",
+    "title": "Have you ever felt like an imposter among high-performing peers? How did you deal with it?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Channel humility into learning: 1. Acknowledge imposter feelings as a natural byproduct of being in a high-caliber environment, 2. Realize that everyone has different areas of deep expertise, 3. Transform anxiety into a structured learning roadmap by asking questions and studying peers' code.",
+    "bullet_points": [
+      "Be authentic; imposter syndrome affects almost every software engineer.",
+      "Reframe it as a positive sign that you are surrounded by people you can learn from.",
+      "Focus on daily incremental progress rather than comparisons."
+    ],
+    "pro_tip": "Being the smartest person in the room means you're in the wrong room.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-hr-traps-016",
+    "topic_id": "topic-hr-traps",
+    "title": "What would you do if you discovered you made a major calculation error in code that is already live in production?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Immediate disclosure, containment, and correction: 1. Notify your lead and team immediately\u2014do not attempt to cover it up, 2. Assess user and financial impact, 3. Deploy a hotfix or toggle the feature off, 4. Write a blameless post-mortem and add unit/integration tests to guarantee it never happens again.",
+    "bullet_points": [
+      "Zero cover-ups: immediate transparency builds immense trust.",
+      "Contain the blast radius first.",
+      "Take complete personal accountability and fix the root cause."
+    ],
+    "pro_tip": "The cover-up is always worse than the bug: transparency is paramount.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-hr-traps-017",
+    "topic_id": "topic-hr-traps",
+    "title": "How do you handle a teammate who constantly interrupts you while you are in deep coding flow?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Set gentle, clear boundaries: 1. Use status indicators (Slack 'in focus mode' or headphones), 2. Kindly let them know you are in the middle of a complex logic flow and agree on a time (e.g., 'in 20 minutes') to help them, 3. Schedule regular pair-programming check-ins.",
+    "bullet_points": [
+      "Protect your deep work focus politely.",
+      "Provide an alternative time rather than just shutting them down.",
+      "Encourage asynchronous questions via chat."
+    ],
+    "pro_tip": "Protecting focus time is essential for writing bug-free complex logic.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-hr-traps-018",
+    "topic_id": "topic-hr-traps",
+    "title": "Tell me about a time you gave up on solving a problem. Why did you give up?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Know when to pivot vs stubborn persistence: 1. Detail an attempt to build a custom solution (e.g., writing a custom in-memory caching engine), 2. Recognize when the ROI of reinventing the wheel is negative compared to using an established, battle-tested open-source tool (e.g., Redis), 3. Pragmatically pivot to the standard tool.",
+    "bullet_points": [
+      "Frame 'giving up' as a pragmatic pivot away from the sunk cost fallacy.",
+      "Highlight engineering ROI and business value.",
+      "Demonstrate wisdom in choosing existing battle-tested solutions."
+    ],
+    "pro_tip": "Pragmatic engineers don't reinvent the wheel out of stubborn pride.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-hr-traps-019",
+    "topic_id": "topic-hr-traps",
+    "title": "How do you respond when an interviewer tells you your answer is completely wrong?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Stay calm, curious, and collaborative: 1. Do not get defensive or argue, 2. Say: 'Thank you for pointing that out. Let me revisit my assumptions\u2014could you share what edge case or constraint I missed?', 3. Walk through the logic step-by-step with the interviewer to discover the flaw together.",
+    "bullet_points": [
+      "Treat the interviewer as a senior colleague pair-programming with you.",
+      "Show intellectual humility and eagerness to understand the correct concept.",
+      "Demonstrate real-time coachability."
+    ],
+    "pro_tip": "Interviewers often challenge candidates deliberately to see how they respond to being challenged.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-hr-traps-020",
+    "topic_id": "topic-hr-traps",
+    "title": "What is your perspective on AI coding assistants (GitHub Copilot, ChatGPT)? Do they make developers lazy?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "View AI as an accelerator for boilerplate, not a substitute for architecture: 1. Use AI tools to write boilerplate, generate mock data, and draft test cases faster, 2. Emphasize that AI cannot understand system architecture, edge-case security, or business constraints, 3. Always verify and understand every line of AI-assisted code before committing.",
+    "bullet_points": [
+      "Embrace modern developer productivity tools.",
+      "Highlight that architectural rigor, security, and verification remain the engineer's responsibility.",
+      "Never blindly copy-paste generated code without review."
+    ],
+    "pro_tip": "Engineers who leverage AI responsibly ship faster, but system understanding remains non-negotiable.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-hr-traps-021",
+    "topic_id": "topic-hr-traps",
+    "title": "Tell me about a time you disagreed with your university's curriculum. What did you do?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Take ownership of your own education: 1. Acknowledge that university syllabi can lag industry trends, 2. Instead of complaining, proactively bridge the gap through self-directed projects, open-source work, and studying industry engineering blogs, 3. Share new tools with peers through college coding clubs.",
+    "bullet_points": [
+      "Don't whine about the curriculum.",
+      "Show extreme ownership in teaching yourself production technologies.",
+      "Uplift peers through workshops and community sharing."
+    ],
+    "pro_tip": "Your education is your responsibility, not just your university's.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-hr-traps-022",
+    "topic_id": "topic-hr-traps",
+    "title": "What will you do if you are assigned to a project or domain you find completely uninteresting?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Find technical challenge in every domain: 1. Recognize that any domain (insurance, logistics, banking) possesses deep engineering problems at scale (concurrency, low latency, data integrity), 2. Focus on mastering the system architecture and database design, 3. Deliver excellence to earn trust for future project choices.",
+    "bullet_points": [
+      "Show professional discipline: pride in engineering craftsmanship regardless of domain.",
+      "Focus on architectural and scale challenges.",
+      "Deliver results to build career capital."
+    ],
+    "pro_tip": "Great engineers make any problem intellectually fascinating.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-hr-traps-023",
+    "topic_id": "topic-hr-traps",
+    "title": "How do you handle a situation where you suspect your manager has a personal bias against you?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Ground interactions in documented data and outcomes: 1. Request a 1-on-1 to establish clear, objective performance metrics and expectations, 2. Document completed deliverables and sprint tickets transparently, 3. Focus on high-quality work and professional communication.",
+    "bullet_points": [
+      "Avoid emotional accusations; focus on objective delivery metrics.",
+      "Seek alignment on clear, measurable expectations.",
+      "Maintain unwavering professionalism."
+    ],
+    "pro_tip": "Focus on what you can control: your attitude, your code, and your results.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-hr-traps-024",
+    "topic_id": "topic-hr-traps",
+    "title": "What is one thing you believe about software engineering that most people disagree with?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Thought-provoking technical insight: 'Most developers believe writing more code means more productivity. I believe the best code is the code you didn't have to write\u2014leveraging existing battle-tested libraries, simplifying requirements, and eliminating unnecessary abstractions. Every line of code written is a liability that must be maintained and tested.'",
+    "bullet_points": [
+      "Show philosophical depth about the discipline.",
+      "Explain the rationale: code as a liability, not an asset.",
+      "Emphasize simplicity and maintainability."
+    ],
+    "pro_tip": "Demonstrates mature software craftsmanship.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-hr-traps-025",
+    "topic_id": "topic-hr-traps",
+    "title": "If you could change one decision you made during your college engineering journey, what would it be?",
+    "category": "HR_BEHAVIORAL",
+    "subject": "HR",
+    "subject_label": "HR Behavioral",
+    "answer": "Reflect with wisdom: 'I would have started contributing to open-source software and participating in hackathons in my first year instead of waiting until my third year. Building in public and having seasoned engineers review my code accelerated my learning curve ten times faster than isolated textbook study.'",
+    "bullet_points": [
+      "Share a genuine, constructive reflection.",
+      "Highlight the value of real-world collaboration and building in public.",
+      "Show that you are now fully committed to continuous collaborative engineering."
+    ],
+    "pro_tip": "Shows maturity, humility, and hunger for continuous growth.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-proj-arch-001",
+    "topic_id": "topic-proj-architecture",
+    "title": "Why did you choose a monolithic architecture over microservices for your project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Defend monolithic simplicity: Monoliths eliminate distributed system complexities like network latency between services, distributed transactions (2PC/Sagas), and deployment overhead. For our initial user base, a modular monolith with clean boundaries allows rapid iteration, shared in-memory function calls, and straightforward debugging.",
+    "bullet_points": [
+      "Explain trade-offs: operational simplicity vs distributed complexity.",
+      "Cite Fowler's 'Monolith First' principle.",
+      "Explain how modular package structures prepare the codebase for future microservice extraction."
+    ],
+    "pro_tip": "Never apologize for building a monolith; industry leaders advocate starting with a modular monolith.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-proj-arch-002",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you decide between SQL (PostgreSQL/MySQL) and NoSQL (MongoDB) for your project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Relational integrity vs schema flexibility: We chose PostgreSQL because our core data models (Users, Orders, Inventory, Payments) possess strong relational dependencies requiring ACID guarantees to prevent phantom inventory deductions. Foreign keys and unique constraints at the database engine level protect against corrupted state.",
+    "bullet_points": [
+      "Anchor the choice on data access patterns and relational integrity.",
+      "Highlight ACID requirements for monetary or stateful transactions.",
+      "Acknowledge where NoSQL would fit (e.g., unstructured logging, session caches)."
+    ],
+    "pro_tip": "Demonstrate that your choice was driven by data consistency, not hype.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-proj-arch-003",
+    "topic_id": "topic-proj-architecture",
+    "title": "Why did you choose REST over GraphQL or gRPC for your project's APIs?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Tool fit for purpose: REST provides native HTTP caching (Cache-Control, ETags), universal tooling/browser compatibility, and simple stateless endpoints. GraphQL introduces query parsing overhead and complex caching, while gRPC requires HTTP/2 and Protobuf tooling that wasn't justified for our public web client.",
+    "bullet_points": [
+      "Explain REST advantages: HTTP caching, idempotency, standard status codes.",
+      "Acknowledge GraphQL benefits (avoiding over-fetching) and gRPC (high-throughput internal microservices).",
+      "Show you chose the simplest tool that satisfied all requirements."
+    ],
+    "pro_tip": "Great engineers don't over-engineer; they pick standard, proven protocols.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-proj-arch-004",
+    "topic_id": "topic-proj-architecture",
+    "title": "How do you handle authentication and authorization in your application?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "JWT with short-lived access tokens and refresh tokens in HttpOnly cookies: 1. Authentication issues an access token (15-min expiry) in memory and a cryptographically signed refresh token in an HttpOnly, Secure, SameSite=Strict cookie to prevent XSS theft. 2. Role-Based Access Control (RBAC) middleware checks user roles before granting route access.",
+    "bullet_points": [
+      "Differentiate authentication (who you are) from authorization (what you can do).",
+      "Explain why storing JWTs in localStorage is vulnerable to XSS.",
+      "Detail token rotation and revoking refresh tokens in a database or Redis blocklist."
+    ],
+    "pro_tip": "Security is a top interview topic: showing you know HttpOnly cookie security wins huge points.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-proj-arch-005",
+    "topic_id": "topic-proj-architecture",
+    "title": "How do you prevent Cross-Site Scripting (XSS) and Cross-Site Request Forgery (CSRF) in your app?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Multi-layered defense: 1. XSS Prevention: Modern frameworks (React/Angular) automatically escape HTML strings; use DOMPurify for any raw HTML; implement strict Content Security Policy (CSP) headers. 2. CSRF Prevention: Use SameSite=Strict or Lax cookies; enforce custom anti-CSRF headers (e.g., X-CSRF-Token) on state-changing requests (POST/PUT/DELETE).",
+    "bullet_points": [
+      "Explain the attack mechanism of both XSS (injecting malicious scripts) and CSRF (tricking browser into forged requests).",
+      "Explain how CSP headers restrict unauthorized script execution.",
+      "Detail CSRF tokens and SameSite cookie attributes."
+    ],
+    "pro_tip": "Demonstrate that security was architected in from day one, not patched on as an afterthought.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-proj-arch-006",
+    "topic_id": "topic-proj-architecture",
+    "title": "Why did you select your frontend framework (e.g., React/Vue) instead of vanilla JavaScript?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Declarative state management and component reusability: React's virtual DOM reconciliation and component-driven architecture allow modular, declarative UI development. It eliminates brittle manual DOM manipulation, reduces spaghetti code, and provides a rich ecosystem of state management, routing, and accessible UI libraries.",
+    "bullet_points": [
+      "Compare imperative DOM updates (`document.getElementById`) with declarative UI (`state -> view`).",
+      "Highlight component reusability and isolated unit testing.",
+      "Mention ecosystem support (React Router, TanStack Query)."
+    ],
+    "pro_tip": "Highlight productivity, maintainability, and declarative consistency.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-proj-arch-007",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you structure your backend project folders and layers?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Clean/Layered Architecture: 1. Controllers (handle HTTP request/response validation), 2. Services (pure business logic, decoupled from HTTP), 3. Repositories/Models (database queries and data access), 4. Middleware (auth, error handling, rate limiting). This separation of concerns allows changing database drivers or adding CLI tools without touching business logic.",
+    "bullet_points": [
+      "Detail the 3-tier architecture: Controller -> Service -> Repository.",
+      "Explain why business logic should never live inside controllers.",
+      "Show how this structure enables isolated unit testing of services using mock repositories."
+    ],
+    "pro_tip": "Clean separation of concerns proves you write professional, testable software.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-proj-arch-008",
+    "topic_id": "topic-proj-architecture",
+    "title": "What is your strategy for handling errors and exceptions across your backend?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Centralized error-handling middleware with typed custom errors: 1. Custom domain error classes (e.g., NotFoundError, ValidationError, UnauthorizedError) extending standard Error with HTTP status codes. 2. All async routes pass errors to `next(err)`. 3. Centralized middleware formats a uniform JSON response (`{ success: false, error: message }`) while logging stack traces to server logs.",
+    "bullet_points": [
+      "Avoid leaking internal stack traces or database errors to client responses in production.",
+      "Return standardized JSON error envelopes with semantic HTTP status codes.",
+      "Ensure all unhandled promise rejections are caught."
+    ],
+    "pro_tip": "Predictable error responses make frontend integration smooth and secure.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-proj-arch-009",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you handle environment configurations and secrets?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Twelve-Factor App methodology: 1. Store configuration in environment variables (`.env` files locally, never committed to git; `.gitignore` enforced). 2. Access secrets through a validated configuration module (using Zod or dotenv). 3. In production, inject secrets via platform environment managers (e.g., AWS Secrets Manager, Vercel/Docker environment variables).",
+    "bullet_points": [
+      "Never commit secrets, API keys, or database credentials to version control.",
+      "Use schema validation (e.g., Zod or Joi) to fail fast on startup if a required env var is missing.",
+      "Follow the 12-Factor App methodology for configuration."
+    ],
+    "pro_tip": "Mentioning Twelve-Factor App principles signals senior-level engineering maturity.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-proj-arch-010",
+    "topic_id": "topic-proj-architecture",
+    "title": "Why did you choose Node.js/Java/Python for your backend service?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Align language runtime characteristics with project needs: If Node.js: non-blocking, event-driven I/O ideal for I/O-bound web APIs and real-time WebSockets with unified JavaScript across stack. If Java: strong static typing, mature enterprise ecosystem, high multi-threaded CPU throughput, and robust memory management via JVM. If Python: rapid prototyping, rich data libraries, and clean syntax.",
+    "bullet_points": [
+      "Anchor the answer on I/O-bound vs CPU-bound characteristics.",
+      "Discuss ecosystem libraries and team velocity.",
+      "Acknowledge the runtime's trade-offs (e.g., Node's single thread vs Java's memory footprint)."
+    ],
+    "pro_tip": "Defend the runtime based on technical requirements, not just familiarity.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-proj-arch-011",
+    "topic_id": "topic-proj-architecture",
+    "title": "How does your frontend manage application state?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Separation of Server State vs Client UI State: 1. Server Cache State (fetching, caching, syncing backend data) is managed via TanStack Query (React Query) or SWR, eliminating manual `useEffect` boilerplates. 2. Global Client State (modals, user theme, filters) is managed with lightweight Zustand or Context API. 3. Local UI state stays in local component `useState`.",
+    "bullet_points": [
+      "Differentiate server state (async, stale-while-revalidate) from UI state.",
+      "Explain why overusing Redux for simple server data fetching is an anti-pattern.",
+      "Highlight performance optimizations (selective re-rendering)."
+    ],
+    "pro_tip": "Separating server cache from UI state is the modern gold standard in frontend architecture.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-proj-arch-012",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you ensure your web application is accessible (a11y)?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Semantic HTML + ARIA + Keyboard Navigation: 1. Use semantic elements (`<main>`, `<nav>`, `<button>`, `<article>`) rather than generic `<div>`s. 2. Provide accessible labels (`aria-label`, `alt` tags for images). 3. Ensure full keyboard accessibility (focus indicators, tab indexing). 4. Maintain high contrast ratios (WCAG AA standard).",
+    "bullet_points": [
+      "Semantic HTML gives accessibility out of the box.",
+      "Never remove CSS `:focus` outlines without replacing them with clear custom focus rings.",
+      "Use automated accessibility linters (axe-core or eslint-plugin-jsx-a11y)."
+    ],
+    "pro_tip": "Demonstrating empathy for diverse users through a11y standards shows professional maturity.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-proj-arch-013",
+    "topic_id": "topic-proj-architecture",
+    "title": "What is an API Gateway, and would your project benefit from one?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Single entry point for client requests: An API Gateway handles cross-cutting concerns\u2014reverse proxying, authentication verification, SSL termination, rate limiting, and request routing\u2014before forwarding requests to internal services. In our project, a reverse proxy (like Nginx) acts as a gateway protecting backend services from direct public exposure.",
+    "bullet_points": [
+      "Explain cross-cutting concerns: rate limiting, auth, SSL, telemetry.",
+      "Differentiate a gateway from a standard load balancer.",
+      "Explain when an API gateway becomes essential (multi-service architectures)."
+    ],
+    "pro_tip": "Understand where infrastructure ends and application logic begins.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-proj-arch-014",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you design your REST API endpoints for consistency and versioning?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Resource-oriented URI design + Semantic HTTP methods + URI Versioning: 1. Plural nouns for resources (`/api/v1/users`, `/api/v1/orders/123/items`). 2. Standard HTTP verbs: GET (read), POST (create), PUT (replace), PATCH (partial update), DELETE. 3. Return standard HTTP status codes (200, 201, 400, 401, 403, 404, 500). 4. URI versioning (`/v1/`) to support breaking changes safely.",
+    "bullet_points": [
+      "Use nouns, not verbs, in endpoint URIs (e.g. `/orders`, not `/getOrders`).",
+      "Use proper HTTP status codes consistently.",
+      "Version endpoints to protect mobile/external consumers from breaking changes."
+    ],
+    "pro_tip": "API design consistency reflects engineering discipline.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-proj-arch-015",
+    "topic_id": "topic-proj-architecture",
+    "title": "What are WebSockets and when should you use them instead of HTTP polling?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Full-duplex, persistent bidirectional TCP connection: Use WebSockets when real-time, low-latency communication is needed (live chat, multiplayer collaboration, live stock tickers) where HTTP polling creates excessive header overhead and latency. For infrequent updates, HTTP polling or Server-Sent Events (SSE) is simpler and more firewall-friendly.",
+    "bullet_points": [
+      "Explain full-duplex TCP connection over single handshake (`ws://`).",
+      "Compare with Short Polling, Long Polling, and Server-Sent Events (SSE).",
+      "Discuss connection state management and horizontal scaling with Redis Pub/Sub."
+    ],
+    "pro_tip": "Demonstrate knowing when NOT to use WebSockets (e.g. simple notification feeds where SSE suffices).",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-proj-arch-016",
+    "topic_id": "topic-proj-architecture",
+    "title": "How do you handle file uploads securely in your application?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Direct-to-S3 pre-signed URLs with server-side validation: 1. Client requests a pre-signed upload URL from backend. 2. Backend validates user permissions, file type (MIME check), and file size limit. 3. Client uploads directly to cloud storage (AWS S3, Cloudinary), keeping heavy binary streams off the application server. 4. Cloud bucket triggers virus scanning and generates a sanitized permanent URL.",
+    "bullet_points": [
+      "Never route large file buffers through application server memory.",
+      "Validate file size and MIME type on the backend; don't trust client extensions.",
+      "Use pre-signed URLs for scalable direct-to-cloud uploads."
+    ],
+    "pro_tip": "Direct-to-cloud upload is the industry standard for scalable file handling.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-proj-arch-017",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you implement search functionality in your project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Tiered search approach: 1. For small-scale datasets: SQL `ILIKE` queries with B-tree or Trigram (`pg_trgm`) indexes on search columns. 2. For medium scale: PostgreSQL Full-Text Search (`tsvector`, `tsquery`) with GIN indexing for stemming and ranking. 3. For large-scale distributed search: Dedicated search engines like Elasticsearch or Meilisearch with inverted indexes.",
+    "bullet_points": [
+      "Explain the progression from SQL ILIKE to PostgreSQL FTS to Elasticsearch.",
+      "Discuss the performance risk of unindexed `%query%` leading wildcards (full table scans).",
+      "Explain inverted index concept simply."
+    ],
+    "pro_tip": "Knowing when PostgreSQL FTS is sufficient vs when Elasticsearch is required shows practical wisdom.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-proj-arch-018",
+    "topic_id": "topic-proj-architecture",
+    "title": "What is CORS (Cross-Origin Resource Sharing) and how did you configure it?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Browser security mechanism enforcing Same-Origin Policy: The browser blocks cross-origin HTTP requests unless the server sends appropriate `Access-Control-Allow-Origin` headers. In our backend, we configured CORS middleware to whitelist specific trusted client origins, allowed methods (GET, POST, etc.), and `credentials: true` for cookie transmission, while rejecting wildcard `*` in authenticated environments.",
+    "bullet_points": [
+      "Explain that CORS is enforced by the browser, not the server.",
+      "Explain Preflight OPTIONS requests for non-simple HTTP requests.",
+      "Never use `Access-Control-Allow-Origin: *` when credentials/cookies are required."
+    ],
+    "pro_tip": "Every web developer encounters CORS; explaining it accurately demonstrates real production experience.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-proj-arch-019",
+    "topic_id": "topic-proj-architecture",
+    "title": "How do you prevent SQL Injection in your backend?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Parameterized queries and ORM prepared statements: Never concatenate raw user input into SQL query strings. Prepared statements pre-compile the SQL structure in the database engine and treat user input strictly as parameters/literals, making it mathematically impossible for input to alter the executable query syntax.",
+    "bullet_points": [
+      "Explain parameterized queries / prepared statements.",
+      "Explain how ORMs (Prisma, Hibernate, SQLAlchemy) parameterize inputs by default.",
+      "Warn against raw SQL concatenation (`SELECT * FROM users WHERE id = ' + input`)."
+    ],
+    "pro_tip": "SQL injection prevention is absolute fundamental knowledge: prepared statements are non-negotiable.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-proj-arch-020",
+    "topic_id": "topic-proj-architecture",
+    "title": "What is the difference between synchronous and asynchronous processing in your system?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Blocking immediate responses vs background decoupled execution: Synchronous processing blocks the caller until the operation finishes (ideal for read queries and user checkout validation). Asynchronous processing offloads time-consuming tasks (email sending, image processing, PDF generation) to background worker queues (BullMQ/Celery/RabbitMQ), returning an immediate 202 Accepted response to the user.",
+    "bullet_points": [
+      "Keep web request-response cycles under 200ms by offloading heavy work.",
+      "Use message brokers (Redis, RabbitMQ, Kafka) to buffer async tasks.",
+      "Provide user feedback via polling, SSE, or webhooks when the background job finishes."
+    ],
+    "pro_tip": "Offloading slow tasks to background queues is the key to responsive web apps.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-proj-arch-021",
+    "topic_id": "topic-proj-architecture",
+    "title": "How do you handle database migrations safely across development and production?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Version-controlled, incremental migration scripts: 1. Use migration tools (Prisma Migrate, Flyway, Liquibase) where schema changes are stored as sequential SQL files in git. 2. Enforce backward-compatible schema changes (e.g., add new nullable column first, deploy code that writes to both, then remove old column in a later release). 3. Automate migrations during CI/CD before application boots.",
+    "bullet_points": [
+      "Never make manual schema changes directly in production databases.",
+      "Ensure migrations are idempotent and reversible (up/down scripts).",
+      "Use the Expand-Contract pattern for zero-downtime database migrations."
+    ],
+    "pro_tip": "Mentioning the Expand-Contract pattern proves you understand zero-downtime deployments.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-proj-arch-022",
+    "topic_id": "topic-proj-architecture",
+    "title": "What caching strategies did you consider for your project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Cache-Aside (Lazy Loading) pattern: Application first queries cache (Redis). If hit, returns cached data. If miss, queries database, populates cache with a Time-To-Live (TTL), and returns data. On updates, application writes to the database and invalidates or updates the cache key. TTLs prevent stale data from lingering indefinitely.",
+    "bullet_points": [
+      "Explain Cache-Aside vs Write-Through vs Write-Behind.",
+      "Highlight setting reasonable TTLs (Time-To-Live) on all cached entries.",
+      "Discuss cache invalidation strategies on mutation."
+    ],
+    "pro_tip": "Quote the classic quote: 'There are only two hard things in Computer Science: cache invalidation and naming things.'",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-proj-arch-023",
+    "topic_id": "topic-proj-architecture",
+    "title": "How did you handle pagination of large datasets in your APIs?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Cursor-based pagination over Offset-based pagination for large datasets: 1. Offset pagination (`OFFSET 10000 LIMIT 20`) causes severe performance degradation because the DB must scan and discard 10,000 rows. 2. Cursor-based (keyset) pagination (`WHERE id > last_seen_id ORDER BY id LIMIT 20`) uses an index seek, executing in O(1) regardless of page depth and avoiding duplicate items if new rows are inserted.",
+    "bullet_points": [
+      "Explain why `OFFSET` degrades at high numbers (scans and discards).",
+      "Explain how cursor pagination uses B-tree index seeks (`WHERE id > cursor`).",
+      "Note that offset pagination is acceptable for small admin tables with page jumping."
+    ],
+    "pro_tip": "Demonstrating cursor pagination over offset pagination is an instant senior-level signal.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-proj-arch-024",
+    "topic_id": "topic-proj-architecture",
+    "title": "What are idempotency keys and how do they prevent duplicate charges in payments?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Ensuring an operation executes exactly once regardless of retries: The client generates a unique UUID (idempotency key) for a transaction and sends it in the header. The backend stores the key in Redis with a lock. If a network timeout occurs and the client retries with the same key, the backend returns the already-processed result without charging the user a second time.",
+    "bullet_points": [
+      "Crucial for payment checkouts and distributed financial operations.",
+      "Use Redis `SET NX` with TTL for distributed lock and idempotency tracking.",
+      "Return cached response for identical idempotency keys."
+    ],
+    "pro_tip": "Idempotency is the cornerstone of robust financial and distributed systems.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-proj-arch-025",
+    "topic_id": "topic-proj-architecture",
+    "title": "If your project suddenly had to scale to 100,000 active users tomorrow, what would break first?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Self-aware bottleneck analysis: 1. The database connection pool would saturate from concurrent requests. 2. Slow unindexed database queries would spike CPU to 100%. 3. Synchronous external API calls (e.g. email sending) would block request threads. Mitigation: add Redis caching for read-heavy routes, connection pooling with PgBouncer, and offload emails to a message queue.",
+    "bullet_points": [
+      "Demonstrate self-awareness of your architecture's current limits.",
+      "Identify database connection exhaustion and unindexed queries as primary failure modes.",
+      "Present a prioritized triage roadmap to scale incrementally."
+    ],
+    "pro_tip": "Interviewers love this question because it proves you understand real production failure modes.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-proj-db-001",
+    "topic_id": "topic-proj-database",
+    "title": "Explain your project's database schema and Entity-Relationship (ER) design.",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Walk through the primary entities, their relationships (1-to-many, many-to-many), and foreign key integrity. Highlight junction tables for many-to-many relationships (e.g., UserRoles, OrderItems) with composite primary keys and indexing on foreign keys.",
+    "bullet_points": [
+      "Define core entities and primary keys clearly.",
+      "Explain normalization to 3NF to eliminate update anomalies.",
+      "Mention composite keys and indexes on foreign key columns."
+    ],
+    "pro_tip": "Be ready to draw or whiteboard your ER diagram with cardinalities.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-proj-db-002",
+    "topic_id": "topic-proj-database",
+    "title": "How did you normalize your database, and did you intentionally denormalize anything?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Normalized to 3rd Normal Form (3NF) to eliminate redundant data and update anomalies. Intentionally denormalized specific high-frequency read attributes\u2014such as caching `user_display_name` in comment tables or `total_order_amount` in orders\u2014to avoid expensive 4-table multi-join queries on every page render.",
+    "bullet_points": [
+      "Explain 1NF (atomic columns), 2NF (full functional dependency), 3NF (no transitive dependencies).",
+      "Justify denormalization strictly with read-performance trade-offs.",
+      "Explain how you keep denormalized fields consistent using database triggers or service transactions."
+    ],
+    "pro_tip": "Denormalization without justification is sloppy; denormalization with conscious trade-offs is senior engineering.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-proj-db-003",
+    "topic_id": "topic-proj-database",
+    "title": "What indexing strategy did you use, and how did you verify index usage?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "B-Tree indexes on high-cardinality search filters and foreign keys (`WHERE user_id = ?`, `ORDER BY created_at DESC`). Composite indexes ordered by selectivity (`WHERE tenant_id = ? AND status = ?`). Verified index utilization using `EXPLAIN ANALYZE` in SQL to confirm an Index Scan / Index Only Scan rather than a costly Seq Scan.",
+    "bullet_points": [
+      "Explain B-Tree index mechanics for range and equality searches.",
+      "Explain the leftmost prefix rule in composite indexes.",
+      "Demonstrate familiarity with `EXPLAIN ANALYZE`."
+    ],
+    "pro_tip": "Adding indexes blindly slows down INSERT/UPDATE operations; explain the trade-off.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-proj-db-004",
+    "topic_id": "topic-proj-database",
+    "title": "How do you prevent race conditions and concurrent write issues (e.g., double spending/booking)?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Pessimistic vs Optimistic Locking: 1. Optimistic Locking: Add a `version` integer column. Update query does `WHERE id = ? AND version = current_version`. If another transaction updated first, 0 rows are affected and application retries. 2. Pessimistic Locking: Use `SELECT ... FOR UPDATE` inside a database transaction to lock the row exclusively until commit.",
+    "bullet_points": [
+      "Explain Optimistic Locking for low-contention scenarios (version column).",
+      "Explain Pessimistic Locking (`SELECT FOR UPDATE`) for high-contention scenarios (flash sales).",
+      "Mention database isolation levels (Read Committed vs Serializable)."
+    ],
+    "pro_tip": "Race conditions in inventory or wallet checkouts are a favorite interview problem.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-proj-db-005",
+    "topic_id": "topic-proj-database",
+    "title": "What is an N+1 query problem and how did you resolve it in your ORM?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Fetching parent records in 1 query, then executing N individual queries in a loop for each child's data (e.g. fetching 100 users, then running 100 queries for each user's profile). Resolved using Eager Loading (`JOIN FETCH` in Hibernate, `include` in Prisma, `select_related`/`prefetch_related` in Django) to fetch parent and children in 1 or 2 batch queries.",
+    "bullet_points": [
+      "Explain how ORMs lazily load relationships by default.",
+      "Calculate the network latency penalty of 101 round-trips vs 1 round-trip.",
+      "Demonstrate using Eager Loading / joins to fix it."
+    ],
+    "pro_tip": "Spotting and eliminating N+1 queries is essential for production ORM performance.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-proj-db-006",
+    "topic_id": "topic-proj-database",
+    "title": "What database isolation level did your project use, and what anomalies does it prevent?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Read Committed (default in PostgreSQL) or Repeatable Read: Read Committed prevents Dirty Reads (reading uncommitted data). Repeatable Read prevents Non-Repeatable Reads (reading different values in same transaction). Serializable prevents Phantom Reads (new rows appearing) using serializable snapshot isolation (SSI).",
+    "bullet_points": [
+      "Define Dirty Read, Non-Repeatable Read, and Phantom Read.",
+      "Compare performance cost of Read Committed vs Serializable.",
+      "Explain Snapshot Isolation."
+    ],
+    "pro_tip": "Knowing the 4 isolation levels proves rigorous computer science fundamentals.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-proj-db-007",
+    "topic_id": "topic-proj-database",
+    "title": "How does Write-Ahead Logging (WAL) ensure durability (the 'D' in ACID)?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Append-only sequential log before modifying data pages: Before any in-memory data page is modified, the change is written sequentially to the WAL on disk. In the event of a power crash, on reboot the database engine replays the WAL (Redo phase) and rolls back uncommitted transactions (Undo phase), guaranteeing zero committed data loss.",
+    "bullet_points": [
+      "Explain sequential disk write speed vs random disk I/O.",
+      "Detail the crash recovery phases: Analysis, Redo, Undo (ARIES protocol).",
+      "Connect WAL to ACID durability and database replication streams."
+    ],
+    "pro_tip": "WAL is the heartbeat of relational database reliability.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-proj-db-008",
+    "topic_id": "topic-proj-database",
+    "title": "When would you use a Composite Index over multiple single-column indexes?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "When queries filter on multiple columns together (`WHERE status = 'ACTIVE' AND created_at > ?`). A composite index `(status, created_at)` allows the database engine to perform a single index seek across both predicates, whereas two single-column indexes require an index bitmap merge or filter in memory.",
+    "bullet_points": [
+      "Explain the Leftmost Prefix Rule (composite index `(A, B)` serves queries on `A` and `A, B`, but not `B` alone).",
+      "Place higher-cardinality (more selective) columns first when appropriate.",
+      "Highlight avoiding unnecessary index storage bloat."
+    ],
+    "pro_tip": "Remember the Leftmost Prefix Rule; interviewers test it frequently.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-proj-db-009",
+    "topic_id": "topic-proj-database",
+    "title": "How do you handle soft deletes vs hard deletes in your database?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Soft deletes with `is_deleted` boolean or `deleted_at` timestamp: Soft deletion preserves referential integrity, historical audit trails, and allows user undo. Hard deletes permanently remove rows using `DELETE FROM`, requiring CASCADE handling. For soft deletes, add partial indexes (`WHERE is_deleted = false`) to keep queries fast.",
+    "bullet_points": [
+      "Explain audit compliance and accidental deletion recovery.",
+      "Mention the challenge of unique constraints with soft deletes (use partial unique indexes).",
+      "Detail periodic archival jobs for compliance (GDPR right to be forgotten)."
+    ],
+    "pro_tip": "Partial indexes (`WHERE deleted_at IS NULL`) optimize soft-delete query performance.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-proj-db-010",
+    "topic_id": "topic-proj-database",
+    "title": "What is connection pooling and why is it necessary for your database?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Reusing pre-established TCP connections to avoid handshake overhead: Establishing a TLS/TCP database connection and authenticating takes 30-100ms. A connection pool (HikariCP, PgBouncer) maintains a pool of open connections; requests borrow a connection, execute queries, and return it. It also limits max concurrent DB connections to prevent server OOM crashes.",
+    "bullet_points": [
+      "Explain the latency cost of establishing new DB TCP/TLS connections per request.",
+      "Detail how pool size throttling prevents database thread thrashing.",
+      "Highlight HikariCP or PgBouncer as production standards."
+    ],
+    "pro_tip": "Without a connection pool, 500 concurrent users will crash a PostgreSQL server via connection exhaustion.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-proj-db-011",
+    "topic_id": "topic-proj-database",
+    "title": "How do you store sensitive passwords securely in your database?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Adaptive salted hashing with bcrypt or Argon2id: Never store plaintext or MD5/SHA256 hashes. Bcrypt incorporates a unique random salt per user to defeat rainbow tables, and has an adjustable work factor (cost parameter, e.g. 10-12 rounds) that intentionally consumes CPU cycles to make offline brute-force cracking computationally infeasible.",
+    "bullet_points": [
+      "Explain why MD5 and plain SHA256 are too fast and vulnerable to GPU cracking.",
+      "Explain the role of salt (preventing identical hashes and rainbow tables).",
+      "Explain the adjustable work factor (cost parameter) to stay ahead of Moore's Law."
+    ],
+    "pro_tip": "Storing plaintext or fast-hash passwords is an automatic interview disqualification.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-proj-db-012",
+    "topic_id": "topic-proj-database",
+    "title": "What are database transactions and how did you use them in your business logic?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "All-or-nothing execution unit (Atomicity): In an order checkout flow, the transaction wraps: 1. Deducting item quantity from inventory, 2. Creating an Order record, 3. Creating a Payment transaction record. If the payment record fails, the entire transaction rolls back, leaving inventory unmodified and preventing corrupt partial state.",
+    "bullet_points": [
+      "Explain Atomicity, Consistency, Isolation, Durability (ACID).",
+      "Demonstrate `BEGIN TRANSACTION`, `COMMIT`, and `ROLLBACK`.",
+      "Emphasize wrapping multi-table dependent operations in a transaction."
+    ],
+    "pro_tip": "Transactions guarantee business integrity across multiple writes.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-proj-db-013",
+    "topic_id": "topic-proj-database",
+    "title": "How would you store hierarchical or tree-structured data in SQL?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Adjacency List vs Closure Table vs Path Enumeration: 1. Adjacency List (`parent_id` column): Simple, easy to update, but requires Recursive Common Table Expressions (`WITH RECURSIVE`) to query deep trees. 2. Closure Table: Separate table storing all ancestor-descendant paths; fast O(1) subtree queries at the cost of write complexity.",
+    "bullet_points": [
+      "Explain Recursive CTEs for traversing `parent_id` hierarchies in SQL.",
+      "Explain Closure Table trade-offs (fast reads, extra writes).",
+      "Mention materialized path (e.g. `/root/node1/node2`)."
+    ],
+    "pro_tip": "Recursive CTEs (`WITH RECURSIVE`) showcase advanced SQL proficiency.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-proj-db-014",
+    "topic_id": "topic-proj-database",
+    "title": "What is Database Sharding and when would your project need it?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Horizontal partitioning across multiple independent database servers: Sharding splits rows across database shards based on a shard key (e.g., `hash(user_id) % num_shards`). It is needed when data volume or write throughput exceeds the physical CPU/RAM/IOPS limits of a single vertical database server. Cross-shard joins become complex and costly.",
+    "bullet_points": [
+      "Differentiate Vertical Scaling (bigger machine) from Horizontal Sharding.",
+      "Explain the critical importance of selecting an even Shard Key to prevent hot spots.",
+      "Acknowledge trade-offs: loss of ACID across shards and difficult cross-shard joins."
+    ],
+    "pro_tip": "Sharding is a last resort after indexing, caching, and read replicas have been exhausted.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-proj-db-015",
+    "topic_id": "topic-proj-database",
+    "title": "What is the difference between an Inner Join, Left Join, and Cross Join?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Set theory mechanics: Inner Join returns only rows with matches in both tables. Left Join returns all rows from the left table, with nulls for non-matching right table columns. Cross Join produces the Cartesian product of all rows from both tables (N x M rows).",
+    "bullet_points": [
+      "Draw or explain the Venn diagram relationships.",
+      "Explain practical use case for Left Join (e.g. listing users and their optional orders).",
+      "Warn against accidental Cross Joins that cause memory exhaustion."
+    ],
+    "pro_tip": "Core SQL knowledge: explain with clear, concrete query examples.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-proj-db-016",
+    "topic_id": "topic-proj-database",
+    "title": "How did you handle database backups and disaster recovery for your project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Automated daily snapshot dumps + Point-in-Time Recovery (PITR): 1. Automated nightly backups (`pg_dump`) encrypted and uploaded to off-site cloud storage (AWS S3) with 30-day lifecycle retention. 2. Continuous WAL archiving enabled Point-in-Time Recovery (PITR) to restore database state to any specific second before a corruption event.",
+    "bullet_points": [
+      "Explain the difference between logical backups (`pg_dump`) and physical backups.",
+      "Detail Point-in-Time Recovery (PITR) using WAL archives.",
+      "Test backup restoration regularly to verify integrity."
+    ],
+    "pro_tip": "Untested backups are not backups: show you think about disaster recovery.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-proj-db-017",
+    "topic_id": "topic-proj-database",
+    "title": "What is a Database View and when should you use a Materialized View?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Virtual query vs Cached disk snapshot: A standard View is a saved SQL query executed on-the-fly whenever queried. A Materialized View executes the query, writes the result table physically to disk, and indexes it. Use Materialized Views for expensive, long-running aggregation reports (e.g., monthly sales analytics) refreshed on a schedule.",
+    "bullet_points": [
+      "A standard View is syntactic sugar; a Materialized View is cached storage.",
+      "Materialized views can have their own indexes for ultra-fast reads.",
+      "Explain the refresh mechanism (`REFRESH MATERIALIZED VIEW CONCURRENTLY`)."
+    ],
+    "pro_tip": "Materialized views are a database-native caching solution for complex analytics.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-proj-db-018",
+    "topic_id": "topic-proj-database",
+    "title": "How do you handle schema versioning when multiple developers collaborate?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Git-tracked incremental migration scripts: Developers never modify existing applied migration files. Every schema change is a new timestamped migration file (`20260914_add_avatar_url.sql`). Git merge conflicts in migration directories are caught in CI, preventing schema drift between development branches and staging databases.",
+    "bullet_points": [
+      "Treat database migrations as immutable source code.",
+      "Automate migration dry-runs in CI pipeline.",
+      "Prevent manual drift with schema dump validation."
+    ],
+    "pro_tip": "Schema drift between local and production is an amateur mistake; migrations prevent it.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-proj-db-019",
+    "topic_id": "topic-proj-database",
+    "title": "What are Foreign Key Constraints and why do some high-scale companies disable them?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Relational integrity enforcement vs write throughput: Foreign keys ensure referenced rows exist, preventing orphaned records. However, at extreme scale, foreign key checks require shared locks on parent tables during writes, causing lock contention, and cannot span across sharded databases. High-scale architectures often enforce integrity at the application layer instead.",
+    "bullet_points": [
+      "Explain the data safety benefits of DB-level foreign key constraints for 99% of apps.",
+      "Explain why distributed/sharded systems enforce relations at the application service level.",
+      "Highlight cascading deletes risks (`ON DELETE CASCADE`)."
+    ],
+    "pro_tip": "Balancing data integrity against high-throughput concurrency shows architectural depth.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-proj-db-020",
+    "topic_id": "topic-proj-database",
+    "title": "How do you optimize a slow database query step-by-step?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "The 4-Step Query Tuning Checklist: 1. Profile with `EXPLAIN ANALYZE` to locate the bottleneck (Seq Scan, Hash Join, Disk Sort). 2. Add or optimize B-Tree/Composite indexes matching the filter and sort predicates. 3. Select only required columns (avoid `SELECT *`) to enable Index-Only scans. 4. If volume is massive, partition table by date range or introduce Redis caching.",
+    "bullet_points": [
+      "Start with `EXPLAIN ANALYZE`, not guesswork.",
+      "Check for missing indexes on foreign keys and WHERE clauses.",
+      "Avoid `SELECT *` to minimize network payload and memory buffer usage."
+    ],
+    "pro_tip": "Walking through an empirical optimization process impresses senior interviewers.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-proj-db-021",
+    "topic_id": "topic-proj-database",
+    "title": "What is Table Partitioning and how does it improve query performance?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Splitting a large table into smaller physical sub-tables while maintaining a single logical interface: Partitioning by range (e.g. date: `orders_2026_01`, `orders_2026_02`). When a query specifies `WHERE order_date >= '2026-01-01'`, the query planner performs 'partition pruning', scanning only that month's partition and ignoring millions of older rows.",
+    "bullet_points": [
+      "Explain Partition Pruning during query optimization.",
+      "Compare Range, List, and Hash partitioning.",
+      "Detail operational benefits like dropping old partitions instantly with `DROP TABLE` instead of slow `DELETE`."
+    ],
+    "pro_tip": "Partition pruning dramatically accelerates queries on multi-million row time-series data.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-proj-db-022",
+    "topic_id": "topic-proj-database",
+    "title": "How do you handle JSON data inside a relational database (e.g., PostgreSQL JSONB)?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Hybrid schema design: Store structured core entities (id, user_id, status) in normalized relational columns, and variable/dynamic attributes (custom user settings, third-party webhook payloads) in PostgreSQL `JSONB` columns. `JSONB` stores decomposed binary JSON and supports GIN indexing for fast nested key queries.",
+    "bullet_points": [
+      "Differentiate PostgreSQL `JSON` (raw text) from `JSONB` (binary, indexed).",
+      "Explain GIN (Generalized Inverted Index) on JSONB columns for fast key searches.",
+      "Combine the best of relational integrity with NoSQL flexibility."
+    ],
+    "pro_tip": "PostgreSQL JSONB makes relational databases powerful enough to replace MongoDB for many use cases.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-proj-db-023",
+    "topic_id": "topic-proj-database",
+    "title": "What are ACID properties in the context of your application?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "A - Atomicity: Entire transaction completes or rolls back (no partial orders). C - Consistency: Database transitions from one valid state to another, preserving constraints. I - Isolation: Concurrent transactions do not interfere with each other. D - Durability: Committed data survives crashes via WAL.",
+    "bullet_points": [
+      "Define each letter with a concrete project example.",
+      "Explain how database engines enforce each property.",
+      "Tie isolation to concurrency and durability to Write-Ahead Logs."
+    ],
+    "pro_tip": "Be ready to explain how your application code invokes and benefits from ACID transactions.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-proj-db-024",
+    "topic_id": "topic-proj-database",
+    "title": "What is the difference between clustered and non-clustered indexes?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Physical sorting vs pointer lookup: A Clustered Index dictates the actual physical sorting order of rows on disk (only one clustered index per table, usually the Primary Key). A Non-Clustered Index is a separate secondary B-tree containing indexed key columns and pointers (row IDs) back to the actual data row.",
+    "bullet_points": [
+      "Only one clustered index per table because data can only be physically sorted once.",
+      "Secondary non-clustered indexes require a lookup to the base table (unless covered).",
+      "Explain Covering Indexes (Index-Only Scans)."
+    ],
+    "pro_tip": "A foundational database question asked in almost every technical interview.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-proj-db-025",
+    "topic_id": "topic-proj-database",
+    "title": "How do you prevent Deadlocks in a relational database?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Enforce consistent lock ordering: A deadlock occurs when Transaction A locks Row 1 and waits for Row 2, while Transaction B locks Row 2 and waits for Row 1. Prevention: 1. Always update multiple resources in a consistent deterministic order (e.g., sort IDs before locking). 2. Keep transactions as short as possible. 3. Set a reasonable deadlock timeout.",
+    "bullet_points": [
+      "Explain circular wait conditions.",
+      "Show that sorting IDs before acquiring locks eliminates circular dependencies.",
+      "Keep transactions small and avoid user interaction inside open transactions."
+    ],
+    "pro_tip": "Lock ordering is the mathematically proven solution to prevent deadlocks.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-proj-scale-001",
+    "topic_id": "topic-proj-scalability",
+    "title": "How does Redis caching improve your application's response time?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Sub-millisecond in-memory lookups: Redis stores data in RAM with optimized data structures (Strings, Hashes, Sets, Sorted Sets), returning queries in <1ms compared to 15-50ms for disk-based relational queries. Caching hot read queries (e.g. user sessions, product catalogs) offloads 80%+ of read traffic from the primary database.",
+    "bullet_points": [
+      "Explain RAM access speed (nanoseconds) vs disk/SSD access (milliseconds).",
+      "Describe the Cache-Aside pattern with TTL expiration.",
+      "Highlight offloading database CPU and connection pools."
+    ],
+    "pro_tip": "Quantify performance: 'Reduced p95 API response time from 120ms to 8ms using Redis.'",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-proj-scale-002",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do you handle Cache Invalidation when underlying data changes?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Event-driven invalidation + TTL safety net: 1. On write mutations (PUT/POST/DELETE), the service updates the database and immediately calls `redis.del(cache_key)`. 2. Every cache key is set with an explicit TTL (e.g., 15 minutes) as a backstop against stale data lingering if an invalidation event fails. 3. For complex views, use versioned cache tags.",
+    "bullet_points": [
+      "Explain 'Delete on write' rather than 'Update on write' to avoid race conditions.",
+      "Always enforce a Time-To-Live (TTL) on cached keys.",
+      "Address cache stampede with distributed mutex locking."
+    ],
+    "pro_tip": "Never leave cached keys without a TTL; infinite TTLs cause memory leaks and stale bugs.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-proj-scale-003",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is a Cache Stampede (Thundering Herd) problem and how do you mitigate it?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Massive concurrent requests hitting DB simultaneously when a popular cache key expires: When a hot key expires, hundreds of concurrent threads experience a cache miss and all execute the expensive DB query at once. Mitigations: 1. Distributed lock (Redis `SET NX`): only the first thread executes the DB query while others wait. 2. Probabilistic early expiration (XFetch algorithm) where the cache refreshes before it expires.",
+    "bullet_points": [
+      "Explain the spike in database CPU load when hot cache keys expire.",
+      "Implement distributed mutex locking using Redis `SET key value NX EX seconds`.",
+      "Mention background pre-warming and probabilistic early refresh."
+    ],
+    "pro_tip": "A classic distributed systems interview question; demonstrating mutex locking shows deep systems mastery.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-proj-scale-004",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do you scale your backend horizontally behind a Load Balancer?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Stateless application servers + Layer 7 Reverse Proxy: Application servers store no local session state in memory (sessions stored in Redis or signed JWTs). A load balancer (Nginx, AWS ALB) distributes incoming HTTP traffic across multiple containerized instances using algorithms like Round Robin or Least Connections. Auto-scaling groups spin up instances based on CPU/memory metrics.",
+    "bullet_points": [
+      "Statelessness is the prerequisite for horizontal scaling.",
+      "Explain Layer 4 (TCP) vs Layer 7 (HTTP/Path-based) load balancing.",
+      "Compare Round Robin, Least Connections, and IP Hash algorithms."
+    ],
+    "pro_tip": "Explain that horizontal scaling adds commodity instances, whereas vertical scaling hits a physical hardware ceiling.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-proj-scale-005",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is Database Read Replication and how does it work?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Primary-Replica (Master-Slave) topology: The primary database instance handles all write mutations (INSERT/UPDATE/DELETE) and streams its Write-Ahead Log (WAL) asynchronously to read replicas. The application routes read queries to replicas and write queries to the primary. This scales read throughput linearly for read-heavy applications (e.g. 90% reads, 10% writes).",
+    "bullet_points": [
+      "Explain asynchronous streaming replication using WAL.",
+      "Detail the risk of Replication Lag (eventual consistency).",
+      "Use 'Read-Your-Own-Writes' consistency by routing reads immediately following a write to the primary."
+    ],
+    "pro_tip": "Mentioning Replication Lag and how to mitigate it proves real production understanding.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-proj-scale-006",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is a Content Delivery Network (CDN) and how does it reduce latency?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Geographically distributed edge caching: A CDN (Cloudflare, AWS CloudFront) caches static assets (images, CSS, JS bundles, videos) at edge point-of-presence (PoP) servers close to the end user. When a user requests an asset, it is served from the nearest edge node in 10-20ms, bypassing the origin server entirely and reducing bandwidth consumption.",
+    "bullet_points": [
+      "Explain latency reduction via physical proximity (speed of light in fiber).",
+      "Explain offloading static asset traffic from origin servers.",
+      "Discuss cache headers (`Cache-Control: public, max-age=31536000, immutable`)."
+    ],
+    "pro_tip": "Static assets should never hit your application server in production: CDNs are mandatory.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-proj-scale-007",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do you implement Rate Limiting to prevent API abuse and DDoS?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Token Bucket or Sliding Window algorithm using Redis: 1. Token Bucket algorithm: Tokens refill at a constant rate; each request consumes a token; if empty, returns HTTP 429 Too Many Requests. 2. Sliding Window Counter in Redis using sorted sets tracks timestamps per IP/user, preventing burst abuse at window boundaries. Returns `Retry-After` header.",
+    "bullet_points": [
+      "Explain Token Bucket, Leaky Bucket, and Sliding Window Counter.",
+      "Explain why Fixed Window counters allow 2x traffic bursts at boundary intervals.",
+      "Detail returning HTTP 429 with `X-RateLimit-Remaining` and `Retry-After` headers."
+    ],
+    "pro_tip": "Rate limiting protects backend services from malicious actors and runaway client loops.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-proj-scale-008",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is the difference between latency, throughput, and bandwidth?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Core networking metrics: Latency is the time taken for a single data packet to travel from sender to receiver (measured in ms). Throughput is the actual volume of successful work or requests processed per unit time (e.g., 5,000 Requests Per Second). Bandwidth is the theoretical maximum data transfer capacity of the network link (e.g., 1 Gbps).",
+    "bullet_points": [
+      "Use the water pipe analogy: Bandwidth is pipe width, latency is water travel time, throughput is gallons delivered per minute.",
+      "Explain how reducing latency increases throughput.",
+      "Clarify that high bandwidth does not automatically guarantee low latency."
+    ],
+    "pro_tip": "Clear, precise definitions showcase networking competence.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-proj-scale-009",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do Message Queues (RabbitMQ, Kafka) enable asynchronous scalability?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Producer-Consumer decoupling and traffic smoothing: Instead of processing heavy operations synchronously, the web server publishes messages to a queue and immediately returns a success response. Independent worker pools consume messages at their own sustainable pace. During traffic spikes, the queue absorbs the surge like a shock absorber, preventing backend crashes.",
+    "bullet_points": [
+      "Explain decoupling of producer and consumer services.",
+      "Highlight backpressure management and spike smoothing.",
+      "Compare RabbitMQ (smart broker, complex routing) with Kafka (distributed append-only log, high throughput)."
+    ],
+    "pro_tip": "Message queues prevent high traffic spikes from crashing downstream database services.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-proj-scale-010",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is Database Connection Exhaustion and how did you prevent it?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Exceeding maximum database connection limits: Each database connection consumes OS threads and memory. Under high concurrency, web servers create more connections than the database can handle, resulting in `FATAL: too many connections`. Prevention: 1. Use a lightweight connection pooler (PgBouncer, HikariCP), 2. Size pool correctly (`connections = (core_count * 2) + effective_spindle_count`), 3. Keep transactions brief.",
+    "bullet_points": [
+      "Explain that more connections do not mean faster queries (causes CPU context switching).",
+      "Detail PgBouncer transaction-level pooling.",
+      "Release database connections back to the pool immediately after query execution."
+    ],
+    "pro_tip": "Proper connection pool sizing is a quintessential production engineering topic.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-proj-scale-011",
+    "topic_id": "topic-proj-scalability",
+    "title": "How does Database Indexing impact Write performance?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Every index is an additional B-tree that must be updated on every INSERT/UPDATE/DELETE: While indexes drastically accelerate SELECT queries, each index requires disk writes, B-tree node splits, and rebalancing during mutations. Unused or redundant indexes degrade write throughput and consume memory buffer space. Maintain only selective, proven indexes.",
+    "bullet_points": [
+      "Explain B-tree maintenance overhead during writes.",
+      "Explain why write-heavy tables should have fewer, highly selective indexes.",
+      "Monitor unused indexes using `pg_stat_user_indexes`."
+    ],
+    "pro_tip": "Engineering is about trade-offs: index reads vs write penalties.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-proj-scale-012",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is Horizontal Pod Autoscaling (HPA) in Kubernetes?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Dynamic container scaling based on resource metrics: HPA automatically adjusts the number of pod replicas in a deployment based on observed CPU utilization, memory thresholds, or custom metrics (e.g., request count per second). When load drops, HPA scales pods down to save cloud compute costs.",
+    "bullet_points": [
+      "Explain target metrics (e.g., scale when CPU > 70%).",
+      "Describe cooldown / stabilization windows to prevent rapid flapping.",
+      "Mention cluster autoscaling when nodes run out of capacity."
+    ],
+    "pro_tip": "Container auto-scaling provides elastic cloud cost management.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-proj-scale-013",
+    "topic_id": "topic-proj-scalability",
+    "title": "How did you optimize your frontend bundle size for fast initial load?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Route-based Code Splitting + Tree Shaking + Asset Compression: 1. Implemented React lazy loading (`React.lazy`, dynamic `import()`) to load routes on demand rather than in a single monolithic bundle. 2. Configured Vite/Webpack tree-shaking to eliminate unused dead code. 3. Compressed static assets using Brotli/Gzip and converted images to modern WebP/AVIF formats.",
+    "bullet_points": [
+      "Measure with bundle analyzers (e.g. `rollup-plugin-visualizer`).",
+      "Explain dynamic `import()` creating separate chunk files.",
+      "Target Core Web Vitals: LCP (Largest Contentful Paint) < 2.5s."
+    ],
+    "pro_tip": "Frontend performance directly drives user conversion and SEO rankings.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-proj-scale-014",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is Circuit Breaker pattern in microservices or external API calls?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Preventing cascading failures across distributed systems: If an external service (e.g., payment gateway or SMS API) is failing, the Circuit Breaker trips from Closed to Open, immediately failing fast and returning a fallback response without wasting threads or waiting for timeouts. After a cooldown, it enters Half-Open to test if the service has recovered.",
+    "bullet_points": [
+      "Three states: Closed (normal), Open (fail fast), Half-Open (trial requests).",
+      "Prevents thread pool exhaustion from hanging on slow downstream services.",
+      "Provides graceful degradation (fallback data)."
+    ],
+    "pro_tip": "Circuit breakers protect systems from dying because of a single failing dependency.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-proj-scale-015",
+    "topic_id": "topic-proj-scalability",
+    "title": "How does Gzip/Brotli compression work on HTTP responses?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Lempel-Ziv + Huffman encoding on text assets: The web server compresses HTML, CSS, JSON, and JS payloads using lossless compression algorithms before sending over the wire. The browser decompresses in memory. Brotli offers 15-20% better compression than Gzip for text assets, reducing payload size by up to 70% and accelerating page load on mobile networks.",
+    "bullet_points": [
+      "Explain client-server negotiation via `Accept-Encoding: gzip, br` header.",
+      "Only compress text assets; never re-compress images (JPEG, PNG, WebP) as it wastes CPU.",
+      "Show measurable payload reductions (e.g., 500KB bundle -> 120KB)."
+    ],
+    "pro_tip": "Compression is free network bandwidth optimization.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-proj-scale-016",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is Database Sharding vs Partitioning?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Multi-machine horizontal distribution vs single-machine table organization: Partitioning splits a large table into smaller physical pieces (e.g., by date) within a single database instance on one server. Sharding splits the data across entirely separate, independent physical database servers, each with its own CPU and memory, requiring application-level routing via a shard key.",
+    "bullet_points": [
+      "Partitioning = single database server; Sharding = multiple distributed database servers.",
+      "Partitioning retains ACID and easy joins; Sharding sacrifices simple cross-shard queries.",
+      "Always partition and add read replicas before attempting sharding."
+    ],
+    "pro_tip": "Precision between partitioning and sharding separates candidates who truly understand database architecture.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-proj-scale-017",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do you prevent Memory Leaks in a long-running Node.js or Java backend?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Managing persistent references and event listeners: 1. In Node.js: Avoid unbounded global objects, unclosed database connection streams, and unremoved event listeners (`EventEmitter.on` without `.removeListener`). 2. Profile heap snapshots using Chrome DevTools or JVM VisualVM to identify objects retained in memory across GC cycles.",
+    "bullet_points": [
+      "Explain Garbage Collection (mark-and-sweep).",
+      "Identify common leak culprits: global caches without eviction, unclosed sockets, detached DOM nodes.",
+      "Use heap profilers to inspect memory delta between snapshots."
+    ],
+    "pro_tip": "Memory leak debugging showcases advanced runtime diagnostics.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-proj-scale-018",
+    "topic_id": "topic-proj-scalability",
+    "title": "What are Core Web Vitals and why do they matter for your project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Google's user-centric performance metrics: 1. LCP (Largest Contentful Paint): measures loading speed (target < 2.5s). 2. INP (Interaction to Next Paint) / FID: measures UI responsiveness to user clicks (target < 200ms). 3. CLS (Cumulative Layout Shift): measures visual layout stability (target < 0.1). They directly dictate Google SEO rankings and user retention.",
+    "bullet_points": [
+      "Define LCP, INP, and CLS clearly.",
+      "Mention optimizing fonts, image dimensions, and reducing main-thread JavaScript blocking.",
+      "Demonstrate understanding of user-perceived performance."
+    ],
+    "pro_tip": "Fast loading is a core product feature, not just a technical detail.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-proj-scale-019",
+    "topic_id": "topic-proj-scalability",
+    "title": "How does HTTP/2 improve performance compared to HTTP/1.1?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Multiplexing over a single TCP connection: HTTP/1.1 suffered from Head-of-Line blocking (max 6 parallel TCP connections per domain). HTTP/2 introduces binary framing and multiplexing, allowing hundreds of concurrent requests and responses over a single TCP connection, eliminating connection overhead and enabling Server Push and HPACK header compression.",
+    "bullet_points": [
+      "Explain Head-of-Line blocking in HTTP/1.1.",
+      "Explain binary framing and multiplexing in HTTP/2.",
+      "Highlight HPACK header compression reducing redundant cookie/header bytes."
+    ],
+    "pro_tip": "HTTP/2 eliminates the need for HTTP/1.1 hacks like domain sharding and CSS image spriting.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-proj-scale-020",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do you handle background job failures and retries gracefully?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Exponential Backoff + Jitter + Dead Letter Queues (DLQ): 1. When a worker fails (e.g., external API timeout), retry with exponential backoff (`delay = base * 2^attempt + random_jitter`) to prevent hammering the service. 2. If all retries (e.g. 5 attempts) fail, move message to a Dead Letter Queue (DLQ) for alerting and manual engineering inspection.",
+    "bullet_points": [
+      "Explain why exponential backoff prevents thundering herd retries.",
+      "Add random jitter to spread retry bursts across time.",
+      "Use Dead Letter Queues to prevent poison-pill messages from crashing worker loops."
+    ],
+    "pro_tip": "A robust retry architecture proves enterprise reliability experience.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-proj-scale-021",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is Database Replication Lag and how do you handle it in critical flows?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Data delay between primary commit and replica update: In asynchronous replication, a user might update their profile (written to primary) and immediately get redirected to view it (read from replica), seeing stale data. Solution: 'Read-Your-Own-Writes' consistency\u2014route queries to the primary for 5 seconds after a user write, or use sticky sessions for recent mutators.",
+    "bullet_points": [
+      "Explain eventual consistency in asynchronous read replicas.",
+      "Implement session tracking or header flags to route post-write reads to primary.",
+      "Explain synchronous replication trade-offs (slower writes)."
+    ],
+    "pro_tip": "Handling replication lag separates naive designs from production-ready systems.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-proj-scale-022",
+    "topic_id": "topic-proj-scalability",
+    "title": "How do you profile and eliminate frontend re-renders in React?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "React Profiler + Memoization + State Colocation: 1. Use React DevTools Profiler to record rendering flamegraphs and identify components rendering unnecessarily. 2. Colocate state down to the lowest sub-component rather than hoisting everything to the root. 3. Use `React.memo`, `useMemo`, and `useCallback` strategically on expensive subtrees, avoiding premature optimization.",
+    "bullet_points": [
+      "Colocate state first before reaching for memoization.",
+      "Use React DevTools Profiler to measure commit phases.",
+      "Ensure stable object/function references in hook dependencies."
+    ],
+    "pro_tip": "State colocation fixes 80% of React re-render performance issues without complex memoization.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-proj-scale-023",
+    "topic_id": "topic-proj-scalability",
+    "title": "What is an In-Memory Database vs In-Memory Cache?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Persistence guarantees and durability: An In-Memory Cache (like Memcached) is purely volatile; data loss on reboot is expected. An In-Memory Database (like Redis or SAP HANA) stores primary data in memory for sub-millisecond access, but provides configurable persistence (RDB snapshots, AOF append-only files) to restore state completely on reboot.",
+    "bullet_points": [
+      "Redis is a data structure store with persistence; Memcached is a simple LRU key-value cache.",
+      "Detail Redis persistence: RDB (point-in-time snapshots) vs AOF (append-only log).",
+      "Highlight use cases for each."
+    ],
+    "pro_tip": "Redis is more than a cache: it is a full in-memory database with pub/sub and geospatial capabilities.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-proj-scale-024",
+    "topic_id": "topic-proj-scalability",
+    "title": "How would you design a URL shortener system (like bit.ly) to scale to billions of URLs?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "High-level system design: 1. Base62 encoding on unique 64-bit integer IDs (Snowflake or distributed ID generator) to generate 7-character short URLs (`62^7 = 3.5 trillion URLs`). 2. Store mapping in distributed key-value store or PostgreSQL. 3. Cache top 20% hot URLs in Redis with LRU eviction. 4. Return HTTP 302 Found (for analytics tracking) or 301 Moved Permanently (for browser caching).",
+    "bullet_points": [
+      "Explain Base62 encoding (a-z, A-Z, 0-9) vs random hashing with collisions.",
+      "Compare HTTP 301 (permanent, client cached) vs 302 (temporary, server tracks analytics).",
+      "Calculate storage: 1 billion URLs * 500 bytes = 500 GB (fits easily on a single modern server/cache)."
+    ],
+    "pro_tip": "The quintessential system design interview question: nail the Base62 encoding and HTTP redirect codes.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-proj-scale-025",
+    "topic_id": "topic-proj-scalability",
+    "title": "What monitoring, logging, and metrics tools would you add to your project in production?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "The Three Pillars of Observability: 1. Metrics: Prometheus + Grafana to monitor CPU, memory, RPS, and p99 latency. 2. Logging: Structured JSON logs with correlation IDs forwarded to OpenSearch/ELK stack. 3. Tracing: OpenTelemetry + Jaeger to trace distributed requests end-to-end across microservices. Sentry for frontend and backend runtime error capture.",
+    "bullet_points": [
+      "Mention Metrics, Logs, and Traces (the 3 pillars of observability).",
+      "Emphasize correlation IDs across microservices for distributed tracing.",
+      "Integrate Sentry for automated exception alerting."
+    ],
+    "pro_tip": "Software isn't production-ready until it is observable and monitored.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
+  },
+  {
+    "id": "int-proj-viva-001",
+    "topic_id": "topic-proj-viva",
+    "title": "What is the single biggest architectural mistake you made in this project and what did you learn?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Authentic engineering reflection: 'Early on, I coupled payment webhook processing synchronously inside our HTTP checkout controller. During a test network timeout, client threads hung and multiple retries caused duplicate inventory checks. I refactored it into an asynchronous, idempotent queue worker using BullMQ and Redis idempotency keys. It taught me the necessity of decoupling external third-party APIs from core request threads.'",
+    "bullet_points": [
+      "Never claim your project was 100% flawless; interviewers know that is untrue.",
+      "Detail the symptom, the root cause, and the architectural refactor.",
+      "Articulate the enduring engineering lesson learned."
+    ],
+    "pro_tip": "Mature engineers reflect openly on mistakes and demonstrate how they engineered robust fixes.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 1
+  },
+  {
+    "id": "int-proj-viva-002",
+    "topic_id": "topic-proj-viva",
+    "title": "If you had to rewrite this entire project from scratch today, what would you do differently?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Strategic hindsight: 1. Define explicit OpenAPI/Swagger contracts before writing any frontend or backend code to accelerate integration. 2. Implement automated integration tests in CI from day one rather than retrofitting them later. 3. Adopt TypeScript across both frontend and backend for end-to-end type safety across API boundaries.",
+    "bullet_points": [
+      "Focus on architectural and process improvements.",
+      "Highlight type safety, API contracts, and CI/CD testing.",
+      "Show how your engineering standards have matured."
+    ],
+    "pro_tip": "Demonstrates growth: show how much more you know now compared to when you started.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 2
+  },
+  {
+    "id": "int-proj-viva-003",
+    "topic_id": "topic-proj-viva",
+    "title": "How did you test your project to ensure it works correctly before deployment?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "The Testing Pyramid: 1. Unit Tests (Jest/PyTest): Testing pure functions, utility algorithms, and service layer logic with mock data. 2. Integration Tests: Testing database queries and API endpoints using test containers (supertest with an ephemeral test database). 3. End-to-End Tests (Cypress/Playwright): Testing critical user journeys (login, checkout, search) in a real browser.",
+    "bullet_points": [
+      "Explain the Testing Pyramid: many fast unit tests, moderate integration tests, few end-to-end tests.",
+      "Explain mocking external services in unit tests.",
+      "Never say 'I only tested it manually in the browser'."
+    ],
+    "pro_tip": "Testing discipline is the clearest differentiator between student code and industry code.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 3
+  },
+  {
+    "id": "int-proj-viva-004",
+    "topic_id": "topic-proj-viva",
+    "title": "What happens behind the scenes from the moment a user types your app's URL in the browser and hits Enter?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "The Full 8-Step Lifecycle: 1. Browser checks DNS cache, then queries DNS resolvers to translate domain to IP. 2. TCP 3-way handshake (SYN, SYN-ACK, ACK) and TLS 1.3 cryptographic handshake. 3. Browser sends HTTP GET request. 4. CDN edge node or reverse proxy (Nginx) terminates TLS and forwards to backend. 5. Backend router, middleware, and controller execute DB query. 6. Backend returns HTTP 200 with HTML/JSON. 7. Browser parses HTML, builds DOM and CSSOM, constructs Render Tree. 8. Layout, Paint, and Composite steps render the pixels.",
+    "bullet_points": [
+      "Walk through DNS -> TCP/TLS -> HTTP -> Backend Controller -> DB -> Browser DOM/CSSOM -> Paint.",
+      "Explain the 3-way handshake simply.",
+      "Detail browser rendering phases."
+    ],
+    "pro_tip": "The ultimate Computer Science comprehensive question: covers networking, OS, backend, and browser internals.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 4
+  },
+  {
+    "id": "int-proj-viva-005",
+    "topic_id": "topic-proj-viva",
+    "title": "How do you prevent a single slow database query from freezing your entire backend server?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Strict query timeouts + Asynchronous I/O + Separate connection pools: 1. Enforce strict database query timeouts (`statement_timeout = 2000` ms) so slow queries fail fast rather than hanging indefinitely. 2. Ensure all database calls are non-blocking asynchronous promises. 3. Use separate connection pools for fast OLTP user requests vs slow background analytics queries.",
+    "bullet_points": [
+      "Set statement timeouts at the database driver level.",
+      "Keep analytics queries off the primary transactional connection pool.",
+      "Log slow queries using the database slow query log (`pg_stat_statements`)."
+    ],
+    "pro_tip": "Fail-fast query timeouts protect server threads from cascading exhaustion.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 5
+  },
+  {
+    "id": "int-proj-viva-006",
+    "topic_id": "topic-proj-viva",
+    "title": "How did you validate and sanitize user inputs to prevent malicious payloads?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Schema-driven validation at the API boundary: Use validation libraries (Zod, Joi, class-validator) to validate incoming request bodies against strict schemas (type checking, string length, regex constraints, whitelist allowed keys). Strip unknown parameters to prevent Mass Assignment vulnerabilities, and sanitize HTML using DOMPurify.",
+    "bullet_points": [
+      "Validate at the API controller boundary before business logic runs.",
+      "Strip unknown fields to prevent Mass Assignment attacks (e.g. user injecting `is_admin: true`).",
+      "Never rely solely on frontend validation; backend validation is mandatory."
+    ],
+    "pro_tip": "Frontend validation is for user experience; backend validation is for security.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 6
+  },
+  {
+    "id": "int-proj-viva-007",
+    "topic_id": "topic-proj-viva",
+    "title": "What third-party APIs or libraries did you integrate, and how do you handle their downtime?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Defensive integration with timeouts, retries, and circuit breakers: 1. Wrapped all external API calls (e.g., Stripe, SendGrid) in strict HTTP timeouts (e.g., 3 seconds) to prevent server threads from hanging. 2. Implemented exponential backoff retries for transient 5xx errors. 3. Built fallback states (e.g., if recommendation API is down, fallback to top 10 popular products).",
+    "bullet_points": [
+      "Never allow third-party latency to block core user requests.",
+      "Set explicit HTTP timeouts on axios/fetch instances.",
+      "Provide graceful degradation and fallback responses."
+    ],
+    "pro_tip": "Third-party APIs will fail in production: show you planned for their failure.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 7
+  },
+  {
+    "id": "int-proj-viva-008",
+    "topic_id": "topic-proj-viva",
+    "title": "How did you secure sensitive data like API keys, database credentials, and user PII?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Environment isolation + Encryption at rest and in transit: 1. In transit: Enforce TLS/HTTPS with HSTS headers. 2. At rest: Sensitive database columns (SSN, credit card tokens) encrypted using AES-256 with keys managed by cloud KMS. 3. Secrets management: API keys stored in environment variables injected at runtime, never committed to source control.",
+    "bullet_points": [
+      "Differentiate encryption in transit (TLS) from encryption at rest (AES-256).",
+      "Use cloud secrets managers (AWS Secrets Manager, HashiCorp Vault) for key rotation.",
+      "Enforce `.gitignore` and run automated secrets scanners (git-secrets, TruffleHog) in CI."
+    ],
+    "pro_tip": "Data privacy and secrets management are fundamental compliance requirements.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 8
+  },
+  {
+    "id": "int-proj-viva-009",
+    "topic_id": "topic-proj-viva",
+    "title": "What is your deployment pipeline and CI/CD workflow for this project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Automated GitHub Actions CI/CD pipeline: 1. On pull request: GitHub Actions runs linters (ESLint/Prettier), type-checks (tsc), and executes unit and integration tests. 2. On merge to main: Builds optimized Docker containers, tags them with the git commit SHA, pushes to container registry, and deploys to cloud hosting with zero downtime rolling updates.",
+    "bullet_points": [
+      "Detail the CI stages: Lint -> Type Check -> Test -> Build -> Deploy.",
+      "Explain how automated CI blocks merging broken code.",
+      "Mention zero-downtime rolling updates."
+    ],
+    "pro_tip": "Automated CI/CD proves your development process matches modern industry standards.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 9
+  },
+  {
+    "id": "int-proj-viva-010",
+    "topic_id": "topic-proj-viva",
+    "title": "How do you handle user session expiration and token refresh without forcing re-login?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Silent token refresh with Axios interceptors: When an API request returns HTTP 401 Unauthorized, an HTTP client interceptor pauses outgoing requests, sends a request to `/api/auth/refresh` using the HttpOnly refresh token cookie, receives a fresh 15-minute access token, and transparently retries the original request without user interruption.",
+    "bullet_points": [
+      "Explain the HTTP 401 response interceptor loop.",
+      "Use a queue to replay requests that arrived while token refresh was in flight.",
+      "If refresh token is expired or revoked, redirect gracefully to `/login`."
+    ],
+    "pro_tip": "Silent token refresh provides a seamless, secure user experience.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 10
+  },
+  {
+    "id": "int-proj-viva-011",
+    "topic_id": "topic-proj-viva",
+    "title": "What is the memory and CPU footprint of your project under normal vs peak load?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Container resource profiling: In development Docker containers, our backend service consumes ~85MB RAM at idle and 250MB under 500 concurrent requests, with CPU hovering at 15-25%. Database container uses ~180MB RAM with shared buffers set to 25% of memory. Profiled using `docker stats` and load tested with k6/Locust.",
+    "bullet_points": [
+      "Know the approximate memory numbers for your runtime (Node ~80-250MB, Java ~300-800MB).",
+      "Mention tuning runtime flags (e.g. `--max-old-space-size` in Node, JVM `-Xms/-Xmx`).",
+      "Cite tools used to measure (docker stats, k6)."
+    ],
+    "pro_tip": "Knowing your service's memory and CPU numbers proves you actually ran and profiled it.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 11
+  },
+  {
+    "id": "int-proj-viva-012",
+    "topic_id": "topic-proj-viva",
+    "title": "What would happen if your database server ran out of disk space while your app was running?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Fail-safe protection and recovery: The database engine immediately goes into read-only mode to protect the WAL and data files from corruption, rejecting all write transactions with disk full errors. Recovery: 1. Clean old WAL archives and temporary query sort files, 2. Expand cloud disk volume (EBS auto-scaling), 3. Set up proactive disk usage alerts at 80% capacity via CloudWatch/Prometheus.",
+    "bullet_points": [
+      "Databases go read-only to prevent catastrophic data corruption.",
+      "Explain why monitoring disk capacity thresholds is critical.",
+      "Show that you know how to expand disk volumes without downtime."
+    ],
+    "pro_tip": "Disk space exhaustion is a real production emergency: show you understand the safety mechanisms.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 12
+  },
+  {
+    "id": "int-proj-viva-013",
+    "topic_id": "topic-proj-viva",
+    "title": "How does your application protect against brute-force login attacks?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Account lockout + IP-based rate limiting + Exponential delays: 1. Rate-limit login attempts per IP and username (e.g., max 5 failed attempts in 15 minutes) using Redis counters. 2. Implement exponential delays after failed attempts. 3. Integrate CAPTCHA (Cloudflare Turnstile) after 3 consecutive failures. 4. Send email notifications on logins from new devices/IPs.",
+    "bullet_points": [
+      "Combine IP-based and username-based rate limits to defeat distributed botnets.",
+      "Use Redis for fast in-memory attempt tracking.",
+      "Enforce CAPTCHA challenges to block automated credential stuffing."
+    ],
+    "pro_tip": "Brute-force protection is an essential security baseline for user authentication.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 13
+  },
+  {
+    "id": "int-proj-viva-014",
+    "topic_id": "topic-proj-viva",
+    "title": "What was the hardest engineering trade-off you had to balance in this project?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Pragmatic engineering trade-off narrative: 'We balanced real-time data accuracy with server resource consumption for our live notification feed. Full WebSockets required maintaining thousands of persistent TCP connections that consumed substantial memory. We compromised on Server-Sent Events (SSE) combined with client-side polling, which gave near-real-time updates with standard HTTP caching and a 60% lower memory footprint.'",
+    "bullet_points": [
+      "State the two competing priorities clearly (e.g. real-time speed vs memory footprint).",
+      "Explain why the compromised choice was the best fit for project constraints.",
+      "Quantify the outcome."
+    ],
+    "pro_tip": "Senior engineering is defined by making conscious, defensible trade-offs.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 14
+  },
+  {
+    "id": "int-proj-viva-015",
+    "topic_id": "topic-proj-viva",
+    "title": "How did you ensure your API responses don't leak internal implementation details?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "DTOs (Data Transfer Objects) and response serialization: Never return raw database entities directly to API responses. Use DTOs or serializer schemas (e.g., class-transformer, Zod) to explicitly pick only client-safe fields, automatically stripping sensitive fields (`password_hash`, `internal_id`, `audit_trail`). In production, hide database error messages behind generic user-friendly text.",
+    "bullet_points": [
+      "Never expose raw database model entities to JSON responses.",
+      "Strip `password_hash`, `stripe_customer_id`, and internal flags.",
+      "Standardize response wrappers (`{ success: true, data: ... }`)."
+    ],
+    "pro_tip": "Leaking database schema details or password hashes in JSON responses is a major vulnerability.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 15
+  },
+  {
+    "id": "int-proj-viva-016",
+    "topic_id": "topic-proj-viva",
+    "title": "How would you adapt your application to support multi-tenancy (multiple client companies)?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Three Multi-Tenancy Models: 1. Shared Database, Shared Schema (Row-Level Tenancy): Add `tenant_id` to every table, enforced via PostgreSQL Row-Level Security (RLS) policies. Lowest cost, high scale. 2. Shared Database, Separate Schemas: Each tenant gets an isolated schema (`tenant_a.orders`). 3. Separate Databases: Maximum isolation and compliance for enterprise clients, but highest maintenance cost.",
+    "bullet_points": [
+      "Compare Row-Level Security vs Schema-Per-Tenant vs Database-Per-Tenant.",
+      "Explain PostgreSQL Row-Level Security (RLS) as the modern cost-effective standard.",
+      "Discuss data leak prevention across tenant boundaries."
+    ],
+    "pro_tip": "Row-Level Security (RLS) in PostgreSQL is the industry standard for modern SaaS multi-tenancy.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 16
+  },
+  {
+    "id": "int-proj-viva-017",
+    "topic_id": "topic-proj-viva",
+    "title": "What was your strategy for database seed data and initial setup for new developers?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Reproducible seed scripts: Wrote a dedicated seed script (`npm run db:seed` / `python manage.py seed`) using Faker/mock data generators that populates the database with realistic test users, roles, categories, and sample products. Paired with Docker Compose, any new developer can run `docker-compose up` and have a working database with dummy data in under 2 minutes.",
+    "bullet_points": [
+      "Automate database seeding with realistic mock data.",
+      "Use Docker Compose for reproducible developer environments.",
+      "Ensure seeds are idempotent so running them twice doesn't cause duplicate key crashes."
+    ],
+    "pro_tip": "Great developer experience (DX) accelerates team productivity.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "MEDIUM",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 17
+  },
+  {
+    "id": "int-proj-viva-018",
+    "topic_id": "topic-proj-viva",
+    "title": "How do you handle timezone conversions between user devices and your database?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Store UTC in database, convert to local timezone on frontend: 1. All database timestamps are stored strictly in UTC using `TIMESTAMP WITH TIME ZONE` (TIMESTAMPTZ). 2. Backend APIs serialize timestamps as ISO-8601 strings (`2026-09-14T16:45:00Z`). 3. Frontend parses ISO strings and displays them in the user's local timezone using the browser's `Intl.DateTimeFormat` or Day.js.",
+    "bullet_points": [
+      "Rule: Always store and compute in UTC; only format in local timezone at presentation layer.",
+      "Use ISO-8601 strings with 'Z' suffix for API transport.",
+      "Avoid storing ambiguous local timestamps without timezone offsets."
+    ],
+    "pro_tip": "Violating the UTC rule leads to nightmare bugs during daylight saving transitions.",
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "JPMorgan Chase"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 18
+  },
+  {
+    "id": "int-proj-viva-019",
+    "topic_id": "topic-proj-viva",
+    "title": "What happens if a user submits a form twice by double-clicking the submit button?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Frontend button disabling + Backend idempotency constraint: 1. Frontend: Instantly disable the submit button and show a loading spinner on first click to prevent accidental double clicks. 2. Backend: Unique database constraints (e.g., unique index on `(user_id, appointment_date)`) and idempotency keys guarantee that even if two requests arrive, the second request fails gracefully with HTTP 409 Conflict.",
+    "bullet_points": [
+      "Frontend UI disabling is a courtesy; backend constraints are the security guarantee.",
+      "Use database UNIQUE constraints to prevent duplicate records.",
+      "Explain idempotency keys for checkout flows."
+    ],
+    "pro_tip": "Never rely solely on frontend button disabling to prevent duplicate database writes.",
+    "company_tags": [
+      "Flipkart",
+      "Swiggy",
+      "Zomato",
+      "Uber"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 19
+  },
+  {
+    "id": "int-proj-viva-020",
+    "topic_id": "topic-proj-viva",
+    "title": "How did you profile frontend network requests to optimize page load speed?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Chrome DevTools Network Tab analysis: 1. Inspected Waterfall chart to identify render-blocking resources and long TTFB (Time to First Byte). 2. Enabled HTTP compression and asset caching headers. 3. Preloaded critical fonts and hero images using `<link rel='preload'>`. 4. Eliminated waterfall API chaining by parallelizing independent requests with `Promise.all`.",
+    "bullet_points": [
+      "Analyze TTFB vs Content Download time in the Waterfall.",
+      "Use `<link rel='preload'>` for critical fonts and hero images.",
+      "Parallelize independent API calls using `Promise.all`."
+    ],
+    "pro_tip": "Mastery of the Network tab proves you debug real browser performance issues.",
+    "company_tags": [
+      "Adobe",
+      "Salesforce",
+      "Atlassian"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 20
+  },
+  {
+    "id": "int-proj-viva-021",
+    "topic_id": "topic-proj-viva",
+    "title": "How do you handle graceful shutdown of your backend application during deployments?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Intercepting OS signals (SIGTERM/SIGINT): When a container orchestrator deploys a new version, it sends a `SIGTERM` signal. The server: 1. Stops accepting new incoming HTTP connections, 2. Waits for currently in-flight HTTP requests and database transactions to finish (with a 10-second timeout), 3. Closes database connection pools and Redis clients, 4. Exits cleanly with code 0.",
+    "bullet_points": [
+      "Explain the difference between abrupt kill (`SIGKILL`) and graceful shutdown (`SIGTERM`).",
+      "Allow in-flight transactions to complete before closing connections.",
+      "Prevent users from seeing 502 Bad Gateway during rolling updates."
+    ],
+    "pro_tip": "Graceful shutdown is essential for zero-downtime rolling deployments in Kubernetes and Docker.",
+    "company_tags": [
+      "Accenture",
+      "Capgemini",
+      "Deloitte"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 21
+  },
+  {
+    "id": "int-proj-viva-022",
+    "topic_id": "topic-proj-viva",
+    "title": "What design patterns did you use in your project and where?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Concrete design pattern applications: 1. Repository Pattern: Abstracting data access logic away from business services. 2. Factory Pattern: Creating notification providers (Email, SMS, Webhook) dynamically based on user preferences. 3. Observer / Pub-Sub Pattern: Event emitters for decoupled order notifications. 4. Middleware / Chain of Responsibility Pattern: Request authentication, validation, and error handling pipelines.",
+    "bullet_points": [
+      "Name specific patterns you actually used in your codebase.",
+      "Explain the concrete architectural problem each pattern solved.",
+      "Demonstrate adherence to SOLID design principles."
+    ],
+    "pro_tip": "Connecting textbook design patterns to real files in your project shows true engineering comprehension.",
+    "company_tags": [
+      "Paytm",
+      "PhonePe",
+      "Razorpay"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "MEDIUM",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 22
+  },
+  {
+    "id": "int-proj-viva-023",
+    "topic_id": "topic-proj-viva",
+    "title": "How would you protect your project against a distributed denial of service (DDoS) attack?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Defense-in-depth across the OSI model: 1. Edge Layer: Cloudflare / AWS Shield for Anycast DNS routing and absorbing multi-gigabit volumetric Layer 3/4 SYN floods. 2. Web Application Firewall (WAF): Inspecting Layer 7 HTTP requests and blocking malicious bot signatures. 3. Application Layer: Rate limiting by IP and API key, and caching public pages on CDNs.",
+    "bullet_points": [
+      "Differentiate Layer 3/4 (network transport floods) from Layer 7 (HTTP application attacks).",
+      "Rely on Anycast cloud edge networks (Cloudflare/AWS) to absorb volumetric floods.",
+      "Use WAF rules and rate limiting to protect backend application endpoints."
+    ],
+    "pro_tip": "Single servers cannot survive volumetric DDoS; explain why edge mitigation is necessary.",
+    "company_tags": [
+      "Cisco",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 23
+  },
+  {
+    "id": "int-proj-viva-024",
+    "topic_id": "topic-proj-viva",
+    "title": "How do you ensure data consistency between your database and search index (e.g. Elasticsearch)?",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Transactional Outbox Pattern or Change Data Capture (CDC): 1. When data updates in Postgres, an outbox record is written in the same atomic database transaction. 2. A background worker (or Debezium CDC using PostgreSQL WAL) reads the outbox and syncs the document to Elasticsearch. 3. If Elasticsearch is down, the worker retries until consistent, guaranteeing eventual consistency without dual-write race conditions.",
+    "bullet_points": [
+      "Explain why naive dual writes (`db.save() then es.index()`) cause data inconsistency on crashes.",
+      "Explain the Transactional Outbox pattern.",
+      "Mention Change Data Capture (CDC) via database WAL streaming."
+    ],
+    "pro_tip": "The Transactional Outbox pattern is a master-level answer to distributed data synchronization.",
+    "company_tags": [
+      "Amazon",
+      "Google",
+      "Microsoft"
+    ],
+    "frequency": "HIGH",
+    "difficulty": "HARD",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 24
+  },
+  {
+    "id": "int-proj-viva-025",
+    "topic_id": "topic-proj-viva",
+    "title": "Summarize why your project makes you a job-ready software engineer.",
+    "category": "PROJECT_DEFENSE",
+    "subject": "PROJECT",
+    "subject_label": "Project Defense",
+    "answer": "Full-lifecycle software engineering capability: 'This project is not just a toy script; it demonstrates end-to-end software craftsmanship: clean modular architecture, rigorous database modeling with ACID transactions, secure authentication with HttpOnly cookies, comprehensive automated testing, and CI/CD deployment. It proves that I can take product requirements from whiteboard architecture to production deployment while writing maintainable, well-tested code.'",
+    "bullet_points": [
+      "Summarize your full-stack capabilities with confidence and pride.",
+      "Emphasize software quality, security, and automated testing.",
+      "Express genuine passion for solving technical problems in a production engineering team."
+    ],
+    "pro_tip": "A triumphant closing statement that leaves the interviewer excited to hire you.",
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Wipro",
+      "Cognizant"
+    ],
+    "frequency": "VERY_HIGH",
+    "difficulty": "EASY",
+    "is_hidden": false,
+    "is_deleted": false,
+    "sort_order": 25
   }
 ];
+
+export const ALL_INTERVIEW_SEED_QUESTIONS: InterviewQuestion[] = RAW_SEED_QUESTIONS as InterviewQuestion[];

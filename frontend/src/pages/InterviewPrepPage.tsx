@@ -183,28 +183,49 @@ export default function InterviewPrepPage() {
     }
   }, [clusters, selectedCluster]);
 
-  // Overall analytics stats
+  // Category question lists for tab counts
   const coreCsQuestions = useMemo(() => allQuestions.filter(q => q.category === 'CORE_CS'), [allQuestions]);
   const hrQuestions = useMemo(() => allQuestions.filter(q => q.category === 'HR_BEHAVIORAL'), [allQuestions]);
   const projectQuestions = useMemo(() => allQuestions.filter(q => q.category === 'PROJECT_DEFENSE'), [allQuestions]);
 
-  const coreCsMastered = useMemo(() => coreCsQuestions.filter(q => q.mastered).length, [coreCsQuestions]);
-  const hrMastered = useMemo(() => hrQuestions.filter(q => q.mastered).length, [hrQuestions]);
-  const projectMastered = useMemo(() => projectQuestions.filter(q => q.mastered).length, [projectQuestions]);
+  // Scope of questions for current view (Topic vs Category)
+  const scopedQuestions = useMemo(() => {
+    if (activeTopic) {
+      return allQuestions.filter(q => q.topicId === activeTopic.id);
+    }
+    return allQuestions.filter(q => q.category === activeCategory);
+  }, [activeTopic, activeCategory, allQuestions]);
 
-  const masteredCount = useMemo(() => allQuestions.filter(q => q.mastered).length, [allQuestions]);
-  const totalQuestions = allQuestions.length;
+  const scopedMasteredCount = useMemo(() => scopedQuestions.filter(q => q.mastered).length, [scopedQuestions]);
+  const scopedTotal = scopedQuestions.length;
+
+  const easyScoped = useMemo(() => scopedQuestions.filter(q => q.difficulty === 'EASY'), [scopedQuestions]);
+  const easyMastered = useMemo(() => easyScoped.filter(q => q.mastered).length, [easyScoped]);
+  const easyPct = easyScoped.length > 0 ? Math.round((easyMastered / easyScoped.length) * 100) : 0;
+
+  const medScoped = useMemo(() => scopedQuestions.filter(q => q.difficulty === 'MEDIUM'), [scopedQuestions]);
+  const medMastered = useMemo(() => medScoped.filter(q => q.mastered).length, [medScoped]);
+  const medPct = medScoped.length > 0 ? Math.round((medMastered / medScoped.length) * 100) : 0;
+
+  const hardScoped = useMemo(() => scopedQuestions.filter(q => q.difficulty === 'HARD'), [scopedQuestions]);
+  const hardMastered = useMemo(() => hardScoped.filter(q => q.mastered).length, [hardScoped]);
+  const hardPct = hardScoped.length > 0 ? Math.round((hardMastered / hardScoped.length) * 100) : 0;
 
   // Donut SVG dimensions matching Aptitude
   const radius = 28;
   const strokeWidth = 4.5;
   const circumference = 2 * Math.PI * radius;
-  const portion = totalQuestions > 0 ? (masteredCount / totalQuestions) * circumference : 0;
-  const dashOffset = circumference - portion;
 
-  const coreCsPct = coreCsQuestions.length > 0 ? Math.round((coreCsMastered / coreCsQuestions.length) * 100) : 0;
-  const hrPct = hrQuestions.length > 0 ? Math.round((hrMastered / hrQuestions.length) * 100) : 0;
-  const projPct = projectQuestions.length > 0 ? Math.round((projectMastered / projectQuestions.length) * 100) : 0;
+  const easyPortion = scopedTotal > 0 ? (easyMastered / scopedTotal) * circumference : 0;
+  const mediumPortion = scopedTotal > 0 ? (medMastered / scopedTotal) * circumference : 0;
+  const hardPortion = scopedTotal > 0 ? (hardMastered / scopedTotal) * circumference : 0;
+
+  const easyDashOffset = circumference - easyPortion;
+  const mediumDashOffset = circumference - mediumPortion;
+  const hardDashOffset = circumference - hardPortion;
+
+  const mediumRotation = scopedTotal > 0 ? (easyMastered / scopedTotal) * 360 : 0;
+  const hardRotation = scopedTotal > 0 ? ((easyMastered + medMastered) / scopedTotal) * 360 : 0;
 
   // Filtered topics for directory view
   const filteredTopics = useMemo(() => {
@@ -1065,6 +1086,7 @@ export default function InterviewPrepPage() {
               {/* Embedded Donut & Category Progress */}
               <div className="flex-1 lg:max-w-2xl">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                  {/* Donut with scopedMastered/scopedTotal */}
                   <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
                       <circle
@@ -1075,78 +1097,107 @@ export default function InterviewPrepPage() {
                         strokeWidth={strokeWidth}
                         fill="none"
                       />
-                      {masteredCount > 0 && (
+                      {easyMastered > 0 && (
                         <circle
                           cx="35"
                           cy="35"
                           r={radius}
-                          className="stroke-[#FD4A32] dark:stroke-[#FD4A32] transition-all duration-700 ease-out"
+                          className="stroke-emerald-500 transition-all duration-700 ease-out"
                           strokeWidth={strokeWidth}
                           strokeDasharray={circumference}
-                          strokeDashoffset={dashOffset}
+                          strokeDashoffset={easyDashOffset}
                           strokeLinecap="round"
                           fill="none"
+                        />
+                      )}
+                      {medMastered > 0 && (
+                        <circle
+                          cx="35"
+                          cy="35"
+                          r={radius}
+                          className="stroke-amber-500 transition-all duration-700 ease-out"
+                          strokeWidth={strokeWidth}
+                          strokeDasharray={circumference}
+                          strokeDashoffset={mediumDashOffset}
+                          strokeLinecap="round"
+                          fill="none"
+                          style={{ transformOrigin: 'center', transform: `rotate(${mediumRotation}deg)` }}
+                        />
+                      )}
+                      {hardMastered > 0 && (
+                        <circle
+                          cx="35"
+                          cy="35"
+                          r={radius}
+                          className="stroke-rose-500 transition-all duration-700 ease-out"
+                          strokeWidth={strokeWidth}
+                          strokeDasharray={circumference}
+                          strokeDashoffset={hardDashOffset}
+                          strokeLinecap="round"
+                          fill="none"
+                          style={{ transformOrigin: 'center', transform: `rotate(${hardRotation}deg)` }}
                         />
                       )}
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center text-center pointer-events-none px-1">
                       <span className="font-mono font-bold text-xs text-[#121417] dark:text-white tracking-tight leading-none">
-                        {masteredCount}/{totalQuestions}
+                        {scopedMasteredCount}/{scopedTotal}
                       </span>
                     </div>
                   </div>
 
+                  {/* 3 Difficulty Progress Bars: Easy, Med, Hard */}
                   <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
-                    {/* Core CS */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                        <span className="font-display font-bold text-[#FD4A32] dark:text-[#FD4A32]">
-                          Core CS
-                        </span>
-                        <span className="text-[#868E96] dark:text-[#666666]">
-                          {coreCsMastered}/{coreCsQuestions.length}
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                        <div
-                          className="h-full bg-[#FD4A32] rounded-full transition-all duration-500"
-                          style={{ width: `${coreCsPct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* HR STAR */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                        <span className="font-display font-bold text-amber-600 dark:text-amber-400">
-                          HR STAR
-                        </span>
-                        <span className="text-[#868E96] dark:text-[#666666]">
-                          {hrMastered}/{hrQuestions.length}
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                        <div
-                          className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${hrPct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Project Defense */}
+                    {/* Easy */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px] font-mono leading-none">
                         <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">
-                          Project
+                          Easy
                         </span>
                         <span className="text-[#868E96] dark:text-[#666666]">
-                          {projectMastered}/{projectQuestions.length}
+                          {easyMastered}/{easyScoped.length}
                         </span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                          style={{ width: `${projPct}%` }}
+                          style={{ width: `${easyPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Med */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                        <span className="font-display font-bold text-amber-600 dark:text-amber-400">
+                          Med
+                        </span>
+                        <span className="text-[#868E96] dark:text-[#666666]">
+                          {medMastered}/{medScoped.length}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                        <div
+                          className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                          style={{ width: `${medPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hard */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                        <span className="font-display font-bold text-rose-600 dark:text-rose-400">
+                          Hard
+                        </span>
+                        <span className="text-[#868E96] dark:text-[#666666]">
+                          {hardMastered}/{hardScoped.length}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                        <div
+                          className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                          style={{ width: `${hardPct}%` }}
                         />
                       </div>
                     </div>

@@ -284,6 +284,19 @@ export default function TechnicalHubPage() {
     return mcqs.filter(m => !mcqProgress[m.id]?.solved).length;
   }, [mcqs, mcqProgress]);
 
+  // MCQ Difficulty breakdown matching Aptitude Easy / Medium / Hard
+  const mcqEasy = useMemo(() => mcqs.filter(m => (m.difficulty || 'EASY') === 'EASY'), [mcqs]);
+  const mcqEasySolved = useMemo(() => mcqEasy.filter(m => mcqProgress[m.id]?.solved).length, [mcqEasy, mcqProgress]);
+  const mcqEasyPct = mcqEasy.length > 0 ? Math.round((mcqEasySolved / mcqEasy.length) * 100) : 0;
+
+  const mcqMedium = useMemo(() => mcqs.filter(m => m.difficulty === 'MEDIUM'), [mcqs]);
+  const mcqMediumSolved = useMemo(() => mcqMedium.filter(m => mcqProgress[m.id]?.solved).length, [mcqMedium, mcqProgress]);
+  const mcqMediumPct = mcqMedium.length > 0 ? Math.round((mcqMediumSolved / mcqMedium.length) * 100) : 0;
+
+  const mcqHard = useMemo(() => mcqs.filter(m => m.difficulty === 'HARD'), [mcqs]);
+  const mcqHardSolved = useMemo(() => mcqHard.filter(m => mcqProgress[m.id]?.solved).length, [mcqHard, mcqProgress]);
+  const mcqHardPct = mcqHard.length > 0 ? Math.round((mcqHardSolved / mcqHard.length) * 100) : 0;
+
   const activeTrackSolved = useMemo(() => {
     if (activeTrack === 'TECHNICAL_MCQS') return mcqSolvedCount;
     return activeTrackProblems.filter(p => p.solved).length;
@@ -2059,41 +2072,44 @@ export default function TechnicalHubPage() {
 
                   {activeTrack === 'TECHNICAL_MCQS' ? (
                     <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
+                      {/* Easy MCQs */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                          <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Solved</span>
-                          <span className="text-[#868E96] dark:text-[#666666]">{mcqSolvedCount}/{mcqs.length}</span>
+                          <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Easy</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mcqEasySolved}/{mcqEasy.length}</span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
                           <div
                             className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                            style={{ width: `${mcqs.length > 0 ? Math.round((mcqSolvedCount / mcqs.length) * 100) : 0}%` }}
+                            style={{ width: `${mcqEasyPct}%` }}
                           />
                         </div>
                       </div>
 
+                      {/* Medium MCQs */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                          <span className="font-display font-bold text-amber-600 dark:text-amber-400">Needs Retry</span>
-                          <span className="text-[#868E96] dark:text-[#666666]">{mcqRetryCount}/{mcqs.length}</span>
+                          <span className="font-display font-bold text-amber-600 dark:text-amber-400">Medium</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mcqMediumSolved}/{mcqMedium.length}</span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
                           <div
                             className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                            style={{ width: `${mcqs.length > 0 ? Math.round((mcqRetryCount / mcqs.length) * 100) : 0}%` }}
+                            style={{ width: `${mcqMediumPct}%` }}
                           />
                         </div>
                       </div>
 
+                      {/* Hard MCQs */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                          <span className="font-display font-bold text-rose-600 dark:text-rose-400">Unsolved</span>
-                          <span className="text-[#868E96] dark:text-[#666666]">{mcqUnsolvedCount}/{mcqs.length}</span>
+                          <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
+                          <span className="text-[#868E96] dark:text-[#666666]">{mcqHardSolved}/{mcqHard.length}</span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
                           <div
                             className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                            style={{ width: `${mcqs.length > 0 ? Math.round((mcqUnsolvedCount / mcqs.length) * 100) : 0}%` }}
+                            style={{ width: `${mcqHardPct}%` }}
                           />
                         </div>
                       </div>
@@ -2102,7 +2118,7 @@ export default function TechnicalHubPage() {
                     <div className="grid grid-cols-3 gap-3 flex-1 max-w-md">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                          <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Basic</span>
+                          <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Easy</span>
                           <span className="text-[#868E96] dark:text-[#666666]">{basicSolved}/{basicProblems.length}</span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">

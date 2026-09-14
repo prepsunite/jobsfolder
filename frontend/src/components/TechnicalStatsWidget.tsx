@@ -162,21 +162,21 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
       {/* CARD 2: INTERVIEW PREP BIBLE */}
       <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 shadow-xs flex flex-col justify-between relative overflow-hidden group">
         {/* Subtle accent corner glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#FD4A32]/5 rounded-full blur-2xl pointer-events-none" />
 
         <div>
           {/* Header */}
           <div className="flex items-start justify-between gap-3 pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                <MessageSquareQuote className="w-4.5 h-4.5 text-purple-600 dark:text-purple-400" />
+              <div className="w-9 h-9 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 flex items-center justify-center shrink-0">
+                <MessageSquareQuote className="w-4.5 h-4.5 text-[#FD4A32]" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-display font-bold text-sm text-[#121417] dark:text-white tracking-tight">
                     Interview Prep Bible
                   </h3>
-                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
                     High Yield
                   </span>
                 </div>
@@ -193,7 +193,7 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
               <span className="text-xs font-mono text-[#868E96] dark:text-[#666666]">
                 /{interviewStats?.totalQuestions ?? 0}
               </span>
-              <span className="text-[9px] font-mono text-purple-600 dark:text-purple-400 block">
+              <span className="text-[9px] font-mono text-[#FD4A32] block">
                 {interviewPct}% mastered
               </span>
             </div>
@@ -203,7 +203,7 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
           <div className="space-y-1 mb-4">
             <div className="w-full h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
               <div
-                className="h-full bg-linear-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-700"
+                className="h-full bg-linear-to-r from-[#FD4A32] to-amber-500 rounded-full transition-all duration-700"
                 style={{ width: `${interviewPct}%` }}
               />
             </div>
@@ -214,7 +214,7 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
             {/* Core CS */}
             <div className="p-2.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
               <div className="flex items-center gap-1.5 mb-1">
-                <Cpu className="w-3.5 h-3.5 text-purple-500" />
+                <Cpu className="w-3.5 h-3.5 text-[#FD4A32]" />
                 <span className="text-[10px] font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider">
                   Core CS
                 </span>
@@ -223,7 +223,7 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
                 <span className="font-mono font-bold text-xs text-[#121417] dark:text-white">
                   {interviewStats?.coreCsMastered ?? 0}/{interviewStats?.coreCsTotal ?? 0}
                 </span>
-                <span className="text-[9px] font-mono text-purple-500">
+                <span className="text-[9px] font-mono text-[#FD4A32]">
                   DBMS/OOP/OS/CN
                 </span>
               </div>

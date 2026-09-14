@@ -280,16 +280,35 @@ export const interviewService = {
     const masteredSet = this.getMasteredQuestionIds();
 
     try {
-      const { data, error } = await supabase
-        .from('interview_questions')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: true });
+      let allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
-      if (data && data.length > 0) {
-        return data.map(d => normalizeDbQuestion(d, masteredSet));
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('interview_questions')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allData = allData.concat(data);
+          if (data.length < pageSize) {
+            hasMore = false;
+          } else {
+            from += pageSize;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      if (allData.length > 0) {
+        return allData.map(d => normalizeDbQuestion(d, masteredSet));
       }
     } catch (e) {
       console.error('Failed to query interview_questions from Supabase:', e);

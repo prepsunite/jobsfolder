@@ -643,6 +643,28 @@ export default function TopicQuestionsPage() {
   const topicNeedsRetryQuestions = roleFilteredQuestions.filter(q => !progressRecords[q.id]?.isSolved && (progressRecords[q.id]?.wrongAttempts ?? 0) > 0).length;
   const topicPercentage = topicTotalQuestions > 0 ? Math.round((topicSolvedQuestions / topicTotalQuestions) * 100) : 0;
 
+  // Easy / Med / Hard difficulty breakdown
+  const topicEasyQuestions = roleFilteredQuestions.filter(q => {
+    const norm = q.difficultyLevel === 1 ? 'EASY' : q.difficultyLevel === 3 ? 'HARD' : (q.difficulty || 'MEDIUM').toUpperCase();
+    return norm === 'EASY';
+  });
+  const topicEasySolved = topicEasyQuestions.filter(q => progressRecords[q.id]?.isSolved).length;
+  const topicEasyPct = topicEasyQuestions.length > 0 ? Math.round((topicEasySolved / topicEasyQuestions.length) * 100) : 0;
+
+  const topicMedQuestions = roleFilteredQuestions.filter(q => {
+    const norm = q.difficultyLevel === 1 ? 'EASY' : q.difficultyLevel === 3 ? 'HARD' : (q.difficulty || 'MEDIUM').toUpperCase();
+    return norm === 'MEDIUM';
+  });
+  const topicMedSolved = topicMedQuestions.filter(q => progressRecords[q.id]?.isSolved).length;
+  const topicMedPct = topicMedQuestions.length > 0 ? Math.round((topicMedSolved / topicMedQuestions.length) * 100) : 0;
+
+  const topicHardQuestions = roleFilteredQuestions.filter(q => {
+    const norm = q.difficultyLevel === 1 ? 'EASY' : q.difficultyLevel === 3 ? 'HARD' : (q.difficulty || 'MEDIUM').toUpperCase();
+    return norm === 'HARD';
+  });
+  const topicHardSolved = topicHardQuestions.filter(q => progressRecords[q.id]?.isSolved).length;
+  const topicHardPct = topicHardQuestions.length > 0 ? Math.round((topicHardSolved / topicHardQuestions.length) * 100) : 0;
+
   const filteredQuestions = roleFilteredQuestions.filter(q => {
     // 1. Difficulty filter
     if (activeDifficulty !== 'ALL') {
@@ -744,17 +766,51 @@ export default function TopicQuestionsPage() {
               {foundTopic?.description || 'Filter questions by difficulty, test your answer with MCQ options, or view detailed step-by-step solutions.'}
             </p>
 
-            {/* Topic Progress Bar */}
-            <div className="flex items-center gap-3 pt-2">
-              <div className="w-44 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                  style={{ width: `${topicPercentage}%` }}
-                />
+            {/* Topic Progress Breakdown: Easy, Med, Hard */}
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-36 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${topicPercentage}%` }}
+                  />
+                </div>
+                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {topicSolvedQuestions} / {topicTotalQuestions} Solved ({topicPercentage}%)
+                </span>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                {topicSolvedQuestions} / {topicTotalQuestions} Solved ({topicPercentage}%)
-              </span>
+
+              <div className="grid grid-cols-3 gap-3 max-w-xs sm:max-w-sm">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                    <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Easy</span>
+                    <span className="text-[#868E96] dark:text-[#666666]">{topicEasySolved}/{topicEasyQuestions.length}</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${topicEasyPct}%` }} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                    <span className="font-display font-bold text-amber-600 dark:text-amber-400">Med</span>
+                    <span className="text-[#868E96] dark:text-[#666666]">{topicMedSolved}/{topicMedQuestions.length}</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                    <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${topicMedPct}%` }} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono leading-none">
+                    <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
+                    <span className="text-[#868E96] dark:text-[#666666]">{topicHardSolved}/{topicHardQuestions.length}</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                    <div className="h-full bg-rose-500 rounded-full transition-all duration-500" style={{ width: `${topicHardPct}%` }} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
