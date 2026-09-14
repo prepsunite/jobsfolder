@@ -16,33 +16,58 @@ export interface TechnicalImportReport {
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
 const SOLVED_MCQS_KEY = 'prepunite_solved_technical_mcqs';
 
-const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem => ({
-  id: d.id,
-  title: d.title,
-  slug: d.slug || d.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-  track: d.track || 'PROGRAMMING_150',
-  level: d.level || 'MEDIUM',
-  category: d.category || 'SYNTAX_BASICS',
-  categoryLabel: d.category_label || d.categoryLabel,
-  topicId: d.topic_id || d.topicId,
-  description: d.description || '',
-  constraints: Array.isArray(d.constraints) ? d.constraints : [],
-  testCases: Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []),
-  sampleInput: d.sample_input || d.sampleInput || '',
-  sampleOutput: d.sample_output || d.sampleOutput || '',
-  explanation: d.explanation || '',
-  solutions: d.solutions || { java: '', python: '', cpp: '', c: '' },
-  timeComplexity: d.time_complexity || d.timeComplexity || 'O(N)',
-  spaceComplexity: d.space_complexity || d.spaceComplexity || 'O(1)',
-  hints: Array.isArray(d.hints) ? d.hints : [],
-  companyTags: Array.isArray(d.company_tags) ? d.company_tags : (Array.isArray(d.companyTags) ? d.companyTags : []),
-  is_hidden: d.is_hidden || false,
-  is_deleted: d.is_deleted || false,
-  sort_order: d.sort_order || 0,
-  solved: solvedSet.has(d.id),
-  created_at: d.created_at,
-  updated_at: d.updated_at,
-});
+const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem => {
+  const solutionsObj = (typeof d.solutions === 'object' && d.solutions !== null) ? d.solutions : {};
+  const leetcodeUrl =
+    d.leetcode_url ||
+    d.leetcodeUrl ||
+    solutionsObj.leetcodeUrl ||
+    (Array.isArray(d.constraints) ? d.constraints.find((c: string) => c.startsWith('LC_URL:'))?.replace('LC_URL:', '') : '') ||
+    '';
+  const leetcodeNumber =
+    d.leetcode_number ||
+    d.leetcodeNumber ||
+    solutionsObj.leetcodeNumber ||
+    (Array.isArray(d.constraints)
+      ? parseInt(d.constraints.find((c: string) => c.startsWith('LC_NUM:'))?.replace('LC_NUM:', '') || '0', 10) || undefined
+      : undefined);
+  const pattern = d.pattern || solutionsObj.pattern || d.category_label || d.categoryLabel || '';
+  const keyIntuition = d.key_intuition || d.keyIntuition || solutionsObj.keyIntuition || d.explanation || d.description || '';
+
+  return {
+    id: d.id,
+    title: d.title,
+    slug: d.slug || d.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    track: d.track || 'PROGRAMMING_150',
+    level: d.level === 'BASIC' ? 'BASIC' : d.level || 'MEDIUM',
+    category: d.category || 'SYNTAX_BASICS',
+    categoryLabel: pattern || d.category_label || d.categoryLabel,
+    topicId: d.topic_id || d.topicId,
+    description: d.description || keyIntuition || '',
+    constraints: Array.isArray(d.constraints)
+      ? d.constraints.filter((c: string) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:'))
+      : [],
+    testCases: Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []),
+    sampleInput: d.sample_input || d.sampleInput || '',
+    sampleOutput: d.sample_output || d.sampleOutput || '',
+    explanation: d.explanation || keyIntuition || '',
+    solutions: d.solutions || { java: '', python: '', cpp: '', c: '' },
+    timeComplexity: d.time_complexity || d.timeComplexity || 'O(N)',
+    spaceComplexity: d.space_complexity || d.spaceComplexity || 'O(1)',
+    hints: Array.isArray(d.hints) ? d.hints : [],
+    companyTags: Array.isArray(d.company_tags) ? d.company_tags : (Array.isArray(d.companyTags) ? d.companyTags : []),
+    is_hidden: d.is_hidden || false,
+    is_deleted: d.is_deleted || false,
+    sort_order: d.sort_order || 0,
+    solved: solvedSet.has(d.id),
+    created_at: d.created_at,
+    updated_at: d.updated_at,
+    leetcodeUrl,
+    leetcodeNumber,
+    pattern,
+    keyIntuition,
+  };
+};
 
 const normalizeDbMcq = (d: any): TechnicalMcq => ({
   id: d.id,
@@ -343,7 +368,23 @@ export const technicalService = {
     }
 
     // Fallback seed
-    if (track === 'CAMPUS_DSA') return CAMPUS_DSA_TOPICS;
+    if (track === 'CAMPUS_DSA') {
+      return CAMPUS_DSA_ROADMAP_STAGES.map((s, idx) => ({
+        id: s.id,
+        title: s.title,
+        name: s.title,
+        cluster: s.cluster,
+        description: s.description,
+        iconName: s.iconName || 'Sliders',
+        icon_name: s.iconName || 'Sliders',
+        category: 'DSA',
+        track: 'CAMPUS_DSA' as TechnicalTrack,
+        order: s.stageNumber || idx + 1,
+        sort_order: s.stageNumber || idx + 1,
+        is_hidden: false,
+        tips: [`Core Pattern: ${s.corePattern}`, `Estimated Time: ${s.estimatedHours}`],
+      }));
+    }
     if (track === 'TECHNICAL_MCQS') return TECHNICAL_MCQ_TOPICS;
     return PROGRAMMING_150_STAGES;
   },
@@ -485,7 +526,40 @@ export const technicalService = {
       console.error('Failed to query Campus DSA problems from Supabase:', e);
     }
 
-    return [];
+    return ALL_CAMPUS_DSA_PROBLEMS.map(p => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      track: 'CAMPUS_DSA' as const,
+      level: p.difficulty === 'EASY' ? 'BASIC' : p.difficulty,
+      category: 'ARRAYS',
+      categoryLabel: p.pattern,
+      topicId: p.stageId,
+      description: p.keyIntuition,
+      constraints: [`LC_URL:${p.leetcodeUrl}`, `LC_NUM:${p.leetcodeNumber}`],
+      testCases: [],
+      sampleInput: '',
+      sampleOutput: '',
+      explanation: p.keyIntuition,
+      solutions: {
+        java: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
+        python: `# LeetCode ${p.leetcodeNumber}: ${p.title}\n# Pattern: ${p.pattern}`,
+        cpp: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
+        c: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
+      },
+      timeComplexity: 'O(N)',
+      spaceComplexity: 'O(1)',
+      hints: [p.keyIntuition],
+      companyTags: p.companyTags,
+      is_hidden: false,
+      is_deleted: false,
+      sort_order: p.order,
+      solved: solvedSet.has(p.id),
+      leetcodeUrl: p.leetcodeUrl,
+      leetcodeNumber: p.leetcodeNumber,
+      pattern: p.pattern,
+      keyIntuition: p.keyIntuition,
+    }));
   },
 
   async getProblemsByTopic(topicId: string): Promise<ProgrammingProblem[]> {
@@ -502,25 +576,39 @@ export const technicalService = {
     const slug = p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const testCases = p.testCases || (p as any).test_cases || (p.sampleInput || p.sampleOutput ? [{ input: p.sampleInput || '', output: p.sampleOutput || '', explanation: p.explanation || '' }] : []);
 
+    const constraints = Array.isArray(p.constraints) ? [...p.constraints] : [];
+    if (p.leetcodeUrl && !constraints.some(c => c.startsWith('LC_URL:'))) {
+      constraints.push(`LC_URL:${p.leetcodeUrl}`);
+    }
+    if (p.leetcodeNumber && !constraints.some(c => c.startsWith('LC_NUM:'))) {
+      constraints.push(`LC_NUM:${p.leetcodeNumber}`);
+    }
+
+    const solutionsObj = typeof p.solutions === 'object' && p.solutions !== null ? { ...p.solutions } : { java: '// Java solution', python: '# Python solution', cpp: '// C++ solution', c: '// C solution' };
+    if (p.leetcodeUrl) (solutionsObj as any).leetcodeUrl = p.leetcodeUrl;
+    if (p.leetcodeNumber) (solutionsObj as any).leetcodeNumber = p.leetcodeNumber;
+    if (p.pattern) (solutionsObj as any).pattern = p.pattern;
+    if (p.keyIntuition) (solutionsObj as any).keyIntuition = p.keyIntuition;
+
     const payload = {
       id,
-      topic_id: p.topicId || (p as any).topic_id || 'syntax-operators',
+      topic_id: p.topicId || (p as any).topic_id || (p.track === 'CAMPUS_DSA' ? 'stage-1-two-pointers' : 'syntax-operators'),
       track: p.track || 'PROGRAMMING_150',
       title: p.title.trim(),
       slug,
       level: p.level || 'MEDIUM',
       category: p.category || 'SYNTAX_BASICS',
-      category_label: p.categoryLabel || (p as any).category_label || 'General Programming',
-      description: p.description || '',
-      constraints: Array.isArray(p.constraints) ? p.constraints : [],
+      category_label: p.pattern || p.categoryLabel || (p as any).category_label || 'General Programming',
+      description: p.description || p.keyIntuition || '',
+      constraints,
       test_cases: testCases,
       sample_input: testCases[0]?.input || p.sampleInput || (p as any).sample_input || '',
       sample_output: testCases[0]?.output || p.sampleOutput || (p as any).sample_output || '',
-      explanation: p.explanation || '',
-      solutions: p.solutions || { java: '// Java solution', python: '# Python solution', cpp: '// C++ solution', c: '// C solution' },
+      explanation: p.explanation || p.keyIntuition || '',
+      solutions: solutionsObj,
       time_complexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
       space_complexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
-      hints: Array.isArray(p.hints) ? p.hints : [],
+      hints: Array.isArray(p.hints) ? p.hints : (p.keyIntuition ? [p.keyIntuition] : []),
       company_tags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : []),
       is_hidden: !!p.is_hidden,
       is_deleted: false,

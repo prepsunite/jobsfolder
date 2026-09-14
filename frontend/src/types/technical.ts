@@ -97,6 +97,10 @@ export interface ProgrammingProblem {
   solved?: boolean;
   created_at?: string;
   updated_at?: string;
+  leetcodeNumber?: number;
+  leetcodeUrl?: string;
+  pattern?: string;
+  keyIntuition?: string;
 }
 
 export interface TechnicalMcq {

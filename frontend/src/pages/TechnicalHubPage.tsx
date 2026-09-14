@@ -47,6 +47,7 @@ import {
   Trash2,
   Upload,
   Flame,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
@@ -652,13 +653,14 @@ export default function TechnicalHubPage() {
     if (problem) {
       setEditingProblem({ ...problem });
     } else {
+      const defaultTopic = activeTopic?.id || (topics[0]?.id || (activeTrack === 'CAMPUS_DSA' ? 'stage-1-two-pointers' : 'syntax-operators'));
       setEditingProblem({
         id: `p-${Date.now()}`,
-        topicId: activeTopic?.id || 'syntax-operators',
+        topicId: defaultTopic,
         track: activeTrack === 'CAMPUS_DSA' ? 'CAMPUS_DSA' : 'PROGRAMMING_150',
         title: '',
         level: 'MEDIUM',
-        category: (activeTopic?.category as any) || 'SYNTAX_BASICS',
+        category: (activeTopic?.category as any) || 'ARRAYS',
         categoryLabel: activeTopic?.title || 'General Programming',
         description: '',
         constraints: ['1 <= N <= 10^5'],
@@ -669,8 +671,12 @@ export default function TechnicalHubPage() {
         timeComplexity: 'O(N)',
         spaceComplexity: 'O(1)',
         hints: [],
-        companyTags: ['Campus Placement'],
+        companyTags: ['Amazon', 'Google', 'TCS Prime'],
         is_hidden: false,
+        leetcodeNumber: undefined,
+        leetcodeUrl: '',
+        pattern: '',
+        keyIntuition: '',
       });
     }
     setIsEditingProblem(true);
@@ -684,8 +690,8 @@ export default function TechnicalHubPage() {
 
     const res = await technicalService.saveProgrammingProblem({
       ...editingProblem,
-      topicId: activeTopic?.id || editingProblem.topicId,
-      track: activeTrack === 'CAMPUS_DSA' ? 'CAMPUS_DSA' : 'PROGRAMMING_150',
+      topicId: editingProblem.topicId || activeTopic?.id,
+      track: editingProblem.track || (activeTrack === 'CAMPUS_DSA' ? 'CAMPUS_DSA' : 'PROGRAMMING_150'),
     });
 
     if (res.success) {
@@ -832,9 +838,9 @@ export default function TechnicalHubPage() {
               : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
           }`}
         >
-          <Flame className="w-3.5 h-3.5 text-[#FFA116]" />
+          <Flame className="w-3.5 h-3.5 text-[#FD4A32]" />
           <span>Campus DSA Roadmap</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FFA116]/10 text-[#FFA116] border border-[#FFA116]/20">
+          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20 font-bold">
             LeetCode
           </span>
         </button>
@@ -848,14 +854,12 @@ export default function TechnicalHubPage() {
               : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
           }`}
         >
-          <BookOpen className="w-3.5 h-3.5 text-purple-500" />
+          <BookOpen className="w-3.5 h-3.5 text-[#FD4A32]" />
           <span>Technical MCQs</span>
         </button>
       </div>
 
-      {activeTrack === 'CAMPUS_DSA' ? (
-        <CampusDsaRoadmapView />
-      ) : activeTopic ? (
+      {activeTopic ? (
         <div className="space-y-6 animate-fadeIn">
           {/* 1. Breadcrumb & Navigation */}
           <div className="flex items-center justify-between">
@@ -924,6 +928,16 @@ export default function TechnicalHubPage() {
                         <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32]"></span>
                         <span>{sub.title}</span>
                         {sIdx < (activeTopic.subtopics?.length ?? 0) - 1 ? <span className="opacity-40">•</span> : null}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {activeTopic.tips && activeTopic.tips.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1.5 text-[11px]">
+                    {activeTopic.tips.map((tip, tIdx) => (
+                      <span key={tIdx} className="font-medium px-2 py-0.5 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20 inline-flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-[#FD4A32]" />
+                        <span>{tip}</span>
                       </span>
                     ))}
                   </div>
@@ -1525,9 +1539,21 @@ export default function TechnicalHubPage() {
                             Question #{globalIdx + 1}
                           </span>
 
+                          {problem.leetcodeNumber && (
+                            <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-mono font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
+                              LC #{problem.leetcodeNumber}
+                            </span>
+                          )}
+
                           {activeTopic?.subtopics && (
                             <span className="text-[10px] font-mono text-[#868E96] dark:text-[#888888] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-medium">
                               {activeTopic.subtopics.find(s => s.id === problem.topicId)?.title || problem.categoryLabel || problem.topicId}
+                            </span>
+                          )}
+
+                          {(problem.pattern || (!activeTopic?.subtopics && problem.categoryLabel)) && (
+                            <span className="text-[10px] font-mono text-[#868E96] dark:text-[#888888] bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#242424] px-2 py-0.5 rounded font-medium">
+                              {problem.pattern || problem.categoryLabel}
                             </span>
                           )}
 
@@ -1619,24 +1645,65 @@ export default function TechnicalHubPage() {
                         </div>
                       </div>
 
-                      {/* 1. Problem Title */}
-                      <h3 className="font-display text-base sm:text-lg font-bold text-[#121417] dark:text-[#FFFFFF] leading-snug">
-                        {problem.title}
-                      </h3>
+                      {/* 1. Problem Title & LeetCode Direct Button */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 className="font-display text-base sm:text-lg font-bold text-[#121417] dark:text-[#FFFFFF] leading-snug">
+                          {problem.title}
+                        </h3>
 
-                      {/* 2. Problem Statement / Description */}
+                        {problem.leetcodeUrl && (
+                          <a
+                            href={problem.leetcodeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32]/10 hover:bg-[#FD4A32] text-[#FD4A32] hover:text-white border border-[#FD4A32]/25 transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
+                          >
+                            <span>Solve on LeetCode</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+
+                      {/* 2. Company Tags */}
+                      {problem.companyTags && problem.companyTags.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                          <span className="text-[10px] font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider font-display">
+                            Companies:
+                          </span>
+                          {problem.companyTags.map(tag => (
+                            <span key={tag} className="text-[10px] font-medium font-sans px-2 py-0.5 rounded bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2C2C2C]">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 3. Problem Statement / Description */}
                       <div className="text-xs sm:text-sm text-[#495057] dark:text-[#CCCCCC] leading-relaxed bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] font-sans whitespace-pre-line">
                         {problem.description}
                       </div>
 
+                      {/* 4. Key Intuition & Approach Callout */}
+                      {problem.keyIntuition && problem.keyIntuition !== problem.description && (
+                        <div className="p-3.5 rounded-lg bg-[#FD4A32]/5 border border-[#FD4A32]/20 space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs font-display font-bold text-[#FD4A32]">
+                            <Lightbulb className="w-3.5 h-3.5 text-[#FD4A32]" />
+                            <span>Key Placement Intuition</span>
+                          </div>
+                          <p className="text-xs text-[#495057] dark:text-[#CCCCCC] leading-relaxed font-sans">
+                            {problem.keyIntuition}
+                          </p>
+                        </div>
+                      )}
+
                       {/* 3. Constraints */}
-                      {problem.constraints && problem.constraints.length > 0 && (
+                      {problem.constraints && problem.constraints.filter(c => !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:')).length > 0 && (
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
                             Constraints:
                           </span>
                           <ul className="list-disc pl-4 space-y-0.5 text-xs font-mono text-[#495057] dark:text-[#CCCCCC]">
-                            {problem.constraints.map((c, i) => (
+                            {problem.constraints.filter(c => !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:')).map((c, i) => (
                               <li key={i}>{c}</li>
                             ))}
                           </ul>
@@ -1984,7 +2051,19 @@ export default function TechnicalHubPage() {
 
           {/* 🏷️ 2. STAGE CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ACTIONS */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            {activeTrack !== 'PROGRAMMING_150' ? (
+            {activeTrack === 'PROGRAMMING_150' ? (
+              <div className="flex items-center gap-2 py-1">
+                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#777777]">
+                  6 Progressive Milestones • Master coding fundamentals to placement-ready patterns
+                </span>
+              </div>
+            ) : activeTrack === 'CAMPUS_DSA' ? (
+              <div className="flex items-center gap-2 py-1">
+                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#777777]">
+                  10 Placement Milestones • Master patterns from Two Pointers to Graphs with curated LeetCode problems
+                </span>
+              </div>
+            ) : (
               <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
                 {stages.map(st => (
                   <button
@@ -2001,12 +2080,6 @@ export default function TechnicalHubPage() {
                   </button>
                 ))}
               </div>
-            ) : (
-              <div className="flex items-center gap-2 py-1">
-                <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#777777]">
-                  6 Progressive Milestones • Master coding fundamentals to placement-ready patterns
-                </span>
-              </div>
             )}
 
             <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
@@ -2017,6 +2090,8 @@ export default function TechnicalHubPage() {
                   placeholder={
                     activeTrack === 'PROGRAMMING_150'
                       ? 'Search stages or topics...'
+                      : activeTrack === 'CAMPUS_DSA'
+                      ? 'Search stages or patterns...'
                       : 'Search MCQ topics...'
                   }
                   value={searchQuery}
@@ -2100,6 +2175,133 @@ export default function TechnicalHubPage() {
                   const topicMcqs = mcqs.filter(m => m.topicId === topic.id);
                   solvedCount = topicMcqs.filter(m => mcqProgress[m.id]?.solved).length;
                   countText = `${liveCount > 0 ? liveCount : topicMcqs.length} MCQs`;
+                } else if (activeTrack === 'CAMPUS_DSA') {
+                  const topicProblems = dsaProblems.filter(p => p.topicId === topic.id);
+                  solvedCount = topicProblems.filter(p => p.solved).length;
+                  let totalCount = topicProblems.length;
+                  if (liveCount > totalCount) totalCount = liveCount;
+                  countText = `${totalCount} Problems (LeetCode)`;
+                  const pct = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
+
+                  return (
+                    <div
+                      key={topic.id}
+                      onClick={() => selectTopic(topic.id)}
+                      className={`group flex flex-col justify-between p-5 bg-white dark:bg-[#141414] hover:bg-[#FAFAFA] dark:hover:bg-[#181818] border ${
+                        topic.is_hidden
+                          ? 'border-amber-500/40 opacity-75'
+                          : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/60 dark:hover:border-[#FD4A32]/60'
+                      } rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden`}
+                    >
+                      <div>
+                        {/* Top: Icon, Title, Solved Count & Admin Controls */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FD4A32]/15 via-[#FD4A32]/10 to-transparent border border-[#FD4A32]/25 text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 group-hover:bg-[#FD4A32] group-hover:text-white duration-200 shadow-2xs">
+                              <TopicIcon className="w-5 h-5" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-display font-extrabold text-base sm:text-[17px] text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] transition-colors leading-snug">
+                                  {topic.title || topic.name}
+                                </h3>
+                                {topic.is_hidden && (
+                                  <span className="text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                    Hidden
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-mono text-[#FD4A32] font-semibold">
+                                {topic.cluster}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {solvedCount > 0 && (
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                <span>{solvedCount}/{totalCount}</span>
+                              </span>
+                            )}
+
+                            {isAdmin && (
+                              <div className="flex items-center gap-1 border-r border-[#E9ECEF] dark:border-[#242424] pr-2 mr-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleTopicHide(e, topic)}
+                                  className="p-1 rounded text-gray-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                  title={topic.is_hidden ? 'Make Visible' : 'Hide Stage'}
+                                >
+                                  {topic.is_hidden ? <EyeOff className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => openTopicEditor(e, topic)}
+                                  className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                  title="Edit Stage Details"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteTopic(e, topic)}
+                                  className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-black/5 dark:hover:bg-white/5"
+                                  title="Delete Stage"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Middle: Description */}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2.5 line-clamp-2 leading-relaxed">
+                          {topic.description}
+                        </p>
+
+                        {topic.tips && topic.tips.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+                            {topic.tips.slice(0, 2).map((tip, idx) => (
+                              <span key={idx} className="text-[10px] font-medium font-sans px-2 py-0.5 rounded bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#555555] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+                                {tip}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom: Progress Bar & CTA */}
+                      <div className="mt-4 pt-3.5 border-t border-[#E9ECEF] dark:border-[#242424] space-y-2.5">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] font-mono">
+                            <span className="text-[#868E96] dark:text-[#666666] font-medium">Stage Mastery</span>
+                            <span className="font-bold text-[#121417] dark:text-white">{pct}% ({solvedCount}/{totalCount} Solved)</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-1.5 text-xs font-mono text-[#868E96] dark:text-[#888888]">
+                            <Flame className="w-3.5 h-3.5 text-[#FD4A32]" />
+                            <span className="font-semibold">{countText}</span>
+                          </div>
+
+                          <span className="inline-flex items-center gap-1 text-xs font-display font-bold text-[#FD4A32] group-hover:translate-x-0.5 transition-transform bg-[#FD4A32]/10 hover:bg-[#FD4A32] hover:text-white px-3 py-1 rounded-md border border-[#FD4A32]/25 group-hover:bg-[#FD4A32] group-hover:text-white">
+                            <span>Open Stage</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
                 } else {
                   // PROGRAMMING_150: match topic.id or subtopicIds
                   const topicProblems = p150Problems.filter(p => 
@@ -2466,18 +2668,36 @@ export default function TechnicalHubPage() {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Problem Title *
+                    Track
                   </label>
-                  <input
-                    type="text"
-                    value={editingProblem.title || ''}
-                    onChange={e => setEditingProblem({ ...editingProblem, title: e.target.value })}
-                    placeholder="e.g. Reverse a Number"
-                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
-                  />
+                  <select
+                    value={editingProblem.track || activeTrack}
+                    onChange={e => setEditingProblem({ ...editingProblem, track: e.target.value as any })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    <option value="CAMPUS_DSA">Campus DSA</option>
+                    <option value="PROGRAMMING_150">Programming 150</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Target Stage / Topic *
+                  </label>
+                  <select
+                    value={editingProblem.topicId || (topics[0]?.id || '')}
+                    onChange={e => setEditingProblem({ ...editingProblem, topicId: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
+                  >
+                    {topics.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.title || t.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -2489,11 +2709,101 @@ export default function TechnicalHubPage() {
                     onChange={e => setEditingProblem({ ...editingProblem, level: e.target.value as any })}
                     className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#181818] rounded-md text-gray-900 dark:text-white"
                   >
-                    <option value="BASIC">BASIC</option>
+                    <option value="BASIC">BASIC (Easy)</option>
                     <option value="MEDIUM">MEDIUM</option>
                     <option value="HARD">HARD</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Problem Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.title || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, title: e.target.value })}
+                    placeholder="e.g. Two Sum"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    LeetCode # (optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={editingProblem.leetcodeNumber || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, leetcodeNumber: e.target.value ? parseInt(e.target.value, 10) : undefined })}
+                    placeholder="e.g. 1"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    LeetCode URL (Direct Redirect)
+                  </label>
+                  <input
+                    type="url"
+                    value={editingProblem.leetcodeUrl || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, leetcodeUrl: e.target.value })}
+                    placeholder="https://leetcode.com/problems/..."
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    Pattern / Core Technique
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProblem.pattern || editingProblem.categoryLabel || ''}
+                    onChange={e => setEditingProblem({ ...editingProblem, pattern: e.target.value, categoryLabel: e.target.value })}
+                    placeholder="e.g. Hash Map Complement / Two Pointers"
+                    className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Company Tags (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={editingProblem.companyTags ? editingProblem.companyTags.join(', ') : ''}
+                  onChange={e => setEditingProblem({
+                    ...editingProblem,
+                    companyTags: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  })}
+                  placeholder="e.g. Amazon, Google, TCS Prime, Microsoft"
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  Key Intuition & Approach / Explanation
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingProblem.keyIntuition || editingProblem.explanation || editingProblem.description || ''}
+                  onChange={e => setEditingProblem({
+                    ...editingProblem,
+                    keyIntuition: e.target.value,
+                    explanation: e.target.value,
+                    description: editingProblem.description || e.target.value
+                  })}
+                  placeholder="Core intuition, boundary conditions, algorithm walkthrough..."
+                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 bg-transparent rounded-md text-gray-900 dark:text-white font-sans text-xs"
+                />
               </div>
 
               <div>

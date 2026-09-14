@@ -66,6 +66,24 @@ const SAMPLE_MCQ_TEMPLATE = `[
   }
 ]`;
 
+const SAMPLE_CAMPUS_DSA_TEMPLATE = `[
+  {
+    "title": "Two Sum",
+    "topicId": "stage-1-two-pointers",
+    "leetcodeNumber": 1,
+    "leetcodeUrl": "https://leetcode.com/problems/two-sum/",
+    "difficulty": "EASY",
+    "pattern": "Hash Map Complement",
+    "companyTags": ["Amazon", "Google", "TCS Prime", "Infosys SP", "Adobe"],
+    "keyIntuition": "Store each visited number in a Hash Map; check if (target - num) exists in O(1) time.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(N)",
+    "solutions": {
+      "java": "class Solution {\\n    public int[] twoSum(int[] nums, int target) {\\n        Map<Integer, Integer> map = new HashMap<>();\\n        for (int i = 0; i < nums.length; i++) {\\n            int comp = target - nums[i];\\n            if (map.containsKey(comp)) return new int[]{map.get(comp), i};\\n            map.put(nums[i], i);\\n        }\\n        return new int[0];\\n    }\\n}"
+    }
+  }
+]`;
+
 export default function TechnicalBulkImportModal({
   isOpen,
   onClose,
@@ -83,7 +101,11 @@ export default function TechnicalBulkImportModal({
 
   if (!isOpen) return null;
 
-  const currentTemplate = isMcqMode ? SAMPLE_MCQ_TEMPLATE : SAMPLE_PROBLEM_TEMPLATE;
+  const currentTemplate = isMcqMode
+    ? SAMPLE_MCQ_TEMPLATE
+    : track === 'CAMPUS_DSA'
+    ? SAMPLE_CAMPUS_DSA_TEMPLATE
+    : SAMPLE_PROBLEM_TEMPLATE;
 
   // Real-time JSON validation using safeJsonParse
   let parsedItems: any[] = [];
