@@ -1759,88 +1759,90 @@ export default function TechnicalHubPage() {
                         </div>
                       )}
 
-                      {/* 5. Collapsible Solution Accordion */}
-                      <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
-                        <button
-                          type="button"
-                          onClick={() => toggleSolution(problem.id)}
-                          className="flex items-center gap-2 text-xs font-bold text-[#FD4A32] hover:text-[#E0351D] transition-colors cursor-pointer"
-                        >
-                          <Code2 className="w-4 h-4" />
-                          <span>{isExpanded ? 'Hide Solution & Code' : 'View Verified Solution & Code'}</span>
-                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                        </button>
+                      {/* 5. Collapsible Solution Accordion (Programming 150 only) */}
+                      {activeTrack !== 'CAMPUS_DSA' && problem.track !== 'CAMPUS_DSA' && (
+                        <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
+                          <button
+                            type="button"
+                            onClick={() => toggleSolution(problem.id)}
+                            className="flex items-center gap-2 text-xs font-bold text-[#FD4A32] hover:text-[#E0351D] transition-colors cursor-pointer"
+                          >
+                            <Code2 className="w-4 h-4" />
+                            <span>{isExpanded ? 'Hide Solution & Code' : 'View Verified Solution & Code'}</span>
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
 
-                        {isExpanded && (
-                          <div className="mt-3 space-y-3 p-4 bg-[#0C0C0C] dark:bg-[#000000] text-white rounded-xl border border-[#242424] animate-fadeIn">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#242424]">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                {(['java', 'python', 'cpp', 'c'] as const).map(lang => (
-                                  <button
-                                    key={lang}
-                                    type="button"
-                                    onClick={() => setProblemLanguage(problem.id, lang)}
-                                    className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all border cursor-pointer ${
-                                      activeLang === lang
-                                        ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-xs'
-                                        : 'bg-[#1A1A1A] border-[#333333] text-[#AAAAAA] hover:text-white'
-                                    }`}
-                                  >
-                                    {lang === 'cpp' ? 'C++' : lang.toUpperCase()}
-                                  </button>
-                                ))}
-                              </div>
-
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
-                                  Time: {problem.timeComplexity}
-                                </span>
-                                <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
-                                  Space: {problem.spaceComplexity}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyCode(problem.solutions[activeLang] || '', problem.id)}
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1A1A1A] hover:bg-[#252525] border border-[#333333] text-[#CCCCCC] hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
-                                >
-                                  {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                                  <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="bg-[#050505] rounded-lg p-3.5 border border-[#1E1E1E] overflow-x-auto text-xs font-mono text-emerald-400">
-                              <pre>{problem.solutions[activeLang] || '// Solution not available in this language'}</pre>
-                            </div>
-
-                            {problem.explanation && (
-                              <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
-                                <span className="font-bold flex items-center gap-1.5 text-[10px] text-[#FD4A32] uppercase tracking-wider">
-                                  <Lightbulb className="w-3.5 h-3.5 text-[#FD4A32]" />
-                                  Explanation &amp; Approach
-                                </span>
-                                <p className="text-gray-300 leading-relaxed font-sans text-xs">
-                                  {problem.explanation}
-                                </p>
-                              </div>
-                            )}
-
-                            {problem.hints && problem.hints.length > 0 && (
-                              <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
-                                <span className="font-bold flex items-center gap-1.5 text-[10px] text-amber-400 uppercase tracking-wider">
-                                  <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
-                                  Hints &amp; Edge Cases
-                                </span>
-                                <ul className="list-disc pl-4 space-y-0.5 text-gray-300 text-xs font-sans">
-                                  {problem.hints.map((hint, hIdx) => (
-                                    <li key={hIdx}>{hint}</li>
+                          {isExpanded && (
+                            <div className="mt-3 space-y-3 p-4 bg-[#0C0C0C] dark:bg-[#000000] text-white rounded-xl border border-[#242424] animate-fadeIn">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#242424]">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {(['java', 'python', 'cpp', 'c'] as const).map(lang => (
+                                    <button
+                                      key={lang}
+                                      type="button"
+                                      onClick={() => setProblemLanguage(problem.id, lang)}
+                                      className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all border cursor-pointer ${
+                                        activeLang === lang
+                                          ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-xs'
+                                          : 'bg-[#1A1A1A] border-[#333333] text-[#AAAAAA] hover:text-white'
+                                      }`}
+                                    >
+                                      {lang === 'cpp' ? 'C++' : lang.toUpperCase()}
+                                    </button>
                                   ))}
-                                </ul>
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
+                                    Time: {problem.timeComplexity}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
+                                    Space: {problem.spaceComplexity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyCode(problem.solutions[activeLang] || '', problem.id)}
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1A1A1A] hover:bg-[#252525] border border-[#333333] text-[#CCCCCC] hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
+                                  >
+                                    {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                    <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
+                                  </button>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+
+                              <div className="bg-[#050505] rounded-lg p-3.5 border border-[#1E1E1E] overflow-x-auto text-xs font-mono text-emerald-400">
+                                <pre>{problem.solutions[activeLang] || '// Solution not available in this language'}</pre>
+                              </div>
+
+                              {problem.explanation && (
+                                <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
+                                  <span className="font-bold flex items-center gap-1.5 text-[10px] text-[#FD4A32] uppercase tracking-wider">
+                                    <Lightbulb className="w-3.5 h-3.5 text-[#FD4A32]" />
+                                    Explanation &amp; Approach
+                                  </span>
+                                  <p className="text-gray-300 leading-relaxed font-sans text-xs">
+                                    {problem.explanation}
+                                  </p>
+                                </div>
+                              )}
+
+                              {problem.hints && problem.hints.length > 0 && (
+                                <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
+                                  <span className="font-bold flex items-center gap-1.5 text-[10px] text-amber-400 uppercase tracking-wider">
+                                    <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                                    Hints &amp; Edge Cases
+                                  </span>
+                                  <ul className="list-disc pl-4 space-y-0.5 text-gray-300 text-xs font-sans">
+                                    {problem.hints.map((hint, hIdx) => (
+                                      <li key={hIdx}>{hint}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })

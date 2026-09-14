@@ -687,6 +687,11 @@ export const technicalService = {
     const existingFingerprints = new Set(
       existingProblems.map(p => computeSha256Hex(`${p.title.trim()}:${p.description?.trim() || ''}`))
     );
+    const existingLcNumbers = new Set(
+      existingProblems
+        .map(p => p.leetcodeNumber || (p.solutions as any)?.leetcodeNumber)
+        .filter((n): n is number => typeof n === 'number' && n > 0)
+    );
 
     const dbPayloads: any[] = [];
     let maxSortOrder = existingProblems.length > 0
@@ -705,8 +710,22 @@ export const technicalService = {
       const normTitle = cleanTitle.toLowerCase();
       const resolvedDescription = p.description || (p as any).problemStatement || (p as any).statement || (p as any).problem_statement || '';
       const fingerprint = computeSha256Hex(`${cleanTitle}:${resolvedDescription.trim()}`);
+      const lcNum = p.leetcodeNumber || (p as any).leetcode_number || (p.solutions as any)?.leetcodeNumber;
+      const lcUrl = p.leetcodeUrl || (p as any).leetcode_url || (p.solutions as any)?.leetcodeUrl || '';
+      const pattern = p.pattern || (p as any).pattern || (p.solutions as any)?.pattern || p.categoryLabel || (p as any).category_label || '';
+      const keyIntuition = p.keyIntuition || (p as any).key_intuition || (p.solutions as any)?.keyIntuition || p.explanation || '';
 
-      // Deduplication Check matching Aptitude
+      // Deduplication Check (Title, Fingerprint, and LeetCode Number)
+      if (track === 'CAMPUS_DSA' && lcNum && existingLcNumbers.has(lcNum)) {
+        report.duplicates++;
+        report.errors.push({
+          itemIndex,
+          title: cleanTitle,
+          reason: `Duplicate problem (LeetCode #${lcNum} already exists in Campus DSA)`,
+        });
+        return;
+      }
+
       if (existingTitles.has(normTitle) || existingFingerprints.has(fingerprint)) {
         report.duplicates++;
         report.errors.push({
@@ -719,41 +738,64 @@ export const technicalService = {
 
       existingTitles.add(normTitle);
       existingFingerprints.add(fingerprint);
+      if (lcNum) existingLcNumbers.add(lcNum);
       maxSortOrder++;
 
-      const resolvedTopicId = p.topicId || (p as any).topic_id || 'syntax-operators';
+      const fallbackTopic = track === 'CAMPUS_DSA' ? 'stage-1-two-pointers' : 'syntax-operators';
+      const resolvedTopicId = p.topicId || (p as any).topic_id || fallbackTopic;
       const resolvedLevel = ((p.level || (p as any).difficulty || 'MEDIUM') as string).toUpperCase() as ProblemLevel;
-      const resolvedSolutions = p.solutions || (p as any).solution || {
-        java: '// Java solution',
-        python: '# Python solution',
-        cpp: '// C++ solution',
-        c: '// C solution',
-      };
+      const resolvedSolutions: any = typeof p.solutions === 'object' && p.solutions !== null
+        ? { ...p.solutions }
+        : (p as any).solution || {
+          java: lcNum ? `// LeetCode #${lcNum}: ${cleanTitle}\nclass Solution {\n    // Solve on LeetCode\n}` : '// Java solution',
+          python: lcNum ? `# LeetCode #${lcNum}: ${cleanTitle}\nclass Solution:\n    pass` : '# Python solution',
+          cpp: lcNum ? `// LeetCode #${lcNum}: ${cleanTitle}\nclass Solution {\npublic:\n};` : '// C++ solution',
+          c: '// C solution',
+        };
+
+      if (lcUrl) resolvedSolutions.leetcodeUrl = lcUrl;
+      if (lcNum) resolvedSolutions.leetcodeNumber = lcNum;
+      if (pattern) resolvedSolutions.pattern = pattern;
+      if (keyIntuition) resolvedSolutions.keyIntuition = keyIntuition;
+
       const resolvedConstraints = Array.isArray(p.constraints)
-        ? p.constraints
+        ? [...p.constraints]
         : (typeof p.constraints === 'string' ? (p.constraints as string).split('\n').map(s => s.trim()).filter(Boolean) : []);
+      if (lcUrl && !resolvedConstraints.some(c => c.startsWith('LC_URL:'))) {
+        resolvedConstraints.push(`LC_URL:${lcUrl}`);
+      }
+      if (lcNum && !resolvedConstraints.some(c => c.startsWith('LC_NUM:'))) {
+        resolvedConstraints.push(`LC_NUM:${lcNum}`);
+      }
+
       const testCases = p.testCases || (p as any).test_cases || (p.sampleInput || p.sampleOutput ? [{ input: p.sampleInput || '', output: p.sampleOutput || '', explanation: p.explanation || '' }] : []);
 
       let resolvedCategory: ProblemCategory = (p.category || 'SYNTAX_BASICS') as ProblemCategory;
-      let resolvedCategoryLabel = p.categoryLabel || (p as any).category_label || 'General Programming';
+      let resolvedCategoryLabel = pattern || p.categoryLabel || (p as any).category_label || 'General Programming';
       if (resolvedTopicId.includes('string')) {
         resolvedCategory = 'STRINGS';
-        resolvedCategoryLabel = 'Strings & Text Processing';
+        if (!pattern) resolvedCategoryLabel = 'Strings & Text Processing';
       } else if (resolvedTopicId.includes('matri') || resolvedTopicId.includes('grid')) {
         resolvedCategory = 'MATRICES';
-        resolvedCategoryLabel = '2D Arrays & Matrices';
-      } else if (resolvedTopicId.includes('array')) {
+        if (!pattern) resolvedCategoryLabel = '2D Arrays & Matrices';
+      } else if (resolvedTopicId.includes('array') || resolvedTopicId.includes('pointer')) {
         resolvedCategory = 'ARRAYS';
-        resolvedCategoryLabel = 'Arrays & Hashing';
+        if (!pattern) resolvedCategoryLabel = 'Arrays & Two Pointers';
+      } else if (resolvedTopicId.includes('tree')) {
+        resolvedCategory = 'DATA_STRUCTURES';
+        if (!pattern) resolvedCategoryLabel = 'Binary Trees & BSTs';
+      } else if (resolvedTopicId.includes('graph')) {
+        resolvedCategory = 'DATA_STRUCTURES';
+        if (!pattern) resolvedCategoryLabel = 'Graphs & BFS/DFS';
       } else if (resolvedTopicId.includes('pattern')) {
         resolvedCategory = 'PATTERNS';
-        resolvedCategoryLabel = 'Pattern Programming';
+        if (!pattern) resolvedCategoryLabel = 'Pattern Programming';
       } else if (resolvedTopicId.includes('digit') || resolvedTopicId.includes('prime') || resolvedTopicId.includes('special-numbers')) {
         resolvedCategory = 'MATH_LOGIC';
-        resolvedCategoryLabel = 'Number Logic & Math';
+        if (!pattern) resolvedCategoryLabel = 'Number Logic & Math';
       }
 
-      const newId = p.id || `custom-${track.toLowerCase()}-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
+      const newId = p.id || (track === 'CAMPUS_DSA' && lcNum ? `lc-${lcNum}` : `custom-${track.toLowerCase()}-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`);
 
       dbPayloads.push({
         id: newId,
@@ -764,16 +806,16 @@ export const technicalService = {
         level: resolvedLevel,
         category: resolvedCategory,
         category_label: resolvedCategoryLabel,
-        description: resolvedDescription,
+        description: resolvedDescription || keyIntuition,
         constraints: resolvedConstraints,
         test_cases: testCases,
         sample_input: testCases[0]?.input || p.sampleInput || (p as any).sample_input || '',
         sample_output: testCases[0]?.output || p.sampleOutput || (p as any).sample_output || '',
-        explanation: p.explanation || '',
+        explanation: p.explanation || keyIntuition,
         solutions: resolvedSolutions,
         time_complexity: p.timeComplexity || (p as any).time_complexity || 'O(N)',
         space_complexity: p.spaceComplexity || (p as any).space_complexity || 'O(1)',
-        hints: Array.isArray(p.hints) ? p.hints : (typeof p.hints === 'string' ? [p.hints] : []),
+        hints: Array.isArray(p.hints) ? p.hints : (keyIntuition ? [keyIntuition] : []),
         company_tags: Array.isArray(p.companyTags) ? p.companyTags : (Array.isArray((p as any).company_tags) ? (p as any).company_tags : []),
         is_hidden: !!p.is_hidden,
         is_deleted: false,

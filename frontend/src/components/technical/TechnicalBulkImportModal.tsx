@@ -164,7 +164,8 @@ export default function TechnicalBulkImportModal({
         }
       } else {
         const itemsToImport = parsedItems.map(p => {
-          const finalTopicId = selectedTopicId !== 'AUTO' ? selectedTopicId : (p.topicId || defaultTopicId || 'syntax-operators');
+          const fallbackTopic = track === 'CAMPUS_DSA' ? 'stage-1-two-pointers' : 'syntax-operators';
+          const finalTopicId = selectedTopicId !== 'AUTO' ? selectedTopicId : (p.topicId || defaultTopicId || fallbackTopic);
           return {
             ...p,
             topicId: finalTopicId,
