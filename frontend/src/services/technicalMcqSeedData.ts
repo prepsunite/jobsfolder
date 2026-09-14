@@ -3640,7 +3640,1811 @@ export const CPP_PROGRAMMING_MCQ_SEED: TechnicalMcq[] = [
   }
 ];
 
+export const JAVA_PROGRAMMING_MCQ_SEED: TechnicalMcq[] = [
+  {
+    "id": "java-mcq-01",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which component of the Java Virtual Machine (JVM) is responsible for converting bytecode into native machine instructions at runtime for frequently executed hot spots?",
+    "options": [
+      "ClassLoader Subsystem",
+      "Just-In-Time (JIT) Compiler",
+      "Garbage Collector (GC)",
+      "Java Native Interface (JNI)"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "The JIT (Just-In-Time) compiler is part of the JVM execution engine. It monitors code execution, identifies 'hot spots' (frequently executed code segments), and compiles that bytecode directly into optimized native machine code for faster execution.",
+    "companyTags": [
+      "TCS Ninja",
+      "Cognizant",
+      "Wipro"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Cognizant",
+      "Wipro"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 1,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-02",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "What is the size and default value of a 'boolean' primitive instance variable in Java?",
+    "options": [
+      "1 byte, default value true",
+      "1 bit, default value 0",
+      "JVM-dependent (typically 1 byte in memory), default value false",
+      "2 bytes, default value null"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "In Java, the JVM specification does not define an exact size for `boolean` in memory (typically represented as 1 byte on the heap, or 4-byte integers on the operand stack). The default value for boolean member variables of an uninitialized object is `false`.",
+    "companyTags": [
+      "Infosys",
+      "Capgemini",
+      "Accenture"
+    ],
+    "company_tags": [
+      "Infosys",
+      "Capgemini",
+      "Accenture"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 2,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-03",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following typecasting and compound assignment snippet in Java?",
+    "codeSnippet": "public class Main {\n    public static void main(String[] args) {\n        byte b = 10;\n        b += 5; // Line 4\n        // b = b + 5; // Line 5\n        System.out.println(b);\n    }\n}",
+    "code_snippet": "public class Main {\n    public static void main(String[] args) {\n        byte b = 10;\n        b += 5; // Line 4\n        // b = b + 5; // Line 5\n        System.out.println(b);\n    }\n}",
+    "options": [
+      "Compilation error on Line 4 due to loss of precision.",
+      "15",
+      "Compilation error on both Line 4 and Line 5.",
+      "Runtime ClassCastException."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java, compound assignment operators (`E1 op= E2`) automatically cast the result to the type of the left-hand operand (`b = (byte)(b + 5)`). Therefore, Line 4 compiles cleanly and outputs 15. In contrast, `b = b + 5` (Line 5) would fail to compile because arithmetic on bytes promotes operands to `int`.",
+    "companyTags": [
+      "TCS Digital",
+      "Mindtree",
+      "LTI"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Mindtree",
+      "LTI"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 3,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-04",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Why does the following Java code fail to compile?",
+    "codeSnippet": "public class Test {\n    public static void main(String[] args) {\n        int x;\n        if (args.length > 0) {\n            x = 10;\n        }\n        System.out.println(x); // Error here\n    }\n}",
+    "code_snippet": "public class Test {\n    public static void main(String[] args) {\n        int x;\n        if (args.length > 0) {\n            x = 10;\n        }\n        System.out.println(x); // Error here\n    }\n}",
+    "options": [
+      "args array cannot be checked with .length.",
+      "Variable 'x' might not have been initialized before being read.",
+      "x must be declared static to be printed in main.",
+      "main method cannot take parameters in modern Java."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Unlike instance/static fields which receive default values (0, null, false), local variables in Java are allocated on the stack and receive NO default values. If there is any code execution path where a local variable might not be assigned before read, the compiler issues: 'variable x might not have been initialized'.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Paytm"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Paytm"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 4,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-05",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which principle does the standard Java ClassLoader hierarchy enforce to prevent a rogue application from replacing core classes like `java.lang.Object`?",
+    "options": [
+      "Double-Checked Locking Model",
+      "Parent Delegation Model",
+      "Lazy Initialization Model",
+      "Bytecode Verification Sandbox"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "The Parent Delegation Model dictates that when a ClassLoader receives a request to load a class, it delegates the request to its parent classloader first, up to the Bootstrap ClassLoader. Only if parent classloaders fail to locate the class does the child attempt to load it, ensuring trusted core Java libraries cannot be overridden.",
+    "companyTags": [
+      "Oracle",
+      "Goldman Sachs",
+      "Morgan Stanley"
+    ],
+    "company_tags": [
+      "Oracle",
+      "Goldman Sachs",
+      "Morgan Stanley"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 5,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-06",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Why are String objects immutable in Java?",
+    "options": [
+      "To prevent String from being serialized across networks.",
+      "To enable String Constant Pool caching, thread safety, and secure hashing for HashMaps.",
+      "Because Java does not support heap memory reallocation.",
+      "To allow Strings to be inherited by StringBuilder."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "String immutability provides three critical advantages: 1) String Pool optimization (multiple variables sharing the same literal safely), 2) Security (passwords, URLs, and file paths cannot be altered maliciously after verification), and 3) Thread safety with cached `hashCode()` for instant HashMap lookups.",
+    "companyTags": [
+      "TCS",
+      "Infosys",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Cognizant"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 6,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-07",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the exact output of comparing String references created via literals versus new keyword?",
+    "codeSnippet": "public class StringTest {\n    public static void main(String[] args) {\n        String s1 = \"Java\";\n        String s2 = \"Java\";\n        String s3 = new String(\"Java\");\n        String s4 = s3.intern();\n        \n        System.out.println((s1 == s2) + \" \" + (s1 == s3) + \" \" + (s1 == s4));\n    }\n}",
+    "code_snippet": "public class StringTest {\n    public static void main(String[] args) {\n        String s1 = \"Java\";\n        String s2 = \"Java\";\n        String s3 = new String(\"Java\");\n        String s4 = s3.intern();\n        \n        System.out.println((s1 == s2) + \" \" + (s1 == s3) + \" \" + (s1 == s4));\n    }\n}",
+    "options": [
+      "true true true",
+      "true false true",
+      "false false false",
+      "true false false"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "1. `s1` and `s2` refer to the same literal in the String Constant Pool (SCP), so `s1 == s2` is true.\n2. `s3` creates a new explicit object in the general heap, so `s1 == s3` is false.\n3. `s3.intern()` returns the canonical reference from the SCP (which is `s1`), so `s1 == s4` is true.\nOutput is `true false true`.",
+    "companyTags": [
+      "Amazon",
+      "Flipkart",
+      "Optum"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Flipkart",
+      "Optum"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 7,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-08",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the primary architectural difference between StringBuilder and StringBuffer in Java?",
+    "options": [
+      "StringBuilder is thread-safe with synchronized methods; StringBuffer is non-synchronized and faster.",
+      "StringBuffer is thread-safe with synchronized methods; StringBuilder is non-synchronized and faster.",
+      "StringBuilder stores UTF-8 characters; StringBuffer stores ASCII characters.",
+      "StringBuffer is immutable; StringBuilder is mutable."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`StringBuffer` (since Java 1.0) has synchronized methods, making it thread-safe but introducing lock overhead. `StringBuilder` (introduced in Java 1.5) removes synchronization, making it significantly faster for single-threaded string concatenation.",
+    "companyTags": [
+      "Accenture",
+      "HCL",
+      "Wipro"
+    ],
+    "company_tags": [
+      "Accenture",
+      "HCL",
+      "Wipro"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 8,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-09",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What will be printed by the following string concatenation evaluation?",
+    "codeSnippet": "public class ConcatTest {\n    public static void main(String[] args) {\n        System.out.println(10 + 20 + \"Hello\" + 30 + 40);\n    }\n}",
+    "code_snippet": "public class ConcatTest {\n    public static void main(String[] args) {\n        System.out.println(10 + 20 + \"Hello\" + 30 + 40);\n    }\n}",
+    "options": [
+      "1020Hello3040",
+      "30Hello70",
+      "30Hello3040",
+      "Compilation error"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "Operators in Java evaluate from left to right: 1) `10 + 20` performs integer addition = `30`. 2) `30 + \"Hello\"` performs string concatenation = `\"30Hello\"`. 3) Once a String is formed, subsequent `+` operations treat remaining numbers as strings: `\"30Hello\" + 30` = `\"30Hello30\"`, and then `+ 40` = `\"30Hello3040\"`.",
+    "companyTags": [
+      "TCS Ninja",
+      "Capgemini",
+      "Tech Mahindra"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Capgemini",
+      "Tech Mahindra"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 9,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-10",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "How many total String objects are created in memory (Heap + String Constant Pool) by executing the line below assuming 'Java' was NOT previously in the pool?",
+    "codeSnippet": "String s = new String(\"Java\");",
+    "code_snippet": "String s = new String(\"Java\");",
+    "options": [
+      "1 object (only in the Heap)",
+      "1 object (only in the String Constant Pool)",
+      "2 objects (one in the String Constant Pool and one in the general Heap)",
+      "3 objects (Heap, SCP, and char array reference)"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "Executing `new String(\"Java\")` creates 2 objects: 1) The string literal `\"Java\"` is created in the String Constant Pool (if not already present), and 2) the `new` operator allocates a distinct String object on the general heap holding the reference to that pool data.",
+    "companyTags": [
+      "Microsoft",
+      "Adobe",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Adobe",
+      "DE Shaw"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 10,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-11",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "Which constructor call must be the FIRST statement in a child class constructor in Java?",
+    "options": [
+      "super() or this()",
+      "init()",
+      "Class.forName()",
+      "Object.clone()"
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "In Java, an explicit constructor call (`super(...)` to invoke a parent constructor or `this(...)` to chain an overloaded constructor) MUST be the very first statement in the constructor body. If neither is written, the compiler automatically inserts `super()`.",
+    "companyTags": [
+      "TCS",
+      "Cognizant",
+      "Infosys"
+    ],
+    "company_tags": [
+      "TCS",
+      "Cognizant",
+      "Infosys"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 11,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-12",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following polymorphic method invocation versus variable shadowing code?",
+    "codeSnippet": "class Parent {\n    int x = 10;\n    void show() { System.out.print(\"ParentShow \"); }\n}\n\nclass Child extends Parent {\n    int x = 20;\n    void show() { System.out.print(\"ChildShow \"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Parent p = new Child();\n        System.out.print(p.x + \" \");\n        p.show();\n    }\n}",
+    "code_snippet": "class Parent {\n    int x = 10;\n    void show() { System.out.print(\"ParentShow \"); }\n}\n\nclass Child extends Parent {\n    int x = 20;\n    void show() { System.out.print(\"ChildShow \"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Parent p = new Child();\n        System.out.print(p.x + \" \");\n        p.show();\n    }\n}",
+    "options": [
+      "20 ChildShow ",
+      "10 ChildShow ",
+      "10 ParentShow ",
+      "20 ParentShow "
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java: 1) Variables are NOT polymorphic; variable access is resolved at compile time based on the reference type (`Parent p`, so `p.x` accesses `Parent.x = 10`). 2) Instance methods ARE polymorphic; method invocation is resolved at runtime based on the actual object (`new Child()`, so `p.show()` calls `Child.show()`). Output: `10 ChildShow `.",
+    "companyTags": [
+      "Amazon",
+      "Adobe",
+      "Qualcomm"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Adobe",
+      "Qualcomm"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 12,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-13",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What happens when a static method is declared with the same signature in both Parent and Child classes (Method Hiding)?",
+    "codeSnippet": "class A {\n    static void display() { System.out.print(\"A \"); }\n}\nclass B extends A {\n    static void display() { System.out.print(\"B \"); }\n}\npublic class Test {\n    public static void main(String[] args) {\n        A obj = new B();\n        obj.display();\n    }\n}",
+    "code_snippet": "class A {\n    static void display() { System.out.print(\"A \"); }\n}\nclass B extends A {\n    static void display() { System.out.print(\"B \"); }\n}\npublic class Test {\n    public static void main(String[] args) {\n        A obj = new B();\n        obj.display();\n    }\n}",
+    "options": [
+      "B ",
+      "A ",
+      "Compilation error: cannot override static methods",
+      "A B "
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Static methods cannot be overridden in Java; they are hidden. Because static methods belong to the class and are resolved at compile time based on the reference type (`A obj`), calling `obj.display()` invokes `A.display()`, printing `A `.",
+    "companyTags": [
+      "Cognizant GenC Next",
+      "HCL",
+      "Mindtree"
+    ],
+    "company_tags": [
+      "Cognizant GenC Next",
+      "HCL",
+      "Mindtree"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 13,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-14",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What rule does the following method overriding attempt violate?",
+    "codeSnippet": "class Parent {\n    protected void process() {}\n}\nclass Child extends Parent {\n    void process() {} // Error here\n}",
+    "code_snippet": "class Parent {\n    protected void process() {}\n}\nclass Child extends Parent {\n    void process() {} // Error here\n}",
+    "options": [
+      "Child method must be declared static.",
+      "An overriding method cannot reduce the visibility of the inherited method (protected cannot become default/package-private).",
+      "Child method must return boolean.",
+      "process() must be declared final in Parent."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java, an overriding method cannot assign weaker access privileges than the overridden method in the superclass. `protected` in Parent cannot be reduced to `default` (package-private) in Child. It can only stay `protected` or be widened to `public`.",
+    "companyTags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Capgemini"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Capgemini"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 14,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-15",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is 'Covariant Return Type' introduced in Java 5?",
+    "codeSnippet": "class SuperClass {\n    SuperClass get() { return this; }\n}\nclass SubClass extends SuperClass {\n    SubClass get() { return this; } // Valid?\n}",
+    "code_snippet": "class SuperClass {\n    SuperClass get() { return this; }\n}\nclass SubClass extends SuperClass {\n    SubClass get() { return this; } // Valid?\n}",
+    "options": [
+      "A method returning void can be overridden to return an int.",
+      "An overriding method can return a subtype of the return type declared in the overridden superclass method.",
+      "A method can return multiple values using tuples.",
+      "Overriding methods must return Object in all subclasses."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Covariant return type allows an overriding method in a subclass to declare a return type that is a subtype (derived class) of the return type declared in the superclass method, eliminating the need for client-side downcasting.",
+    "companyTags": [
+      "Google",
+      "Bloomberg",
+      "Goldman Sachs"
+    ],
+    "company_tags": [
+      "Google",
+      "Bloomberg",
+      "Goldman Sachs"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 15,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-16",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "What are the implicit modifiers for variables declared inside an interface in Java?",
+    "codeSnippet": "interface Constants {\n    int MAX = 100;\n}",
+    "code_snippet": "interface Constants {\n    int MAX = 100;\n}",
+    "options": [
+      "private static final",
+      "public static final",
+      "protected final",
+      "public volatile"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Every field declared inside an interface is automatically and implicitly `public static final`. They are compile-time constants.",
+    "companyTags": [
+      "Wipro",
+      "Tech Mahindra",
+      "Accenture"
+    ],
+    "company_tags": [
+      "Wipro",
+      "Tech Mahindra",
+      "Accenture"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 16,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-17",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is a 'Functional Interface' in Java 8?",
+    "options": [
+      "An interface that contains only static utility methods.",
+      "An interface containing exactly one abstract method (Single Abstract Method - SAM).",
+      "An interface with no methods at all.",
+      "An interface that cannot be implemented by classes."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "A Functional Interface contains exactly one abstract method (Single Abstract Method / SAM), making it eligible for lambda expressions and method references. It may contain any number of `default` or `static` methods.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Optum"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Optum"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 17,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-18",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "How does Java 8 resolve ambiguity when a class implements two interfaces that provide conflicting default methods with the same signature?",
+    "codeSnippet": "interface A { default void hello() { System.out.print(\"A\"); } }\ninterface B { default void hello() { System.out.print(\"B\"); } }\n\nclass C implements A, B {\n    public void hello() {\n        A.super.hello();\n        System.out.print(\"C\");\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        new C().hello();\n    }\n}",
+    "code_snippet": "interface A { default void hello() { System.out.print(\"A\"); } }\ninterface B { default void hello() { System.out.print(\"B\"); } }\n\nclass C implements A, B {\n    public void hello() {\n        A.super.hello();\n        System.out.print(\"C\");\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        new C().hello();\n    }\n}",
+    "options": [
+      "AC",
+      "BC",
+      "Compilation error: conflicting default methods cannot be resolved",
+      "ABC"
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "When two interfaces have conflicting default methods, the implementing class MUST explicitly override the method to resolve ambiguity. It can invoke a specific interface's default implementation using `InterfaceName.super.methodName()`. Here `A.super.hello()` prints \"A\", followed by \"C\", outputting `AC`.",
+    "companyTags": [
+      "Morgan Stanley",
+      "Societe Generale",
+      "Barclays"
+    ],
+    "company_tags": [
+      "Morgan Stanley",
+      "Societe Generale",
+      "Barclays"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 18,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-19",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Which statement about abstract classes in Java is FALSE?",
+    "options": [
+      "An abstract class can have constructors.",
+      "An abstract class can contain concrete (implemented) methods.",
+      "An abstract class can be declared with the 'final' keyword.",
+      "A class can be declared abstract even if it contains no abstract methods."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "An abstract class can NEVER be declared `final`. An abstract class is designed specifically to be inherited and extended by subclasses, while `final` explicitly forbids inheritance. Combining them produces a compile-time error: 'illegal combination of modifiers: abstract and final'.",
+    "companyTags": [
+      "TCS Ninja",
+      "Infosys",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Infosys",
+      "Cognizant"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 19,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-20",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is a 'Marker Interface' in Java, and how does modern Java design replace its usage?",
+    "options": [
+      "An interface containing only abstract methods; replaced by Abstract classes.",
+      "An empty interface with no methods or fields (like Serializable); largely superseded by Annotations.",
+      "An interface with only private methods; replaced by Sealed interfaces.",
+      "An interface implemented only by native libraries; replaced by JNI."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "A marker (or tag) interface has no methods or constants (e.g., `java.io.Serializable`, `java.lang.Cloneable`). It delivers metadata to the JVM or frameworks via `instanceof`. In modern Java (since Java 5), custom Annotations are preferred for metadata decoration.",
+    "companyTags": [
+      "Oracle",
+      "Goldman Sachs",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Oracle",
+      "Goldman Sachs",
+      "DE Shaw"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 20,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-21",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which of the following exception classes is an UNCHECKED exception in Java?",
+    "options": [
+      "java.io.IOException",
+      "java.sql.SQLException",
+      "java.lang.NullPointerException",
+      "java.lang.ClassNotFoundException"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "Unchecked exceptions in Java are subclasses of `RuntimeException` (such as `NullPointerException`, `ArrayIndexOutOfBoundsException`, `ArithmeticException`) and `Error`. They do not need to be declared in a method's `throws` clause or enclosed in a try-catch block. `IOException`, `SQLException`, and `ClassNotFoundException` are checked exceptions.",
+    "companyTags": [
+      "TCS",
+      "Accenture",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS",
+      "Accenture",
+      "Cognizant"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 21,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-22",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the return value of the following method containing a return statement inside both 'try' and 'finally' blocks?",
+    "codeSnippet": "public class Test {\n    public static int getValue() {\n        try {\n            return 10;\n        } finally {\n            return 20;\n        }\n    }\n    public static void main(String[] args) {\n        System.out.println(getValue());\n    }\n}",
+    "code_snippet": "public class Test {\n    public static int getValue() {\n        try {\n            return 10;\n        } finally {\n            return 20;\n        }\n    }\n    public static void main(String[] args) {\n        System.out.println(getValue());\n    }\n}",
+    "options": [
+      "10",
+      "20",
+      "Compilation error",
+      "10 followed by 20"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "The `finally` block ALWAYS executes before a method returns. If the `finally` block executes a `return` statement, it discards and overrides any pending return value from the `try` block, returning 20.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Adobe"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Adobe"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 22,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-23",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Why does the following multi-catch block cause a compilation error?",
+    "codeSnippet": "try {\n    // some code\n} catch (Exception e) {\n    System.out.println(\"Exception\");\n} catch (ArithmeticException e) {\n    System.out.println(\"Arithmetic\");\n}",
+    "code_snippet": "try {\n    // some code\n} catch (Exception e) {\n    System.out.println(\"Exception\");\n} catch (ArithmeticException e) {\n    System.out.println(\"Arithmetic\");\n}",
+    "options": [
+      "ArithmeticException cannot be caught after a generic try block.",
+      "Compilation error: Unreachable catch block because ArithmeticException has already been caught by the broader Exception handler.",
+      "Variable 'e' cannot be reused across catch blocks.",
+      "try blocks require at least one finally block."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java catch blocks, subclasses MUST precede superclasses. Because `ArithmeticException` is a subclass of `Exception`, placing `catch(Exception e)` first catches all exceptions, rendering the `catch(ArithmeticException e)` block completely unreachable, which is a compile-time error.",
+    "companyTags": [
+      "Infosys SP",
+      "Capgemini",
+      "Tech Mahindra"
+    ],
+    "company_tags": [
+      "Infosys SP",
+      "Capgemini",
+      "Tech Mahindra"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 23,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-24",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Under what circumstance will a 'finally' block NOT execute in Java?",
+    "options": [
+      "When an OutOfMemoryError is thrown.",
+      "When the try block finishes with a return statement.",
+      "When `System.exit(0)` is invoked inside the try block.",
+      "When an unhandled RuntimeException occurs."
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "`System.exit(status)` halts the JVM process immediately, terminating OS-level execution without running pending `finally` blocks (the only exceptions being JVM crashes or power failure).",
+    "companyTags": [
+      "Qualcomm",
+      "NVIDIA",
+      "Samsung"
+    ],
+    "company_tags": [
+      "Qualcomm",
+      "NVIDIA",
+      "Samsung"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 24,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-25",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "What interface must a resource implement to be managed automatically by Java 7's 'try-with-resources' statement?",
+    "codeSnippet": "try (MyResource res = new MyResource()) {\n    // operations\n}",
+    "code_snippet": "try (MyResource res = new MyResource()) {\n    // operations\n}",
+    "options": [
+      "java.io.Serializable",
+      "java.lang.AutoCloseable",
+      "java.lang.Runnable",
+      "java.util.Observer"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Any resource used within the parentheses of a `try(...)` statement must implement `java.lang.AutoCloseable` (or its child `java.io.Closeable`). The JVM automatically invokes its `close()` method upon exiting the try block in reverse order of initialization.",
+    "companyTags": [
+      "Microsoft",
+      "Google",
+      "Bloomberg"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Google",
+      "Bloomberg"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 25,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-26",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "Which Java Collections interface guarantees unique elements and sorts them in their natural ascending order?",
+    "options": [
+      "HashSet",
+      "LinkedHashSet",
+      "TreeSet",
+      "PriorityQueue"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "`TreeSet` implements the `NavigableSet` / `SortedSet` interface and uses a Red-Black Tree to guarantee unique elements stored in natural sorted order (or via a custom `Comparator`) with $O(\\log n)$ operations.",
+    "companyTags": [
+      "TCS Ninja",
+      "Infosys",
+      "Wipro"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Infosys",
+      "Wipro"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 26,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-27",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What happens in a Java HashMap when the number of elements in a single bucket exceeds TREEIFY_THRESHOLD (8) and total table capacity is at least 64?",
+    "options": [
+      "The entire HashMap throws a HashCollisionException.",
+      "The bucket's singly linked list is converted into a balanced Red-Black Tree.",
+      "The oldest elements in the bucket are automatically purged.",
+      "The HashMap switches to linear probing."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Since Java 8, when a bucket in `HashMap` reaches a threshold of 8 elements and the overall capacity is $\\ge$ 64, the linked list is transformed into a balanced Red-Black Tree (`TreeNode`). This improves worst-case lookup from $O(n)$ to $O(\\log n)$.",
+    "companyTags": [
+      "Amazon",
+      "Flipkart",
+      "Walmart"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Flipkart",
+      "Walmart"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 27,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-28",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following HashSet operation when equals() and hashCode() are NOT overridden?",
+    "codeSnippet": "import java.util.*;\n\nclass Student {\n    int id;\n    Student(int id) { this.id = id; }\n}\n\npublic class SetTest {\n    public static void main(String[] args) {\n        Set<Student> set = new HashSet<>();\n        set.add(new Student(1));\n        set.add(new Student(1));\n        System.out.println(set.size());\n    }\n}",
+    "code_snippet": "import java.util.*;\n\nclass Student {\n    int id;\n    Student(int id) { this.id = id; }\n}\n\npublic class SetTest {\n    public static void main(String[] args) {\n        Set<Student> set = new HashSet<>();\n        set.add(new Student(1));\n        set.add(new Student(1));\n        System.out.println(set.size());\n    }\n}",
+    "options": [
+      "1",
+      "2",
+      "Compilation error",
+      "Runtime Exception"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Because `equals()` and `hashCode()` are not overridden in `Student`, `HashSet` uses `Object`'s default implementation, which compares memory references (`==`). Since both instances are created with separate `new` calls, their hash codes and references differ, resulting in both being added (size = 2).",
+    "companyTags": [
+      "Adobe",
+      "Cisco",
+      "Paytm"
+    ],
+    "company_tags": [
+      "Adobe",
+      "Cisco",
+      "Paytm"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 28,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-29",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What exception is thrown when modifying an ArrayList while traversing it using an enhanced for-loop (Fail-Fast Iterator)?",
+    "codeSnippet": "List<String> list = new ArrayList<>(Arrays.asList(\"A\", \"B\", \"C\"));\nfor (String s : list) {\n    if (s.equals(\"B\")) {\n        list.remove(s); // What happens?\n    }\n}",
+    "code_snippet": "List<String> list = new ArrayList<>(Arrays.asList(\"A\", \"B\", \"C\"));\nfor (String s : list) {\n    if (s.equals(\"B\")) {\n        list.remove(s); // What happens?\n    }\n}",
+    "options": [
+      "IllegalStateException",
+      "ConcurrentModificationException",
+      "IndexOutOfBoundsException",
+      "NoSuchElementException"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Java collections iterators are fail-fast. When structural modifications (add/remove) are made directly to the collection instead of through the iterator's own `it.remove()` method, the `modCount` diverges from the expected count, throwing `ConcurrentModificationException`.",
+    "companyTags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Microsoft"
+    ],
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Microsoft"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 29,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-30",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of sorting Strings using a PriorityQueue with default natural ordering in Java?",
+    "codeSnippet": "import java.util.*;\n\npublic class PQTest {\n    public static void main(String[] args) {\n        PriorityQueue<Integer> pq = new PriorityQueue<>();\n        pq.add(40);\n        pq.add(10);\n        pq.add(30);\n        pq.add(20);\n        \n        System.out.print(pq.poll() + \" \" + pq.poll());\n    }\n}",
+    "code_snippet": "import java.util.*;\n\npublic class PQTest {\n    public static void main(String[] args) {\n        PriorityQueue<Integer> pq = new PriorityQueue<>();\n        pq.add(40);\n        pq.add(10);\n        pq.add(30);\n        pq.add(20);\n        \n        System.out.print(pq.poll() + \" \" + pq.poll());\n    }\n}",
+    "options": [
+      "40 30",
+      "10 20",
+      "10 40",
+      "40 10"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java, `PriorityQueue` is a min-heap by default. The `poll()` method retrieves and removes the smallest element first. The first `poll()` returns 10, and the second `poll()` returns 20.",
+    "companyTags": [
+      "Uber",
+      "Intuit",
+      "Amazon"
+    ],
+    "company_tags": [
+      "Uber",
+      "Intuit",
+      "Amazon"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 30,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-31",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "How does Java 8's ConcurrentHashMap achieve thread safety without locking the entire map like Hashtable?",
+    "options": [
+      "By disabling all write operations during concurrent reads.",
+      "By using CAS (Compare-And-Swap) for empty bucket insertion and locking only the head node of a bucket (`synchronized(head)`) during write operations.",
+      "By maintaining a full replica of the map on each thread's stack.",
+      "By running all reads and writes on a single background actor thread."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java 8, `ConcurrentHashMap` abandoned Segmented Locks in favor of Lock-Free CAS (Compare-And-Swap) operations for inserting into empty buckets, combined with synchronized locks on individual bucket head nodes for collisions. Reads are completely lock-free via volatile field reads.",
+    "companyTags": [
+      "DE Shaw",
+      "Goldman Sachs",
+      "Google"
+    ],
+    "company_tags": [
+      "DE Shaw",
+      "Goldman Sachs",
+      "Google"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 31,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-32",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the difference between calling `thread.start()` versus `thread.run()` in Java?",
+    "options": [
+      "start() creates a new OS thread and invokes run() asynchronously; run() executes on the current calling thread synchronously.",
+      "run() creates a new OS thread; start() is deprecated.",
+      "start() can only be called once; run() cannot be called more than once.",
+      "There is no difference; start() is an alias for run()."
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "`thread.start()` allocates new thread resources and registers with the OS scheduler to invoke `run()` on a separate execution path. Directly calling `thread.run()` simply invokes a normal method on the caller's existing thread synchronously.",
+    "companyTags": [
+      "TCS Digital",
+      "Cognizant",
+      "Infosys"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Cognizant",
+      "Infosys"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 32,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-33",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What does the 'volatile' keyword guarantee in Java?",
+    "codeSnippet": "private volatile boolean flag = true;",
+    "code_snippet": "private volatile boolean flag = true;",
+    "options": [
+      "It guarantees both memory visibility and mutual exclusion (thread atomicity for count++).",
+      "It guarantees memory visibility across threads (reading directly from main memory) and prevents instruction reordering, but does NOT provide atomicity.",
+      "It causes the variable to be stored on the execution stack instead of the heap.",
+      "It locks the object until the calling thread exits."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`volatile` guarantees visibility (changes made by one thread are immediately visible to all other threads by bypassing CPU L1/L2 caches) and prevents compiler/CPU instruction reordering. However, compound operations like `count++` (read-modify-write) are NOT atomic.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Adobe"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Adobe"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 33,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-34",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "What exception is thrown if `wait()`, `notify()`, or `notifyAll()` is called on an object without holding that object's monitor lock?",
+    "codeSnippet": "Object lock = new Object();\nlock.wait(); // Line 2 (not inside synchronized(lock))",
+    "code_snippet": "Object lock = new Object();\nlock.wait(); // Line 2 (not inside synchronized(lock))",
+    "options": [
+      "InterruptedException",
+      "IllegalMonitorStateException",
+      "NullPointerException",
+      "ThreadDeath"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Calling `wait()` or `notify()` requires the current thread to own the object's monitor lock (via `synchronized(lock)`). Failing to acquire the monitor lock before calling these methods throws `IllegalMonitorStateException` at runtime.",
+    "companyTags": [
+      "Microsoft",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Oracle",
+      "Qualcomm"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 34,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-35",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What happens when `join()` is invoked on a thread instance in Java?",
+    "codeSnippet": "Thread t = new Thread(() -> {\n    // background work\n});\nt.start();\nt.join(); // What does this call do?",
+    "code_snippet": "Thread t = new Thread(() -> {\n    // background work\n});\nt.start();\nt.join(); // What does this call do?",
+    "options": [
+      "Terminates thread t immediately.",
+      "Causes the calling thread to pause and wait until thread t completes its execution.",
+      "Merges thread t's memory into the calling thread's heap space.",
+      "Puts thread t into the BLOCKED state."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`t.join()` causes the current thread (the one calling `join()`) to suspend execution and enter `WAITING` state until thread `t` terminates.",
+    "companyTags": [
+      "Paytm",
+      "Flipkart",
+      "Accenture"
+    ],
+    "company_tags": [
+      "Paytm",
+      "Flipkart",
+      "Accenture"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 35,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-36",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What are the four Coffman conditions required for a deadlock to occur in Java multithreading, and how is it typically prevented?",
+    "options": [
+      "Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait; prevented by acquiring locks in a consistent global order.",
+      "Race Condition, Context Switch, Thread Starvation, Cache Miss; prevented by increasing heap memory.",
+      "Volatile Reads, CAS Failures, Spinlock contention, CPU Throttle; prevented by using thread pools.",
+      "Paging Anomaly, Thread Leak, Garbage Collection Pause, Monitor timeout; prevented with noexcept."
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "The 4 necessary conditions for deadlock are: Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait. Breaking 'Circular Wait' by enforcing strict linear lock acquisition ordering across all threads is the standard programmatic solution.",
+    "companyTags": [
+      "Bloomberg",
+      "Tower Research",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Bloomberg",
+      "Tower Research",
+      "DE Shaw"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 36,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-37",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is 'Type Erasure' in Java Generics?",
+    "options": [
+      "Removing primitive variables to save heap space.",
+      "The compiler replacing all generic type parameters with their bounds (or Object) and inserting appropriate casts, discarding generic metadata at runtime.",
+      "A JVM feature that deletes unused classes from memory.",
+      "The process of clearing variables before garbage collection."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "To maintain backward compatibility with pre-Java 5 legacy code, Java uses Type Erasure. The compiler enforces type safety during compilation and then strips away generic type arguments (replacing `T` with its upper bound or `Object`) in bytecode.",
+    "companyTags": [
+      "TCS",
+      "Infosys",
+      "Cognizant"
+    ],
+    "company_tags": [
+      "TCS",
+      "Infosys",
+      "Cognizant"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 37,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-38",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Why does the following Java code fail to compile?",
+    "codeSnippet": "List<Number> list = new ArrayList<Integer>();",
+    "code_snippet": "List<Number> list = new ArrayList<Integer>();",
+    "options": [
+      "Integer does not inherit from Number.",
+      "Generics in Java are invariant: `List<Integer>` is NOT a subtype of `List<Number>`.",
+      "ArrayList cannot be instantiated with a generic type.",
+      "Number is an abstract class and cannot be referenced."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java, generic types are invariant. Although `Integer` is a subtype of `Number`, `List<Integer>` is NOT a subtype of `List<Number>`. Allowing this would permit writing `list.add(3.14)` (a Double) into a list of Integers. The correct covariant wildcard syntax is `List<? extends Number> list = new ArrayList<Integer>();`.",
+    "companyTags": [
+      "Amazon",
+      "Adobe",
+      "Microsoft"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Adobe",
+      "Microsoft"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 38,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-39",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "According to the PECS (Producer Extends, Consumer Super) rule in Java Generics, which wildcard should be used when a collection produces read-only data?",
+    "options": [
+      "<? super T>",
+      "<? extends T>",
+      "<?>",
+      "<T extends Object>"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "PECS stands for 'Producer Extends, Consumer Super'. If a parameterized type represents a producer that you only read from (`get()`), use `<? extends T>`. If it represents a consumer that you write to (`add()`), use `<? super T>`.",
+    "companyTags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Google"
+    ],
+    "company_tags": [
+      "Goldman Sachs",
+      "Morgan Stanley",
+      "Google"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 39,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-40",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Which of the following operations is ILLEGAL with generic type parameters due to Type Erasure?",
+    "options": [
+      "Declaring a generic method `public <T> void print(T item)`",
+      "Creating an instance of a type parameter directly: `T obj = new T();`",
+      "Passing generic collections as method parameters",
+      "Using bounded wildcards `List<? extends Comparable<T>>`"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Because type parameters are erased at runtime into `Object`, the expression `new T()` is invalid because the JVM does not know what concrete constructor or memory allocation to perform. Reflection or factory suppliers (`Supplier<T>`) are required instead.",
+    "companyTags": [
+      "Cisco",
+      "Qualcomm",
+      "Oracle"
+    ],
+    "company_tags": [
+      "Cisco",
+      "Qualcomm",
+      "Oracle"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 40,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-41",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CODE_COMPLETION",
+    "question_type": "CODE_COMPLETION",
+    "question": "Which method signature correctly completes a generic copy method that transfers all elements from a source list to a destination list following the PECS principle?",
+    "codeSnippet": "public static <T> void copy(// Missing parameters here) {\n    for (T item : src) {\n        dest.add(item);\n    }\n}",
+    "code_snippet": "public static <T> void copy(// Missing parameters here) {\n    for (T item : src) {\n        dest.add(item);\n    }\n}",
+    "options": [
+      "List<T> dest, List<T> src",
+      "List<? super T> dest, List<? extends T> src",
+      "List<? extends T> dest, List<? super T> src",
+      "List<?> dest, List<?> src"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "`src` produces items (read via foreach), so it must be `List<? extends T>`. `dest` consumes items (written via `dest.add(item)`), so it must be `List<? super T>`. This is the exact signature used in `java.util.Collections.copy()`.",
+    "companyTags": [
+      "DE Shaw",
+      "Bloomberg",
+      "Google"
+    ],
+    "company_tags": [
+      "DE Shaw",
+      "Bloomberg",
+      "Google"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 41,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-42",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the difference between Intermediate and Terminal operations in the Java 8 Streams API?",
+    "options": [
+      "Intermediate operations execute immediately; Terminal operations are lazy.",
+      "Intermediate operations return a new Stream and are lazily evaluated; Terminal operations trigger pipeline execution and produce a result or side-effect.",
+      "Intermediate operations cannot be chained; Terminal operations can be chained infinitely.",
+      "Intermediate operations only work on parallel streams."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Intermediate operations (like `filter`, `map`, `sorted`) return a new Stream and are lazy—no computation occurs until a Terminal operation (like `collect`, `forEach`, `reduce`, `count`) is invoked, which triggers the stream pipeline.",
+    "companyTags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Accenture"
+    ],
+    "company_tags": [
+      "TCS Digital",
+      "Infosys SP",
+      "Accenture"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 42,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-43",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "SYNTAX_RULE",
+    "question_type": "SYNTAX_RULE",
+    "question": "Which method reference syntax corresponds to calling a static method `Math.max(a, b)`?",
+    "options": [
+      "Math::max",
+      "Math->max",
+      "Math.max::call",
+      "::Math.max"
+    ],
+    "correctOptionIndex": 0,
+    "correct_option_index": 0,
+    "explanation": "In Java 8, method references use the `::` double colon operator. A reference to a static method of a class is written as `ClassName::staticMethodName` (e.g., `Math::max`).",
+    "companyTags": [
+      "Cognizant",
+      "Capgemini",
+      "Wipro"
+    ],
+    "company_tags": [
+      "Cognizant",
+      "Capgemini",
+      "Wipro"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 43,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-44",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of the following Streams filter and map pipeline?",
+    "codeSnippet": "import java.util.*;\nimport java.util.stream.*;\n\npublic class StreamTest {\n    public static void main(String[] args) {\n        List<Integer> nums = Arrays.asList(1, 2, 3, 4, 5, 6);\n        long count = nums.stream()\n            .filter(n -> n % 2 == 0)\n            .map(n -> n * 2)\n            .filter(n -> n > 6)\n            .count();\n            \n        System.out.println(count);\n    }\n}",
+    "code_snippet": "import java.util.*;\nimport java.util.stream.*;\n\npublic class StreamTest {\n    public static void main(String[] args) {\n        List<Integer> nums = Arrays.asList(1, 2, 3, 4, 5, 6);\n        long count = nums.stream()\n            .filter(n -> n % 2 == 0)\n            .map(n -> n * 2)\n            .filter(n -> n > 6)\n            .count();\n            \n        System.out.println(count);\n    }\n}",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "1. `filter(n -> n % 2 == 0)` filters even numbers: [2, 4, 6].\n2. `map(n -> n * 2)` doubles each: [4, 8, 12].\n3. `filter(n -> n > 6)` keeps numbers strictly greater than 6: [8, 12].\n4. `count()` returns 2.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Optum"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Optum"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 44,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-45",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "OUTPUT_PREDICTION",
+    "question_type": "OUTPUT_PREDICTION",
+    "question": "What is the output of dealing with an empty Optional in Java?",
+    "codeSnippet": "import java.util.Optional;\n\npublic class OptionalTest {\n    public static void main(String[] args) {\n        Optional<String> opt = Optional.ofNullable(null);\n        String res = opt.orElse(\"Default\");\n        System.out.println(res);\n    }\n}",
+    "code_snippet": "import java.util.Optional;\n\npublic class OptionalTest {\n    public static void main(String[] args) {\n        Optional<String> opt = Optional.ofNullable(null);\n        String res = opt.orElse(\"Default\");\n        System.out.println(res);\n    }\n}",
+    "options": [
+      "null",
+      "NullPointerException",
+      "Default",
+      "Optional.empty"
+    ],
+    "correctOptionIndex": 2,
+    "correct_option_index": 2,
+    "explanation": "`Optional.ofNullable(null)` returns an empty `Optional`. When calling `opt.orElse(\"Default\")`, since the optional is empty, it returns the fallback default value (\"Default\") safely without throwing NullPointerException.",
+    "companyTags": [
+      "Adobe",
+      "Paytm",
+      "Flipkart"
+    ],
+    "company_tags": [
+      "Adobe",
+      "Paytm",
+      "Flipkart"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 45,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-46",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What happens when you invoke multiple intermediate operations on a Stream without ever calling a terminal operation?",
+    "codeSnippet": "Stream<String> s = list.stream()\n    .filter(x -> { System.out.println(x); return true; });",
+    "code_snippet": "Stream<String> s = list.stream()\n    .filter(x -> { System.out.println(x); return true; });",
+    "options": [
+      "All elements are printed immediately.",
+      "Nothing is printed because intermediate operations are lazily evaluated and never execute without a terminal operation.",
+      "An IllegalStateException is thrown.",
+      "The stream runs in the background on the Common ForkJoinPool."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Stream intermediate operations are completely lazy. The JVM builds a pipeline specification, but zero elements are pulled through the pipeline until a terminal operation (e.g., `collect`, `findFirst`, `count`) is invoked.",
+    "companyTags": [
+      "Goldman Sachs",
+      "Google",
+      "Microsoft"
+    ],
+    "company_tags": [
+      "Goldman Sachs",
+      "Google",
+      "Microsoft"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 46,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-47",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "In the Java Virtual Machine heap memory, where are newly created objects initially allocated?",
+    "options": [
+      "Old (Tenured) Generation",
+      "Eden Space in the Young Generation",
+      "Survivor Space S1",
+      "Metaspace"
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "New objects are initially allocated in the Eden space of the Young Generation. Objects that survive Minor Garbage Collections are aged in Survivor spaces (S0 and S1) before eventually being promoted to the Old (Tenured) Generation.",
+    "companyTags": [
+      "TCS Ninja",
+      "Infosys",
+      "Wipro"
+    ],
+    "company_tags": [
+      "TCS Ninja",
+      "Infosys",
+      "Wipro"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 47,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-48",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What replaced the PermGen (Permanent Generation) in Java 8, and where is it allocated?",
+    "options": [
+      "CodeCache, allocated on the Java heap.",
+      "Metaspace, allocated on native OS memory outside the Java heap.",
+      "Stack Frame, allocated per-thread.",
+      "Eden space, allocated on continuous virtual memory."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Java 8 completely removed PermGen to prevent `java.lang.OutOfMemoryError: PermGen space`. It was replaced by `Metaspace`, which stores class metadata in native OS memory and dynamically expands as needed.",
+    "companyTags": [
+      "Amazon",
+      "Cisco",
+      "Oracle"
+    ],
+    "company_tags": [
+      "Amazon",
+      "Cisco",
+      "Oracle"
+    ],
+    "difficulty": "BASIC",
+    "sort_order": 48,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-49",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "FIND_ERROR",
+    "question_type": "FIND_ERROR",
+    "question": "Which of the following scenarios is the most common cause of a Memory Leak in a managed runtime like Java?",
+    "options": [
+      "Creating primitive variables in a loop.",
+      "Unintentionally retaining references to obsolete objects in a static collection (e.g., `static List<Object> cache`).",
+      "Calling `System.gc()` repeatedly.",
+      "Catching NullPointerException."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "In Java, an object cannot be garbage-collected as long as it is reachable from a GC Root. Static fields live for the entire lifetime of the ClassLoader; adding objects to static collections without eviction means they can never be collected, creating a memory leak.",
+    "companyTags": [
+      "Microsoft",
+      "Adobe",
+      "DE Shaw"
+    ],
+    "company_tags": [
+      "Microsoft",
+      "Adobe",
+      "DE Shaw"
+    ],
+    "difficulty": "MEDIUM",
+    "sort_order": 49,
+    "is_hidden": false,
+    "is_deleted": false
+  },
+  {
+    "id": "java-mcq-50",
+    "topicId": "mcq-java-programming",
+    "topic_id": "mcq-java-programming",
+    "topic": "Java Language",
+    "topic_name": "Java Language",
+    "topicCategory": "JAVA_PROGRAMMING",
+    "topic_category": "JAVA_PROGRAMMING",
+    "questionType": "CONCEPTUAL",
+    "question_type": "CONCEPTUAL",
+    "question": "What is the difference between a Strong Reference, WeakReference, and SoftReference in Java?",
+    "options": [
+      "WeakReferences are never collected; SoftReferences are collected on every GC.",
+      "Strong references prevent GC; SoftReferences are cleared only when memory is critically low (before OOM); WeakReferences are cleared eagerly on the very next GC cycle.",
+      "SoftReferences cannot hold collections; WeakReferences can hold any object.",
+      "They are completely identical in modern JVMs."
+    ],
+    "correctOptionIndex": 1,
+    "correct_option_index": 1,
+    "explanation": "Java Reference types: 1) Strong (`Object o = new Object()`): never collected while reachable. 2) `SoftReference`: ideal for memory-sensitive caches, cleared only before the JVM throws OutOfMemoryError. 3) `WeakReference`: ideal for canonical mappings (`WeakHashMap`), cleared whenever the garbage collector encounters them.",
+    "companyTags": [
+      "Google",
+      "Bloomberg",
+      "Tower Research"
+    ],
+    "company_tags": [
+      "Google",
+      "Bloomberg",
+      "Tower Research"
+    ],
+    "difficulty": "HARD",
+    "sort_order": 50,
+    "is_hidden": false,
+    "is_deleted": false
+  }
+];
+
 export const ALL_TECHNICAL_MCQ_SEEDS: TechnicalMcq[] = [
   ...C_PROGRAMMING_MCQ_SEED,
   ...CPP_PROGRAMMING_MCQ_SEED,
+  ...JAVA_PROGRAMMING_MCQ_SEED,
 ];
