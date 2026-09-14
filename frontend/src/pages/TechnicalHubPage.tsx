@@ -975,9 +975,10 @@ export default function TechnicalHubPage() {
 
           {/* 3. Filter Bar & Search inside topic */}
           {activeTrack === 'TECHNICAL_MCQS' ? (
-            <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center flex-wrap gap-4">
+            <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                  {/* Difficulty Filter */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
                       Difficulty:
@@ -1005,6 +1006,7 @@ export default function TechnicalHubPage() {
                     </div>
                   </div>
 
+                  {/* Status Filter */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
                       Status:
@@ -1033,31 +1035,19 @@ export default function TechnicalHubPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="relative w-48 sm:w-56">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
-                    <input
-                      type="text"
-                      placeholder="Search MCQs..."
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleToggleSound}
-                    className={`p-1.5 rounded-md border text-xs transition-all cursor-pointer ${
-                      isMuted
-                        ? 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96]'
-                        : 'bg-[#FD4A32]/10 border-[#FD4A32]/30 text-[#FD4A32]'
-                    }`}
-                    title={isMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
-                  >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  </button>
-                </div>
+                {/* Sound FX Toggle */}
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  className={`p-1.5 rounded-md border text-xs transition-all cursor-pointer ${
+                    isMuted
+                      ? 'bg-[#F8F9FA] dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96]'
+                      : 'bg-[#FD4A32]/10 border-[#FD4A32]/30 text-[#FD4A32]'
+                  }`}
+                  title={isMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
               </div>
             </div>
           ) : (
