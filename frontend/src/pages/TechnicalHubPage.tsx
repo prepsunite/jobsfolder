@@ -48,6 +48,7 @@ import {
   Upload,
   Flame,
   ExternalLink,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
@@ -1664,26 +1665,14 @@ export default function TechnicalHubPage() {
                         )}
                       </div>
 
-                      {/* 2. Company Tags */}
-                      {problem.companyTags && problem.companyTags.length > 0 && (
-                        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                          <span className="text-[10px] font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider font-display">
-                            Companies:
-                          </span>
-                          {problem.companyTags.map(tag => (
-                            <span key={tag} className="text-[10px] font-medium font-sans px-2 py-0.5 rounded bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2C2C2C]">
-                              {tag}
-                            </span>
-                          ))}
+                      {/* 2. Problem Statement / Description (Elaborating Question) */}
+                      {problem.description && (
+                        <div className="text-xs sm:text-sm text-[#495057] dark:text-[#CCCCCC] leading-relaxed bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] font-sans whitespace-pre-line">
+                          {problem.description}
                         </div>
                       )}
 
-                      {/* 3. Problem Statement / Description */}
-                      <div className="text-xs sm:text-sm text-[#495057] dark:text-[#CCCCCC] leading-relaxed bg-[#F8F9FA] dark:bg-[#0C0C0C] p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] font-sans whitespace-pre-line">
-                        {problem.description}
-                      </div>
-
-                      {/* 4. Key Intuition & Approach Callout */}
+                      {/* 3. Key Intuition & Approach Callout */}
                       {problem.keyIntuition && problem.keyIntuition !== problem.description && (
                         <div className="p-3.5 rounded-lg bg-[#FD4A32]/5 border border-[#FD4A32]/20 space-y-1">
                           <div className="flex items-center gap-1.5 text-xs font-display font-bold text-[#FD4A32]">
@@ -1693,6 +1682,21 @@ export default function TechnicalHubPage() {
                           <p className="text-xs text-[#495057] dark:text-[#CCCCCC] leading-relaxed font-sans">
                             {problem.keyIntuition}
                           </p>
+                        </div>
+                      )}
+
+                      {/* 4. Company Tags (Placed below the question description) */}
+                      {problem.companyTags && problem.companyTags.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider font-display">
+                            <Building2 className="w-3 h-3 text-[#868E96] dark:text-[#777777]" />
+                            <span>Companies:</span>
+                          </span>
+                          {problem.companyTags.map(tag => (
+                            <span key={tag} className="text-[10px] font-medium font-sans px-2 py-0.5 rounded bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2C2C2C]">
+                              {tag}
+                            </span>
+                          ))}
                         </div>
                       )}
 
