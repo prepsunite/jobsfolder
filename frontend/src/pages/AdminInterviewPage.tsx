@@ -336,7 +336,7 @@ export default function AdminInterviewPage() {
         <div>
           <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Category *</label>
           <select value={draft.category || 'CORE_CS'} onChange={e => setDraft({ ...draft, category: e.target.value })}
-            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40">
+            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]">
             <option value="CORE_CS">Core CS Fundamentals</option>
             <option value="HR_BEHAVIORAL">HR & Behavioral</option>
             <option value="PROJECT_DEFENSE">Project Defense & Viva</option>
@@ -345,7 +345,7 @@ export default function AdminInterviewPage() {
         <div>
           <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Supabase Topic</label>
           <select value={draft.topicId || ''} onChange={e => setDraft({ ...draft, topicId: e.target.value })}
-            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40">
+            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]">
             <option value="">— Select Supabase Topic —</option>
             {allTopics.filter(t => t.category === (draft.category || 'CORE_CS')).map(t => (
               <option key={t.id} value={t.id}>{t.name || t.title} ({t.id})</option>
@@ -356,14 +356,14 @@ export default function AdminInterviewPage() {
       <div>
         <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Question Title *</label>
         <input type="text" value={draft.title || ''} onChange={e => setDraft({ ...draft, title: e.target.value })}
-          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           placeholder="e.g. What is the difference between Synchronous and Asynchronous execution?" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Subject / Domain</label>
           <select value={draft.subject || ''} onChange={e => setDraft({ ...draft, subject: e.target.value, subjectLabel: e.target.value.replace(/_/g, ' ') })}
-            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40">
+            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]">
             <option value="">— None / General —</option>
             <option value="DBMS">DBMS</option>
             <option value="SQL_QUERIES">SQL Queries</option>
@@ -376,7 +376,7 @@ export default function AdminInterviewPage() {
         <div>
           <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Interview Frequency</label>
           <select value={draft.frequency || 'MEDIUM'} onChange={e => setDraft({ ...draft, frequency: e.target.value })}
-            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40">
+            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]">
             <option value="VERY_HIGH">🔥 Very High (Asked in 80%+ Interviews)</option>
             <option value="HIGH">⚡ High (Frequent)</option>
             <option value="MEDIUM">Standard / Medium</option>
@@ -386,45 +386,45 @@ export default function AdminInterviewPage() {
       <div>
         <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Model Answer *</label>
         <textarea rows={4} value={draft.answer || ''} onChange={e => setDraft({ ...draft, answer: e.target.value })}
-          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           placeholder="Detailed, structured model answer that candidates should deliver..." />
       </div>
       <div>
         <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Key Concepts / Bullet Points (one per line)</label>
         <textarea rows={3} value={draft.bulletPoints || ''} onChange={e => setDraft({ ...draft, bulletPoints: e.target.value })}
-          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           placeholder={'Key point 1: Core distinction...\nKey point 2: Practical trade-off...'} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Code Snippet Language</label>
           <input type="text" value={draft.codeSnippetLang || ''} onChange={e => setDraft({ ...draft, codeSnippetLang: e.target.value })}
-            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
             placeholder="sql / java / python / javascript" />
         </div>
         <div>
           <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Subject Display Label</label>
           <input type="text" value={draft.subjectLabel || ''} onChange={e => setDraft({ ...draft, subjectLabel: e.target.value })}
-            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+            className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
             placeholder="e.g. Database Management Systems" />
         </div>
       </div>
       <div>
         <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Code Snippet (optional)</label>
         <textarea rows={3} value={draft.codeSnippetCode || ''} onChange={e => setDraft({ ...draft, codeSnippetCode: e.target.value })}
-          className="w-full text-sm font-mono rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full text-sm font-mono rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           placeholder="// Code example demonstrating the concept" />
       </div>
       <div>
         <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Pro Tip for Candidate</label>
         <input type="text" value={draft.proTip || ''} onChange={e => setDraft({ ...draft, proTip: e.target.value })}
-          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           placeholder="Inside tip on how interviewers follow up on this question..." />
       </div>
       <div>
         <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Company Tags (comma-separated)</label>
         <input type="text" value={draft.companyTags || ''} onChange={e => setDraft({ ...draft, companyTags: e.target.value })}
-          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           placeholder="Amazon, TCS, Infosys, Accenture" />
       </div>
     </div>
@@ -457,7 +457,7 @@ export default function AdminInterviewPage() {
           {activeTab === 'topics' ? (
             <button
               onClick={openAddTopicModal}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-[#FD4A32] hover:bg-[#E03E28] text-white shadow-sm transition-colors"
             >
               <Plus className="w-4 h-4" /> Add Topic
             </button>
@@ -465,7 +465,7 @@ export default function AdminInterviewPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setShowAddForm(v => !v); setShowBulkPanel(false); setAddDraft({ category: 'CORE_CS', frequency: 'MEDIUM' }); }}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl bg-[#FD4A32] hover:bg-[#E03E28] text-white shadow-sm transition-colors"
               >
                 <Plus className="w-4 h-4" /> Add Question
               </button>
@@ -486,7 +486,7 @@ export default function AdminInterviewPage() {
           onClick={() => { setActiveTab('topics'); setShowBulkPanel(false); setShowAddForm(false); }}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
             activeTab === 'topics'
-              ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+              ? 'border-[#FD4A32] text-[#FD4A32] dark:text-[#FD4A32]'
               : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
           }`}
         >
@@ -501,7 +501,7 @@ export default function AdminInterviewPage() {
           onClick={() => { setActiveTab('questions'); setShowBulkPanel(false); setShowAddForm(false); }}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
             activeTab === 'questions'
-              ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+              ? 'border-[#FD4A32] text-[#FD4A32] dark:text-[#FD4A32]'
               : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
           }`}
         >
@@ -522,7 +522,7 @@ export default function AdminInterviewPage() {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={activeTab === 'topics' ? "Search interview topics…" : "Search questions, model answers, tags…"}
-            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           />
         </div>
 
@@ -533,7 +533,7 @@ export default function AdminInterviewPage() {
               onClick={() => setFilterCat(cat)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                 filterCat === cat
-                  ? 'bg-white dark:bg-neutral-900 text-purple-600 dark:text-purple-400 shadow-xs'
+                  ? 'bg-white dark:bg-neutral-900 text-[#FD4A32] dark:text-[#FD4A32] shadow-xs'
                   : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900'
               }`}
             >
@@ -569,7 +569,7 @@ export default function AdminInterviewPage() {
                     className="p-4 hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                   >
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/50 flex items-center justify-center flex-shrink-0 text-purple-600 dark:text-purple-400 mt-0.5">
+                      <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 border border-[#FD4A32]/25 flex items-center justify-center flex-shrink-0 text-[#FD4A32] dark:text-[#FD4A32] mt-0.5">
                         <BookOpen className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -600,7 +600,7 @@ export default function AdminInterviewPage() {
                           </p>
                         )}
                         {Array.isArray(topic.formulas) && topic.formulas.length > 0 && (
-                          <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1">
+                          <p className="text-[11px] text-[#FD4A32] dark:text-[#FD4A32] mt-1">
                             📌 {topic.formulas.length} Key takeaway / formula(s) attached
                           </p>
                         )}
@@ -623,7 +623,7 @@ export default function AdminInterviewPage() {
                         <button
                           onClick={() => openEditTopicModal(topic)}
                           title="Edit Topic"
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                          className="p-1.5 rounded-lg text-neutral-400 hover:text-[#FD4A32] hover:bg-[#FD4A32]/10 transition-colors"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
@@ -646,8 +646,8 @@ export default function AdminInterviewPage() {
 
       {/* ─── ADD / EDIT QUESTION INLINE FORM ───────────────────────────────── */}
       {showAddForm && activeTab === 'questions' && (
-        <div className="rounded-2xl border border-purple-200 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-900/10 p-5 space-y-4">
-          <h3 className="font-semibold text-sm text-purple-700 dark:text-purple-300 flex items-center gap-2">
+        <div className="rounded-2xl border border-[#FD4A32]/25 bg-[#FD4A32]/5 dark:bg-[#FD4A32]/10 p-5 space-y-4">
+          <h3 className="font-semibold text-sm text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-2">
             <Plus className="w-4 h-4" /> Add New Interview Question
           </h3>
           <QuestionFormFields draft={addDraft} setDraft={setAddDraft} />
@@ -655,7 +655,7 @@ export default function AdminInterviewPage() {
             <button
               onClick={handleAddSingle}
               disabled={isSaving || !addDraft.title || !addDraft.answer}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition-colors shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-[#FD4A32] hover:bg-[#E03E28] text-white disabled:opacity-50 transition-colors shadow-xs"
             >
               <Check className="w-4 h-4" /> {isSaving ? 'Saving to Supabase…' : 'Save Question to Supabase'}
             </button>
@@ -699,7 +699,7 @@ export default function AdminInterviewPage() {
             onChange={e => handleTextChange(e.target.value)}
             rows={10}
             placeholder={`Paste JSON array here…\n\n${QUESTION_TEMPLATE}`}
-            className="w-full text-sm font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+            className="w-full text-sm font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
           />
 
           {parseError && (
@@ -726,7 +726,7 @@ export default function AdminInterviewPage() {
           <button
             onClick={handleBulkImport}
             disabled={!parsedItems.length || !!parseError || isImporting}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-xs"
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-[#FD4A32] hover:bg-[#E03E28] text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-xs"
           >
             <Upload className="w-4 h-4" />
             {isImporting ? 'Importing to Cloud…' : `Import ${parsedItems.length} Question(s) to Supabase`}
@@ -750,12 +750,12 @@ export default function AdminInterviewPage() {
             {filteredQuestions.map(iq => {
               const isEditing = editingId === iq.id;
               return (
-                <div key={iq.id} className={`p-4 space-y-3 ${isEditing ? 'bg-purple-50/50 dark:bg-purple-900/10' : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/40'}`}>
+                <div key={iq.id} className={`p-4 space-y-3 ${isEditing ? 'bg-[#FD4A32]/5 dark:bg-[#FD4A32]/10' : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/40'}`}>
                   {isEditing ? (
                     <>
                       <QuestionFormFields draft={editDraft} setDraft={setEditDraft} />
                       <div className="flex gap-2 pt-2">
-                        <button onClick={saveEdit} disabled={isSaving} className="flex items-center gap-1 px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors">
+                        <button onClick={saveEdit} disabled={isSaving} className="flex items-center gap-1 px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#FD4A32] text-white hover:bg-[#E03E28] transition-colors">
                           <Check className="w-3.5 h-3.5" /> {isSaving ? 'Saving…' : 'Save Changes'}
                         </button>
                         <button onClick={() => setEditingId(null)} className="px-4 py-1.5 text-xs font-semibold rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
@@ -797,7 +797,7 @@ export default function AdminInterviewPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={() => startEdit(iq)} className="p-1.5 rounded-lg text-neutral-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">
+                        <button onClick={() => startEdit(iq)} className="p-1.5 rounded-lg text-neutral-400 hover:text-[#FD4A32] hover:bg-[#FD4A32]/10 transition-colors">
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleDeleteQuestion(iq.id)} className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
@@ -819,7 +819,7 @@ export default function AdminInterviewPage() {
           <div className="bg-white dark:bg-neutral-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800">
               <h3 className="font-bold text-base text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-purple-600" />
+                <Layers className="w-5 h-5 text-[#FD4A32]" />
                 {editingTopic ? 'Edit Interview Topic' : 'Add New Interview Topic'}
               </h3>
               <button
@@ -838,7 +838,7 @@ export default function AdminInterviewPage() {
                 <select
                   value={topicDraft.category || 'CORE_CS'}
                   onChange={e => setTopicDraft({ ...topicDraft, category: e.target.value as InterviewCategory })}
-                  className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                 >
                   <option value="CORE_CS">Core CS Fundamentals</option>
                   <option value="HR_BEHAVIORAL">HR & Behavioral</option>
@@ -856,7 +856,7 @@ export default function AdminInterviewPage() {
                   value={topicDraft.name || topicDraft.title || ''}
                   onChange={e => setTopicDraft({ ...topicDraft, name: e.target.value, title: e.target.value })}
                   placeholder="e.g. Database Management Systems (DBMS)"
-                  className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                 />
               </div>
 
@@ -871,7 +871,7 @@ export default function AdminInterviewPage() {
                     onChange={e => setTopicDraft({ ...topicDraft, id: e.target.value })}
                     disabled={!!editingTopic}
                     placeholder="e.g. topic-dbms"
-                    className="w-full text-sm font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40 disabled:opacity-50"
+                    className="w-full text-sm font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32] disabled:opacity-50"
                   />
                 </div>
 
@@ -884,7 +884,7 @@ export default function AdminInterviewPage() {
                     value={topicDraft.cluster || ''}
                     onChange={e => setTopicDraft({ ...topicDraft, cluster: e.target.value })}
                     placeholder="e.g. Core CS Fundamentals"
-                    className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                   />
                 </div>
               </div>
@@ -898,7 +898,7 @@ export default function AdminInterviewPage() {
                   value={topicDraft.description || ''}
                   onChange={e => setTopicDraft({ ...topicDraft, description: e.target.value })}
                   placeholder="What is covered in this topic..."
-                  className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                 />
               </div>
 
@@ -911,7 +911,7 @@ export default function AdminInterviewPage() {
                   value={topicFormFormulasText}
                   onChange={e => setTopicFormFormulasText(e.target.value)}
                   placeholder={'ACID = Atomicity, Consistency, Isolation, Durability\nCAP Theorem: Consistency, Availability, Partition tolerance'}
-                  className="w-full text-xs font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full text-xs font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                 />
               </div>
 
@@ -924,7 +924,7 @@ export default function AdminInterviewPage() {
                     type="number"
                     value={topicDraft.sort_order ?? 0}
                     onChange={e => setTopicDraft({ ...topicDraft, sort_order: Number(e.target.value) })}
-                    className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                   />
                 </div>
                 <div>
@@ -936,7 +936,7 @@ export default function AdminInterviewPage() {
                     value={topicDraft.icon_name || topicDraft.iconName || 'BookOpen'}
                     onChange={e => setTopicDraft({ ...topicDraft, icon_name: e.target.value, iconName: e.target.value })}
                     placeholder="BookOpen / Database / Users"
-                    className="w-full text-sm font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full text-sm font-mono rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/40 focus:border-[#FD4A32]"
                   />
                 </div>
               </div>
@@ -947,7 +947,7 @@ export default function AdminInterviewPage() {
                   id="topic_hidden_chk_int"
                   checked={!!topicDraft.is_hidden}
                   onChange={e => setTopicDraft({ ...topicDraft, is_hidden: e.target.checked })}
-                  className="rounded border-neutral-300 text-purple-600 focus:ring-purple-500"
+                  className="rounded border-neutral-300 text-[#FD4A32] focus:ring-[#FD4A32]"
                 />
                 <label htmlFor="topic_hidden_chk_int" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                   Hide topic from students (Draft mode)
@@ -965,7 +965,7 @@ export default function AdminInterviewPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex items-center gap-1.5 px-5 py-2 text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-colors"
+                  className="flex items-center gap-1.5 px-5 py-2 text-sm font-semibold rounded-xl bg-[#FD4A32] hover:bg-[#E03E28] text-white shadow-sm transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   {isSaving ? 'Saving…' : 'Save Topic'}

@@ -427,7 +427,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   <span>Interview Preparation</span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      isInterviewExpanded ? 'rotate-180 text-purple-600 dark:text-purple-400' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
+                      isInterviewExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
                     }`}
                   />
                 </button>
@@ -451,11 +451,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                           }`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <ItemIcon className="w-3.5 h-3.5 shrink-0 text-purple-500 transition-transform group-hover:scale-110" />
+                            <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
                             <span className="truncate">{item.name}</span>
                           </div>
                           {item.badge && (
-                            <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+                            <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
                               {item.badge}
                             </span>
                           )}

@@ -485,7 +485,7 @@ export default function InterviewPrepPage() {
             <button
               type="button"
               onClick={clearSelectedTopic}
-              className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#999999] hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#999999] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Back to Interview Topics</span>
@@ -497,7 +497,7 @@ export default function InterviewPrepPage() {
                   <button
                     type="button"
                     onClick={(e) => openQuestionEditor(e)}
-                    className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                    className="px-2.5 py-1 bg-[#FD4A32] hover:bg-[#E03E28] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Question</span>
@@ -505,7 +505,7 @@ export default function InterviewPrepPage() {
                   <button
                     type="button"
                     onClick={() => setShowBulkModal(true)}
-                    className="px-2.5 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                    className="px-2.5 py-1 bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] border border-[#FD4A32]/25 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
                     title="Bulk import questions from JSON"
                   >
                     <Upload className="w-3.5 h-3.5" />
@@ -524,7 +524,7 @@ export default function InterviewPrepPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/25 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#FD4A32] dark:text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/25 px-2 py-0.5 rounded">
                     {activeTopic.cluster}
                   </span>
                   {activeTopic.is_hidden && (
@@ -551,7 +551,7 @@ export default function InterviewPrepPage() {
 
                 <div className="w-full sm:w-44 h-2 bg-[#F1F3F5] dark:bg-[#242424] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-purple-600 transition-all duration-500"
+                    className="h-full bg-[#FD4A32] transition-all duration-500"
                     style={{ width: `${activeTopicPercentage}%` }}
                   />
                 </div>
@@ -560,10 +560,10 @@ export default function InterviewPrepPage() {
                   <button
                     type="button"
                     onClick={() => setShowCheatcodeModal(true)}
-                    className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-display font-bold border border-purple-500/25 transition-all cursor-pointer shadow-2xs"
+                    className="px-2.5 py-1 flex items-center gap-1.5 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] text-xs font-display font-bold border border-[#FD4A32]/25 transition-all cursor-pointer shadow-2xs"
                     title="View interview cheatcode, high-yield answers, and key principles"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <BookOpen className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
                     <span>Cheatcode / Pro Tips</span>
                   </button>
 
@@ -597,7 +597,7 @@ export default function InterviewPrepPage() {
                         onClick={() => setSelectedDifficulty(item.id as any)}
                         className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
                           selectedDifficulty === item.id
-                            ? 'bg-purple-600 text-white shadow-xs'
+                            ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                             : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                         }`}
                       >
@@ -624,7 +624,7 @@ export default function InterviewPrepPage() {
                         onClick={() => setSelectedStatus(item.id as any)}
                         className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
                           selectedStatus === item.id
-                            ? 'bg-purple-600 text-white shadow-xs'
+                            ? 'bg-[#FD4A32] text-white shadow-xs'
                             : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                         }`}
                       >
@@ -643,7 +643,7 @@ export default function InterviewPrepPage() {
                   placeholder="Search in this topic..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-purple-600 rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
+                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#FD4A32] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
                 />
               </div>
             </div>
@@ -660,7 +660,7 @@ export default function InterviewPrepPage() {
                     selectedQuestionIds.size === filteredActiveQuestions.length
                   }
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  className="w-4 h-4 rounded border-[#E9ECEF] dark:border-[#242424] text-[#FD4A32] focus:ring-[#FD4A32] cursor-pointer"
                 />
                 <span className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
                   Select All
@@ -735,7 +735,7 @@ export default function InterviewPrepPage() {
                     <button
                       type="button"
                       onClick={(e) => openQuestionEditor(e)}
-                      className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      className="px-3.5 py-1.5 bg-[#FD4A32] hover:bg-[#E03E28] text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Question</span>
@@ -763,7 +763,7 @@ export default function InterviewPrepPage() {
                     setSelectedStatus('ALL');
                     setSearchQuery('');
                   }}
-                  className="mt-3 px-3 py-1.5 bg-purple-600 text-white rounded-md text-xs font-display font-bold cursor-pointer"
+                  className="mt-3 px-3 py-1.5 bg-[#FD4A32] text-white rounded-md text-xs font-display font-bold cursor-pointer"
                 >
                   Reset Filters
                 </button>
@@ -781,8 +781,8 @@ export default function InterviewPrepPage() {
                     className={`rounded-xl border transition-all duration-300 shadow-xs overflow-hidden ${
                       q.is_hidden
                         ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
-                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-purple-500/40 text-[#121417] dark:text-[#FFFFFF]'
-                    } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
+                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/40 text-[#121417] dark:text-[#FFFFFF]'
+                    } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-[#FD4A32]/50 border-[#FD4A32] shadow-md' : ''}`}
                   >
                     {/* Header Row */}
                     <div
@@ -800,11 +800,11 @@ export default function InterviewPrepPage() {
                                 toggleQuestionSelection(q.id);
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 mr-1 rounded border-[#E9ECEF] dark:border-[#242424] text-purple-600 focus:ring-purple-500 cursor-pointer"
+                              className="w-4 h-4 mr-1 rounded border-[#E9ECEF] dark:border-[#242424] text-[#FD4A32] focus:ring-[#FD4A32] cursor-pointer"
                             />
                           )}
 
-                          <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-display font-bold text-[10px] tracking-tight border border-purple-500/25">
+                          <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
                             Q{globalIdx + 1}
                           </span>
 
@@ -826,7 +826,7 @@ export default function InterviewPrepPage() {
                           )}
 
                           {q.frequency === 'VERY_HIGH' && (
-                            <span className="text-[9px] font-display font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25 px-2 py-0.5 rounded flex items-center gap-1">
+                            <span className="text-[9px] font-display font-bold bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] border border-[#FD4A32]/25 px-2 py-0.5 rounded flex items-center gap-1">
                               <Zap className="w-2.5 h-2.5" />
                               High Frequency
                             </span>
@@ -852,7 +852,7 @@ export default function InterviewPrepPage() {
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border transition-all cursor-pointer ${
                             q.mastered
                               ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
-                              : 'bg-[#F8F9FA] dark:bg-[#202020] text-[#868E96] border-[#E9ECEF] dark:border-[#2E2E2E] hover:text-purple-600'
+                              : 'bg-[#F8F9FA] dark:bg-[#202020] text-[#868E96] border-[#E9ECEF] dark:border-[#2E2E2E] hover:text-[#FD4A32]'
                           }`}
                           title={q.mastered ? 'Marked as Mastered' : 'Mark as Mastered'}
                         >
@@ -940,7 +940,7 @@ export default function InterviewPrepPage() {
                               <button
                                 type="button"
                                 onClick={() => handleCopy(q.codeSnippet!.code, q.id)}
-                                className="flex items-center gap-1 text-[11px] font-mono text-gray-500 hover:text-purple-600 transition-colors cursor-pointer"
+                                className="flex items-center gap-1 text-[11px] font-mono text-gray-500 hover:text-[#FD4A32] transition-colors cursor-pointer"
                               >
                                 {copiedId === q.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                                 <span>{copiedId === q.id ? 'Copied' : 'Copy'}</span>
@@ -954,8 +954,8 @@ export default function InterviewPrepPage() {
 
                         {/* 3. Key Takeaways for Quick Revision */}
                         {q.bulletPoints && q.bulletPoints.length > 0 && (
-                          <div className="p-3.5 rounded-lg bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/20 space-y-1.5">
-                            <span className="font-display font-bold text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
+                          <div className="p-3.5 rounded-lg bg-[#FD4A32]/5 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 space-y-1.5">
+                            <span className="font-display font-bold text-[10px] text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">
                               Key Takeaways for Quick Revision:
                             </span>
                             <ul className="list-disc pl-4 space-y-1 text-xs text-gray-700 dark:text-gray-300 font-sans">
@@ -1012,7 +1012,7 @@ export default function InterviewPrepPage() {
                       onClick={() => handlePageChange(page)}
                       className={`flex items-center justify-center min-w-[36px] h-[36px] px-2 rounded-full font-display font-bold text-xs transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20 scale-105'
+                          ? 'bg-[#FD4A32] text-white shadow-md shadow-[#FD4A32]/20 scale-105'
                           : 'bg-transparent text-[#868E96] dark:text-[#888888] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                     >
@@ -1043,8 +1043,8 @@ export default function InterviewPrepPage() {
           <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-1 sm:max-w-md shrink-0">
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[9px] font-display font-bold uppercase tracking-wider">
-                  <MessageSquareQuote className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
+                  <MessageSquareQuote className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32]" />
                   <span>Interview Preparation Directory</span>
                 </div>
                 <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
@@ -1080,7 +1080,7 @@ export default function InterviewPrepPage() {
                           cx="35"
                           cy="35"
                           r={radius}
-                          className="stroke-purple-600 dark:stroke-purple-500 transition-all duration-700 ease-out"
+                          className="stroke-[#FD4A32] dark:stroke-[#FD4A32] transition-all duration-700 ease-out"
                           strokeWidth={strokeWidth}
                           strokeDasharray={circumference}
                           strokeDashoffset={dashOffset}
@@ -1100,7 +1100,7 @@ export default function InterviewPrepPage() {
                     {/* Core CS */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                        <span className="font-display font-bold text-purple-600 dark:text-purple-400">
+                        <span className="font-display font-bold text-[#FD4A32] dark:text-[#FD4A32]">
                           Core CS
                         </span>
                         <span className="text-[#868E96] dark:text-[#666666]">
@@ -1109,7 +1109,7 @@ export default function InterviewPrepPage() {
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
                         <div
-                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                          className="h-full bg-[#FD4A32] rounded-full transition-all duration-500"
                           style={{ width: `${coreCsPct}%` }}
                         />
                       </div>
@@ -1167,7 +1167,7 @@ export default function InterviewPrepPage() {
                   : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
               }`}
             >
-              <Database className="w-3.5 h-3.5 text-purple-500" />
+              <Database className="w-3.5 h-3.5 text-[#FD4A32]" />
               <span>Core CS Fundamentals</span>
               <span
                 className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
@@ -1252,7 +1252,7 @@ export default function InterviewPrepPage() {
                   placeholder="Search topics..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-purple-600 rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
+                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#FD4A32] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
                 />
               </div>
 
@@ -1261,7 +1261,7 @@ export default function InterviewPrepPage() {
                   <button
                     type="button"
                     onClick={(e) => openTopicEditor(e)}
-                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                    className="px-3 py-1 bg-[#FD4A32] hover:bg-[#E03E28] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
                     title="Add New Interview Topic"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -1270,7 +1270,7 @@ export default function InterviewPrepPage() {
                   <button
                     type="button"
                     onClick={() => setShowBulkModal(true)}
-                    className="px-3 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
+                    className="px-3 py-1 bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] border border-[#FD4A32]/25 rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
                     title="Bulk import interview questions from JSON"
                   >
                     <Upload className="w-3.5 h-3.5" />
@@ -1314,18 +1314,18 @@ export default function InterviewPrepPage() {
                     className={`group flex items-center justify-between p-3.5 bg-white dark:bg-[#141414] hover:bg-[#F8F9FA] dark:hover:bg-[#1C1C1C] border ${
                       topic.is_hidden
                         ? 'border-amber-500/40 opacity-75'
-                        : 'border-[#E9ECEF] dark:border-[#242424] hover:border-purple-500/50 dark:hover:border-purple-500/50'
+                        : 'border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/50 dark:hover:border-[#FD4A32]/50'
                     } rounded-lg transition-all duration-150 shadow-2xs cursor-pointer`}
                   >
                     {/* Left: Icon & Title & Description */}
                     <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-                      <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                        <TopicIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] dark:text-[#FD4A32] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                        <TopicIcon className="w-4 h-4 text-[#FD4A32] dark:text-[#FD4A32]" />
                       </div>
 
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
+                          <span className="font-display font-bold text-xs sm:text-sm text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
                             {topic.title || topic.name}
                           </span>
                           {topic.is_hidden && (
@@ -1377,7 +1377,7 @@ export default function InterviewPrepPage() {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-purple-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      <div className="flex items-center gap-1 text-[11px] font-display font-bold text-[#121417] dark:text-[#E9ECEF] bg-[#F1F3F5] dark:bg-[#202020] px-2.5 py-1 rounded border border-[#E9ECEF] dark:border-[#2E2E2E] group-hover:border-[#FD4A32] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors">
                         <span>{liveCount} Questions</span>
                         <ChevronRight className="w-3 h-3 text-[#868E96]" />
                       </div>
@@ -1501,7 +1501,7 @@ export default function InterviewPrepPage() {
                   id="topic_is_hidden"
                   checked={!!editingTopic.is_hidden}
                   onChange={e => setEditingTopic({ ...editingTopic, is_hidden: e.target.checked })}
-                  className="rounded text-purple-600 focus:ring-purple-500"
+                  className="rounded text-[#FD4A32] focus:ring-[#FD4A32]"
                 />
                 <label htmlFor="topic_is_hidden" className="text-gray-700 dark:text-gray-300 cursor-pointer font-semibold">
                   Hide topic from students (Draft / Archived)
@@ -1520,7 +1520,7 @@ export default function InterviewPrepPage() {
               <button
                 type="button"
                 onClick={saveTopic}
-                className="px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                className="px-4 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#E03E28] text-white text-xs font-bold shadow-xs cursor-pointer"
               >
                 Save Topic to Supabase
               </button>
@@ -1646,7 +1646,7 @@ export default function InterviewPrepPage() {
               <button
                 type="button"
                 onClick={saveQuestion}
-                className="px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                className="px-4 py-1.5 rounded-md bg-[#FD4A32] hover:bg-[#E03E28] text-white text-xs font-bold shadow-xs cursor-pointer"
               >
                 Save Question to Supabase
               </button>

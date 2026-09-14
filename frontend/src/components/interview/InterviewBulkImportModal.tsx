@@ -116,7 +116,7 @@ export default function InterviewBulkImportModal({
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#E9ECEF] dark:border-[#242424] flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-display font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
               <BookOpen className="w-3 h-3" />
               <span>Admin Bulk JSON Import</span>
             </div>
@@ -147,7 +147,7 @@ export default function InterviewBulkImportModal({
               <select
                 value={selectedTopicId}
                 onChange={e => setSelectedTopicId(e.target.value)}
-                className="w-full bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-lg px-3 py-2 text-xs text-[#121417] dark:text-white font-medium focus:outline-none focus:border-purple-600 transition-colors"
+                className="w-full bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-lg px-3 py-2 text-xs text-[#121417] dark:text-white font-medium focus:outline-none focus:border-[#FD4A32] transition-colors"
               >
                 <option value="AUTO">✨ Auto-Detect (use "topicId" from each JSON item)</option>
                 {topics.map(t => (
@@ -171,7 +171,7 @@ export default function InterviewBulkImportModal({
               <button
                 type="button"
                 onClick={handleCopyTemplate}
-                className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-purple-600 dark:text-purple-400 hover:text-purple-500 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] hover:text-[#E03E28] transition-colors cursor-pointer"
               >
                 {copiedTemplate ? (
                   <>
@@ -195,7 +195,7 @@ export default function InterviewBulkImportModal({
               className={`w-full bg-[#0D0D0D] border rounded-lg p-3 font-mono text-xs text-emerald-400 placeholder-[#555555] focus:outline-none transition-colors leading-relaxed ${
                 parseError
                   ? 'border-rose-500/50 focus:border-rose-500'
-                  : 'border-[#242424] focus:border-purple-600'
+                  : 'border-[#242424] focus:border-[#FD4A32]'
               }`}
             />
           </div>
@@ -260,7 +260,7 @@ export default function InterviewBulkImportModal({
             <button
               type="submit"
               disabled={isSubmitting || !jsonText.trim() || !!parseError || parsedQuestions.length === 0}
-              className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-display font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+              className="px-5 py-2 rounded-lg bg-[#FD4A32] hover:bg-[#E03E28] disabled:opacity-50 text-white text-xs font-display font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

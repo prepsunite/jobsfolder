@@ -633,7 +633,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
                     /{intTotal}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 block">
+                <span className="text-[10px] font-mono text-[#FD4A32] dark:text-[#FD4A32] block">
                   {intPct}% Mastered
                 </span>
               </div>
@@ -642,7 +642,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             {/* Card 2: Core CS Subjects */}
             <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-display font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+                <span className="text-xs font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1.5">
                   <Cpu className="w-3.5 h-3.5" />
                   Core CS
                 </span>
@@ -653,7 +653,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#202020] overflow-hidden">
-                  <div className="h-full bg-purple-500 rounded-full transition-all duration-500" style={{ width: `${coreCsPct}%` }} />
+                  <div className="h-full bg-[#FD4A32] rounded-full transition-all duration-500" style={{ width: `${coreCsPct}%` }} />
                 </div>
                 <div className="flex justify-between text-[9px] font-mono text-[#868E96] dark:text-[#666666]">
                   <span>DBMS, OOPs, OS &amp; CN</span>
@@ -716,7 +716,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </span>
             <Link
               to="/interview-prep"
-              className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 shrink-0"
+              className="text-xs font-bold text-[#FD4A32] dark:text-[#FD4A32] hover:underline flex items-center gap-1 shrink-0"
             >
               <span>Go to Interview Prep Bible</span>
               <ArrowRight className="w-3.5 h-3.5" />

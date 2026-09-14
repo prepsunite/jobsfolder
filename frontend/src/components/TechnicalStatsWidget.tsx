@@ -270,10 +270,10 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
         {/* CTA */}
         <Link
           to="/interview-prep"
-          className="w-full py-2 px-3 rounded-lg bg-[#F8F9FA] hover:bg-purple-600 dark:bg-[#1A1A1A] dark:hover:bg-purple-600 text-[#121417] hover:text-white dark:text-white border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-purple-600 text-xs font-bold transition-all flex items-center justify-between group/link"
+          className="w-full py-2 px-3 rounded-lg bg-[#F8F9FA] hover:bg-[#FD4A32] dark:bg-[#1A1A1A] dark:hover:bg-[#FD4A32] text-[#121417] hover:text-white dark:text-white border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#FD4A32] text-xs font-bold transition-all flex items-center justify-between group/link"
         >
           <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-purple-600 group-hover/link:text-white" />
+            <Sparkles className="w-3.5 h-3.5 text-[#FD4A32] group-hover/link:text-white" />
             Revise Interview Q&amp;A &amp; Defense Framework
           </span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-1" />
