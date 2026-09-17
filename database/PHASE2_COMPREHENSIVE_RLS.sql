@@ -17,7 +17,7 @@ RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
-AS 
+AS $$
 BEGIN
   IF auth.uid() IS NULL THEN
     RETURN FALSE;
@@ -38,13 +38,13 @@ BEGIN
       )
   );
 END;
-;
+$$;
 
 GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role;
 
 
 -- 1. EXPERIENCES (Interview Experiences)
-DO 
+DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'experiences') THEN
     ALTER TABLE public.experiences ENABLE ROW LEVEL SECURITY;
@@ -66,11 +66,11 @@ BEGIN
     CREATE POLICY "Admins delete experiences" ON public.experiences
       FOR DELETE USING (public.is_admin());
   END IF;
-END ;
+END $$;
 
 
 -- 2. QUESTION REPORTS & CONTACT MESSAGES
-DO 
+DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'question_reports') THEN
     ALTER TABLE public.question_reports ENABLE ROW LEVEL SECURITY;
@@ -97,11 +97,11 @@ BEGIN
     CREATE POLICY "Admins manage contact_messages" ON public.contact_messages
       FOR ALL USING (public.is_admin());
   END IF;
-END ;
+END $$;
 
 
 -- 3. TECHNICAL & INTERVIEW CONTENT TABLES
-DO 
+DO $$
 BEGIN
   -- technical_topics
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'technical_topics') THEN
@@ -174,11 +174,11 @@ BEGIN
     CREATE POLICY "Admins mutate aptitude_topics" ON public.aptitude_topics
       FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
   END IF;
-END ;
+END $$;
 
 
 -- 4. MOCK EXAMS & STUDENT ATTEMPTS
-DO 
+DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'mock_exams') THEN
     ALTER TABLE public.mock_exams ENABLE ROW LEVEL SECURITY;
@@ -215,4 +215,4 @@ BEGIN
         OR (auth.email() IS NOT NULL AND LOWER(student_email) = LOWER(auth.email()))
       );
   END IF;
-END ;
+END $$;

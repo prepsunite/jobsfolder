@@ -16,7 +16,7 @@ RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
-AS 
+AS $$
 BEGIN
   -- 1. Check if auth user exists
   IF auth.uid() IS NULL THEN
@@ -39,7 +39,7 @@ BEGIN
       )
   );
 END;
-;
+$$;
 
 GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role;
 
