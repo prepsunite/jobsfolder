@@ -921,6 +921,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
           {/* Main Content Area: Native DocumentExplorer */}
           <div className="flex-1 flex overflow-hidden w-full h-full p-4">
             <DocumentExplorer
+              className="h-full min-h-0"
               examName={currentExam?.name || 'Recruitment Drive'}
               companyName={companyName}
               tabs={currentExam?.paperTabs || []}

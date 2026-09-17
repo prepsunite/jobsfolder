@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { type DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -38,6 +38,7 @@ interface DocumentExplorerProps {
   isAdmin?: boolean;
   isPublicExam?: boolean;
   watermarkText?: string;
+  className?: string;
   onOpenPaywall: () => void;
   onUpdateTabs?: (updatedTabs: DocTabNode[]) => void;
   onToggleExamPublic?: (isPublic: boolean) => void;
@@ -50,6 +51,7 @@ export default function DocumentExplorer({
   hasAccess,
   isAdmin = false,
   watermarkText,
+  className = '',
   onOpenPaywall,
   onUpdateTabs,
   onToggleExamPublic,
@@ -62,6 +64,36 @@ export default function DocumentExplorer({
     const flat = flattenNodes(tabs);
     return flat[0]?.id || '';
   });
+
+  const readerPanelRef = useRef<HTMLDivElement>(null);
+  const topAnchorRef = useRef<HTMLDivElement>(null);
+  const adminPanelRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTop = useCallback(() => {
+    const reset = () => {
+      if (readerPanelRef.current) {
+        readerPanelRef.current.scrollTop = 0;
+        readerPanelRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+      if (topAnchorRef.current) {
+        topAnchorRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      if (adminPanelRef.current) {
+        adminPanelRef.current.scrollTop = 0;
+        adminPanelRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    };
+
+    reset();
+    requestAnimationFrame(() => {
+      reset();
+    });
+  }, []);
+
+  // Scroll reader / admin content back to top when switching sections or tabs
+  useEffect(() => {
+    scrollToTop();
+  }, [selectedNodeId, scrollToTop]);
 
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(() => {
     const map: Record<string, boolean> = {};
@@ -217,7 +249,7 @@ export default function DocumentExplorer({
   }, [activeNode, localTabs, persist]);
 
   return (
-    <div className="w-full rounded-lg overflow-hidden border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col md:flex-row min-h-[680px]">
+    <div className={`w-full rounded-lg overflow-hidden border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col md:flex-row ${className || 'min-h-[680px]'}`}>
 
       {showBulkImportModal && (
         <BulkImportPapersModal
@@ -393,7 +425,7 @@ export default function DocumentExplorer({
       </div>
 
       {/* ── RIGHT CONTENT PANEL ──────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col relative min-h-[600px] overflow-hidden bg-white dark:bg-[#141414]">
+      <div className="flex-1 flex flex-col relative min-h-0 md:min-h-[600px] overflow-hidden bg-white dark:bg-[#141414]">
 
         {/* PAYWALL OVERLAY */}
         {!(hasAccess || isAdmin || activeNode?.isFree === true) ? (
@@ -442,7 +474,10 @@ export default function DocumentExplorer({
 
         ) : isAdmin && adminMode ? (
           /* ── ADMIN EDIT PANEL ──────────────────────────────────────── */
-          <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+          <div 
+            ref={adminPanelRef}
+            className="flex-1 flex flex-col overflow-y-auto custom-scrollbar"
+          >
             {activeNode ? (
               <>
                 {/* Node meta editor */}
@@ -535,7 +570,12 @@ export default function DocumentExplorer({
 
         ) : (
           /* ── READER PANEL ──────────────────────────────────────────── */
-          <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar p-6 sm:p-10 select-none">
+          <div 
+            ref={readerPanelRef}
+            className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar p-6 sm:p-10 select-none"
+          >
+            {/* Top Anchor for instant scroll reset */}
+            <div ref={topAnchorRef} className="h-0 w-0 pointer-events-none" />
 
             {/* Watermark */}
             {watermarkText && (
@@ -595,7 +635,13 @@ export default function DocumentExplorer({
             {flatNodes.length > 1 && (
               <div className="mt-12 pt-6 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-4">
                 {prevNode ? (
-                  <button onClick={() => setSelectedNodeId(prevNode.id)} className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-left group transition-all cursor-pointer">
+                  <button 
+                    onClick={() => {
+                      setSelectedNodeId(prevNode.id);
+                      scrollToTop();
+                    }} 
+                    className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-left group transition-all cursor-pointer"
+                  >
                     <span className="text-lg text-[#121417] dark:text-[#FFFFFF]">←</span>
                     <div>
                       <span className="block text-[10px] text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display font-bold">Previous</span>
@@ -605,7 +651,13 @@ export default function DocumentExplorer({
                 ) : <div />}
 
                 {nextNode && (
-                  <button onClick={() => setSelectedNodeId(nextNode.id)} className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-right group transition-all ml-auto cursor-pointer">
+                  <button 
+                    onClick={() => {
+                      setSelectedNodeId(nextNode.id);
+                      scrollToTop();
+                    }} 
+                    className="flex items-center gap-2 p-3 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:bg-[#F8F9FA] dark:hover:bg-[#141414] text-right group transition-all ml-auto cursor-pointer"
+                  >
                     <div>
                       <span className="block text-[10px] text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display font-bold">Next</span>
                       <span className="text-xs font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32]">{nextNode.title}</span>
