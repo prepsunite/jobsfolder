@@ -14,7 +14,7 @@ export const auditService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase.from('admin_audit_logs').insert({
+      const { error } = await supabase.from('admin_audit_logs').insert({
         admin_id: user.id,
         admin_email: user.email || 'admin@jobsfolder.com',
         action: params.action,
@@ -23,6 +23,10 @@ export const auditService = {
         before_data: params.beforeData ? JSON.stringify(params.beforeData) : null,
         after_data: params.afterData ? JSON.stringify(params.afterData) : null,
       });
+
+      if (error) {
+        console.error('[auditService.logAction] Failed to insert admin audit log:', error.message);
+      }
     } catch (err) {
       console.warn('[auditService.logAction] Could not log admin action:', err);
     }

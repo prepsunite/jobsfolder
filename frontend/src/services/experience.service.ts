@@ -76,8 +76,7 @@ export const experienceService = {
 
     const local = dataStore.getExperiences().filter(e => e.status === 'APPROVED');
     const mappedLocal: InterviewExperience[] = local.map(e => {
-      const expAny = e as any;
-      const slug = expAny.companySlug || (expAny.companyName ? expAny.companyName.toLowerCase() : 'tcs');
+      const slug = e.companySlug || (e.companyName ? e.companyName.toLowerCase() : 'tcs');
       return {
         id: e.id,
         companyId: slug,
@@ -88,8 +87,8 @@ export const experienceService = {
         college: e.college,
         year: e.year,
         difficulty: e.difficulty as any,
-        content: expAny.overallExperience || (e.rounds && e.rounds.length > 0 ? e.rounds[0].details : 'Interview Experience Details'),
-        tips: expAny.tips || '',
+        content: e.overallExperience || (e.rounds && e.rounds.length > 0 ? e.rounds[0].details : 'Interview Experience Details'),
+        tips: e.tips || '',
         resourcesUsed: '',
         status: (e.status as any) || 'APPROVED',
         isAnonymous: false,
@@ -276,7 +275,10 @@ export const experienceService = {
         .eq('id', id)
         .single();
       const nextUpvotes = (current?.upvotes || 0) + 1;
-      await supabase.from('experiences').update({ upvotes: nextUpvotes }).eq('id', id);
+      const { error: updateErr } = await supabase.from('experiences').update({ upvotes: nextUpvotes }).eq('id', id);
+      if (updateErr) {
+        console.warn('[experienceService.upvoteExperience] Direct upvote update notice:', updateErr.message);
+      }
       return nextUpvotes;
     } catch (err) {
       console.warn('[experienceService.upvoteExperience] Error incrementing upvotes:', err);

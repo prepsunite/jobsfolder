@@ -24,7 +24,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services/dataStore';
 import { progressService, type QuestionProgressRecord } from '@/services/progress.service';
 import { supabase } from '@/lib/supabase';
@@ -75,7 +75,7 @@ export default function TopicQuestionsPage() {
 
   // Hydrate user progress and bookmarks from Supabase on mount / when user changes
   useEffect(() => {
-    if (user?.email && user.email !== 'guest@prepunite.com') {
+    if (user?.email && user.email !== GUEST_EMAIL) {
       progressService.fetchAndSyncFromSupabase(user.email).then((records) => {
         setProgressRecords(records);
       });

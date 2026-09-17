@@ -1,6 +1,6 @@
 export type InterviewCategory = 'CORE_CS' | 'HR_BEHAVIORAL' | 'PROJECT_DEFENSE';
 
-export type CoreCsSubject = 'DBMS' | 'OOPS' | 'OPERATING_SYSTEMS' | 'COMPUTER_NETWORKS' | 'SQL_QUERIES' | string;
+export type CoreCsSubject = 'DBMS' | 'OOPS' | 'OPERATING_SYSTEMS' | 'COMPUTER_NETWORKS' | 'SQL_QUERIES' | (string & {});
 
 export interface InterviewTopic {
   id: string;

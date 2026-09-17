@@ -561,7 +561,12 @@ export default function BulkImportPapersModal({
   }, [destMode, targetNode, newFileTitle]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs animate-fadeIn font-sans">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Bulk Questions Importer"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs animate-fadeIn font-sans"
+    >
       <div className="bg-white dark:bg-[#141414] rounded-2xl border border-[#E9ECEF] dark:border-[#242424] shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-scaleIn">
         
         {/* MODAL HEADER */}

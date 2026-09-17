@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import {
@@ -412,7 +412,7 @@ export default function AptitudePage() {
   const { data: progressRecords = {}, isLoading: isProgressLoading } = useQuery({
     queryKey: ['user-aptitude-progress', user?.email],
     queryFn: async () => {
-      if (!user?.email || user.email === 'guest@prepunite.com') {
+      if (!user?.email || user.email === GUEST_EMAIL) {
         return progressService.getAllRecords(user?.email);
       }
       return await progressService.fetchAndSyncFromSupabase(user.email);

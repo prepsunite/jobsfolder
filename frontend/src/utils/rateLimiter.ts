@@ -28,33 +28,39 @@ interface StoredRateLimit {
 }
 
 const STORAGE_PREFIX = 'prepunite_ratelimit_';
+const memoryFallback = new Map<string, number[]>();
 
 function getStorageKey(action: string): string {
   return `${STORAGE_PREFIX}${action}`;
 }
 
 function getStoredData(action: string): StoredRateLimit {
+  const now = Date.now();
+  const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
   try {
     const raw = localStorage.getItem(getStorageKey(action));
-    if (!raw) return { timestamps: [] };
+    if (!raw) {
+      const inMem = memoryFallback.get(action) || [];
+      return { timestamps: inMem.filter((ts) => ts > oneDayAgo) };
+    }
     const parsed = JSON.parse(raw);
     if (!parsed || !Array.isArray(parsed.timestamps)) return { timestamps: [] };
 
-    const now = Date.now();
-    const oneDayAgo = now - 24 * 60 * 60 * 1000;
     const validTimestamps = parsed.timestamps.filter((ts: number) => typeof ts === 'number' && ts > oneDayAgo);
-
     return { timestamps: validTimestamps };
   } catch {
-    return { timestamps: [] };
+    const inMem = memoryFallback.get(action) || [];
+    return { timestamps: inMem.filter((ts) => ts > oneDayAgo) };
   }
 }
 
 function saveStoredData(action: string, data: StoredRateLimit): void {
+  memoryFallback.set(action, data.timestamps);
   try {
     localStorage.setItem(getStorageKey(action), JSON.stringify(data));
   } catch (e) {
-    console.warn('[rateLimiter] Failed to save rate limit state:', e);
+    console.warn('[rateLimiter] Failed to save rate limit state to localStorage, using in-memory fallback:', e);
   }
 }
 

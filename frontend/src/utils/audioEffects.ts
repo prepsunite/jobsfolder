@@ -68,6 +68,12 @@ class AudioEffectsManager {
 
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
+      osc1.onended = () => {
+        try {
+          osc1.disconnect();
+          gain1.disconnect();
+        } catch {}
+      };
       osc1.start(now);
       osc1.stop(now + 0.25);
 
@@ -83,6 +89,12 @@ class AudioEffectsManager {
 
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
+      osc2.onended = () => {
+        try {
+          osc2.disconnect();
+          gain2.disconnect();
+        } catch {}
+      };
       osc2.start(now + 0.1);
       osc2.stop(now + 0.45);
     } catch (e) {
@@ -111,6 +123,12 @@ class AudioEffectsManager {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      osc.onended = () => {
+        try {
+          osc.disconnect();
+          gain.disconnect();
+        } catch {}
+      };
       osc.start(now);
       osc.stop(now + 0.18);
     } catch (e) {

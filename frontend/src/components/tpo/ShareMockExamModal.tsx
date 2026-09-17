@@ -97,7 +97,12 @@ Training & Placement Office`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Share Mock Exam"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+    >
       <div className="bg-white dark:bg-[#151618] border border-gray-200 dark:border-[#25262a] rounded-3xl max-w-lg w-full p-6 shadow-2xl relative space-y-5 animate-scaleUp">
         
         {/* Close Button */}

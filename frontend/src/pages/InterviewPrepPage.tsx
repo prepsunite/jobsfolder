@@ -36,7 +36,7 @@ import {
   Terminal,
   Code,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { interviewService } from '@/services/interview.service';
 import InterviewBulkImportModal from '@/components/interview/InterviewBulkImportModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
@@ -283,7 +283,7 @@ export default function InterviewPrepPage() {
 
   // Hydrate user progress from Supabase on mount / when user changes
   useEffect(() => {
-    if (user?.email && user.email !== 'guest@prepunite.com') {
+    if (user?.email && user.email !== GUEST_EMAIL) {
       interviewService.fetchAndSyncFromSupabase(user.email).then(() => {
         refetchQuestions();
       });

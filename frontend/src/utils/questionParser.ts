@@ -131,8 +131,12 @@ export function safeJsonParse<T = any>(input: string): T {
   try {
     return JSON.parse(input);
   } catch {
-    const sanitized = sanitizeJsonInput(input);
-    return JSON.parse(sanitized);
+    try {
+      const sanitized = sanitizeJsonInput(input);
+      return JSON.parse(sanitized);
+    } catch {
+      return null as unknown as T;
+    }
   }
 }
 

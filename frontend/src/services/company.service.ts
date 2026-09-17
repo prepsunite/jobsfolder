@@ -260,7 +260,10 @@ export const companyService = {
       } else {
         fetchQuery = fetchQuery.eq('slug', idOrSlug);
       }
-      const { data: compData } = await fetchQuery.maybeSingle();
+      const { data: compData, error: compFetchErr } = await fetchQuery.maybeSingle();
+      if (compFetchErr) {
+        console.warn('[companyService.deleteCompany] Company lookup notice:', compFetchErr.message);
+      }
       if (compData) {
         targetSlug = compData.slug;
         targetId = compData.id;
@@ -291,22 +294,25 @@ export const companyService = {
 
         const examIds = (childExams || []).map(e => e.id);
 
-        await supabase
+        const { error: examErr } = await supabase
           .from('exams')
           .update({ is_deleted: true, deleted_at: now })
           .eq('company_slug', targetSlug);
+        if (examErr) console.warn('[companyService.deleteCompany] Exams cascade notice:', examErr.message);
 
         if (examIds.length > 0) {
-          await supabase
+          const { error: tabErr } = await supabase
             .from('paper_tab_nodes')
             .update({ is_deleted: true })
             .in('exam_id', examIds);
+          if (tabErr) console.warn('[companyService.deleteCompany] Paper tabs cascade notice:', tabErr.message);
         }
 
-        await supabase
+        const { error: expErr } = await supabase
           .from('experiences')
           .update({ is_deleted: true })
           .eq('company_slug', targetSlug);
+        if (expErr) console.warn('[companyService.deleteCompany] Experiences cascade notice:', expErr.message);
       }
     } catch (cascadeErr) {
       console.warn('[companyService.deleteCompany] Cascade delete notice:', cascadeErr);

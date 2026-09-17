@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link, Navigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import QuestionCard from '@/components/QuestionCard';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { examService } from '@/services/exam.service';
 import { dataStore, type QuestionItem, type ExperienceItem, type TopicQuestionItem } from '@/services/dataStore';
@@ -215,7 +215,7 @@ export default function DashboardPage() {
   const { data: progressRecords = {}, isLoading: isProgressLoading } = useQuery({
     queryKey: ['user-aptitude-progress', user?.email],
     queryFn: async () => {
-      if (!user?.email || user.email === 'guest@prepunite.com') {
+      if (!user?.email || user.email === GUEST_EMAIL) {
         return progressService.getAllRecords(user?.email);
       }
       return await progressService.fetchAndSyncFromSupabase(user.email);

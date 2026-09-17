@@ -174,6 +174,7 @@ export interface ImportReport {
 export interface ExperienceItem {
   id: string;
   companyName: string;
+  companySlug?: string;
   role: string;
   studentName: string;
   college: string;
@@ -184,6 +185,8 @@ export interface ExperienceItem {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   upvotes?: number;
   driveType?: 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS';
+  overallExperience?: string;
+  tips?: string;
 }
 
 

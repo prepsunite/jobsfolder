@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   X,
@@ -34,15 +34,17 @@ export default function ExamAnalyticsModal({
   if (!isOpen) return null;
 
   // Filter attempts
-  const filteredAttempts = attempts.filter(att => {
-    const student = att.student || { name: '', email: '', roll_number: '', department: '' };
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (student.roll_number && student.roll_number.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesDept = deptFilter === 'ALL' || student.department === deptFilter;
-    return matchesSearch && matchesDept;
-  });
+  const filteredAttempts = useMemo(() => {
+    return attempts.filter(att => {
+      const student = att.student || { name: '', email: '', roll_number: '', department: '' };
+      const matchesSearch =
+        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.roll_number && student.roll_number.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesDept = deptFilter === 'ALL' || student.department === deptFilter;
+      return matchesSearch && matchesDept;
+    });
+  }, [attempts, searchTerm, deptFilter]);
 
   const totalSubmitted = attempts.length;
   const uniqueCandidatesCount = attempts.reduce((set, a) => {
@@ -78,7 +80,12 @@ export default function ExamAnalyticsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Exam Analytics"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+    >
       <div className="bg-white dark:bg-[#1a1b1e] border border-gray-200 dark:border-[#2e3035] w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}

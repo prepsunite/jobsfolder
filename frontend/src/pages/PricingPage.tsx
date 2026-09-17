@@ -32,6 +32,7 @@ export default function PricingPage() {
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [selectedExamId, setSelectedExamId] = useState<string>('');
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // Fetch all available company placement papers live from database
   const { data: exams = [] } = useQuery<ExamWithCompany[]>({
@@ -58,17 +59,23 @@ export default function PricingPage() {
   const handleBuy = async (planType: string, amount: number, examId?: string) => {
     try {
       setLoadingPlan(planType);
+      setNotification(null);
       const userEmail = user?.email;
       if (!userEmail) {
-        alert('Please log in with your email account first so your pass is permanently attached to your account.');
-        window.location.href = '/login?redirectTo=/pricing';
+        setNotification({
+          type: 'error',
+          message: 'Please log in with your email account first so your pass is permanently attached to your account.',
+        });
+        setTimeout(() => {
+          window.location.href = '/login?redirectTo=/pricing';
+        }, 1500);
         return;
       }
 
       const targetExamId = (planType === 'SINGLE_PAPER' || planType === 'SINGLE') ? (examId || selectedExamId) : undefined;
 
       if ((planType === 'SINGLE_PAPER' || planType === 'SINGLE') && !targetExamId) {
-        alert('Please select a target company exam paper to unlock.');
+        setNotification({ type: 'error', message: 'Please select a target company exam paper to unlock.' });
         return;
       }
 
@@ -129,22 +136,36 @@ export default function PricingPage() {
 
             if (!verifyRes.ok) {
               const verifyData = await verifyRes.json().catch(() => ({}));
-              alert(`Payment verification failed: ${verifyData.error || 'Please contact support with your Payment ID: ' + response.razorpay_payment_id}`);
+              setNotification({
+                type: 'error',
+                message: `Payment verification failed: ${verifyData.error || 'Please contact support with your Payment ID: ' + response.razorpay_payment_id}`,
+              });
               return;
             }
 
-            alert('Payment Verified! Paper access unlocked on your account.');
-            window.location.href = targetExamId ? `/companies?examId=${targetExamId}` : '/companies';
+            setNotification({
+              type: 'success',
+              message: 'Payment Verified! Paper access unlocked on your account. Redirecting...',
+            });
+            setTimeout(() => {
+              window.location.href = targetExamId ? `/companies?examId=${targetExamId}` : '/companies';
+            }, 1500);
           },
         };
 
         const rzp = new (window as any).Razorpay(options);
         rzp.open();
       } else {
-        alert(`Mock Mode Order Created: ${orderData.orderId}. Configure VITE_RAZORPAY_KEY_ID for live checkout.`);
+        setNotification({
+          type: 'info',
+          message: `Order Created: ${orderData.orderId}. Razorpay payment gateway is running in test mode.`,
+        });
       }
     } catch (err: any) {
-      alert(err.message || 'Payment initiation failed');
+      setNotification({
+        type: 'error',
+        message: err.message || 'Payment initiation failed. Please try again.',
+      });
     } finally {
       setLoadingPlan(null);
     }
@@ -158,15 +179,38 @@ export default function PricingPage() {
       <div className="text-center space-y-3 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider">
           <Zap className="w-3.5 h-3.5" />
-          <span>Paper Archives & Access Plans</span>
+          <span>Transparent Pricing</span>
         </div>
-        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#121417] dark:text-white tracking-tight">
-          Invest in Real Drive Papers.
+        <h1 className="text-4xl md:text-5xl font-display font-extrabold tracking-tight">
+          Invest in Your <span className="bg-gradient-to-r from-[#FD4A32] via-[#FD4A32] to-[#FF8066] bg-clip-text text-transparent">Dream Career</span>
         </h1>
-        <p className="text-xs sm:text-sm text-[#868E96] dark:text-[#888888] leading-relaxed font-sans">
-          Select a single 1-year company archive pass or unlock unlimited access across all 50+ company archives.
+        <p className="text-base text-gray-700 dark:text-gray-300">
+          Unlock exclusive company placement papers, complete syllabus breakdowns, and original previous questions with full step-by-step solutions.
         </p>
       </div>
+
+      {/* Notification Toast */}
+      {notification && (
+        <div
+          role="alert"
+          className={`max-w-2xl mx-auto p-4 rounded-xl text-sm font-medium flex items-center justify-between border transition-all ${
+            notification.type === 'error'
+              ? 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+              : notification.type === 'success'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+              : 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400'
+          }`}
+        >
+          <span>{notification.message}</span>
+          <button
+            type="button"
+            onClick={() => setNotification(null)}
+            className="ml-3 text-xs opacity-70 hover:opacity-100 font-bold px-2 py-1 rounded cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Top 2 Primary Options: Freemium vs Single Company Pass */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">

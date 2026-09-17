@@ -175,6 +175,7 @@ export interface BulkStudentRow {
   batch_id?: string;
   batch_name?: string;
   isValid?: boolean;
+  is_valid?: boolean;
   error?: string;
 }
 

@@ -9,6 +9,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, LayoutDashboard, Building2 } from 'lucide-react';
 
 import LoadingScreen from '@/components/LoadingScreen';
+import { dataStore } from '@/services/dataStore';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -30,6 +31,8 @@ export default function RootLayout() {
 
   // Instant Real-Time Data Synchronization Engine across all Tabs, Pages, and Roles
   useEffect(() => {
+    dataStore.initRealtimeSync();
+
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const handleStoreUpdate = () => {
       if (debounceTimer) clearTimeout(debounceTimer);
@@ -50,6 +53,7 @@ export default function RootLayout() {
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       window.removeEventListener('prepunite_datastore_updated', handleStoreUpdate);
+      dataStore.destroyRealtimeSync();
     };
   }, [queryClient]);
 

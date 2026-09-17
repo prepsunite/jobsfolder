@@ -33,7 +33,9 @@ export interface UserProfile {
   avatarUrl?: string;
   targetCompany?: string;
   isTpoAdmin?: boolean;
+  is_tpo_admin?: boolean;
   collegeId?: string;
+  college_id?: string;
   collegeName?: string;
   college?: string;
   graduationYear?: string;
@@ -74,11 +76,12 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   const clean = email.trim().toLowerCase();
   if (SUPER_ADMIN_EMAILS.includes(clean)) return true;
 
-  // Gmail dot & plus alias normalization
+  // Gmail dot & plus alias normalization (normalizes googlemail.com -> gmail.com as well)
   if (clean.endsWith('@gmail.com') || clean.endsWith('@googlemail.com')) {
     const [userPart, domain] = clean.split('@');
     const normalizedUser = userPart.replace(/\./g, '').split('+')[0];
-    const normalizedEmail = `${normalizedUser}@${domain}`;
+    const actualDomain = domain === 'googlemail.com' ? 'gmail.com' : domain;
+    const normalizedEmail = `${normalizedUser}@${actualDomain}`;
 
     // Exact matches for primary PrepUnite Super Admins only
     if (
@@ -93,7 +96,8 @@ export function isSuperAdminEmail(email?: string | null): boolean {
       const a = admin.toLowerCase();
       if (a.endsWith('@gmail.com') || a.endsWith('@googlemail.com')) {
         const [aUser, aDomain] = a.split('@');
-        return `${aUser.replace(/\./g, '').split('+')[0]}@${aDomain}` === normalizedEmail;
+        const adminDomain = aDomain === 'googlemail.com' ? 'gmail.com' : aDomain;
+        return `${aUser.replace(/\./g, '').split('+')[0]}@${adminDomain}` === normalizedEmail;
       }
       return a === normalizedEmail;
     });
@@ -119,7 +123,7 @@ const getInitialUser = (): UserProfile | null => {
     let role = (localStorage.getItem('prepunite_role') as UserRole) || 'USER';
     const avatarUrl = localStorage.getItem('prepunite_user_avatar') || undefined;
 
-    if (email && email !== 'guest@prepunite.com') {
+    if (email && email !== GUEST_EMAIL) {
       const isSuper = isSuperAdminEmail(email);
 
       // 1. 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN
@@ -297,7 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 2. Check pre-authorized TPO records (NEVER an authorized super admin)
       const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(email) : null;
-      const isDbTpo = !isMasterAdmin && (Boolean(tpoAuth) || Boolean((dbProfile as any)?.is_tpo_admin));
+      const isDbTpo = !isMasterAdmin && (Boolean(tpoAuth) || Boolean(dbProfile?.is_tpo_admin));
 
       if (profileError) {
         console.warn('[syncProfileWithSupabase] Profile lookup notice:', profileError.message);
@@ -352,17 +356,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (demoteErr) {
           console.warn('[syncProfileWithSupabase] Admin strip notice:', demoteErr);
         }
-
-        // Auto-heal TPO status in database profiles table
-        if (isDbTpo && userId && (!(dbProfile as any)?.is_tpo_admin || !(dbProfile as any)?.college_id)) {
-          try {
-            await supabase.from('profiles').update({
-              is_tpo_admin: true,
-              college_id: tpoAuth?.college_id || (dbProfile as any)?.college_id,
-              updated_at: new Date().toISOString(),
-            }).eq('id', userId);
-          } catch {}
-        }
       } else if (!dbProfile && !profileError && userId && email) {
         // 3. New profile row creation for regular users
         try {
@@ -378,12 +371,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      // Auto-heal TPO status in database profiles table if pre-authorized
+      if (isDbTpo && userId && tpoAuth?.college_id && (!dbProfile?.is_tpo_admin || !dbProfile?.college_id)) {
+        try {
+          await supabase.from('profiles').update({
+            is_tpo_admin: true,
+            college_id: tpoAuth.college_id,
+            updated_at: new Date().toISOString(),
+          }).eq('id', userId);
+        } catch (tpoErr) {
+          console.warn('[syncProfileWithSupabase] TPO self-heal notice:', tpoErr);
+        }
+      }
+
       // 🏛️ Multi-Device Student College Resolution:
       // Check if student was enrolled by a TPO into college_students or user_subscriptions
-      let resolvedCollegeId = (dbProfile as any)?.college_id || null;
-      let resolvedRollNumber = (dbProfile as any)?.roll_number || null;
-      let resolvedDepartment = (dbProfile as any)?.department || null;
-      let resolvedBatchYear = (dbProfile as any)?.batch_year || null;
+      let resolvedCollegeId = dbProfile?.college_id || null;
+      let resolvedRollNumber = dbProfile?.roll_number || null;
+      let resolvedDepartment = dbProfile?.department || null;
+      let resolvedBatchYear = dbProfile?.batch_year || null;
       let resolvedCollegeName = '';
 
       if (!isMasterAdmin && !isDbTpo && !resolvedCollegeId && email) {

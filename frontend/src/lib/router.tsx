@@ -47,9 +47,9 @@ const PageLoader = () => (
   <LoadingScreen fullScreen={false} size="md" />
 );
 
-const withSuspense = (Component: React.ComponentType<any>, props?: any) => (
+const withSuspense = <P extends object>(Component: React.ComponentType<P>, props?: P) => (
   <Suspense fallback={<PageLoader />}>
-    <Component {...props} />
+    <Component {...(props as P)} />
   </Suspense>
 );
 

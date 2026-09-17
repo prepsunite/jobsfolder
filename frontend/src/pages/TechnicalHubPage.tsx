@@ -50,7 +50,7 @@ import {
   ExternalLink,
   Building2,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
 import { STAGE_SUBTOPIC_TO_STAGE_MAP } from '@/services/programmingTopicsData';
 import audioEffects from '@/utils/audioEffects';
@@ -251,7 +251,7 @@ export default function TechnicalHubPage() {
 
   // Hydrate user progress from Supabase on mount / when user changes
   useEffect(() => {
-    if (user?.email && user.email !== 'guest@prepunite.com') {
+    if (user?.email && user.email !== GUEST_EMAIL) {
       technicalService.fetchAndSyncFromSupabase(user.email).then(() => {
         setMcqProgress(technicalService.getMcqProgress());
         refetchP150();

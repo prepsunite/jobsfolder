@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router';
+import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router';
 // Native Document Explorer View Enabled
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
@@ -43,6 +43,7 @@ interface CompanyDetailPageProps {
 
 export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPageProps = {}) {
   const { slug = 'tcs' } = useParams<{ slug: string }>();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlExamId = searchParams.get('examId');
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const isAdmin = isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
 
-  const isDirectOldPapersUrl = !!isOldPapersRoute || (typeof window !== 'undefined' && window.location.pathname.endsWith('/oldpapers'));
+  const isDirectOldPapersUrl = !!isOldPapersRoute || location.pathname.endsWith('/oldpapers');
 
   // Company Data from external API (dummy)
   const { data: company, isLoading: isCompanyLoading } = useQuery({

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { feedbackService } from '@/services/feedback.service';
 import type { ReportIssueType } from '@/types/feedback';
 import { rateLimiter, type RateLimitStatus } from '@/utils/rateLimiter';
@@ -59,7 +59,7 @@ export default function ReportQuestionModal({
 
   const [issueType, setIssueType] = useState<ReportIssueType>('INCORRECT_ANSWER');
   const [details, setDetails] = useState('');
-  const [email, setEmail] = useState(user?.email && user.email !== 'guest@prepunite.com' ? user.email : '');
+  const [email, setEmail] = useState(user?.email && user.email !== GUEST_EMAIL ? user.email : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

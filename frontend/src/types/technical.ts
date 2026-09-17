@@ -123,7 +123,7 @@ export interface TechnicalMcq {
     | 'OPERATING_SYSTEMS'
     | 'DATA_STRUCTURES'
     | 'PSEUDO_CODE'
-    | string;
+    | (string & {});
   topic_category?: string;
   topicId?: string;
   topic_id?: string;

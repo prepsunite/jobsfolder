@@ -234,7 +234,10 @@ export const feedbackService = {
 
   deleteQuestionReport: async (id: string): Promise<void> => {
     try {
-      await supabase.from('question_reports').delete().eq('id', id);
+      const { error } = await supabase.from('question_reports').delete().eq('id', id);
+      if (error) {
+        console.warn('[feedbackService.deleteQuestionReport] Supabase delete notice:', error.message);
+      }
     } catch (err) {
       console.warn('[feedbackService.deleteQuestionReport] Supabase delete error:', err);
     }
@@ -423,7 +426,10 @@ export const feedbackService = {
 
   deleteContactMessage: async (id: string): Promise<void> => {
     try {
-      await supabase.from('contact_messages').delete().eq('id', id);
+      const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+      if (error) {
+        console.warn('[feedbackService.deleteContactMessage] Supabase delete notice:', error.message);
+      }
     } catch (err) {
       console.warn('[feedbackService.deleteContactMessage] Supabase delete error:', err);
     }

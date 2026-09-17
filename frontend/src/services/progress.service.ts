@@ -37,7 +37,7 @@ export interface ProgressSummaryStats {
 const STORAGE_PREFIX = 'prepunite_aptitude_progress_';
 
 function getStorageKey(userEmail?: string): string {
-  const normalized = userEmail ? userEmail.trim().toLowerCase() : 'guest';
+  const normalized = userEmail ? userEmail.trim().toLowerCase() : GUEST_EMAIL;
   return `${STORAGE_PREFIX}${normalized}`;
 }
 
@@ -175,7 +175,7 @@ export const progressService = {
     // Sync with Supabase asynchronously for logged-in users
     if (userEmail && userEmail !== GUEST_EMAIL) {
       try {
-        await supabase.from('user_question_progress').upsert(
+        const { error } = await supabase.from('user_question_progress').upsert(
           {
             user_email: userEmail.trim().toLowerCase(),
             question_id: questionId,
@@ -193,6 +193,9 @@ export const progressService = {
           },
           { onConflict: 'user_email,question_id' }
         );
+        if (error) {
+          console.warn('[progressService] Supabase sync notice:', error.message);
+        }
       } catch (err) {
         console.warn('[progressService] Supabase sync notice:', err);
       }
@@ -380,7 +383,7 @@ export const progressService = {
       while (hasMore) {
         const { data, error } = await supabase
           .from('user_question_progress')
-          .select('*')
+          .select('question_id, topic_id, category_slug, difficulty, selected_option, correct_option, wrong_attempts, is_solved, is_revealed, first_try_correct, completed_at, last_attempted_at')
           .eq('user_email', normalized)
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -458,7 +461,7 @@ export const progressService = {
         if (!userRecords[qId]) {
           userRecords[qId] = gRec;
           try {
-            await supabase.from('user_question_progress').upsert(
+            const { error: migErr } = await supabase.from('user_question_progress').upsert(
               {
                 user_email: normalized,
                 question_id: gRec.questionId,
@@ -476,6 +479,9 @@ export const progressService = {
               },
               { onConflict: 'user_email,question_id' }
             );
+            if (migErr) {
+              console.warn('[progressService] Guest migration upsert notice:', migErr.message);
+            }
           } catch (e) {
             console.warn('[progressService] Guest migration upsert notice:', e);
           }

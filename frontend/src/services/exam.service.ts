@@ -4,7 +4,31 @@ import { auditService } from '@/services/audit.service';
 
 export type { ExamWithCompany };
 
-const parseCompHidden = (c: any): boolean => {
+interface CompanyVisibilityCheck {
+  is_hidden?: boolean;
+  isHidden?: boolean;
+  about_company?: string;
+  description?: string;
+}
+
+interface RpcExamRow {
+  id: string;
+  company_slug: string;
+  name: string;
+  badge?: string;
+  content?: string;
+  old_papers?: string;
+  price?: number | string;
+  paper_tabs?: any;
+  google_doc_embed_url?: string;
+  google_doc_edit_url?: string;
+  is_public_exam?: boolean;
+  is_active?: boolean;
+  upvotes?: number;
+  created_at?: string;
+}
+
+const parseCompHidden = (c: CompanyVisibilityCheck): boolean => {
   if (c.is_hidden === true || c.isHidden === true) return true;
   if (typeof c.about_company === 'string' && c.about_company.includes('<!-- prepunite_hidden:true -->')) return true;
   if (typeof c.description === 'string' && c.description.includes('<!-- prepunite_hidden:true -->')) return true;
@@ -26,7 +50,7 @@ export const examService = {
       }
 
       if (rpcData && rpcData.length > 0) {
-        return rpcData.map((e: any) => ({
+        return (rpcData as RpcExamRow[]).map((e) => ({
           id: e.id,
           companySlug: e.company_slug,
           name: e.name,
@@ -270,11 +294,16 @@ export const examService = {
 
     // Soft-delete ONLY paper tab nodes associated with this specific exam
     try {
-      await supabase
+      const { error: tabErr } = await supabase
         .from('paper_tab_nodes')
         .update({ is_deleted: true })
         .eq('exam_id', id);
-    } catch {}
+      if (tabErr) {
+        console.warn('[examService.deleteExam] Paper tab nodes soft delete notice:', tabErr.message);
+      }
+    } catch (tabErr) {
+      console.warn('[examService.deleteExam] Paper tab nodes soft delete notice:', tabErr);
+    }
 
     auditService.logAction({
       action: 'SOFT_DELETE_EXAM',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   X,
   Sparkles,
@@ -441,17 +441,24 @@ export default function CreateMockExamModal({
     }
   };
 
-  const filteredTemplates = templates.filter(t => {
+  const filteredTemplates = useMemo(() => {
     const q = templateSearch.toLowerCase();
-    return (
-      t.name.toLowerCase().includes(q) ||
-      t.target_company.toLowerCase().includes(q) ||
-      (t.badge && t.badge.toLowerCase().includes(q))
-    );
-  });
+    return templates.filter(t => {
+      return (
+        t.name.toLowerCase().includes(q) ||
+        t.target_company.toLowerCase().includes(q) ||
+        (t.badge && t.badge.toLowerCase().includes(q))
+      );
+    });
+  }, [templates, templateSearch]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create Mock Exam"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+    >
       <div className="bg-white dark:bg-[#1a1b1e] border border-gray-200 dark:border-[#2e3035] w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Header */}
@@ -812,9 +819,9 @@ export default function CreateMockExamModal({
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {filteredTemplates.map(tmpl => {
+                      {filteredTemplates.map((tmpl: MockExamTemplate) => {
                         const totalQs = tmpl.sections.reduce(
-                          (a, s) => a + (Number(s.question_count) || 0),
+                          (a: number, s: any) => a + (Number(s.question_count) || 0),
                           0
                         );
 
@@ -900,7 +907,7 @@ export default function CreateMockExamModal({
                                   Sections ({tmpl.sections.length}):
                                 </span>
                                 <div className="flex flex-wrap gap-1.5">
-                                  {tmpl.sections.map((s, idx) => (
+                                  {tmpl.sections.map((s: any, idx: number) => (
                                     <span
                                       key={idx}
                                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-200/60 dark:bg-[#2b2d31] text-[10px] font-semibold text-gray-700 dark:text-gray-300"

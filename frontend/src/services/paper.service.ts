@@ -48,9 +48,11 @@ export class PaperService {
 
       if (error) {
         console.error('[PaperService.savePaperTabNodes] Supabase error on exams update:', error);
+        throw new Error(`Failed to save paper tabs: ${error.message}`);
       }
     } catch (err) {
       console.error('[PaperService.savePaperTabNodes] Failed exams update:', err);
+      throw err;
     }
 
     // 🛡️ Storage Sync: Also synchronize rows into paper_tab_nodes relational table
