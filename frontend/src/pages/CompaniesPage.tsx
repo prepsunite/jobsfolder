@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CompanyCard from '@/components/CompanyCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, Building2, SlidersHorizontal, Plus, XCircle } from 'lucide-react';
+import { Search, Building2, SlidersHorizontal, Plus, XCircle, EyeOff } from 'lucide-react';
 import type { Company } from '@/types/company';
 import LogoLoader from '@/components/LogoLoader';
 
@@ -27,7 +27,7 @@ export default function CompaniesPage() {
     headquarters: 'India & Global',
   });
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: allCompanies = [], isLoading } = useQuery({
     queryKey: ['live-companies', searchTerm],
     queryFn: async () => {
       const res = await companyService.getCompanies(searchTerm);
@@ -43,12 +43,28 @@ export default function CompaniesPage() {
         logoUrl: c.logoUrl,
         examsList: [`${c.name} Placement Papers 2026`],
         isActive: c.isActive,
+        isHidden: c.isHidden,
         createdAt: c.createdAt,
       }));
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
+
+  // Students see only visible companies; admins see all
+  const companies = allCompanies.filter(c => isAdmin || !c.isHidden);
+  const hiddenCount = allCompanies.filter(c => c.isHidden).length;
+
+  const handleToggleCompanyVisibility = async (company: Company) => {
+    const nextHidden = !company.isHidden;
+    try {
+      await companyService.toggleCompanyVisibility(company.id || company.slug, nextHidden);
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+    } catch (err: any) {
+      alert(`Failed to update company visibility: ${err.message || err}`);
+    }
+  };
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,9 +122,17 @@ export default function CompaniesPage() {
               Companies Directory ({companies.length})
             </h1>
             {isAdmin && (
-              <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-                Admin CRUD
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                  Admin CRUD
+                </span>
+                {hiddenCount > 0 && (
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                    <EyeOff className="w-2.5 h-2.5" />
+                    {hiddenCount} Hidden
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans mt-0.5">
@@ -168,6 +192,7 @@ export default function CompaniesPage() {
               company={company as Company}
               onEdit={() => setEditingCompany(company)}
               onDelete={handleDeleteCompany}
+              onToggleVisibility={handleToggleCompanyVisibility}
             />
           ))}
         </div>

@@ -32,6 +32,7 @@ export interface Company {
   headquarters?: string;
   foundedYear?: number;
   isActive: boolean;
+  isHidden?: boolean;
   createdAt: string;
   roles?: CompanyRole[];
   hiringProcesses?: HiringProcessRound[];

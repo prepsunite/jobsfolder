@@ -1,13 +1,15 @@
 import { supabase } from '@/lib/supabase';
-import { dataStore, type ExamItem } from '@/services/dataStore';
+import { dataStore, type ExamItem, type ExamWithCompany } from '@/services/dataStore';
 import { auditService } from '@/services/audit.service';
 
-export interface ExamWithCompany extends ExamItem {
-  companyName: string;
-  companyLogoUrl?: string;
-  companyIndustry?: string;
-}
+export type { ExamWithCompany };
 
+const parseCompHidden = (c: any): boolean => {
+  if (c.is_hidden === true || c.isHidden === true) return true;
+  if (typeof c.about_company === 'string' && c.about_company.includes('<!-- prepunite_hidden:true -->')) return true;
+  if (typeof c.description === 'string' && c.description.includes('<!-- prepunite_hidden:true -->')) return true;
+  return false;
+};
 
 export const examService = {
   getExamsByCompany: async (companySlug: string, userEmail?: string): Promise<ExamItem[]> => {
@@ -75,7 +77,7 @@ export const examService = {
     }
   },
 
-  getAllExams: async (): Promise<ExamWithCompany[]> => {
+  getAllExams: async (includeHidden = false): Promise<ExamWithCompany[]> => {
     try {
       const [examsRes, compsRes] = await Promise.all([
         supabase
@@ -85,25 +87,27 @@ export const examService = {
           .order('name', { ascending: true }),
         supabase
           .from('companies')
-          .select('id, name, slug, logo_url, industry')
+          .select('*')
           .eq('is_deleted', false),
       ]);
 
       if (examsRes.error) {
         console.warn('[examService.getAllExams] Supabase notice, falling back to dataStore:', examsRes.error?.message || examsRes.error);
-        return dataStore.getAllExams();
+        const dsExams = dataStore.getAllExams();
+        return includeHidden ? dsExams : dsExams.filter(e => !e.isCompanyHidden);
       }
 
       const companyMapBySlug = new Map(
-        (compsRes.data || []).map(c => [c.slug, c])
+        (compsRes.data || []).map(c => [c.slug, { ...c, isHidden: parseCompHidden(c) }])
       );
       const companyMapById = new Map(
-        (compsRes.data || []).map(c => [c.id, c])
+        (compsRes.data || []).map(c => [c.id, { ...c, isHidden: parseCompHidden(c) }])
       );
 
       if (examsRes.data && examsRes.data.length > 0) {
-        return examsRes.data.map(e => {
+        const allMapped: ExamWithCompany[] = examsRes.data.map(e => {
           const fallbackComp = companyMapBySlug.get(e.company_slug) || companyMapById.get(e.company_id);
+          const isCompanyHidden = fallbackComp ? Boolean(fallbackComp.isHidden) : false;
 
           return {
             id: e.id,
@@ -121,14 +125,19 @@ export const examService = {
             companyName: fallbackComp?.name || e.company_slug.toUpperCase(),
             companyLogoUrl: fallbackComp?.logo_url || undefined,
             companyIndustry: fallbackComp?.industry || 'IT Services & Consulting',
+            isCompanyHidden,
           };
         });
+
+        return includeHidden ? allMapped : allMapped.filter(e => !e.isCompanyHidden);
       }
 
-      return dataStore.getAllExams();
+      const dsExams = dataStore.getAllExams();
+      return includeHidden ? dsExams : dsExams.filter(e => !e.isCompanyHidden);
     } catch (err) {
       console.warn('[examService.getAllExams] Handled error, returning dataStore exams:', err);
-      return dataStore.getAllExams();
+      const dsExams = dataStore.getAllExams();
+      return includeHidden ? dsExams : dsExams.filter(e => !e.isCompanyHidden);
     }
   },
 

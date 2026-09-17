@@ -41,6 +41,7 @@ export interface CompanyItem {
   examsList?: string[]; // Legacy, kept for fallback
   aboutCompany?: string; // Full markdown content for "About Company" tab
   isActive: boolean;
+  isHidden?: boolean;
   createdAt: string;
 }
 
@@ -87,6 +88,7 @@ export interface ExamWithCompany extends ExamItem {
   companyName: string;
   companyLogoUrl?: string;
   companyIndustry?: string;
+  isCompanyHidden?: boolean;
 }
 
 export interface QuestionItem {
@@ -970,11 +972,12 @@ class DataStoreManager {
     return res.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
   }
 
-  getAllExams(): ExamWithCompany[] {
+  getAllExams(includeHidden = false): ExamWithCompany[] {
     const companies = this.getCompanies();
     const result: ExamWithCompany[] = [];
 
     companies.forEach(company => {
+      if (!includeHidden && company.isHidden) return;
       const exams = this.getExams(company.slug);
       exams.forEach(exam => {
         result.push({
@@ -982,6 +985,7 @@ class DataStoreManager {
           companyName: company.name,
           companyLogoUrl: company.logoUrl,
           companyIndustry: company.industry || 'IT Services & Consulting',
+          isCompanyHidden: company.isHidden,
         });
       });
     });

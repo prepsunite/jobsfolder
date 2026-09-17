@@ -31,6 +31,8 @@ import {
   Bookmark,
   BookmarkCheck,
   Share2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 type TabType = 'aboutCompany' | 'aboutExam' | 'oldPapers';
@@ -51,7 +53,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const isDirectOldPapersUrl = !!isOldPapersRoute || (typeof window !== 'undefined' && window.location.pathname.endsWith('/oldpapers'));
 
   // Company Data from external API (dummy)
-  const { data: company } = useQuery({
+  const { data: company, isLoading: isCompanyLoading } = useQuery({
     queryKey: ['company', slug],
     queryFn: () => companyService.getCompanyBySlug(slug),
     enabled: !!slug,
@@ -81,6 +83,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         logoUrl: company.logoUrl,
         aboutCompany: company.aboutCompany || `### About ${company.name}\n\nAdd details here.`,
         isActive: company.isActive ?? true,
+        isHidden: company.isHidden ?? false,
         createdAt: company.createdAt || new Date().toISOString(),
       }
     : {
@@ -95,6 +98,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         logoUrl: undefined,
         aboutCompany: `### About ${slug.toUpperCase()}\n\nAdd details here.`,
         isActive: true,
+        isHidden: false,
         createdAt: new Date().toISOString(),
       };
 
@@ -357,6 +361,20 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
 
 
+  const handleToggleVisibility = async (newHiddenStatus: boolean) => {
+    const targetId = company?.id || slug;
+    try {
+      await companyService.toggleCompanyVisibility(targetId, newHiddenStatus);
+      queryClient.invalidateQueries({ queryKey: ['company', slug] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
+      forceRefreshData();
+    } catch (err: any) {
+      alert(`Failed to update company visibility: ${err.message || err}`);
+    }
+  };
+
   const handleUpvote = () => {
     if (isUpvoted) {
       setUpvoteCount(upvoteCount - 1);
@@ -367,8 +385,85 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     }
   };
 
+  if (isCompanyLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FD4A32]" />
+      </div>
+    );
+  }
+
+  // Non-admin guard: If company is hidden/draft, students cannot view content or exams
+  if (company?.isHidden && !isAdmin) {
+    return (
+      <div className="space-y-6 animate-fadeIn pb-12 w-full max-w-2xl mx-auto pt-8">
+        <div className="flex items-center justify-between text-xs text-[#747878] dark:text-[#a6adbb]">
+          <Link
+            to="/companies"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Companies
+          </Link>
+        </div>
+
+        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-8 sm:p-12 text-center shadow-xs space-y-5">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <EyeOff className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <span className="inline-block bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[10px] font-display font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+              In Preparation / Draft Mode
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#121417] dark:text-[#FFFFFF] tracking-tight">
+              Company Module Coming Soon
+            </h2>
+            <p className="text-sm text-[#747878] dark:text-[#a6adbb] max-w-md mx-auto leading-relaxed">
+              The recruitment tracks, syllabus, and old papers for <strong className="text-[#121417] dark:text-white">{company.name}</strong> are currently being curated by our editorial team. Please check back shortly!
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              to="/companies"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03e28] text-white font-display font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Explore Available Companies
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fadeIn pb-12 w-full">
+      {/* Draft / Hidden Warning Banner for Admin */}
+      {company?.isHidden && isAdmin && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-800 dark:text-amber-300">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-amber-500/20 shrink-0">
+              <EyeOff className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <span className="text-xs font-bold font-display uppercase tracking-wide flex items-center gap-1.5">
+                Draft / Hidden Mode Active
+              </span>
+              <p className="text-xs opacity-90">
+                This company and its exam tracks are completely hidden from regular students. You can add questions, syllabus, and papers safely.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => handleToggleVisibility(false)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-display font-bold text-xs uppercase tracking-wider shrink-0 shadow-xs transition-colors cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Publish & Make Live</span>
+          </button>
+        </div>
+      )}
+
       {/* Breadcrumb Navigation */}
       <div className="flex items-center justify-between text-xs text-[#747878] dark:text-[#a6adbb]">
         <div className="flex items-center gap-2 flex-wrap">
@@ -410,6 +505,11 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
                   {companyName}
                 </h1>
+                {company?.isHidden && (
+                  <span className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1">
+                    <EyeOff className="w-2.5 h-2.5" /> Draft / Hidden
+                  </span>
+                )}
                 <span className="bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                   {currentCompanyStoreItem.industry || 'IT Services'}
                 </span>
@@ -425,13 +525,37 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <button
-                onClick={handleOpenEditHeaderModal}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase tracking-wider shadow-xs transition-all shrink-0"
-              >
-                <Edit3 className="w-3 h-3 text-purple-300" />
-                <span>Edit Header</span>
-              </button>
+              <>
+                <button
+                  onClick={() => handleToggleVisibility(!company?.isHidden)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-display font-bold text-xs uppercase tracking-wider shadow-xs transition-all shrink-0 cursor-pointer ${
+                    company?.isHidden
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                      : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700'
+                  }`}
+                  title={company?.isHidden ? "Click to make visible to students" : "Click to hide from students"}
+                >
+                  {company?.isHidden ? (
+                    <>
+                      <Eye className="w-3 h-3" />
+                      <span>Publish</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-3 h-3" />
+                      <span>Hide</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleOpenEditHeaderModal}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase tracking-wider shadow-xs transition-all shrink-0 cursor-pointer"
+                >
+                  <Edit3 className="w-3 h-3 text-purple-300" />
+                  <span>Edit Header</span>
+                </button>
+              </>
             )}
 
             <button

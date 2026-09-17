@@ -1,23 +1,44 @@
 import { Link } from 'react-router';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, ArrowRight, Edit3, Trash2 } from 'lucide-react';
+import { Building2, ArrowRight, Edit3, Trash2, Eye, EyeOff } from 'lucide-react';
 
 interface CompanyCardProps {
   company: Company & { examsList?: string[] };
   onEdit?: (company: Company) => void;
   onDelete?: (companyId: string) => void;
+  onToggleVisibility?: (company: Company) => void;
 }
 
-export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
+export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibility }: CompanyCardProps) {
   const { role } = useAuth();
   const isAdmin = role === 'ADMIN';
 
   return (
-    <div className="group relative bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between">
+    <div className={`group relative bg-white dark:bg-[#141414] border rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between ${
+      company.isHidden
+        ? 'border-dashed border-amber-400 dark:border-amber-600/60 bg-amber-500/[0.02] dark:bg-amber-950/[0.05]'
+        : 'border-[#E9ECEF] dark:border-[#242424]'
+    }`}>
       {/* Admin Inline Action Badges */}
       {isAdmin && (
         <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 bg-white/95 dark:bg-[#1C1C1C]/95 p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] shadow-xs">
+          {onToggleVisibility && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleVisibility(company);
+              }}
+              className={`p-1 rounded transition-colors ${
+                company.isHidden
+                  ? 'text-amber-600 dark:text-amber-400 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30'
+                  : 'text-[#747878] dark:text-[#a6adbb] hover:text-[#121417] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+              title={company.isHidden ? "Unhide Company (Make Live for Students)" : "Hide Company from Students"}
+            >
+              {company.isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={(e) => {
@@ -49,6 +70,12 @@ export default function CompanyCard({ company, onEdit, onDelete }: CompanyCardPr
 
       {/* Edge-to-Edge Company Logo Hero Container */}
       <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 flex items-center justify-center h-36 overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20">
+        {company.isHidden && (
+          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
+            <EyeOff className="w-2.5 h-2.5" />
+            <span>Draft / Hidden</span>
+          </div>
+        )}
         {company.logoUrl ? (
           <img
             src={company.logoUrl}

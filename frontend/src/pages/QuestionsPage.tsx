@@ -34,9 +34,9 @@ export default function QuestionsPage() {
 
   // Live Exams Query — always from Supabase
   const { data: exams = [], isLoading: isLoadingExams } = useQuery({
-    queryKey: ['live-all-exams', searchTerm],
+    queryKey: ['live-all-exams', searchTerm, isAdmin],
     queryFn: async () => {
-      const all = await examService.getAllExams();
+      const all = await examService.getAllExams(isAdmin);
       if (!searchTerm) return all;
       return all.filter(
         (e) =>

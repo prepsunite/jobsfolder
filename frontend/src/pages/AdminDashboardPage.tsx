@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
   // --- React Query: All Exams Global from Supabase ---
   const { data: allExamsGlobal = [] } = useQuery({
     queryKey: ['live-all-exams'],
-    queryFn: () => examService.getAllExams(),
+    queryFn: () => examService.getAllExams(true),
     enabled: isAdmin,
     staleTime: 0,
   });

@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import type { ExamWithCompany } from '@/services/dataStore';
 import { dataStore } from '@/services/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck, EyeOff } from 'lucide-react';
 
 interface ExamCardProps {
   exam: ExamWithCompany;
@@ -34,7 +34,11 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
   };
 
   return (
-    <div className="group relative bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between">
+    <div className={`group relative bg-white dark:bg-[#141414] border rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between ${
+      exam.isCompanyHidden
+        ? 'border-dashed border-amber-400 dark:border-amber-600/60 bg-amber-500/[0.02] dark:bg-amber-950/[0.05]'
+        : 'border-[#E9ECEF] dark:border-[#242424]'
+    }`}>
       {/* Top Right Action Overlay Bar */}
       <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 pointer-events-none">
         <button
@@ -87,6 +91,12 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
 
       {/* Inner Hero Card Container */}
       <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 p-3 flex flex-col items-center justify-center min-h-[160px] overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 space-y-2">
+        {exam.isCompanyHidden && (
+          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
+            <EyeOff className="w-2.5 h-2.5" />
+            <span>Company Hidden</span>
+          </div>
+        )}
         {/* Exam Title */}
         <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center z-10">
           {exam.name}

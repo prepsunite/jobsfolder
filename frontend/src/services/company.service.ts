@@ -2,8 +2,41 @@ import { supabase } from '@/lib/supabase';
 import type { Company, PageResponse } from '@/types/company';
 import { auditService } from '@/services/audit.service';
 
+const HIDDEN_MARKER = '<!-- prepunite_hidden:true -->';
+
+const parseIsHidden = (c: any): boolean => {
+  if (c.is_hidden === true || c.isHidden === true) return true;
+  if (typeof c.about_company === 'string' && c.about_company.includes(HIDDEN_MARKER)) return true;
+  if (typeof c.description === 'string' && c.description.includes(HIDDEN_MARKER)) return true;
+  return false;
+};
+
+const cleanAboutCompany = (text?: string | null): string => {
+  if (!text) return '';
+  return text.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+};
+
+const mapCompany = (c: any): Company => {
+  const isHidden = parseIsHidden(c);
+  return {
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    industry: c.industry || 'IT Services & Consulting',
+    companySize: c.company_size || c.companySize || '10,000+ employees',
+    headquarters: c.headquarters || 'Pan-India',
+    website: c.website_url || c.website,
+    logoUrl: c.logo_url || c.logoUrl,
+    description: c.description || '',
+    aboutCompany: cleanAboutCompany(c.about_company || c.aboutCompany),
+    isActive: !c.is_deleted,
+    isHidden,
+    createdAt: c.created_at || c.createdAt,
+  };
+};
+
 export const companyService = {
-  getCompanies: async (search?: string, page = 0, size = 20): Promise<PageResponse<Company>> => {
+  getCompanies: async (search?: string, page = 0, size = 50): Promise<PageResponse<Company>> => {
     let query = supabase
       .from('companies')
       .select('*', { count: 'exact' })
@@ -25,20 +58,7 @@ export const companyService = {
       throw error;
     }
 
-    const mapped: Company[] = (data || []).map(c => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      industry: c.industry || 'IT Services & Consulting',
-      companySize: c.company_size || '10,000+ employees',
-      headquarters: c.headquarters || 'Pan-India',
-      website: c.website_url,
-      logoUrl: c.logo_url,
-      description: c.description || '',
-      aboutCompany: c.about_company,
-      isActive: !c.is_deleted,
-      createdAt: c.created_at,
-    }));
+    const mapped: Company[] = (data || []).map(mapCompany);
 
     const total = count ?? mapped.length;
     return {
@@ -68,24 +88,72 @@ export const companyService = {
       throw new Error(`Company with slug '${slug}' not found.`);
     }
 
-    return {
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      industry: data.industry || 'IT Services & Consulting',
-      companySize: data.company_size || '10,000+ employees',
-      headquarters: data.headquarters || 'Pan-India',
-      website: data.website_url,
-      logoUrl: data.logo_url,
-      description: data.description || '',
-      aboutCompany: data.about_company,
-      isActive: !data.is_deleted,
-      createdAt: data.created_at,
-    };
+    return mapCompany(data);
+  },
+
+  toggleCompanyVisibility: async (idOrSlug: string, isHidden: boolean): Promise<boolean> => {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+
+    // 1. First attempt to update native is_hidden column
+    try {
+      let colQuery = supabase.from('companies').update({ is_hidden: isHidden });
+      colQuery = isUuid ? colQuery.eq('id', idOrSlug) : colQuery.eq('slug', idOrSlug);
+      const { error: colErr } = await colQuery;
+
+      if (!colErr) {
+        auditService.logAction({
+          action: isHidden ? 'HIDE_COMPANY' : 'UNHIDE_COMPANY',
+          targetEntity: 'companies',
+          targetId: idOrSlug,
+          afterData: { is_hidden: isHidden },
+        });
+        return true;
+      }
+    } catch (e) {
+      console.warn('[companyService.toggleCompanyVisibility] Native column note:', e);
+    }
+
+    // 2. Resilient fallback: Embed/remove hidden metadata tag in about_company
+    try {
+      let fetchQuery = supabase.from('companies').select('id, slug, about_company');
+      fetchQuery = isUuid ? fetchQuery.eq('id', idOrSlug) : fetchQuery.eq('slug', idOrSlug);
+      const { data: comp } = await fetchQuery.maybeSingle();
+
+      if (comp) {
+        let currentAbout = comp.about_company || '';
+        currentAbout = currentAbout.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+        if (isHidden) {
+          currentAbout = currentAbout ? `${currentAbout}\n\n${HIDDEN_MARKER}` : HIDDEN_MARKER;
+        }
+
+        let updQuery = supabase.from('companies').update({ about_company: currentAbout });
+        updQuery = isUuid ? updQuery.eq('id', idOrSlug) : updQuery.eq('slug', idOrSlug);
+        const { error: updErr } = await updQuery;
+
+        if (!updErr) {
+          auditService.logAction({
+            action: isHidden ? 'HIDE_COMPANY_FALLBACK' : 'UNHIDE_COMPANY_FALLBACK',
+            targetEntity: 'companies',
+            targetId: comp.id || idOrSlug,
+            afterData: { is_hidden: isHidden, slug: comp.slug },
+          });
+          return true;
+        }
+      }
+    } catch (fallbackErr) {
+      console.error('[companyService.toggleCompanyVisibility] Fallback error:', fallbackErr);
+    }
+
+    return false;
   },
 
   createCompany: async (companyData: Partial<Company>): Promise<Company> => {
     const slug = companyData.slug || companyData.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'new-company';
+    let aboutComp = companyData.aboutCompany || null;
+    if (companyData.isHidden) {
+      aboutComp = aboutComp ? `${aboutComp}\n\n${HIDDEN_MARKER}` : HIDDEN_MARKER;
+    }
+
     const payload: Record<string, any> = {
       name: companyData.name || 'New Company',
       slug,
@@ -95,7 +163,7 @@ export const companyService = {
       description: companyData.description || '',
       website_url: companyData.website || null,
       logo_url: companyData.logoUrl || null,
-      about_company: companyData.aboutCompany || null,
+      about_company: aboutComp,
       is_deleted: false,
     };
 
@@ -115,20 +183,7 @@ export const companyService = {
       throw new Error(`[${error.code || 'ERR'}] ${error.message || 'Failed to save company in Supabase'}`);
     }
 
-    const created: Company = {
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      industry: data.industry,
-      companySize: data.company_size,
-      headquarters: data.headquarters,
-      website: data.website_url,
-      logoUrl: data.logo_url,
-      description: data.description,
-      aboutCompany: data.about_company,
-      isActive: true,
-      createdAt: data.created_at,
-    };
+    const created = mapCompany(data);
 
     auditService.logAction({
       action: 'UPSERT_COMPANY',
@@ -180,20 +235,7 @@ export const companyService = {
 
     const first = data[0];
 
-    const updated: Company = {
-      id: first.id,
-      name: first.name,
-      slug: first.slug,
-      industry: first.industry,
-      companySize: first.company_size,
-      headquarters: first.headquarters,
-      website: first.website_url,
-      logoUrl: first.logo_url,
-      description: first.description,
-      aboutCompany: first.about_company,
-      isActive: !first.is_deleted,
-      createdAt: first.created_at,
-    };
+    const updated: Company = mapCompany(first);
 
     auditService.logAction({
       action: 'UPDATE_COMPANY',
