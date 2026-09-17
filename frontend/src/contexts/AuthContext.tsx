@@ -115,42 +115,32 @@ const getInitialUser = (): UserProfile | null => {
     const avatarUrl = localStorage.getItem('prepunite_user_avatar') || undefined;
 
     if (email && email !== 'guest@prepunite.com') {
-      const isSuper = isSuperAdminEmail(email);
-
-      // 1. 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN
-      if (isSuper) {
-        role = 'ADMIN';
-        localStorage.setItem('prepunite_role', 'ADMIN');
-        localStorage.removeItem('prepunite_college_id');
-        localStorage.removeItem('prepunite_college_name');
-      } else {
-        // 🔒 SANITIZE: Any non-super-admin cached as ADMIN is immediately demoted to USER!
-        if (role === 'ADMIN') {
-          role = 'USER';
-          localStorage.setItem('prepunite_role', 'USER');
-        }
-
-        // 2. TPO Coordinator Check: Preserve TPO_ADMIN if verified or already cached
-        const tpoAuth = tpoService.findTpoAuthByEmail(email);
-        if (tpoAuth || role === 'TPO_ADMIN') {
-          const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
-          const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
-          role = 'TPO_ADMIN';
-          localStorage.setItem('prepunite_role', 'TPO_ADMIN');
-          return {
-            id: email,
-            name: name || formatDisplayNameFromEmail(email, ''),
-            email,
-            role: 'TPO_ADMIN',
-            isTpoAdmin: true,
-            collegeId,
-            collegeName,
-            avatarUrl,
-          };
-        }
+      // 🔒 SANITIZE: Never trust ADMIN from localStorage on initial load to prevent spoofing.
+      // It will be upgraded to ADMIN by syncProfileWithSupabase if verified by database.
+      if (role === 'ADMIN') {
+        role = 'USER';
       }
 
-      const studentInfo = !isSuper ? tpoService.getStudentEntitlementInfo(email) : null;
+      // 2. TPO Coordinator Check: Preserve TPO_ADMIN if verified or already cached
+      const tpoAuth = tpoService.findTpoAuthByEmail(email);
+      if (tpoAuth || role === 'TPO_ADMIN') {
+        const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
+        const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
+        role = 'TPO_ADMIN';
+        localStorage.setItem('prepunite_role', 'TPO_ADMIN');
+        return {
+          id: email,
+          name: name || formatDisplayNameFromEmail(email, ''),
+          email,
+          role: 'TPO_ADMIN',
+          isTpoAdmin: true,
+          collegeId,
+          collegeName,
+          avatarUrl,
+        };
+      }
+
+      const studentInfo = tpoService.getStudentEntitlementInfo(email);
 
       return {
         id: email,
@@ -158,8 +148,8 @@ const getInitialUser = (): UserProfile | null => {
         email,
         role,
         avatarUrl,
-        collegeId: !isSuper ? (studentInfo?.collegeId || localStorage.getItem('prepunite_college_id') || undefined) : undefined,
-        collegeName: !isSuper ? (studentInfo?.collegeName || localStorage.getItem('prepunite_college_name') || undefined) : undefined,
+        collegeId: studentInfo?.collegeId || localStorage.getItem('prepunite_college_id') || undefined,
+        collegeName: studentInfo?.collegeName || localStorage.getItem('prepunite_college_name') || undefined,
       };
     }
   } catch (e) {
@@ -173,9 +163,7 @@ const getInitialRole = (): UserRole => {
     const email = localStorage.getItem('prepunite_user_email');
     const cachedRole = localStorage.getItem('prepunite_role') as UserRole;
     if (email) {
-      if (isSuperAdminEmail(email)) {
-        return 'ADMIN';
-      }
+      // 🔒 SANITIZE: Never trust ADMIN from localStorage to prevent spoofing
       if (tpoService.findTpoAuthByEmail(email) || cachedRole === 'TPO_ADMIN') {
         return 'TPO_ADMIN';
       }
@@ -207,8 +195,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       expiresAt?: string;
     }
   ) => {
-    // 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN. No exceptions!
-    const isSuperAdmin = isSuperAdminEmail(email);
+    // 🛡️ Admin Protection is enforced via Database 'role' column
+    const isSuperAdmin = assignedRole === 'ADMIN';
     // 🛡️ TPO Protection: STRICTLY require verified TPO authorization, NEVER self-declared or ADMIN
     const verifiedTpoAuth = !isSuperAdmin ? tpoService.findTpoAuthByEmail(email) : null;
     const isTpo = !isSuperAdmin && (Boolean(verifiedTpoAuth) || (assignedRole === 'TPO_ADMIN' && Boolean(collegeData?.isTpoAdmin)));
