@@ -42,7 +42,7 @@ interface TreeNodeItemProps {
   onImportIntoNode?: (e: React.MouseEvent, nodeId: string) => void;
 }
 
-export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
+const TreeNodeItemComponent: React.FC<TreeNodeItemProps> = ({
   node,
   level = 0,
   selectedNodeId,
@@ -78,7 +78,15 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   return (
     <div className="select-none">
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => onSelectNode(node.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelectNode(node.id);
+          }
+        }}
         style={{ paddingLeft: `${level * 14 + 8}px` }}
         className={`group flex items-center gap-1 py-1.5 px-2 rounded-md text-xs font-semibold cursor-pointer transition-all ${
           isSelected
@@ -271,3 +279,5 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
     </div>
   );
 };
+
+export const TreeNodeItem = React.memo(TreeNodeItemComponent);

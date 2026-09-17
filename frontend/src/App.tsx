@@ -4,13 +4,13 @@ import { router } from '@/lib/router'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ConsentProvider } from '@/contexts/ConsentContext'
-import ConsentBanner from '@/components/ConsentBanner'
 import { broadcastQueryClient } from '@tanstack/query-broadcast-client-experimental'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30 * 1000, // 30s default cache to prevent continuous refetches
+      gcTime: 10 * 60 * 1000, // 10 minutes cache garbage collection to avoid memory bloat
       retry: 1,
       refetchOnWindowFocus: false, // Avoid sudden network/CPU spikes on alt-tab
     },
@@ -30,8 +30,6 @@ export default function App() {
       <ThemeProvider>
         <ConsentProvider>
           <AuthProvider>
-            {/* DPDP Act 2023 — Rule 3: Notice before data collection */}
-            <ConsentBanner />
             <RouterProvider router={router} />
           </AuthProvider>
         </ConsentProvider>

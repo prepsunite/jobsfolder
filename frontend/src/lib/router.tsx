@@ -238,6 +238,10 @@ export const router = createBrowserRouter([
         path: 'settings',
         element: withSuspense(TpoSettingsPage),
       },
+      {
+        path: '*',
+        element: <NotFoundPage />,
+      },
     ],
   },
   // 3. Isolated Distraction-Free Standardized Examination Engine (Zero Dashboard/Menus/Chrome)

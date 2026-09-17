@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack, CampusDsaStage, CampusDsaProblem } from '@/types/technical';
-import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, PROGRAMMING_150_EXPANDED_SEED, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
-import { CAMPUS_DSA_ROADMAP_STAGES, ALL_CAMPUS_DSA_PROBLEMS } from './campusDsaRoadmapData';
+import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
+import { CAMPUS_DSA_ROADMAP_STAGES } from './campusDsaRoadmapData';
 import { computeSha256Hex } from '@/utils/questionParser';
 
 export interface TechnicalImportReport {
@@ -537,7 +537,7 @@ export const technicalService = {
       console.error('Failed to query Campus DSA problems from Supabase:', e);
     }
 
-    return ALL_CAMPUS_DSA_PROBLEMS.map(p => ({
+    return CAMPUS_DSA_ROADMAP_STAGES.flatMap(s => s.problems).map(p => ({
       id: p.id,
       title: p.title,
       slug: p.slug,
@@ -1126,7 +1126,7 @@ export const technicalService = {
 
   getCampusDsaStats() {
     const solvedSet = this.getSolvedProblemIds();
-    const allProblems = ALL_CAMPUS_DSA_PROBLEMS;
+    const allProblems = CAMPUS_DSA_ROADMAP_STAGES.flatMap(s => s.problems);
     const total = allProblems.length;
     let solved = 0;
     const byDifficulty: Record<string, { total: number; solved: number }> = {

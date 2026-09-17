@@ -1,7 +1,6 @@
 // Global synchronized state manager for Admin CRUD operations visible to all users live!
 import { resolveTopicSlug } from './topicMap';
 import { supabase } from '@/lib/supabase';
-import stringify from 'fast-json-stable-stringify';
 import {
   validateQuestionItem,
   generateQuestionFingerprint,
@@ -670,7 +669,7 @@ class DataStoreManager {
       const ca = String(q.correctAnswer || 'A').trim().toUpperCase();
       const correctAnswerInt = isNaN(Number(ca)) ? (letterToIdx[ca] ?? 0) : Number(ca);
 
-      await supabase.from('topic_questions').upsert({
+      const { error } = await supabase.from('topic_questions').upsert({
         id: q.id,
         topic_id: q.topicId,
         company_slug: (q as any).companySlug || (q as any).company || 'general',
@@ -684,14 +683,18 @@ class DataStoreManager {
         is_hidden: q.isHidden,
         question_number: q.questionNumber,
       });
+
+      if (error) {
+        console.error('[dataStore] Supabase topic question sync error:', error);
+      }
     } catch (err) {
-      console.warn('[dataStore] Supabase topic question sync error:', err);
+      console.warn('[dataStore] Supabase topic question sync exception:', err);
     }
   }
 
   async syncExperienceToSupabase(exp: ExperienceItem): Promise<void> {
     try {
-      await supabase.from('experiences').upsert({
+      const { error } = await supabase.from('experiences').upsert({
         id: exp.id,
         company_slug: (exp.companyName || 'tcs').toLowerCase(),
         student_name: exp.studentName,
@@ -700,17 +703,24 @@ class DataStoreManager {
         rounds: exp.rounds,
         status: exp.status || 'PENDING',
       });
+
+      if (error) {
+        console.error('[dataStore] Supabase experience sync error:', error);
+      }
     } catch (err) {
-      console.warn('[dataStore] Supabase experience sync error:', err);
+      console.warn('[dataStore] Supabase experience sync exception:', err);
     }
   }
+
+  private realtimeChannel: any = null;
 
   initRealtimeSync(): void {
     try {
       if (typeof window === 'undefined') return;
+      if (this.realtimeChannel) return;
 
       // Subscribe to Realtime DB updates (Scoped strictly to lightweight metadata)
-      supabase
+      this.realtimeChannel = supabase
         .channel('public_realtime_metadata')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
           this.fetchLiveCompaniesFromSupabase();
@@ -721,6 +731,17 @@ class DataStoreManager {
       this.fetchLiveCompaniesFromSupabase();
     } catch (err) {
       console.warn('[dataStore] Realtime sync init notice:', err);
+    }
+  }
+
+  destroyRealtimeSync(): void {
+    try {
+      if (this.realtimeChannel) {
+        this.realtimeChannel.unsubscribe();
+        this.realtimeChannel = null;
+      }
+    } catch (err) {
+      console.warn('[dataStore] Realtime unsubscribe notice:', err);
     }
   }
 
@@ -1181,7 +1202,11 @@ class DataStoreManager {
   deleteExperience(id: string): void {
     const all = this.getExperiences().filter(e => e.id !== id);
     this.setStorage('prepunite_experiences', all);
-    supabase.from('experiences').delete().eq('id', id).then();
+    supabase.from('experiences').delete().eq('id', id).then(({ error }) => {
+      if (error) {
+        console.error('[dataStore] Failed to delete experience from Supabase:', error);
+      }
+    });
   }
 
 

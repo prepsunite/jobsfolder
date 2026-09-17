@@ -23,7 +23,7 @@ export type ProblemCategory =
   | 'NETWORKING'
   | 'DATA_STRUCTURES'
   | 'PSEUDO_CODE'
-  | string;
+  | (string & {});
 
 export type TechnicalTrack = 'PROGRAMMING_150' | 'CAMPUS_DSA' | 'TECHNICAL_MCQS';
 

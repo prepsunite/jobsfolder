@@ -35,7 +35,10 @@ export interface InterviewQuestion {
     language: string;
     code: string;
   };
-  code_snippet?: any;
+  code_snippet?: {
+    language: string;
+    code: string;
+  } | string | null;
   proTip?: string;
   pro_tip?: string;
   companyTags?: string[];

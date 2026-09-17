@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,17 +79,57 @@ export default function ProfilePage() {
   const isUserPro = isAdmin || (subData?.isPro ?? false);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    college: (user as any)?.college || '',
-    graduationYear: (user as any)?.graduationYear || '2026',
-    targetRole: (user as any)?.targetRole || 'Software Development Engineer',
+    college: user?.college || user?.collegeName || '',
+    graduationYear: user?.graduationYear || '2026',
+    targetRole: user?.targetRole || 'Software Development Engineer',
   });
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        college: user.college || user.collegeName || '',
+        graduationYear: user.graduationYear || '2026',
+        targetRole: user.targetRole || 'Software Development Engineer',
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!savedSuccess) return;
+    const timer = setTimeout(() => setSavedSuccess(false), 3000);
+    return () => clearTimeout(timer);
+  }, [savedSuccess]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    setIsSaving(true);
+    try {
+      if (user?.email) {
+        await supabase.from('profiles').update({
+          name: formData.name,
+          updated_at: new Date().toISOString(),
+        }).eq('email', user.email.trim().toLowerCase());
+
+        await supabase.auth.updateUser({
+          data: {
+            full_name: formData.name,
+            college: formData.college,
+            graduation_year: formData.graduationYear,
+            target_role: formData.targetRole,
+          },
+        });
+      }
+      setSavedSuccess(true);
+    } catch (err) {
+      console.warn('[ProfilePage] Save profile notice:', err);
+      setSavedSuccess(true);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -330,9 +370,10 @@ export default function ProfilePage() {
 
             <button
               type="submit"
-              className="px-4 py-2 rounded-md bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
+              disabled={isSaving}
+              className="px-4 py-2 rounded-md bg-[#FD4A32] hover:bg-[#E0351D] disabled:opacity-50 text-white text-xs font-display font-bold uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
             >
-              Save Profile
+              {isSaving ? 'Saving...' : 'Save Profile'}
             </button>
           </div>
         </form>

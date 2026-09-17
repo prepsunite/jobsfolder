@@ -35,6 +35,9 @@ export interface UserProfile {
   isTpoAdmin?: boolean;
   collegeId?: string;
   collegeName?: string;
+  college?: string;
+  graduationYear?: string;
+  targetRole?: string;
   rollNumber?: string;
   department?: string;
   batchYear?: number;
@@ -224,6 +227,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isTpoAdmin: finalRole === 'TPO_ADMIN',
       collegeId: isSuperAdmin ? undefined : collegeData?.collegeId,
       collegeName: isSuperAdmin ? undefined : collegeData?.collegeName,
+      college: isSuperAdmin ? undefined : (collegeData?.collegeName || collegeData?.collegeId),
+      graduationYear: collegeData?.batchYear ? String(collegeData.batchYear) : undefined,
+      targetRole: 'Software Development Engineer',
       rollNumber: isSuperAdmin ? undefined : collegeData?.rollNumber,
       department: isSuperAdmin ? undefined : collegeData?.department,
       batchYear: isSuperAdmin ? undefined : collegeData?.batchYear,
@@ -475,37 +481,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sync Supabase Auth state dynamically (Google OAuth 2.0)
   useEffect(() => {
     let mounted = true;
+    let lastSyncedUserId: string | null = null;
+    let syncPromise: Promise<void> | null = null;
+
+    const handleSessionSync = async (sessionUser: any) => {
+      if (!sessionUser || !mounted) return;
+      if (syncPromise) {
+        await syncPromise;
+        return;
+      }
+      const su = sessionUser;
+      const userMeta = su.user_metadata || {};
+      const appMeta = su.app_metadata || {};
+      const email = su.email || userMeta.email || '';
+      const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
+      const avatarUrl = userMeta.avatar_url || userMeta.picture;
+      const appRole = appMeta.role;
+
+      if (email && lastSyncedUserId !== su.id) {
+        lastSyncedUserId = su.id;
+        syncPromise = (async () => {
+          try {
+            await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
+            if (!mounted) return;
+            dataStore.hydrateBookmarksFromSupabase(userMeta);
+            progressService.fetchAndSyncFromSupabase(email);
+            progressService.migrateGuestProgress(email);
+          } finally {
+            syncPromise = null;
+          }
+        })();
+        await syncPromise;
+      }
+
+      if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('code');
+          url.hash = '';
+          const cleanUrl = url.pathname + (url.search ? url.search : '');
+          window.history.replaceState(null, '', cleanUrl);
+        } catch {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+    };
 
     async function checkInitialSession() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted && session?.user) {
-          const su = session.user;
-          const userMeta = su.user_metadata || {};
-          const appMeta = su.app_metadata || {};
-          const email = su.email || userMeta.email || '';
-          const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
-          const avatarUrl = userMeta.avatar_url || userMeta.picture;
-          const appRole = appMeta.role;
-
-          if (email) {
-            await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
-            dataStore.hydrateBookmarksFromSupabase(userMeta);
-            progressService.fetchAndSyncFromSupabase(email);
-            progressService.migrateGuestProgress(email);
-          }
-
-          if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
-            try {
-              const url = new URL(window.location.href);
-              url.searchParams.delete('code');
-              url.hash = '';
-              const cleanUrl = url.pathname + (url.search ? url.search : '');
-              window.history.replaceState(null, '', cleanUrl);
-            } catch {
-              window.history.replaceState(null, '', window.location.pathname);
-            }
-          }
+          await handleSessionSync(session.user);
         }
       } catch (err) {
         console.warn('[AuthProvider] Supabase session check notice:', err);
@@ -518,34 +544,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen to live Auth State Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       if (session?.user) {
-        const su = session.user;
-        const userMeta = su.user_metadata || {};
-        const appMeta = su.app_metadata || {};
-        const email = su.email || userMeta.email || '';
-        const name = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
-        const avatarUrl = userMeta.avatar_url || userMeta.picture;
-        const appRole = appMeta.role;
-
-        if (email) {
-          await syncProfileWithSupabase(su.id, email, name, avatarUrl, appRole);
-          dataStore.hydrateBookmarksFromSupabase(userMeta);
-          progressService.fetchAndSyncFromSupabase(email);
-          progressService.migrateGuestProgress(email);
-        }
-
-        if (window.location.search.includes('code=') || (window.location.hash && window.location.hash.includes('access_token'))) {
-          try {
-            const url = new URL(window.location.href);
-            url.searchParams.delete('code');
-            url.hash = '';
-            const cleanUrl = url.pathname + (url.search ? url.search : '');
-            window.history.replaceState(null, '', cleanUrl);
-          } catch {
-            window.history.replaceState(null, '', window.location.pathname);
-          }
-        }
+        await handleSessionSync(session.user);
       } else if (event === 'SIGNED_OUT') {
+        lastSyncedUserId = null;
         setUser(GUEST_USER);
         setRole('GUEST');
         localStorage.removeItem('prepunite_role');
@@ -553,7 +556,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('prepunite_user_name');
         localStorage.removeItem('prepunite_user_avatar');
       }
-      setIsLoading(false);
+      if (mounted) setIsLoading(false);
     });
 
     return () => {

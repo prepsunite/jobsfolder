@@ -54,7 +54,7 @@ export const examService = {
       const [examsRes, compsRes] = await Promise.all([
         supabase
           .from('exams')
-          .select('*')
+          .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted')
           .eq('is_deleted', false)
           .order('name', { ascending: true }),
         supabase
@@ -89,7 +89,7 @@ export const examService = {
             content: e.content || '',
             oldPapers: e.old_papers || '',
             price: e.price ? Number(e.price) : 99,
-            paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+            paperTabs: [],
             googleDocEmbedUrl: e.google_doc_embed_url,
             googleDocEditUrl: e.google_doc_edit_url,
             isPublicExam: e.is_public_exam ?? false,
@@ -113,18 +113,21 @@ export const examService = {
     }
   },
 
-  createExam: async (examData: Partial<ExamItem>): Promise<ExamItem> => {
-    const companySlug = examData.companySlug || 'tcs';
-
+  createExam: async (examData: Partial<ExamItem> & { companySlug: string }): Promise<ExamItem> => {
+    const companySlug = examData.companySlug.toLowerCase().trim();
     let companyId: string | null = null;
+
     try {
-      const { data: comp } = await supabase
+      const { data: comp, error: compErr } = await supabase
         .from('companies')
         .select('id')
         .eq('slug', companySlug)
         .maybeSingle();
+      if (compErr) console.warn('[createExam] Failed to fetch company id for slug:', compErr.message);
       if (comp?.id) companyId = comp.id;
-    } catch {}
+    } catch (e) {
+      console.warn('[createExam] Company lookup exception:', e);
+    }
 
     const payload: Record<string, any> = {
       company_slug: companySlug,

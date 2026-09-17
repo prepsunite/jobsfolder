@@ -203,7 +203,7 @@ export const progressService = {
   /**
    * Mark a question as having its answer revealed via the "Show Answer" button
    */
-  markRevealed: (questionId: string, userEmail?: string): void => {
+  markRevealed: async (questionId: string, userEmail?: string): Promise<void> => {
     const localMap = getLocalRecords(userEmail);
     if (localMap[questionId]) {
       localMap[questionId].isRevealed = true;
@@ -213,17 +213,18 @@ export const progressService = {
       saveLocalRecords(localMap, userEmail);
 
       if (userEmail && userEmail !== 'guest@prepunite.com') {
-        (async () => {
-          try {
-            await supabase
-              .from('user_question_progress')
-              .update({ is_revealed: true })
-              .eq('user_email', userEmail.trim().toLowerCase())
-              .eq('question_id', questionId);
-          } catch (e) {
-            console.warn('[progressService] Reveal sync error:', e);
+        try {
+          const { error } = await supabase
+            .from('user_question_progress')
+            .update({ is_revealed: true })
+            .eq('user_email', userEmail.trim().toLowerCase())
+            .eq('question_id', questionId);
+          if (error) {
+            console.warn('[progressService] Reveal sync error:', error.message);
           }
-        })();
+        } catch (e) {
+          console.warn('[progressService] Reveal sync exception:', e);
+        }
       }
     }
   },

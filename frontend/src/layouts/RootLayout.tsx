@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router';
+import { Outlet, Link, useLocation, ScrollRestoration } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
 import FloatingGlassTokens from '@/components/FloatingGlassTokens';
+import ConsentBanner from '@/components/ConsentBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, LayoutDashboard, Building2 } from 'lucide-react';
@@ -52,25 +53,19 @@ export default function RootLayout() {
     };
   }, [queryClient]);
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);
+  const currentPath = location.pathname.replace(/\/+$/, '') || '/';
+  const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
 
   // While checking Supabase session, render the animated orange light logo loading screen
   if (isLoading) {
     return <LoadingScreen fullScreen size="md" />;
   }
 
-  // Standalone Distraction-Free Exam Taking Mode (Zero Website Sidebar, Header, or Menu)
-  if (location.pathname.startsWith('/exam/')) {
-    return (
-      <div className="min-h-screen w-full bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] font-sans selection:bg-[#FD4A32] selection:text-white">
-        <Outlet />
-      </div>
-    );
-  }
-
   if (isPublicRoute) {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
+        <ScrollRestoration />
+        <ConsentBanner />
 
         {/* ── PREMIUM PUBLIC NAVBAR ── */}
         <header className="pub-nav">
@@ -226,6 +221,8 @@ export default function RootLayout() {
   // INTERNAL APP WORKSPACE LAYOUT (WITH RESPONSIVE SIDEBAR)
   return (
     <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col md:flex-row font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
+      <ScrollRestoration />
+      <ConsentBanner />
       {/* Mobile Workspace Top Header Bar (< md) */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] sticky top-0 z-30">
         <button
