@@ -709,24 +709,16 @@ class DataStoreManager {
     try {
       if (typeof window === 'undefined') return;
 
-      // Subscribe to Realtime DB updates (Only non-paywalled public tables)
+      // Subscribe to Realtime DB updates (Scoped strictly to lightweight metadata)
       supabase
-        .channel('public_realtime_data')
+        .channel('public_realtime_metadata')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
           this.fetchLiveCompaniesFromSupabase();
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'topic_questions' }, () => {
-          this.fetchLiveTopicQuestionsFromSupabase();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'experiences' }, () => {
-          this.fetchLiveExperiencesFromSupabase();
-        })
         .subscribe();
 
-      // Initial Fetch for offline public entities
+      // Initial Fetch for offline fallback
       this.fetchLiveCompaniesFromSupabase();
-      this.fetchLiveTopicQuestionsFromSupabase();
-      this.fetchLiveExperiencesFromSupabase();
     } catch (err) {
       console.warn('[dataStore] Realtime sync init notice:', err);
     }
@@ -772,76 +764,13 @@ class DataStoreManager {
   }
 
   async fetchLiveTopicQuestionsFromSupabase(): Promise<void> {
-    try {
-      const { data } = await supabase
-        .from('topic_questions')
-        .select('*')
-        .order('question_number', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: true })
-        .limit(100);
-      if (data && data.length > 0) {
-        const mapped: TopicQuestionItem[] = data.map(q => {
-          const rawCorrect = q.correct_answer;
-          const resolvedLetter = typeof rawCorrect === 'number'
-            ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
-            : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
-                ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
-                : (String(rawCorrect || 'A').toUpperCase()));
-
-          return {
-            id: q.id,
-            topicId: q.topic_id,
-            statement: q.statement,
-            options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-            correctAnswer: resolvedLetter,
-            explanation: q.explanation,
-            structuredExplanation: typeof q.structured_explanation === 'string' ? JSON.parse(q.structured_explanation) : q.structured_explanation,
-            difficulty: q.difficulty || 'MEDIUM',
-            difficultyLevel: q.difficulty_level || 2,
-            isHidden: q.is_hidden || false,
-            questionNumber: q.question_number,
-            createdAt: q.created_at,
-          };
-        });
-        const existing = this.getStorage<TopicQuestionItem[]>('prepunite_topic_questions', INITIAL_TOPIC_QUESTIONS);
-        const idSet = new Set(mapped.map(m => m.id));
-        const merged = [...mapped];
-        existing.forEach(ex => {
-          if (!idSet.has(ex.id)) {
-            merged.push(ex);
-            idSet.add(ex.id);
-          }
-        });
-        merged.sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0) || (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
-        this.setStorage('prepunite_topic_questions', merged);
-      }
-    } catch {}
+    // Intentionally offloaded: Topic questions are queried on-demand per topic with TanStack Query
+    // in TopicQuestionsPage to prevent overloading browser localStorage with thousands of items.
   }
 
   async fetchLiveExperiencesFromSupabase(): Promise<void> {
-    try {
-      const { data } = await supabase.from('experiences').select('*');
-      if (data && data.length > 0) {
-        const mapped: ExperienceItem[] = data.map(e => ({
-          id: e.id,
-          companyName: e.company_slug.toUpperCase(),
-          companySlug: e.company_slug,
-          role: e.role_title,
-          roleTitle: e.role_title,
-          studentName: e.student_name,
-          college: 'Engineering College',
-          year: 2026,
-          difficulty: 'MEDIUM',
-          verdict: e.result as any,
-          result: e.result,
-          rounds: typeof e.rounds === 'string' ? JSON.parse(e.rounds) : e.rounds,
-          overallExperience: e.overall_experience,
-          tips: e.tips,
-          status: e.status || 'PENDING',
-        }));
-        this.setStorage('prepunite_experiences', mapped);
-      }
-    } catch {}
+    // Intentionally offloaded: Experiences are queried on-demand with pagination in ExperiencesPage
+    // to prevent overloading browser localStorage.
   }
 
   // --- COMPANIES ---
