@@ -12,7 +12,6 @@
   "dependencies": {
     "@hookform/resolvers": "^5.4.2",
     "@supabase/supabase-js": "^2.111.0",
-    "@tailwindcss/vite": "^4.3.3",
     "@tanstack/query-broadcast-client-experimental": "^5.102.8",
     "@tanstack/react-query": "^5.102.8",
     "@tiptap/extension-character-count": "^3.29.2",
@@ -36,11 +35,6 @@
     "@tiptap/pm": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
-    "@types/node": "^24.13.2",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
-    "axios": "^1.18.1",
     "broadcast-channel": "^7.4.0",
     "clsx": "^2.1.1",
     "fast-json-stable-stringify": "^2.1.0",
@@ -55,14 +49,19 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.3.3",
-    "typescript": "~6.0.2",
-    "vite": "^8.1.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/fast-json-stable-stringify": "^2.0.0",
-    "oxlint": "^1.71.0"
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "oxlint": "^1.71.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
   }
 }

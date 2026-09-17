@@ -67,7 +67,10 @@ export class PaperService {
           is_deleted: false,
           updated_at: new Date().toISOString(),
         }));
-        await supabase.from('paper_tab_nodes').upsert(rows, { onConflict: 'id' });
+        const { error: tabErr } = await supabase.from('paper_tab_nodes').upsert(rows, { onConflict: 'id' });
+        if (tabErr) {
+          console.warn('[PaperService.savePaperTabNodes] paper_tab_nodes sync warning:', tabErr.message);
+        }
       }
     } catch (syncErr) {
       console.warn('[PaperService.savePaperTabNodes] paper_tab_nodes sync notice:', syncErr);

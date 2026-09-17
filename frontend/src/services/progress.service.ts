@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { GUEST_EMAIL } from '@/contexts/AuthContext';
 import stringify from 'fast-json-stable-stringify';
 
 export interface QuestionProgressRecord {
@@ -172,7 +173,7 @@ export const progressService = {
     }
 
     // Sync with Supabase asynchronously for logged-in users
-    if (userEmail && userEmail !== 'guest@prepunite.com') {
+    if (userEmail && userEmail !== GUEST_EMAIL) {
       try {
         await supabase.from('user_question_progress').upsert(
           {
@@ -212,7 +213,7 @@ export const progressService = {
       }
       saveLocalRecords(localMap, userEmail);
 
-      if (userEmail && userEmail !== 'guest@prepunite.com') {
+      if (userEmail && userEmail !== GUEST_EMAIL) {
         try {
           const { error } = await supabase
             .from('user_question_progress')
@@ -363,7 +364,7 @@ export const progressService = {
    * Fetch all records from Supabase database, sync to localStorage, and return full records map
    */
   fetchAndSyncFromSupabase: async (userEmail?: string): Promise<Record<string, QuestionProgressRecord>> => {
-    if (!userEmail || userEmail === 'guest@prepunite.com') {
+    if (!userEmail || userEmail === GUEST_EMAIL) {
       return getLocalRecords(userEmail);
     }
 
@@ -442,10 +443,10 @@ export const progressService = {
    * Automatically migrate any practice questions solved as guest to the user's permanent Supabase account
    */
   migrateGuestProgress: async (userEmail: string): Promise<void> => {
-    if (!userEmail || userEmail === 'guest@prepunite.com') return;
+    if (!userEmail || userEmail === GUEST_EMAIL) return;
 
     try {
-      const guestRecords = getLocalRecords('guest@prepunite.com');
+      const guestRecords = getLocalRecords(GUEST_EMAIL);
       const guestKeys = Object.keys(guestRecords);
       if (guestKeys.length === 0) return;
 
@@ -482,7 +483,7 @@ export const progressService = {
       }
 
       saveLocalRecords(userRecords, normalized);
-      localStorage.removeItem(getStorageKey('guest@prepunite.com'));
+      localStorage.removeItem(getStorageKey(GUEST_EMAIL));
       localStorage.removeItem(getStorageKey('guest'));
 
       if (typeof window !== 'undefined') {

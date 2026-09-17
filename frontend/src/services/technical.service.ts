@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { GUEST_EMAIL } from '@/contexts/AuthContext';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack, CampusDsaStage, CampusDsaProblem } from '@/types/technical';
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
 import { CAMPUS_DSA_ROADMAP_STAGES } from './campusDsaRoadmapData';
@@ -120,7 +121,7 @@ export const technicalService = {
       console.error('Failed to save MCQ progress to localStorage:', e);
     }
 
-    if (userEmail && userEmail !== 'guest@prepunite.com') {
+    if (userEmail && userEmail !== GUEST_EMAIL) {
       supabase
         .from('user_mcq_progress')
         .upsert({
@@ -162,7 +163,7 @@ export const technicalService = {
       localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
     } catch {}
 
-    if (userEmail && userEmail !== 'guest@prepunite.com') {
+    if (userEmail && userEmail !== GUEST_EMAIL) {
       if (isNowSolved) {
         supabase
           .from('user_technical_progress')
@@ -193,7 +194,7 @@ export const technicalService = {
   },
 
   async fetchAndSyncFromSupabase(userEmail?: string): Promise<void> {
-    if (!userEmail || userEmail === 'guest@prepunite.com' || typeof window === 'undefined') return;
+    if (!userEmail || userEmail === GUEST_EMAIL || typeof window === 'undefined') return;
 
     try {
       // Sync Solved Problems
@@ -689,25 +690,51 @@ export const technicalService = {
       return report;
     }
 
-    // 1. Fetch current problems from Supabase for duplicate detection
-    const existingProblems = track === 'CAMPUS_DSA'
-      ? await this.getCampusDsaProblems()
-      : await this.getProgramming150Problems();
+    // 1. Fetch current problems from Supabase for duplicate detection (lightweight projection)
+    let existingTitles = new Set<string>();
+    let existingFingerprints = new Set<string>();
+    let existingLcNumbers = new Set<number>();
+    let maxSortOrder = 0;
 
-    const existingTitles = new Set(existingProblems.map(p => p.title.trim().toLowerCase()));
-    const existingFingerprints = new Set(
-      existingProblems.map(p => computeSha256Hex(`${p.title.trim()}:${p.description?.trim() || ''}`))
-    );
-    const existingLcNumbers = new Set(
-      existingProblems
-        .map(p => p.leetcodeNumber || (p.solutions as any)?.leetcodeNumber)
-        .filter((n): n is number => typeof n === 'number' && n > 0)
-    );
+    const { data: existingRows, error: fetchErr } = await supabase
+      .from('programming_problems')
+      .select('title, description, leetcode_number, sort_order')
+      .eq('track', track)
+      .eq('is_deleted', false);
+
+    if (!fetchErr && existingRows) {
+      existingRows.forEach((p: any) => {
+        if (p.title) existingTitles.add(p.title.trim().toLowerCase());
+        const desc = p.description || '';
+        if (p.title) {
+          existingFingerprints.add(computeSha256Hex(`${p.title.trim()}:${desc.trim()}`));
+        }
+        if (typeof p.leetcode_number === 'number' && p.leetcode_number > 0) {
+          existingLcNumbers.add(p.leetcode_number);
+        }
+        if (typeof p.sort_order === 'number' && p.sort_order > maxSortOrder) {
+          maxSortOrder = p.sort_order;
+        }
+      });
+    } else {
+      const fallbackProblems = track === 'CAMPUS_DSA'
+        ? await this.getCampusDsaProblems()
+        : await this.getProgramming150Problems();
+      existingTitles = new Set(fallbackProblems.map(p => p.title.trim().toLowerCase()));
+      existingFingerprints = new Set(
+        fallbackProblems.map(p => computeSha256Hex(`${p.title.trim()}:${p.description?.trim() || ''}`))
+      );
+      existingLcNumbers = new Set(
+        fallbackProblems
+          .map(p => p.leetcodeNumber || (p.solutions as any)?.leetcodeNumber)
+          .filter((n): n is number => typeof n === 'number' && n > 0)
+      );
+      maxSortOrder = fallbackProblems.length > 0
+        ? Math.max(...fallbackProblems.map(p => p.sort_order || 0))
+        : 0;
+    }
 
     const dbPayloads: any[] = [];
-    let maxSortOrder = existingProblems.length > 0
-      ? Math.max(...existingProblems.map(p => p.sort_order || 0))
-      : 0;
 
     newProblems.forEach((p, idx) => {
       const itemIndex = idx + 1;

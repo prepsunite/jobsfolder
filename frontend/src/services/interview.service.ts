@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { GUEST_EMAIL } from '@/contexts/AuthContext';
 import type { InterviewQuestion, CoreCsSubject, InterviewCategory, InterviewTopic } from '@/types/interview';
 import { ALL_INTERVIEW_TOPICS, CORE_CS_TOPICS, HR_BEHAVIORAL_TOPICS, PROJECT_DEFENSE_TOPICS } from './interviewTopicsData';
 
@@ -65,7 +66,7 @@ export const interviewService = {
       localStorage.setItem(MASTERED_INTERVIEW_KEY, JSON.stringify(Array.from(masteredSet)));
     } catch {}
 
-    if (userEmail && userEmail !== 'guest@prepunite.com') {
+    if (userEmail && userEmail !== GUEST_EMAIL) {
       if (isNowMastered) {
         supabase
           .from('user_interview_progress')
@@ -94,7 +95,7 @@ export const interviewService = {
   },
 
   async fetchAndSyncFromSupabase(userEmail?: string): Promise<void> {
-    if (!userEmail || userEmail === 'guest@prepunite.com' || typeof window === 'undefined') return;
+    if (!userEmail || userEmail === GUEST_EMAIL || typeof window === 'undefined') return;
 
     try {
       const { data } = await supabase
@@ -506,13 +507,30 @@ export const interviewService = {
       return { importedCount: 0 };
     }
 
-    const existingQuestions = await this.getAllQuestions();
-    const existingTitles = new Set(existingQuestions.map(q => q.title.trim().toLowerCase()));
+    let existingTitles = new Set<string>();
+    let maxSortOrder = 0;
+
+    const { data: titleData, error: titleErr } = await supabase
+      .from('interview_questions')
+      .select('title, sort_order')
+      .eq('is_deleted', false);
+
+    if (!titleErr && titleData) {
+      titleData.forEach((r: any) => {
+        if (r.title) existingTitles.add(r.title.trim().toLowerCase());
+        if (typeof r.sort_order === 'number' && r.sort_order > maxSortOrder) {
+          maxSortOrder = r.sort_order;
+        }
+      });
+    } else {
+      const fallbackQuestions = await this.getAllQuestions();
+      existingTitles = new Set(fallbackQuestions.map(q => q.title.trim().toLowerCase()));
+      maxSortOrder = fallbackQuestions.length > 0
+        ? Math.max(...fallbackQuestions.map(q => q.sort_order || 0))
+        : 0;
+    }
 
     const dbPayloads: any[] = [];
-    let maxSortOrder = existingQuestions.length > 0
-      ? Math.max(...existingQuestions.map(q => q.sort_order || 0))
-      : 0;
 
     newQuestions.forEach((q, idx) => {
       if (!q || !q.title || !q.answer || !q.title.trim() || !q.answer.trim()) return;
@@ -614,5 +632,3 @@ export const interviewService = {
     };
   },
 };
-
-const INTERVIEW_QUESTIONS_SEED: InterviewQuestion[] = [];

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, Navigate, useSearchParams } from 'react-router';
+import { Outlet, Link, Navigate, useSearchParams, ScrollRestoration } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
 import Sidebar from '@/components/Sidebar';
+import ConsentBanner from '@/components/ConsentBanner';
+import LoadingScreen from '@/components/LoadingScreen';
 import type { College, TpoDashboardStats } from '@/types/tpo';
 import {
   Building2,
@@ -89,11 +91,15 @@ export default function TpoLayout() {
   }
 
   // Query real-time college details directly from Supabase
-  const { data: dbCollegeDetails } = useQuery({
+  const { data: dbCollegeDetails, isLoading: isDetailsLoading } = useQuery({
     queryKey: ['tpo-college-details', effectiveCollegeId],
     queryFn: () => (effectiveCollegeId ? tpoService.getCollegeDetails(effectiveCollegeId) : null),
     enabled: !!effectiveCollegeId,
   });
+
+  if (isDetailsLoading && !dbCollegeDetails && allColleges.length === 0) {
+    return <LoadingScreen fullScreen size="md" />;
+  }
 
   const currentCollege: College = dbCollegeDetails || allColleges.find(c => c.id === effectiveCollegeId) || {
     id: effectiveCollegeId,
@@ -123,7 +129,8 @@ export default function TpoLayout() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col md:flex-row font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
-      
+      <ScrollRestoration />
+      <ConsentBanner />
       {/* Mobile Workspace Top Header Bar (< md) */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] sticky top-0 z-30">
         <button

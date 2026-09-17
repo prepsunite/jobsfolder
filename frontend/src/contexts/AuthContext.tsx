@@ -102,10 +102,12 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   return false;
 }
 
+export const GUEST_EMAIL = 'guest@prepunite.com';
+
 const GUEST_USER: UserProfile = {
   id: 'guest',
   name: 'Guest Explorer',
-  email: 'guest@prepunite.com',
+  email: GUEST_EMAIL,
   role: 'GUEST',
 };
 

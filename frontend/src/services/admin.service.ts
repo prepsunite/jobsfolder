@@ -40,7 +40,7 @@ export const adminService = {
   getRegisteredUsers: async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, email, name, role, is_tpo_admin, college_id, created_at, updated_at')
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data || [];
