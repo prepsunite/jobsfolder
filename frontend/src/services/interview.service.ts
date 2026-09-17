@@ -335,23 +335,101 @@ export const interviewService = {
   },
 
   async getQuestionsForTopic(topicId: string): Promise<InterviewQuestion[]> {
-    const all = await this.getAllQuestions();
-    return all.filter(q => q.topicId === topicId);
+    const masteredSet = this.getMasteredQuestionIds();
+    try {
+      const { data, error } = await supabase
+        .from('interview_questions')
+        .select('*')
+        .eq('topic_id', topicId)
+        .eq('is_deleted', false)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        return data.map(d => normalizeDbQuestion(d, masteredSet));
+      }
+    } catch (e) {
+      console.error('Failed to query questions for topic:', e);
+    }
+    const seed = await getOfflineSeedQuestions();
+    return seed.filter(q => q.topicId === topicId).map(q => ({
+      ...q,
+      mastered: masteredSet.has(q.id),
+    }));
   },
 
   async getCoreCsQuestions(subject?: CoreCsSubject): Promise<InterviewQuestion[]> {
-    const all = await this.getAllQuestions();
-    return all.filter(q => q.category === 'CORE_CS' && (!subject || q.subject === subject));
+    const masteredSet = this.getMasteredQuestionIds();
+    try {
+      let query = supabase
+        .from('interview_questions')
+        .select('*')
+        .eq('category', 'CORE_CS')
+        .eq('is_deleted', false)
+        .order('sort_order', { ascending: true });
+
+      if (subject) {
+        query = query.eq('subject', subject);
+      }
+
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        return data.map(d => normalizeDbQuestion(d, masteredSet));
+      }
+    } catch (e) {
+      console.error('Failed to query Core CS questions:', e);
+    }
+    const seed = await getOfflineSeedQuestions();
+    return seed.filter(q => q.category === 'CORE_CS' && (!subject || q.subject === subject)).map(q => ({
+      ...q,
+      mastered: masteredSet.has(q.id),
+    }));
   },
 
   async getHrQuestions(): Promise<InterviewQuestion[]> {
-    const all = await this.getAllQuestions();
-    return all.filter(q => q.category === 'HR_BEHAVIORAL');
+    const masteredSet = this.getMasteredQuestionIds();
+    try {
+      const { data, error } = await supabase
+        .from('interview_questions')
+        .select('*')
+        .eq('category', 'HR_BEHAVIORAL')
+        .eq('is_deleted', false)
+        .order('sort_order', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        return data.map(d => normalizeDbQuestion(d, masteredSet));
+      }
+    } catch (e) {
+      console.error('Failed to query HR questions:', e);
+    }
+    const seed = await getOfflineSeedQuestions();
+    return seed.filter(q => q.category === 'HR_BEHAVIORAL').map(q => ({
+      ...q,
+      mastered: masteredSet.has(q.id),
+    }));
   },
 
   async getProjectDefenseQuestions(): Promise<InterviewQuestion[]> {
-    const all = await this.getAllQuestions();
-    return all.filter(q => q.category === 'PROJECT_DEFENSE');
+    const masteredSet = this.getMasteredQuestionIds();
+    try {
+      const { data, error } = await supabase
+        .from('interview_questions')
+        .select('*')
+        .eq('category', 'PROJECT_DEFENSE')
+        .eq('is_deleted', false)
+        .order('sort_order', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        return data.map(d => normalizeDbQuestion(d, masteredSet));
+      }
+    } catch (e) {
+      console.error('Failed to query Project Defense questions:', e);
+    }
+    const seed = await getOfflineSeedQuestions();
+    return seed.filter(q => q.category === 'PROJECT_DEFENSE').map(q => ({
+      ...q,
+      mastered: masteredSet.has(q.id),
+    }));
   },
 
   async saveInterviewQuestion(q: Partial<InterviewQuestion>): Promise<{ success: boolean; error?: string }> {
