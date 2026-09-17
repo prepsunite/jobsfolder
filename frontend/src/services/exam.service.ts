@@ -20,7 +20,12 @@ export const examService = {
         p_user_email: userEmail || null,
       });
 
-      if (!rpcError && rpcData && rpcData.length > 0) {
+      if (rpcError) {
+        console.error('[examService.getExamsByCompany] Secure RPC failure (failing closed to protect paywalled content):', rpcError.message);
+        return [];
+      }
+
+      if (rpcData && rpcData.length > 0) {
         return rpcData.map((e: any) => ({
           id: e.id,
           companySlug: e.company_slug,
@@ -37,42 +42,9 @@ export const examService = {
         }));
       }
 
-      if (!rpcError) return [];
-      console.warn('[examService.getExamsByCompany] RPC fallback triggered:', rpcError.message);
-    } catch (e) {
-      console.warn('[examService.getExamsByCompany] RPC error, falling back to direct query:', e);
-    }
-
-    // Resilient fallback: Direct table query if RPC is not yet deployed
-    try {
-      const { data: fallbackData, error: fbErr } = await supabase
-        .from('exams')
-        .select('*')
-        .eq('company_slug', companySlug)
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: false });
-
-      if (fbErr) {
-        console.error('[examService.getExamsByCompany] Fallback query error:', fbErr.message);
-        return [];
-      }
-
-      return (fallbackData || []).map((e: any) => ({
-        id: e.id,
-        companySlug: e.company_slug,
-        name: e.name,
-        badge: e.badge || 'Campus Recruitment Drive',
-        content: e.content || '',
-        oldPapers: e.old_papers || '',
-        price: e.price ? Number(e.price) : 99,
-        paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
-        googleDocEmbedUrl: e.google_doc_embed_url,
-        googleDocEditUrl: e.google_doc_edit_url,
-        isPublicExam: e.is_public_exam ?? false,
-        upvotes: e.upvotes || 0,
-      }));
+      return [];
     } catch (err) {
-      console.error('[examService.getExamsByCompany] Critical query failure:', err);
+      console.error('[examService.getExamsByCompany] Critical query failure (failing closed):', err);
       return [];
     }
   },

@@ -597,14 +597,15 @@ class DataStoreManager {
 
   private setStorage<T>(key: string, value: T): void {
     try {
-      const serialized = stringify(value);
-      if (localStorage.getItem(key) === serialized) {
-        return; // Identical data (key-order independent), skip disk write and broadcast
-      }
+      const serialized = JSON.stringify(value);
       localStorage.setItem(key, serialized);
       this.notifySync(key);
-    } catch (e) {
-      console.error(`[DataStore] Failed to write key '${key}' to localStorage:`, e);
+    } catch (e: any) {
+      if (e?.name === 'QuotaExceededError' || e?.code === 22 || e?.code === 1014) {
+        console.warn(`[DataStore] Browser localStorage quota reached for '${key}'. Operating safely in-memory.`);
+      } else {
+        console.error(`[DataStore] Failed to write key '${key}' to localStorage:`, e);
+      }
     }
   }
 
@@ -708,14 +709,11 @@ class DataStoreManager {
     try {
       if (typeof window === 'undefined') return;
 
-      // Subscribe to Realtime DB updates
+      // Subscribe to Realtime DB updates (Only non-paywalled public tables)
       supabase
         .channel('public_realtime_data')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
           this.fetchLiveCompaniesFromSupabase();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
-          this.fetchLiveExamsFromSupabase();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'topic_questions' }, () => {
           this.fetchLiveTopicQuestionsFromSupabase();
@@ -725,9 +723,8 @@ class DataStoreManager {
         })
         .subscribe();
 
-      // Initial Fetch
+      // Initial Fetch for offline public entities
       this.fetchLiveCompaniesFromSupabase();
-      this.fetchLiveExamsFromSupabase();
       this.fetchLiveTopicQuestionsFromSupabase();
       this.fetchLiveExperiencesFromSupabase();
     } catch (err) {
@@ -769,33 +766,9 @@ class DataStoreManager {
   }
 
   async fetchLiveExamsFromSupabase(): Promise<void> {
-    try {
-      const { data } = await supabase.from('exams').select('*').eq('is_deleted', false);
-      if (data && data.length > 0) {
-        const mapped: ExamItem[] = data.map(e => ({
-          id: e.id,
-          companySlug: e.company_slug,
-          name: e.name,
-          badge: e.badge || 'Campus Recruitment Drive',
-          upvotes: e.upvotes || 0,
-          content: e.content || '',
-          oldPapers: e.old_papers || '',
-          price: e.price || 99,
-          paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
-          isPublicExam: e.is_public_exam ?? false,
-        }));
-        const existing = this.getStorage<ExamItem[]>('prepunite_exams', INITIAL_EXAMS);
-        const idSet = new Set(mapped.map(m => m.id));
-        const merged = [...mapped];
-        existing.forEach(ex => {
-          if (!idSet.has(ex.id)) {
-            merged.push(ex);
-            idSet.add(ex.id);
-          }
-        });
-        this.setStorage('prepunite_exams', merged);
-      }
-    } catch {}
+    // Intentionally disconnected: Exams are now strictly queried on-demand per company
+    // via examService.getExamsByCompany() to preserve server-side redaction RPC
+    // and prevent unredacted paper_tabs from leaking into browser localStorage.
   }
 
   async fetchLiveTopicQuestionsFromSupabase(): Promise<void> {
