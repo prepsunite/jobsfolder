@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, ProblemCategory, ProgrammingTopic, TechnicalTrack, CampusDsaStage, CampusDsaProblem } from '@/types/technical';
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, PROGRAMMING_150_EXPANDED_SEED, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
 import { CAMPUS_DSA_ROADMAP_STAGES, ALL_CAMPUS_DSA_PROBLEMS } from './campusDsaRoadmapData';
-import { ALL_TECHNICAL_MCQ_SEEDS } from './technicalMcqSeedData';
 import { computeSha256Hex } from '@/utils/questionParser';
 
 export interface TechnicalImportReport {
@@ -894,12 +893,17 @@ export const technicalService = {
       console.error('Failed to query technical_mcqs from Supabase:', e);
     }
 
-    // High-quality offline / hydration fallback
-    const fallbackList = ALL_TECHNICAL_MCQ_SEEDS;
-    if (topicId) {
-      return fallbackList.filter(m => m.topicId === topicId);
+    // High-quality offline / hydration fallback (Dynamically loaded on demand to prevent bundle bloat)
+    try {
+      const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
+      const fallbackList = ALL_TECHNICAL_MCQ_SEEDS;
+      if (topicId) {
+        return fallbackList.filter(m => m.topicId === topicId);
+      }
+      return fallbackList;
+    } catch {
+      return [];
     }
-    return fallbackList;
   },
 
   async saveTechnicalMcq(m: Partial<TechnicalMcq>): Promise<{ success: boolean; error?: string }> {

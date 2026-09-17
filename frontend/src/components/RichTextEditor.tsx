@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { Node as TipTapNode } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/react/menus';
@@ -18,6 +19,30 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { marked } from 'marked';
 import { transformRawMarkdownToBeautifulHtml } from './ContentRenderer';
+
+async function processImageFile(file: File): Promise<string> {
+  try {
+    const fileExt = file.name.split('.').pop() || 'png';
+    const fileName = `editor/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const { data, error } = await supabase.storage.from('public_assets').upload(fileName, file, {
+      cacheControl: '31536000',
+      upsert: false,
+    });
+    if (!error && data) {
+      const { data: publicUrlData } = supabase.storage.from('public_assets').getPublicUrl(fileName);
+      if (publicUrlData?.publicUrl) return publicUrlData.publicUrl;
+    }
+  } catch {
+    // Graceful fallback to DataURL if offline or bucket unconfigured
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+}
+
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, CheckSquare,
@@ -456,16 +481,13 @@ function RichTextEditorInner({
             hasImage = true;
             const file = item.getAsFile();
             if (file) {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const src = e.target?.result as string;
+              processImageFile(file).then((src) => {
                 if (src && view.state.schema.nodes.image) {
                   const node = view.state.schema.nodes.image.create({ src, alt: file.name || 'pasted-image' });
                   const tr = view.state.tr.replaceSelectionWith(node);
                   view.dispatch(tr);
                 }
-              };
-              reader.readAsDataURL(file);
+              });
             }
           }
         }
@@ -618,12 +640,10 @@ function RichTextEditorInner({
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editor) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      editor.chain().focus().setImage({ src: reader.result as string, alt: file.name }).run();
+    processImageFile(file).then((src) => {
+      editor.chain().focus().setImage({ src, alt: file.name }).run();
       setShowImage(false);
-    };
-    reader.readAsDataURL(file);
+    });
     // Reset input so same file can be re-selected
     e.target.value = '';
   }, [editor]);
@@ -651,11 +671,9 @@ function RichTextEditorInner({
       e.preventDefault();
       const file = e.dataTransfer?.files?.[0];
       if (!file || !file.type.startsWith('image/')) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        editor.chain().focus().setImage({ src: reader.result as string, alt: file.name }).run();
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file).then((src) => {
+        editor.chain().focus().setImage({ src, alt: file.name }).run();
+      });
     };
     const handleDragOver = (e: DragEvent) => e.preventDefault();
     el.addEventListener('drop', handleDrop);
