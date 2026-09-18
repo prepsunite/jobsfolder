@@ -138,48 +138,44 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
         )}
       </div>
 
-      {/* Inner Hero Card Container */}
-      <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 p-3 flex flex-col items-center justify-center min-h-[160px] overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 space-y-2">
+      {/* Logo + Title Hero Area — flat, no nested box */}
+      <div className="relative flex flex-col items-center justify-center min-h-[160px] space-y-2">
         {isHidden && (
-          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
+          <div className="absolute top-0 left-0 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
             <EyeOff className="w-2.5 h-2.5" />
             <span>{exam.isCompanyHidden ? 'Company Hidden' : 'Exam Hidden'}</span>
           </div>
         )}
-        {/* Exam Title */}
-        <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center z-10">
-          {exam.name}
-        </h3>
 
-        {/* Center Main Visual Logo */}
-        <div className="my-auto flex items-center justify-center w-full h-24 sm:h-28 rounded-md border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 overflow-hidden bg-white dark:bg-[#141414]">
+        {/* Center Logo */}
+        <div className="flex items-center justify-center w-full h-24 sm:h-28 overflow-hidden">
           {effectiveLogo ? (
             <img
               src={effectiveLogo}
               alt={exam.companyName}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
             />
           ) : (
-            <div className="flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform duration-200">
-              <div className="w-10 h-10 rounded-md bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-lg font-black">
-                {exam.companyName.charAt(0)}
-              </div>
+            <div className="w-14 h-14 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-2xl font-black group-hover:scale-105 transition-transform duration-200">
+              {exam.companyName.charAt(0)}
             </div>
           )}
         </div>
+
+        {/* Exam Title */}
+        <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center">
+          {exam.name}
+        </h3>
       </div>
 
       {/* Bottom Footer Section */}
       <div className="pt-3 px-0.5 flex items-center justify-between gap-2.5 border-t border-[#E9ECEF] dark:border-[#242424] mt-3">
-        {/* Left: Handle & Industry Metadata */}
+        {/* Left: Company name & Industry */}
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate flex items-center gap-1.5">
-            {effectiveLogo && (
-              <img src={effectiveLogo} alt="" className="w-3.5 h-3.5 object-contain shrink-0 rounded-xs" />
-            )}
-            <span className="truncate">{exam.companyName}</span>
+          <div className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
+            {exam.companyName}
           </div>
           <div className="text-[10px] text-[#868E96] dark:text-[#555555] truncate flex items-center gap-1 mt-0.5 font-sans">
             <Building2 className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />
@@ -187,7 +183,7 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
           </div>
         </div>
 
-        {/* Right: Sharp Button */}
+        {/* Right: Papers Button */}
         <Link
           to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#23272f] dark:hover:bg-[#e6e6e6] font-display font-bold text-[10px] uppercase tracking-wider transition-colors shrink-0"
