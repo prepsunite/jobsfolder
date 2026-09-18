@@ -84,18 +84,26 @@ export default function TpoLayout() {
     ? (selectedCollegeId || queryCollegeId || '')
     : (tpoAuth?.college_id || user?.collegeId || selectedCollegeId || '');
 
-  // 🛡️ SAFE GUARD: If a Super Admin opens /tpo directly without choosing a specific college to inspect,
-  // automatically redirect them to the dedicated Super Admin Colleges Hub (/admin/colleges)!
-  if (isPureSuperAdmin && !effectiveCollegeId) {
-    return <Navigate to="/admin/colleges" replace />;
-  }
-
+  // ALL hooks must come before any early returns (Rules of Hooks)
   // Query real-time college details directly from Supabase
   const { data: dbCollegeDetails, isLoading: isDetailsLoading } = useQuery({
     queryKey: ['tpo-college-details', effectiveCollegeId],
     queryFn: () => (effectiveCollegeId ? tpoService.getCollegeDetails(effectiveCollegeId) : null),
     enabled: !!effectiveCollegeId,
   });
+
+  const { data: stats } = useQuery({
+    queryKey: ['tpo-stats', effectiveCollegeId],
+    queryFn: () => tpoService.getTpoStats(effectiveCollegeId),
+    enabled: !!effectiveCollegeId,
+  });
+
+  // 🛡️ SAFE GUARD: If a Super Admin opens /tpo directly without choosing a specific college to inspect,
+  // automatically redirect them to the dedicated Super Admin Colleges Hub (/admin/colleges)!
+  // NOTE: This must come AFTER all hooks to comply with the Rules of Hooks.
+  if (isPureSuperAdmin && !effectiveCollegeId) {
+    return <Navigate to="/admin/colleges" replace />;
+  }
 
   if (isDetailsLoading && !dbCollegeDetails && allColleges.length === 0) {
     return <LoadingScreen fullScreen size="md" />;
@@ -120,12 +128,6 @@ export default function TpoLayout() {
     : 0;
   const isContractExpired = validUntilDate ? daysLeft <= 0 : false;
   const isContractExpiringSoon = daysLeft > 0 && daysLeft <= 7;
-
-  const { data: stats } = useQuery({
-    queryKey: ['tpo-stats', effectiveCollegeId],
-    queryFn: () => tpoService.getTpoStats(effectiveCollegeId),
-    enabled: !!effectiveCollegeId,
-  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col md:flex-row font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
