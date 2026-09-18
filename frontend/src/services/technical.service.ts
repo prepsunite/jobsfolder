@@ -13,11 +13,10 @@ export interface TechnicalImportReport {
   errors: { itemIndex: number; title?: string; reason: string }[];
   supabaseSynced: boolean;
 }
-
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
 const SOLVED_MCQS_KEY = 'prepunite_solved_technical_mcqs';
 
-const TECHNICAL_PROBLEM_COLUMNS = 'id, title, slug, track, level, category, category_label, topic_id, description, constraints, test_cases, sample_input, sample_output, explanation, solutions, time_complexity, space_complexity, hints, company_tags, is_hidden, is_deleted, sort_order, created_at, updated_at, leetcode_url, leetcode_number, pattern, key_intuition';
+const TECHNICAL_PROBLEM_COLUMNS = 'id, topic_id, track, title, slug, level, category, category_label, description, constraints, test_cases, sample_input, sample_output, explanation, solutions, time_complexity, space_complexity, hints, company_tags, is_hidden, is_deleted, sort_order, created_at, updated_at';
 
 const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem => {
   const solutionsObj = (typeof d.solutions === 'object' && d.solutions !== null) ? d.solutions : {};
@@ -699,8 +698,8 @@ export const technicalService = {
     let maxSortOrder = 0;
 
     const { data: existingRows, error: fetchErr } = await supabase
-      .from('programming_problems')
-      .select('title, description, leetcode_number, sort_order')
+      .from('technical_problems')
+      .select('title, description, constraints, sort_order')
       .eq('track', track)
       .eq('is_deleted', false);
 
@@ -711,8 +710,12 @@ export const technicalService = {
         if (p.title) {
           existingFingerprints.add(computeSha256Hex(`${p.title.trim()}:${desc.trim()}`));
         }
-        if (typeof p.leetcode_number === 'number' && p.leetcode_number > 0) {
-          existingLcNumbers.add(p.leetcode_number);
+        if (Array.isArray(p.constraints)) {
+          const lcNumStr = p.constraints.find((c: string) => typeof c === 'string' && c.startsWith('LC_NUM:'))?.replace('LC_NUM:', '');
+          const parsed = lcNumStr ? parseInt(lcNumStr, 10) : NaN;
+          if (!isNaN(parsed) && parsed > 0) {
+            existingLcNumbers.add(parsed);
+          }
         }
         if (typeof p.sort_order === 'number' && p.sort_order > maxSortOrder) {
           maxSortOrder = p.sort_order;
