@@ -31,9 +31,7 @@ export default function ExamAnalyticsModal({
     enabled: isOpen && !!exam.id,
   });
 
-  if (!isOpen) return null;
-
-  // Filter attempts
+  // All hooks must come before any early returns (Rules of Hooks)
   const filteredAttempts = useMemo(() => {
     return attempts.filter(att => {
       const student = att.student || { name: '', email: '', roll_number: '', department: '' };
@@ -45,6 +43,9 @@ export default function ExamAnalyticsModal({
       return matchesSearch && matchesDept;
     });
   }, [attempts, searchTerm, deptFilter]);
+
+  if (!isOpen) return null;
+
 
   const totalSubmitted = attempts.length;
   const uniqueCandidatesCount = attempts.reduce((set, a) => {
