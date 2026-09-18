@@ -2,20 +2,29 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import type { ExamWithCompany } from '@/services/dataStore';
 import { dataStore } from '@/services/dataStore';
+import { examService } from '@/services/exam.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck, EyeOff } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
+import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck, Eye, EyeOff } from 'lucide-react';
 
 interface ExamCardProps {
   exam: ExamWithCompany;
   onEdit?: (exam: ExamWithCompany) => void;
   onDelete?: (examId: string) => void;
+  onToggleVisibility?: (examId: string, isHidden: boolean) => void;
 }
 
-export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
+export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }: ExamCardProps) {
   const { role } = useAuth();
+  const { confirmModal } = useToast();
   const isAdmin = role === 'ADMIN';
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(() => dataStore.isExamBookmarked(exam.id));
+  const [localIsHidden, setLocalIsHidden] = useState<boolean>(Boolean(exam.isHidden));
+
+  useEffect(() => {
+    setLocalIsHidden(Boolean(exam.isHidden));
+  }, [exam.isHidden]);
 
   useEffect(() => {
     setIsBookmarked(dataStore.isExamBookmarked(exam.id));
@@ -33,39 +42,73 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
     setIsBookmarked(newStatus);
   };
 
+  const handleToggleHide = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const nextHidden = !localIsHidden;
+    setLocalIsHidden(nextHidden);
+    if (onToggleVisibility) {
+      onToggleVisibility(exam.id, nextHidden);
+    } else {
+      try {
+        await examService.toggleExamVisibility(exam.id, nextHidden);
+        window.dispatchEvent(new CustomEvent('prepunite_exams_changed'));
+      } catch (err) {
+        console.error('Failed to toggle exam visibility:', err);
+        setLocalIsHidden(!nextHidden);
+      }
+    }
+  };
+
+  // Resilient logo resolution: use exam's companyLogoUrl or fallback to dataStore by slug
+  const effectiveLogo =
+    exam.companyLogoUrl ||
+    dataStore.getCompanies().find((c) => (c.slug || '').toLowerCase() === (exam.companySlug || '').toLowerCase())?.logoUrl;
+
+  const isHidden = localIsHidden || exam.isCompanyHidden;
+
   return (
-    <div className={`group relative bg-white dark:bg-[#141414] border rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between ${
-      exam.isCompanyHidden
-        ? 'border-dashed border-amber-400 dark:border-amber-600/60 bg-amber-500/[0.02] dark:bg-amber-950/[0.05]'
-        : 'border-[#E9ECEF] dark:border-[#242424]'
-    }`}>
+    <div
+      className={`group relative bg-white dark:bg-[#141414] border rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between ${
+        isHidden
+          ? 'border-dashed border-amber-400 dark:border-amber-600/60 bg-amber-500/[0.02] dark:bg-amber-950/[0.05]'
+          : 'border-[#E9ECEF] dark:border-[#242424]'
+      }`}
+    >
       {/* Top Right Action Overlay Bar */}
       <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 pointer-events-none">
         <button
           onClick={handleToggleBookmark}
-          className={`pointer-events-auto p-1.5 rounded-md border shadow-xs transition-all ${
+          className={`pointer-events-auto p-1.5 rounded-md border shadow-xs transition-all cursor-pointer ${
             isBookmarked
               ? 'bg-amber-500 border-amber-600 text-white'
               : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
           }`}
           title={isBookmarked ? 'Remove from dashboard bookmarks' : 'Save exam drive to dashboard'}
         >
-          {isBookmarked ? (
-            <BookmarkCheck className="w-3 h-3 fill-white" />
-          ) : (
-            <Bookmark className="w-3 h-3" />
-          )}
+          {isBookmarked ? <BookmarkCheck className="w-3 h-3 fill-white" /> : <Bookmark className="w-3 h-3" />}
         </button>
 
         {isAdmin && (
           <div className="pointer-events-auto flex items-center gap-1 bg-white/95 dark:bg-[#1C1C1C]/95 p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] shadow-xs">
+            <button
+              onClick={handleToggleHide}
+              className={`p-1 rounded transition-colors cursor-pointer ${
+                localIsHidden
+                  ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }`}
+              title={localIsHidden ? `Publish "${exam.name}" to students` : `Hide "${exam.name}" (Draft Mode)`}
+            >
+              {localIsHidden ? <EyeOff className="w-3 h-3 text-amber-500" /> : <Eye className="w-3 h-3" />}
+            </button>
             {onEdit && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(exam);
                 }}
-                className="p-1 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors"
+                className="p-1 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors cursor-pointer"
                 title="Edit Exam"
               >
                 <Edit3 className="w-3 h-3" />
@@ -73,13 +116,19 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
             )}
             {onDelete && (
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  if (confirm(`Delete ${exam.name}?`)) {
+                  const confirmed = await confirmModal({
+                    title: 'Delete Exam',
+                    message: `Are you sure you want to delete "${exam.name}"? This action cannot be undone.`,
+                    confirmText: 'Delete',
+                    isDanger: true,
+                  });
+                  if (confirmed) {
                     onDelete(exam.id);
                   }
                 }}
-                className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors"
+                className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors cursor-pointer"
                 title="Delete Exam"
               >
                 <Trash2 className="w-3 h-3" />
@@ -91,10 +140,10 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
 
       {/* Inner Hero Card Container */}
       <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 p-3 flex flex-col items-center justify-center min-h-[160px] overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 space-y-2">
-        {exam.isCompanyHidden && (
+        {isHidden && (
           <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
             <EyeOff className="w-2.5 h-2.5" />
-            <span>Company Hidden</span>
+            <span>{exam.isCompanyHidden ? 'Company Hidden' : 'Exam Hidden'}</span>
           </div>
         )}
         {/* Exam Title */}
@@ -104,13 +153,13 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
 
         {/* Center Main Visual Logo */}
         <div className="my-auto flex items-center justify-center w-full h-24 sm:h-28 rounded-md border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 overflow-hidden bg-white dark:bg-[#141414]">
-          {exam.companyLogoUrl ? (
+          {effectiveLogo ? (
             <img
-              src={exam.companyLogoUrl}
+              src={effectiveLogo}
               alt={exam.companyName}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
             />
           ) : (
             <div className="flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform duration-200">
@@ -126,8 +175,11 @@ export default function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
       <div className="pt-3 px-0.5 flex items-center justify-between gap-2.5 border-t border-[#E9ECEF] dark:border-[#242424] mt-3">
         {/* Left: Handle & Industry Metadata */}
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate">
-            {exam.companyName}
+          <div className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF] group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors truncate flex items-center gap-1.5">
+            {effectiveLogo && (
+              <img src={effectiveLogo} alt="" className="w-3.5 h-3.5 object-contain shrink-0 rounded-xs" />
+            )}
+            <span className="truncate">{exam.companyName}</span>
           </div>
           <div className="text-[10px] text-[#868E96] dark:text-[#555555] truncate flex items-center gap-1 mt-0.5 font-sans">
             <Building2 className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32] shrink-0" />

@@ -19,6 +19,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { marked } from 'marked';
 import { transformRawMarkdownToBeautifulHtml } from './ContentRenderer';
+import { useToast } from '@/contexts/ToastContext';
 
 async function processImageFile(file: File): Promise<string> {
   try {
@@ -354,6 +355,9 @@ function RichTextEditorInner({
   minHeight = '320px',
   title = 'Content Editor',
 }: RichTextEditorProps) {
+
+  // ── Toast / Confirm ───────────────────────────────────────────────────────
+  const { confirmModal } = useToast();
 
   // ── UI State ─────────────────────────────────────────────────────────────
   const [mode, setMode] = useState<'write' | 'preview' | 'split'>('write');
@@ -706,8 +710,15 @@ function RichTextEditorInner({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleClear = () => {
-    if (!editor || !confirm('Clear all content?')) return;
+  const handleClear = async () => {
+    if (!editor) return;
+    const confirmed = await confirmModal({
+      title: 'Clear Content',
+      message: 'Are you sure you want to clear all content? This action cannot be undone.',
+      confirmText: 'Clear',
+      isDanger: true,
+    });
+    if (!confirmed) return;
     editor.commands.clearContent();
     onChange('');
   };

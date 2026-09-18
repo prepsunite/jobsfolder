@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import type { OaQuestion } from '@/types/question';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { dataStore } from '@/services/dataStore';
 import { Bookmark, BookmarkCheck, Building2, ChevronDown, ChevronUp, Code, Hash, Flame, Edit3, Trash2, ExternalLink, AlertTriangle } from 'lucide-react';
 import ReportQuestionModal from '@/components/ReportQuestionModal';
@@ -14,6 +15,7 @@ interface QuestionCardProps {
 
 export default function QuestionCard({ question, onEdit, onDelete }: QuestionCardProps) {
   const { role } = useAuth();
+  const { confirmModal } = useToast();
   const isAdmin = role === 'ADMIN';
   const [showSolution, setShowSolution] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(() => dataStore.isQuestionBookmarked(question.id));
@@ -96,8 +98,14 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
               )}
               {onDelete && (
                 <button
-                  onClick={() => {
-                    if (confirm(`Delete question: ${question.title}?`)) {
+                  onClick={async () => {
+                    const confirmed = await confirmModal({
+                      title: 'Delete Question',
+                      message: `Are you sure you want to delete question: "${question.title}"? This action cannot be undone.`,
+                      confirmText: 'Delete',
+                      isDanger: true,
+                    });
+                    if (confirmed) {
                       onDelete(question.id);
                     }
                   }}

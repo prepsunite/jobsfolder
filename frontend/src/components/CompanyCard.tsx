@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import type { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Building2, ArrowRight, Edit3, Trash2, Eye, EyeOff } from 'lucide-react';
 
 interface CompanyCardProps {
@@ -12,6 +13,7 @@ interface CompanyCardProps {
 
 export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibility }: CompanyCardProps) {
   const { role } = useAuth();
+  const { confirmModal } = useToast();
   const isAdmin = role === 'ADMIN';
 
   return (
@@ -53,9 +55,15 @@ export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibil
           )}
           {onDelete && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
-                if (confirm(`Delete ${company.name}?`)) {
+                const confirmed = await confirmModal({
+                  title: 'Delete Company',
+                  message: `Are you sure you want to delete "${company.name}"? This action cannot be undone.`,
+                  confirmText: 'Delete',
+                  isDanger: true,
+                });
+                if (confirmed) {
                   onDelete(company.id);
                 }
               }}
