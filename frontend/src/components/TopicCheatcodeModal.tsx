@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, X, Save, Edit3, Eye, Copy, Check, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
 interface TopicCheatcodeModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
   fallbackFormulas = EMPTY_FALLBACK_FORMULAS,
 }) => {
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -105,9 +107,10 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
         );
 
       if (error) throw error;
+      toast.success('Cheatcode saved successfully.');
       setIsEditing(false);
     } catch (err: any) {
-      alert(`Failed to save cheatcode: ${err.message || err}`);
+      toast.error(`Failed to save cheatcode: ${err.message || err}`);
     } finally {
       setIsSaving(false);
     }

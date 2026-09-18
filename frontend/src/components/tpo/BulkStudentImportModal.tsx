@@ -108,7 +108,7 @@ export default function BulkStudentImportModal({
 
       const lines = text.split(/\r\n|\n/).filter(line => line.trim().length > 0);
       if (lines.length < 2) {
-        alert('CSV file must have a header row and at least one student row.');
+        setImportError('CSV file must have a header row and at least one student row.');
         return;
       }
 
@@ -121,18 +121,19 @@ export default function BulkStudentImportModal({
       const batchIdx = headers.findIndex(h => h.includes('batch_name') || h === 'batch' || h.includes('cohort') || h.includes('group'));
 
       if (emailIdx === -1) {
-        alert('CSV file must include an "email" column.');
+        setImportError('CSV file must include an "email" column.');
         return;
       }
 
       const rows: BulkStudentRow[] = [];
+      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
         if (cols.length === 0 || !cols[emailIdx]) continue;
 
-        const email = cols[emailIdx];
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const isValid = emailRegex.test(email);
+        const email = cols[emailIdx].trim().toLowerCase();
+        const isValid = emailRegex.test(email) && email.length <= 254 && !email.includes('..');
 
         rows.push({
           roll_number: rollIdx !== -1 ? cols[rollIdx] || '' : '',
@@ -142,6 +143,7 @@ export default function BulkStudentImportModal({
           batch_year: yearIdx !== -1 ? parseInt(cols[yearIdx]) || 2026 : 2026,
           batch_name: batchIdx !== -1 && cols[batchIdx] ? cols[batchIdx].trim() : undefined,
           isValid,
+          is_valid: isValid,
           error: !isValid ? 'Invalid email format' : undefined,
         });
       }

@@ -6,6 +6,8 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ConsentProvider } from '@/contexts/ConsentContext'
 import { broadcastQueryClient } from '@tanstack/query-broadcast-client-experimental'
 
+import { ToastProvider } from '@/contexts/ToastContext'
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -30,7 +32,9 @@ export default function App() {
       <ThemeProvider>
         <ConsentProvider>
           <AuthProvider>
-            <RouterProvider router={router} />
+            <ToastProvider>
+              <RouterProvider router={router} />
+            </ToastProvider>
           </AuthProvider>
         </ConsentProvider>
       </ThemeProvider>

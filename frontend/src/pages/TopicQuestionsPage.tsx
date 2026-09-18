@@ -36,11 +36,13 @@ import ReportQuestionModal from '@/components/ReportQuestionModal';
 import ShareModal from '@/components/ShareModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import audioEffects from '@/utils/audioEffects';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
   const { role, user } = useAuth();
   const isAdmin = role === 'ADMIN';
+  const { toast, confirmModal } = useToast();
 
   // Topic display name
   const { data: foundTopic } = useQuery({
@@ -306,7 +308,14 @@ export default function TopicQuestionsPage() {
 
   const handleBulkDelete = async () => {
     if (selectedQuestionIds.size === 0) return;
-    if (!window.confirm(`Are you sure you want to delete ${selectedQuestionIds.size} selected question(s)? This action cannot be undone.`)) return;
+    const count = selectedQuestionIds.size;
+    const confirmed = await confirmModal({
+      title: 'Bulk Delete Questions',
+      message: `Are you sure you want to delete ${count} selected question(s)? This action cannot be undone.`,
+      confirmText: 'Delete Questions',
+      isDanger: true,
+    });
+    if (!confirmed) return;
 
     try {
       const idsToDelete = Array.from(selectedQuestionIds);
@@ -318,7 +327,9 @@ export default function TopicQuestionsPage() {
         
       if (error) {
         console.error('[TopicQuestionsPage] Bulk delete failed:', error);
-        alert(`Failed to bulk delete from Supabase: ${error.message}`);
+        toast.error(`Failed to bulk delete from Supabase: ${error.message}`);
+      } else {
+        toast.success(`Successfully deleted ${idsToDelete.length} questions.`);
       }
       
       idsToDelete.forEach(id => dataStore.deleteTopicQuestion(id));
@@ -327,7 +338,7 @@ export default function TopicQuestionsPage() {
       await loadQuestions();
     } catch (err) {
       console.error(err);
-      alert('An unexpected error occurred during bulk deletion.');
+      toast.error('An unexpected error occurred during bulk deletion.');
     }
   };
 
@@ -350,7 +361,7 @@ export default function TopicQuestionsPage() {
 
   const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formStatement.trim()) return alert('Question statement is required.');
+    if (!formStatement.trim()) return toast.error('Question statement is required.');
 
     const optionsList = [
       { key: 'A', text: normalizeMathText(formOptionA.trim()) || 'Option A' },
@@ -398,6 +409,7 @@ export default function TopicQuestionsPage() {
           })
           .eq('id', editingQuestion.id);
         if (error) throw error;
+        toast.success('Question updated successfully.');
       } else {
         const nextNum = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber || 0)) + 1 : 1;
         const { error } = await supabase
@@ -418,53 +430,61 @@ export default function TopicQuestionsPage() {
             is_deleted: false,
           });
         if (error) throw error;
+        toast.success('Question added successfully.');
       }
       setShowModal(false);
       loadQuestions();
     } catch (err: any) {
-      alert(`Failed to save question to Supabase: ${err.message || err}`);
+      toast.error(`Failed to save question to Supabase: ${err.message || err}`);
     }
   };
 
   const handleDeleteQuestion = async (qId: string) => {
-    if (window.confirm('Are you sure you want to delete this question?')) {
-      try {
-        const questionToDelete = questions.find(q => q.id === qId);
-        if (!questionToDelete) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Question',
+      message: 'Are you sure you want to delete this question? Its sequence numbers will be automatically rebalanced.',
+      confirmText: 'Delete Question',
+      isDanger: true,
+    });
+    if (!confirmed) return;
 
-        const deletedNum = questionToDelete.questionNumber;
+    try {
+      const questionToDelete = questions.find(q => q.id === qId);
+      if (!questionToDelete) return;
 
-        const { error: deleteError } = await supabase
+      const deletedNum = questionToDelete.questionNumber;
+
+      const { error: deleteError } = await supabase
+        .from('topic_questions')
+        .delete()
+        .eq('id', qId);
+      if (deleteError) throw deleteError;
+
+      if (typeof deletedNum === 'number') {
+        const { data: subsequentQuestions, error: fetchError } = await supabase
           .from('topic_questions')
-          .delete()
-          .eq('id', qId);
-        if (deleteError) throw deleteError;
+          .select('id, question_number')
+          .eq('topic_id', topicId)
+          .gt('question_number', deletedNum);
 
-        if (typeof deletedNum === 'number') {
-          const { data: subsequentQuestions, error: fetchError } = await supabase
-            .from('topic_questions')
-            .select('id, question_number')
-            .eq('topic_id', topicId)
-            .gt('question_number', deletedNum);
+        if (fetchError) throw fetchError;
 
-          if (fetchError) throw fetchError;
-
-          if (subsequentQuestions && subsequentQuestions.length > 0) {
-            const updatePromises = subsequentQuestions.map(sq => {
-              const currentNum = sq.question_number || 0;
-              return supabase
-                .from('topic_questions')
-                .update({ question_number: currentNum - 1 })
-                .eq('id', sq.id);
-            });
-            await Promise.all(updatePromises);
-          }
+        if (subsequentQuestions && subsequentQuestions.length > 0) {
+          const updatePromises = subsequentQuestions.map(sq => {
+            const currentNum = sq.question_number || 0;
+            return supabase
+              .from('topic_questions')
+              .update({ question_number: currentNum - 1 })
+              .eq('id', sq.id);
+          });
+          await Promise.all(updatePromises);
         }
-
-        loadQuestions();
-      } catch (err: any) {
-        alert(`Failed to delete question from Supabase: ${err.message || err}`);
       }
+
+      toast.success('Question deleted successfully.');
+      loadQuestions();
+    } catch (err: any) {
+      toast.error(`Failed to delete question from Supabase: ${err.message || err}`);
     }
   };
 
@@ -478,9 +498,10 @@ export default function TopicQuestionsPage() {
         .update({ is_hidden: newHidden })
         .eq('id', qId);
       if (error) throw error;
+      toast.success(`Question is now ${newHidden ? 'hidden' : 'visible'}.`);
       loadQuestions();
     } catch (err: any) {
-      alert(`Failed to update question visibility in Supabase: ${err.message || err}`);
+      toast.error(`Failed to update question visibility in Supabase: ${err.message || err}`);
     }
   };
 

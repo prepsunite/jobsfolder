@@ -20,11 +20,13 @@ import {
 import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
   const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
@@ -153,7 +155,7 @@ export default function TpoExamDetailPage() {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const url = `${origin}/exam/${examId}`;
     navigator.clipboard.writeText(url);
-    alert(`Candidate link copied:\n${url}`);
+    toast.success('Candidate exam link copied to clipboard!');
   };
 
   if (examLoading) {

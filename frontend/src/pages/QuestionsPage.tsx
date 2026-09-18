@@ -7,11 +7,13 @@ import { companyService } from '@/services/company.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, Search, Plus, XCircle, Building2 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function QuestionsPage() {
   const { role } = useAuth();
   const isAdmin = role === 'ADMIN';
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddExamModal, setShowAddExamModal] = useState(false);
@@ -69,20 +71,39 @@ export default function QuestionsPage() {
         name: 'TCS NQT Placement Papers 2026',
         badge: 'Campus Recruitment Drive',
       });
+      toast.success('Exam paper created successfully.');
     } catch (err: any) {
-      alert(`Failed to create exam: ${err.message || err}`);
+      toast.error(`Failed to create exam: ${err.message || err}`);
     }
   };
 
   const handleDeleteExam = async (examId: string) => {
+    const confirmed = await confirmModal({
+      title: 'Delete Exam Paper',
+      message: 'Are you sure you want to delete this exam paper? It will be archived.',
+      confirmText: 'Delete Exam',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     try {
       await examService.deleteExam(examId);
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      toast.success('Exam paper deleted successfully.');
     } catch (err: any) {
-      alert(`Failed to delete exam: ${err.message || err}`);
+      toast.error(`Failed to delete exam: ${err.message || err}`);
     }
   };
 
+  const handleToggleExamVisibility = async (examId: string, isHidden: boolean) => {
+    try {
+      await examService.toggleExamVisibility(examId, isHidden);
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      toast.success(`Exam is now ${isHidden ? 'hidden' : 'visible'}.`);
+    } catch (err: any) {
+      toast.error(`Failed to update exam visibility: ${err.message || err}`);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
@@ -148,6 +169,7 @@ export default function QuestionsPage() {
               key={exam.id}
               exam={exam}
               onDelete={handleDeleteExam}
+              onToggleVisibility={handleToggleExamVisibility}
             />
           ))}
         </div>

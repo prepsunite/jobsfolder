@@ -40,12 +40,14 @@ import type {
   StudentExamResponse,
   ProctorEvent,
 } from '@/types/tpo';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function MockExamTestPage() {
   const { examId } = useParams<{ examId: string }>();
   const { user, isAdmin, isTpoAdmin } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Test Lifecycle: 'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'
   const [testPhase, setTestPhase] = useState<'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'>('INSTRUCTIONS');
@@ -375,7 +377,7 @@ export default function MockExamTestPage() {
     if (!exam || !user) return;
 
     if (!isAuthorizedCandidate) {
-      alert(`Access Restricted: This assessment is reserved exclusively for students of ${examCollege?.name || exam.college_id}.`);
+      toast.error(`Access Restricted: This assessment is reserved exclusively for students of ${examCollege?.name || exam.college_id}.`);
       return;
     }
 
@@ -387,7 +389,7 @@ export default function MockExamTestPage() {
         existingAttempt.status === 'TERMINATED_MALPRACTICE' ||
         existingAttempt.status === 'GRADED')
     ) {
-      alert('This assessment has already been completed and submitted. Under campus placement drive regulations, re-attempts are strictly disabled.');
+      toast.error('This assessment has already been completed and submitted. Under campus placement drive regulations, re-attempts are strictly disabled.');
       setFinalGradedAttempt(existingAttempt);
       setTestPhase('SUBMITTED');
       return;
@@ -395,11 +397,11 @@ export default function MockExamTestPage() {
 
     const timing = getExamTimingStatus(exam);
     if (timing === 'CONCLUDED' && (!existingAttempt || !isAttemptCompleted(existingAttempt))) {
-      alert('This mock assessment window has concluded. Submissions and new attempts are no longer accepted.');
+      toast.error('This mock assessment window has concluded. Submissions and new attempts are no longer accepted.');
       return;
     }
     if (timing === 'UPCOMING' && (!existingAttempt || !isAttemptCompleted(existingAttempt))) {
-      alert(`This mock exam is scheduled to open on ${exam.start_time ? new Date(exam.start_time).toLocaleString() : 'a later date'}.`);
+      toast.error(`This mock exam is scheduled to open on ${exam.start_time ? new Date(exam.start_time).toLocaleString() : 'a later date'}.`);
       return;
     }
 
@@ -449,7 +451,7 @@ export default function MockExamTestPage() {
       if (attempt.responses) setResponses(attempt.responses);
       setTestPhase('IN_PROGRESS');
     } catch (err: any) {
-      alert(`Could not start exam: ${err.message}`);
+      toast.error(`Could not start exam: ${err.message}`);
     }
   };
 
@@ -508,7 +510,7 @@ export default function MockExamTestPage() {
         queryClient.invalidateQueries({ queryKey: ['tpo-exam-attempts'] });
         queryClient.invalidateQueries({ queryKey: ['tpo-stats'] });
       } catch (err: any) {
-        alert(`Submission error: ${err.message}`);
+        toast.error(`Submission error: ${err.message}`);
         isSubmittingRef.current = false;
       } finally {
         setIsSubmitting(false);

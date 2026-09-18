@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import type { CollegeStudent } from '@/types/tpo';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function CollegesTpoManager() {
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   // Modal / Edit States
   const [isAddCollegeModalOpen, setIsAddCollegeModalOpen] = useState(false);
@@ -74,7 +76,7 @@ export default function CollegesTpoManager() {
   const handleAddCollege = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollegeName.trim() || !newCollegeCode.trim()) {
-      alert('Please provide College Name and College Code.');
+      toast.error('Please provide College Name and College Code.');
       return;
     }
 
@@ -136,7 +138,7 @@ export default function CollegesTpoManager() {
   const handleAssignTpo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tpoEmail.trim() || !selectedCollegeId) {
-      alert('Please enter a user email and select a target college.');
+      toast.error('Please enter a user email and select a target college.');
       return;
     }
 
@@ -146,15 +148,19 @@ export default function CollegesTpoManager() {
       const res = await tpoService.assignTpoAdmin(tpoEmail.trim(), selectedCollegeId);
       if (res.success) {
         setStatusMessage({ text: res.message });
+        toast.success(res.message);
         setTpoEmail('');
         queryClient.invalidateQueries({ queryKey: ['admin-tpo-admins'] });
         queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
         queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       } else {
         setStatusMessage({ text: res.message, isError: true });
+        toast.error(res.message);
       }
     } catch (err: any) {
-      setStatusMessage({ text: `Error assigning TPO: ${err.message}`, isError: true });
+      const errMsg = `Error assigning TPO: ${err.message}`;
+      setStatusMessage({ text: errMsg, isError: true });
+      toast.error(errMsg);
     } finally {
       setIsAssigningTpo(false);
     }
@@ -168,9 +174,11 @@ export default function CollegesTpoManager() {
       await tpoService.updateCollegeLicenseLimit(editingLicenseCollege.id, newCapValue);
       setEditingLicenseCollege(null);
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
-      setStatusMessage({ text: `Updated license quota for ${editingLicenseCollege.name} to ${newCapValue} students.` });
+      const successMsg = `Updated license quota for ${editingLicenseCollege.name} to ${newCapValue} students.`;
+      setStatusMessage({ text: successMsg });
+      toast.success(successMsg);
     } catch (err: any) {
-      alert(`Error updating capacity: ${err.message}`);
+      toast.error(`Error updating capacity: ${err.message}`);
     }
   };
 
@@ -188,11 +196,11 @@ export default function CollegesTpoManager() {
       );
       setEditingValidityCollege(null);
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
-      setStatusMessage({
-        text: `Updated access validity for ${editingValidityCollege.name} until ${new Date(targetIso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}. Enrolled students synchronized with active Pro Pass!`,
-      });
+      const successMsg = `Updated access validity for ${editingValidityCollege.name} until ${new Date(targetIso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}. Enrolled students synchronized with active Pro Pass!`;
+      setStatusMessage({ text: successMsg });
+      toast.success(successMsg);
     } catch (err: any) {
-      alert(`Error updating validity: ${err.message}`);
+      toast.error(`Error updating validity: ${err.message}`);
     } finally {
       setIsUpdatingValidity(false);
     }
@@ -219,27 +227,43 @@ export default function CollegesTpoManager() {
         ? `Are you sure you want to SUSPEND access for "${collegeName}"? Enrolled students will be blocked until re-activated.`
         : `Re-activate institutional access for "${collegeName}"?`;
 
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await confirmModal({
+      title: nextStatus === 'SUSPENDED' ? 'Suspend College Access' : 'Reactivate College Access',
+      message: confirmMsg,
+      confirmText: nextStatus === 'SUSPENDED' ? 'Suspend' : 'Reactivate',
+      isDanger: nextStatus === 'SUSPENDED',
+    });
+    if (!confirmed) return;
 
     try {
       await tpoService.updateCollegeContractStatus(collegeId, nextStatus as any);
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
-      setStatusMessage({ text: `Contract for ${collegeName} is now ${nextStatus}.` });
+      const successMsg = `Contract for ${collegeName} is now ${nextStatus}.`;
+      setStatusMessage({ text: successMsg });
+      toast.success(successMsg);
     } catch (err: any) {
-      alert(`Error updating contract: ${err.message}`);
+      toast.error(`Error updating contract: ${err.message}`);
     }
   };
 
   // 5. Revoke TPO Access
   const handleRevoke = async (userId: string, email: string) => {
-    if (!confirm(`Revoke TPO Admin privileges for ${email}?`)) return;
+    const confirmed = await confirmModal({
+      title: 'Revoke TPO Admin Privileges',
+      message: `Revoke TPO Admin privileges for ${email}?`,
+      confirmText: 'Revoke',
+      isDanger: true,
+    });
+    if (!confirmed) return;
 
     try {
       await tpoService.revokeTpoAdmin(email || userId);
       queryClient.invalidateQueries({ queryKey: ['admin-tpo-admins'] });
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      setStatusMessage({ text: `Revoked TPO access for ${email}` });
+      const successMsg = `Revoked TPO access for ${email}`;
+      setStatusMessage({ text: successMsg });
+      toast.success(successMsg);
     } catch (err: any) {
       setStatusMessage({ text: `Failed to revoke: ${err.message}`, isError: true });
     }

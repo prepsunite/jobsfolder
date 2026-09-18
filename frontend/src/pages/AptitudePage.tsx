@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
+import { useToast } from '@/contexts/ToastContext';
 import {
   Folder,
   Calculator,
@@ -243,6 +244,7 @@ const getTopicIcon = (topicId: string, iconName?: string): React.ComponentType<a
 export default function AptitudePage() {
   const { categorySlug = 'arithmetic-aptitude' } = useParams<{ categorySlug: string }>();
   const { isAdmin, user } = useAuth();
+  const { toast, confirmModal } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
@@ -459,8 +461,9 @@ export default function AptitudePage() {
       
     if (!error) {
       refetchTopics();
+      toast.success(`Topic is now ${!topic.is_hidden ? 'hidden' : 'visible'}.`);
     } else {
-      alert("Error updating visibility: " + error.message);
+      toast.error("Error updating visibility: " + error.message);
     }
   };
 
@@ -469,17 +472,24 @@ export default function AptitudePage() {
     e.stopPropagation();
     if (!isAdmin) return;
     
-    if (confirm(`Are you sure you want to permanently delete "${topic.name}"?`)) {
-      const { error } = await supabase
-        .from('aptitude_topics')
-        .delete()
-        .eq('id', topic.id);
-        
-      if (!error) {
-        refetchTopics();
-      } else {
-        alert("Error deleting topic: " + error.message);
-      }
+    const confirmed = await confirmModal({
+      title: "Delete Topic",
+      message: `Are you sure you want to permanently delete "${topic.name}"?`,
+      confirmText: "Delete Topic",
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from('aptitude_topics')
+      .delete()
+      .eq('id', topic.id);
+      
+    if (!error) {
+      refetchTopics();
+      toast.success("Topic deleted successfully.");
+    } else {
+      toast.error("Error deleting topic: " + error.message);
     }
   };
 
@@ -506,7 +516,7 @@ export default function AptitudePage() {
 
   const saveTopic = async () => {
     if (!editingTopic || !editingTopic.id || !editingTopic.name) {
-      alert("ID and Name are required");
+      toast.error("ID and Name are required");
       return;
     }
 
@@ -526,11 +536,12 @@ export default function AptitudePage() {
       .upsert(payload);
 
     if (error) {
-      alert("Error saving topic: " + error.message);
+      toast.error("Error saving topic: " + error.message);
     } else {
       setIsEditing(false);
       setEditingTopic(null);
       refetchTopics();
+      toast.success("Topic saved successfully.");
     }
   };
 

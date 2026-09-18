@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { MockExamTemplate, CollegeBatch } from '@/types/tpo';
+import { useToast } from '@/contexts/ToastContext';
 
 interface CreateMockExamModalProps {
   isOpen: boolean;
@@ -114,6 +115,7 @@ export default function CreateMockExamModal({
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast, confirmModal } = useToast();
 
   // Form State
   const [title, setTitle] = useState('');
@@ -227,8 +229,9 @@ export default function CreateMockExamModal({
       });
       setInlineNewBatchName('');
       setIsAddingInlineBatch(false);
+      toast.success(`Created cohort "${created.name}".`);
     } catch (err: any) {
-      alert(`Could not create batch: ${err.message}`);
+      toast.error(`Could not create batch: ${err.message}`);
     }
   };
 
@@ -245,10 +248,11 @@ export default function CreateMockExamModal({
         end_time: new Date(targetEndTime).toISOString(),
       });
       setTargetingTemplate(null);
+      toast.success('Assessment launched successfully.');
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(`Failed to launch exam: ${err.message || 'Unknown error'}`);
+      toast.error(`Failed to launch exam: ${err.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -331,11 +335,11 @@ export default function CreateMockExamModal({
   // Super Admin: Save Pattern
   const handleSavePattern = async () => {
     if (!editingTemplate || !editingTemplate.name.trim()) {
-      alert('Please enter a valid template name.');
+      toast.error('Please enter a valid template name.');
       return;
     }
     if (editingTemplate.sections.length === 0) {
-      alert('Template must contain at least one section.');
+      toast.error('Template must contain at least one section.');
       return;
     }
 
@@ -345,8 +349,9 @@ export default function CreateMockExamModal({
       await refetchTemplates();
       setModalMode('TEMPLATES');
       setEditingTemplate(null);
+      toast.success('Template saved successfully.');
     } catch (err: any) {
-      alert(`Failed to save template: ${err.message}`);
+      toast.error(`Failed to save template: ${err.message}`);
     } finally {
       setIsAdminSavingTemplate(false);
     }
@@ -355,12 +360,20 @@ export default function CreateMockExamModal({
   // Super Admin: Delete Pattern
   const handleDeletePattern = async (templateId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this custom template pattern?')) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Template',
+      message: 'Are you sure you want to delete this custom template pattern?',
+      confirmText: 'Delete Template',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     try {
       await tpoService.deleteExamTemplate(templateId);
       await refetchTemplates();
+      toast.success('Template deleted successfully.');
     } catch (err: any) {
-      alert(`Failed to delete template: ${err.message}`);
+      toast.error(`Failed to delete template: ${err.message}`);
     }
   };
 
@@ -396,11 +409,11 @@ export default function CreateMockExamModal({
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      alert('Please enter an exam title.');
+      toast.error('Please enter an exam title.');
       return;
     }
     if (sections.length === 0 || totalQuestions === 0) {
-      alert('Please configure at least one section with questions.');
+      toast.error('Please configure at least one section with questions.');
       return;
     }
 
@@ -432,10 +445,11 @@ export default function CreateMockExamModal({
         sections
       );
 
+      toast.success('Mock exam published successfully.');
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(`Failed to create exam: ${err.message}`);
+      toast.error(`Failed to create exam: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -1730,7 +1744,7 @@ export default function CreateMockExamModal({
                   <button
                     onClick={() => {
                       if (step === 1 && !title.trim()) {
-                        alert('Please enter an exam title.');
+                        toast.error('Please enter an exam title.');
                         return;
                       }
                       setStep((step + 1) as any);

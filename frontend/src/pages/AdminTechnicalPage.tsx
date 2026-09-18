@@ -11,6 +11,7 @@ import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { technicalService } from '@/services/technical.service';
 import type { ProgrammingProblem, TechnicalMcq, ProgrammingTopic, TechnicalTrack } from '@/types/technical';
+import { useToast } from '@/contexts/ToastContext';
 
 const PROBLEM_TEMPLATE = JSON.stringify([{
   title: 'Sum of Digits',
@@ -53,6 +54,7 @@ type AdminTab = 'topics' | 'problems' | 'mcqs';
 export default function AdminTechnicalPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   if (!isSuperAdminEmail(user?.email)) return <NotFoundPage />;
 
@@ -145,8 +147,13 @@ export default function AdminTechnicalPage() {
   const saveTopicEdit = async () => {
     setTopicSaving(true);
     const res = await technicalService.saveTopic(topicDraft as any);
-    if (res.success) { setEditingTopicId(null); refetchTopics(); }
-    else alert('Error: ' + res.error);
+    if (res.success) {
+      setEditingTopicId(null);
+      refetchTopics();
+      toast.success('Topic saved successfully');
+    } else {
+      toast.error('Error: ' + res.error);
+    }
     setTopicSaving(false);
   };
 
@@ -157,19 +164,31 @@ export default function AdminTechnicalPage() {
       setShowAddTopicForm(false);
       setAddTopicDraft({ track: 'PROGRAMMING_150', category: 'SYNTAX_BASICS', is_hidden: false });
       refetchTopics();
-    } else alert('Error: ' + res.error);
+      toast.success('Topic created successfully');
+    } else {
+      toast.error('Error: ' + res.error);
+    }
     setTopicSaving(false);
   };
 
   const handleDeleteTopic = async (id: string, name: string) => {
-    if (!confirm(`Delete topic "${name}"?`)) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Topic',
+      message: `Are you sure you want to delete topic "${name}"?`,
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     await technicalService.deleteTopic(id);
     refetchTopics();
+    toast.success('Topic deleted');
   };
 
   const handleToggleTopicHide = async (id: string, is_hidden: boolean) => {
     await technicalService.toggleTopicVisibility(id, !is_hidden);
     refetchTopics();
+    toast.success(is_hidden ? 'Topic is now visible' : 'Topic is now hidden');
   };
 
   // ─── Problem CRUD ─────────────────────────────────────────────────────────
@@ -182,6 +201,7 @@ export default function AdminTechnicalPage() {
     setParsedProblems([]);
     refetchAll();
     setIsImportingProblems(false);
+    toast.success(`Imported ${res.importedCount} problem(s) successfully`);
   };
 
   const handleSaveAddProblem = async () => {
@@ -191,14 +211,25 @@ export default function AdminTechnicalPage() {
       setShowAddProblemForm(false);
       setProblemDraft({ track: 'PROGRAMMING_150', level: 'MEDIUM', category: 'SYNTAX_BASICS' });
       refetchAll();
-    } else alert('Error: ' + res.error);
+      toast.success('Problem created successfully');
+    } else {
+      toast.error('Error: ' + res.error);
+    }
     setProblemSaving(false);
   };
 
   const handleDeleteProblem = async (id: string, title: string) => {
-    if (!confirm(`Delete problem "${title}"?`)) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Problem',
+      message: `Are you sure you want to delete problem "${title}"?`,
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     await technicalService.deleteProgrammingProblem(id);
     refetchAll();
+    toast.success('Problem deleted');
   };
 
   // ─── MCQ CRUD ─────────────────────────────────────────────────────────────
@@ -211,6 +242,7 @@ export default function AdminTechnicalPage() {
     setParsedMcqs([]);
     refetchAll();
     setIsImportingMcqs(false);
+    toast.success(`Imported ${res.importedCount} MCQ(s) successfully`);
   };
 
   const handleSaveAddMcq = async () => {
@@ -223,14 +255,25 @@ export default function AdminTechnicalPage() {
       setShowAddMcqForm(false);
       setMcqDraft({ topicCategory: 'C_PROGRAMMING', difficulty: 'MEDIUM', correctOptionIndex: 0 });
       refetchAll();
-    } else alert('Error: ' + res.error);
+      toast.success('MCQ saved successfully');
+    } else {
+      toast.error('Error: ' + res.error);
+    }
     setMcqSaving(false);
   };
 
   const handleDeleteMcq = async (id: string) => {
-    if (!confirm('Delete this MCQ?')) return;
+    const confirmed = await confirmModal({
+      title: 'Delete MCQ',
+      message: 'Are you sure you want to delete this MCQ permanently?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     await technicalService.deleteTechnicalMcq(id);
     refetchAll();
+    toast.success('MCQ deleted');
   };
 
   const q = searchQuery.toLowerCase();

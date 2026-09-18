@@ -21,6 +21,7 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ExperienceDbRow {
   id: string;
@@ -43,6 +44,7 @@ interface ExperienceDbRow {
 export default function ExperiencesPage() {
   const { role } = useAuth();
   const isAdmin = role === 'ADMIN';
+  const { toast, confirmModal } = useToast();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,7 +159,14 @@ export default function ExperiencesPage() {
   });
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this experience?')) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Experience',
+      message: 'Are you sure you want to delete this interview experience? It will be archived from the platform.',
+      confirmText: 'Delete Experience',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     try {
       const { error } = await supabase
         .from('experiences')
@@ -165,8 +174,9 @@ export default function ExperiencesPage() {
         .eq('id', id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      toast.success('Experience deleted successfully.');
     } catch (err: any) {
-      alert(`Failed to delete experience: ${err.message || err}`);
+      toast.error(`Failed to delete experience: ${err.message || err}`);
     }
   };
 

@@ -119,7 +119,7 @@ export const examService = {
           .order('name', { ascending: true }),
         supabase
           .from('companies')
-          .select('id, slug, name, logo_url, industry, is_hidden, about_company, description')
+          .select('id, slug, name, logo_url, industry, about_company, description')
           .eq('is_deleted', false),
       ]);
 
@@ -129,8 +129,15 @@ export const examService = {
         return dsExams;
       }
 
+      if (compsRes.error) {
+        console.warn('[examService.getAllExams] Companies query notice:', compsRes.error?.message || compsRes.error);
+      }
+
+      const dsCompanies = dataStore.getCompanies();
+      const dsMapBySlug = new Map(dsCompanies.map(c => [(c.slug || '').toLowerCase().trim(), c]));
+
       const companyMapBySlug = new Map(
-        (compsRes.data || []).map(c => [c.slug, { ...c, isHidden: parseCompHidden(c) }])
+        (compsRes.data || []).map(c => [(c.slug || '').toLowerCase().trim(), { ...c, isHidden: parseCompHidden(c) }])
       );
       const companyMapById = new Map(
         (compsRes.data || []).map(c => [c.id, { ...c, isHidden: parseCompHidden(c) }])
@@ -138,9 +145,14 @@ export const examService = {
 
       if (examsRes.data && examsRes.data.length > 0) {
         const allMapped: ExamWithCompany[] = examsRes.data.map(e => {
-          const fallbackComp = companyMapBySlug.get(e.company_slug) || companyMapById.get(e.company_id);
+          const slugKey = (e.company_slug || '').toLowerCase().trim();
+          const fallbackComp = companyMapBySlug.get(slugKey) || companyMapById.get(e.company_id);
+          const dsFallback = dsMapBySlug.get(slugKey);
           const isCompanyHidden = fallbackComp ? Boolean(fallbackComp.isHidden) : false;
           const isHidden = parseExamHidden(e);
+          const logoUrl = fallbackComp?.logo_url || dsFallback?.logoUrl || undefined;
+          const compName = fallbackComp?.name || dsFallback?.name || (e.company_slug ? e.company_slug.toUpperCase() : 'RECRUITMENT');
+          const compIndustry = fallbackComp?.industry || dsFallback?.industry || 'IT Services & Consulting';
 
           return {
             id: e.id,
@@ -155,9 +167,9 @@ export const examService = {
             googleDocEditUrl: e.google_doc_edit_url,
             isPublicExam: e.is_public_exam ?? false,
             upvotes: e.upvotes || 0,
-            companyName: fallbackComp?.name || e.company_slug.toUpperCase(),
-            companyLogoUrl: fallbackComp?.logo_url || undefined,
-            companyIndustry: fallbackComp?.industry || 'IT Services & Consulting',
+            companyName: compName,
+            companyLogoUrl: logoUrl,
+            companyIndustry: compIndustry,
             isCompanyHidden,
             isHidden,
           };

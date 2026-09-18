@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { ExperienceItem } from '@/services/dataStore';
+import { useToast } from '@/contexts/ToastContext';
 
 interface EditExperienceModalProps {
   experience: ExperienceItem | null;
@@ -18,6 +19,7 @@ export const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<ExperienceItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setFormData(experience ? JSON.parse(JSON.stringify(experience)) : null);
@@ -47,20 +49,26 @@ export const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
 
       if (error) throw error;
 
+      toast.success('Experience updated successfully.');
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(`Failed to update experience: ${err.message || err}`);
+      toast.error(`Failed to update experience: ${err.message || err}`);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-experience-title"
+      className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4"
+    >
       <div className="bg-[#ffffff] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto text-[#121417] dark:text-[#FFFFFF]">
         <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#242424]">
-          <h3 className="font-display text-base font-bold">Edit Experience</h3>
+          <h3 id="edit-experience-title" className="font-display text-base font-bold">Edit Experience</h3>
           <button
             onClick={onClose}
             className="text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF] cursor-pointer"

@@ -38,12 +38,16 @@ import {
   Mail,
   IndianRupee,
   CreditCard,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const isAdmin = isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   const [adminTab, setAdminTab] = useState<
     'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'question-reports' | 'contact-messages' | 'users' | 'metrics' | 'colleges-tpo'
@@ -89,7 +93,7 @@ export default function AdminDashboardPage() {
   // --- React Query: Exams for selected company from Supabase ---
   const { data: companyExamsList = [] } = useQuery<ExamItem[]>({
     queryKey: ['live-exams', selectedCompanySlug],
-    queryFn: () => examService.getExamsByCompany(selectedCompanySlug),
+    queryFn: () => examService.getExamsByCompany(selectedCompanySlug, undefined, true),
     enabled: isAdmin && !!selectedCompanySlug,
     staleTime: 0,
   });
@@ -300,7 +304,8 @@ export default function AdminDashboardPage() {
     name: '',
     badge: 'Official Campus Drive 2026',
     content: '### Exam Pattern & Syllabus Overview\n\n- **Round 1:** Aptitude & Reasoning MCQs\n- **Round 2:** Technical Coding Assessment',
-    oldPapers: '### Memory Papers & PYQs\n\n1. **Previous Year Question 1:** Array manipulation\n2. **Previous Year Question 2:** SQL Inner Join query'
+    oldPapers: '### Memory Papers & PYQs\n\n1. **Previous Year Question 1:** Array manipulation\n2. **Previous Year Question 2:** SQL Inner Join query',
+    isHidden: false,
   });
 
   const { data } = useQuery({
@@ -350,8 +355,9 @@ export default function AdminDashboardPage() {
       setSelectedCompanySlug(slug);
       setAdminTab('manage-exams');
       reloadDataStoreLists(slug);
+      toast.success(`Published ${companyForm.name} package successfully`);
     } catch (err: any) {
-      alert(`Failed to publish company package to Supabase: ${err.message || err}`);
+      toast.error(`Failed to publish company package: ${err.message || err}`);
     }
   };
 
@@ -369,8 +375,9 @@ export default function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['company', selectedCompanySlug] });
       setOverviewSavedNotice(true);
       setTimeout(() => setOverviewSavedNotice(false), 3000);
+      toast.success('Company overview updated successfully');
     } catch (err: any) {
-      alert(`Failed to update company overview in Supabase: ${err.message || err}`);
+      toast.error(`Failed to update company overview: ${err.message || err}`);
     }
   };
 
@@ -390,8 +397,9 @@ export default function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['live-questions'] });
       setQuestionSuccess(true);
       setTimeout(() => setQuestionSuccess(false), 4000);
+      toast.success('Question created successfully');
     } catch (err: any) {
-      alert(`Failed to create question in Supabase: ${err.message || err}`);
+      toast.error(`Failed to create question: ${err.message || err}`);
     }
   };
 
@@ -421,6 +429,7 @@ export default function AdminDashboardPage() {
         badge: newExamCard.badge || 'Official Campus Drive 2026',
         content: newExamCard.content,
         oldPapers: newExamCard.oldPapers,
+        isHidden: newExamCard.isHidden,
       });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
@@ -430,10 +439,12 @@ export default function AdminDashboardPage() {
         name: '',
         badge: 'Official Campus Drive 2026',
         content: '### Exam Pattern & Syllabus Overview\n\n- **Round 1:** Aptitude & Reasoning MCQs\n- **Round 2:** Technical Coding Assessment',
-        oldPapers: '### Memory Papers & PYQs\n\n1. **Previous Year Question 1:** Array manipulation\n2. **Previous Year Question 2:** SQL Inner Join query'
+        oldPapers: '### Memory Papers & PYQs\n\n1. **Previous Year Question 1:** Array manipulation\n2. **Previous Year Question 2:** SQL Inner Join query',
+        isHidden: false,
       });
+      toast.success('Exam module created successfully');
     } catch (err: any) {
-      alert(`Failed to add exam card in Supabase: ${err.message || err}`);
+      toast.error(`Failed to add exam card: ${err.message || err}`);
     }
   };
 
@@ -445,21 +456,29 @@ export default function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
       reloadDataStoreLists(selectedCompanySlug);
       setEditingExam(null);
+      toast.success('Exam module updated successfully');
     } catch (err: any) {
-      alert(`Failed to update exam in Supabase: ${err.message || err}`);
+      toast.error(`Failed to update exam: ${err.message || err}`);
     }
   };
 
   const handleDeleteExam = async (id: string) => {
-    if (confirm('Are you sure you want to delete this exam module?')) {
-      try {
-        await examService.deleteExam(id);
-        queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-        queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
-        reloadDataStoreLists(selectedCompanySlug);
-      } catch (err: any) {
-        alert(`Failed to delete exam from Supabase: ${err.message || err}`);
-      }
+    const confirmed = await confirmModal({
+      title: 'Delete Exam Module',
+      message: 'Are you sure you want to delete this exam module?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await examService.deleteExam(id);
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['live-exams', selectedCompanySlug] });
+      reloadDataStoreLists(selectedCompanySlug);
+      toast.success('Exam module deleted successfully');
+    } catch (err: any) {
+      toast.error(`Failed to delete exam: ${err.message || err}`);
     }
   };
 
@@ -475,8 +494,9 @@ export default function AdminDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       reloadDataStoreLists();
+      toast.success(`Experience marked as ${status}`);
     } catch (err: any) {
-      alert(`Failed to update experience status in Supabase: ${err.message || err}`);
+      toast.error(`Failed to update experience status: ${err.message || err}`);
     }
   };
 
@@ -491,14 +511,21 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteExperience = async (id: string) => {
-    if (confirm('Are you sure you want to delete this student experience submission?')) {
-      try {
-        await supabase.from('experiences').update({ is_deleted: true, deleted_at: new Date().toISOString() }).eq('id', id);
-        queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
-        reloadDataStoreLists();
-      } catch (err: any) {
-        alert(`Failed to delete experience from Supabase: ${err.message || err}`);
-      }
+    const confirmed = await confirmModal({
+      title: 'Delete Student Experience',
+      message: 'Are you sure you want to delete this student experience submission?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await supabase.from('experiences').update({ is_deleted: true, deleted_at: new Date().toISOString() }).eq('id', id);
+      queryClient.invalidateQueries({ queryKey: ['admin-experiences'] });
+      reloadDataStoreLists();
+      toast.success('Experience deleted successfully');
+    } catch (err: any) {
+      toast.error(`Failed to delete experience: ${err.message || err}`);
     }
   };
 
@@ -511,19 +538,27 @@ export default function AdminDashboardPage() {
     try {
       await feedbackService.updateReportStatus(id, status, adminNotes);
       queryClient.invalidateQueries({ queryKey: ['admin-question-reports'] });
+      toast.success(`Report marked as ${status}`);
     } catch (err: any) {
-      alert(`Failed to update report status: ${err.message || err}`);
+      toast.error(`Failed to update report status: ${err.message || err}`);
     }
   };
 
   const handleDeleteReport = async (id: string) => {
-    if (confirm('Delete this question report?')) {
-      try {
-        await feedbackService.deleteQuestionReport(id);
-        queryClient.invalidateQueries({ queryKey: ['admin-question-reports'] });
-      } catch (err: any) {
-        alert(`Failed to delete report: ${err.message || err}`);
-      }
+    const confirmed = await confirmModal({
+      title: 'Delete Question Report',
+      message: 'Delete this question report permanently?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await feedbackService.deleteQuestionReport(id);
+      queryClient.invalidateQueries({ queryKey: ['admin-question-reports'] });
+      toast.success('Report deleted successfully');
+    } catch (err: any) {
+      toast.error(`Failed to delete report: ${err.message || err}`);
     }
   };
 
@@ -536,19 +571,27 @@ export default function AdminDashboardPage() {
     try {
       await feedbackService.updateContactStatus(id, status, adminNotes);
       queryClient.invalidateQueries({ queryKey: ['admin-contact-messages'] });
+      toast.success(`Message marked as ${status}`);
     } catch (err: any) {
-      alert(`Failed to update message status: ${err.message || err}`);
+      toast.error(`Failed to update message status: ${err.message || err}`);
     }
   };
 
   const handleDeleteContactMessage = async (id: string) => {
-    if (confirm('Delete this contact message?')) {
-      try {
-        await feedbackService.deleteContactMessage(id);
-        queryClient.invalidateQueries({ queryKey: ['admin-contact-messages'] });
-      } catch (err: any) {
-        alert(`Failed to delete message: ${err.message || err}`);
-      }
+    const confirmed = await confirmModal({
+      title: 'Delete Contact Message',
+      message: 'Delete this contact message permanently?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await feedbackService.deleteContactMessage(id);
+      queryClient.invalidateQueries({ queryKey: ['admin-contact-messages'] });
+      toast.success('Message deleted successfully');
+    } catch (err: any) {
+      toast.error(`Failed to delete message: ${err.message || err}`);
     }
   };
 
@@ -919,10 +962,31 @@ export default function AdminDashboardPage() {
                         <h4 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3] flex items-center gap-2">
                           <GraduationCap className="w-5 h-5 text-[#FD4A32] dark:text-[#FD4A32]" />
                           <span>{exam.name}</span>
+                          {exam.isHidden && (
+                            <span className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <EyeOff className="w-3 h-3" /> Draft / Hidden
+                            </span>
+                          )}
                         </h4>
                         <span className="text-xs text-[#747878] dark:text-[#a6adbb]">{exam.badge || 'Official Campus Drive'}</span>
                       </div>
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={async () => {
+                            await examService.toggleExamVisibility(exam.id, !exam.isHidden);
+                            queryClient.invalidateQueries({ queryKey: ['live-exams'] });
+                            queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+                          }}
+                          className={`px-3 py-1.5 text-[11px] font-bold rounded-full transition-colors flex items-center gap-1 shadow-xs cursor-pointer ${
+                            exam.isHidden
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                              : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700'
+                          }`}
+                          title={exam.isHidden ? "Click to make this exam visible to students" : "Click to hide this exam from students"}
+                        >
+                          {exam.isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                          <span>{exam.isHidden ? 'Publish' : 'Hide'}</span>
+                        </button>
                         <Link
                           to={`/companies/${exam.companySlug}/oldpapers`}
                           className="px-3.5 py-1.5 bg-[#FD4A32] hover:bg-[#005237] text-white text-[11px] font-bold rounded-full transition-colors flex items-center gap-1"
@@ -974,6 +1038,17 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setNewExamCard({ ...newExamCard, badge: e.target.value })}
                     className="bg-[#ffffff] dark:bg-[#1e1f22] border border-[#c4c7c7] dark:border-[#383a40] rounded-xl px-3 py-2 text-xs text-[#1f1b17] dark:text-[#e3e3e3] placeholder-[#747878] dark:placeholder-[#6e7278]"
                   />
+                </div>
+                <div className="pt-1">
+                  <label className="flex items-center gap-2 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newExamCard.isHidden}
+                      onChange={(e) => setNewExamCard({ ...newExamCard, isHidden: e.target.checked })}
+                      className="rounded border-[#c4c7c7] text-[#FD4A32] focus:ring-[#FD4A32]"
+                    />
+                    <span>Hide Exam from Students (Draft Mode - Admin only)</span>
+                  </label>
                 </div>
                 <RichTextEditor
                   title="About Exam Markdown (Syllabus & Pattern)"
@@ -2293,8 +2368,19 @@ export default function AdminDashboardPage() {
                     type="text"
                     value={editingExam.badge}
                     onChange={(e) => setEditingExam({ ...editingExam, badge: e.target.value })}
-                    className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs text-[#1f1b17] dark:text-[#e3e3e3]"
+                    className="w-full bg-[#F8F9FA] dark:bg-[#141517] border border-transparent dark:border-[#383a40] rounded-xl p-2.5 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3]"
                   />
+                </div>
+                <div className="col-span-full pt-1">
+                  <label className="flex items-center gap-2 text-xs font-bold text-[#1f1b17] dark:text-[#e3e3e3] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editingExam.isHidden ?? false}
+                      onChange={(e) => setEditingExam({ ...editingExam, isHidden: e.target.checked })}
+                      className="rounded border-[#c4c7c7] text-[#FD4A32] focus:ring-[#FD4A32]"
+                    />
+                    <span>Hide Exam from Students (Draft Mode - Admin only)</span>
+                  </label>
                 </div>
               </div>
 

@@ -4,6 +4,7 @@ import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
 import { TreeNodeItem } from '@/components/TreeNodeItem';
 import BulkImportPapersModal from '@/components/BulkImportPapersModal';
+import { useToast } from '@/contexts/ToastContext';
 import {
   cloneTree,
   moveUp,
@@ -56,6 +57,7 @@ export default function DocumentExplorer({
   onUpdateTabs,
   onToggleExamPublic,
 }: DocumentExplorerProps) {
+  const { toast, confirmModal } = useToast();
 
   // Local tab state — keeps admin edits fast without prop round-trips
   const [localTabs, setLocalTabs] = useState<DocTabNode[]>(() => cloneTree(tabs));
@@ -213,13 +215,20 @@ export default function DocumentExplorer({
     persist(moveDown(localTabs, nodeId));
   };
 
-  const handleDelete = (e: React.MouseEvent, nodeId: string) => {
+  const handleDelete = async (e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
     const target = findNodeById(localTabs, nodeId);
-    if (!confirm(`Delete "${target?.title || 'this section'}" and all its children?`)) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Section',
+      message: `Delete "${target?.title || 'this section'}" and all its children?`,
+      confirmText: 'Delete Section',
+      isDanger: true,
+    });
+    if (!confirmed) return;
     const updated = deleteNode(localTabs, nodeId);
     persist(updated);
     if (selectedNodeId === nodeId) setSelectedNodeId(updated[0]?.id || '');
+    toast.success('Section deleted.');
   };
 
   const startRename = (e: React.MouseEvent, node: DocTabNode) => {

@@ -6,6 +6,7 @@ import {
   type PaywallOptionType,
   type PaywallPricingTier,
 } from '@/constants/pricingData';
+import { useToast } from '@/contexts/ToastContext';
 
 export type { PaywallOptionType };
 
@@ -31,6 +32,7 @@ export default function PaywallModal({
   const [selectedOption, setSelectedOption] = useState<PaywallOptionType>('MONTHLY');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const { toast } = useToast();
 
   if (!isOpen) return null;
 
@@ -40,7 +42,7 @@ export default function PaywallModal({
   const handleCheckout = async (option: PaywallOptionType) => {
     const email = userEmail?.trim();
     if (!email) {
-      alert('Please log in with your email account first so your unlocked papers are permanently linked to your account.');
+      toast.error('Please log in with your email account first so your unlocked papers are permanently linked to your account.');
       window.location.href = '/login?redirectTo=' + encodeURIComponent(window.location.pathname);
       return;
     }
@@ -104,7 +106,7 @@ export default function PaywallModal({
 
             if (!verifyRes.ok) {
               const vd = await verifyRes.json().catch(() => ({}));
-              alert(`Payment verification failed: ${vd.error || 'Please contact support with Payment ID: ' + response.razorpay_payment_id}`);
+              toast.error(`Payment verification failed: ${vd.error || 'Please contact support with Payment ID: ' + response.razorpay_payment_id}`);
               setIsProcessing(false);
               return;
             }
@@ -112,6 +114,7 @@ export default function PaywallModal({
             // 4. Verification successful on Supabase database
             setIsProcessing(false);
             setPaymentSuccess(true);
+            toast.success('Payment verified! Paper unlocked.');
             setTimeout(() => {
               setPaymentSuccess(false);
               onUnlocked();
@@ -124,11 +127,11 @@ export default function PaywallModal({
         rzp.open();
       } else {
         // Dev/staging fallback — shown only when Razorpay key is NOT configured
-        alert(`[Dev Mode] Order created: ${orderData.orderId}\nConfigure VITE_RAZORPAY_KEY_ID to enable live payments.`);
+        toast.info(`[Dev Mode] Order created: ${orderData.orderId}\nConfigure VITE_RAZORPAY_KEY_ID to enable live payments.`);
         setIsProcessing(false);
       }
     } catch (err: any) {
-      alert(err.message || 'Payment initiation failed. Please try again.');
+      toast.error(err.message || 'Payment initiation failed. Please try again.');
       setIsProcessing(false);
     }
   };

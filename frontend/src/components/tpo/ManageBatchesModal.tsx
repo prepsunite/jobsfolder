@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService } from '@/services/tpo.service';
 import type { CollegeBatch, CollegeStudent } from '@/types/tpo';
+import { useToast } from '@/contexts/ToastContext';
 import {
   Layers,
   X,
@@ -41,6 +42,7 @@ export default function ManageBatchesModal({
   onSelectBatchFilter,
 }: ManageBatchesModalProps) {
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   const [batchName, setBatchName] = useState('');
   const [passoutYear, setPassoutYear] = useState<number>(new Date().getFullYear());
@@ -122,15 +124,22 @@ export default function ManageBatchesModal({
       ? `Cohort "${batch.name}" currently has ${studentCount} enrolled student(s).\n\nAre you sure you want to delete this cohort? Students will remain on the roster as unassigned.`
       : `Are you sure you want to delete the cohort "${batch.name}"?`;
 
-    if (!window.confirm(confirmMsg)) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Cohort Batch',
+      message: confirmMsg,
+      confirmText: 'Delete Batch',
+      isDanger: true,
+    });
+    if (!confirmed) return;
 
     setDeletingBatchId(batch.id);
     try {
       await tpoService.deleteCollegeBatch(collegeId, batch.id);
       queryClient.invalidateQueries({ queryKey: ['tpo-batches', collegeId] });
       queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
+      toast.success(`Deleted cohort "${batch.name}".`);
     } catch (err: any) {
-      alert(`Could not delete batch: ${err.message}`);
+      toast.error(`Could not delete batch: ${err.message}`);
     } finally {
       setDeletingBatchId(null);
     }

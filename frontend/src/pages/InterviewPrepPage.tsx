@@ -41,6 +41,7 @@ import { interviewService } from '@/services/interview.service';
 import InterviewBulkImportModal from '@/components/interview/InterviewBulkImportModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/types/interview';
+import { useToast } from '@/contexts/ToastContext';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
   Database,
@@ -64,6 +65,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 export default function InterviewPrepPage() {
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const topicParam = searchParams.get('topic');
@@ -359,7 +361,7 @@ export default function InterviewPrepPage() {
 
   const saveTopic = async () => {
     if (!editingTopic || !editingTopic.id || !(editingTopic.name || editingTopic.title)) {
-      alert("Topic ID and Title/Name are required.");
+      toast.error("Topic ID and Title/Name are required.");
       return;
     }
 
@@ -375,8 +377,9 @@ export default function InterviewPrepPage() {
       setEditingTopic(null);
       refetchTopics();
       queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
+      toast.success("Topic saved successfully.");
     } else {
-      alert("Error saving topic: " + res.error);
+      toast.error("Error saving topic: " + res.error);
     }
   };
 
@@ -389,8 +392,9 @@ export default function InterviewPrepPage() {
     if (success) {
       refetchTopics();
       queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
+      toast.success(`Topic is now ${!topic.is_hidden ? 'hidden' : 'visible'}.`);
     } else {
-      alert("Failed to toggle visibility");
+      toast.error("Failed to toggle visibility");
     }
   };
 
@@ -399,14 +403,21 @@ export default function InterviewPrepPage() {
     e.stopPropagation();
     if (!isAdmin) return;
 
-    if (confirm(`Are you sure you want to permanently delete topic "${topic.title || topic.name}"?`)) {
-      const success = await interviewService.deleteTopic(topic.id);
-      if (success) {
-        refetchTopics();
-        queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
-      } else {
-        alert("Failed to delete topic");
-      }
+    const confirmed = await confirmModal({
+      title: "Delete Topic",
+      message: `Are you sure you want to permanently delete topic "${topic.title || topic.name}"?`,
+      confirmText: "Delete Topic",
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    const success = await interviewService.deleteTopic(topic.id);
+    if (success) {
+      refetchTopics();
+      queryClient.invalidateQueries({ queryKey: ['interview-prep-topics'] });
+      toast.success("Topic deleted successfully.");
+    } else {
+      toast.error("Failed to delete topic");
     }
   };
 
@@ -440,7 +451,7 @@ export default function InterviewPrepPage() {
 
   const saveQuestion = async () => {
     if (!editingQuestion || !editingQuestion.title || !editingQuestion.answer) {
-      alert("Question prompt and answer are required.");
+      toast.error("Question prompt and answer are required.");
       return;
     }
 
@@ -454,15 +465,23 @@ export default function InterviewPrepPage() {
       setIsEditingQuestion(false);
       setEditingQuestion(null);
       refetchQuestions();
+      toast.success("Question saved successfully.");
     } else {
-      alert("Error saving question: " + res.error);
+      toast.error("Error saving question: " + res.error);
     }
   };
 
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm("Are you sure you want to delete this question?")) return;
+    const confirmed = await confirmModal({
+      title: "Delete Question",
+      message: "Are you sure you want to delete this question?",
+      confirmText: "Delete Question",
+      isDanger: true,
+    });
+    if (!confirmed) return;
     await interviewService.deleteInterviewQuestion(questionId);
     refetchQuestions();
+    toast.success("Question deleted successfully.");
   };
 
   // ─── ADMIN BULK & VISIBILITY ACTIONS ──────────────────────────────────────
@@ -477,12 +496,19 @@ export default function InterviewPrepPage() {
   const handleBulkDelete = async () => {
     if (selectedQuestionIds.size === 0) return;
     const count = selectedQuestionIds.size;
-    if (!window.confirm(`Are you sure you want to delete ${count} selected question(s)? This action cannot be undone.`)) return;
+    const confirmed = await confirmModal({
+      title: 'Bulk Delete Questions',
+      message: `Are you sure you want to delete ${count} selected question(s)? This action cannot be undone.`,
+      confirmText: 'Delete Questions',
+      isDanger: true,
+    });
+    if (!confirmed) return;
 
     const idsToDelete = Array.from(selectedQuestionIds);
     await interviewService.bulkDeleteInterviewQuestions(idsToDelete);
     refetchQuestions();
     setSelectedQuestionIds(new Set());
+    toast.success(`Deleted ${count} questions.`);
   };
 
   const handleToggleQuestionVisibility = async (question: InterviewQuestion) => {

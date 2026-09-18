@@ -11,6 +11,7 @@ import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { interviewService } from '@/services/interview.service';
 import type { InterviewQuestion, InterviewCategory, InterviewTopic } from '@/types/interview';
+import { useToast } from '@/contexts/ToastContext';
 
 // ─── JSON Template ────────────────────────────────────────────────────────────
 const QUESTION_TEMPLATE = JSON.stringify([{
@@ -38,6 +39,7 @@ type FilterCat = 'ALL' | InterviewCategory;
 export default function AdminInterviewPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   if (!isSuperAdminEmail(user?.email)) return <NotFoundPage />;
 
@@ -136,7 +138,7 @@ export default function AdminInterviewPage() {
   const handleSaveTopic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topicDraft.name?.trim()) {
-      alert('Please provide a Topic Name / Title.');
+      toast.error('Please provide a Topic Name / Title.');
       return;
     }
 
@@ -154,14 +156,15 @@ export default function AdminInterviewPage() {
       });
 
       if (!res.success) {
-        alert(res.error || 'Failed to save topic');
+        toast.error(res.error || 'Failed to save topic');
         return;
       }
 
       setTopicModalOpen(false);
       refetchAll();
+      toast.success('Topic saved successfully');
     } catch (err: any) {
-      alert('Error saving topic: ' + err.message);
+      toast.error('Error saving topic: ' + err.message);
     } finally {
       setIsSaving(false);
     }
@@ -171,12 +174,21 @@ export default function AdminInterviewPage() {
     const nextHidden = !topic.is_hidden;
     await interviewService.toggleTopicVisibility(topic.id, nextHidden);
     refetchAll();
+    toast.success(nextHidden ? 'Topic is now hidden' : 'Topic is now visible');
   };
 
   const handleDeleteTopic = async (topic: InterviewTopic) => {
-    if (!confirm(`Delete topic "${topic.name || topic.title}"? Any linked questions will be retained.`)) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Topic',
+      message: `Delete topic "${topic.name || topic.title}"? Any linked questions will be retained.`,
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     await interviewService.deleteTopic(topic.id);
     refetchAll();
+    toast.success('Topic deleted');
   };
 
   // ─── JSON Parse ───────────────────────────────────────────────────────────
@@ -220,8 +232,10 @@ export default function AdminInterviewPage() {
       setJsonText('');
       setParsedItems([]);
       refetchAll();
+      toast.success(`Imported ${result.importedCount} question(s) successfully`);
     } catch (e: any) {
       setImportReport({ count: 0, message: `Error: ${e.message}` });
+      toast.error(`Import failed: ${e.message}`);
     } finally {
       setIsImporting(false);
     }
@@ -229,9 +243,17 @@ export default function AdminInterviewPage() {
 
   // ─── Delete Question ──────────────────────────────────────────────────────
   const handleDeleteQuestion = async (id: string) => {
-    if (!confirm('Delete this question permanently?')) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Question',
+      message: 'Delete this question permanently?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     await interviewService.deleteInterviewQuestion(id);
     refetchAll();
+    toast.success('Question deleted');
   };
 
   // ─── Edit Question ────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import ContentRenderer from '@/components/ContentRenderer';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/contexts/ToastContext';
 import PaywallModal from '@/components/PaywallModal';
 import DocumentExplorer from '@/components/DocumentExplorer';
 import ShareModal from '@/components/ShareModal';
@@ -50,6 +51,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const { user } = useAuth();
   const isAdmin = isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   const isDirectOldPapersUrl = !!isOldPapersRoute || location.pathname.endsWith('/oldpapers');
 
@@ -71,21 +73,38 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   });
 
   // Derive a CompanyItem-compatible shape from the Supabase company
+  const fallbackDsCompany = dataStore.getCompanies().find(c => (c.slug || '').toLowerCase() === (slug || '').toLowerCase());
   const currentCompanyStoreItem = company
     ? {
         id: company.id,
         name: company.name,
         slug: company.slug,
-        description: company.description || `${company.name} conducts annual campus recruitment drives.`,
-        industry: company.industry || 'IT Services & Consulting',
-        companySize: company.companySize || 'Pan-India Recruitment Drive',
-        headquarters: company.headquarters || 'India & Global',
-        website: company.website,
-        logoUrl: company.logoUrl,
-        aboutCompany: company.aboutCompany || `### About ${company.name}\n\nAdd details here.`,
+        description: company.description || fallbackDsCompany?.description || `${company.name} conducts annual campus recruitment drives.`,
+        industry: company.industry || fallbackDsCompany?.industry || 'IT Services & Consulting',
+        companySize: company.companySize || fallbackDsCompany?.companySize || 'Pan-India Recruitment Drive',
+        headquarters: company.headquarters || fallbackDsCompany?.headquarters || 'India & Global',
+        website: company.website || fallbackDsCompany?.website,
+        logoUrl: company.logoUrl || fallbackDsCompany?.logoUrl,
+        aboutCompany: company.aboutCompany || fallbackDsCompany?.aboutCompany || `### About ${company.name}\n\nAdd details here.`,
         isActive: company.isActive ?? true,
         isHidden: company.isHidden ?? false,
         createdAt: company.createdAt || new Date().toISOString(),
+      }
+    : fallbackDsCompany
+    ? {
+        id: fallbackDsCompany.id,
+        name: fallbackDsCompany.name,
+        slug: fallbackDsCompany.slug,
+        description: fallbackDsCompany.description || `${fallbackDsCompany.name} conducts annual campus recruitment drives.`,
+        industry: fallbackDsCompany.industry || 'IT Services & Consulting',
+        companySize: fallbackDsCompany.companySize || 'Pan-India Recruitment Drive',
+        headquarters: fallbackDsCompany.headquarters || 'India & Global',
+        website: fallbackDsCompany.website,
+        logoUrl: fallbackDsCompany.logoUrl,
+        aboutCompany: fallbackDsCompany.aboutCompany || `### About ${fallbackDsCompany.name}\n\nAdd details here.`,
+        isActive: true,
+        isHidden: false,
+        createdAt: new Date().toISOString(),
       }
     : {
         id: `c-${slug}`,
@@ -279,8 +298,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       queryClient.invalidateQueries({ queryKey: ['company', slug] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       forceRefreshData();
+      toast.success('Company header saved successfully.');
     } catch (err: any) {
-      alert(`Failed to save company header to Supabase: ${err.message || err}`);
+      toast.error(`Failed to save company header to Supabase: ${err.message || err}`);
     }
   };
 
@@ -302,8 +322,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       queryClient.invalidateQueries({ queryKey: ['live-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       forceRefreshData();
+      toast.success('New exam module created.');
     } catch (err: any) {
-      alert(`Failed to create exam in Supabase: ${err.message || err}`);
+      toast.error(`Failed to create exam in Supabase: ${err.message || err}`);
     }
   };
 
@@ -346,22 +367,31 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       queryClient.invalidateQueries({ queryKey: ['live-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       forceRefreshData();
+      toast.success('Content saved successfully.');
     } catch (err: any) {
-      alert(`Failed to save content to Supabase: ${err.message || err}`);
+      toast.error(`Failed to save content to Supabase: ${err.message || err}`);
     }
   };
 
   const handleDeleteExam = async () => {
-    if (currentExam && confirm("Are you sure you want to delete this exam module?")) {
-      try {
-        await examService.deleteExam(currentExam.id);
-        setIsEditing(false);
-        queryClient.invalidateQueries({ queryKey: ['live-exams'] });
-        queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
-        forceRefreshData();
-      } catch (err: any) {
-        alert(`Failed to delete exam from Supabase: ${err.message || err}`);
-      }
+    if (!currentExam) return;
+    const confirmed = await confirmModal({
+      title: 'Delete Exam Module',
+      message: 'Are you sure you want to delete this exam module? All syllabus contents will be archived.',
+      confirmText: 'Delete Exam',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await examService.deleteExam(currentExam.id);
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['live-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      forceRefreshData();
+      toast.success('Exam module deleted successfully.');
+    } catch (err: any) {
+      toast.error(`Failed to delete exam from Supabase: ${err.message || err}`);
     }
   };
 
@@ -371,8 +401,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       queryClient.invalidateQueries({ queryKey: ['live-exams'] });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       forceRefreshData();
+      toast.success(`Exam is now ${newHiddenStatus ? 'hidden' : 'visible'}.`);
     } catch (err: any) {
-      alert(`Failed to update exam visibility: ${err.message || err}`);
+      toast.error(`Failed to update exam visibility: ${err.message || err}`);
     }
   };
 
@@ -385,8 +416,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['live-exams'] });
       forceRefreshData();
+      toast.success(`Company is now ${newHiddenStatus ? 'hidden' : 'visible'}.`);
     } catch (err: any) {
-      alert(`Failed to update company visibility: ${err.message || err}`);
+      toast.error(`Failed to update company visibility: ${err.message || err}`);
     }
   };
 
@@ -602,17 +634,40 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
         {/* Horizontal Active Exam Module Tabs */}
         <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
-              Active Exam Archive:
-            </span>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
+                Active Exam Archive:
+              </span>
+              {currentExam?.isHidden && (
+                <span className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1">
+                  <EyeOff className="w-2.5 h-2.5" /> Selected Exam is Hidden
+                </span>
+              )}
+            </div>
             {isAdmin && (
-              <button
-                onClick={handleAddNewExam}
-                className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-display font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded hover:bg-purple-200"
-              >
-                <Plus className="w-3 h-3" /> Add Exam
-              </button>
+              <div className="flex items-center gap-2">
+                {currentExam && (
+                  <button
+                    onClick={() => handleToggleExamVisibility(currentExam.id, !currentExam.isHidden)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-display font-bold uppercase tracking-wider rounded transition-all shadow-xs cursor-pointer ${
+                      currentExam.isHidden
+                        ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                        : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700'
+                    }`}
+                    title={currentExam.isHidden ? `Publish "${currentExam.name}" to students` : `Hide "${currentExam.name}" from students`}
+                  >
+                    {currentExam.isHidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                    <span>{currentExam.isHidden ? 'Publish Selected Exam' : 'Hide Selected Exam'}</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleAddNewExam}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-display font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded hover:bg-purple-200"
+                >
+                  <Plus className="w-3 h-3" /> Add Exam
+                </button>
+              </div>
             )}
           </div>
           
@@ -656,7 +711,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
           {currentExam ? (
             <div className="space-y-6">
               {/* Draft / Hidden Warning Banner for Admin */}
-              {currentExam?.isHidden && isAdmin && activeTab !== 'aboutCompany' && (
+              {currentExam?.isHidden && isAdmin && (
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-800 dark:text-amber-300">
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 rounded-md bg-amber-500/20 shrink-0">
@@ -664,7 +719,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     </div>
                     <div>
                       <span className="text-xs font-bold font-display uppercase tracking-wide flex items-center gap-1.5">
-                        Exam Module in Draft / Hidden Mode
+                        Selected Exam ({currentExam.name}) in Draft / Hidden Mode
                       </span>
                       <p className="text-xs opacity-90">
                         This exam track is hidden from students. You can safely add syllabus details, old paper tabs, and test questions.
@@ -681,24 +736,37 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                 </div>
               )}
 
-              {/* Active Exam Header Bar with Bookmark Button */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
-                <div>
-                  <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF]">
-                    {activeTab === 'aboutCompany' ? `${companyName} Overview` : currentExam.name}
-                  </h2>
-                  {activeTab !== 'aboutCompany' && (
+              {/* Active Exam Header Bar with Company Logo & Bookmark Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-md bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#121417] dark:text-[#FFFFFF] font-display font-black text-lg flex items-center justify-center shrink-0 overflow-hidden">
+                    {currentCompanyStoreItem.logoUrl ? (
+                      <img src={currentCompanyStoreItem.logoUrl} alt={companyName} className="w-full h-full object-contain p-1" />
+                    ) : (
+                      companyName.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF]">
+                      {activeTab === 'aboutCompany' ? `${companyName} Overview` : currentExam.name}
+                    </h2>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="inline-block bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                        {currentExam.badge}
-                      </span>
+                      {activeTab !== 'aboutCompany' ? (
+                        <span className="inline-block bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                          {currentExam.badge}
+                        </span>
+                      ) : (
+                        <span className="inline-block bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
+                          {companyName} Drives
+                        </span>
+                      )}
                       {currentExam.isHidden && (
                         <span className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1">
                           <EyeOff className="w-2.5 h-2.5" /> Draft / Hidden
                         </span>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-2.5">
@@ -742,7 +810,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     </button>
                   )}
 
-                  {isAdmin && currentExam && activeTab !== 'aboutCompany' && (
+                  {isAdmin && currentExam && (
                     <button
                       onClick={() => handleToggleExamVisibility(currentExam.id, !currentExam.isHidden)}
                       className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-display font-bold text-xs uppercase tracking-wider shadow-xs transition-all shrink-0 cursor-pointer ${

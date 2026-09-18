@@ -20,6 +20,7 @@ import {
 import type { DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
 import { flattenNodes, findNodeById, updateNode } from '@/utils/treeUtils';
+import { useToast } from '@/contexts/ToastContext';
 
 export interface BulkImportPapersModalProps {
   isOpen: boolean;
@@ -370,6 +371,7 @@ export default function BulkImportPapersModal({
   initialTargetNodeId,
   onImport,
 }: BulkImportPapersModalProps) {
+  const { toast } = useToast();
   const [inputText, setInputText] = useState<string>('');
   const [accessMode, setAccessMode] = useState<'standard' | 'free' | 'paid'>('standard');
   
@@ -541,9 +543,10 @@ export default function BulkImportPapersModal({
       }
 
       onImport(updatedTabs, finalTargetId);
+      toast.success('Successfully imported questions into exam syllabus.');
       onClose();
     } catch (err: any) {
-      alert('Failed to import questions: ' + (err.message || err));
+      toast.error('Failed to import questions: ' + (err.message || err));
     } finally {
       setIsSubmitting(false);
     }

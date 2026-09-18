@@ -143,11 +143,11 @@ export interface StudentExamAttempt {
   id: string;
   mock_exam_id: string;
   student_id: string;
-  student_email?: string;
+  student_email?: string | null;
   college_id: string;
   status: 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT' | 'GRADED';
   started_at: string;
-  submitted_at?: string;
+  submitted_at?: string | null;
   time_spent_seconds: number;
   total_score: number;
   max_possible_score: number;

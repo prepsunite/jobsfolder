@@ -14,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import { normalizeMathText } from '@/utils/questionParser';
+import { useToast } from '@/contexts/ToastContext';
 import {
   User,
   BookmarkCheck,
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
   const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
   const [deletionRequested, setDeletionRequested] = useState(false);
+  const { toast, confirmModal } = useToast();
 
 
   // Live Supabase subscription query for Pro Pass
@@ -496,17 +498,29 @@ export default function DashboardPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleWithdrawConsent = () => {
-    if (confirm('Are you sure you want to withdraw DPDP consent? While your account stays safe, personalized analytics and sync features will be paused until re-consented.')) {
+  const handleWithdrawConsent = async () => {
+    const confirmed = await confirmModal({
+      title: 'Withdraw DPDP Consent',
+      message: 'Are you sure you want to withdraw DPDP consent? While your account stays safe, personalized analytics and sync features will be paused until re-consented.',
+      confirmText: 'Withdraw Consent',
+      isDanger: true,
+    });
+    if (confirmed) {
       setConsentStatus('WITHDRAWN');
-      alert('Your consent has been successfully withdrawn. You may re-consent anytime by saving questions or updating your profile.');
+      toast.info('Your consent has been successfully withdrawn. You may re-consent anytime by saving questions or updating your profile.');
     }
   };
 
-  const handleRequestDeletion = () => {
-    if (confirm('Request account deletion under Section 12(3) of DPDP Act 2023? Our Data Grievance Officer will verify and purge all personal identifiers within 30 days.')) {
+  const handleRequestDeletion = async () => {
+    const confirmed = await confirmModal({
+      title: 'Request Account Deletion',
+      message: 'Request account deletion under Section 12(3) of DPDP Act 2023? Our Data Grievance Officer will verify and purge all personal identifiers within 30 days.',
+      confirmText: 'Request Deletion',
+      isDanger: true,
+    });
+    if (confirmed) {
       setDeletionRequested(true);
-      alert('Account deletion request registered. An email confirmation has been logged for our Grievance Officer.');
+      toast.info('Account deletion request registered. An email confirmation has been logged for our Grievance Officer.');
     }
   };
 

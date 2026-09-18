@@ -58,6 +58,7 @@ import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImport
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import CampusDsaRoadmapView from '@/components/technical/CampusDsaRoadmapView';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
+import { useToast } from '@/contexts/ToastContext';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
   Code2,
@@ -85,6 +86,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 export default function TechnicalHubPage() {
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const trackParam = searchParams.get('track');
   const topicParam = searchParams.get('topic');
@@ -612,7 +614,7 @@ export default function TechnicalHubPage() {
 
   const saveTopic = async () => {
     if (!editingTopic || !editingTopic.id || !(editingTopic.name || editingTopic.title)) {
-      alert("Topic ID and Title/Name are required.");
+      toast.error("Topic ID and Title/Name are required.");
       return;
     }
 
@@ -628,8 +630,9 @@ export default function TechnicalHubPage() {
       setEditingTopic(null);
       refetchTopics();
       queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
+      toast.success("Topic saved successfully.");
     } else {
-      alert("Error saving topic: " + res.error);
+      toast.error("Error saving topic: " + res.error);
     }
   };
 
@@ -642,8 +645,9 @@ export default function TechnicalHubPage() {
     if (success) {
       refetchTopics();
       queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
+      toast.success(`Topic is now ${!topic.is_hidden ? 'hidden' : 'visible'}.`);
     } else {
-      alert("Failed to toggle visibility");
+      toast.error("Failed to toggle visibility");
     }
   };
 
@@ -652,14 +656,21 @@ export default function TechnicalHubPage() {
     e.stopPropagation();
     if (!isAdmin) return;
 
-    if (confirm(`Are you sure you want to permanently delete topic "${topic.title}"?`)) {
-      const success = await technicalService.deleteTopic(topic.id);
-      if (success) {
-        refetchTopics();
-        queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
-      } else {
-        alert("Failed to delete topic");
-      }
+    const confirmed = await confirmModal({
+      title: "Delete Topic",
+      message: `Are you sure you want to permanently delete topic "${topic.title}"?`,
+      confirmText: "Delete Topic",
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    const success = await technicalService.deleteTopic(topic.id);
+    if (success) {
+      refetchTopics();
+      queryClient.invalidateQueries({ queryKey: ['technical-topics'] });
+      toast.success("Topic deleted successfully.");
+    } else {
+      toast.error("Failed to delete topic");
     }
   };
 
@@ -703,7 +714,7 @@ export default function TechnicalHubPage() {
 
   const saveProblem = async () => {
     if (!editingProblem || !editingProblem.title) {
-      alert("Problem title is required.");
+      toast.error("Problem title is required.");
       return;
     }
 
@@ -718,16 +729,24 @@ export default function TechnicalHubPage() {
       setEditingProblem(null);
       if (activeTrack === 'CAMPUS_DSA') refetchDsa();
       else refetchP150();
+      toast.success("Problem saved successfully.");
     } else {
-      alert("Error saving problem: " + res.error);
+      toast.error("Error saving problem: " + res.error);
     }
   };
 
   const handleDeleteProblem = async (problemId: string) => {
-    if (!confirm("Are you sure you want to delete this problem?")) return;
+    const confirmed = await confirmModal({
+      title: "Delete Problem",
+      message: "Are you sure you want to delete this problem?",
+      confirmText: "Delete Problem",
+      isDanger: true,
+    });
+    if (!confirmed) return;
     await technicalService.deleteProgrammingProblem(problemId);
     if (activeTrack === 'CAMPUS_DSA') refetchDsa();
     else refetchP150();
+    toast.success("Problem deleted successfully.");
   };
 
   // ─── ADMIN MCQ ACTIONS ────────────────────────────────────────────────────
@@ -759,7 +778,7 @@ export default function TechnicalHubPage() {
 
   const saveMcq = async () => {
     if (!editingMcq || !editingMcq.question) {
-      alert("MCQ Question is required.");
+      toast.error("MCQ Question is required.");
       return;
     }
 
@@ -773,15 +792,23 @@ export default function TechnicalHubPage() {
       setIsEditingMcq(false);
       setEditingMcq(null);
       refetchMcqs();
+      toast.success("MCQ saved successfully.");
     } else {
-      alert("Error saving MCQ: " + res.error);
+      toast.error("Error saving MCQ: " + res.error);
     }
   };
 
   const handleDeleteMcq = async (mcqId: string) => {
-    if (!confirm("Are you sure you want to delete this MCQ?")) return;
+    const confirmed = await confirmModal({
+      title: "Delete MCQ",
+      message: "Are you sure you want to delete this MCQ?",
+      confirmText: "Delete MCQ",
+      isDanger: true,
+    });
+    if (!confirmed) return;
     await technicalService.deleteTechnicalMcq(mcqId);
     refetchMcqs();
+    toast.success("MCQ deleted successfully.");
   };
 
   // ─── ADMIN BULK & VISIBILITY ACTIONS ──────────────────────────────────────
@@ -798,7 +825,13 @@ export default function TechnicalHubPage() {
     if (selectedItemIds.size === 0) return;
     const count = selectedItemIds.size;
     const itemLabel = activeTrack === 'TECHNICAL_MCQS' ? 'MCQ(s)' : 'problem(s)';
-    if (!window.confirm(`Are you sure you want to delete ${count} selected ${itemLabel}? This action cannot be undone.`)) return;
+    const confirmed = await confirmModal({
+      title: 'Bulk Delete Items',
+      message: `Are you sure you want to delete ${count} selected ${itemLabel}? This action cannot be undone.`,
+      confirmText: 'Delete Items',
+      isDanger: true,
+    });
+    if (!confirmed) return;
 
     const idsToDelete = Array.from(selectedItemIds);
     if (activeTrack === 'TECHNICAL_MCQS') {
@@ -810,6 +843,7 @@ export default function TechnicalHubPage() {
       else refetchP150();
     }
     setSelectedItemIds(new Set());
+    toast.success(`Deleted ${count} ${itemLabel}.`);
   };
 
   const handleToggleProblemVisibility = async (problem: ProgrammingProblem) => {

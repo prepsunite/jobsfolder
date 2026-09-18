@@ -1,6 +1,7 @@
 // Global synchronized state manager for Admin CRUD operations visible to all users live!
 import { resolveTopicSlug } from './topicMap';
 import { supabase } from '@/lib/supabase';
+import { bookmarkStore } from './stores/bookmarkStore';
 import {
   validateQuestionItem,
   generateQuestionFingerprint,
@@ -1216,191 +1217,51 @@ class DataStoreManager {
 
 
 
-  // --- BOOKMARKS (DATABASE-BACKED WITH LOCAL CACHE) ---
-  private syncBookmarksTimeout: any = null;
-
-  async syncBookmarksWithSupabase(): Promise<void> {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const questions = this.getBookmarkedQuestionIds();
-      const exams = this.getBookmarkedExamIds();
-      const experiences = this.getBookmarkedExperienceIds();
-
-      if (this.syncBookmarksTimeout) clearTimeout(this.syncBookmarksTimeout);
-      this.syncBookmarksTimeout = setTimeout(async () => {
-        try {
-          // 🛡️ JWT Size Protection: Cap recent bookmarks in user_metadata to prevent HTTP 431 Request Header Too Large
-          const safeQuestions = questions.slice(0, 30);
-          const safeExams = exams.slice(0, 20);
-          const safeExperiences = experiences.slice(0, 20);
-
-          await supabase.auth.updateUser({
-            data: {
-              bookmarked_questions: safeQuestions,
-              bookmarked_exams: safeExams,
-              bookmarked_experiences: safeExperiences,
-            },
-          });
-        } catch (e) {
-          console.warn('[dataStore] Supabase bookmarks sync notice:', e);
-        }
-      }, 400);
-    } catch (err) {
-      console.warn('[dataStore] Failed to check auth session for bookmark sync:', err);
-    }
+  // --- BOOKMARKS (DELEGATED TO MODULAR BOOKMARK STORE) ---
+  syncBookmarksWithSupabase(): Promise<void> {
+    return bookmarkStore.syncBookmarksWithSupabase();
   }
 
-  async hydrateBookmarksFromSupabase(userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
-    try {
-      let meta = userMetadata;
-      if (!meta) {
-        const { data: { session } } = await supabase.auth.getSession();
-        meta = session?.user?.user_metadata;
-      }
-
-      if (!meta) {
-        return {
-          questions: this.getBookmarkedQuestionIds(),
-          exams: this.getBookmarkedExamIds(),
-          experiences: this.getBookmarkedExperienceIds(),
-        };
-      }
-
-      const remoteQuestions: string[] = Array.isArray(meta.bookmarked_questions) ? meta.bookmarked_questions : [];
-      const remoteExams: string[] = Array.isArray(meta.bookmarked_exams) ? meta.bookmarked_exams : [];
-      const remoteExps: string[] = Array.isArray(meta.bookmarked_experiences) ? meta.bookmarked_experiences : [];
-
-      const localQuestions = this.getBookmarkedQuestionIds();
-      const localExams = this.getBookmarkedExamIds();
-      const localExps = this.getBookmarkedExperienceIds();
-
-      // Union: preserve any items saved locally + all items saved in Supabase
-      const mergedQuestions = Array.from(new Set([...localQuestions, ...remoteQuestions]));
-      const mergedExams = Array.from(new Set([...localExams, ...remoteExams]));
-      const mergedExps = Array.from(new Set([...localExps, ...remoteExps]));
-
-      const hasChanged = (
-        mergedQuestions.length !== localQuestions.length ||
-        mergedExams.length !== localExams.length ||
-        mergedExps.length !== localExps.length
-      );
-
-      if (hasChanged) {
-        this.setStorage('prepunite_bookmarked_questions', mergedQuestions);
-        this.setStorage('prepunite_bookmarked_exams', mergedExams);
-        this.setStorage('prepunite_bookmarked_experiences', mergedExps);
-
-        if (
-          mergedQuestions.length !== remoteQuestions.length ||
-          mergedExams.length !== remoteExams.length ||
-          mergedExps.length !== remoteExps.length
-        ) {
-          this.syncBookmarksWithSupabase();
-        }
-
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
-        }
-      }
-
-      return {
-        questions: mergedQuestions,
-        exams: mergedExams,
-        experiences: mergedExps,
-      };
-    } catch (e) {
-      console.warn('[dataStore] Hydrate bookmarks notice:', e);
-      return {
-        questions: this.getBookmarkedQuestionIds(),
-        exams: this.getBookmarkedExamIds(),
-        experiences: this.getBookmarkedExperienceIds(),
-      };
-    }
+  hydrateBookmarksFromSupabase(userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
+    return bookmarkStore.hydrateBookmarksFromSupabase(userMetadata);
   }
 
   getBookmarkedExamIds(): string[] {
-    return this.getStorage<string[]>('prepunite_bookmarked_exams', []);
+    return bookmarkStore.getBookmarkedExamIds();
   }
 
   isExamBookmarked(examId: string): boolean {
-    return this.getBookmarkedExamIds().includes(examId);
+    return bookmarkStore.isExamBookmarked(examId);
   }
 
   toggleBookmarkExam(examId: string): boolean {
-    const list = this.getBookmarkedExamIds();
-    let updated: string[];
-    let isBookmarked: boolean;
-    if (list.includes(examId)) {
-      updated = list.filter(id => id !== examId);
-      isBookmarked = false;
-    } else {
-      updated = [...list, examId];
-      isBookmarked = true;
-    }
-    this.setStorage('prepunite_bookmarked_exams', updated);
-    this.syncBookmarksWithSupabase();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
-    }
-    return isBookmarked;
+    return bookmarkStore.toggleBookmarkExam(examId);
   }
 
   // --- QUESTION BOOKMARKS ---
   getBookmarkedQuestionIds(): string[] {
-    return this.getStorage<string[]>('prepunite_bookmarked_questions', []);
+    return bookmarkStore.getBookmarkedQuestionIds();
   }
 
   isQuestionBookmarked(questionId: string): boolean {
-    return this.getBookmarkedQuestionIds().includes(questionId);
+    return bookmarkStore.isQuestionBookmarked(questionId);
   }
 
   toggleBookmarkQuestion(questionId: string): boolean {
-    const list = this.getBookmarkedQuestionIds();
-    let updated: string[];
-    let isBookmarked: boolean;
-    if (list.includes(questionId)) {
-      updated = list.filter(id => id !== questionId);
-      isBookmarked = false;
-    } else {
-      updated = [...list, questionId];
-      isBookmarked = true;
-    }
-    this.setStorage('prepunite_bookmarked_questions', updated);
-    this.syncBookmarksWithSupabase();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
-    }
-    return isBookmarked;
+    return bookmarkStore.toggleBookmarkQuestion(questionId);
   }
 
   // --- EXPERIENCE BOOKMARKS ---
   getBookmarkedExperienceIds(): string[] {
-    return this.getStorage<string[]>('prepunite_bookmarked_experiences', []);
+    return bookmarkStore.getBookmarkedExperienceIds();
   }
 
   isExperienceBookmarked(expId: string): boolean {
-    return this.getBookmarkedExperienceIds().includes(expId);
+    return bookmarkStore.isExperienceBookmarked(expId);
   }
 
   toggleBookmarkExperience(expId: string): boolean {
-    const list = this.getBookmarkedExperienceIds();
-    let updated: string[];
-    let isBookmarked: boolean;
-    if (list.includes(expId)) {
-      updated = list.filter(id => id !== expId);
-      isBookmarked = false;
-    } else {
-      updated = [...list, expId];
-      isBookmarked = true;
-    }
-    this.setStorage('prepunite_bookmarked_experiences', updated);
-    this.syncBookmarksWithSupabase();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
-    }
-    return isBookmarked;
+    return bookmarkStore.toggleBookmarkExperience(expId);
   }
 
   // --- PAYWALL & MONETIZATION STORAGE WITH 30-DAY SINGLE PAPER EXPIRATION ---

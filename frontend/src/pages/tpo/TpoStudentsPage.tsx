@@ -21,10 +21,12 @@ import type { CollegeStudent } from '@/types/tpo';
 import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
 import AddStudentModal from '@/components/tpo/AddStudentModal';
 import ManageBatchesModal from '@/components/tpo/ManageBatchesModal';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function TpoStudentsPage() {
   const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
@@ -102,9 +104,12 @@ export default function TpoStudentsPage() {
 
   // Remove Single Student
   const handleRemoveStudent = async (studentEmail: string, studentName: string) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to remove ${studentName} (${studentEmail}) from ${currentCollege.name}?\n\nThis will revoke their Campus Pro Pass access and free up 1 student license seat.`
-    );
+    const confirmDelete = await confirmModal({
+      title: 'Remove Student',
+      message: `Are you sure you want to remove ${studentName} (${studentEmail}) from ${currentCollege.name}?\n\nThis will revoke their Campus Pro Pass access and free up 1 student license seat.`,
+      confirmText: 'Remove Student',
+      isDanger: true,
+    });
     if (!confirmDelete) return;
 
     try {
@@ -114,8 +119,9 @@ export default function TpoStudentsPage() {
       queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
       refetch();
+      toast.success(`Removed ${studentName} from roster.`);
     } catch (err: any) {
-      alert(`Failed to remove student: ${err.message}`);
+      toast.error(`Failed to remove student: ${err.message}`);
     }
   };
 
@@ -128,8 +134,9 @@ export default function TpoStudentsPage() {
       queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
       queryClient.invalidateQueries({ queryKey: ['tpo-all-students-counts', collegeId] });
       refetch();
+      toast.success(`Assigned ${studentName} to cohort "${newBatchName}".`);
     } catch (err: any) {
-      alert(`Could not update cohort batch: ${err.message}`);
+      toast.error(`Could not update cohort batch: ${err.message}`);
     }
   };
 

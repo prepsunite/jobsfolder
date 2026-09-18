@@ -7,11 +7,13 @@ import type { Company } from '@/types/company';
 import LogoLoader from '@/components/LogoLoader';
 
 import { companyService } from '@/services/company.service';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function CompaniesPage() {
   const { role } = useAuth();
   const isAdmin = role === 'ADMIN';
   const queryClient = useQueryClient();
+  const { toast, confirmModal } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -61,8 +63,9 @@ export default function CompaniesPage() {
       await companyService.toggleCompanyVisibility(company.id || company.slug, nextHidden);
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
+      toast.success(`Company ${nextHidden ? 'hidden' : 'visible'} successfully.`);
     } catch (err: any) {
-      alert(`Failed to update company visibility: ${err.message || err}`);
+      toast.error(`Failed to update company visibility: ${err.message || err}`);
     }
   };
 
@@ -85,8 +88,9 @@ export default function CompaniesPage() {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setShowAddModal(false);
       setNewCompany({ name: '', industry: 'IT Services & Consulting', description: '', logoUrl: '', website: '', headquarters: 'India & Global' });
+      toast.success('Company created successfully in Supabase.');
     } catch (err: any) {
-      alert(`Failed to create company in Supabase: ${err.message || err}`);
+      toast.error(`Failed to create company in Supabase: ${err.message || err}`);
     }
   };
 
@@ -97,18 +101,28 @@ export default function CompaniesPage() {
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setEditingCompany(null);
+      toast.success('Company updated successfully in Supabase.');
     } catch (err: any) {
-      alert(`Failed to update company in Supabase: ${err.message || err}`);
+      toast.error(`Failed to update company in Supabase: ${err.message || err}`);
     }
   };
 
   const handleDeleteCompany = async (id: string) => {
+    const confirmed = await confirmModal({
+      title: 'Delete Company',
+      message: 'Are you sure you want to delete this company? All associated exams and syllabus papers will be archived.',
+      confirmText: 'Delete Company',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
     try {
       await companyService.deleteCompany(id);
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      toast.success('Company deleted successfully.');
     } catch (err: any) {
-      alert(`Failed to delete company in Supabase: ${err.message || err}`);
+      toast.error(`Failed to delete company in Supabase: ${err.message || err}`);
     }
   };
 
