@@ -148,7 +148,7 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
         )}
 
         {/* Center Logo */}
-        <div className="flex items-center justify-center w-full h-24 sm:h-28 overflow-hidden">
+        <div className="flex items-center justify-center w-full h-24 sm:h-28 overflow-hidden rounded-md bg-white">
           {effectiveLogo ? (
             <img
               src={effectiveLogo}
