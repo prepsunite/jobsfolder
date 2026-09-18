@@ -22,6 +22,24 @@ import {
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 
+interface ExperienceDbRow {
+  id: string;
+  company_name?: string | null;
+  company_slug?: string | null;
+  role_title?: string | null;
+  student_name?: string | null;
+  college?: string | null;
+  year?: number | null;
+  difficulty?: string | null;
+  verdict?: 'SELECTED' | 'REJECTED' | null;
+  upvotes?: number | null;
+  drive_type?: 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS' | null;
+  rounds?: unknown;
+  overall_experience?: string | null;
+  description?: string | null;
+  status?: string | null;
+}
+
 export default function ExperiencesPage() {
   const { role } = useAuth();
   const isAdmin = role === 'ADMIN';
@@ -64,9 +82,9 @@ export default function ExperiencesPage() {
   };
 
   // Bookmark State
-  const [bookmarkedExpIds, setBookmarkedExpIds] = useState<string[]>(() =>
-    dataStore.getBookmarkedExperienceIds()
-  );
+  const [bookmarkedExpIds, setBookmarkedExpIds] = useState<string[]>(() => {
+    return dataStore.getBookmarkedExperienceIds();
+  });
 
   useEffect(() => {
     const handleBookmarksChanged = () => {
@@ -86,7 +104,9 @@ export default function ExperiencesPage() {
     queryFn: async () => {
       let query = supabase
         .from('experiences')
-        .select('*')
+        .select(
+          'id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, upvotes, drive_type, rounds, overall_experience, description, status'
+        )
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
@@ -103,26 +123,26 @@ export default function ExperiencesPage() {
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(
-        (e: any): ExperienceItem => ({
+      return ((data || []) as unknown as ExperienceDbRow[]).map(
+        (e: ExperienceDbRow): ExperienceItem => ({
           id: e.id,
           companyName: e.company_name || e.company_slug?.toUpperCase() || 'TCS',
           role: e.role_title || 'Software Engineer',
           studentName: e.student_name || 'Student',
           college: e.college || '',
           year: e.year || 2026,
-          difficulty: e.difficulty || 'MEDIUM',
+          difficulty: e.difficulty === 'EASY' || e.difficulty === 'HARD' ? e.difficulty : 'MEDIUM',
           verdict: e.verdict || 'SELECTED',
           upvotes: e.upvotes || 0,
           driveType: e.drive_type || 'ON_CAMPUS',
           rounds: (() => {
             try {
-              return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : e.rounds || [];
+              return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : (e.rounds as any) || [];
             } catch {
               return [{ roundTitle: 'Interview', details: e.overall_experience || e.description || '' }];
             }
           })(),
-          status: e.status || 'PENDING',
+          status: e.status === 'APPROVED' || e.status === 'REJECTED' ? e.status : 'PENDING',
         })
       );
     },

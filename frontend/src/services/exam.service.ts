@@ -28,6 +28,36 @@ interface RpcExamRow {
   created_at?: string;
 }
 
+export const HIDDEN_EXAM_MARKER = '<!-- prepunite_hidden:true -->';
+
+export interface ExamVisibilityCheck {
+  is_hidden?: boolean;
+  isHidden?: boolean;
+  content?: string;
+  badge?: string;
+}
+
+export const parseExamHidden = (e: ExamVisibilityCheck): boolean => {
+  if (e.is_hidden === true || e.isHidden === true) return true;
+  if (typeof e.content === 'string' && e.content.includes(HIDDEN_EXAM_MARKER)) return true;
+  if (typeof e.badge === 'string' && (e.badge.includes(HIDDEN_EXAM_MARKER) || e.badge.toLowerCase().includes('[draft]') || e.badge.toLowerCase().includes('[hidden]'))) return true;
+  return false;
+};
+
+export const cleanExamContent = (content?: string): string => {
+  if (!content) return '';
+  return content.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+};
+
+export const cleanExamBadge = (badge?: string): string => {
+  if (!badge) return '';
+  return badge
+    .replace(/<!--\s*prepunite_hidden:true\s*-->/g, '')
+    .replace(/\[\s*draft\s*\]/gi, '')
+    .replace(/\[\s*hidden\s*\]/gi, '')
+    .trim();
+};
+
 const parseCompHidden = (c: CompanyVisibilityCheck): boolean => {
   if (c.is_hidden === true || c.isHidden === true) return true;
   if (typeof c.about_company === 'string' && c.about_company.includes('<!-- prepunite_hidden:true -->')) return true;
@@ -36,7 +66,7 @@ const parseCompHidden = (c: CompanyVisibilityCheck): boolean => {
 };
 
 export const examService = {
-  getExamsByCompany: async (companySlug: string, userEmail?: string): Promise<ExamItem[]> => {
+  getExamsByCompany: async (companySlug: string, userEmail?: string, includeHidden = false): Promise<ExamItem[]> => {
     // Strictly utilize Secure Server-Side Redaction RPC to prevent any unpaid content leakage
     try {
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_secure_exams_by_company', {
@@ -50,20 +80,26 @@ export const examService = {
       }
 
       if (rpcData && rpcData.length > 0) {
-        return (rpcData as RpcExamRow[]).map((e) => ({
-          id: e.id,
-          companySlug: e.company_slug,
-          name: e.name,
-          badge: e.badge || 'Campus Recruitment Drive',
-          content: e.content || '',
-          oldPapers: e.old_papers || '',
-          price: e.price ? Number(e.price) : 99,
-          paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
-          googleDocEmbedUrl: e.google_doc_embed_url,
-          googleDocEditUrl: e.google_doc_edit_url,
-          isPublicExam: e.is_public_exam ?? false,
-          upvotes: e.upvotes || 0,
-        }));
+        const mapped: ExamItem[] = (rpcData as RpcExamRow[]).map((e) => {
+          const isHidden = parseExamHidden(e);
+          return {
+            id: e.id,
+            companySlug: e.company_slug,
+            name: e.name,
+            badge: cleanExamBadge(e.badge) || 'Campus Recruitment Drive',
+            content: cleanExamContent(e.content),
+            oldPapers: e.old_papers || '',
+            price: e.price ? Number(e.price) : 99,
+            paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+            googleDocEmbedUrl: e.google_doc_embed_url,
+            googleDocEditUrl: e.google_doc_edit_url,
+            isPublicExam: e.is_public_exam ?? false,
+            upvotes: e.upvotes || 0,
+            isHidden,
+          };
+        });
+
+        return includeHidden ? mapped : mapped.filter((e) => !e.isHidden);
       }
 
       return [];
@@ -89,8 +125,8 @@ export const examService = {
 
       if (examsRes.error) {
         console.warn('[examService.getAllExams] Supabase notice, falling back to dataStore:', examsRes.error?.message || examsRes.error);
-        const dsExams = dataStore.getAllExams();
-        return includeHidden ? dsExams : dsExams.filter(e => !e.isCompanyHidden);
+        const dsExams = dataStore.getAllExams(includeHidden);
+        return dsExams;
       }
 
       const companyMapBySlug = new Map(
@@ -104,13 +140,14 @@ export const examService = {
         const allMapped: ExamWithCompany[] = examsRes.data.map(e => {
           const fallbackComp = companyMapBySlug.get(e.company_slug) || companyMapById.get(e.company_id);
           const isCompanyHidden = fallbackComp ? Boolean(fallbackComp.isHidden) : false;
+          const isHidden = parseExamHidden(e);
 
           return {
             id: e.id,
             companySlug: e.company_slug,
             name: e.name,
-            badge: e.badge || 'Campus Recruitment Drive',
-            content: e.content || '',
+            badge: cleanExamBadge(e.badge) || 'Campus Recruitment Drive',
+            content: cleanExamContent(e.content),
             oldPapers: e.old_papers || '',
             price: e.price ? Number(e.price) : 99,
             paperTabs: [],
@@ -122,19 +159,91 @@ export const examService = {
             companyLogoUrl: fallbackComp?.logo_url || undefined,
             companyIndustry: fallbackComp?.industry || 'IT Services & Consulting',
             isCompanyHidden,
+            isHidden,
           };
         });
 
-        return includeHidden ? allMapped : allMapped.filter(e => !e.isCompanyHidden);
+        return includeHidden ? allMapped : allMapped.filter(e => !e.isCompanyHidden && !e.isHidden);
       }
 
-      const dsExams = dataStore.getAllExams();
-      return includeHidden ? dsExams : dsExams.filter(e => !e.isCompanyHidden);
+      const dsExams = dataStore.getAllExams(includeHidden);
+      return dsExams;
     } catch (err) {
       console.warn('[examService.getAllExams] Handled error, returning dataStore exams:', err);
-      const dsExams = dataStore.getAllExams();
-      return includeHidden ? dsExams : dsExams.filter(e => !e.isCompanyHidden);
+      const dsExams = dataStore.getAllExams(includeHidden);
+      return dsExams;
     }
+  },
+
+  toggleExamVisibility: async (id: string, isHidden: boolean): Promise<boolean> => {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    // 1. First attempt to update native is_hidden column
+    try {
+      let colQuery = supabase.from('exams').update({ is_hidden: isHidden });
+      colQuery = isUuid ? colQuery.eq('id', id) : colQuery.eq('name', id);
+      const { error: colErr } = await colQuery;
+
+      if (!colErr) {
+        auditService.logAction({
+          action: isHidden ? 'HIDE_EXAM' : 'UNHIDE_EXAM',
+          targetEntity: 'exams',
+          targetId: id,
+          afterData: { is_hidden: isHidden },
+        });
+        return true;
+      }
+    } catch (e) {
+      console.warn('[examService.toggleExamVisibility] Native column note:', e);
+    }
+
+    // 2. Resilient fallback: Embed/remove hidden metadata marker in content & badge
+    try {
+      let fetchQuery = supabase.from('exams').select('id, name, content, badge');
+      fetchQuery = isUuid ? fetchQuery.eq('id', id) : fetchQuery.eq('name', id);
+      const { data: exam, error: fetchErr } = await fetchQuery.maybeSingle();
+
+      if (fetchErr) {
+        console.warn('[examService.toggleExamVisibility] Fetch error:', fetchErr.message);
+      }
+
+      if (exam) {
+        let currentContent = exam.content || '';
+        currentContent = currentContent.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+        if (isHidden) {
+          currentContent = currentContent ? `${currentContent}\n\n${HIDDEN_EXAM_MARKER}` : HIDDEN_EXAM_MARKER;
+        }
+
+        let currentBadge = exam.badge || 'Drive';
+        currentBadge = currentBadge.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+        if (isHidden) {
+          currentBadge = `${currentBadge} ${HIDDEN_EXAM_MARKER}`.trim();
+        }
+
+        let updQuery = supabase.from('exams').update({
+          content: currentContent,
+          badge: currentBadge,
+        });
+        updQuery = isUuid ? updQuery.eq('id', id) : updQuery.eq('name', id);
+        const { error: updErr } = await updQuery;
+
+        if (!updErr) {
+          auditService.logAction({
+            action: isHidden ? 'HIDE_EXAM_FALLBACK' : 'UNHIDE_EXAM_FALLBACK',
+            targetEntity: 'exams',
+            targetId: exam.id || id,
+            afterData: { is_hidden: isHidden, name: exam.name },
+          });
+          return true;
+        } else {
+          console.error('[examService.toggleExamVisibility] Fallback update error:', updErr.message);
+        }
+      }
+    } catch (fallbackErr) {
+      console.error('[examService.toggleExamVisibility] Fallback exception:', fallbackErr);
+    }
+
+    return false;
   },
 
   createExam: async (examData: Partial<ExamItem> & { companySlug: string }): Promise<ExamItem> => {
@@ -153,12 +262,19 @@ export const examService = {
       console.warn('[createExam] Company lookup exception:', e);
     }
 
+    let initialContent = examData.content || '### New Exam Syllabus\n\nWrite details here...';
+    let initialBadge = examData.badge || 'Drive';
+    if (examData.isHidden) {
+      initialContent = initialContent ? `${initialContent}\n\n${HIDDEN_EXAM_MARKER}` : HIDDEN_EXAM_MARKER;
+      initialBadge = `${initialBadge} ${HIDDEN_EXAM_MARKER}`.trim();
+    }
+
     const payload: Record<string, any> = {
       company_slug: companySlug,
       company_id: companyId,
       name: examData.name || 'New Exam Module',
-      badge: examData.badge || 'Drive',
-      content: examData.content || '### New Exam Syllabus\n\nWrite details here...',
+      badge: initialBadge,
+      content: initialContent,
       old_papers: examData.oldPapers || '### Old Papers\n\nWrite old papers here...',
       paper_tabs: examData.paperTabs || [],
       google_doc_embed_url: examData.googleDocEmbedUrl || null,
@@ -188,8 +304,8 @@ export const examService = {
       id: data.id,
       companySlug: data.company_slug,
       name: data.name,
-      badge: data.badge,
-      content: data.content,
+      badge: cleanExamBadge(data.badge) || 'Drive',
+      content: cleanExamContent(data.content),
       oldPapers: data.old_papers,
       price: data.price ? Number(data.price) : 99,
       paperTabs: typeof data.paper_tabs === 'string' ? JSON.parse(data.paper_tabs) : (data.paper_tabs || []),
@@ -197,6 +313,7 @@ export const examService = {
       googleDocEditUrl: data.google_doc_edit_url,
       isPublicExam: data.is_public_exam ?? false,
       upvotes: data.upvotes || 0,
+      isHidden: parseExamHidden(data),
     };
 
     auditService.logAction({
@@ -214,8 +331,20 @@ export const examService = {
 
     const payload: Record<string, any> = {};
     if (updatedFields.name !== undefined) payload.name = updatedFields.name;
-    if (updatedFields.badge !== undefined) payload.badge = updatedFields.badge;
-    if (updatedFields.content !== undefined) payload.content = updatedFields.content;
+    if (updatedFields.badge !== undefined) {
+      let b = updatedFields.badge;
+      if (updatedFields.isHidden) {
+        b = `${cleanExamBadge(b)} ${HIDDEN_EXAM_MARKER}`.trim();
+      }
+      payload.badge = b;
+    }
+    if (updatedFields.content !== undefined) {
+      let c = updatedFields.content;
+      if (updatedFields.isHidden) {
+        c = `${cleanExamContent(c)}\n\n${HIDDEN_EXAM_MARKER}`;
+      }
+      payload.content = c;
+    }
     if (updatedFields.oldPapers !== undefined) payload.old_papers = updatedFields.oldPapers;
     if (updatedFields.paperTabs !== undefined) payload.paper_tabs = updatedFields.paperTabs;
     if (updatedFields.googleDocEmbedUrl !== undefined) payload.google_doc_embed_url = updatedFields.googleDocEmbedUrl;
@@ -249,12 +378,17 @@ export const examService = {
 
     const first = data[0];
 
+    // If isHidden was toggled without content/badge being provided in update fields
+    if (updatedFields.isHidden !== undefined && updatedFields.content === undefined && updatedFields.badge === undefined) {
+      await examService.toggleExamVisibility(first.id, updatedFields.isHidden);
+    }
+
     const updated: ExamItem = {
       id: first.id,
       companySlug: first.company_slug,
       name: first.name,
-      badge: first.badge,
-      content: first.content,
+      badge: cleanExamBadge(first.badge) || 'Drive',
+      content: cleanExamContent(first.content),
       oldPapers: first.old_papers,
       price: first.price ? Number(first.price) : 99,
       paperTabs: typeof first.paper_tabs === 'string' ? JSON.parse(first.paper_tabs) : (first.paper_tabs || []),
@@ -262,6 +396,7 @@ export const examService = {
       googleDocEditUrl: first.google_doc_edit_url,
       isPublicExam: first.is_public_exam ?? false,
       upvotes: first.upvotes || 0,
+      isHidden: updatedFields.isHidden !== undefined ? updatedFields.isHidden : parseExamHidden(first),
     };
 
     auditService.logAction({

@@ -68,6 +68,7 @@ export interface ExamItem {
   price?: number;
   isPublicExam?: boolean; // true = all content is free, no paywall for any section
   upvotes: number;
+  isHidden?: boolean; // true = exam is in draft mode, hidden from students
 }
 
 // SECURE BACKEND DTO (Returned ONLY after server-side JWT & purchase verification)
@@ -906,6 +907,7 @@ class DataStoreManager {
       if (!includeHidden && company.isHidden) return;
       const exams = this.getExams(company.slug);
       exams.forEach(exam => {
+        if (!includeHidden && exam.isHidden) return;
         result.push({
           ...exam,
           companyName: company.name,

@@ -21,6 +21,7 @@ export default function SubmitExperiencePage() {
   const [tips, setTips] = useState('');
   const [resourcesUsed, setResourcesUsed] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: companiesData } = useQuery({
     queryKey: ['companies-dropdown'],
@@ -48,18 +49,31 @@ export default function SubmitExperiencePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyId || !role || !content) return;
+    setFormError(null);
+
+    if (!companyId) {
+      setFormError('Please select a company.');
+      return;
+    }
+    if (!role.trim()) {
+      setFormError('Please specify the role/position.');
+      return;
+    }
+    if (!content.trim()) {
+      setFormError('Please describe your interview experience.');
+      return;
+    }
 
     submitMutation.mutate({
       companyId,
-      role,
+      role: role.trim(),
       studentName: user?.name || '',
-      college,
+      college: college.trim(),
       year: Number(year),
       difficulty,
-      content,
-      tips,
-      resourcesUsed,
+      content: content.trim(),
+      tips: tips.trim(),
+      resourcesUsed: resourcesUsed.trim(),
       isAnonymous,
     });
   };
@@ -104,6 +118,17 @@ export default function SubmitExperiencePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-[#E9ECEF] dark:border-[#242424]">
+          {formError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-600 dark:text-red-400 text-xs font-sans animate-fadeIn">
+              {formError}
+            </div>
+          )}
+          {submitMutation.isError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-600 dark:text-red-400 text-xs font-sans animate-fadeIn">
+              Failed to submit experience. Please verify your connection and try again.
+            </div>
+          )}
+
           {/* Company & Role */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
