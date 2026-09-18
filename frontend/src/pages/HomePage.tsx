@@ -19,14 +19,22 @@ function useCounter(end: number, started: boolean, duration = 1800) {
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!started) return;
-    let start = 0;
-    const step = end / (duration / 16);
-    const timer = setInterval(() => {
-      start = Math.min(start + step, end);
-      setVal(Math.floor(start));
-      if (start >= end) clearInterval(timer);
-    }, 16);
-    return () => clearInterval(timer);
+    let startTime: number | null = null;
+    let animFrameId: number;
+
+    const animate = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Linear interpolation with floor capping
+      setVal(Math.floor(progress * end));
+      if (progress < 1) {
+        animFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    animFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animFrameId);
   }, [started, end, duration]);
   return val;
 }

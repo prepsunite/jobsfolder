@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import { Brain } from 'lucide-react';
 import type { ProgressSummaryStats } from '@/services/progress.service';
 
@@ -11,7 +12,7 @@ interface AptitudeStatsWidgetProps {
   isLoading?: boolean;
 }
 
-export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
+export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = memo(({
   stats,
   title = 'Aptitude Mastery',
   subtitle,
@@ -436,6 +437,6 @@ export const AptitudeStatsWidget: React.FC<AptitudeStatsWidgetProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default AptitudeStatsWidget;

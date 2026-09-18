@@ -228,9 +228,17 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
         </div>
 
         {/* 3 Interactive Tab Selector Buttons + Expand/Collapse Button */}
-        <div className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] self-start lg:self-auto gap-1">
+        <div
+          role="tablist"
+          aria-label="Student mastery domain analytics"
+          className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] self-start lg:self-auto gap-1"
+        >
           <button
             type="button"
+            role="tab"
+            id="tab-aptitude"
+            aria-selected={isExpanded && activeTab === 'aptitude'}
+            aria-controls="panel-aptitude"
             onClick={() => handleTabClick('aptitude')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               isExpanded && activeTab === 'aptitude'
@@ -249,6 +257,10 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
 
           <button
             type="button"
+            role="tab"
+            id="tab-technical"
+            aria-selected={isExpanded && activeTab === 'technical'}
+            aria-controls="panel-technical"
             onClick={() => handleTabClick('technical')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               isExpanded && activeTab === 'technical'
@@ -267,6 +279,10 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
 
           <button
             type="button"
+            role="tab"
+            id="tab-interview"
+            aria-selected={isExpanded && activeTab === 'interview'}
+            aria-controls="panel-interview"
             onClick={() => handleTabClick('interview')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               isExpanded && activeTab === 'interview'
@@ -304,7 +320,12 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
 
       {/* --- TAB A: APTITUDE ANALYTICS --- */}
       {isExpanded && activeTab === 'aptitude' && (
-        <div className="space-y-4 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-aptitude"
+          aria-labelledby="tab-aptitude"
+          className="space-y-4 animate-fadeIn"
+        >
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
@@ -451,7 +472,12 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
 
       {/* --- TAB B: TECHNICAL & CODING ANALYTICS --- */}
       {isExpanded && activeTab === 'technical' && (
-        <div className="space-y-4 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-technical"
+          aria-labelledby="tab-technical"
+          className="space-y-4 animate-fadeIn"
+        >
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
@@ -589,7 +615,12 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
 
       {/* --- TAB C: INTERVIEW PREP ANALYTICS --- */}
       {isExpanded && activeTab === 'interview' && (
-        <div className="space-y-4 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-interview"
+          aria-labelledby="tab-interview"
+          className="space-y-4 animate-fadeIn"
+        >
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">

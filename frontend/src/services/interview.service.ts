@@ -18,6 +18,8 @@ async function getOfflineSeedQuestions(): Promise<InterviewQuestion[]> {
 
 const MASTERED_INTERVIEW_KEY = 'prepunite_mastered_interview_questions';
 
+const INTERVIEW_QUESTION_COLUMNS = 'id, topic_id, category, subject, subject_label, title, answer, difficulty, bullet_points, code_snippet, pro_tip, company_tags, frequency, is_hidden, is_deleted, sort_order, created_at, updated_at';
+
 const normalizeDbQuestion = (d: any, masteredSet: Set<string>): InterviewQuestion => ({
   id: d.id,
   topicId: d.topic_id || d.topicId,
@@ -301,7 +303,7 @@ export const interviewService = {
       while (hasMore) {
         const { data, error } = await supabase
           .from('interview_questions')
-          .select('*')
+          .select(INTERVIEW_QUESTION_COLUMNS)
           .eq('is_deleted', false)
           .order('sort_order', { ascending: true })
           .order('created_at', { ascending: true })
@@ -340,7 +342,7 @@ export const interviewService = {
     try {
       const { data, error } = await supabase
         .from('interview_questions')
-        .select('*')
+        .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('topic_id', topicId)
         .eq('is_deleted', false)
         .order('sort_order', { ascending: true })
@@ -359,12 +361,36 @@ export const interviewService = {
     }));
   },
 
+  async getQuestionsForCategory(category: InterviewCategory): Promise<InterviewQuestion[]> {
+    const masteredSet = this.getMasteredQuestionIds();
+    try {
+      const { data, error } = await supabase
+        .from('interview_questions')
+        .select(INTERVIEW_QUESTION_COLUMNS)
+        .eq('category', category)
+        .eq('is_deleted', false)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        return data.map(d => normalizeDbQuestion(d, masteredSet));
+      }
+    } catch (e) {
+      console.error('Failed to query questions for category:', category, e);
+    }
+    const seed = await getOfflineSeedQuestions();
+    return seed.filter(q => q.category === category).map(q => ({
+      ...q,
+      mastered: masteredSet.has(q.id),
+    }));
+  },
+
   async getCoreCsQuestions(subject?: CoreCsSubject): Promise<InterviewQuestion[]> {
     const masteredSet = this.getMasteredQuestionIds();
     try {
       let query = supabase
         .from('interview_questions')
-        .select('*')
+        .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', 'CORE_CS')
         .eq('is_deleted', false)
         .order('sort_order', { ascending: true });
@@ -392,7 +418,7 @@ export const interviewService = {
     try {
       const { data, error } = await supabase
         .from('interview_questions')
-        .select('*')
+        .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', 'HR_BEHAVIORAL')
         .eq('is_deleted', false)
         .order('sort_order', { ascending: true });
@@ -415,7 +441,7 @@ export const interviewService = {
     try {
       const { data, error } = await supabase
         .from('interview_questions')
-        .select('*')
+        .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', 'PROJECT_DEFENSE')
         .eq('is_deleted', false)
         .order('sort_order', { ascending: true });
@@ -614,21 +640,76 @@ export const interviewService = {
   },
 
   async getStats() {
-    const all = await this.getAllQuestions();
-    const coreCs = all.filter(q => q.category === 'CORE_CS');
-    const hr = all.filter(q => q.category === 'HR_BEHAVIORAL');
-    const project = all.filter(q => q.category === 'PROJECT_DEFENSE');
-    const masteredCount = all.filter(q => q.mastered).length;
+    const masteredSet = this.getMasteredQuestionIds();
+
+    try {
+      // Execute 4 lightweight HTTP HEAD count queries in parallel (0 bytes payload over wire)
+      const [totalRes, coreCsRes, hrRes, projectRes] = await Promise.all([
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('category', 'CORE_CS'),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('category', 'HR_BEHAVIORAL'),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('category', 'PROJECT_DEFENSE'),
+      ]);
+
+      if (!totalRes.error && totalRes.count !== null && totalRes.count !== undefined) {
+        const total = totalRes.count || 0;
+        const coreCsTotal = coreCsRes.count || 0;
+        const hrTotal = hrRes.count || 0;
+        const projectTotal = projectRes.count || 0;
+
+        // Fetch lightweight category-to-id mapping for mastered calculation only for mastered items
+        let coreCsMastered = 0;
+        let hrMastered = 0;
+        let projectMastered = 0;
+        const masteredIds = Array.from(masteredSet);
+
+        if (masteredIds.length > 0) {
+          const { data: masteredRows } = await supabase
+            .from('interview_questions')
+            .select('id, category')
+            .eq('is_deleted', false)
+            .in('id', masteredIds);
+
+          const activeMasteredRows = masteredRows || [];
+          coreCsMastered = activeMasteredRows.filter(r => r.category === 'CORE_CS').length;
+          hrMastered = activeMasteredRows.filter(r => r.category === 'HR_BEHAVIORAL').length;
+          projectMastered = activeMasteredRows.filter(r => r.category === 'PROJECT_DEFENSE').length;
+        }
+
+        const masteredCount = coreCsMastered + hrMastered + projectMastered;
+
+        return {
+          totalQuestions: total,
+          masteredCount,
+          coreCsTotal,
+          coreCsMastered,
+          hrTotal,
+          hrMastered,
+          projectTotal,
+          projectMastered,
+          percentage: total > 0 ? Math.round((masteredCount / total) * 100) : 0,
+        };
+      }
+    } catch (e) {
+      console.warn('[interviewService.getStats] Live count query exception, falling back to seed:', e);
+    }
+
+    // Offline / seed fallback
+    const seed = await getOfflineSeedQuestions();
+    const coreCs = seed.filter(q => q.category === 'CORE_CS');
+    const hr = seed.filter(q => q.category === 'HR_BEHAVIORAL');
+    const project = seed.filter(q => q.category === 'PROJECT_DEFENSE');
+    const masteredCount = seed.filter(q => masteredSet.has(q.id)).length;
     return {
-      totalQuestions: all.length,
+      totalQuestions: seed.length,
       masteredCount,
       coreCsTotal: coreCs.length,
-      coreCsMastered: coreCs.filter(q => q.mastered).length,
+      coreCsMastered: coreCs.filter(q => masteredSet.has(q.id)).length,
       hrTotal: hr.length,
-      hrMastered: hr.filter(q => q.mastered).length,
+      hrMastered: hr.filter(q => masteredSet.has(q.id)).length,
       projectTotal: project.length,
-      projectMastered: project.filter(q => q.mastered).length,
-      percentage: all.length > 0 ? Math.round((masteredCount / all.length) * 100) : 0,
+      projectMastered: project.filter(q => masteredSet.has(q.id)).length,
+      percentage: seed.length > 0 ? Math.round((masteredCount / seed.length) * 100) : 0,
     };
   },
 };

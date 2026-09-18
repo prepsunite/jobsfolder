@@ -83,7 +83,7 @@ export const examService = {
           .order('name', { ascending: true }),
         supabase
           .from('companies')
-          .select('*')
+          .select('id, slug, name, logo_url, industry, is_hidden, about_company, description')
           .eq('is_deleted', false),
       ]);
 

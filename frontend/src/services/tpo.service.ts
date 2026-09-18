@@ -605,7 +605,7 @@ export const tpoService = {
       // 1. Try public.tpo_authorizations table if created
       const { data: directData } = await supabase
         .from('tpo_authorizations')
-        .select('*')
+        .select('id, email, college_id, max_licenses, assigned_at, created_at, status')
         .eq('email', clean)
         .eq('status', 'ACTIVE')
         .maybeSingle();
@@ -664,12 +664,26 @@ export const tpoService = {
     try {
       const { data, error } = await supabase
         .from('colleges')
-        .select('*')
+        .select('id, name, code, slug, logo_url, city, state, contract_status, max_licenses, valid_until, status, is_deleted, created_at, updated_at')
         .eq('is_deleted', false)
         .order('name', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        data.forEach(c => map.set(c.id, c));
+        data.forEach((c: any) => map.set(c.id, {
+          id: c.id,
+          name: c.name,
+          code: c.code || 'CRT',
+          slug: c.slug || c.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'college',
+          logo_url: c.logo_url,
+          city: c.city,
+          state: c.state,
+          contract_status: c.contract_status || (c.status === 'ACTIVE' ? 'ACTIVE' : 'PILOT'),
+          max_licenses: c.max_licenses || 1000,
+          valid_until: c.valid_until || new Date(Date.now() + 365*24*60*60*1000).toISOString(),
+          created_at: c.created_at || new Date().toISOString(),
+          updated_at: c.updated_at,
+          is_deleted: c.is_deleted ?? false,
+        }));
       }
     } catch (e) {
       console.warn('Could not fetch colleges from Supabase, using cloud sync fallback:', e);

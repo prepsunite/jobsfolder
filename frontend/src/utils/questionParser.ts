@@ -279,14 +279,25 @@ export function normalizeQuestionOptions(raw: any): NormalizedQuestionOption[] {
  * Robust parser for raw JSON input representing a topic question item.
  */
 export function parseTopicQuestionJsonItem(raw: any, defaultTopicId?: string): Partial<TopicQuestionItem> {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Item must be a valid JSON object.');
+  }
+
+  const rawStatement = raw.question || raw.statement || '';
+  if (!rawStatement || !String(rawStatement).trim()) {
+    throw new Error('Question statement is required and cannot be empty.');
+  }
+  const statement = normalizeMathText(String(rawStatement));
+
   const rawSubtopic = raw.subtopic || raw.subTopic || raw.topic || raw.topicId;
   const topicId = resolveTopicSlug(rawSubtopic, defaultTopicId);
 
-  const rawStatement = raw.question || raw.statement || '';
-  const statement = normalizeMathText(rawStatement);
+  const normalizedOpts = normalizeQuestionOptions(raw.options);
+  if (!normalizedOpts || normalizedOpts.length < 2) {
+    throw new Error('At least 2 valid options are required for multiple choice questions.');
+  }
 
   const keys = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const normalizedOpts = normalizeQuestionOptions(raw.options);
   const parsedOptions: QuestionOption[] = normalizedOpts.map((opt) => ({
     id: opt.key,
     key: opt.key,

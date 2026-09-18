@@ -57,6 +57,7 @@ export class SupabasePaymentService {
         .eq('user_email', normalizedEmail)
         .eq('status', 'ACTIVE')
         .gt('expires_at', new Date().toISOString())
+        .limit(1)
         .maybeSingle();
 
       if (!subError && activeSub) return true;
@@ -75,6 +76,7 @@ export class SupabasePaymentService {
           .eq('user_email', normalizedEmail)
           .eq('exam_id', examId)
           .gt('expires_at', new Date().toISOString())
+          .limit(1)
           .maybeSingle();
 
         if (!purchaseError && purchase) return true;

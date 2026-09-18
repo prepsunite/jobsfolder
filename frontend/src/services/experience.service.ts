@@ -14,7 +14,7 @@ export const experienceService = {
     try {
       let query = supabase
         .from('experiences')
-        .select('*', { count: 'exact' })
+        .select('id, company_id, company_slug, student_name, role_title, college, year, difficulty, overall_experience, tips, upvotes, verdict, drive_type, created_at, status', { count: 'exact' })
         .eq('is_deleted', false)
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: false });

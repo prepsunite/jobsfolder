@@ -157,7 +157,6 @@ export default function DashboardPage() {
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error) {
-          console.warn('Failed to fetch questions meta for profile stats:', error);
           break;
         }
 
@@ -304,9 +303,7 @@ export default function DashboardPage() {
             };
           });
         }
-      } catch (err) {
-        console.warn('[ProfilePage] Failed to fetch bookmarked questions:', err);
-      }
+      } catch {}
       if (allTopicQuestions.length === 0) {
         const local = dataStore.getTopicQuestions();
         allTopicQuestions = questionIds
@@ -358,7 +355,7 @@ export default function DashboardPage() {
           chunks.map((chunk) =>
             supabase
               .from('experiences')
-              .select('*')
+              .select('id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, rounds, description, overall_experience, status')
               .in('id', chunk)
               .eq('is_deleted', false)
           )
@@ -390,9 +387,7 @@ export default function DashboardPage() {
             status: e.status || 'APPROVED',
           }));
         }
-      } catch (err) {
-        console.warn('[ProfilePage] Failed to fetch live experiences from Supabase:', err);
-      }
+      } catch {}
       const localExps = dataStore.getExperiences();
       const expMap = new Map<string, ExperienceItem>();
       allExps.forEach((e) => expMap.set(e.id, e));

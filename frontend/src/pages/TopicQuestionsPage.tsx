@@ -520,9 +520,16 @@ export default function TopicQuestionsPage() {
 
       const rows: any[] = [];
       let duplicatesCount = 0;
+      const itemErrors: { itemIndex: number; reason: string }[] = [];
 
-      for (const q of items) {
-        const rawStatement = q.statement || q.question || q.title || 'Question';
+      for (const [idx, q] of items.entries()) {
+        const itemNumber = idx + 1;
+        const rawStatement = q.statement || q.question || q.title || '';
+        if (!rawStatement || !String(rawStatement).trim()) {
+          itemErrors.push({ itemIndex: itemNumber, reason: 'Missing question statement.' });
+          continue;
+        }
+
         const formattedStatement = normalizeMathText(rawStatement);
         const fingerprint = generateQuestionFingerprint({ statement: formattedStatement }, q);
 
@@ -621,12 +628,22 @@ export default function TopicQuestionsPage() {
         if (error) throw error;
       }
 
-      setBulkImportResult({ success: rows.length, duplicates: duplicatesCount, invalid: 0, errors: [] });
+      setBulkImportResult({
+        success: rows.length,
+        duplicates: duplicatesCount,
+        invalid: itemErrors.length,
+        errors: itemErrors,
+      });
       if (rows.length > 0) {
         loadQuestions();
       }
     } catch (err: any) {
-      setBulkImportResult({ success: 0, duplicates: 0, invalid: 1, errors: [{ itemIndex: 0, reason: `Supabase bulk import failed: ${err.message || err}` }] });
+      setBulkImportResult({
+        success: 0,
+        duplicates: 0,
+        invalid: 1,
+        errors: [{ itemIndex: 1, reason: `Supabase bulk import failed: ${err.message || err}` }],
+      });
     }
   };
 

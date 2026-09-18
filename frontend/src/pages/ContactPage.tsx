@@ -28,7 +28,6 @@ export default function ContactPage() {
     // 1. Invisible Anti-Bot Honeypot Trap
     // Bots automatically populate hidden inputs; humans do not see or touch them.
     if (honeypot.trim()) {
-      console.warn('[ContactPage] Bot submission intercepted via honeypot trap.');
       setSubmitted(true); // Fake success to disarm automated spam scrapers
       return;
     }

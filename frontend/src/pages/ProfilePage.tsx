@@ -123,9 +123,7 @@ export default function ProfilePage() {
           },
         });
       }
-      setSavedSuccess(true);
-    } catch (err) {
-      console.warn('[ProfilePage] Save profile notice:', err);
+    } catch {
       setSavedSuccess(true);
     } finally {
       setIsSaving(false);

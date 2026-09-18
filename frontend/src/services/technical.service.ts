@@ -17,6 +17,8 @@ export interface TechnicalImportReport {
 const SOLVED_PROBLEMS_KEY = 'prepunite_solved_coding_problems';
 const SOLVED_MCQS_KEY = 'prepunite_solved_technical_mcqs';
 
+const TECHNICAL_PROBLEM_COLUMNS = 'id, title, slug, track, level, category, category_label, topic_id, description, constraints, test_cases, sample_input, sample_output, explanation, solutions, time_complexity, space_complexity, hints, company_tags, is_hidden, is_deleted, sort_order, created_at, updated_at, leetcode_url, leetcode_number, pattern, key_intuition';
+
 const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem => {
   const solutionsObj = (typeof d.solutions === 'object' && d.solutions !== null) ? d.solutions : {};
   const leetcodeUrl =
@@ -501,7 +503,7 @@ export const technicalService = {
     try {
       const { data, error } = await supabase
         .from('technical_problems')
-        .select('*')
+        .select(TECHNICAL_PROBLEM_COLUMNS)
         .eq('track', 'PROGRAMMING_150')
         .eq('is_deleted', false)
         .order('sort_order', { ascending: true })
@@ -524,7 +526,7 @@ export const technicalService = {
     try {
       const { data, error } = await supabase
         .from('technical_problems')
-        .select('*')
+        .select(TECHNICAL_PROBLEM_COLUMNS)
         .eq('track', 'CAMPUS_DSA')
         .eq('is_deleted', false)
         .order('sort_order', { ascending: true })
@@ -1180,26 +1182,75 @@ export const technicalService = {
   },
 
   async getStats() {
-    const p150 = await this.getProgramming150Problems();
+    const solvedSet = this.getSolvedProblemIds();
     const dsaStats = this.getCampusDsaStats();
-    const mcqs = await this.getTechnicalMcqs();
     const mcqProgress = this.getMcqProgress();
     const mcqSolved = Object.values(mcqProgress).filter(p => p.solved).length;
-    const p150Solved = p150.filter(p => p.solved).length;
-    const dsaSolved = dsaStats.solved;
-    const totalCoding = p150.length + dsaStats.total;
-    const totalSolved = p150Solved + dsaSolved;
-    return {
-      p150Total: p150.length,
-      p150Solved,
-      dsaTotal: dsaStats.total,
-      dsaSolved,
-      mcqTotal: mcqs.length,
-      mcqSolved,
-      totalCoding,
-      totalSolved,
-      percentage: totalCoding > 0 ? Math.round((totalSolved / totalCoding) * 100) : 0,
-    };
+
+    try {
+      // Parallel lightweight queries: ID-only for P150 solved check, head count for MCQs
+      const [p150Res, mcqCountRes] = await Promise.all([
+        supabase
+          .from('technical_problems')
+          .select('id')
+          .eq('track', 'PROGRAMMING_150')
+          .eq('is_deleted', false),
+        supabase
+          .from('technical_mcqs')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_deleted', false),
+      ]);
+
+      let p150Total = 0;
+      let p150Solved = 0;
+
+      if (!p150Res.error && p150Res.data && p150Res.data.length > 0) {
+        p150Total = p150Res.data.length;
+        p150Solved = p150Res.data.filter(r => solvedSet.has(r.id)).length;
+      } else {
+        p150Total = 150;
+      }
+
+      let mcqTotal = 0;
+      if (!mcqCountRes.error && mcqCountRes.count !== null && mcqCountRes.count !== undefined) {
+        mcqTotal = mcqCountRes.count;
+      } else {
+        const mcqs = await this.getTechnicalMcqs();
+        mcqTotal = mcqs.length;
+      }
+
+      const dsaSolved = dsaStats.solved;
+      const totalCoding = p150Total + dsaStats.total;
+      const totalSolved = p150Solved + dsaSolved;
+
+      return {
+        p150Total,
+        p150Solved,
+        dsaTotal: dsaStats.total,
+        dsaSolved,
+        mcqTotal,
+        mcqSolved,
+        totalCoding,
+        totalSolved,
+        percentage: totalCoding > 0 ? Math.round((totalSolved / totalCoding) * 100) : 0,
+      };
+    } catch (e) {
+      console.warn('[technicalService.getStats] Live query exception, using local calculation:', e);
+      const dsaSolved = dsaStats.solved;
+      const totalCoding = 150 + dsaStats.total;
+      const totalSolved = dsaSolved;
+      return {
+        p150Total: 150,
+        p150Solved: 0,
+        dsaTotal: dsaStats.total,
+        dsaSolved,
+        mcqTotal: 100,
+        mcqSolved,
+        totalCoding,
+        totalSolved,
+        percentage: totalCoding > 0 ? Math.round((totalSolved / totalCoding) * 100) : 0,
+      };
+    }
   },
 };
 
