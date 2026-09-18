@@ -111,52 +111,36 @@ export const examService = {
 
   getAllExams: async (includeHidden = false): Promise<ExamWithCompany[]> => {
     try {
-      const [examsRes, compsRes] = await Promise.all([
-        supabase
-          .from('exams')
-          .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted')
-          .eq('is_deleted', false)
-          .order('name', { ascending: true }),
-        supabase
-          .from('companies')
-          .select('id, slug, name, logo_url, industry, about_company, description')
-          .eq('is_deleted', false),
-      ]);
+      const { data: examsData, error: examsErr } = await supabase
+        .from('exams')
+        .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
+        .eq('is_deleted', false)
+        .order('name', { ascending: true });
 
-      if (examsRes.error) {
-        console.warn('[examService.getAllExams] Supabase notice, falling back to dataStore:', examsRes.error?.message || examsRes.error);
+      if (examsErr) {
+        console.warn('[examService.getAllExams] Supabase relational query notice, falling back to dataStore:', examsErr.message || examsErr);
         const dsExams = dataStore.getAllExams(includeHidden);
         return dsExams;
-      }
-
-      if (compsRes.error) {
-        console.warn('[examService.getAllExams] Companies query notice:', compsRes.error?.message || compsRes.error);
       }
 
       const dsCompanies = dataStore.getCompanies();
       const dsMapBySlug = new Map(dsCompanies.map(c => [(c.slug || '').toLowerCase().trim(), c]));
 
-      const companyMapBySlug = new Map(
-        (compsRes.data || []).map(c => [(c.slug || '').toLowerCase().trim(), { ...c, isHidden: parseCompHidden(c) }])
-      );
-      const companyMapById = new Map(
-        (compsRes.data || []).map(c => [c.id, { ...c, isHidden: parseCompHidden(c) }])
-      );
-
-      if (examsRes.data && examsRes.data.length > 0) {
-        const allMapped: ExamWithCompany[] = examsRes.data.map(e => {
-          const slugKey = (e.company_slug || '').toLowerCase().trim();
-          const fallbackComp = companyMapBySlug.get(slugKey) || companyMapById.get(e.company_id);
+      if (examsData && examsData.length > 0) {
+        const allMapped: ExamWithCompany[] = examsData.map((e: any) => {
+          const relComp = e.companies as any;
+          const slugKey = (e.company_slug || relComp?.slug || '').toLowerCase().trim();
           const dsFallback = dsMapBySlug.get(slugKey);
-          const isCompanyHidden = fallbackComp ? Boolean(fallbackComp.isHidden) : false;
+
+          const isCompanyHidden = relComp ? parseCompHidden(relComp) : false;
           const isHidden = parseExamHidden(e);
-          const logoUrl = fallbackComp?.logo_url || dsFallback?.logoUrl || undefined;
-          const compName = fallbackComp?.name || dsFallback?.name || (e.company_slug ? e.company_slug.toUpperCase() : 'RECRUITMENT');
-          const compIndustry = fallbackComp?.industry || dsFallback?.industry || 'IT Services & Consulting';
+          const logoUrl = relComp?.logo_url || dsFallback?.logoUrl || undefined;
+          const compName = relComp?.name || dsFallback?.name || (e.company_slug ? e.company_slug.toUpperCase() : 'RECRUITMENT');
+          const compIndustry = relComp?.industry || dsFallback?.industry || 'IT Services & Consulting';
 
           return {
             id: e.id,
-            companySlug: e.company_slug,
+            companySlug: e.company_slug || relComp?.slug,
             name: e.name,
             badge: cleanExamBadge(e.badge) || 'Campus Recruitment Drive',
             content: cleanExamContent(e.content),
