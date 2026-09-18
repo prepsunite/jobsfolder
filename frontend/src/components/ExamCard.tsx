@@ -138,34 +138,36 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
         )}
       </div>
 
-      {/* Logo + Title Hero Area — flat, no nested box */}
-      <div className="relative flex flex-col items-center justify-center min-h-[160px] space-y-2">
+      {/* Logo Hero — matches CompanyCard layout */}
+      <div className="relative rounded-md bg-[#FD4A32]/5 dark:bg-[#FD4A32]/5 flex flex-col items-center justify-center overflow-hidden border border-[#FD4A32]/20 dark:border-[#FD4A32]/20 min-h-[160px]">
         {isHidden && (
-          <div className="absolute top-0 left-0 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
+          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/90 text-white text-[9px] font-display font-extrabold uppercase tracking-wider shadow-xs">
             <EyeOff className="w-2.5 h-2.5" />
             <span>{exam.isCompanyHidden ? 'Company Hidden' : 'Exam Hidden'}</span>
           </div>
         )}
 
-        {/* Center Logo */}
-        <div className="flex items-center justify-center w-full h-24 sm:h-28 overflow-hidden rounded-md bg-white">
+        {/* Logo — edge-to-edge like CompanyCard */}
+        <div className="w-full h-24 sm:h-28 overflow-hidden">
           {effectiveLogo ? (
             <img
               src={effectiveLogo}
               alt={exam.companyName}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             />
           ) : (
-            <div className="w-14 h-14 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-2xl font-black group-hover:scale-105 transition-transform duration-200">
-              {exam.companyName.charAt(0)}
+            <div className="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+              <div className="w-14 h-14 rounded-md bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-2xl font-black">
+                {exam.companyName.charAt(0)}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Exam Title */}
-        <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center">
+        {/* Exam Title — inside the tinted hero box */}
+        <h3 className="font-display text-xs sm:text-sm font-bold text-[#121417] dark:text-[#FFFFFF] tracking-tight group-hover:text-[#FD4A32] dark:group-hover:text-[#FD4A32] transition-colors line-clamp-2 text-center px-3 py-2">
           {exam.name}
         </h3>
       </div>
