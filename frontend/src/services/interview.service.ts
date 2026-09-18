@@ -3,6 +3,8 @@ import { GUEST_EMAIL } from '@/contexts/AuthContext';
 import type { InterviewQuestion, CoreCsSubject, InterviewCategory, InterviewTopic } from '@/types/interview';
 import { ALL_INTERVIEW_TOPICS, CORE_CS_TOPICS, HR_BEHAVIORAL_TOPICS, PROJECT_DEFENSE_TOPICS } from './interviewTopicsData';
 
+import type { InterviewQuestionRow } from '@/lib/database.types';
+
 let cachedOfflineSeed: InterviewQuestion[] | null = null;
 async function getOfflineSeedQuestions(): Promise<InterviewQuestion[]> {
   if (cachedOfflineSeed) return cachedOfflineSeed;
@@ -20,27 +22,51 @@ const MASTERED_INTERVIEW_KEY = 'prepunite_mastered_interview_questions';
 
 const INTERVIEW_QUESTION_COLUMNS = 'id, topic_id, category, subject, subject_label, title, answer, difficulty, bullet_points, code_snippet, pro_tip, company_tags, frequency, is_hidden, is_deleted, sort_order, created_at, updated_at';
 
-const normalizeDbQuestion = (d: any, masteredSet: Set<string>): InterviewQuestion => ({
-  id: d.id,
-  topicId: d.topic_id || d.topicId,
-  title: d.title,
-  category: d.category || 'CORE_CS',
-  subject: d.subject,
-  subjectLabel: d.subject_label || d.subjectLabel,
-  bulletPoints: Array.isArray(d.bullet_points) ? d.bullet_points : (Array.isArray(d.bulletPoints) ? d.bulletPoints : []),
-  answer: d.answer || '',
-  codeSnippet: d.code_snippet || d.codeSnippet,
-  proTip: d.pro_tip || d.proTip || '',
-  companyTags: Array.isArray(d.company_tags) ? d.company_tags : (Array.isArray(d.companyTags) ? d.companyTags : []),
-  frequency: d.frequency || 'MEDIUM',
-  difficulty: d.difficulty || 'MEDIUM',
-  mastered: masteredSet.has(d.id),
-  is_hidden: d.is_hidden || false,
-  is_deleted: d.is_deleted || false,
-  sort_order: d.sort_order || 0,
-  created_at: d.created_at,
-  updated_at: d.updated_at,
-});
+type RawDbQuestion = Partial<InterviewQuestionRow> & Partial<InterviewQuestion> & {
+  id: string;
+  title: string;
+};
+
+const normalizeDbQuestion = (d: RawDbQuestion, masteredSet: Set<string>): InterviewQuestion => {
+  const resolvedTopicId = d.topic_id || d.topicId;
+  const resolvedSubjectLabel = d.subject_label || d.subjectLabel;
+  const resolvedBulletPoints = Array.isArray(d.bullet_points)
+    ? (d.bullet_points as string[])
+    : (Array.isArray(d.bulletPoints) ? d.bulletPoints : []);
+  const resolvedCodeSnippet = d.codeSnippet || (typeof d.code_snippet === 'object' && d.code_snippet !== null ? d.code_snippet as any : undefined);
+  const resolvedProTip = d.pro_tip || d.proTip || '';
+  const resolvedCompanyTags = Array.isArray(d.company_tags)
+    ? (d.company_tags as string[])
+    : (Array.isArray(d.companyTags) ? d.companyTags : []);
+
+  return {
+    id: d.id,
+    topicId: resolvedTopicId,
+    topic_id: resolvedTopicId,
+    title: d.title,
+    category: (d.category as InterviewCategory) || 'CORE_CS',
+    subject: d.subject as CoreCsSubject,
+    subjectLabel: resolvedSubjectLabel,
+    subject_label: resolvedSubjectLabel,
+    bulletPoints: resolvedBulletPoints,
+    bullet_points: resolvedBulletPoints,
+    answer: d.answer || '',
+    codeSnippet: resolvedCodeSnippet,
+    code_snippet: resolvedCodeSnippet,
+    proTip: resolvedProTip,
+    pro_tip: resolvedProTip,
+    companyTags: resolvedCompanyTags,
+    company_tags: resolvedCompanyTags,
+    frequency: (d.frequency as 'VERY_HIGH' | 'HIGH' | 'MEDIUM') || 'MEDIUM',
+    difficulty: (d.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
+    mastered: masteredSet.has(d.id),
+    is_hidden: d.is_hidden || false,
+    is_deleted: d.is_deleted || false,
+    sort_order: d.sort_order || 0,
+    created_at: d.created_at,
+    updated_at: d.updated_at,
+  };
+};
 
 export const interviewService = {
   // ─── Mastery State Management ─────────────────────────────────────────────

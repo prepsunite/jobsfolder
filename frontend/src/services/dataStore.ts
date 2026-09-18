@@ -1,13 +1,14 @@
-// Global synchronized state manager for Admin CRUD operations visible to all users live!
 import { resolveTopicSlug } from './topicMap';
 import { supabase } from '@/lib/supabase';
 import { bookmarkStore } from './stores/bookmarkStore';
+import { experienceStore } from './stores/experienceStore';
 import {
   validateQuestionItem,
   generateQuestionFingerprint,
   parseTopicQuestionJsonItem as parseTopicQuestionJsonItemUtil,
   safeJsonParse,
 } from '@/utils/questionParser';
+import type { ExperienceItem, ExperienceRound, ExperienceStatus, ExperienceVerdict, ExperienceDriveType } from '@/types/experience';
 export { resolveTopicSlug };
 
 // STORAGE KEYS CONSTANTS
@@ -173,23 +174,8 @@ export interface ImportReport {
 
 
 
-export interface ExperienceItem {
-  id: string;
-  companyName: string;
-  companySlug?: string;
-  role: string;
-  studentName: string;
-  college: string;
-  year: number;
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-  verdict: 'SELECTED' | 'REJECTED' | 'WAITLISTED';
-  rounds: { roundTitle: string; details: string }[];
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  upvotes?: number;
-  driveType?: 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS';
-  overallExperience?: string;
-  tips?: string;
-}
+export type { ExperienceItem, ExperienceRound, ExperienceStatus, ExperienceVerdict, ExperienceDriveType } from '@/types/experience';
+
 
 
 
@@ -583,8 +569,6 @@ const INITIAL_TOPIC_QUESTIONS: TopicQuestionItem[] = [
   }
 ];
 
-const INITIAL_EXPERIENCES: ExperienceItem[] = [];
-
 class DataStoreManager {
   constructor() {
     this.initRealtimeSync();
@@ -698,23 +682,7 @@ class DataStoreManager {
   }
 
   async syncExperienceToSupabase(exp: ExperienceItem): Promise<void> {
-    try {
-      const { error } = await supabase.from('experiences').upsert({
-        id: exp.id,
-        company_slug: (exp.companyName || 'tcs').toLowerCase(),
-        student_name: exp.studentName,
-        role_title: exp.role,
-        result: exp.verdict,
-        rounds: exp.rounds,
-        status: exp.status || 'PENDING',
-      });
-
-      if (error) {
-        console.error('[dataStore] Supabase experience sync error:', error);
-      }
-    } catch (err) {
-      console.warn('[dataStore] Supabase experience sync exception:', err);
-    }
+    return experienceStore.syncExperienceToSupabase(exp);
   }
 
   private realtimeChannel: any = null;
@@ -1152,67 +1120,25 @@ class DataStoreManager {
 
 
 
-  // --- EXPERIENCES (Full CRUD) ---
+  // --- EXPERIENCES (DELEGATED TO MODULAR EXPERIENCE STORE) ---
   getExperiences(): ExperienceItem[] {
-    const list = this.getStorage<ExperienceItem[]>('prepunite_experiences', INITIAL_EXPERIENCES);
-    const cleaned = list.filter(e => 
-      !['exp-1', 'exp-2', 'exp-3', 'exp-4'].includes(e.id) &&
-      !['Rahul Sharma', 'Priya Verma', 'Aniket Gupta', 'Sneha Reddy', 'Super Admin'].includes(e.studentName)
-    );
-    if (cleaned.length !== list.length) {
-      this.setStorage('prepunite_experiences', cleaned);
-    }
-    return cleaned;
+    return experienceStore.getExperiences();
   }
 
   addExperience(exp: Partial<ExperienceItem>): ExperienceItem {
-    const list = this.getExperiences();
-    const newExp: ExperienceItem = {
-      id: `exp-${Date.now()}`,
-      companyName: exp.companyName || 'TCS',
-      role: exp.role || 'Software Engineer',
-      studentName: exp.studentName || 'Anonymous Student',
-      college: exp.college || 'NIT/IIT Campus',
-      year: exp.year || 2026,
-      difficulty: exp.difficulty || 'MEDIUM',
-      verdict: exp.verdict || 'SELECTED',
-      rounds: exp.rounds || [{ roundTitle: 'Online Assessment', details: 'Appeared in online assessment round.' }],
-      status: exp.status || 'PENDING',
-    };
-    const updated = [newExp, ...list];
-    this.setStorage('prepunite_experiences', updated);
-    this.syncExperienceToSupabase(newExp);
-    return newExp;
+    return experienceStore.addExperience(exp);
   }
 
   updateExperienceStatus(id: string, status: 'APPROVED' | 'REJECTED' | 'PENDING'): void {
-    const experiences = this.getExperiences();
-    const target = experiences.find(e => e.id === id);
-    if (target) {
-      target.status = status;
-      this.setStorage('prepunite_experiences', experiences);
-      this.syncExperienceToSupabase(target);
-    }
+    experienceStore.updateExperienceStatus(id, status);
   }
 
   updateExperience(id: string, updatedExp: Partial<ExperienceItem>): void {
-    const experiences = this.getExperiences();
-    const index = experiences.findIndex(e => e.id === id);
-    if (index > -1) {
-      experiences[index] = { ...experiences[index], ...updatedExp };
-      this.setStorage('prepunite_experiences', experiences);
-      this.syncExperienceToSupabase(experiences[index]);
-    }
+    experienceStore.updateExperience(id, updatedExp);
   }
 
   deleteExperience(id: string): void {
-    const all = this.getExperiences().filter(e => e.id !== id);
-    this.setStorage('prepunite_experiences', all);
-    supabase.from('experiences').delete().eq('id', id).then(({ error }) => {
-      if (error) {
-        console.error('[dataStore] Failed to delete experience from Supabase:', error);
-      }
-    });
+    experienceStore.deleteExperience(id);
   }
 
 

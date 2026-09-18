@@ -5,6 +5,8 @@ import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICA
 import { CAMPUS_DSA_ROADMAP_STAGES } from './campusDsaRoadmapData';
 import { computeSha256Hex } from '@/utils/questionParser';
 
+import type { TechnicalProblemRow, TechnicalMcqRow } from '@/lib/database.types';
+
 export interface TechnicalImportReport {
   success: number;
   importedCount: number;
@@ -18,46 +20,71 @@ const SOLVED_MCQS_KEY = 'prepunite_solved_technical_mcqs';
 
 const TECHNICAL_PROBLEM_COLUMNS = 'id, topic_id, track, title, slug, level, category, category_label, description, constraints, test_cases, sample_input, sample_output, explanation, solutions, time_complexity, space_complexity, hints, company_tags, is_hidden, is_deleted, sort_order, created_at, updated_at';
 
-const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem => {
-  const solutionsObj = (typeof d.solutions === 'object' && d.solutions !== null) ? d.solutions : {};
+type RawDbProblem = Partial<TechnicalProblemRow> & Partial<ProgrammingProblem> & {
+  id: string;
+  title: string;
+};
+
+type RawDbMcq = Partial<TechnicalMcqRow> & Partial<TechnicalMcq> & {
+  id: string;
+};
+
+const normalizeDbProblem = (d: RawDbProblem, solvedSet: Set<string>): ProgrammingProblem => {
+  const solutionsObj = (typeof d.solutions === 'object' && d.solutions !== null) ? d.solutions as any : {};
   const leetcodeUrl =
-    d.leetcode_url ||
+    (d as any).leetcode_url ||
     d.leetcodeUrl ||
     solutionsObj.leetcodeUrl ||
-    (Array.isArray(d.constraints) ? d.constraints.find((c: string) => c.startsWith('LC_URL:'))?.replace('LC_URL:', '') : '') ||
+    (Array.isArray(d.constraints) ? (d.constraints as string[]).find((c: string) => typeof c === 'string' && c.startsWith('LC_URL:'))?.replace('LC_URL:', '') : '') ||
     '';
   const leetcodeNumber =
-    d.leetcode_number ||
+    (d as any).leetcode_number ||
     d.leetcodeNumber ||
     solutionsObj.leetcodeNumber ||
     (Array.isArray(d.constraints)
-      ? parseInt(d.constraints.find((c: string) => c.startsWith('LC_NUM:'))?.replace('LC_NUM:', '') || '0', 10) || undefined
+      ? parseInt((d.constraints as string[]).find((c: string) => typeof c === 'string' && c.startsWith('LC_NUM:'))?.replace('LC_NUM:', '') || '0', 10) || undefined
       : undefined);
   const pattern = d.pattern || solutionsObj.pattern || d.category_label || d.categoryLabel || '';
-  const keyIntuition = d.key_intuition || d.keyIntuition || solutionsObj.keyIntuition || d.explanation || d.description || '';
+  const keyIntuition = d.keyIntuition || solutionsObj.keyIntuition || d.explanation || d.description || '';
+  const resolvedCategoryLabel = pattern || d.category_label || d.categoryLabel;
+  const resolvedTopicId = d.topic_id || d.topicId;
+  const resolvedTestCases = Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []);
+  const resolvedSampleInput = d.sample_input || d.sampleInput || '';
+  const resolvedSampleOutput = d.sample_output || d.sampleOutput || '';
+  const resolvedTimeComplexity = d.time_complexity || d.timeComplexity || 'O(N)';
+  const resolvedSpaceComplexity = d.space_complexity || d.spaceComplexity || 'O(1)';
+  const resolvedCompanyTags = Array.isArray(d.company_tags) ? (d.company_tags as string[]) : (Array.isArray(d.companyTags) ? d.companyTags : []);
 
   return {
     id: d.id,
     title: d.title,
     slug: d.slug || d.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-    track: d.track || 'PROGRAMMING_150',
-    level: d.level === 'BASIC' ? 'BASIC' : d.level || 'MEDIUM',
-    category: d.category || 'SYNTAX_BASICS',
-    categoryLabel: pattern || d.category_label || d.categoryLabel,
-    topicId: d.topic_id || d.topicId,
+    track: (d.track as 'PROGRAMMING_150' | 'CAMPUS_DSA') || 'PROGRAMMING_150',
+    level: d.level === 'BASIC' ? 'BASIC' : ((d.level as ProblemLevel) || 'MEDIUM'),
+    category: (d.category as ProblemCategory) || 'SYNTAX_BASICS',
+    categoryLabel: resolvedCategoryLabel,
+    category_label: resolvedCategoryLabel,
+    topicId: resolvedTopicId,
+    topic_id: resolvedTopicId,
     description: d.description || keyIntuition || '',
     constraints: Array.isArray(d.constraints)
-      ? d.constraints.filter((c: string) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:'))
+      ? (d.constraints as string[]).filter((c: string) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:'))
       : [],
-    testCases: Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []),
-    sampleInput: d.sample_input || d.sampleInput || '',
-    sampleOutput: d.sample_output || d.sampleOutput || '',
+    testCases: resolvedTestCases,
+    test_cases: resolvedTestCases,
+    sampleInput: resolvedSampleInput,
+    sample_input: resolvedSampleInput,
+    sampleOutput: resolvedSampleOutput,
+    sample_output: resolvedSampleOutput,
     explanation: d.explanation || keyIntuition || '',
-    solutions: d.solutions || { java: '', python: '', cpp: '', c: '' },
-    timeComplexity: d.time_complexity || d.timeComplexity || 'O(N)',
-    spaceComplexity: d.space_complexity || d.spaceComplexity || 'O(1)',
-    hints: Array.isArray(d.hints) ? d.hints : [],
-    companyTags: Array.isArray(d.company_tags) ? d.company_tags : (Array.isArray(d.companyTags) ? d.companyTags : []),
+    solutions: (d.solutions as any) || { java: '', python: '', cpp: '', c: '' },
+    timeComplexity: resolvedTimeComplexity,
+    time_complexity: resolvedTimeComplexity,
+    spaceComplexity: resolvedSpaceComplexity,
+    space_complexity: resolvedSpaceComplexity,
+    hints: Array.isArray(d.hints) ? (d.hints as string[]) : [],
+    companyTags: resolvedCompanyTags,
+    company_tags: resolvedCompanyTags,
     is_hidden: d.is_hidden || false,
     is_deleted: d.is_deleted || false,
     sort_order: d.sort_order || 0,
@@ -71,27 +98,36 @@ const normalizeDbProblem = (d: any, solvedSet: Set<string>): ProgrammingProblem 
   };
 };
 
-const normalizeDbMcq = (d: any): TechnicalMcq => {
+const normalizeDbMcq = (d: RawDbMcq): TechnicalMcq => {
   const rawTags: string[] = Array.isArray(d.company_tags)
-    ? d.company_tags
+    ? (d.company_tags as string[])
     : (Array.isArray(d.companyTags) ? d.companyTags : []);
   const typeTag = rawTags.find((t: string) => t.startsWith('TYPE:'))?.replace('TYPE:', '') as any;
   const companyTags = rawTags.filter((t: string) => !t.startsWith('TYPE:'));
   const questionType = d.question_type || d.questionType || typeTag || (d.code_snippet ? 'OUTPUT_PREDICTION' : 'CONCEPTUAL');
+  const resolvedCategory = d.topic_category || d.topicCategory || 'C_PROGRAMMING';
+  const resolvedTopicId = d.topic_id || d.topicId;
+  const resolvedCodeSnippet = d.code_snippet || d.codeSnippet || '';
+  const resolvedCorrectOption = typeof d.correct_option_index === 'number' ? d.correct_option_index : (d.correctOptionIndex ?? 0);
 
   return {
     id: d.id,
-    topic: d.topic_name || d.topic || 'General',
-    topicCategory: d.topic_category || d.topicCategory || 'C_PROGRAMMING',
-    topicId: d.topic_id || d.topicId,
+    topic: (d as any).topic_name || (d as any).topic || 'General',
+    topicCategory: resolvedCategory as any,
+    topic_category: resolvedCategory,
+    topicId: resolvedTopicId,
+    topic_id: resolvedTopicId,
     questionType,
     question_type: questionType,
     question: d.question || '',
-    codeSnippet: d.code_snippet || d.codeSnippet || '',
-    options: Array.isArray(d.options) ? d.options : ['A', 'B', 'C', 'D'],
-    correctOptionIndex: typeof d.correct_option_index === 'number' ? d.correct_option_index : (d.correctOptionIndex ?? 0),
+    codeSnippet: resolvedCodeSnippet,
+    code_snippet: resolvedCodeSnippet,
+    options: Array.isArray(d.options) ? (d.options as string[]) : ['A', 'B', 'C', 'D'],
+    correctOptionIndex: resolvedCorrectOption,
+    correct_option_index: resolvedCorrectOption,
     explanation: d.explanation || '',
     companyTags,
+    company_tags: companyTags,
     difficulty: d.difficulty || 'MEDIUM',
     is_hidden: d.is_hidden || false,
     is_deleted: d.is_deleted || false,
