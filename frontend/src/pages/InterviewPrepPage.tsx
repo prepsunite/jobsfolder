@@ -143,10 +143,18 @@ export default function InterviewPrepPage() {
   // Cheatcode / Tips Modal State
   const [showCheatcodeModal, setShowCheatcodeModal] = useState(false);
 
-  // Query All Questions (Supabase-first)
-  const { data: allQuestions = [], refetch: refetchQuestions } = useQuery({
-    queryKey: ['interview-prep-questions'],
-    queryFn: () => interviewService.getAllQuestions(),
+  // Query Targeted Questions (Category-scoped in directory view, topic-scoped in practice view)
+  const { data: currentQuestions = [], refetch: refetchQuestions } = useQuery({
+    queryKey: ['interview-prep-questions', activeCategory, topicParam],
+    queryFn: () => topicParam
+      ? interviewService.getQuestionsForTopic(topicParam)
+      : interviewService.getQuestionsForCategory(activeCategory),
+  });
+
+  // Query Category Totals via lightweight HTTP HEAD counts (0 bytes payload over wire)
+  const { data: interviewStats } = useQuery({
+    queryKey: ['interview-prep-stats'],
+    queryFn: () => interviewService.getStats(),
   });
 
   // Query Topics for activeCategory (Supabase-first)
@@ -185,18 +193,18 @@ export default function InterviewPrepPage() {
     }
   }, [clusters, selectedCluster]);
 
-  // Category question lists for tab counts
-  const coreCsQuestions = useMemo(() => allQuestions.filter(q => q.category === 'CORE_CS'), [allQuestions]);
-  const hrQuestions = useMemo(() => allQuestions.filter(q => q.category === 'HR_BEHAVIORAL'), [allQuestions]);
-  const projectQuestions = useMemo(() => allQuestions.filter(q => q.category === 'PROJECT_DEFENSE'), [allQuestions]);
+  // Category counts for tab badges
+  const coreCsTotal = interviewStats?.coreCsTotal ?? 0;
+  const hrTotal = interviewStats?.hrTotal ?? 0;
+  const projectTotal = interviewStats?.projectTotal ?? 0;
 
   // Scope of questions for current view (Topic vs Category)
   const scopedQuestions = useMemo(() => {
     if (activeTopic) {
-      return allQuestions.filter(q => q.topicId === activeTopic.id);
+      return currentQuestions.filter(q => q.topicId === activeTopic.id);
     }
-    return allQuestions.filter(q => q.category === activeCategory);
-  }, [activeTopic, activeCategory, allQuestions]);
+    return currentQuestions.filter(q => q.category === activeCategory);
+  }, [activeTopic, activeCategory, currentQuestions]);
 
   const scopedMasteredCount = useMemo(() => scopedQuestions.filter(q => q.mastered).length, [scopedQuestions]);
   const scopedTotal = scopedQuestions.length;
@@ -245,8 +253,8 @@ export default function InterviewPrepPage() {
   // Active topic questions
   const activeTopicQuestions = useMemo(() => {
     if (!activeTopic) return [];
-    return allQuestions.filter(q => q.topicId === activeTopic.id);
-  }, [activeTopic, allQuestions]);
+    return currentQuestions.filter(q => q.topicId === activeTopic.id);
+  }, [activeTopic, currentQuestions]);
 
   const activeTopicMasteredCount = useMemo(() => {
     return activeTopicQuestions.filter(q => q.mastered).length;
@@ -1253,7 +1261,7 @@ export default function InterviewPrepPage() {
                     : 'bg-black/5 dark:bg-white/5'
                 }`}
               >
-                {coreCsQuestions.length}
+                {coreCsTotal}
               </span>
             </button>
 
@@ -1275,7 +1283,7 @@ export default function InterviewPrepPage() {
                     : 'bg-black/5 dark:bg-white/5'
                 }`}
               >
-                {hrQuestions.length}
+                {hrTotal}
               </span>
             </button>
 
@@ -1297,7 +1305,7 @@ export default function InterviewPrepPage() {
                     : 'bg-black/5 dark:bg-white/5'
                 }`}
               >
-                {projectQuestions.length}
+                {projectTotal}
               </span>
             </button>
           </div>
@@ -1380,7 +1388,7 @@ export default function InterviewPrepPage() {
             ) : (
               filteredTopics.map(topic => {
                 const TopicIcon = TOPIC_ICON_MAP[topic.icon_name || topic.iconName] || BookOpen;
-                const topicQuestions = allQuestions.filter(q => q.topicId === topic.id);
+                const topicQuestions = currentQuestions.filter(q => q.topicId === topic.id);
                 const masteredInTopic = topicQuestions.filter(q => q.mastered).length;
                 const liveCount = liveCountMap[topic.id] ?? topicQuestions.length;
 
