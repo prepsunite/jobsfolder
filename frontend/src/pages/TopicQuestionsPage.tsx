@@ -807,53 +807,6 @@ export default function TopicQuestionsPage() {
             <p className="text-sm text-gray-700 dark:text-gray-300 font-sans mt-1">
               {foundTopic?.description || 'Filter questions by difficulty, test your answer with MCQ options, or view detailed step-by-step solutions.'}
             </p>
-
-            {/* Topic Progress Breakdown: Easy, Med, Hard */}
-            <div className="pt-2 space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="w-36 h-2 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${topicPercentage}%` }}
-                  />
-                </div>
-                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  {topicSolvedQuestions} / {topicTotalQuestions} Solved ({topicPercentage}%)
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 max-w-xs sm:max-w-sm">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                    <span className="font-display font-bold text-emerald-600 dark:text-emerald-400">Easy</span>
-                    <span className="text-[#868E96] dark:text-[#666666]">{topicEasySolved}/{topicEasyQuestions.length}</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${topicEasyPct}%` }} />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                    <span className="font-display font-bold text-amber-600 dark:text-amber-400">Med</span>
-                    <span className="text-[#868E96] dark:text-[#666666]">{topicMedSolved}/{topicMedQuestions.length}</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${topicMedPct}%` }} />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono leading-none">
-                    <span className="font-display font-bold text-rose-600 dark:text-rose-400">Hard</span>
-                    <span className="text-[#868E96] dark:text-[#666666]">{topicHardSolved}/{topicHardQuestions.length}</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#242424] overflow-hidden">
-                    <div className="h-full bg-rose-500 rounded-full transition-all duration-500" style={{ width: `${topicHardPct}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center flex-wrap gap-2 shrink-0">
