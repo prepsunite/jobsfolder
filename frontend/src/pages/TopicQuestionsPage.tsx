@@ -874,17 +874,17 @@ export default function TopicQuestionsPage() {
       </div>
 
       {/* 🎯 UNIFIED TOPIC FILTER & PAGINATION TOOLBAR */}
-      <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="p-2.5 sm:p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs overflow-x-auto no-scrollbar">
+        <div className="flex items-center justify-between gap-2 sm:gap-4 min-w-max sm:min-w-0 w-full flex-nowrap">
           {/* Left: Difficulty Filter Group */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
             <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555] flex items-center gap-1">
               <Filter className="w-3 h-3 text-[#121417] dark:text-[#FD4A32]" />
               <span>Difficulty:</span>
             </span>
-            <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+            <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-nowrap">
               {[
-                { id: 'ALL', label: 'All Levels' },
+                { id: 'ALL', label: 'All' },
                 { id: 'EASY', label: 'Easy' },
                 { id: 'MEDIUM', label: 'Medium' },
                 { id: 'HARD', label: 'Hard' },
@@ -893,11 +893,12 @@ export default function TopicQuestionsPage() {
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => {
                       setActiveDifficulty(item.id);
                       handlePageChange(1);
                     }}
-                    className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                    className={`px-2 sm:px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer whitespace-nowrap ${
                       isActive
                         ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                         : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
@@ -911,60 +912,61 @@ export default function TopicQuestionsPage() {
           </div>
 
           {/* Middle: Integrated Pagination */}
-          {totalPages > 1 ? (
-            <div className="inline-flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
-                aria-label="Previous Page"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Prev</span>
-              </button>
+          <div className="flex items-center justify-center shrink-0 flex-nowrap">
+            {totalPages > 1 ? (
+              <div className="inline-flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer whitespace-nowrap"
+                  aria-label="Previous Page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
+                </button>
 
-              <span className="px-3 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] whitespace-nowrap">
-                Page {currentPage} of {totalPages}
-              </span>
+                <span className="px-2.5 sm:px-3 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] whitespace-nowrap">
+                  Page {currentPage} of {totalPages}
+                </span>
 
-              <button
-                type="button"
-                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
-                aria-label="Next Page"
-              >
-                <span>Next</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <div />
-          )}
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer whitespace-nowrap"
+                  aria-label="Next Page"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
 
           {/* Right: Status Filter Group */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
             <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
               Status:
             </span>
-            <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-wrap">
+            <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-nowrap">
               {[
                 { id: 'ALL', label: 'All' },
                 { id: 'UNSOLVED', label: 'Unsolved' },
                 { id: 'SOLVED', label: `Solved (${topicSolvedQuestions})` },
-                ...(topicNeedsRetryQuestions > 0 ? [{ id: 'RETRY', label: `Needs Retry (${topicNeedsRetryQuestions})` }] : []),
+                ...(topicNeedsRetryQuestions > 0 ? [{ id: 'RETRY', label: `Retry (${topicNeedsRetryQuestions})` }] : []),
                 { id: 'BOOKMARKED', label: 'Bookmarked' },
               ].map((item) => {
                 const isActive = activeStatusFilter === item.id;
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => {
                       setActiveStatusFilter(item.id as any);
                       handlePageChange(1);
                     }}
-                    className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                    className={`px-2 sm:px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer whitespace-nowrap ${
                       isActive
                         ? 'bg-[#FD4A32] text-white shadow-xs'
                         : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
