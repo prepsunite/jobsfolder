@@ -1241,76 +1241,7 @@ export default function InterviewPrepPage() {
             </div>
           </div>
 
-          {/* 🏷️ 2. CATEGORY SWITCHER TABS */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleCategoryChange('CORE_CS')}
-              className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                activeCategory === 'CORE_CS'
-                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                  : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5 text-[#FD4A32]" />
-              <span>Core CS Fundamentals</span>
-              <span
-                className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                  activeCategory === 'CORE_CS'
-                    ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
-                    : 'bg-black/5 dark:bg-white/5'
-                }`}
-              >
-                {coreCsTotal}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleCategoryChange('HR_BEHAVIORAL')}
-              className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                activeCategory === 'HR_BEHAVIORAL'
-                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                  : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5 text-amber-500" />
-              <span>HR Behavioral (STAR)</span>
-              <span
-                className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                  activeCategory === 'HR_BEHAVIORAL'
-                    ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
-                    : 'bg-black/5 dark:bg-white/5'
-                }`}
-              >
-                {hrTotal}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleCategoryChange('PROJECT_DEFENSE')}
-              className={`px-3 py-1.5 rounded-md text-xs font-display font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                activeCategory === 'PROJECT_DEFENSE'
-                  ? 'bg-[#121417] dark:bg-white text-white dark:text-black border-[#121417] dark:border-white shadow-xs'
-                  : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:border-[#121417]'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Project Defense &amp; Viva</span>
-              <span
-                className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                  activeCategory === 'PROJECT_DEFENSE'
-                    ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
-                    : 'bg-black/5 dark:bg-white/5'
-                }`}
-              >
-                {projectTotal}
-              </span>
-            </button>
-          </div>
-
-          {/* 🏷️ 3. CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ADD TOPIC BUTTON */}
+          {/* 🏷️ 2. CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ADD TOPIC BUTTON */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
               {clusters.map(cluster => (

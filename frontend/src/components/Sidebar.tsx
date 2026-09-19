@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import {
@@ -33,6 +33,8 @@ import {
   HelpCircle,
   Briefcase,
   Flame,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -50,9 +52,47 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const isTpo = (role === 'TPO_ADMIN' || isTpoAdmin) || (isAdmin && isTpoRoute);
 
   const displayCollegeName = collegeName || (collegeCode ? `${collegeCode}` : '') || user?.collegeName || 'Institutional';
+
+  // Desktop Collapsible State (persisted in localStorage)
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('prepunite_sidebar_collapsed') === 'true';
+    }
+    return false;
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('prepunite_sidebar_collapsed', String(next));
+      }
+      return next;
+    });
+  };
+
+  // Keyboard shortcut Ctrl+[ to toggle sidebar collapse
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+        e.preventDefault();
+        toggleCollapsed();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(() => location.pathname.startsWith('/aptitude'));
   const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(() => location.pathname.startsWith('/technical'));
   const [isInterviewExpanded, setIsInterviewExpanded] = useState(() => location.pathname.startsWith('/interview-prep'));
+
+  // Automatically expand corresponding category when route changes
+  useEffect(() => {
+    if (location.pathname.startsWith('/aptitude')) setIsAptitudeExpanded(true);
+    if (location.pathname.startsWith('/technical')) setIsTechnicalExpanded(true);
+    if (location.pathname.startsWith('/interview-prep')) setIsInterviewExpanded(true);
+  }, [location.pathname]);
 
   // TPO Institutional Modules (Strictly for College Placement Officers)
   const tpoNavLinks = [
@@ -108,51 +148,104 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
       {/* Main Sidebar */}
       <aside
-        className={`w-64 bg-[#F8F9FA] dark:bg-[#0C0C0C] border-r border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between h-screen fixed md:sticky top-0 left-0 shrink-0 z-50 md:z-40 transition-transform duration-200 ease-in-out ${
+        className={`bg-[#F8F9FA] dark:bg-[#0C0C0C] border-r border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between h-screen fixed md:sticky top-0 left-0 shrink-0 z-50 md:z-40 transition-all duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } ${
+          isCollapsed ? 'w-64 md:w-16' : 'w-64 md:w-64'
         }`}
       >
         {/* Top Header & Brand */}
-        <div className="p-4 space-y-4 overflow-y-auto custom-scrollbar flex-1">
-          {/* Brand Logo with Mobile Close Button */}
-          <div className="flex items-center justify-between">
-            <Link to={isTpo ? "/tpo" : "/"} onClick={onClose} className="flex items-center gap-2.5 group">
-              <img
-                src="/favicon.svg"
-                alt="PrepUnite Logo"
-                className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
-              />
-              <div className="flex flex-col">
-                <span className="font-display font-extrabold text-base tracking-tight text-[#121417] dark:text-[#FFFFFF]">
-                  Prep<span className="text-[#FD4A32]">Unite</span>
-                </span>
-                <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
-                  {isAdmin
-                    ? (isTpoRoute ? `${displayCollegeName} CRT` : 'Admin Portal')
-                    : (role === 'TPO_ADMIN' || isTpoAdmin)
-                    ? `${displayCollegeName} CRT`
-                    : role === 'USER'
-                    ? 'Student Workspace'
-                    : 'Guest Mode'}
-                </span>
+        <div className={`overflow-y-auto custom-scrollbar flex-1 overflow-x-hidden ${isCollapsed ? 'p-2 space-y-3' : 'p-4 space-y-4'}`}>
+          {/* Brand Logo with Mobile Close Button & Desktop Collapse Toggle */}
+          {isCollapsed ? (
+            <div className="flex flex-col items-center gap-2 pt-1 pb-1">
+              <Link
+                to={isTpo ? "/tpo" : "/"}
+                onClick={onClose}
+                className="p-1 rounded-full hover:scale-105 transition-transform"
+                title="PrepUnite Home"
+              >
+                <img
+                  src="/favicon.svg"
+                  alt="PrepUnite Logo"
+                  className="w-8 h-8 rounded-full object-contain shrink-0"
+                />
+              </Link>
+              <button
+                type="button"
+                onClick={toggleCollapsed}
+                className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                title="Expand Sidebar (Ctrl+[)"
+                aria-label="Expand Sidebar"
+              >
+                <PanelLeftOpen className="w-4 h-4 text-[#FD4A32]" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <Link to={isTpo ? "/tpo" : "/"} onClick={onClose} className="flex items-center gap-2.5 group">
+                <img
+                  src="/favicon.svg"
+                  alt="PrepUnite Logo"
+                  className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
+                />
+                <div className="flex flex-col">
+                  <span className="font-display font-extrabold text-base tracking-tight text-[#121417] dark:text-[#FFFFFF]">
+                    Prep<span className="text-[#FD4A32]">Unite</span>
+                  </span>
+                  <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
+                    {isAdmin
+                      ? (isTpoRoute ? `${displayCollegeName} CRT` : 'Admin Portal')
+                      : (role === 'TPO_ADMIN' || isTpoAdmin)
+                      ? `${displayCollegeName} CRT`
+                      : role === 'USER'
+                      ? 'Student Workspace'
+                      : 'Guest Mode'}
+                  </span>
+                </div>
+              </Link>
+
+              <div className="flex items-center gap-1">
+                {/* Desktop Collapse Button */}
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  className="hidden md:flex items-center justify-center p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Collapse Sidebar (Ctrl+[)"
+                  aria-label="Collapse Sidebar"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+
+                {/* Mobile close button */}
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:bg-black/5 dark:hover:bg-white/5 md:hidden cursor-pointer"
+                  title="Close Navigation"
+                  aria-label="Close Navigation"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-            </Link>
+            </div>
+          )}
 
-            {/* Mobile close button */}
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:bg-black/5 dark:hover:bg-white/5 md:hidden"
-              title="Close Navigation"
+          {/* Status Indicator */}
+          {isCollapsed ? (
+            <div
+              className="flex items-center justify-center py-1"
+              title={
+                isAdmin
+                  ? (isTpoRoute ? 'TPO Portal (Admin View)' : 'Admin Active')
+                  : (role === 'TPO_ADMIN' || isTpoAdmin)
+                  ? 'TPO Coordinator'
+                  : role === 'USER'
+                  ? 'Student Mode'
+                  : 'Guest Preview'
+              }
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Clean Status Badge */}
-          <div className="p-2 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs flex items-center justify-between">
-            <div className="flex items-center gap-2">
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
+                className={`w-2 h-2 rounded-full ${
                   isAdmin
                     ? 'bg-purple-500 animate-pulse'
                     : (role === 'TPO_ADMIN' || isTpoAdmin)
@@ -162,29 +255,42 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     : 'bg-[#FD4A32]'
                 }`}
               />
-              <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
-                {isAdmin
-                  ? (isTpoRoute ? 'TPO Portal (Admin View)' : 'Admin Active')
-                  : (role === 'TPO_ADMIN' || isTpoAdmin)
-                  ? 'TPO Coordinator'
-                  : role === 'USER'
-                  ? 'Student Mode'
-                  : 'Guest Preview'}
+            </div>
+          ) : (
+            <div className="p-2 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isAdmin
+                      ? 'bg-purple-500 animate-pulse'
+                      : (role === 'TPO_ADMIN' || isTpoAdmin)
+                      ? 'bg-amber-500 animate-pulse'
+                      : role === 'USER'
+                      ? 'bg-emerald-500'
+                      : 'bg-[#FD4A32]'
+                  }`}
+                />
+                <span className="font-display font-bold text-[#121417] dark:text-[#FFFFFF] uppercase tracking-wider text-[10px]">
+                  {isAdmin
+                    ? (isTpoRoute ? 'TPO Portal (Admin View)' : 'Admin Active')
+                    : (role === 'TPO_ADMIN' || isTpoAdmin)
+                    ? 'TPO Coordinator'
+                    : role === 'USER'
+                    ? 'Student Mode'
+                    : 'Guest Preview'}
+                </span>
+              </div>
+              <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase">
+                {(role === 'TPO_ADMIN' || isTpoAdmin || isTpoRoute) ? 'TPO' : '2026'}
               </span>
             </div>
-            <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase">
-              {(role === 'TPO_ADMIN' || isTpoAdmin || isTpoRoute) ? 'TPO' : '2026'}
-            </span>
-          </div>
+          )}
 
           {/* CONDITIONAL NAVIGATION: TPO Coordinators vs Students/Admins */}
           {isTpo ? (
             /* TPO INSTITUTIONAL WORKSPACE MODULES (Strictly for College Placement Officers) */
-            <div className="space-y-4">
-              <nav className="space-y-1">
-                <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
-                  Placement Modules
-                </span>
+            isCollapsed ? (
+              <div className="space-y-1">
                 {tpoNavLinks.map((link) => {
                   const Icon = link.icon;
                   const isActive = link.exact
@@ -195,431 +301,697 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       key={link.name}
                       to={link.href}
                       onClick={onClose}
-                      className={`group flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold transition-all ${
+                      title={link.name}
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-[#FD4A32] text-white shadow-xs font-bold'
-                          : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                          ? 'bg-[#FD4A32] text-white shadow-xs'
+                          : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#FD4A32]'} transition-transform group-hover:scale-110`} />
-                        <span>{link.name}</span>
-                      </div>
-                      {isActive && <ChevronRight className="w-3 h-3 text-white" />}
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#FD4A32]'} transition-transform group-hover:scale-110`} />
                     </Link>
                   );
                 })}
-              </nav>
-
-              {/* College Info & Capacity Badge */}
-              <div className="p-3 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold uppercase text-[#868E96] dark:text-[#555555]">
-                    Institutional CRT
-                  </span>
-                  <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
-                    Authorized
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-[#FD4A32] shrink-0" />
-                  <span className="font-bold text-[#121417] dark:text-white truncate">
-                    {displayCollegeName}
-                  </span>
-                </div>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <nav className="space-y-1">
+                  <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                    Placement Modules
+                  </span>
+                  {tpoNavLinks.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = link.exact
+                      ? location.pathname === link.href
+                      : location.pathname.startsWith(link.href);
+                    return (
+                      <Link
+                        key={link.name}
+                        to={link.href}
+                        onClick={onClose}
+                        className={`group flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-[#FD4A32] text-white shadow-xs font-bold'
+                            : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#FD4A32]'} transition-transform group-hover:scale-110`} />
+                          <span>{link.name}</span>
+                        </div>
+                        {isActive && <ChevronRight className="w-3 h-3 text-white" />}
+                      </Link>
+                    );
+                  })}
+                </nav>
 
-              {/* Support & Platform Links for Placement Officers */}
-              <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-0.5">
-                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
-                  Platform &amp; Help
-                </span>
-                <Link
-                  to="/about"
-                  onClick={onClose}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
-                >
-                  <Info className="w-3.5 h-3.5 text-[#868E96]" />
-                  <span>About Jobsfolder</span>
-                </Link>
-                <Link
-                  to="/contact"
-                  onClick={onClose}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
-                >
-                  <Mail className="w-3.5 h-3.5 text-[#868E96]" />
-                  <span>Contact Support</span>
-                </Link>
-              </div>
+                {/* College Info & Capacity Badge */}
+                <div className="p-3 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold uppercase text-[#868E96] dark:text-[#555555]">
+                      Institutional CRT
+                    </span>
+                    <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
+                      Authorized
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                    <span className="font-bold text-[#121417] dark:text-white truncate">
+                      {displayCollegeName}
+                    </span>
+                  </div>
+                </div>
 
-              {/* Admin Quick Return for Super Admins */}
-              {isAdmin && (
-                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
-                  <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
-                    Control Center
+                {/* Support & Platform Links for Placement Officers */}
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-0.5">
+                  <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
+                    Platform &amp; Help
                   </span>
                   <Link
-                    to="/admin"
+                    to="/about"
                     onClick={onClose}
-                    className="flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
                   >
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                      <span>Admin Console</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
-                      Core
-                    </span>
+                    <Info className="w-3.5 h-3.5 text-[#868E96]" />
+                    <span>About Jobsfolder</span>
                   </Link>
                   <Link
-                    to="/admin/colleges"
+                    to="/contact"
                     onClick={onClose}
-                    className="flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
                   >
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
-                      <span>Colleges &amp; TPOs</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/60 text-[#FD4A32]">
-                      B2B
-                    </span>
+                    <Mail className="w-3.5 h-3.5 text-[#868E96]" />
+                    <span>Contact Support</span>
                   </Link>
                 </div>
-              )}
-            </div>
+
+                {/* Admin Quick Return for Super Admins */}
+                {isAdmin && (
+                  <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                    <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                      Control Center
+                    </span>
+                    <Link
+                      to="/admin"
+                      onClick={onClose}
+                      className="flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        <span>Admin Console</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                        Core
+                      </span>
+                    </Link>
+                    <Link
+                      to="/admin/colleges"
+                      onClick={onClose}
+                      className="flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+                        <span>Colleges &amp; TPOs</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/60 text-[#FD4A32]">
+                        B2B
+                      </span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             /* STUDENT & PLATFORM ADMIN WORKSPACE */
-            <>
-              {/* Main Navigation Links */}
-              <nav className="space-y-0.5">
-                <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
-                  Menu
-                </span>
-                {navLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = location.pathname.startsWith(link.href);
-                  return (
+            isCollapsed ? (
+              /* COLLAPSED RAIL: Clean Icon-Only Navigation */
+              <div className="space-y-2">
+                {/* Main Consumer Links */}
+                <nav className="space-y-1">
+                  {navLinks.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = location.pathname.startsWith(link.href);
+                    return (
+                      <Link
+                        key={link.name}
+                        to={link.href}
+                        onClick={onClose}
+                        title={link.name}
+                        className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all relative ${
+                          isActive
+                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                        {'badge' in link && (link as any).badge && (
+                          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FD4A32]" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                {/* Aptitude Rail Icon */}
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
+                  <Link
+                    to="/aptitude/arithmetic-aptitude"
+                    onClick={onClose}
+                    title="Aptitude & Reasoning"
+                    className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                      location.pathname.startsWith('/aptitude')
+                        ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E]'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                    }`}
+                  >
+                    <Calculator className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                  </Link>
+                </div>
+
+                {/* Technical & Coding Tracks Rail Icons */}
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                  {technicalTracks.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isItemActive =
+                      location.pathname === '/technical' &&
+                      (location.search.includes(item.track) || (!location.search && item.track === 'programming-150'));
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        onClick={onClose}
+                        title={`Technical: ${item.name}`}
+                        className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                          isItemActive
+                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E]'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        }`}
+                      >
+                        <ItemIcon className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Interview Prep Categories Rail Icons */}
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                  {interviewCategories.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isItemActive =
+                      location.pathname === '/interview-prep' &&
+                      (location.search.includes(item.category) || (!location.search && item.category === 'core-cs'));
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        onClick={onClose}
+                        title={`Interview: ${item.name}`}
+                        className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                          isItemActive
+                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E]'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        }`}
+                      >
+                        <ItemIcon className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Admin Rail Icons */}
+                {isAdmin && (
+                  <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
                     <Link
-                      key={link.name}
-                      to={link.href}
+                      to="/admin"
                       onClick={onClose}
-                      className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                        isActive
-                          ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
+                      title="Admin Console"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname === '/admin'
+                          ? 'bg-purple-900/20 text-purple-400 border border-purple-500/40'
+                          : 'text-[#868E96] hover:text-purple-400 hover:bg-purple-900/10'
+                      }`}
+                    >
+                      <ShieldCheck className="w-4 h-4 text-purple-500" />
+                    </Link>
+                    <Link
+                      to="/admin/colleges"
+                      onClick={onClose}
+                      title="Colleges & TPOs"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/colleges')
+                          ? 'bg-orange-500/20 text-[#FD4A32] border border-orange-500/40'
+                          : 'text-[#868E96] hover:text-[#FD4A32] hover:bg-orange-500/10'
+                      }`}
+                    >
+                      <Building2 className="w-4 h-4 text-[#FD4A32]" />
+                    </Link>
+                    <Link
+                      to="/admin/bulk-import"
+                      onClick={onClose}
+                      title="Bulk Importer"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/bulk-import')
+                          ? 'bg-purple-900/20 text-purple-400 border border-purple-500/40'
+                          : 'text-[#868E96] hover:text-purple-400 hover:bg-purple-900/10'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4 text-purple-400" />
+                    </Link>
+                    <Link
+                      to="/admin/technical"
+                      onClick={onClose}
+                      title="Technical Hub Admin"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/technical')
+                          ? 'bg-indigo-900/20 text-indigo-400 border border-indigo-500/40'
+                          : 'text-[#868E96] hover:text-indigo-400 hover:bg-indigo-900/10'
+                      }`}
+                    >
+                      <Code2 className="w-4 h-4 text-indigo-400" />
+                    </Link>
+                    <Link
+                      to="/admin/interview"
+                      onClick={onClose}
+                      title="Interview Prep Admin"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/interview')
+                          ? 'bg-teal-900/20 text-teal-400 border border-teal-500/40'
+                          : 'text-[#868E96] hover:text-teal-400 hover:bg-teal-900/10'
+                      }`}
+                    >
+                      <MessageSquareQuote className="w-4 h-4 text-teal-400" />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* EXPANDED FULL SIDEBAR NAVIGATION */
+              <>
+                {/* Main Navigation Links */}
+                <nav className="space-y-0.5">
+                  <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                    Menu
+                  </span>
+                  {navLinks.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = location.pathname.startsWith(link.href);
+                    return (
+                      <Link
+                        key={link.name}
+                        to={link.href}
+                        onClick={onClose}
+                        className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                          <span>{link.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {'badge' in link && (link as any).badge && (
+                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                              {(link as any).badge}
+                            </span>
+                          )}
+                          {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                {/* Collapsible Aptitude Categories */}
+                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+                  <button
+                    type="button"
+                    onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
+                  >
+                    <span>Aptitude &amp; Reasoning</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
+                      }`}
+                    />
+                  </button>
+
+                  {isAptitudeExpanded && (
+                    <div className="space-y-0.5 pt-1.5 animate-fadeIn">
+                      {aptitudeCategories.map((cat) => {
+                        const CatIcon = cat.icon;
+                        const isCatActive = location.pathname.startsWith(`/aptitude/${cat.slug}`);
+                        return (
+                          <Link
+                            key={cat.name}
+                            to={`/aptitude/${cat.slug}`}
+                            onClick={onClose}
+                            className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                              isCatActive
+                                ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                              <span className="truncate">{cat.name}</span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Collapsible Technical & Coding */}
+                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+                  <button
+                    type="button"
+                    onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
+                  >
+                    <span>Technical &amp; Coding</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        isTechnicalExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
+                      }`}
+                    />
+                  </button>
+
+                  {isTechnicalExpanded && (
+                    <div className="space-y-0.5 pt-1.5 animate-fadeIn">
+                      {technicalTracks.map((item) => {
+                        const ItemIcon = item.icon;
+                        const isItemActive =
+                          location.pathname === '/technical' &&
+                          (location.search.includes(item.track) || (!location.search && item.track === 'programming-150'));
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            onClick={onClose}
+                            className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                              isItemActive
+                                ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                              <span className="truncate">{item.name}</span>
+                            </div>
+                            {item.badge && (
+                              <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Collapsible Interview Preparation */}
+                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
+                  <button
+                    type="button"
+                    onClick={() => setIsInterviewExpanded(!isInterviewExpanded)}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
+                  >
+                    <span>Interview Preparation</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        isInterviewExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
+                      }`}
+                    />
+                  </button>
+
+                  {isInterviewExpanded && (
+                    <div className="space-y-0.5 pt-1.5 animate-fadeIn">
+                      {interviewCategories.map((item) => {
+                        const ItemIcon = item.icon;
+                        const isItemActive =
+                          location.pathname === '/interview-prep' &&
+                          (location.search.includes(item.category) || (!location.search && item.category === 'core-cs'));
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            onClick={onClose}
+                            className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                              isItemActive
+                                ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
+                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                              <span className="truncate">{item.name}</span>
+                            </div>
+                            {item.badge && (
+                              <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Admin Control Panel Section */}
+                {isAdmin && (
+                  <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
+                    <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
+                      Control Center
+                    </span>
+                    <Link
+                      to="/admin"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname === '/admin'
+                          ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
                           : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
-                        <span>{link.name}</span>
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        <span>Admin Console</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {'badge' in link && (link as any).badge && (
-                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
-                            {(link as any).badge}
-                          </span>
-                        )}
-                        {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
-                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                        Core
+                      </span>
                     </Link>
-                  );
-                })}
-              </nav>
 
-              {/* Collapsible Aptitude Categories */}
-              <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
-                <button
-                  type="button"
-                  onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
-                >
-                  <span>Aptitude &amp; Reasoning</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      isAptitudeExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
-                    }`}
-                  />
-                </button>
+                    <Link
+                      to="/admin/colleges"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/colleges')
+                          ? 'bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+                        <span>Colleges &amp; TPOs</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/60 text-[#FD4A32]">
+                        B2B
+                      </span>
+                    </Link>
 
-                {isAptitudeExpanded && (
-                  <div className="space-y-0.5 pt-1.5 animate-fadeIn">
-                    {aptitudeCategories.map((cat) => {
-                      const CatIcon = cat.icon;
-                      const isCatActive = location.pathname.startsWith(`/aptitude/${cat.slug}`);
-                      return (
-                        <Link
-                          key={cat.name}
-                          to={`/aptitude/${cat.slug}`}
-                          onClick={onClose}
-                          className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                            isCatActive
-                              ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                              : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
-                            <span className="truncate">{cat.name}</span>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                    <Link
+                      to="/admin/bulk-import"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/bulk-import')
+                          ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        <span>Bulk Importer</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                        Import
+                      </span>
+                    </Link>
+
+                    <Link
+                      to="/admin/technical"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/technical')
+                          ? 'bg-indigo-900/10 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Code2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <span>Technical Hub</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                        Tech
+                      </span>
+                    </Link>
+
+                    <Link
+                      to="/admin/interview"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/interview')
+                          ? 'bg-teal-900/10 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageSquareQuote className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                        <span>Interview Prep</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300">
+                        Prep
+                      </span>
+                    </Link>
                   </div>
                 )}
-              </div>
-
-              {/* Collapsible Technical & Coding */}
-              <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
-                <button
-                  type="button"
-                  onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
-                >
-                  <span>Technical &amp; Coding</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      isTechnicalExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
-                    }`}
-                  />
-                </button>
-
-                {isTechnicalExpanded && (
-                  <div className="space-y-0.5 pt-1.5 animate-fadeIn">
-                    {technicalTracks.map((item) => {
-                      const ItemIcon = item.icon;
-                      const isItemActive =
-                        location.pathname === '/technical' &&
-                        (location.search.includes(item.track) || (!location.search && item.track === 'programming-150'));
-                      return (
-                        <Link
-                          key={item.name}
-                          to={item.href}
-                          onClick={onClose}
-                          className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                            isItemActive
-                              ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                              : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
-                            <span className="truncate">{item.name}</span>
-                          </div>
-                          {item.badge && (
-                            <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
-                              {item.badge}
-                            </span>
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Collapsible Interview Preparation */}
-              <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#242424]">
-                <button
-                  type="button"
-                  onClick={() => setIsInterviewExpanded(!isInterviewExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group font-display uppercase tracking-wider"
-                >
-                  <span>Interview Preparation</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      isInterviewExpanded ? 'rotate-180 text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
-                    }`}
-                  />
-                </button>
-
-                {isInterviewExpanded && (
-                  <div className="space-y-0.5 pt-1.5 animate-fadeIn">
-                    {interviewCategories.map((item) => {
-                      const ItemIcon = item.icon;
-                      const isItemActive =
-                        location.pathname === '/interview-prep' &&
-                        (location.search.includes(item.category) || (!location.search && item.category === 'core-cs'));
-                      return (
-                        <Link
-                          key={item.name}
-                          to={item.href}
-                          onClick={onClose}
-                          className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                            isItemActive
-                              ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                              : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
-                            <span className="truncate">{item.name}</span>
-                          </div>
-                          {item.badge && (
-                            <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
-                              {item.badge}
-                            </span>
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Admin Control Panel Section */}
-              {isAdmin && (
-                <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] space-y-1">
-                  <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
-                    Control Center
-                  </span>
-                  <Link
-                    to="/admin"
-                    onClick={onClose}
-                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                      location.pathname === '/admin'
-                        ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                      <span>Admin Console</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
-                      Core
-                    </span>
-                  </Link>
-
-                  <Link
-                    to="/admin/colleges"
-                    onClick={onClose}
-                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                      location.pathname.startsWith('/admin/colleges')
-                        ? 'bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30'
-                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-[#FD4A32]" />
-                      <span>Colleges &amp; TPOs</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/60 text-[#FD4A32]">
-                      B2B
-                    </span>
-                  </Link>
-
-                  <Link
-                    to="/admin/bulk-import"
-                    onClick={onClose}
-                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                      location.pathname.startsWith('/admin/bulk-import')
-                        ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                      <span>Bulk Importer</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
-                      Import
-                    </span>
-                  </Link>
-
-                  <Link
-                    to="/admin/technical"
-                    onClick={onClose}
-                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                      location.pathname.startsWith('/admin/technical')
-                        ? 'bg-indigo-900/10 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30'
-                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Code2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                      <span>Technical Hub</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
-                      Tech
-                    </span>
-                  </Link>
-
-                  <Link
-                    to="/admin/interview"
-                    onClick={onClose}
-                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                      location.pathname.startsWith('/admin/interview')
-                        ? 'bg-teal-900/10 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-500/30'
-                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <MessageSquareQuote className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                      <span>Interview Prep</span>
-                    </div>
-                    <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300">
-                      Prep
-                    </span>
-                  </Link>
-                </div>
-              )}
-            </>
+              </>
+            )
           )}
         </div>
 
         {/* Bottom User Account Section */}
-        <div className="p-3 border-t border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414]">
-          {role === 'GUEST' ? (
-            <Link
-              to="/login"
-              onClick={onClose}
-              className="flex items-center justify-between p-2 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/25 text-[#FD4A32] transition-colors w-full font-bold text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <User className="w-3.5 h-3.5" />
-                <span>Sign In / Register</span>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          ) : (
-            <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] w-full">
-              <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-                <div
-                  className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
-                    isAdmin
-                      ? 'bg-purple-600 dark:bg-purple-400'
-                      : (role === 'TPO_ADMIN' || isTpoAdmin)
-                      ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
-                      : 'bg-[#FD4A32]'
-                  }`}
+        <div className={`border-t border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          {isCollapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              {role === 'GUEST' ? (
+                <Link
+                  to="/login"
+                  onClick={onClose}
+                  title="Sign In / Register"
+                  className="w-10 h-10 rounded-lg bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/25 text-[#FD4A32] flex items-center justify-center cursor-pointer"
                 >
-                  {isAdmin ? (
-                    <KeyRound className="w-3.5 h-3.5" />
-                  ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
-                    <Building2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <User className="w-3.5 h-3.5" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">
-                    {user?.name || 'Workspace Account'}
-                  </span>
-                  <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 block truncate">
-                    {isAdmin
-                      ? 'Administrator'
-                      : (role === 'TPO_ADMIN' || isTpoAdmin)
-                      ? user?.collegeName ? `${user.collegeName} (TPO)` : 'TPO Coordinator'
-                      : (user?.email || 'Active Account')}
-                  </span>
-                </div>
-              </Link>
+                  <User className="w-4 h-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/profile"
+                    onClick={onClose}
+                    title={user?.name || user?.email || 'Profile'}
+                    className={`w-9 h-9 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs hover:opacity-90 transition-opacity ${
+                      isAdmin
+                        ? 'bg-purple-600 dark:bg-purple-400'
+                        : (role === 'TPO_ADMIN' || isTpoAdmin)
+                        ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
+                        : 'bg-[#FD4A32]'
+                    }`}
+                  >
+                    {isAdmin ? (
+                      <KeyRound className="w-4 h-4" />
+                    ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
+                      <Building2 className="w-4 h-4" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                  </Link>
+                  <button
+                    onClick={logout}
+                    title="Sign Out"
+                    className="p-1.5 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Bottom Expand Toggle in Collapsed Mode */}
               <button
-                onClick={logout}
-                title="Sign Out"
-                className="p-1 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors shrink-0 cursor-pointer"
+                type="button"
+                onClick={toggleCollapsed}
+                title="Expand Sidebar (Ctrl+[)"
+                className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer mt-1"
+                aria-label="Expand Sidebar"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <PanelLeftOpen className="w-4 h-4 text-[#FD4A32]" />
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {role === 'GUEST' ? (
+                <Link
+                  to="/login"
+                  onClick={onClose}
+                  className="flex items-center justify-between p-2 rounded-md bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/25 text-[#FD4A32] transition-colors w-full font-bold text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5" />
+                    <span>Sign In / Register</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : (
+                <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] w-full">
+                  <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+                    <div
+                      className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
+                        isAdmin
+                          ? 'bg-purple-600 dark:bg-purple-400'
+                          : (role === 'TPO_ADMIN' || isTpoAdmin)
+                          ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
+                          : 'bg-[#FD4A32]'
+                      }`}
+                    >
+                      {isAdmin ? (
+                        <KeyRound className="w-3.5 h-3.5" />
+                      ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
+                        <Building2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <User className="w-3.5 h-3.5" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">
+                        {user?.name || 'Workspace Account'}
+                      </span>
+                      <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 block truncate">
+                        {isAdmin
+                          ? 'Administrator'
+                          : (role === 'TPO_ADMIN' || isTpoAdmin)
+                          ? user?.collegeName ? `${user.collegeName} (TPO)` : 'TPO Coordinator'
+                          : (user?.email || 'Active Account')}
+                      </span>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={logout}
+                    title="Sign Out"
+                    className="p-1 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors shrink-0 cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Bottom Collapse Button in Expanded Mode */}
+              <button
+                type="button"
+                onClick={toggleCollapsed}
+                className="hidden md:flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs font-semibold text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                title="Collapse Sidebar (Ctrl+[)"
+                aria-label="Collapse Sidebar"
+              >
+                <div className="flex items-center gap-2">
+                  <PanelLeftClose className="w-3.5 h-3.5" />
+                  <span>Collapse Sidebar</span>
+                </div>
+                <span className="text-[9px] font-mono text-neutral-400">Ctrl+[</span>
               </button>
             </div>
           )}

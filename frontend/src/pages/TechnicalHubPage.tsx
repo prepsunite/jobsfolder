@@ -867,50 +867,6 @@ export default function TechnicalHubPage() {
 
   return (
     <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
-      {/* 🧭 Top Track Navigation Switcher */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#F1F3F5] dark:bg-[#141414] rounded-xl border border-[#E9ECEF] dark:border-[#242424] max-w-fit">
-        <button
-          type="button"
-          onClick={() => handleTrackChange('PROGRAMMING_150')}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            activeTrack === 'PROGRAMMING_150'
-              ? 'bg-white dark:bg-[#202020] text-[#121417] dark:text-white shadow-xs'
-              : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-          }`}
-        >
-          <Code2 className="w-3.5 h-3.5 text-[#FD4A32]" />
-          <span>Programming 150</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTrackChange('CAMPUS_DSA')}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            activeTrack === 'CAMPUS_DSA'
-              ? 'bg-white dark:bg-[#202020] text-[#121417] dark:text-white shadow-xs'
-              : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-          }`}
-        >
-          <Flame className="w-3.5 h-3.5 text-[#FD4A32]" />
-          <span>Campus DSA Roadmap</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20 font-bold">
-            LeetCode
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTrackChange('TECHNICAL_MCQS')}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            activeTrack === 'TECHNICAL_MCQS'
-              ? 'bg-white dark:bg-[#202020] text-[#121417] dark:text-white shadow-xs'
-              : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5 text-[#FD4A32]" />
-          <span>Technical MCQs</span>
-        </button>
-      </div>
 
       {activeTopic ? (
         <div className="space-y-6 animate-fadeIn">
@@ -2060,11 +2016,14 @@ export default function TechnicalHubPage() {
                 </div>
                 <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
                   {activeTrack === 'PROGRAMMING_150' && 'Programming 150'}
+                  {activeTrack === 'CAMPUS_DSA' && 'Campus DSA Roadmap (LeetCode)'}
                   {activeTrack === 'TECHNICAL_MCQS' && 'Technical MCQs & Practice'}
                 </h1>
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-sans mt-0.5">
                   {activeTrack === 'PROGRAMMING_150' &&
                     'Structured 15-topic syllabus across 6 progressive stages building syntax foundations, loop mechanics, number logic, patterns, arrays, strings, and recursion.'}
+                  {activeTrack === 'CAMPUS_DSA' &&
+                    'Curated LeetCode DSA roadmap across 10 progressive milestones from Two Pointers to Dynamic Programming and Graphs.'}
                   {activeTrack === 'TECHNICAL_MCQS' &&
                     'Subject-wise campus placement MCQs across C, C++, C#, Java, Database, Networks, OS, and Data Structures.'}
                 </p>
