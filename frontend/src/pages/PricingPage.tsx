@@ -8,26 +8,36 @@ import { examService, type ExamWithCompany } from '@/services/exam.service';
 import type { DocTabNode } from '@/services/dataStore';
 
 function hasLockedNodes(nodes?: DocTabNode[]): boolean {
-  if (!nodes || nodes.length === 0) return false;
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) return false;
   return nodes.some(n => {
-    if (!n.isFree) return true;
+    // If a node is not explicitly marked free (isFree === true), it is locked/paid
+    if (n.isFree !== true) return true;
     if (n.children && n.children.length > 0) return hasLockedNodes(n.children);
     return false;
   });
 }
 
 function isPaywalledExam(exam: ExamWithCompany): boolean {
-  // If explicitly marked public or free price (₹0), not paywalled
-  if (exam.isPublicExam === true) return false;
+  // If explicitly free price (₹0), it's not paywalled
   if (exam.price === 0) return false;
 
-  // If paperTabs exists with items, verify if any node is locked
+  // 1. Primary Source of Truth: paperTabs
+  // An exam may have 1 or 2 free demo PDFs/tabs for students to preview what's inside,
+  // but if ANY tab is paid/locked (isFree !== true), the paper requires a pass (₹99 or Pro)!
   if (exam.paperTabs && Array.isArray(exam.paperTabs) && exam.paperTabs.length > 0) {
     return hasLockedNodes(exam.paperTabs);
   }
 
-  // If it's not public and has price > 0, it is paywalled
-  return true;
+  // 2. Draft/placeholder exams without content or tabs should not appear in paid archive
+  if (exam.name.toLowerCase().includes('new exam module')) {
+    return false;
+  }
+
+  // 3. If paperTabs is not yet configured, check isPublicExam
+  if (exam.isPublicExam === true) return false;
+
+  // Fallback: if price > 0 and not public, it is paywalled
+  return (exam.price || 0) > 0;
 }
 
 export default function PricingPage() {

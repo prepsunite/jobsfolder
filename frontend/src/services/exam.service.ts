@@ -65,6 +65,20 @@ const parseCompHidden = (c: CompanyVisibilityCheck): boolean => {
   return false;
 };
 
+export const parsePaperTabs = (rawTabs: any): any[] => {
+  if (!rawTabs) return [];
+  if (Array.isArray(rawTabs)) return rawTabs;
+  if (typeof rawTabs === 'string') {
+    try {
+      const parsed = JSON.parse(rawTabs);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 export const examService = {
   getExamsByCompany: async (companySlug: string, userEmail?: string, includeHidden = false): Promise<ExamItem[]> => {
     // Strictly utilize Secure Server-Side Redaction RPC to prevent any unpaid content leakage
@@ -90,7 +104,7 @@ export const examService = {
             content: cleanExamContent(e.content),
             oldPapers: e.old_papers || '',
             price: e.price ? Number(e.price) : 99,
-            paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+            paperTabs: parsePaperTabs(e.paper_tabs),
             googleDocEmbedUrl: e.google_doc_embed_url,
             googleDocEditUrl: e.google_doc_edit_url,
             isPublicExam: e.is_public_exam ?? false,
@@ -146,7 +160,7 @@ export const examService = {
             content: cleanExamContent(e.content),
             oldPapers: e.old_papers || '',
             price: e.price ? Number(e.price) : 99,
-            paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
+            paperTabs: parsePaperTabs(e.paper_tabs),
             googleDocEmbedUrl: e.google_doc_embed_url,
             googleDocEditUrl: e.google_doc_edit_url,
             isPublicExam: e.is_public_exam ?? false,
