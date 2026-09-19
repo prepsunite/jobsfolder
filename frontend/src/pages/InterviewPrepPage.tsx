@@ -633,76 +633,101 @@ export default function InterviewPrepPage() {
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="flex items-center gap-4 flex-wrap">
-                {/* Difficulty Filter */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                    Difficulty:
-                  </span>
-                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                    {[
-                      { id: 'ALL', label: 'All' },
-                      { id: 'EASY', label: 'Easy' },
-                      { id: 'MEDIUM', label: 'Medium' },
-                      { id: 'HARD', label: 'Tricky Hard' },
-                    ].map(item => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedDifficulty(item.id as any)}
-                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                          selectedDifficulty === item.id
-                            ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Status Filter */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                    Status:
-                  </span>
-                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                    {[
-                      { id: 'ALL', label: 'All' },
-                      { id: 'UNMASTERED', label: 'Unmastered' },
-                      { id: 'MASTERED', label: `Mastered (${activeTopicMasteredCount})` },
-                    ].map(item => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedStatus(item.id as any)}
-                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                          selectedStatus === item.id
-                            ? 'bg-[#FD4A32] text-white shadow-xs'
-                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
+          {/* 3. Unified Filter Bar & Pagination Toolbar */}
+          <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              {/* Left: Difficulty Filter */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                  Difficulty:
+                </span>
+                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                  {[
+                    { id: 'ALL', label: 'All' },
+                    { id: 'EASY', label: 'Easy' },
+                    { id: 'MEDIUM', label: 'Medium' },
+                    { id: 'HARD', label: 'Hard' },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDifficulty(item.id as any);
+                        handlePageChange(1);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        selectedDifficulty === item.id
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* In-Topic Search */}
-              <div className="relative w-full md:w-56">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
-                <input
-                  type="text"
-                  placeholder="Search in this topic..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#FD4A32] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
-                />
+              {/* Middle: Integrated Pagination */}
+              {totalPages > 1 ? (
+                <div className="inline-flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                    aria-label="Previous Page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+
+                  <span className="px-3 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] whitespace-nowrap">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                    aria-label="Next Page"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div />
+              )}
+
+              {/* Right: Status Filter */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                  Status:
+                </span>
+                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                  {[
+                    { id: 'ALL', label: 'All' },
+                    { id: 'UNMASTERED', label: 'Unmastered' },
+                    { id: 'MASTERED', label: `Mastered (${activeTopicMasteredCount})` },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStatus(item.id as any);
+                        handlePageChange(1);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        selectedStatus === item.id
+                          ? 'bg-[#FD4A32] text-white shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

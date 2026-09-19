@@ -979,209 +979,104 @@ export default function TechnicalHubPage() {
             </div>
           </div>
 
-          {/* 3. Filter Bar & Search inside topic */}
-          {activeTrack === 'TECHNICAL_MCQS' ? (
-            <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                {/* Left: Difficulty Filter */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                    Difficulty:
-                  </span>
-                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                    {[
-                      { id: 'ALL', label: 'All Levels' },
-                      { id: 'BASIC', label: 'Basic' },
-                      { id: 'MEDIUM', label: 'Medium' },
-                      { id: 'HARD', label: 'Hard' },
-                    ].map(item => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedLevel(item.id)}
-                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                          selectedLevel === item.id
-                            ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Middle: Integrated Pagination */}
-                {totalPages > 1 ? (
-                  <div className="inline-flex items-center gap-1.5">
+          {/* 3. Unified Filter Bar & Pagination Toolbar */}
+          <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              {/* Left: Difficulty Filter */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                  Difficulty:
+                </span>
+                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                  {[
+                    { id: 'ALL', label: 'All Levels' },
+                    { id: 'BASIC', label: 'Basic' },
+                    { id: 'MEDIUM', label: 'Medium' },
+                    { id: 'HARD', label: 'Hard' },
+                  ].map(item => (
                     <button
+                      key={item.id}
                       type="button"
-                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
-                      aria-label="Previous Page"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                      <span>Prev</span>
-                    </button>
-
-                    <span className="px-3 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] whitespace-nowrap">
-                      Page {currentPage} of {totalPages}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
-                      aria-label="Next Page"
-                    >
-                      <span>Next</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div />
-                )}
-
-                {/* Right: Status Filter (Without Retry) */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                    Status:
-                  </span>
-                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                    {[
-                      { id: 'ALL', label: 'All' },
-                      { id: 'UNSOLVED', label: 'Unsolved' },
-                      { id: 'SOLVED', label: `Solved (${activeTopicSolvedCount})` },
-                    ].map(item => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setSelectedStatus(item.id as any)}
-                        className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                          selectedStatus === item.id
-                            ? 'bg-[#FD4A32] text-white shadow-xs'
-                            : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
-              {/* In-Stage Subtopic Filter Pills */}
-              {activeTopic?.subtopics && activeTopic.subtopics.length > 1 && (
-                <div className="flex items-center gap-1.5 flex-wrap pb-2.5 border-b border-[#E9ECEF] dark:border-[#242424]">
-                  <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                    Module:
-                  </span>
-                  <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex-wrap gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSubtopic('ALL')}
+                      onClick={() => {
+                        setSelectedLevel(item.id);
+                        handlePageChange(1);
+                      }}
                       className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                        selectedSubtopic === 'ALL'
+                        selectedLevel === item.id
                           ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                           : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                     >
-                      All Modules ({activeTopicProblems.length})
+                      {item.label}
                     </button>
-                    {activeTopic.subtopics.map(sub => {
-                      const count = activeTopicProblems.filter(p => p.topicId === sub.id).length;
-                      return (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          onClick={() => setSelectedSubtopic(sub.id)}
-                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                            selectedSubtopic === sub.id
-                              ? 'bg-[#FD4A32] text-white shadow-xs'
-                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                          }`}
-                        >
-                          {sub.title} {count > 0 ? `(${count})` : ''}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  ))}
                 </div>
+              </div>
+
+              {/* Middle: Integrated Pagination */}
+              {totalPages > 1 ? (
+                <div className="inline-flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                    aria-label="Previous Page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+
+                  <span className="px-3 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF] whitespace-nowrap">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
+                    aria-label="Next Page"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div />
               )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center flex-wrap gap-4">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                      Difficulty:
-                    </span>
-                    <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                      {[
-                        { id: 'ALL', label: 'All Levels' },
-                        { id: 'BASIC', label: 'Basic' },
-                        { id: 'MEDIUM', label: 'Medium' },
-                        { id: 'HARD', label: 'Hard' },
-                      ].map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setSelectedLevel(item.id)}
-                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                            selectedLevel === item.id
-                              ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
-                      Status:
-                    </span>
-                    <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
-                      {[
-                        { id: 'ALL', label: 'All' },
-                        { id: 'UNSOLVED', label: 'Unsolved' },
-                        { id: 'SOLVED', label: `Solved (${activeTopicSolvedCount})` },
-                      ].map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setSelectedStatus(item.id as any)}
-                          className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
-                            selectedStatus === item.id
-                              ? 'bg-[#FD4A32] text-white shadow-xs'
-                              : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative w-48 sm:w-56">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
-                  <input
-                    type="text"
-                    placeholder="Search questions..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-8 pr-2.5 py-1 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] focus:outline-none transition-colors font-sans"
-                  />
+              {/* Right: Status Filter */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555]">
+                  Status:
+                </span>
+                <div className="inline-flex items-center p-0.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]">
+                  {[
+                    { id: 'ALL', label: 'All' },
+                    { id: 'UNSOLVED', label: 'Unsolved' },
+                    { id: 'SOLVED', label: `Solved (${activeTopicSolvedCount})` },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStatus(item.id as any);
+                        handlePageChange(1);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-display font-bold transition-all cursor-pointer ${
+                        selectedStatus === item.id
+                          ? 'bg-[#FD4A32] text-white shadow-xs'
+                          : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Admin Bulk Actions */}
           {isAdmin && (activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length > 0 : filteredProblems.length > 0) && (
@@ -1203,7 +1098,7 @@ export default function TechnicalHubPage() {
 
               {selectedItemIds.size > 0 && (
                 <>
-                  <div className="w-px h-4 bg-[#E9ECEF] dark:bg-[#242424]"></div>
+                  <div className="w-px h-4 bg-[#E9ECEF] dark:border-[#242424]"></div>
                   <span className="text-xs font-display font-bold text-[#868E96] dark:text-[#555555]">
                     {selectedItemIds.size} selected
                   </span>
@@ -1217,39 +1112,6 @@ export default function TechnicalHubPage() {
                   </button>
                 </>
               )}
-            </div>
-          )}
-
-          {/* 📄 CENTERED TOP PAGINATION (FOR CODING TRACKS) */}
-          {activeTrack !== 'TECHNICAL_MCQS' && totalPages > 1 && (
-            <div className="flex items-center justify-center pt-2.5 pb-1">
-              <div className="inline-flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
-                  aria-label="Previous Page"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Prev</span>
-                </button>
-
-                <span className="px-3.5 py-1.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] font-display font-bold text-xs text-[#121417] dark:text-[#FFFFFF]">
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-display font-bold border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#888888] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#555555] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs cursor-pointer"
-                  aria-label="Next Page"
-                >
-                  <span>Next</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
             </div>
           )}
 
