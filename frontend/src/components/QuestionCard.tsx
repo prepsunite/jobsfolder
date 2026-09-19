@@ -203,8 +203,8 @@ export default function QuestionCard({ question, onEdit, onDelete }: QuestionCar
                 </div>
               )}
               <div>
-                <span className="text-xs font-semibold text-[#FD4A32] block mb-1">Code Solution:</span>
-                <pre className="p-3 bg-[#000000] rounded-lg text-xs font-mono text-[#FD4A32] overflow-x-auto border border-[#342f2b]">
+                <span className="text-xs font-semibold text-emerald-400 block mb-1">Code Solution:</span>
+                <pre className="p-3 bg-[#0D1117] rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto border border-[#1F2937]">
                   {question.solution}
                 </pre>
               </div>

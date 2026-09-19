@@ -180,8 +180,8 @@ export default function ContentRenderer({
     'prose-table:w-full prose-th:bg-[#F8F9FA] dark:prose-th:bg-[#2b2d31] ' +
     'prose-td:border prose-td:border-[#E9ECEF] dark:prose-td:border-[#383a40] ' +
     'prose-blockquote:border-l-4 prose-blockquote:border-[#FD4A32] dark:prose-blockquote:border-[#FD4A32] ' +
-    'prose-code:text-[#FD4A32] dark:prose-code:text-[#FD4A32] ' +
-    'prose-code:bg-[#F8F9FA] dark:prose-code:bg-[#2b2d31] ' +
+    'prose-code:text-emerald-600 dark:prose-code:text-emerald-400 ' +
+    'prose-code:bg-emerald-50 dark:prose-code:bg-emerald-950/40 prose-code:border prose-code:border-emerald-200/50 dark:prose-code:border-emerald-800/40 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono ' +
     'text-[#1f1b17] dark:text-[#e3e3e3] ' +
     className;
 

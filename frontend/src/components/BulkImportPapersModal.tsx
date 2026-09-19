@@ -325,7 +325,7 @@ export function formatQuestionContentToHtml(q: ParsedPaperQuestion): string {
   const constraintsList = (q.constraints && q.constraints.length > 0)
     ? `
 <div class="my-3">
-<h3 class="text-xs font-bold text-[#FD4A32] uppercase tracking-wider mb-1.5">Constraints</h3>
+<h3 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1.5">Constraints</h3>
 <ul class="list-disc pl-5 space-y-1 text-xs font-mono text-gray-700 dark:text-gray-300">
 ${q.constraints.map(c => `<li>${escapeHtml(c)}</li>`).join('\n')}
 </ul>

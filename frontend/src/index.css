@@ -251,14 +251,19 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Inline code */
 .tiptap-wrapper .ProseMirror code {
-  background: #F8F9FA;
-  padding: 0.1rem 0.35rem;
+  background: #ECFDF5;
+  padding: 0.15rem 0.4rem;
   border-radius: 5px;
-  font-size: 0.8em;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #FD4A32;
+  font-size: 0.82em;
+  font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', monospace;
+  color: #059669;
+  border: 1px solid #A7F3D0;
 }
-:where(.dark, .dark *) .tiptap-wrapper .ProseMirror code { background: #2b2d31; color: #ff6d59; }
+:where(.dark, .dark *) .tiptap-wrapper .ProseMirror code {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34D399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
 
 /* Code block & Test Case Styles (Preserves exact multiline formatting, spaces, and line breaks) */
 .test-case,
@@ -273,11 +278,11 @@ pre.test-case,
   tab-size: 4 !important;
   word-break: break-word !important;
   overflow-wrap: break-word !important;
-  background: #141517 !important;
-  color: #ff6d59 !important;
+  background: #0D1117 !important;
+  color: #34D399 !important;
   padding: 1rem 1.25rem !important;
   border-radius: 0.75rem !important;
-  border: 1px solid #383a40 !important;
+  border: 1px solid #1F2937 !important;
   margin: 0.75rem 0 !important;
 }
 
@@ -286,9 +291,9 @@ pre.test-case,
 :where(.dark, .dark *) .prose pre,
 :where(.dark, .dark *) .tiptap-editor-content pre.test-case,
 :where(.dark, .dark *) .tiptap-wrapper .ProseMirror pre {
-  background: #101113 !important;
-  color: #ff6d59 !important;
-  border-color: #2b2d31 !important;
+  background: #0A0D12 !important;
+  color: #34D399 !important;
+  border-color: #1F2937 !important;
 }
 
 .tiptap-wrapper .ProseMirror pre code,
@@ -331,14 +336,14 @@ div[data-type="test-case-group"] {
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
-  color: #FD4A32 !important;
+  color: #059669 !important;
   padding-bottom: 0.5rem !important;
-  border-bottom: 1px dashed #E9ECEF !important;
+  border-bottom: 1px dashed rgba(16, 185, 129, 0.3) !important;
 }
 
 :where(.dark, .dark *) .test-case-group-title {
-  color: #ff6d59 !important;
-  border-bottom-color: #2b2d31 !important;
+  color: #34D399 !important;
+  border-bottom-color: rgba(52, 211, 153, 0.25) !important;
 }
 
 .test-case-item,
@@ -410,9 +415,9 @@ pre.test-case-code {
   font-size: 0.8rem !important;
   line-height: 1.55 !important;
   white-space: pre-wrap !important;
-  background-color: #141517 !important;
-  color: #ff6d59 !important;
-  border: 1px solid #2b2d31 !important;
+  background-color: #0D1117 !important;
+  color: #34D399 !important;
+  border: 1px solid #1F2937 !important;
   border-radius: 0.5rem !important;
   padding: 0.6rem 0.75rem !important;
   margin: 0 !important;
@@ -424,8 +429,9 @@ pre.test-case-code {
 
 :where(.dark, .dark *) .test-case-code,
 :where(.dark, .dark *) pre.test-case-code {
-  background-color: #0f1012 !important;
-  border-color: #2b2d31 !important;
+  background-color: #0A0D12 !important;
+  border-color: #1F2937 !important;
+  color: #34D399 !important;
 }
 
 /* Horizontal rule */
