@@ -873,7 +873,7 @@ export default function TechnicalHubPage() {
       {activeTopic ? (
         <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
           {/* Main Topic Practice Matter (Aligned left right beside sidebar) */}
-          <div className="flex-1 min-w-0 max-w-4xl 2xl:max-w-5xl space-y-6 w-full">
+          <div className="flex-1 min-w-0 max-w-3xl 2xl:max-w-4xl space-y-6 w-full">
           {/* 1. Breadcrumb & Navigation */}
           <div className="flex items-center justify-between">
             <button
@@ -1862,7 +1862,7 @@ export default function TechnicalHubPage() {
           </div>
 
           {/* Dedicated Right-hand Ad Space Slot (Sticky on wide screens) */}
-          <div className="hidden xl:block w-72 2xl:w-80 shrink-0 sticky top-6 space-y-4">
+          <div className="hidden xl:block w-[300px] shrink-0 sticky top-6 space-y-4">
             <AdSpaceSlot slot="technical-topic-rail" />
           </div>
         </div>
