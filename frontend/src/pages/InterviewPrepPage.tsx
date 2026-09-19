@@ -42,6 +42,7 @@ import InterviewBulkImportModal from '@/components/interview/InterviewBulkImport
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/types/interview';
 import { useToast } from '@/contexts/ToastContext';
+import AdSpaceSlot from '@/components/AdSpaceSlot';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
   Database,
@@ -529,12 +530,14 @@ export default function InterviewPrepPage() {
   };
 
   return (
-    <div className={`space-y-6 animate-fadeIn pb-12 font-sans relative ${activeTopic ? 'max-w-4xl mx-auto' : 'max-w-6xl mx-auto'}`}>
+    <div className="space-y-6 animate-fadeIn pb-12 font-sans relative w-full">
       {/* ────────────────────────────────────────────────────────────────────────
           ACTIVE TOPIC DRILLDOWN VIEW
       ──────────────────────────────────────────────────────────────────────── */}
       {activeTopic ? (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
+          {/* Main Interview Topic Matter (Aligned left right beside sidebar) */}
+          <div className="flex-1 min-w-0 max-w-4xl 2xl:max-w-5xl space-y-6 w-full">
           {/* Breadcrumb + Back Button */}
           <div className="flex items-center justify-between">
             <button
@@ -1088,12 +1091,18 @@ export default function InterviewPrepPage() {
               </button>
             </div>
           )}
+          </div>
+
+          {/* Dedicated Right-hand Ad Space Slot (Sticky on wide screens) */}
+          <div className="hidden xl:block w-72 2xl:w-80 shrink-0 sticky top-6 space-y-4">
+            <AdSpaceSlot slot="interview-topic-rail" />
+          </div>
         </div>
       ) : (
         /* ────────────────────────────────────────────────────────────────────────
             MAIN DIRECTORY VIEW
         ──────────────────────────────────────────────────────────────────────── */
-        <>
+        <div className="space-y-6 w-full max-w-7xl animate-fadeIn">
           {/* 🚀 1. UNIFIED HEADER BANNER */}
           <div className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -1403,7 +1412,7 @@ export default function InterviewPrepPage() {
               })
             )}
           </div>
-        </>
+        </div>
       )}
 
       {/* 🛠️ ADMIN INTERVIEW TOPIC EDITOR MODAL */}

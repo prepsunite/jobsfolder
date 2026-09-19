@@ -37,6 +37,7 @@ import ShareModal from '@/components/ShareModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import audioEffects from '@/utils/audioEffects';
 import { useToast } from '@/contexts/ToastContext';
+import AdSpaceSlot from '@/components/AdSpaceSlot';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
@@ -767,9 +768,12 @@ export default function TopicQuestionsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto pb-16 font-sans">
-      {/* Breadcrumb & Navigation */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fadeIn pb-16 font-sans w-full">
+      <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
+        {/* Main Topic Questions Matter (Aligned left right beside sidebar) */}
+        <div className="flex-1 min-w-0 max-w-4xl 2xl:max-w-5xl space-y-6 w-full">
+          {/* Breadcrumb & Navigation */}
+          <div className="flex items-center justify-between">
         <Link
           to={`/aptitude/${categorySlug}`}
           className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#868E96] dark:text-[#999999] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors"
@@ -1453,6 +1457,13 @@ export default function TopicQuestionsPage() {
           </button>
         </div>
       )}
+        </div>
+
+        {/* Dedicated Right-hand Ad Space Slot (Sticky on wide screens) */}
+        <div className="hidden xl:block w-72 2xl:w-80 shrink-0 sticky top-6 space-y-4">
+          <AdSpaceSlot slot="aptitude-topic-rail" />
+        </div>
+      </div>
 
       {/* 📥 ADMIN BULK JSON IMPORT MODAL */}
       {showBulkModal && (
