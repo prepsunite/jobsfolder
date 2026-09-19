@@ -113,7 +113,7 @@ export const examService = {
     try {
       const { data: examsData, error: examsErr } = await supabase
         .from('exams')
-        .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
+        .select('id, company_slug, company_id, name, badge, content, old_papers, price, paper_tabs, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
         .eq('is_deleted', false)
         .order('name', { ascending: true });
 
@@ -146,7 +146,7 @@ export const examService = {
             content: cleanExamContent(e.content),
             oldPapers: e.old_papers || '',
             price: e.price ? Number(e.price) : 99,
-            paperTabs: [],
+            paperTabs: typeof e.paper_tabs === 'string' ? JSON.parse(e.paper_tabs) : (e.paper_tabs || []),
             googleDocEmbedUrl: e.google_doc_embed_url,
             googleDocEditUrl: e.google_doc_edit_url,
             isPublicExam: e.is_public_exam ?? false,

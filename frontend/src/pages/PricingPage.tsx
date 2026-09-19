@@ -17,12 +17,17 @@ function hasLockedNodes(nodes?: DocTabNode[]): boolean {
 }
 
 function isPaywalledExam(exam: ExamWithCompany): boolean {
+  // If explicitly marked public or free price (₹0), not paywalled
   if (exam.isPublicExam === true) return false;
   if (exam.price === 0) return false;
-  if (exam.paperTabs && exam.paperTabs.length > 0) {
+
+  // If paperTabs exists with items, verify if any node is locked
+  if (exam.paperTabs && Array.isArray(exam.paperTabs) && exam.paperTabs.length > 0) {
     return hasLockedNodes(exam.paperTabs);
   }
-  return false;
+
+  // If it's not public and has price > 0, it is paywalled
+  return true;
 }
 
 export default function PricingPage() {
