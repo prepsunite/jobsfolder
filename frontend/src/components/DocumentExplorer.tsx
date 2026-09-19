@@ -436,8 +436,76 @@ export default function DocumentExplorer({
       {/* ── RIGHT CONTENT PANEL ──────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col relative min-h-0 md:min-h-[600px] overflow-hidden bg-white dark:bg-[#141414]">
 
-        {/* PAYWALL OVERLAY */}
-        {!(hasAccess || isAdmin || activeNode?.isFree === true) ? (
+        {/* ── EMPTY STATE: NO FILES / TABS CONFIGURED ─────────────────────── */}
+        {flatNodes.length === 0 ? (
+          isAdmin && adminMode ? (
+            <div 
+              ref={adminPanelRef}
+              className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#F8F9FA]/40 dark:bg-[#0C0C0C]/40 space-y-4"
+            >
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 max-w-xs">
+                <h4 className="font-display text-sm font-bold text-[#121417] dark:text-white">Start Building Paper Archive</h4>
+                <p className="text-xs text-[#868E96] dark:text-[#666666]">Create a section or bulk import question sets to make them available for students.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAddRootFile}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add First File</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenBulkImportModal()}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Bulk Import</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-[#F8F9FA]/40 dark:bg-[#0C0C0C]/40 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#666666] flex items-center justify-center mx-auto shadow-xs">
+                <FileText className="w-7 h-7 opacity-60" />
+              </div>
+              <div className="space-y-1.5 max-w-sm">
+                <h3 className="font-display text-base font-extrabold text-[#121417] dark:text-[#FFFFFF]">
+                  No Files Uploaded Yet
+                </h3>
+                <p className="text-xs text-[#868E96] dark:text-[#666666] leading-relaxed font-sans">
+                  Previous year papers and solution sets for <strong>{companyName} – {examName}</strong> have not been uploaded yet. Please check back shortly!
+                </p>
+              </div>
+              {isAdmin && (
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddRootFile}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add First File</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenBulkImportModal()}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Bulk Import</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        ) : !(hasAccess || isAdmin || activeNode?.isFree === true) ? (
+          /* PAYWALL OVERLAY */
           <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#F8F9FA]/50 dark:bg-[#0C0C0C]/50">
             {/* Visual Abstract Skeleton Background */}
             <div className="absolute inset-0 p-8 opacity-10 filter blur-xs pointer-events-none select-none overflow-hidden space-y-6">
