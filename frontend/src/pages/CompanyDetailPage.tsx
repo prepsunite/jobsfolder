@@ -20,7 +20,6 @@ import {
   Globe,
   ArrowLeft,
   ExternalLink,
-  ChevronRight,
   GraduationCap,
   Heart,
   Edit3,
@@ -1052,51 +1051,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
           )}
         </main>
 
-        {/* RIGHT SIDEBAR */}
+        {/* RIGHT SIDEBAR (Blank space reserved for Google Ads) */}
         <aside className="lg:col-span-3 space-y-4">
-          <div className="bg-white dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] p-4 shadow-sm space-y-3 transition-colors">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
-              <h4 className="font-display text-xs font-bold text-[#121417] dark:text-[#e3e3e3] uppercase tracking-wider">
-                Recent Questions
-              </h4>
-              <span className="text-[10px] font-bold text-[#E0351D] dark:text-[#FD4A32] bg-[#FD4A32]/30 dark:bg-[#FD4A32]/30 px-2 py-0.5 rounded-full">Live</span>
-            </div>
-
-            <div className="space-y-2.5">
-              {[
-                { q: 'Array Subarray Difference', type: 'Coding' },
-                { q: 'DBMS INNER JOIN vs LEFT JOIN', type: 'SQL' },
-                { q: 'Clock Angle at 3:25', type: 'Aptitude' },
-                { q: 'Process vs Thread Memory', type: 'OS Core' },
-              ].map((item, idx) => (
-                <div key={idx} className="p-2.5 bg-[#F8F9FA] dark:bg-[#141517]/60 rounded-[12px] border border-[#E9ECEF] dark:border-[#383a40] space-y-1 hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 transition-all cursor-pointer">
-                  <span className="text-xs font-bold text-[#121417] dark:text-[#e3e3e3] block leading-snug">{item.q}</span>
-                  <span className="text-[10px] text-[#747878] dark:text-[#a6adbb] font-semibold">{item.type}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-[#F8F9FA] dark:bg-[#1e1f22] border border-[#E9ECEF] dark:border-[#2b2d31] rounded-[24px] p-4 shadow-sm space-y-3 transition-colors">
-            <h4 className="font-display text-xs font-bold text-[#121417] dark:text-[#e3e3e3] uppercase tracking-wider pb-2 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
-              Discover More
-            </h4>
-            <div className="space-y-1">
-              {[
-                'Arithmetic Aptitude',
-                'Data Interpretation',
-                'Verbal Ability',
-                'Logical Reasoning',
-                'Pseudocode Practice',
-                'Placement Papers',
-              ].map((cat, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-[10px] hover:bg-white dark:hover:bg-[#2b2d31] text-xs font-bold text-[#121417] dark:text-[#e3e3e3] transition-all cursor-pointer">
-                  <span>{cat}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-[#747878] dark:text-[#a6adbb]" />
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Reserved for Google Ads */}
         </aside>
 
       </div>
