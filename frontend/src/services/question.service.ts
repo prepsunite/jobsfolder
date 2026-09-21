@@ -19,6 +19,7 @@ export const questionService = {
         .select('*', { count: 'exact' })
         .eq('is_deleted', false)
         .eq('is_hidden', false)
+        .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
         .order('created_at', { ascending: false });
 
       if (companySlug) {

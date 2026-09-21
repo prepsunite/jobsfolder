@@ -40,8 +40,12 @@ import {
   CreditCard,
   Eye,
   EyeOff,
+  Database,
+  Sparkles,
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import AdminBlueprintManager from '@/components/admin/AdminBlueprintManager';
+import AdminQuestionBankPage from '@/pages/AdminQuestionBankPage';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -50,7 +54,7 @@ export default function AdminDashboardPage() {
   const { toast, confirmModal } = useToast();
 
   const [adminTab, setAdminTab] = useState<
-    'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'question-reports' | 'contact-messages' | 'users' | 'metrics' | 'colleges-tpo'
+    'create-company' | 'create-question' | 'create-resource' | 'manage-exams' | 'moderation' | 'question-reports' | 'contact-messages' | 'users' | 'metrics' | 'colleges-tpo' | 'mock-blueprints' | 'question-bank'
   >('manage-exams');
   const [selectedCompanySlug, setSelectedCompanySlug] = useState('tcs');
   const [usersSubTab, setUsersSubTab] = useState<'users' | 'transactions' | 'purchases' | 'subscriptions'>('users');
@@ -710,6 +714,20 @@ export default function AdminDashboardPage() {
             <span>Reports ({openReportsCount})</span>
           </button>
           <button
+            onClick={() => setAdminTab('mock-blueprints')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Blueprints</span>
+          </button>
+          <button
+            onClick={() => setAdminTab('question-bank')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-cyan-700 hover:bg-cyan-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all shrink-0 cursor-pointer"
+          >
+            <Database className="w-3.5 h-3.5 text-cyan-200" />
+            <span>Question Bank (500/Topic)</span>
+          </button>
+          <button
             onClick={() => setAdminTab('contact-messages')}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all shrink-0"
           >
@@ -731,6 +749,30 @@ export default function AdminDashboardPage() {
         >
           <Layers className={`w-3.5 h-3.5 ${adminTab === 'manage-exams' ? 'text-purple-300' : 'text-purple-600 dark:text-purple-400'}`} />
           <span>Company &amp; Exam Modules</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('mock-blueprints')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            adminTab === 'mock-blueprints'
+              ? 'bg-purple-900 text-white shadow-sm'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
+          }`}
+        >
+          <Sparkles className={`w-3.5 h-3.5 ${adminTab === 'mock-blueprints' ? 'text-purple-300' : 'text-emerald-600 dark:text-emerald-400'}`} />
+          <span>Mock Exam Blueprints</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('question-bank')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            adminTab === 'question-bank'
+              ? 'bg-purple-900 text-white shadow-sm'
+              : 'text-[#444748] dark:text-[#a6adbb] hover:text-[#1f1b17] dark:hover:text-[#e3e3e3] hover:bg-[#F8F9FA] dark:hover:bg-[#2b2d31]'
+          }`}
+        >
+          <Database className={`w-3.5 h-3.5 ${adminTab === 'question-bank' ? 'text-purple-300' : 'text-cyan-600 dark:text-cyan-400'}`} />
+          <span>Question Bank Workspace</span>
         </button>
 
         <Link
@@ -1536,6 +1578,20 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 🎯 TAB: MOCK EXAM BLUEPRINTS */}
+      {adminTab === 'mock-blueprints' && (
+        <div className="space-y-6">
+          <AdminBlueprintManager />
+        </div>
+      )}
+
+      {/* 📚 TAB: QUESTION BANK WORKSPACE */}
+      {adminTab === 'question-bank' && (
+        <div className="space-y-6">
+          <AdminQuestionBankPage />
         </div>
       )}
 

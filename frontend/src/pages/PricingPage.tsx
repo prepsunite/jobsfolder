@@ -4,38 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Check, Zap, BookOpen, Sparkles, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { examService, type ExamWithCompany } from '@/services/exam.service';
-import type { DocTabNode } from '@/services/dataStore';
-
-function hasLockedNodes(nodes?: DocTabNode[]): boolean {
-  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) return false;
-  return nodes.some(n => {
-    // If a node is not explicitly marked free (isFree === true), it is locked/paid
-    if (n.isFree !== true) return true;
-    if (n.children && n.children.length > 0) return hasLockedNodes(n.children);
-    return false;
-  });
-}
-
-function isPaywalledExam(exam: ExamWithCompany): boolean {
-  // If explicitly free price (₹0), it's not paywalled
-  if (exam.price === 0) return false;
-
-  // Never offer an exam for purchase if it has no papers, tabs, or files!
-  // Prevents users from paying ₹99 for an empty archive with no content.
-  if (!exam.paperTabs || !Array.isArray(exam.paperTabs) || exam.paperTabs.length === 0) {
-    return false;
-  }
-
-  // Draft / placeholder exams without proper names should not appear in paid archive
-  if (exam.name.toLowerCase().includes('new exam module')) {
-    return false;
-  }
-
-  // Must contain at least one locked (paid) tab.
-  // If all tabs are free demo tabs, the exam is 100% free, so not paywalled.
-  return hasLockedNodes(exam.paperTabs);
-}
+import { examService, formatExamDisplayName, isExamPaywalled, type ExamWithCompany } from '@/services/exam.service';
 
 export default function PricingPage() {
   const { user } = useAuth();
@@ -54,7 +23,7 @@ export default function PricingPage() {
 
   // Filter out public/free exams
   const paywalledExams = useMemo(() => {
-    return exams.filter(isPaywalledExam);
+    return exams.filter(isExamPaywalled);
   }, [exams]);
 
   // Pre-select exam from URL parameter or default to first paywalled exam
@@ -422,7 +391,7 @@ export default function PricingPage() {
                 {paywalledExams.length > 0 ? (
                   paywalledExams.map((exam) => (
                     <option key={exam.id} value={exam.id}>
-                      {exam.companyName} — {exam.name}
+                      {formatExamDisplayName(exam)}
                     </option>
                   ))
                 ) : (

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
+import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
 import type {
   College,
   CollegeBatch,
@@ -3607,118 +3608,24 @@ export const tpoService = {
   // ==========================================
 
   /**
-   * Fetches all Exam Templates (combines built-in defaults, local storage, and Admin custom cloud patterns)
+   * Fetches all Exam Templates / Blueprints (combines built-in defaults, local storage, and Admin custom cloud patterns)
    */
   async getExamTemplates(): Promise<MockExamTemplate[]> {
-    const templatesMap = new Map<string, MockExamTemplate>();
-
-    // 1. Built-in defaults
-    DEFAULT_EXAM_TEMPLATES.forEach(t => templatesMap.set(t.id, t));
-
-    // 2. Local storage cache
-    try {
-      const cached = localStorage.getItem(STORAGE_KEYS_TPO.TEMPLATES);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((t: MockExamTemplate) => {
-            if (t && t.id) templatesMap.set(t.id, t);
-          });
-        }
-      }
-    } catch {}
-
-    // 3. Cloud Admin custom templates from /api/campus-exams?action=templates
-    try {
-      const authHeaders = await getAuthHeaders();
-      const res = await fetch('/api/campus-exams?action=templates', {
-        headers: authHeaders,
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.templates && Array.isArray(json.templates)) {
-          json.templates.forEach((t: MockExamTemplate) => {
-            if (t && t.id) templatesMap.set(t.id, t);
-          });
-        }
-      }
-    } catch {}
-
-    const all = Array.from(templatesMap.values());
-    try {
-      localStorage.setItem(STORAGE_KEYS_TPO.TEMPLATES, JSON.stringify(all));
-    } catch {}
-    return all;
+    return mockExamBlueprintService.getAllBlueprints();
   },
 
   /**
    * Super Admin saves / creates / edits an exam template pattern
    */
   async saveExamTemplate(template: MockExamTemplate): Promise<MockExamTemplate> {
-    const updated: MockExamTemplate = {
-      ...template,
-      updated_at: new Date().toISOString(),
-    };
-
-    // 1. Update local cache
-    try {
-      const current = await this.getExamTemplates();
-      const idx = current.findIndex(t => t.id === updated.id);
-      if (idx >= 0) current[idx] = updated;
-      else current.unshift(updated);
-      localStorage.setItem(STORAGE_KEYS_TPO.TEMPLATES, JSON.stringify(current));
-    } catch {}
-
-    // 2. Persist to cloud via API
-    try {
-      const authHeaders = await getAuthHeaders();
-      await fetch('/api/campus-exams', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify({
-          action: 'save-template',
-          template: updated,
-        }),
-      });
-    } catch (e) {
-      console.warn('Notice saving template to server:', e);
-    }
-
-    return updated;
+    return mockExamBlueprintService.saveBlueprint(template);
   },
 
   /**
    * Super Admin deletes a custom exam template pattern
    */
   async deleteExamTemplate(templateId: string): Promise<boolean> {
-    // 1. Update local cache
-    try {
-      const current = (await this.getExamTemplates()).filter(t => t.id !== templateId);
-      localStorage.setItem(STORAGE_KEYS_TPO.TEMPLATES, JSON.stringify(current));
-    } catch {}
-
-    // 2. Update cloud via API
-    try {
-      const authHeaders = await getAuthHeaders();
-      await fetch('/api/campus-exams', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify({
-          action: 'delete-template',
-          templateId,
-        }),
-      });
-    } catch (e) {
-      console.warn('Notice deleting template from server:', e);
-    }
-
-    return true;
+    return mockExamBlueprintService.deleteBlueprint(templateId);
   },
 
   /**
@@ -3774,11 +3681,15 @@ export const tpoService = {
       },
       template.sections.map(s => ({
         name: s.name,
+        section_type: s.section_type || (s.category === 'coding' ? 'CODING' : 'MCQ'),
         question_count: s.question_count,
         marks_per_correct: s.marks_per_correct,
         negative_marking: s.negative_marking,
         duration_minutes: s.duration_minutes,
         topic_ids: s.topic_ids || [],
+        coding_track: s.coding_track,
+        category: s.category,
+        random_sampling: s.random_sampling ?? true,
       }))
     );
   },
@@ -3843,11 +3754,16 @@ export const tpoService = {
       },
       template.sections.map(s => ({
         name: s.name,
+        section_type: s.section_type || (s.category === 'coding' ? 'CODING' : 'MCQ'),
         question_count: s.question_count,
         marks_per_correct: s.marks_per_correct,
         negative_marking: s.negative_marking,
         duration_minutes: s.duration_minutes,
         topic_ids: s.topic_ids || [],
+        coding_track: s.coding_track,
+        difficulty: s.difficulty,
+        category: s.category,
+        random_sampling: s.random_sampling ?? true,
       }))
     );
 
@@ -3928,19 +3844,23 @@ export const tpoService = {
   },
 
   /**
-   * TPOs create mock exams by selecting topics & question counts.
-   * Questions are strictly queried from `topic_questions` without any write operations to the question bank.
+   * TPOs & Students create mock exams by selecting topics & question counts.
+   * Pulls questions randomly from topic pools (topic_questions for MCQs and technical_problems for Coding).
    */
   async createMockExam(
     examData: Omit<MockExam, 'id' | 'created_at'>,
     sectionConfigs: {
       name: string;
+      section_type?: 'MCQ' | 'CODING';
       topic_ids: string[];
       question_count: number;
       difficulty?: string;
       marks_per_correct: number;
       negative_marking: number;
       duration_minutes?: number;
+      coding_track?: 'PROGRAMMING_150' | 'CAMPUS_DSA';
+      category?: string;
+      random_sampling?: boolean;
     }[]
   ): Promise<MockExam> {
     const examId = `exam-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
@@ -3951,19 +3871,30 @@ export const tpoService = {
       const sec = sectionConfigs[idx];
       const neededCount = Math.max(1, sec.question_count || 10);
       const questionIds: string[] = [];
+      const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
 
-      try {
-        if (sec.topic_ids && sec.topic_ids.length > 0) {
-          const { data } = await supabase
-            .from('topic_questions')
-            .select('id, question_number, topic_id')
-            .in('topic_id', sec.topic_ids)
-            .eq('is_deleted', false)
-            .order('question_number', { ascending: true })
-            .limit(neededCount * 3);
+      if (isCodingSection) {
+        // Query coding problems from technical_problems
+        try {
+          let codingQuery = supabase
+            .from('technical_problems')
+            .select('id, title, category, level')
+            .eq('is_deleted', false);
 
-          if (data && data.length > 0) {
-            for (const q of data) {
+          if (sec.difficulty && sec.difficulty !== 'ALL') {
+            const codingLevel = sec.difficulty === 'EASY' ? 'BASIC' : sec.difficulty;
+            codingQuery = codingQuery.eq('level', codingLevel);
+          }
+
+          if (sec.topic_ids && sec.topic_ids.length > 0) {
+            codingQuery = codingQuery.in('category', sec.topic_ids);
+          }
+
+          const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
+          if (codingData && codingData.length > 0) {
+            // Randomly shuffle to ensure variety across exams
+            const shuffled = [...codingData].sort(() => Math.random() - 0.5);
+            for (const q of shuffled) {
               if (!usedQuestionIds.has(q.id)) {
                 questionIds.push(q.id);
                 usedQuestionIds.add(q.id);
@@ -3971,29 +3902,60 @@ export const tpoService = {
               }
             }
           }
+        } catch (err) {
+          console.warn('Notice pulling coding questions from Supabase for section:', sec.name, err);
         }
-
-        if (questionIds.length < neededCount) {
-          const stillNeeded = neededCount - questionIds.length;
-          const { data: fallbackQ } = await supabase
+      } else {
+        // Query MCQs from topic_questions
+        try {
+          let mcqQuery = supabase
             .from('topic_questions')
-            .select('id, question_number, topic_id')
-            .eq('is_deleted', false)
-            .order('question_number', { ascending: true })
-            .limit(Math.max(stillNeeded * 4, 50));
+            .select('id, question_number, topic_id, difficulty')
+            .eq('is_deleted', false);
 
-          if (fallbackQ && fallbackQ.length > 0) {
-            for (const f of fallbackQ) {
-              if (!usedQuestionIds.has(f.id)) {
-                questionIds.push(f.id);
-                usedQuestionIds.add(f.id);
+          if (sec.difficulty && sec.difficulty !== 'ALL') {
+            mcqQuery = mcqQuery.eq('difficulty', sec.difficulty);
+          }
+
+          if (sec.topic_ids && sec.topic_ids.length > 0) {
+            mcqQuery = mcqQuery.in('topic_id', sec.topic_ids);
+          }
+
+          const { data } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
+          if (data && data.length > 0) {
+            // Randomly shuffle the pool so questions don't repeat predictably
+            const shuffled = [...data].sort(() => Math.random() - 0.5);
+            for (const q of shuffled) {
+              if (!usedQuestionIds.has(q.id)) {
+                questionIds.push(q.id);
+                usedQuestionIds.add(q.id);
                 if (questionIds.length >= neededCount) break;
               }
             }
           }
+
+          if (questionIds.length < neededCount) {
+            const stillNeeded = neededCount - questionIds.length;
+            const { data: fallbackQ } = await supabase
+              .from('topic_questions')
+              .select('id, question_number, topic_id, difficulty')
+              .eq('is_deleted', false)
+              .limit(Math.max(stillNeeded * 10, 100));
+
+            if (fallbackQ && fallbackQ.length > 0) {
+              const fallbackShuffled = [...fallbackQ].sort(() => Math.random() - 0.5);
+              for (const f of fallbackShuffled) {
+                if (!usedQuestionIds.has(f.id)) {
+                  questionIds.push(f.id);
+                  usedQuestionIds.add(f.id);
+                  if (questionIds.length >= neededCount) break;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Notice pulling questions from Supabase for section:', sec.name, e);
         }
-      } catch (e) {
-        console.warn('Notice pulling questions from Supabase for section:', sec.name, e);
       }
 
       sections.push({
@@ -4001,6 +3963,10 @@ export const tpoService = {
         mock_exam_id: examId,
         name: sec.name,
         section_order: idx + 1,
+        section_type: isCodingSection ? 'CODING' : 'MCQ',
+        category: sec.category,
+        coding_track: sec.coding_track,
+        difficulty: (sec.difficulty as 'ALL' | 'EASY' | 'MEDIUM' | 'HARD' | undefined) || undefined,
         duration_minutes: sec.duration_minutes || undefined,
         marks_per_correct: sec.marks_per_correct,
         negative_marking: sec.negative_marking,
@@ -4419,6 +4385,42 @@ export const tpoService = {
       }
     }
 
+    // 1b. Check if any question IDs are coding problems from technical_problems
+    const foundIds = new Set(rawQuestions.map(q => q.id));
+    const missingIds = questionIds.filter(id => !foundIds.has(id));
+
+    if (missingIds.length > 0) {
+      try {
+        const { data: codingData } = await supabase
+          .from('technical_problems')
+          .select('id, title, description, constraints, sample_input, sample_output, explanation, test_cases, solutions, level, category')
+          .in('id', missingIds);
+
+        if (codingData && codingData.length > 0) {
+          codingData.forEach(p => {
+            rawQuestions.push({
+              id: p.id,
+              title: p.title,
+              statement: p.description,
+              description: p.description,
+              options: [],
+              difficulty: p.level || 'MEDIUM',
+              topic_id: p.category,
+              structured_explanation: p.explanation,
+              constraints: p.constraints,
+              sample_input: p.sample_input,
+              sample_output: p.sample_output,
+              test_cases: p.test_cases,
+              solutions: p.solutions,
+              isCodingProblem: true,
+            });
+          });
+        }
+      } catch (e) {
+        console.warn('Notice checking coding problems in getQuestionsForExam:', e);
+      }
+    }
+
     if (rawQuestions.length === 0) return [];
 
     // 2. Extract shared stimuli (Directions, SVG charts, Data Interpretation tables, Puzzles)
@@ -4792,12 +4794,49 @@ export const tpoService = {
         totalQuestions++;
 
         const resp = responses[qId];
-        const correctAns = solutionMap[qId];
+        const isCodingSection = section.section_type === 'CODING' || section.category === 'coding';
+        const hasCodeSubmitted = Boolean(resp?.code_solution && resp.code_solution.trim().length > 0);
         const hasSelected = resp && resp.selected_option !== null && resp.selected_option !== undefined && (resp.selected_option as unknown) !== '';
 
-        if (hasSelected) {
+        if (isCodingSection || hasCodeSubmitted) {
+          if (hasCodeSubmitted) {
+            secAttempted++;
+            totalAttempted++;
+            const totalTests = Number(resp?.total_test_cases) || 1;
+            const passedTests = Number(resp?.test_cases_passed ?? (resp?.is_correct ? totalTests : 0));
+            const passRatio = Math.min(1, Math.max(0, passedTests / totalTests));
+            const isCorrect = passRatio >= 0.8 || Boolean(resp?.is_correct);
+
+            // Award marks proportional to test cases passed, or 50% partial credit if code is written
+            const earnedMarks = Math.round(marksPerQ * (passRatio > 0 ? passRatio : 0.5) * 100) / 100;
+            secScore += earnedMarks;
+            if (isCorrect || earnedMarks > 0) {
+              secCorrect++;
+              totalCorrect++;
+            } else {
+              secIncorrect++;
+              totalIncorrect++;
+            }
+
+            gradedResponses[qId] = {
+              ...resp,
+              is_correct: isCorrect || earnedMarks > 0,
+              test_cases_passed: passedTests,
+              total_test_cases: totalTests,
+            };
+          } else {
+            secUnattempted++;
+            totalUnattempted++;
+            gradedResponses[qId] = {
+              ...resp,
+              code_solution: '',
+              is_correct: false,
+            };
+          }
+        } else if (hasSelected) {
           secAttempted++;
           totalAttempted++;
+          const correctAns = solutionMap[qId];
           const isCorrect = correctAns !== undefined
             ? Number(resp.selected_option) === Number(correctAns)
             : Boolean(resp?.is_correct);

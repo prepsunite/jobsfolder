@@ -72,11 +72,17 @@ export const companyService = {
   },
 
   getCompanyBySlug: async (slug: string): Promise<Company> => {
+    const raw = (slug || '').toLowerCase().trim();
+    const searchSlugs = (raw === 'amazon' || raw === 'amamzon')
+      ? ['amazon', 'amamzon']
+      : [raw];
+
     const { data, error } = await supabase
       .from('companies')
       .select('*')
-      .eq('slug', slug)
+      .in('slug', searchSlugs)
       .eq('is_deleted', false)
+      .limit(1)
       .maybeSingle();
 
     if (error) {

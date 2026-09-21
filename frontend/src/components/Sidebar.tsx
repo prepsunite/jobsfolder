@@ -33,6 +33,7 @@ import {
   HelpCircle,
   Briefcase,
   Flame,
+  Database,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -106,7 +107,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   // Consumer Student Navigation
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Mock Exams', href: '/student/exams', icon: GraduationCap, badge: 'CRT' },
+    { name: 'Mock Exams', href: '/student/exams', icon: GraduationCap, badge: isAdmin ? 'STUDIO' : 'CRT' },
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
@@ -582,6 +583,30 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     >
                       <MessageSquareQuote className="w-4 h-4 text-teal-400" />
                     </Link>
+                    <Link
+                      to="/student/exams?tab=blueprints"
+                      onClick={onClose}
+                      title="Mock Exam Blueprints & Patterns"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname === '/student/exams' && (!location.search || location.search.includes('tab=blueprints'))
+                          ? 'bg-blue-900/20 text-blue-400 border border-blue-500/40'
+                          : 'text-[#868E96] hover:text-blue-400 hover:bg-blue-900/10'
+                      }`}
+                    >
+                      <Layers className="w-4 h-4 text-blue-400" />
+                    </Link>
+                    <Link
+                      to="/student/exams?tab=bank"
+                      onClick={onClose}
+                      title="Question Bank Workspace (500 Qs/Topic)"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname === '/student/exams' && location.search.includes('tab=bank')
+                          ? 'bg-emerald-900/20 text-emerald-400 border border-emerald-500/40'
+                          : 'text-[#868E96] hover:text-emerald-400 hover:bg-emerald-900/10'
+                      }`}
+                    >
+                      <Database className="w-4 h-4 text-emerald-400" />
+                    </Link>
                   </div>
                 )}
               </div>
@@ -857,6 +882,42 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       </div>
                       <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300">
                         Prep
+                      </span>
+                    </Link>
+
+                    <Link
+                      to="/student/exams?tab=blueprints"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname === '/student/exams' && (!location.search || location.search.includes('tab=blueprints'))
+                          ? 'bg-blue-900/10 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        <span>Mock Blueprints</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                        Studio
+                      </span>
+                    </Link>
+
+                    <Link
+                      to="/student/exams?tab=bank"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname === '/student/exams' && location.search.includes('tab=bank')
+                          ? 'bg-emerald-900/10 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Question Bank</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                        500 Qs
                       </span>
                     </Link>
                   </div>

@@ -79,12 +79,100 @@ export const parsePaperTabs = (rawTabs: any): any[] => {
   return [];
 };
 
+/**
+ * Recursively checks if any node in the document hierarchy is locked (paid).
+ * In PrepUnite, a node is free if and only if `node.isFree === true`.
+ * Any node with `isFree !== true` (false or undefined) is locked/paid.
+ */
+export const hasLockedPaperNodes = (nodes?: any[]): boolean => {
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) return false;
+  return nodes.some((n: any) => {
+    if (n.isFree !== true) return true;
+    if (n.children && Array.isArray(n.children) && n.children.length > 0) {
+      return hasLockedPaperNodes(n.children);
+    }
+    return false;
+  });
+};
+
+/**
+ * Normalizes exam display names to guarantee that even if an administrator
+ * created an exam with the default placeholder "New Exam Module",
+ * students see a professional, descriptive title like "Amazon — Placement Papers & OA Archive".
+ */
+export const formatExamDisplayName = (exam: {
+  name?: string;
+  companyName?: string;
+  companySlug?: string;
+  company_slug?: string;
+}): string => {
+  const rawName = (exam.name || '').trim();
+  const compName = (
+    exam.companyName ||
+    exam.companySlug ||
+    exam.company_slug ||
+    'Recruiter'
+  ).trim();
+
+  // If name is placeholder, missing, or default generic
+  if (
+    !rawName ||
+    /^new exam module$/i.test(rawName) ||
+    /^exam module$/i.test(rawName) ||
+    rawName.toLowerCase() === 'draft'
+  ) {
+    return `${compName} — Placement Papers & OA Archive`;
+  }
+
+  // If the rawName doesn't already contain the company name, prefix it cleanly
+  if (!rawName.toLowerCase().includes(compName.toLowerCase())) {
+    return `${compName} — ${rawName}`;
+  }
+
+  return rawName;
+};
+
+/**
+ * Standardized single-source-of-truth determination for whether an exam
+ * is Paywalled (requires unlocking / single-company pass).
+ * 
+ * Rules:
+ * 1. Must NOT be soft-deleted.
+ * 2. Price must be > 0 (or undefined, defaulting to 99). If explicitly 0, it's free.
+ * 3. Must have valid non-empty paperTabs.
+ * 4. Must contain at least one locked node (hasLockedPaperNodes).
+ *    (If all nodes have isFree === true, the entire archive is 100% free practice).
+ * 5. NEVER rejects based on name/title strings!
+ */
+export const isExamPaywalled = (exam: Partial<ExamWithCompany> | Partial<ExamItem> | any): boolean => {
+  if (!exam) return false;
+
+  // 1. Soft-deleted check
+  if (exam.is_deleted === true || exam.isDeleted === true) return false;
+
+  // 2. Explicitly ₹0 price check
+  if (exam.price !== undefined && Number(exam.price) === 0) return false;
+
+  // 3. Tab content check: never sell an empty exam archive with no papers/tabs
+  const tabs = parsePaperTabs(exam.paperTabs || exam.paper_tabs);
+  if (!tabs || tabs.length === 0) return false;
+
+  // 4. Must contain at least one locked node.
+  return hasLockedPaperNodes(tabs);
+};
+
 export const examService = {
+  hasLockedPaperNodes,
+  formatExamDisplayName,
+  isExamPaywalled,
+
   getExamsByCompany: async (companySlug: string, userEmail?: string, includeHidden = false): Promise<ExamItem[]> => {
     // Strictly utilize Secure Server-Side Redaction RPC to prevent any unpaid content leakage
     try {
+      const cleanSlug = (companySlug || '').toLowerCase().trim();
+      const effectiveSlug = cleanSlug === 'amamzon' ? 'amazon' : cleanSlug;
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_secure_exams_by_company', {
-        p_company_slug: companySlug,
+        p_company_slug: effectiveSlug,
         p_user_email: userEmail || null,
       });
 
@@ -279,10 +367,13 @@ export const examService = {
       initialBadge = `${initialBadge} ${HIDDEN_EXAM_MARKER}`.trim();
     }
 
+    const resolvedCompName = (companySlug ? companySlug.charAt(0).toUpperCase() + companySlug.slice(1) : 'Company');
+    const defaultExamName = `${resolvedCompName} Placement Papers & OA Archive`;
+
     const payload: Record<string, any> = {
       company_slug: companySlug,
       company_id: companyId,
-      name: examData.name || 'New Exam Module',
+      name: examData.name && examData.name !== 'New Exam Module' ? examData.name : defaultExamName,
       badge: initialBadge,
       content: initialContent,
       old_papers: examData.oldPapers || '### Old Papers\n\nWrite old papers here...',

@@ -151,11 +151,12 @@ export default function DashboardPage() {
       const PAGE_SIZE = 1000;
       let hasMore = true;
 
-      while (hasMore) {
+      while (hasMore && page < 6) {
         const { data, error } = await supabase
           .from('topic_questions')
           .select('id, difficulty, topic_id')
           .eq('is_deleted', false)
+          .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error) {
@@ -174,7 +175,7 @@ export default function DashboardPage() {
         }
       }
 
-      if (allFetchedData.length > 0) {
+      if (allFetchedData.length > 0 && allFetchedData.length <= 6000) {
         try {
           localStorage.setItem('prepunite_all_questions_meta_cache', JSON.stringify(allFetchedData));
         } catch {}

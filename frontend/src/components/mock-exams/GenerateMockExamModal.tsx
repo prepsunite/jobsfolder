@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -41,8 +41,17 @@ export default function GenerateMockExamModal({
     queryKey: ['mock-exam-templates'],
     queryFn: () => tpoService.getExamTemplates(),
     enabled: isOpen,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 1000,
   });
+
+  // Real-time blueprint update listener
+  useEffect(() => {
+    const handleUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['mock-exam-templates'] });
+    };
+    window.addEventListener('prepunite_blueprints_updated', handleUpdated);
+    return () => window.removeEventListener('prepunite_blueprints_updated', handleUpdated);
+  }, [queryClient]);
 
   // 2. Fetch user's subscription and monthly quota
   const {

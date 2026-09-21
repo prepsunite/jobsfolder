@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   GraduationCap,
@@ -24,22 +24,79 @@ import {
   BookOpen,
   Filter,
   Eye,
+  EyeOff,
   AlertCircle,
   BarChart3,
+  Database,
+  SlidersHorizontal,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
+import AdminBlueprintManager from '@/components/admin/AdminBlueprintManager';
+import AdminQuestionBankPage from '@/pages/AdminQuestionBankPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/tpo.service';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
+import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
+import { questionBankService, type TopicInventoryItem } from '@/services/questionBank.service';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 
 type ExamFilterTab = 'ACTIVE' | 'COMPLETED' | 'UPCOMING' | 'ALL';
 
 export default function StudentExamsPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Admin Tab State (URL synced)
+  const initialAdminTab = searchParams.get('tab');
+  const [adminActiveTab, setAdminActiveTab] = useState<'BLUEPRINTS' | 'QUESTION_BANK' | 'EXAMS'>(() => {
+    if (initialAdminTab === 'bank' || initialAdminTab === 'question-bank') return 'QUESTION_BANK';
+    if (initialAdminTab === 'exams') return 'EXAMS';
+    return 'BLUEPRINTS';
+  });
+  const [previewAsStudent, setPreviewAsStudent] = useState<boolean>(false);
+
+  const handleAdminTabChange = (tab: 'BLUEPRINTS' | 'QUESTION_BANK' | 'EXAMS') => {
+    setAdminActiveTab(tab);
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'BLUEPRINTS') newParams.set('tab', 'blueprints');
+    else if (tab === 'QUESTION_BANK') newParams.set('tab', 'bank');
+    else if (tab === 'EXAMS') newParams.set('tab', 'exams');
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Keep adminActiveTab synced if searchParams change externally
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'bank' || tabParam === 'question-bank') {
+      setAdminActiveTab('QUESTION_BANK');
+    } else if (tabParam === 'exams') {
+      setAdminActiveTab('EXAMS');
+    } else if (tabParam === 'blueprints') {
+      setAdminActiveTab('BLUEPRINTS');
+    }
+  }, [searchParams]);
+
+  // Admin Data Queries (Cached & Instant)
+  const { data: adminBlueprints = [], refetch: refetchBlueprints } = useQuery({
+    queryKey: ['admin-blueprints'],
+    queryFn: () => mockExamBlueprintService.getAllBlueprints(),
+    enabled: !!isAdmin,
+    staleTime: 30 * 1000,
+  });
+
+  const { data: topicInventory = [], refetch: refetchInventory } = useQuery<TopicInventoryItem[]>({
+    queryKey: ['admin-topic-inventory'],
+    queryFn: () => questionBankService.getTopicInventories(),
+    enabled: !!isAdmin,
+    staleTime: 30 * 1000,
+  });
+
+  const totalBankQuestions = useMemo(() => {
+    return topicInventory.reduce((acc: number, t: TopicInventoryItem) => acc + t.count, 0);
+  }, [topicInventory]);
 
   // Tab State
   const [activeTab, setActiveTab] = useState<ExamFilterTab>('ACTIVE');
@@ -242,8 +299,8 @@ export default function StudentExamsPage() {
     return list;
   }, [activeTab, activeExams, completedExams, upcomingExams, campusExams, selectedCompanyFilter, searchQuery]);
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+  const renderStudentExamsContent = () => (
+    <div className="space-y-8 animate-fadeIn">
       {/* ── TOP BREADCRUMB & HEADER ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-[#242424]">
         <div>
@@ -866,6 +923,206 @@ export default function StudentExamsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+      {isAdmin && !previewAsStudent ? (
+        <div className="space-y-8">
+          {/* ── APPLE-GRADE ADMIN CONTROL STUDIO HEADER ── */}
+          <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-white to-gray-50/80 dark:from-[#16171a] dark:to-[#111215] border border-gray-200/80 dark:border-white/10 shadow-sm backdrop-blur-xl">
+            {/* Ambient accent lighting */}
+            <div className="absolute top-0 right-1/4 w-96 h-32 bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 blur-3xl pointer-events-none rounded-full" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-black text-white dark:bg-white dark:text-black shadow-xs">
+                    <Sparkles className="w-3 h-3 text-[#FD4A32]" />
+                    ADMIN CONTROL HUB
+                  </span>
+                  <span className="text-xs font-mono font-bold text-gray-400 dark:text-gray-500">
+                    Mock Assessment Engine
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-gray-900 dark:text-white font-display">
+                  Mock Exam Studio &amp; Patterns
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+                  Design multi-section company blueprints (TCS, Accenture, Amazon, Infosys), manage the 500-question topic repository, and govern candidate assessment drives with real-time sync.
+                </p>
+              </div>
+
+              {/* Action Switchers */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setPreviewAsStudent(true)}
+                  className="group px-4 py-2.5 rounded-2xl bg-white dark:bg-[#1e2025] hover:bg-gray-50 dark:hover:bg-[#252830] border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 text-xs font-bold transition-all shadow-2xs hover:shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                  title="Preview candidate student view"
+                >
+                  <Eye className="w-4 h-4 text-[#FD4A32] group-hover:scale-110 transition-transform" />
+                  <span>Preview Student View</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsGenerateModalOpen(true)}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#FD4A32] to-[#FF6B4A] hover:from-[#e03f29] hover:to-[#FD4A32] text-white text-xs font-display font-bold uppercase tracking-wider shadow-md shadow-[#FD4A32]/25 hover:shadow-lg hover:shadow-[#FD4A32]/35 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-200" />
+                  <span>Generate Test Paper</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    refetchBlueprints();
+                    refetchInventory();
+                    refetchExams();
+                  }}
+                  className="p-2.5 rounded-2xl border border-gray-200 dark:border-[#2c2e33] bg-white dark:bg-[#141414] text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
+                  title="Refresh all data"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Apple-grade Metric Pills */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 mt-6 border-t border-gray-200/60 dark:border-white/5">
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/60 dark:border-white/5">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-mono font-bold text-gray-400">Active Blueprints</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                    {adminBlueprints.length} Exam Patterns Configured
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/60 dark:border-white/5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Database className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-mono font-bold text-gray-400">Question Bank Inventory</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                    {totalBankQuestions} Questions Stocked
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/60 dark:border-white/5">
+                <div className="w-9 h-9 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-mono font-bold text-gray-400">Mock Assessments &amp; Drives</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                    {campusExams.length} Candidate Sessions
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── APPLE SEGMENTED CONTROL BAR ── */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex p-1.5 rounded-2xl bg-gray-100/90 dark:bg-[#16171b] border border-gray-200 dark:border-[#26282e] shadow-inner max-w-full overflow-x-auto custom-scrollbar">
+              <button
+                type="button"
+                onClick={() => handleAdminTabChange('BLUEPRINTS')}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  adminActiveTab === 'BLUEPRINTS'
+                    ? 'bg-white dark:bg-[#24262c] text-gray-900 dark:text-white shadow-sm font-black'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Layers className="w-4 h-4 text-blue-500" />
+                <span>Blueprint Studio &amp; Patterns</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
+                  {adminBlueprints.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleAdminTabChange('QUESTION_BANK')}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  adminActiveTab === 'QUESTION_BANK'
+                    ? 'bg-white dark:bg-[#24262c] text-gray-900 dark:text-white shadow-sm font-black'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Database className="w-4 h-4 text-emerald-500" />
+                <span>Question Bank Workspace</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+                  500 Qs/Topic
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleAdminTabChange('EXAMS')}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  adminActiveTab === 'EXAMS'
+                    ? 'bg-white dark:bg-[#24262c] text-gray-900 dark:text-white shadow-sm font-black'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <GraduationCap className="w-4 h-4 text-[#FD4A32]" />
+                <span>Candidate Mock Exams &amp; Drives</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] font-bold">
+                  {campusExams.length}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* ── SUB-TAB CONTENTS ── */}
+          {adminActiveTab === 'BLUEPRINTS' && <AdminBlueprintManager />}
+          {adminActiveTab === 'QUESTION_BANK' && <AdminQuestionBankPage />}
+          {adminActiveTab === 'EXAMS' && renderStudentExamsContent()}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Admin Preview Mode Alert Banner */}
+          {isAdmin && previewAsStudent && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span>Candidate Experience Preview Mode</span>
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
+                      Preview Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400">
+                    You are previewing how enrolled students interact with mock exams. Blueprints and question bank questions configured in admin studio determine the generated exams.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewAsStudent(false)}
+                className="px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:opacity-90 transition-opacity shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Return to Admin Studio</span>
+              </button>
+            </div>
+          )}
+
+          {renderStudentExamsContent()}
         </div>
       )}
 

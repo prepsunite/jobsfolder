@@ -306,9 +306,13 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   // --- EXAM ACTIONS ---
   const handleAddNewExam = async () => {
     try {
+      const defaultTitle = currentCompanyStoreItem?.name
+        ? `${currentCompanyStoreItem.name} Placement Papers & OA Archive`
+        : 'Placement Papers & OA Archive';
+
       const created = await examService.createExam({
         companySlug: slug,
-        name: 'New Exam Module',
+        name: defaultTitle,
         badge: 'Draft',
         content: '### New Exam Syllabus\n\nWrite details here...',
         oldPapers: '### Old Papers\n\nWrite old papers here...',

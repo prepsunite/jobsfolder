@@ -141,11 +141,18 @@ export default function TopicQuestionsPage() {
   // Load questions from Supabase (live — admins and students always see the same data)
   const loadQuestions = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('topic_questions')
         .select('*')
         .eq('topic_id', topicId)
-        .eq('is_deleted', false)
+        .eq('is_deleted', false);
+
+      // Guard: Do not load mock exam question bank questions onto regular students during practice
+      if (!isAdmin) {
+        query = query.or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK').limit(60);
+      }
+
+      const { data, error } = await query
         .order('question_number', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
@@ -207,7 +214,7 @@ export default function TopicQuestionsPage() {
       const list = dataStore.getTopicQuestions(topicId);
       setQuestions(list);
     }
-  }, [topicId]);
+  }, [topicId, isAdmin]);
 
   useEffect(() => {
     loadQuestions();

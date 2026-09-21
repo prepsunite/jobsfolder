@@ -33,6 +33,7 @@ import LogoLoader from '@/components/LogoLoader';
 import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
+import MockExamCodingWorkspace from '@/components/mock-exams/MockExamCodingWorkspace';
 import type {
   MockExam,
   MockExamSection,
@@ -745,6 +746,36 @@ export default function MockExamTestPage() {
     });
   };
 
+  const handleUpdateCode = (
+    codeText: string,
+    language?: string,
+    testCasesPassed?: number,
+    totalTestCases?: number
+  ) => {
+    if (!currentQuestionId) return;
+    setResponses(prev => {
+      const existing = prev[currentQuestionId] || {};
+      const updated = {
+        ...prev,
+        [currentQuestionId]: {
+          ...existing,
+          code_solution: codeText,
+          code_language: language || existing.code_language || 'python',
+          test_cases_passed: testCasesPassed !== undefined ? testCasesPassed : existing.test_cases_passed,
+          total_test_cases: totalTestCases !== undefined ? totalTestCases : existing.total_test_cases,
+          marked_review: existing.marked_review || false,
+          time_spent_sec: (existing.time_spent_sec || 0) + 1,
+        },
+      };
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+  };
+
   const handleClearResponse = () => {
     if (!currentQuestionId) return;
     setResponses(prev => {
@@ -752,6 +783,8 @@ export default function MockExamTestPage() {
         ...prev,
         [currentQuestionId]: {
           selected_option: null,
+          code_solution: '',
+          test_cases_passed: 0,
           marked_review: prev[currentQuestionId]?.marked_review || false,
           time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
         },
@@ -763,6 +796,13 @@ export default function MockExamTestPage() {
       }
       return updated;
     });
+  };
+
+  const isQuestionAnswered = (r?: StudentExamResponse) => {
+    if (!r) return false;
+    if (r.selected_option !== null && r.selected_option !== undefined && (r.selected_option as unknown) !== '') return true;
+    if (r.code_solution && r.code_solution.trim().length > 0) return true;
+    return false;
   };
 
   const handleToggleReview = () => {
@@ -1132,8 +1172,14 @@ export default function MockExamTestPage() {
   if (testPhase === 'IN_PROGRESS') {
     const isLastSection = currentSectionIndex === (sections.length || 1) - 1;
     const isLastQuestionInSection = currentQuestionIndex === currentSectionQIds.length - 1;
+    const isCodingProblem = Boolean(
+      currentQuestion?.isCodingProblem ||
+      currentSection?.section_type === 'CODING' ||
+      currentSection?.category === 'coding' ||
+      (currentQuestion?.test_cases && currentQuestion.test_cases.length > 0)
+    );
 
-    const totalAnsweredCount = Object.values(responses).filter(r => r.selected_option !== null && r.selected_option !== undefined).length;
+    const totalAnsweredCount = Object.values(responses).filter(isQuestionAnswered).length;
     const allExamQIds = sections.flatMap(s => s.question_ids);
 
     return (
@@ -1241,7 +1287,7 @@ export default function MockExamTestPage() {
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-[48vw] sm:max-w-md md:max-w-xl py-1 no-scrollbar">
             {sections.map((sec, idx) => {
               const secAnswered = sec.question_ids.filter(
-                qId => responses[qId]?.selected_option !== null && responses[qId]?.selected_option !== undefined
+                qId => isQuestionAnswered(responses[qId])
               ).length;
               const isCurrent = currentSectionIndex === idx;
               return (
@@ -1336,7 +1382,7 @@ export default function MockExamTestPage() {
                   <div className="flex flex-col gap-1.5">
                     {sections.map((sec, idx) => {
                       const secAns = sec.question_ids.filter(
-                        qId => responses[qId]?.selected_option !== null && responses[qId]?.selected_option !== undefined
+                        qId => isQuestionAnswered(responses[qId])
                       ).length;
                       const isCur = currentSectionIndex === idx;
                       return (
@@ -1372,7 +1418,7 @@ export default function MockExamTestPage() {
               {/* Status Summary Counts */}
               {(() => {
                 const secAns = currentSectionQIds.filter(
-                  qId => responses[qId]?.selected_option !== null && responses[qId]?.selected_option !== undefined
+                  qId => isQuestionAnswered(responses[qId])
                 ).length;
                 const secMarked = currentSectionQIds.filter(
                   qId => responses[qId]?.marked_review
@@ -1427,7 +1473,7 @@ export default function MockExamTestPage() {
                   {currentSectionQIds.map((qId, idx) => {
                     const resp = responses[qId];
                     const isCurrent = idx === currentQuestionIndex;
-                    const isAnswered = resp && resp.selected_option !== null && resp.selected_option !== undefined;
+                    const isAnswered = isQuestionAnswered(resp);
                     const isMarked = resp && resp.marked_review;
                     const isVisited = resp !== undefined;
 
@@ -1487,7 +1533,46 @@ export default function MockExamTestPage() {
             </div>
 
             {currentQuestion ? (
-              <div className="bg-white dark:bg-[#151618] rounded-2xl p-6 border border-gray-200 dark:border-[#25262a] shadow-sm space-y-6">
+              isCodingProblem ? (
+                <MockExamCodingWorkspace
+                  question={currentQuestion}
+                  sectionName={currentSection?.name}
+                  questionIndex={currentQuestionIndex}
+                  totalQuestions={currentSectionQIds.length}
+                  marksPerCorrect={currentSection?.marks_per_correct || 10}
+                  negativeMarking={currentSection?.negative_marking || 0}
+                  savedResponse={responses[currentQuestionId]}
+                  onUpdateCode={handleUpdateCode}
+                  onClearCode={handleClearResponse}
+                  onToggleReview={handleToggleReview}
+                  isMarkedReview={Boolean(responses[currentQuestionId]?.marked_review)}
+                  onPrev={() => {
+                    if (currentQuestionIndex > 0) {
+                      setCurrentQuestionIndex(prev => prev - 1);
+                    } else if (currentSectionIndex > 0) {
+                      const prevSec = sections[currentSectionIndex - 1];
+                      const prevQCount = prevSec?.question_ids?.length || 1;
+                      setCurrentSectionIndex(prev => prev - 1);
+                      setCurrentQuestionIndex(Math.max(0, prevQCount - 1));
+                    }
+                  }}
+                  onNext={() => {
+                    if (!isLastQuestionInSection) {
+                      setCurrentQuestionIndex(prev => prev + 1);
+                    } else if (!isLastSection) {
+                      setCurrentSectionIndex(prev => prev + 1);
+                      setCurrentQuestionIndex(0);
+                    } else {
+                      setShowSubmitConfirm(true);
+                    }
+                  }}
+                  isFirstQuestion={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                  isLastQuestion={isLastQuestionInSection}
+                  isLastSection={isLastSection}
+                  nextSectionName={sections[currentSectionIndex + 1]?.name}
+                />
+              ) : (
+                <div className="bg-white dark:bg-[#151618] rounded-2xl p-6 border border-gray-200 dark:border-[#25262a] shadow-sm space-y-6">
                 
                 {/* Question Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#25262a] pb-4">
@@ -1696,6 +1781,7 @@ export default function MockExamTestPage() {
                 </div>
 
               </div>
+            )
             ) : (
               <div className="p-8 text-center text-xs text-gray-400">Loading question content...</div>
             )}

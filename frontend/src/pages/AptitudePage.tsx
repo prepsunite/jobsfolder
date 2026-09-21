@@ -293,12 +293,13 @@ export default function AptitudePage() {
       const PAGE_SIZE = 1000;
       let hasMore = true;
 
-      while (hasMore) {
+      while (hasMore && page < 5) {
         const { data, error } = await supabase
           .from('topic_questions')
           .select('topic_id')
           .in('topic_id', topicIds)
           .eq('is_deleted', false)
+          .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error) {
@@ -357,12 +358,13 @@ export default function AptitudePage() {
       const PAGE_SIZE = 1000;
       let hasMore = true;
 
-      while (hasMore) {
+      while (hasMore && page < 5) {
         const { data, error } = await supabase
           .from('topic_questions')
           .select('id, difficulty, topic_id')
           .in('topic_id', topicIds)
           .eq('is_deleted', false)
+          .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error) {
@@ -382,7 +384,7 @@ export default function AptitudePage() {
         }
       }
 
-      if (allFetchedData.length > 0) {
+      if (allFetchedData.length > 0 && allFetchedData.length <= 5000) {
         try {
           localStorage.setItem(`prepunite_cat_q_cache_${categorySlug}`, JSON.stringify(allFetchedData));
         } catch {}
