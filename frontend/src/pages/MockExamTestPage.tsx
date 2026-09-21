@@ -169,29 +169,35 @@ export default function MockExamTestPage() {
 
   const isCollegeTpo = isTpoAdmin && (user?.collegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
   const isAdminOrTpo = isSuperAdmin || isCollegeTpo;
+  const isSelfPracticeExam =
+    exam?.college_id === 'SELF' ||
+    exam?.college_id === 'PUBLIC' ||
+    exam?.college_id === 'INDIVIDUAL' ||
+    Boolean(user?.email && exam?.target_departments?.includes(user.email.toLowerCase())) ||
+    Boolean(user?.email && exam?.instructions?.includes(`<!--STUDENT:${user.email.trim().toLowerCase()}-->`));
   const isEnrolledStudent = Boolean(
     exam?.college_id && (dbEnrollmentVerified || userCollegeId === exam.college_id)
   );
-  const isAuthorizedCandidate = !exam?.college_id || isAdminOrTpo || isEnrolledStudent;
+  const isAuthorizedCandidate = !exam?.college_id || isSelfPracticeExam || isAdminOrTpo || isEnrolledStudent;
 
   // Cohort Batch & Stream Eligibility
   const isBatchEligible = useMemo(() => {
-    if (isAdminOrTpo) return true;
+    if (isAdminOrTpo || isSelfPracticeExam) return true;
     if (!exam?.target_batches || exam.target_batches.length === 0) return true;
     if (exam.target_batches.some(b => b.toUpperCase() === 'ALL')) return true;
     const studentBatch = candidateStudentRecord?.batch_name?.trim().toLowerCase();
     if (!studentBatch) return false;
     return exam.target_batches.some(b => b.trim().toLowerCase() === studentBatch);
-  }, [isAdminOrTpo, exam?.target_batches, candidateStudentRecord?.batch_name]);
+  }, [isAdminOrTpo, isSelfPracticeExam, exam?.target_batches, candidateStudentRecord?.batch_name]);
 
   const isDeptEligible = useMemo(() => {
-    if (isAdminOrTpo) return true;
+    if (isAdminOrTpo || isSelfPracticeExam) return true;
     if (!exam?.target_departments || exam.target_departments.length === 0) return true;
     if (exam.target_departments.some(d => d.toUpperCase() === 'ALL')) return true;
     const studentDept = candidateStudentRecord?.department?.trim().toUpperCase();
     if (!studentDept) return false;
     return exam.target_departments.some(d => d.trim().toUpperCase() === studentDept);
-  }, [isAdminOrTpo, exam?.target_departments, candidateStudentRecord?.department]);
+  }, [isAdminOrTpo, isSelfPracticeExam, exam?.target_departments, candidateStudentRecord?.department]);
 
   // Fetch Existing Candidate Attempt
   const { data: existingAttempt } = useQuery<StudentExamAttempt | null>({

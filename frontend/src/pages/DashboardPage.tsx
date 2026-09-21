@@ -640,8 +640,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 🏛️ Campus Mock Placement Drives Gateway Widget for Enrolled College Students */}
-      {enrolledCollege && (
+      {/* 🏛️ Mock Placement Drives Gateway Widget */}
+      {(enrolledCollege || campusExams.length > 0) && (
         <div className="rounded-2xl p-5 sm:p-6 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/40 via-white to-orange-50/10 dark:from-[#1a1311] dark:via-[#141414] dark:to-[#121417] shadow-sm relative overflow-hidden space-y-4">
           {/* Top Banner Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-orange-100 dark:border-[#2a2220] pb-3.5">
@@ -652,14 +652,14 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FD4A32] text-white">
-                    Campus Placement Cell
+                    {enrolledCollege ? 'Campus Placement Cell' : 'Mock Exam Suite'}
                   </span>
                   <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                    {enrolledCollege.name}
+                    {enrolledCollege ? enrolledCollege.name : 'Blueprint Mock Tests'}
                   </span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight mt-0.5">
-                  Assigned Placement Drives & Mock Tests
+                  {enrolledCollege ? 'Assigned Placement Drives & Mock Tests' : 'Your Blueprint Mock Assessments'}
                 </h2>
               </div>
             </div>

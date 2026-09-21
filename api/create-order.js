@@ -2,10 +2,14 @@ import Razorpay from 'razorpay';
 
 // Server-side authoritative pricing catalog (INR)
 const PRICING_CATALOG = {
+  PLUS: 139,
+  PLUS_MONTHLY: 139,
+  PRO: 199,
+  PRO_MONTHLY: 199,
   SINGLE_PAPER: 99,
   SINGLE: 99,
-  MONTHLY: 299,
-  MONTHLY_PASS: 299,
+  MONTHLY: 199,
+  MONTHLY_PASS: 199,
   QUARTERLY: 699,
   YEARLY: 1999,
 };

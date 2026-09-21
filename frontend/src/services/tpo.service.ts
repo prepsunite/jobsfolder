@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
+import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import type {
   College,
   CollegeBatch,
@@ -25,6 +26,7 @@ export const STORAGE_KEYS_TPO = {
   STUDENTS: 'prepunite_tpo_students',
   BATCHES: 'prepunite_tpo_college_batches',
   EXAMS: 'prepunite_tpo_mock_exams',
+  SELF_EXAMS: 'prepunite_self_mock_exams',
   STUDENT_ENTITLEMENTS: 'prepunite_student_entitlements',
   ATTEMPTS: 'prepunite_tpo_exam_attempts',
   TEMPLATES: 'prepunite_tpo_exam_templates',
@@ -76,7 +78,7 @@ export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
     target_company: 'TCS NQT',
     badge: 'High Hiring Volume',
     description: 'Official multi-section placement assessment matching the latest TCS NQT National Qualifier test blueprint.',
-    duration_minutes: 80,
+    duration_minutes: 90,
     passing_percentage: 45,
     enable_fullscreen_lock: true,
     enable_tab_switch_detection: true,
@@ -88,25 +90,25 @@ export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
     sections: [
       {
         name: 'Numerical Ability & Advanced Quant',
-        question_count: 20,
+        question_count: 25,
         marks_per_correct: 1,
         negative_marking: 0,
-        duration_minutes: 30,
+        duration_minutes: 35,
         category: 'arithmetic-aptitude',
         topic_ids: ['numbers', 'time-and-work', 'time-and-distance', 'problems-on-trains', 'hcf-lcm', 'simplification'],
       },
       {
         name: 'Reasoning Ability & Logical Deduction',
-        question_count: 20,
+        question_count: 25,
         marks_per_correct: 1,
         negative_marking: 0,
-        duration_minutes: 30,
+        duration_minutes: 35,
         category: 'logical-reasoning',
         topic_ids: ['calendar', 'data-interpretation'],
       },
       {
         name: 'Verbal Ability & Reading Comprehension',
-        question_count: 15,
+        question_count: 20,
         marks_per_correct: 1,
         negative_marking: 0,
         duration_minutes: 20,
@@ -116,13 +118,13 @@ export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
     ],
   },
   {
-    id: 'tmpl-accenture-cognitive',
-    name: 'Accenture Discovery Cognitive Assessment',
-    target_company: 'Accenture',
-    badge: 'Industry Standard',
-    description: 'Triple-module cognitive and critical reasoning evaluation designed for Accenture Campus Placement Drives.',
+    id: 'tmpl-accenture-ase',
+    name: 'Accenture ASE (Associate Software Engineer) Blueprint',
+    target_company: 'Accenture ASE',
+    badge: 'Campus Benchmark',
+    description: 'Accenture Associate Software Engineer (ASE) official test blueprint covering Critical Reasoning, Abstract/Quant Logic, English Verbal, and Technical Pseudocode.',
     duration_minutes: 90,
-    passing_percentage: 40,
+    passing_percentage: 45,
     enable_fullscreen_lock: true,
     enable_tab_switch_detection: true,
     max_tab_switches_allowed: 3,
@@ -136,24 +138,36 @@ export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
         question_count: 20,
         marks_per_correct: 1,
         negative_marking: 0,
+        duration_minutes: 25,
         category: 'logical-reasoning',
-        topic_ids: [],
+        topic_ids: ['calendar', 'data-interpretation'],
       },
       {
         name: 'Abstract Reasoning & Numerical Logic',
         question_count: 20,
         marks_per_correct: 1,
         negative_marking: 0,
+        duration_minutes: 25,
         category: 'arithmetic-aptitude',
-        topic_ids: ['numbers', 'average', 'time-and-work', 'simplification'],
+        topic_ids: ['numbers', 'average', 'time-and-work', 'simplification', 'percentage'],
       },
       {
         name: 'English Communication & Verbal Skills',
         question_count: 15,
         marks_per_correct: 1,
         negative_marking: 0,
+        duration_minutes: 20,
         category: 'verbal-reasoning',
         topic_ids: [],
+      },
+      {
+        name: 'Technical Essentials & Pseudocode Logic',
+        question_count: 15,
+        marks_per_correct: 1,
+        negative_marking: 0,
+        duration_minutes: 20,
+        category: 'arithmetic-aptitude',
+        topic_ids: ['simplification'],
       },
     ],
   },
@@ -487,6 +501,23 @@ function getLocalExams(collegeId: string): MockExam[] {
 function saveLocalExams(collegeId: string, exams: MockExam[]) {
   try {
     localStorage.setItem(`${STORAGE_KEYS_TPO.EXAMS}_${collegeId}`, JSON.stringify(exams));
+  } catch {}
+}
+
+function getLocalSelfExams(email: string): MockExam[] {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_KEYS_TPO.SELF_EXAMS}_${email.trim().toLowerCase()}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function saveLocalSelfExams(email: string, exams: MockExam[]) {
+  try {
+    localStorage.setItem(`${STORAGE_KEYS_TPO.SELF_EXAMS}_${email.trim().toLowerCase()}`, JSON.stringify(exams));
   } catch {}
 }
 
@@ -3529,6 +3560,29 @@ export const tpoService = {
       if (found) return found;
     }
 
+    // Try finding in local self-practice exams
+    const localSelf = getLocalExams('SELF');
+    const foundSelf = localSelf.find(e => e.id === examId);
+    if (foundSelf) return foundSelf;
+
+    if (typeof window !== 'undefined') {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(STORAGE_KEYS_TPO.SELF_EXAMS)) {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const list: MockExam[] = JSON.parse(raw);
+              if (Array.isArray(list)) {
+                const m = list.find(e => e.id === examId);
+                if (m) return m;
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
     // Try finding in cloud contact_messages
     try {
       const { data: cloudMsg } = await supabase
@@ -3727,6 +3781,150 @@ export const tpoService = {
         topic_ids: s.topic_ids || [],
       }))
     );
+  },
+
+  /**
+   * Generates an official Blueprint Mock Exam for a student (B2C Plus/Pro candidate).
+   * Validates monthly generation quota, generates section questions from the question pool,
+   * sets candidate's custom live time window, and records monthly usage.
+   */
+  async generateStudentPracticeExam(
+    userEmail: string,
+    template: MockExamTemplate,
+    overrides?: {
+      title?: string;
+      start_time?: string;
+      end_time?: string;
+    }
+  ): Promise<MockExam> {
+    const cleanEmail = userEmail.trim().toLowerCase();
+    const now = new Date();
+    const startTime = overrides?.start_time || now.toISOString();
+    const endTime = overrides?.end_time || new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const title = overrides?.title || `${template.name} - Blueprint Practice`;
+
+    // 1. Quota Verification
+    const usage = await mockExamSubscriptionService.getMonthlyUsage(cleanEmail);
+    if (!usage.canGenerate) {
+      throw new Error(
+        usage.limit === 0
+          ? 'Your Free tier does not include blueprint mock exams. Please upgrade to Plus (₹139/mo, 5 exams) or Pro (₹199/mo, 20 exams) to generate assessments.'
+          : `You have exhausted your monthly limit of ${usage.limit} mock exams (${usage.plan} Plan). Your quota resets on ${usage.resetDate}. Upgrade to Pro for 20 exams/month.`
+      );
+    }
+
+    const totalQuestions = template.sections.reduce((acc, s) => acc + (Number(s.question_count) || 0), 0);
+    const totalMarks = template.sections.reduce(
+      (acc, s) => acc + (Number(s.question_count) || 0) * (Number(s.marks_per_correct) || 1),
+      0
+    );
+
+    const exam = await this.createMockExam(
+      {
+        college_id: 'SELF',
+        title,
+        target_company: template.target_company,
+        description: template.description || `Self-practice assessment generated from ${template.name}.`,
+        instructions: `1. Test must be taken in Fullscreen Mode.\n2. Switching tabs or minimizing browser will be flagged by proctor.\n3. Test will auto-submit when the countdown expires.\n<!--STUDENT:${cleanEmail}-->`,
+        duration_minutes: template.duration_minutes,
+        total_marks: totalMarks,
+        passing_percentage: template.passing_percentage,
+        start_time: startTime,
+        end_time: endTime,
+        is_active: true,
+        enable_tab_switch_detection: template.enable_tab_switch_detection ?? true,
+        max_tab_switches_allowed: template.max_tab_switches_allowed ?? 3,
+        enable_fullscreen_lock: template.enable_fullscreen_lock ?? true,
+        shuffle_questions: template.shuffle_questions ?? true,
+        shuffle_options: template.shuffle_options ?? true,
+        show_results_immediately: template.show_results_immediately ?? true,
+        target_departments: [cleanEmail],
+        target_batches: ['ALL'],
+      },
+      template.sections.map(s => ({
+        name: s.name,
+        question_count: s.question_count,
+        marks_per_correct: s.marks_per_correct,
+        negative_marking: s.negative_marking,
+        duration_minutes: s.duration_minutes,
+        topic_ids: s.topic_ids || [],
+      }))
+    );
+
+    // Save under student-specific self-exams store
+    const local = getLocalSelfExams(cleanEmail);
+    local.unshift(exam);
+    saveLocalSelfExams(cleanEmail, local);
+
+    // Cloud backup to contact_messages for cross-device support
+    try {
+      await supabase.from('contact_messages').insert({
+        name: `Self Exam: ${exam.title}`,
+        email: cleanEmail,
+        subject: `B2B_EXAM:SELF:${cleanEmail}:${exam.id}`,
+        message: JSON.stringify(exam),
+        status: 'ACTIVE',
+      });
+    } catch {}
+
+    // Record usage quota
+    mockExamSubscriptionService.recordExamGenerated(cleanEmail, exam.id);
+
+    return exam;
+  },
+
+  /**
+   * Retrieves all personal self-practice exams created by an individual candidate
+   */
+  async getStudentSelfPracticeExams(cleanEmail: string): Promise<MockExam[]> {
+    if (!cleanEmail) return [];
+    const clean = cleanEmail.trim().toLowerCase();
+    const map = new Map<string, MockExam>();
+
+    // 1. Local student store
+    const local = getLocalSelfExams(clean);
+    local.forEach(e => map.set(e.id, e));
+
+    // Also check local 'SELF' store
+    const localSelf = getLocalExams('SELF');
+    localSelf.forEach(e => {
+      if (
+        e.target_departments?.includes(clean) ||
+        e.instructions?.includes(`<!--STUDENT:${clean}-->`)
+      ) {
+        map.set(e.id, e);
+      }
+    });
+
+    // 2. Cloud contact_messages
+    try {
+      const { data: cloudMsgs } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .or(`subject.like.B2B_EXAM:SELF:${clean}:%,subject.like.B2B_EXAM:SELF:%`)
+        .neq('status', 'DELETED')
+        .order('created_at', { ascending: false });
+
+      if (cloudMsgs && cloudMsgs.length > 0) {
+        cloudMsgs.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message) as MockExam;
+            if (
+              parsed &&
+              parsed.id &&
+              (parsed.target_departments?.includes(clean) ||
+                parsed.instructions?.includes(`<!--STUDENT:${clean}-->`))
+            ) {
+              if (!map.has(parsed.id)) {
+                map.set(parsed.id, parsed);
+              }
+            }
+          } catch {}
+        });
+      }
+    } catch {}
+
+    return Array.from(map.values());
   },
 
   /**
@@ -5235,11 +5433,14 @@ export const tpoService = {
       }
     }
 
-    if (!resolvedCollegeId) {
+    // 2. Fetch candidate's self-practice mock exams
+    const selfExams = await this.getStudentSelfPracticeExams(cleanEmail);
+
+    if (!resolvedCollegeId && selfExams.length === 0) {
       return { college: null, exams: [] };
     }
 
-    if (!resolvedCollegeName) {
+    if (resolvedCollegeId && !resolvedCollegeName) {
       const colDetails = await this.getCollegeDetails(resolvedCollegeId);
       if (colDetails) {
         resolvedCollegeName = colDetails.name;
@@ -5250,10 +5451,19 @@ export const tpoService = {
       }
     }
 
-    // 2. Fetch mock exams for this college
-    const exams = await this.getMockExamsForCollege(resolvedCollegeId);
+    // 3. Fetch mock exams for this college (if enrolled)
+    let collegeExams: MockExam[] = [];
+    if (resolvedCollegeId) {
+      collegeExams = await this.getMockExamsForCollege(resolvedCollegeId);
+    }
 
-    // 3. Fetch all attempts by this student
+    // Merge self-practice exams and college exams (deduplicating by id)
+    const combinedMap = new Map<string, MockExam>();
+    selfExams.forEach(e => combinedMap.set(e.id, e));
+    collegeExams.forEach(e => combinedMap.set(e.id, e));
+    const allExams = Array.from(combinedMap.values());
+
+    // 4. Fetch all attempts by this student
     let studentAttempts: StudentExamAttempt[] = [];
     const localAll = getLocalAttempts().filter(
       a =>
@@ -5302,7 +5512,7 @@ export const tpoService = {
     } catch {}
 
     // Map attempts to exams: for each exam, pick the completed attempt if any, or latest in-progress
-    const annotatedExams = exams.map(exam => {
+    const annotatedExams = allExams.map(exam => {
       const examAttempts = studentAttempts.filter(a => a.mock_exam_id === exam.id);
       let bestAttempt: StudentExamAttempt | null = null;
       if (examAttempts.length > 0) {
@@ -5323,11 +5533,13 @@ export const tpoService = {
     });
 
     return {
-      college: {
-        id: resolvedCollegeId,
-        name: resolvedCollegeName || 'Partner Institution',
-        code: resolvedCollegeCode || 'CRT',
-      },
+      college: resolvedCollegeId
+        ? {
+            id: resolvedCollegeId,
+            name: resolvedCollegeName || 'Partner Institution',
+            code: resolvedCollegeCode || 'CRT',
+          }
+        : null,
       exams: annotatedExams,
     };
   },

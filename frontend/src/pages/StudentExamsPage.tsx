@@ -28,9 +28,11 @@ import {
   BarChart3,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
+import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/tpo.service';
+import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 
 type ExamFilterTab = 'ACTIVE' | 'COMPLETED' | 'UPCOMING' | 'ALL';
@@ -43,11 +45,20 @@ export default function StudentExamsPage() {
   const [activeTab, setActiveTab] = useState<ExamFilterTab>('ACTIVE');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState<string>('ALL');
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
 
   // Scorecard Modal State
   const [selectedScorecardExam, setSelectedScorecardExam] = useState<
     (MockExam & { attempt?: StudentExamAttempt | null }) | null
   >(null);
+
+  // User Mock Exam Subscription & Usage Quota
+  const { data: usageInfo, refetch: refetchUsage } = useQuery({
+    queryKey: ['student-mock-exam-quota', user?.email],
+    queryFn: () => mockExamSubscriptionService.getMonthlyUsage(user?.email),
+    enabled: !!user?.email,
+    staleTime: 15 * 1000,
+  });
 
   // 1. Fetch Campus Placement Mock Drives for Enrolled Student
   const {
@@ -275,6 +286,14 @@ export default function StudentExamsPage() {
           )}
 
           <button
+            onClick={() => setIsGenerateModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-xl bg-linear-to-r from-[#FD4A32] to-[#FF6B4A] hover:from-[#e03f29] hover:to-[#FD4A32] text-white text-xs font-display font-bold uppercase tracking-wider shadow-md shadow-[#FD4A32]/25 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+            <span>Generate Blueprint Exam</span>
+          </button>
+
+          <button
             onClick={() => refetchExams()}
             className="p-2 rounded-xl border border-gray-200 dark:border-[#2c2e33] bg-white dark:bg-[#141414] text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-[#FD4A32]/40 transition-colors text-xs font-bold"
             title="Refresh drives"
@@ -408,26 +427,47 @@ export default function StudentExamsPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl p-6 border border-gray-200 dark:border-[#27292e] bg-gray-50/50 dark:bg-[#141517] flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gray-200 dark:bg-[#202226] text-gray-500 flex items-center justify-center font-bold shrink-0">
-              <GraduationCap className="w-6 h-6" />
+        <div className="rounded-2xl p-6 border border-gray-200 dark:border-[#27292e] bg-linear-to-br from-gray-50/70 via-white to-orange-50/20 dark:from-[#141517] dark:via-[#17181c] dark:to-[#1a1413] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0 mt-1 sm:mt-0">
+              <Sparkles className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                Individual Practice Candidate Mode
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xl mt-0.5">
-                You are currently browsing individual mock exams. If your college is partnered with PrepUnite / Jobsfolder, link your institutional email in settings or contact your TPO placement cell to access private campus recruitment drives.
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Blueprint Mock Exam Suite
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] uppercase tracking-wider">
+                  {usageInfo?.planName || 'Free Plan'}
+                </span>
+                {usageInfo && (
+                  <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                    {usageInfo.remaining} of {usageInfo.limit} mock exams remaining
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xl">
+                Choose an official company blueprint pattern like <strong>TCS NQT (90 min)</strong> or <strong>Accenture ASE (90 min)</strong> to generate your custom-scheduled mock test with proctored anti-cheat and instant in-depth solutions.
               </p>
             </div>
           </div>
-          <Link
-            to="/pricing"
-            className="px-4 py-2.5 rounded-xl bg-[#FD4A32] text-white text-xs font-bold uppercase tracking-wider shrink-0 hover:bg-[#e03f29] transition-all shadow-md shadow-[#FD4A32]/20"
-          >
-            Explore Campus Pro Passes →
-          </Link>
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <button
+              onClick={() => setIsGenerateModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#FD4A32] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#e03f29] transition-all shadow-md shadow-[#FD4A32]/20 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Generate Blueprint Exam</span>
+            </button>
+            {usageInfo?.limit === 0 && (
+              <Link
+                to="/pricing"
+                className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-[#33363f] text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-[#202226] transition-all"
+              >
+                Upgrade to Plus (₹139) →
+              </Link>
+            )}
+          </div>
         </div>
       )}
 
@@ -593,7 +633,14 @@ export default function StudentExamsPage() {
               ? 'Once you complete and submit an active mock drive, your performance scorecard and accuracy analytics will appear here.'
               : 'Keep practicing aptitude modules and company pattern blueprints while your college adds new recruitment rounds.'}
           </p>
-          <div className="pt-2 flex items-center justify-center gap-3">
+          <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => setIsGenerateModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#FD4A32] text-white text-xs font-bold hover:bg-[#e03f29] transition-colors flex items-center gap-1.5 shadow-md shadow-[#FD4A32]/25 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Generate Blueprint Mock Exam</span>
+            </button>
             <Link
               to="/companies"
               className="px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:opacity-90 transition-opacity"
@@ -1061,6 +1108,16 @@ export default function StudentExamsPage() {
           </div>
         </div>
       )}
+
+      {/* ── GENERATE BLUEPRINT MOCK EXAM MODAL ── */}
+      <GenerateMockExamModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        onExamCreated={() => {
+          refetchExams();
+          refetchUsage();
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ProgressSummaryStats } from '@/services/progress.service';
 import { technicalService } from '@/services/technical.service';
 import { interviewService } from '@/services/interview.service';
@@ -61,16 +62,29 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
     } catch {}
   };
 
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Invalidate queries when questions or MCQs are solved
+  useEffect(() => {
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['technical-stats-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['interview-stats-summary'] });
+    };
+    window.addEventListener('prepunite-storage-update', handleUpdate);
+    return () => window.removeEventListener('prepunite-storage-update', handleUpdate);
+  }, [queryClient]);
+
   // Queries for Technical & Interview data
   const { data: techStats } = useQuery({
-    queryKey: ['technical-stats-summary'],
-    queryFn: () => technicalService.getStats(),
+    queryKey: ['technical-stats-summary', user?.email],
+    queryFn: () => technicalService.getStats(user?.email),
     staleTime: 10 * 1000,
   });
 
   const { data: interviewStats } = useQuery({
-    queryKey: ['interview-stats-summary'],
-    queryFn: () => interviewService.getStats(),
+    queryKey: ['interview-stats-summary', user?.email],
+    queryFn: () => interviewService.getStats(user?.email),
     staleTime: 10 * 1000,
   });
 
@@ -129,6 +143,8 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
   const dsaSolved = techStats?.dsaSolved ?? 0;
   const dsaPct = dsaTotal > 0 ? Math.min(100, Math.round((dsaSolved / dsaTotal) * 100)) : 0;
   const mcqTotal = techStats?.mcqTotal ?? 0;
+  const mcqSolved = techStats?.mcqSolved ?? 0;
+  const mcqPct = mcqTotal > 0 ? Math.min(100, Math.round((mcqSolved / mcqTotal) * 100)) : 0;
   const codingPortion = codingTotal > 0 ? (codingSolved / codingTotal) * circumference : 0;
   const codingDashOffset = circumference - codingPortion;
 
@@ -489,8 +505,8 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
               <span className="font-extrabold text-[#121417] dark:text-white">{dsaSolved}/{dsaTotal}</span>
             </div>
             <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
-              <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">OA MCQs:</span>
-              <span className="font-extrabold text-[#121417] dark:text-white">{mcqTotal} questions</span>
+              <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Technical MCQs:</span>
+              <span className="font-extrabold text-[#121417] dark:text-white">{mcqSolved}/{mcqTotal}</span>
             </div>
           </div>
 
@@ -578,20 +594,20 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <HelpCircle className="w-3.5 h-3.5" />
-                  Output MCQs
+                  Technical MCQs
                 </span>
                 <span className="text-[11px] font-mono font-bold text-[#121417] dark:text-white">
-                  {mcqTotal}
-                  <span className="text-[#868E96] dark:text-[#555555] font-normal"> Qs</span>
+                  {mcqSolved}
+                  <span className="text-[#868E96] dark:text-[#555555] font-normal">/{mcqTotal}</span>
                 </span>
               </div>
               <div className="space-y-1">
                 <div className="w-full h-1.5 rounded-full bg-[#E9ECEF] dark:bg-[#202020] overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '100%' }} />
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${mcqPct}%` }} />
                 </div>
                 <div className="flex justify-between text-[9px] font-mono text-[#868E96] dark:text-[#666666]">
                   <span>C, C++, Java &amp; Python Traps</span>
-                  <span className="text-emerald-500">Ready</span>
+                  <span>{mcqPct}%</span>
                 </div>
               </div>
             </div>

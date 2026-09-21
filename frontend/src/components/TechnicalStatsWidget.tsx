@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 import { technicalService } from '@/services/technical.service';
 import { interviewService } from '@/services/interview.service';
 import {
@@ -21,15 +22,27 @@ interface TechnicalStatsWidgetProps {
 }
 
 export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ className = '' }) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['technical-stats-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['interview-stats-summary'] });
+    };
+    window.addEventListener('prepunite-storage-update', handleUpdate);
+    return () => window.removeEventListener('prepunite-storage-update', handleUpdate);
+  }, [queryClient]);
+
   const { data: techStats, isLoading: isTechLoading } = useQuery({
-    queryKey: ['technical-stats-summary'],
-    queryFn: () => technicalService.getStats(),
+    queryKey: ['technical-stats-summary', user?.email],
+    queryFn: () => technicalService.getStats(user?.email),
     staleTime: 10 * 1000,
   });
 
   const { data: interviewStats, isLoading: isInterviewLoading } = useQuery({
-    queryKey: ['interview-stats-summary'],
-    queryFn: () => interviewService.getStats(),
+    queryKey: ['interview-stats-summary', user?.email],
+    queryFn: () => interviewService.getStats(user?.email),
     staleTime: 10 * 1000,
   });
 
@@ -131,12 +144,12 @@ export const TechnicalStatsWidget: React.FC<TechnicalStatsWidgetProps> = ({ clas
               <div className="flex items-center gap-1.5 mb-1">
                 <HelpCircle className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-[10px] font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider">
-                  Output MCQs
+                  Technical MCQs
                 </span>
               </div>
               <div className="flex items-baseline justify-between">
                 <span className="font-mono font-bold text-xs text-[#121417] dark:text-white">
-                  {techStats?.mcqTotal ?? 0}
+                  {techStats?.mcqSolved ?? 0}/{techStats?.mcqTotal ?? 0}
                 </span>
                 <span className="text-[9px] font-mono text-emerald-500">
                   OA Traps

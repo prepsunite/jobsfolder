@@ -92,6 +92,9 @@ export const interviewService = {
     }
     try {
       localStorage.setItem(MASTERED_INTERVIEW_KEY, JSON.stringify(Array.from(masteredSet)));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
+      }
     } catch {}
 
     if (userEmail && userEmail !== GUEST_EMAIL) {
@@ -665,7 +668,12 @@ export const interviewService = {
     return countMap;
   },
 
-  async getStats() {
+  async getStats(userEmail?: string) {
+    if (userEmail && userEmail !== GUEST_EMAIL) {
+      await this.fetchAndSyncFromSupabase(userEmail).catch(err =>
+        console.warn('[interviewService.getStats] fetchAndSync error:', err)
+      );
+    }
     const masteredSet = this.getMasteredQuestionIds();
 
     try {

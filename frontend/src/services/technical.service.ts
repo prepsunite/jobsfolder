@@ -154,6 +154,9 @@ export const technicalService = {
     existing[mcqId] = progress;
     try {
       localStorage.setItem(SOLVED_MCQS_KEY, JSON.stringify(existing));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
+      }
     } catch (e) {
       console.error('Failed to save MCQ progress to localStorage:', e);
     }
@@ -198,6 +201,9 @@ export const technicalService = {
     }
     try {
       localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
+      }
     } catch {}
 
     if (userEmail && userEmail !== GUEST_EMAIL) {
@@ -1220,7 +1226,12 @@ export const technicalService = {
     };
   },
 
-  async getStats() {
+  async getStats(userEmail?: string) {
+    if (userEmail && userEmail !== GUEST_EMAIL) {
+      await this.fetchAndSyncFromSupabase(userEmail).catch(err =>
+        console.warn('[technicalService.getStats] fetchAndSync error:', err)
+      );
+    }
     const solvedSet = this.getSolvedProblemIds();
     const dsaStats = this.getCampusDsaStats();
     const mcqProgress = this.getMcqProgress();

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
 import { progressService } from '@/services/progress.service';
+import { technicalService } from '@/services/technical.service';
+import { interviewService } from '@/services/interview.service';
 import { tpoService } from '@/services/tpo.service';
 
 export type UserRole = 'GUEST' | 'USER' | 'ADMIN' | 'TPO_ADMIN';
@@ -515,6 +517,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             dataStore.hydrateBookmarksFromSupabase(userMeta);
             progressService.fetchAndSyncFromSupabase(email);
             progressService.migrateGuestProgress(email);
+            technicalService.fetchAndSyncFromSupabase(email);
+            interviewService.fetchAndSyncFromSupabase(email);
           } finally {
             syncPromise = null;
           }

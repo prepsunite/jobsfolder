@@ -2,10 +2,14 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
 const PRICING_CATALOG = {
+  PLUS: 139,
+  PLUS_MONTHLY: 139,
+  PRO: 199,
+  PRO_MONTHLY: 199,
   SINGLE_PAPER: 99,
   SINGLE: 99,
-  MONTHLY: 299,
-  MONTHLY_PASS: 299,
+  MONTHLY: 199,
+  MONTHLY_PASS: 199,
   QUARTERLY: 699,
   YEARLY: 1999,
 };
@@ -132,8 +136,14 @@ export default async function handler(req, res) {
       );
     } else {
       let days = 30;
-      let planName = 'PrepUnite Pro Monthly Pass';
-      if (normalizedItemType === 'QUARTERLY') {
+      let planName = 'PrepUnite Pro (20 Mock Exams/mo)';
+      if (normalizedItemType === 'PLUS' || normalizedItemType === 'PLUS_MONTHLY') {
+        days = 30;
+        planName = 'PrepUnite Plus (5 Mock Exams/mo)';
+      } else if (normalizedItemType === 'PRO' || normalizedItemType === 'PRO_MONTHLY' || normalizedItemType === 'MONTHLY' || normalizedItemType === 'MONTHLY_PASS') {
+        days = 30;
+        planName = 'PrepUnite Pro (20 Mock Exams/mo)';
+      } else if (normalizedItemType === 'QUARTERLY') {
         days = 90;
         planName = 'PrepUnite Pro Quarterly Pass';
       } else if (normalizedItemType === 'YEARLY') {
