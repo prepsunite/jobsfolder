@@ -168,8 +168,6 @@ export default function CreateMockExamModal({
     },
   ]);
 
-  if (!isOpen) return null;
-
   // ⚡ 1-Click Launch: Opens Target Audience Selector Dialog
   const handleOpen1ClickTargeting = (tmpl: MockExamTemplate) => {
     const now = new Date();
@@ -465,6 +463,8 @@ export default function CreateMockExamModal({
       );
     });
   }, [templates, templateSearch]);
+
+  if (!isOpen) return null;
 
   return (
     <div
