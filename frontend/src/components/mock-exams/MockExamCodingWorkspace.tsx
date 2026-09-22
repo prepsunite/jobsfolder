@@ -29,6 +29,14 @@ import {
   type TestCaseRunResult,
   type EvaluatedTestCase,
 } from '@/services/codeExecution.service';
+import Editor from '@monaco-editor/react';
+
+const MONACO_LANGUAGE_MAP: Record<string, string> = {
+  python: 'python',
+  cpp: 'cpp',
+  java: 'java',
+  c: 'c',
+};
 
 interface TestCaseItem {
   input: string;
@@ -100,14 +108,17 @@ export default function MockExamCodingWorkspace({
   const [copiedOutput, setCopiedOutput] = useState(false);
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
 
   // Sync state if savedResponse changes (e.g. Navigating between questions)
   useEffect(() => {
     const lang = savedResponse?.code_language || 'python';
     setSelectedLanguage(lang);
-    setCode(savedResponse?.code_solution || STARTER_TEMPLATES[lang] || STARTER_TEMPLATES.python);
+    const initialCode = savedResponse?.code_solution || STARTER_TEMPLATES[lang] || STARTER_TEMPLATES.python;
+    setCode(initialCode);
+    if (editorRef.current && editorRef.current.getValue() !== initialCode) {
+      editorRef.current.setValue(initialCode);
+    }
     setTestResults(null);
     setActiveTestTab(0);
   }, [question.id]);
@@ -120,6 +131,9 @@ export default function MockExamCodingWorkspace({
     if (!code || code.trim() === oldTemplate?.trim()) {
       const newCode = STARTER_TEMPLATES[newLang] || '';
       setCode(newCode);
+      if (editorRef.current) {
+        editorRef.current.setValue(newCode);
+      }
       onUpdateCode(newCode, newLang);
     } else {
       onUpdateCode(code, newLang);
@@ -130,6 +144,9 @@ export default function MockExamCodingWorkspace({
   const handleResetTemplate = () => {
     const template = STARTER_TEMPLATES[selectedLanguage] || '';
     setCode(template);
+    if (editorRef.current) {
+      editorRef.current.setValue(template);
+    }
     onUpdateCode(template, selectedLanguage, 0, testCases.length);
     setTestResults(null);
   };
@@ -156,50 +173,9 @@ export default function MockExamCodingWorkspace({
         ];
   }, [question.test_cases, question.sample_input, question.sample_output]);
 
-  // Line count for code gutter
-  const lineCount = useMemo(() => {
-    const count = (code || '').split('\n').length;
-    return Math.max(16, count);
-  }, [code]);
-
-  // Code editor keyboard handling (Tab key and Ctrl+Enter execution)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      handleRunTests();
-      return;
-    }
-
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const currentVal = textarea.value;
-
-      const updatedVal = currentVal.substring(0, start) + '  ' + currentVal.substring(end);
-      setCode(updatedVal);
-      onUpdateCode(updatedVal, selectedLanguage);
-
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 2;
-      }, 0);
-    }
-  };
-
-  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newCode = e.target.value;
+  const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     onUpdateCode(newCode, selectedLanguage);
-  };
-
-  // Synchronize scroll between gutter and textarea
-  const handleScroll = () => {
-    if (textareaRef.current && lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-    }
   };
 
   // Copy helpers
@@ -410,31 +386,52 @@ export default function MockExamCodingWorkspace({
             </div>
           </div>
 
-          {/* Code Textarea with Line Numbers */}
-          <div className="flex-1 relative flex overflow-hidden min-h-[300px]">
-            {/* Gutter Line Numbers */}
-            <div
-              ref={lineNumbersRef}
-              className="w-11 select-none text-right pr-2.5 py-3 font-mono text-[11px] text-[#6e7681] bg-[#0d1117] border-r border-[#21262d] overflow-hidden leading-5"
-            >
-              {Array.from({ length: lineCount }, (_, i) => (
-                <div key={i}>{i + 1}</div>
-              ))}
-            </div>
-
-            {/* Code Input */}
-            <textarea
-              ref={textareaRef}
+          {/* Monaco Professional Code Editor */}
+          <div className="flex-1 relative flex flex-col overflow-hidden min-h-[340px] bg-[#1e1e1e]">
+            <Editor
+              height="100%"
+              language={MONACO_LANGUAGE_MAP[selectedLanguage] || 'python'}
               value={code}
-              onChange={handleCodeChange}
-              onKeyDown={handleKeyDown}
-              onScroll={handleScroll}
-              spellCheck={false}
-              autoCapitalize="off"
-              autoComplete="off"
-              autoCorrect="off"
-              placeholder="// Write your solution code here..."
-              className="flex-1 p-3 font-mono text-xs sm:text-[13px] leading-5 bg-[#0d1117] text-[#f0f6fc] border-0 focus:outline-none resize-none overflow-auto custom-scrollbar whitespace-pre tab-[2]"
+              theme="vs-dark"
+              onChange={(val) => handleCodeChange(val || '')}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+                  handleRunTests();
+                });
+              }}
+              options={{
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace",
+                fontLigatures: true,
+                tabSize: 4,
+                automaticLayout: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                autoClosingBrackets: 'always',
+                autoClosingQuotes: 'always',
+                autoClosingOvertype: 'always',
+                autoSurround: 'languageDefined',
+                formatOnPaste: true,
+                formatOnType: true,
+                lineNumbers: 'on',
+                renderLineHighlight: 'all',
+                bracketPairColorization: { enabled: true },
+                folding: true,
+                foldingHighlight: true,
+                showFoldingControls: 'always',
+                cursorBlinking: 'smooth',
+                smoothScrolling: true,
+                wordWrap: 'on',
+                lineHeight: 22,
+                padding: { top: 12, bottom: 12 },
+              }}
+              loading={
+                <div className="flex-1 flex flex-col items-center justify-center bg-[#1e1e1e] text-[#8b949e] gap-2 p-8 min-h-[300px]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#FD4A32]" />
+                  <span className="text-xs font-mono">Initializing Code Studio...</span>
+                </div>
+              }
             />
           </div>
 
