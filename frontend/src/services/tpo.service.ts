@@ -3851,7 +3851,7 @@ export const tpoService = {
     examData: Omit<MockExam, 'id' | 'created_at'>,
     sectionConfigs: {
       name: string;
-      section_type?: 'MCQ' | 'CODING';
+      section_type?: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ';
       topic_ids: string[];
       question_count: number;
       difficulty?: string;
@@ -3872,6 +3872,11 @@ export const tpoService = {
       const neededCount = Math.max(1, sec.question_count || 10);
       const questionIds: string[] = [];
       const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
+      const isTechnicalMcq =
+        sec.section_type === 'TECHNICAL_MCQ' ||
+        sec.category === 'technical-mcqs' ||
+        sec.category?.startsWith('mcq-') ||
+        (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-')));
 
       if (isCodingSection) {
         // Query coding problems from technical_problems
@@ -3887,12 +3892,12 @@ export const tpoService = {
           }
 
           if (sec.topic_ids && sec.topic_ids.length > 0) {
-            codingQuery = codingQuery.in('category', sec.topic_ids);
+            const categoryVariants = sec.topic_ids.flatMap(t => [t, t.toUpperCase(), t.toLowerCase()]);
+            codingQuery = codingQuery.in('category', Array.from(new Set(categoryVariants)));
           }
 
           const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
           if (codingData && codingData.length > 0) {
-            // Randomly shuffle to ensure variety across exams
             const shuffled = [...codingData].sort(() => Math.random() - 0.5);
             for (const q of shuffled) {
               if (!usedQuestionIds.has(q.id)) {
@@ -3902,11 +3907,85 @@ export const tpoService = {
               }
             }
           }
+
+          // Fallback if needed count is not met: query any available coding problems
+          if (questionIds.length < neededCount) {
+            const { data: fallbackCoding } = await supabase
+              .from('technical_problems')
+              .select('id, title, category, level')
+              .eq('is_deleted', false)
+              .limit(Math.max((neededCount - questionIds.length) * 10, 50));
+
+            if (fallbackCoding && fallbackCoding.length > 0) {
+              const shuffled = [...fallbackCoding].sort(() => Math.random() - 0.5);
+              for (const q of shuffled) {
+                if (!usedQuestionIds.has(q.id)) {
+                  questionIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  if (questionIds.length >= neededCount) break;
+                }
+              }
+            }
+          }
         } catch (err) {
           console.warn('Notice pulling coding questions from Supabase for section:', sec.name, err);
         }
+      } else if (isTechnicalMcq) {
+        // Query Technical MCQs from technical_mcqs table
+        try {
+          let techQuery = supabase
+            .from('technical_mcqs')
+            .select('id, topic_id, difficulty')
+            .eq('is_deleted', false);
+
+          if (sec.difficulty && sec.difficulty !== 'ALL') {
+            techQuery = techQuery.eq('difficulty', sec.difficulty);
+          }
+
+          if (sec.topic_ids && sec.topic_ids.length > 0) {
+            techQuery = techQuery.in('topic_id', sec.topic_ids);
+          } else if (sec.category && sec.category.startsWith('mcq-')) {
+            techQuery = techQuery.eq('topic_id', sec.category);
+          }
+
+          const { data: techData } = await techQuery.limit(Math.max(neededCount * 25, 200));
+          if (techData && techData.length > 0) {
+            const shuffled = [...techData].sort(() => Math.random() - 0.5);
+            for (const q of shuffled) {
+              if (!usedQuestionIds.has(q.id)) {
+                questionIds.push(q.id);
+                usedQuestionIds.add(q.id);
+                if (questionIds.length >= neededCount) break;
+              }
+            }
+          }
+
+          // Fallback to ALL_TECHNICAL_MCQ_SEEDS if not fully populated
+          if (questionIds.length < neededCount) {
+            try {
+              const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
+              let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
+              if (sec.topic_ids && sec.topic_ids.length > 0) {
+                const allowed = new Set(sec.topic_ids);
+                seedPool = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
+              } else if (sec.category && sec.category.startsWith('mcq-')) {
+                seedPool = seedPool.filter(s => (s.topicId || (s as any).topic_id) === sec.category);
+              }
+              const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
+              for (const s of shuffledSeeds) {
+                if (!usedQuestionIds.has(s.id)) {
+                  questionIds.push(s.id);
+                  usedQuestionIds.add(s.id);
+                  if (questionIds.length >= neededCount) break;
+                }
+              }
+            } catch {}
+          }
+        } catch (err) {
+          console.warn('Notice pulling technical MCQs from Supabase for section:', sec.name, err);
+        }
       } else {
-        // Query MCQs from topic_questions
+        // Query Aptitude MCQs from topic_questions
         try {
           let mcqQuery = supabase
             .from('topic_questions')
@@ -3923,7 +4002,6 @@ export const tpoService = {
 
           const { data } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
           if (data && data.length > 0) {
-            // Randomly shuffle the pool so questions don't repeat predictably
             const shuffled = [...data].sort(() => Math.random() - 0.5);
             for (const q of shuffled) {
               if (!usedQuestionIds.has(q.id)) {
@@ -3963,7 +4041,7 @@ export const tpoService = {
         mock_exam_id: examId,
         name: sec.name,
         section_order: idx + 1,
-        section_type: isCodingSection ? 'CODING' : 'MCQ',
+        section_type: isCodingSection ? 'CODING' : isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ',
         category: sec.category,
         coding_track: sec.coding_track,
         difficulty: (sec.difficulty as 'ALL' | 'EASY' | 'MEDIUM' | 'HARD' | undefined) || undefined,
@@ -4386,8 +4464,8 @@ export const tpoService = {
     }
 
     // 1b. Check if any question IDs are coding problems from technical_problems
-    const foundIds = new Set(rawQuestions.map(q => q.id));
-    const missingIds = questionIds.filter(id => !foundIds.has(id));
+    let foundIds = new Set(rawQuestions.map(q => q.id));
+    let missingIds = questionIds.filter(id => !foundIds.has(id));
 
     if (missingIds.length > 0) {
       try {
@@ -4419,6 +4497,66 @@ export const tpoService = {
       } catch (e) {
         console.warn('Notice checking coding problems in getQuestionsForExam:', e);
       }
+    }
+
+    // 1c. Check if any remaining question IDs are Technical MCQs from technical_mcqs table
+    foundIds = new Set(rawQuestions.map(q => q.id));
+    missingIds = questionIds.filter(id => !foundIds.has(id));
+
+    if (missingIds.length > 0) {
+      try {
+        const { data: techMcqs } = await supabase
+          .from('technical_mcqs')
+          .select('id, question, code_snippet, options, correct_option_index, explanation, difficulty, topic_id')
+          .in('id', missingIds);
+
+        if (techMcqs && techMcqs.length > 0) {
+          techMcqs.forEach(m => {
+            const lang = (m.topic_id || '').includes('python') ? 'python' : (m.topic_id || '').includes('java') ? 'java' : 'c';
+            const codeBlock = m.code_snippet ? `\n\n\`\`\`${lang}\n${m.code_snippet}\n\`\`\`` : '';
+            rawQuestions.push({
+              id: m.id,
+              statement: `${m.question}${codeBlock}`,
+              options: m.options || [],
+              difficulty: m.difficulty || 'MEDIUM',
+              topic_id: m.topic_id,
+              structured_explanation: m.explanation || '',
+              correct_option: m.correct_option_index,
+              isTechnicalMcq: true,
+            });
+          });
+        }
+      } catch (e) {
+        console.warn('Notice checking technical_mcqs in getQuestionsForExam:', e);
+      }
+    }
+
+    // 1d. Fallback: Check ALL_TECHNICAL_MCQ_SEEDS for any still unresolved Technical MCQs
+    foundIds = new Set(rawQuestions.map(q => q.id));
+    missingIds = questionIds.filter(id => !foundIds.has(id));
+
+    if (missingIds.length > 0) {
+      try {
+        const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
+        const seedMap = new Map(ALL_TECHNICAL_MCQ_SEEDS.map(s => [s.id, s]));
+        missingIds.forEach(mId => {
+          const s = seedMap.get(mId);
+          if (s) {
+            const lang = (s.topicId || '').includes('python') ? 'python' : (s.topicId || '').includes('java') ? 'java' : 'c';
+            const codeBlock = s.codeSnippet ? `\n\n\`\`\`${lang}\n${s.codeSnippet}\n\`\`\`` : '';
+            rawQuestions.push({
+              id: s.id,
+              statement: `${s.question}${codeBlock}`,
+              options: s.options || [],
+              difficulty: s.difficulty || 'MEDIUM',
+              topic_id: s.topicId,
+              structured_explanation: s.explanation || '',
+              correct_option: s.correctOptionIndex,
+              isTechnicalMcq: true,
+            });
+          }
+        });
+      } catch {}
     }
 
     if (rawQuestions.length === 0) return [];
@@ -4577,6 +4715,18 @@ export const tpoService = {
         passageTitle: se?.passageTitle || null,
         contextData,
         contextTitle,
+        correct_option: q.correct_option,
+        // Preserve Hands-on Coding fields so MockExamTestPage renders the interactive code editor & runs test cases
+        isCodingProblem: !!q.isCodingProblem,
+        title: q.title || undefined,
+        description: q.description || undefined,
+        constraints: q.constraints || undefined,
+        sample_input: q.sample_input || undefined,
+        sample_output: q.sample_output || undefined,
+        test_cases: q.test_cases || undefined,
+        solutions: q.solutions || undefined,
+        // Preserve Technical MCQ status
+        isTechnicalMcq: !!q.isTechnicalMcq,
       };
     });
   },

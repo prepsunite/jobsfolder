@@ -19,10 +19,19 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronUp,
+  Terminal,
+  Check,
+  CheckSquare,
+  Square,
+  Filter,
+  Cpu,
+  Brain,
 } from 'lucide-react';
 import {
   mockExamBlueprintService,
   CODING_CATEGORIES,
+  APTITUDE_CATEGORIES,
+  TECHNICAL_MCQ_SUBJECTS,
 } from '@/services/mockExamBlueprint.service';
 import type { MockExamTemplate, TemplateSectionDraft } from '@/types/tpo';
 import { useToast } from '@/contexts/ToastContext';
@@ -35,6 +44,7 @@ export default function AdminBlueprintManager() {
   const [editingBlueprint, setEditingBlueprint] = useState<MockExamTemplate | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [sectionTopicSearch, setSectionTopicSearch] = useState<Record<number, string>>({});
 
   // Load all blueprints
   const { data: blueprints = [], isLoading } = useQuery<MockExamTemplate[]>({
@@ -228,6 +238,21 @@ export default function AdminBlueprintManager() {
     handleSectionChange(secIdx, 'topic_ids', next);
   };
 
+  const getSectionDomain = (sec: TemplateSectionDraft): 'MCQ' | 'TECHNICAL_MCQ' | 'CODING' => {
+    if (sec.section_type === 'CODING' || sec.category === 'coding') {
+      return 'CODING';
+    }
+    if (
+      sec.section_type === 'TECHNICAL_MCQ' ||
+      sec.category === 'technical-mcqs' ||
+      sec.category?.startsWith('mcq-') ||
+      (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-')))
+    ) {
+      return 'TECHNICAL_MCQ';
+    }
+    return 'MCQ';
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -294,6 +319,13 @@ export default function AdminBlueprintManager() {
               0
             );
             const hasCoding = bp.sections.some(s => s.section_type === 'CODING' || s.category === 'coding');
+            const hasTechnicalMcq = bp.sections.some(
+              s =>
+                s.section_type === 'TECHNICAL_MCQ' ||
+                s.category === 'technical-mcqs' ||
+                s.category?.startsWith('mcq-') ||
+                (s.topic_ids && s.topic_ids.some(t => t.startsWith('mcq-')))
+            );
 
             return (
               <div
@@ -310,6 +342,11 @@ export default function AdminBlueprintManager() {
                         {bp.badge && (
                           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32]">
                             {bp.badge}
+                          </span>
+                        )}
+                        {hasTechnicalMcq && (
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 flex items-center gap-1">
+                            <Cpu className="w-2.5 h-2.5" /> Tech MCQs
                           </span>
                         )}
                         {hasCoding && (
@@ -335,18 +372,29 @@ export default function AdminBlueprintManager() {
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {bp.sections.map((sec, sIdx) => {
-                        const isCoding = sec.section_type === 'CODING' || sec.category === 'coding';
+                        const d = getSectionDomain(sec);
+                        const isCoding = d === 'CODING';
+                        const isTechnical = d === 'TECHNICAL_MCQ';
                         return (
                           <span
                             key={sIdx}
                             className={`text-[10px] font-medium px-2 py-0.5 rounded-md border flex items-center gap-1 ${
                               isCoding
                                 ? 'bg-blue-500/5 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                                : isTechnical
+                                ? 'bg-violet-500/5 text-violet-600 dark:text-violet-400 border-violet-500/20'
                                 : 'bg-gray-50 dark:bg-[#1c1d22] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#2c2f38]'
                             }`}
                           >
-                            {isCoding ? <Code2 className="w-2.5 h-2.5" /> : <BookOpen className="w-2.5 h-2.5" />}
-                            {sec.name.split(':')[0].substring(0, 18)} ({sec.question_count} Qs{sec.difficulty && sec.difficulty !== 'ALL' ? ` • ${sec.difficulty}` : ''})
+                            {isCoding ? (
+                              <Code2 className="w-2.5 h-2.5" />
+                            ) : isTechnical ? (
+                              <Cpu className="w-2.5 h-2.5" />
+                            ) : (
+                              <BookOpen className="w-2.5 h-2.5" />
+                            )}
+                            {sec.name.split(':')[0].substring(0, 18)} ({sec.question_count} Qs
+                            {sec.difficulty && sec.difficulty !== 'ALL' ? ` • ${sec.difficulty}` : ''})
                           </span>
                         );
                       })}
@@ -518,52 +566,124 @@ export default function AdminBlueprintManager() {
 
                 <div className="space-y-4">
                   {editingBlueprint.sections.map((sec, sIdx) => {
-                    const isCoding = sec.section_type === 'CODING' || sec.category === 'coding';
+                    const domain = getSectionDomain(sec);
+                    const isCoding = domain === 'CODING';
+                    const isTechnicalMcq = domain === 'TECHNICAL_MCQ';
+                    const isAptitudeMcq = domain === 'MCQ';
+
+                    // Topic search query for this section
+                    const searchQuery = (sectionTopicSearch[sIdx] || '').toLowerCase().trim();
+
+                    // Visible topics calculation based on domain and category/track filter
+                    let visibleItems: { id: string; name: string; badge?: string }[] = [];
+
+                    if (isAptitudeMcq) {
+                      const activeCategory = sec.category || 'all';
+                      visibleItems = aptitudeTopics
+                        .filter(t => activeCategory === 'all' || t.category_slug === activeCategory)
+                        .map(t => ({ id: t.id, name: t.name, badge: t.category_slug }))
+                        .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery) || t.id.toLowerCase().includes(searchQuery));
+                    } else if (isTechnicalMcq) {
+                      const activeSubject = sec.category || 'technical-mcqs';
+                      visibleItems = TECHNICAL_MCQ_SUBJECTS
+                        .filter(s => activeSubject === 'technical-mcqs' || s.id === activeSubject)
+                        .map(s => ({ id: s.id, name: s.name, badge: s.cluster }))
+                        .filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery) || s.id.toLowerCase().includes(searchQuery));
+                    } else if (isCoding) {
+                      const activeTrack = sec.coding_track || 'ALL';
+                      visibleItems = CODING_CATEGORIES
+                        .filter(c => activeTrack === 'ALL' || c.track === activeTrack)
+                        .map(c => ({ id: c.id, name: c.name, badge: c.track === 'PROGRAMMING_150' ? 'P150' : 'DSA' }))
+                        .filter(c => !searchQuery || c.name.toLowerCase().includes(searchQuery) || c.id.toLowerCase().includes(searchQuery));
+                    }
+
+                    const selectedCount = (sec.topic_ids || []).length;
+                    const visibleIds = visibleItems.map(item => item.id);
+
+                    const handleSelectAllVisible = () => {
+                      const merged = Array.from(new Set([...(sec.topic_ids || []), ...visibleIds]));
+                      handleSectionChange(sIdx, 'topic_ids', merged);
+                    };
+
+                    const handleClearAllVisible = () => {
+                      const remaining = (sec.topic_ids || []).filter(id => !visibleIds.includes(id));
+                      handleSectionChange(sIdx, 'topic_ids', remaining);
+                    };
+
                     return (
                       <div
                         key={sIdx}
-                        className={`p-4 rounded-xl border space-y-3 ${
+                        className={`p-4 rounded-xl border space-y-3 transition-colors ${
                           isCoding
-                            ? 'bg-blue-500/5 border-blue-500/20'
+                            ? 'bg-blue-500/5 border-blue-500/30 dark:bg-blue-950/10'
+                            : isTechnicalMcq
+                            ? 'bg-violet-500/5 border-violet-500/30 dark:bg-violet-950/10'
                             : 'bg-gray-50 dark:bg-[#18191c] border-gray-200 dark:border-[#27292e]'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FD4A32] text-white font-mono">
+                        {/* Section Header & 3-way Domain Switcher */}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono text-white ${
+                              isCoding ? 'bg-blue-600' : isTechnicalMcq ? 'bg-violet-600' : 'bg-[#FD4A32]'
+                            }`}>
                               #{sIdx + 1}
                             </span>
-                            {/* Section Type Switcher */}
-                            <div className="inline-flex rounded-lg border border-gray-200 dark:border-[#2c2f38] bg-white dark:bg-[#141414] p-0.5">
+
+                            {/* 3-Domain Switcher */}
+                            <div className="inline-flex rounded-lg border border-gray-200 dark:border-[#2c2f38] bg-white dark:bg-[#141414] p-0.5 shadow-xs">
                               <button
                                 type="button"
                                 onClick={() => {
                                   handleSectionChange(sIdx, 'section_type', 'MCQ');
                                   handleSectionChange(sIdx, 'category', 'arithmetic-aptitude');
+                                  handleSectionChange(sIdx, 'coding_track', undefined);
                                   handleSectionChange(sIdx, 'topic_ids', []);
                                 }}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                                  !isCoding
-                                    ? 'bg-[#FD4A32] text-white'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                  isAptitudeMcq
+                                    ? 'bg-[#FD4A32] text-white shadow-xs'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                                 }`}
                               >
-                                <BookOpen className="w-2.5 h-2.5" /> MCQ Section
+                                <BookOpen className="w-3 h-3" />
+                                <span>Aptitude MCQs</span>
                               </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleSectionChange(sIdx, 'section_type', 'TECHNICAL_MCQ');
+                                  handleSectionChange(sIdx, 'category', 'technical-mcqs');
+                                  handleSectionChange(sIdx, 'coding_track', undefined);
+                                  handleSectionChange(sIdx, 'topic_ids', []);
+                                }}
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                  isTechnicalMcq
+                                    ? 'bg-violet-600 text-white shadow-xs'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                              >
+                                <Cpu className="w-3 h-3" />
+                                <span>Technical MCQs</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
                                   handleSectionChange(sIdx, 'section_type', 'CODING');
                                   handleSectionChange(sIdx, 'category', 'coding');
+                                  handleSectionChange(sIdx, 'coding_track', 'PROGRAMMING_150');
                                   handleSectionChange(sIdx, 'topic_ids', ['ARRAYS', 'STRINGS']);
                                 }}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                   isCoding
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                                 }`}
                               >
-                                <Code2 className="w-2.5 h-2.5" /> Coding Section
+                                <Code2 className="w-3 h-3" />
+                                <span>Hands-on Coding</span>
                               </button>
                             </div>
                           </div>
@@ -572,26 +692,96 @@ export default function AdminBlueprintManager() {
                             type="button"
                             onClick={() => handleRemoveSection(sIdx)}
                             className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
+                            title="Remove Section"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                          <div className="sm:col-span-2 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">
+                        {/* Row 1: Section Name, Category/Track Dropdown, Difficulty, Questions, Marks */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                          {/* Section Name */}
+                          <div className="sm:col-span-4 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                               Section Name
                             </label>
                             <input
                               type="text"
                               value={sec.name}
                               onChange={e => handleSectionChange(sIdx, 'name', e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                              placeholder="e.g. Quantitative Ability"
                             />
                           </div>
 
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">
+                          {/* Domain Category / Subject / Track Selector */}
+                          <div className="sm:col-span-3 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                              <Filter className="w-2.5 h-2.5 text-gray-400" />
+                              {isAptitudeMcq
+                                ? 'Category / Domain'
+                                : isTechnicalMcq
+                                ? 'Core CS Subject'
+                                : 'Coding Track'}
+                            </label>
+
+                            {isAptitudeMcq ? (
+                              <select
+                                value={sec.category || 'arithmetic-aptitude'}
+                                onChange={e => {
+                                  handleSectionChange(sIdx, 'category', e.target.value);
+                                  handleSectionChange(sIdx, 'topic_ids', []);
+                                }}
+                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                              >
+                                <option value="all">All Aptitude Categories (Mixed)</option>
+                                {APTITUDE_CATEGORIES.map(cat => (
+                                  <option key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : isTechnicalMcq ? (
+                              <select
+                                value={sec.category || 'technical-mcqs'}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  handleSectionChange(sIdx, 'category', val);
+                                  if (val !== 'technical-mcqs') {
+                                    handleSectionChange(sIdx, 'topic_ids', [val]);
+                                  } else {
+                                    handleSectionChange(sIdx, 'topic_ids', []);
+                                  }
+                                }}
+                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                              >
+                                <option value="technical-mcqs">All Core CS Subjects (Mixed Pool)</option>
+                                {TECHNICAL_MCQ_SUBJECTS.map(subj => (
+                                  <option key={subj.id} value={subj.id}>
+                                    {subj.name} • {subj.cluster}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <select
+                                value={sec.coding_track || 'ALL'}
+                                onChange={e => {
+                                  const val = e.target.value as any;
+                                  handleSectionChange(sIdx, 'coding_track', val);
+                                  handleSectionChange(sIdx, 'topic_ids', []);
+                                }}
+                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                              >
+                                <option value="ALL">All Tracks (Foundation & Advanced)</option>
+                                <option value="PROGRAMMING_150">Programming 150 Foundation</option>
+                                <option value="CAMPUS_DSA">Campus DSA Roadmap</option>
+                              </select>
+                            )}
+                          </div>
+
+                          {/* Difficulty */}
+                          <div className="sm:col-span-2 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                               Difficulty
                             </label>
                             <select
@@ -606,20 +796,22 @@ export default function AdminBlueprintManager() {
                             </select>
                           </div>
 
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">
+                          {/* Question Count */}
+                          <div className="sm:col-span-1 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                               Questions
                             </label>
                             <input
                               type="number"
                               value={sec.question_count}
                               onChange={e => handleSectionChange(sIdx, 'question_count', Number(e.target.value) || 1)}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                              className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden text-center"
                             />
                           </div>
 
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">
+                          {/* Marks (+ / -) */}
+                          <div className="sm:col-span-2 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                               Marks (+ / -)
                             </label>
                             <div className="flex items-center gap-1">
@@ -627,75 +819,134 @@ export default function AdminBlueprintManager() {
                                 type="number"
                                 value={sec.marks_per_correct}
                                 onChange={e => handleSectionChange(sIdx, 'marks_per_correct', Number(e.target.value) || 1)}
-                                className="w-1/2 px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                                className="w-1/2 px-1.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden text-center"
+                                title="Marks per correct"
                               />
                               <input
                                 type="number"
                                 step="0.25"
                                 value={sec.negative_marking}
                                 onChange={e => handleSectionChange(sIdx, 'negative_marking', Number(e.target.value) || 0)}
-                                className="w-1/2 px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                                className="w-1/2 px-1.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden text-center"
+                                title="Negative marking penalty"
                               />
                             </div>
                           </div>
                         </div>
 
-                        {/* Topics Picker from 500-Question Bank */}
-                        <div className="space-y-1.5 pt-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center justify-between">
-                            <span>
-                              {isCoding ? 'Target Coding Categories' : 'Target Topics (From 500-Q Bank)'}
-                            </span>
-                            <span className="text-gray-400 font-normal">
-                              {(sec.topic_ids || []).length} topic(s) selected
-                            </span>
-                          </label>
+                        {/* Row 2: Topic Picker with Search, Select All, Clear All, and Chips */}
+                        <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-[#24262c]">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                {isCoding
+                                  ? 'Target Coding Problem Types'
+                                  : isTechnicalMcq
+                                  ? 'Target Core CS Topics'
+                                  : 'Target Aptitude Topics'}
+                              </span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+                                selectedCount > 0
+                                  ? isCoding
+                                    ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                                    : isTechnicalMcq
+                                    ? 'bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300'
+                                    : 'bg-[#FD4A32]/10 text-[#FD4A32]'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                              }`}>
+                                {selectedCount > 0 ? `${selectedCount} selected` : 'Auto-Sample All'}
+                              </span>
+                            </div>
 
-                          {isCoding ? (
-                            <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38]">
-                              {CODING_CATEGORIES.map(cat => {
-                                const isChecked = (sec.topic_ids || []).includes(cat.id);
+                            <div className="flex items-center gap-1.5">
+                              {/* Topic Search within this section */}
+                              <div className="relative">
+                                <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                                <input
+                                  type="text"
+                                  value={sectionTopicSearch[sIdx] || ''}
+                                  onChange={e =>
+                                    setSectionTopicSearch({ ...sectionTopicSearch, [sIdx]: e.target.value })
+                                  }
+                                  placeholder="Filter topics..."
+                                  className="pl-6 pr-2 py-1 rounded-md bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-[10px] text-gray-900 dark:text-white placeholder-gray-400 w-32 sm:w-40 focus:outline-hidden"
+                                />
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={handleSelectAllVisible}
+                                className="px-2 py-1 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#2a2c34] text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                              >
+                                Select All
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleClearAllVisible}
+                                className="px-2 py-1 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#2a2c34] text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                              >
+                                Clear
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Chips Container */}
+                          <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] custom-scrollbar">
+                            {visibleItems.length === 0 ? (
+                              <div className="py-3 text-center w-full text-xs text-gray-400">
+                                No topics match current filter.
+                              </div>
+                            ) : (
+                              visibleItems.map(item => {
+                                const isChecked = (sec.topic_ids || []).includes(item.id);
+                                const activeColor = isCoding
+                                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                                  : isTechnicalMcq
+                                  ? 'bg-violet-600 text-white shadow-xs font-bold'
+                                  : 'bg-[#FD4A32] text-white shadow-xs font-bold';
+
                                 return (
                                   <button
-                                    key={cat.id}
+                                    key={item.id}
                                     type="button"
-                                    onClick={() => handleToggleTopic(sIdx, cat.id)}
-                                    className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
+                                    onClick={() => handleToggleTopic(sIdx, item.id)}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
                                       isChecked
-                                        ? 'bg-blue-600 text-white font-bold'
-                                        : 'bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:text-gray-900'
+                                        ? activeColor
+                                        : 'bg-gray-100 dark:bg-[#202228] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#282a32]'
                                     }`}
                                   >
-                                    {cat.name}
+                                    <Check
+                                      className={`w-3 h-3 transition-opacity ${
+                                        isChecked ? 'opacity-100' : 'opacity-0 -mr-3'
+                                      }`}
+                                    />
+                                    <span>{item.name}</span>
+                                    {item.badge && (
+                                      <span className={`text-[9px] px-1 py-0.2 rounded ${
+                                        isChecked
+                                          ? 'bg-black/20 text-white/90'
+                                          : 'bg-gray-200 dark:bg-[#2c2f38] text-gray-500'
+                                      }`}>
+                                        {item.badge}
+                                      </span>
+                                    )}
                                   </button>
                                 );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38]">
-                              {aptitudeTopics.slice(0, 60).map(t => {
-                                const isChecked = (sec.topic_ids || []).includes(t.id);
-                                return (
-                                  <button
-                                    key={t.id}
-                                    type="button"
-                                    onClick={() => handleToggleTopic(sIdx, t.id)}
-                                    className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
-                                      isChecked
-                                        ? 'bg-[#FD4A32] text-white font-bold'
-                                        : 'bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:text-gray-900'
-                                    }`}
-                                  >
-                                    {t.name}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
+                              })
+                            )}
+                          </div>
+
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">
+                            {selectedCount === 0
+                              ? 'ℹ️ With 0 topics selected, questions will be automatically sampled across all topics in this domain.'
+                              : `✓ Questions will only be drawn from the ${selectedCount} selected topic(s).`}
+                          </p>
                         </div>
 
                         {/* Random Sampling Toggle */}
-                        <div className="flex items-center gap-2 pt-1 text-[11px] text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2 pt-1 text-[11px] text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-[#24262c]">
                           <input
                             type="checkbox"
                             id={`random-sec-${sIdx}`}
@@ -704,7 +955,7 @@ export default function AdminBlueprintManager() {
                             className="rounded text-[#FD4A32] focus:ring-[#FD4A32]"
                           />
                           <label htmlFor={`random-sec-${sIdx}`} className="cursor-pointer">
-                            🎲 <strong>Random Question Selection</strong>: Pull random questions from the topic's 500-question pool every time an exam is generated.
+                            🎲 <strong>Random Question Selection</strong>: Pull randomized questions from the 500-question pool every time an exam is generated.
                           </label>
                         </div>
                       </div>

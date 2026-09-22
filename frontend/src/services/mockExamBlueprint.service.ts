@@ -358,6 +358,29 @@ export const BUILTIN_BLUEPRINTS: MockExamTemplate[] = [
   },
 ];
 
+export const APTITUDE_CATEGORIES = [
+  { id: 'arithmetic-aptitude', name: 'Arithmetic Aptitude' },
+  { id: 'data-interpretation', name: 'Data Interpretation' },
+  { id: 'logical-reasoning', name: 'Logical Reasoning' },
+  { id: 'verbal-reasoning', name: 'Verbal Reasoning' },
+  { id: 'verbal-ability', name: 'Verbal Ability' },
+  { id: 'non-verbal-reasoning', name: 'Nonverbal Reasoning' },
+  { id: 'technical-aptitude', name: 'Technical & Cognitive Aptitude' },
+];
+
+export const TECHNICAL_MCQ_SUBJECTS = [
+  { id: 'mcq-c-programming', name: 'C Language', category: 'C_PROGRAMMING', cluster: 'Core Languages' },
+  { id: 'mcq-cpp-programming', name: 'C++ Language', category: 'CPP_PROGRAMMING', cluster: 'Core Languages' },
+  { id: 'mcq-java-programming', name: 'Java Language', category: 'JAVA_PROGRAMMING', cluster: 'Core Languages' },
+  { id: 'mcq-python-programming', name: 'Python Language', category: 'SYNTAX_BASICS', cluster: 'Core Languages' },
+  { id: 'mcq-oops-concepts', name: 'OOPs Concepts', category: 'SYNTAX_BASICS', cluster: 'Core CS Subjects' },
+  { id: 'mcq-database-systems', name: 'DBMS & SQL', category: 'DATABASE', cluster: 'Core CS Subjects' },
+  { id: 'mcq-operating-systems', name: 'Operating Systems', category: 'OPERATING_SYSTEMS', cluster: 'Core CS Subjects' },
+  { id: 'mcq-computer-networks', name: 'Computer Networks', category: 'NETWORKING', cluster: 'Core CS Subjects' },
+  { id: 'mcq-data-structures', name: 'Data Structures & Algorithms', category: 'DATA_STRUCTURES', cluster: 'Data Structures & Logic' },
+  { id: 'mcq-pseudo-code', name: 'Campus OA Pseudo-Code', category: 'PSEUDO_CODE', cluster: 'Data Structures & Logic' },
+];
+
 export const CODING_CATEGORIES = [
   { id: 'NUMBER_LOGIC', name: 'Number Logic & Math', track: 'PROGRAMMING_150' },
   { id: 'PATTERNS', name: 'Pattern Printing', track: 'PROGRAMMING_150' },
@@ -372,6 +395,123 @@ export const CODING_CATEGORIES = [
   { id: 'DYNAMIC_PROGRAMMING', name: 'Dynamic Programming', track: 'CAMPUS_DSA' },
   { id: 'BIT_MANIPULATION', name: 'Bit Manipulation', track: 'CAMPUS_DSA' },
   { id: 'SEARCHING_SORTING', name: 'Searching & Sorting Algorithms', track: 'PROGRAMMING_150' },
+];
+
+export const FALLBACK_APTITUDE_TOPICS = [
+  // Arithmetic Aptitude
+  { id: 'numbers', name: 'Numbers & Number System', category_slug: 'arithmetic-aptitude' },
+  { id: 'problems-on-numbers', name: 'Problems on Numbers', category_slug: 'arithmetic-aptitude' },
+  { id: 'hcf-lcm', name: 'HCF and LCM', category_slug: 'arithmetic-aptitude' },
+  { id: 'decimal-fraction', name: 'Decimal Fractions', category_slug: 'arithmetic-aptitude' },
+  { id: 'simplification', name: 'Simplification', category_slug: 'arithmetic-aptitude' },
+  { id: 'square-cube-root', name: 'Square Root & Cube Root', category_slug: 'arithmetic-aptitude' },
+  { id: 'percentage', name: 'Percentage', category_slug: 'arithmetic-aptitude' },
+  { id: 'profit-and-loss', name: 'Profit and Loss', category_slug: 'arithmetic-aptitude' },
+  { id: 'ratio-and-proportion', name: 'Ratio and Proportion', category_slug: 'arithmetic-aptitude' },
+  { id: 'partnership', name: 'Partnership', category_slug: 'arithmetic-aptitude' },
+  { id: 'chain-rule', name: 'Chain Rule', category_slug: 'arithmetic-aptitude' },
+  { id: 'time-and-work', name: 'Time and Work', category_slug: 'arithmetic-aptitude' },
+  { id: 'pipes-and-cistern', name: 'Pipes and Cistern', category_slug: 'arithmetic-aptitude' },
+  { id: 'time-and-distance', name: 'Time and Distance', category_slug: 'arithmetic-aptitude' },
+  { id: 'problems-on-trains', name: 'Problems on Trains', category_slug: 'arithmetic-aptitude' },
+  { id: 'boats-and-streams', name: 'Boats and Streams', category_slug: 'arithmetic-aptitude' },
+  { id: 'alligation-or-mixture', name: 'Alligation or Mixture', category_slug: 'arithmetic-aptitude' },
+  { id: 'simple-interest', name: 'Simple Interest', category_slug: 'arithmetic-aptitude' },
+  { id: 'compound-interest', name: 'Compound Interest', category_slug: 'arithmetic-aptitude' },
+  { id: 'stocks-and-shares', name: 'Stocks and Shares', category_slug: 'arithmetic-aptitude' },
+  { id: 'true-discount', name: 'True Discount', category_slug: 'arithmetic-aptitude' },
+  { id: 'bankers-discount', name: 'Banker\'s Discount', category_slug: 'arithmetic-aptitude' },
+  { id: 'height-and-distance', name: 'Height and Distance', category_slug: 'arithmetic-aptitude' },
+  { id: 'area', name: 'Area & Perimeter', category_slug: 'arithmetic-aptitude' },
+  { id: 'volume-and-surface-area', name: 'Volume and Surface Area', category_slug: 'arithmetic-aptitude' },
+  { id: 'races-and-games', name: 'Races and Games', category_slug: 'arithmetic-aptitude' },
+  { id: 'permutation-and-combination', name: 'Permutation and Combination', category_slug: 'arithmetic-aptitude' },
+  { id: 'probability', name: 'Probability', category_slug: 'arithmetic-aptitude' },
+  { id: 'average', name: 'Average', category_slug: 'arithmetic-aptitude' },
+  { id: 'problems-on-ages', name: 'Problems on Ages', category_slug: 'arithmetic-aptitude' },
+  { id: 'calendar', name: 'Calendar', category_slug: 'arithmetic-aptitude' },
+  { id: 'clock', name: 'Clock', category_slug: 'arithmetic-aptitude' },
+  { id: 'odd-man-out-and-series', name: 'Odd Man Out and Series', category_slug: 'arithmetic-aptitude' },
+  { id: 'surds-and-indices', name: 'Surds and Indices', category_slug: 'arithmetic-aptitude' },
+  { id: 'logarithm', name: 'Logarithm', category_slug: 'arithmetic-aptitude' },
+
+  // Data Interpretation
+  { id: 'table-charts', name: 'Table Charts', category_slug: 'data-interpretation' },
+  { id: 'bar-charts', name: 'Bar Charts', category_slug: 'data-interpretation' },
+  { id: 'pie-charts', name: 'Pie Charts', category_slug: 'data-interpretation' },
+  { id: 'line-charts', name: 'Line Charts', category_slug: 'data-interpretation' },
+  { id: 'caselet-di', name: 'Caselet DI', category_slug: 'data-interpretation' },
+  { id: 'radar-web-charts', name: 'Radar / Web Charts', category_slug: 'data-interpretation' },
+  { id: 'scatter-bubble-charts', name: 'Scatter & Bubble Charts', category_slug: 'data-interpretation' },
+  { id: 'scatter-plots', name: 'Scatter Plots', category_slug: 'data-interpretation' },
+
+  // Logical Reasoning
+  { id: 'number-series', name: 'Number Series', category_slug: 'logical-reasoning' },
+  { id: 'letter-and-symbol-series', name: 'Letter and Symbol Series', category_slug: 'logical-reasoning' },
+  { id: 'verbal-classification', name: 'Verbal Classification', category_slug: 'logical-reasoning' },
+  { id: 'analogies', name: 'Analogies', category_slug: 'logical-reasoning' },
+  { id: 'matching-definitions', name: 'Matching Definitions', category_slug: 'logical-reasoning' },
+  { id: 'verbal-reasoning', name: 'Verbal Reasoning Logic', category_slug: 'logical-reasoning' },
+  { id: 'logical-games', name: 'Logical Games', category_slug: 'logical-reasoning' },
+  { id: 'statement-and-assumption', name: 'Statement and Assumption', category_slug: 'logical-reasoning' },
+  { id: 'statement-and-conclusion', name: 'Statement and Conclusion', category_slug: 'logical-reasoning' },
+  { id: 'cause-and-effect', name: 'Cause and Effect', category_slug: 'logical-reasoning' },
+  { id: 'essential-part', name: 'Essential Part', category_slug: 'logical-reasoning' },
+  { id: 'artificial-language', name: 'Artificial Language', category_slug: 'logical-reasoning' },
+  { id: 'making-judgments', name: 'Making Judgments', category_slug: 'logical-reasoning' },
+  { id: 'logical-problems', name: 'Logical Problems', category_slug: 'logical-reasoning' },
+  { id: 'analyzing-arguments', name: 'Analyzing Arguments', category_slug: 'logical-reasoning' },
+  { id: 'course-of-action', name: 'Course of Action', category_slug: 'logical-reasoning' },
+  { id: 'theme-detection', name: 'Theme Detection', category_slug: 'logical-reasoning' },
+  { id: 'statement-and-argument', name: 'Statement and Argument', category_slug: 'logical-reasoning' },
+  { id: 'logical-deduction', name: 'Logical Deduction', category_slug: 'logical-reasoning' },
+  { id: 'logical-sequence-of-words', name: 'Logical Sequence of Words', category_slug: 'logical-reasoning' },
+  { id: 'syllogisms', name: 'Syllogisms', category_slug: 'logical-reasoning' },
+  { id: 'blood-relations', name: 'Blood Relations', category_slug: 'logical-reasoning' },
+  { id: 'cubes-and-dice', name: 'Cubes and Dice', category_slug: 'logical-reasoning' },
+  { id: 'seating-arrangement', name: 'Seating Arrangement', category_slug: 'logical-reasoning' },
+  { id: 'direction-sense', name: 'Direction Sense Test', category_slug: 'logical-reasoning' },
+
+  // Verbal Reasoning
+  { id: 'vr-logical-sequence', name: 'Logical Sequence of Words', category_slug: 'verbal-reasoning' },
+  { id: 'vr-blood-relations', name: 'Blood Relations Test', category_slug: 'verbal-reasoning' },
+  { id: 'vr-syllogism', name: 'Syllogisms & Premises', category_slug: 'verbal-reasoning' },
+  { id: 'vr-arguments', name: 'Statement & Arguments', category_slug: 'verbal-reasoning' },
+  { id: 'vr-assumptions', name: 'Statement & Assumptions', category_slug: 'verbal-reasoning' },
+  { id: 'vr-conclusions', name: 'Statement & Conclusions', category_slug: 'verbal-reasoning' },
+  { id: 'vr-cause-effect', name: 'Cause & Effect Analysis', category_slug: 'verbal-reasoning' },
+  { id: 'vr-critical-reasoning', name: 'Critical Reasoning', category_slug: 'verbal-reasoning' },
+
+  // Verbal Ability
+  { id: 'reading-comprehension', name: 'Reading Comprehension', category_slug: 'verbal-ability' },
+  { id: 'spotting-errors', name: 'Spotting Errors', category_slug: 'verbal-ability' },
+  { id: 'synonyms', name: 'Synonyms', category_slug: 'verbal-ability' },
+  { id: 'antonyms', name: 'Antonyms', category_slug: 'verbal-ability' },
+  { id: 'spellings', name: 'Spellings', category_slug: 'verbal-ability' },
+  { id: 'ordering-of-words', name: 'Ordering of Words', category_slug: 'verbal-ability' },
+  { id: 'sentence-improvement', name: 'Sentence Improvement', category_slug: 'verbal-ability' },
+  { id: 'ordering-of-sentences', name: 'Ordering of Sentences', category_slug: 'verbal-ability' },
+  { id: 'cloze-test', name: 'Cloze Test', category_slug: 'verbal-ability' },
+  { id: 'one-word-substitutes', name: 'One Word Substitutes', category_slug: 'verbal-ability' },
+  { id: 'idioms-and-phrases', name: 'Idioms and Phrases', category_slug: 'verbal-ability' },
+
+  // Nonverbal Reasoning
+  { id: 'pattern-completion', name: 'Pattern Completion', category_slug: 'non-verbal-reasoning' },
+  { id: 'mirror-images', name: 'Mirror Images', category_slug: 'non-verbal-reasoning' },
+  { id: 'water-images', name: 'Water Images', category_slug: 'non-verbal-reasoning' },
+  { id: 'paper-folding', name: 'Paper Folding', category_slug: 'non-verbal-reasoning' },
+  { id: 'paper-cutting', name: 'Paper Cutting', category_slug: 'non-verbal-reasoning' },
+  { id: 'embedded-images', name: 'Embedded Images', category_slug: 'non-verbal-reasoning' },
+  { id: 'shape-construction', name: 'Shape Construction', category_slug: 'non-verbal-reasoning' },
+  { id: 'cubes-and-dice-nv', name: 'Cubes and Dice Visual', category_slug: 'non-verbal-reasoning' },
+  { id: 'grouping-of-images', name: 'Grouping of Identical Figures', category_slug: 'non-verbal-reasoning' },
+
+  // Technical Aptitude (Cognitive & Architecture)
+  { id: 'pseudocode-tracing', name: 'Pseudocode Tracing & Logic', category_slug: 'technical-aptitude' },
+  { id: 'bitwise-operators', name: 'Bitwise Operators & Shifts', category_slug: 'technical-aptitude' },
+  { id: 'code-debugging-logic', name: 'Code Debugging Logic', category_slug: 'technical-aptitude' },
+  { id: 'cloud-networking-basics', name: 'Cloud & Networking Basics', category_slug: 'technical-aptitude' },
+  { id: 'automata-theory-basics', name: 'Automata Theory Basics', category_slug: 'technical-aptitude' },
 ];
 
 export const mockExamBlueprintService = {
@@ -538,9 +678,15 @@ export const mockExamBlueprintService = {
   },
 
   /**
-   * Returns all 105 aptitude topics grouped by category
+   * Returns all aptitude topics grouped by category, merging database topics with fallbacks
    */
   async getAptitudeTopics(): Promise<{ id: string; name: string; category_slug: string }[]> {
+    const topicMap = new Map<string, { id: string; name: string; category_slug: string }>();
+
+    // 1. Seed with curated topics
+    FALLBACK_APTITUDE_TOPICS.forEach(t => topicMap.set(t.id, t));
+
+    // 2. Overlay live DB topics from Supabase
     try {
       const { data, error } = await supabase
         .from('aptitude_topics')
@@ -548,14 +694,27 @@ export const mockExamBlueprintService = {
         .order('name', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        return data;
+        data.forEach(d => {
+          if (d.id && d.name) {
+            topicMap.set(d.id, {
+              id: d.id,
+              name: d.name,
+              category_slug: d.category_slug || 'arithmetic-aptitude',
+            });
+          }
+        });
       }
     } catch {}
 
-    return [];
+    return Array.from(topicMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   },
 
-  getCodingTopics() {
-    return CODING_CATEGORIES;
+  getTechnicalMcqTopics() {
+    return TECHNICAL_MCQ_SUBJECTS;
+  },
+
+  getCodingTopics(track?: string) {
+    if (!track || track === 'ALL') return CODING_CATEGORIES;
+    return CODING_CATEGORIES.filter(c => c.track === track);
   },
 };

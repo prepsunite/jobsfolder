@@ -85,7 +85,7 @@ export interface MockExamSection {
   mock_exam_id?: string;
   name: string;
   section_order: number;
-  section_type?: 'MCQ' | 'CODING';
+  section_type?: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ';
   category?: string;
   coding_track?: 'PROGRAMMING_150' | 'CAMPUS_DSA';
   difficulty?: 'ALL' | 'EASY' | 'MEDIUM' | 'HARD';
@@ -225,13 +225,13 @@ export interface TpoDashboardStats {
 
 export interface TemplateSectionDraft {
   name: string;
-  section_type?: 'MCQ' | 'CODING';
+  section_type?: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ';
   question_count: number;
   marks_per_correct: number;
   negative_marking: number;
   duration_minutes?: number;
   topic_ids?: string[];
-  category?: 'arithmetic-aptitude' | 'logical-reasoning' | 'verbal-reasoning' | 'data-interpretation' | 'technical-aptitude' | 'coding' | 'all' | (string & {});
+  category?: 'arithmetic-aptitude' | 'logical-reasoning' | 'verbal-reasoning' | 'data-interpretation' | 'verbal-ability' | 'non-verbal-reasoning' | 'technical-aptitude' | 'technical-mcqs' | 'coding' | 'all' | (string & {});
   coding_track?: 'PROGRAMMING_150' | 'CAMPUS_DSA';
   difficulty?: 'ALL' | 'EASY' | 'MEDIUM' | 'HARD';
   random_sampling?: boolean;
