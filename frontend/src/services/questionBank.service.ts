@@ -48,25 +48,33 @@ export const questionBankService = {
   async getTopicInventories(): Promise<TopicInventoryItem[]> {
     const inventories: TopicInventoryItem[] = [];
 
-    // 1. Fetch all Aptitude Topics
+    // 1. Fetch all Aptitude Topics & Paginate through ALL topic_questions
     try {
       const { data: dbTopics } = await supabase
         .from('aptitude_topics')
         .select('id, name, category_slug')
         .order('name', { ascending: true });
 
-      // Count per topic in topic_questions
-      const { data: topicCounts } = await supabase
-        .from('topic_questions')
-        .select('topic_id')
-        .eq('is_deleted', false);
-
+      // PostgREST limits queries to 1000 rows by default. Paginate in 1000-row blocks to capture all questions.
       const countMap: Record<string, number> = {};
-      (topicCounts || []).forEach(row => {
-        if (row.topic_id) {
-          countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
-        }
-      });
+      const PAGE_SIZE = 1000;
+      let page = 0;
+      while (true) {
+        const { data: batch, error } = await supabase
+          .from('topic_questions')
+          .select('topic_id')
+          .eq('is_deleted', false)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (error || !batch || batch.length === 0) break;
+        batch.forEach(row => {
+          if (row.topic_id) {
+            countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
+          }
+        });
+        if (batch.length < PAGE_SIZE) break;
+        page++;
+      }
 
       (dbTopics || []).forEach(t => {
         const count = countMap[t.id] || 0;
@@ -91,7 +99,7 @@ export const questionBankService = {
       console.warn('[questionBankService.getTopicInventories] Aptitude topics notice:', e);
     }
 
-    // 2. Fetch Coding Categories and problem counts
+    // 2. Fetch Coding Categories and problem counts across all 290 problems
     try {
       const { data: codingRows } = await supabase
         .from('technical_problems')
@@ -101,12 +109,19 @@ export const questionBankService = {
       const codingCountMap: Record<string, number> = {};
       (codingRows || []).forEach(r => {
         if (r.category) {
-          codingCountMap[r.category] = (codingCountMap[r.category] || 0) + 1;
+          const catKey = String(r.category).trim().toUpperCase();
+          codingCountMap[catKey] = (codingCountMap[catKey] || 0) + 1;
         }
       });
 
+      const processedCodingIds = new Set<string>();
+
       CODING_CATEGORIES.forEach(c => {
-        const count = codingCountMap[c.id] || 0;
+        const catKey = c.id.trim().toUpperCase();
+        if (processedCodingIds.has(catKey)) return;
+        processedCodingIds.add(catKey);
+
+        const count = codingCountMap[catKey] || 0;
         const target = 500;
         const percentage = Math.min(100, Math.round((count / target) * 100));
         let status: 'NEEDS_QUESTIONS' | 'HALF_STOCKED' | 'FULLY_STOCKED' = 'NEEDS_QUESTIONS';
@@ -123,6 +138,31 @@ export const questionBankService = {
           percentage,
           status,
         });
+      });
+
+      // Dynamically discover any category present in technical_problems not already in CODING_CATEGORIES
+      Object.keys(codingCountMap).forEach(catKey => {
+        if (!processedCodingIds.has(catKey)) {
+          processedCodingIds.add(catKey);
+          const count = codingCountMap[catKey] || 0;
+          const target = 500;
+          const percentage = Math.min(100, Math.round((count / target) * 100));
+          const formattedName = catKey
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, l => l.toUpperCase());
+
+          inventories.push({
+            id: catKey,
+            name: formattedName,
+            category: 'coding',
+            type: 'CODING',
+            count,
+            target,
+            percentage,
+            status: count >= 500 ? 'FULLY_STOCKED' : count >= 100 ? 'HALF_STOCKED' : 'NEEDS_QUESTIONS',
+          });
+        }
       });
     } catch (e) {
       console.warn('[questionBankService.getTopicInventories] Coding categories notice:', e);
@@ -143,10 +183,11 @@ export const questionBankService = {
     difficulty?: string
   ): Promise<{ items: any[]; total: number }> {
     if (isCoding) {
+      const categoryVariants = Array.from(new Set([topicId, topicId.toUpperCase(), topicId.toLowerCase()]));
       let query = supabase
         .from('technical_problems')
         .select('*', { count: 'exact' })
-        .eq('category', topicId)
+        .in('category', categoryVariants)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 

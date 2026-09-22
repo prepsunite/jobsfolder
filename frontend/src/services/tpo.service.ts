@@ -3988,9 +3988,27 @@ export const tpoService = {
       } else {
         // Query Aptitude MCQs from topic_questions
         try {
+          const PASSAGE_BASED_TOPICS = new Set([
+            'reading-comprehension',
+            'cloze-test',
+            'table-charts',
+            'line-charts',
+            'bar-charts',
+            'pie-charts',
+            'caselet-di',
+            'missing-di',
+            'radar-web-charts',
+            'scatter-bubble-charts',
+            'floor-scheduling-puzzles',
+            'games-and-tournaments',
+            'logical-games',
+            'machine-input-output',
+            'making-judgments',
+          ]);
+
           let mcqQuery = supabase
             .from('topic_questions')
-            .select('id, question_number, topic_id, difficulty')
+            .select('id, question_number, topic_id, difficulty, structured_explanation')
             .eq('is_deleted', false);
 
           if (sec.difficulty && sec.difficulty !== 'ALL') {
@@ -4003,12 +4021,70 @@ export const tpoService = {
 
           const { data } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
           if (data && data.length > 0) {
-            const shuffled = [...data].sort(() => Math.random() - 0.5);
-            for (const q of shuffled) {
-              if (!usedQuestionIds.has(q.id)) {
-                questionIds.push(q.id);
-                usedQuestionIds.add(q.id);
+            // Check if section contains passage-based questions
+            const hasPassageTopic =
+              (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t)) ||
+              data.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
+
+            if (hasPassageTopic) {
+              // Group passage questions into atomic 5-question blocks
+              const passageBlocks: Record<string, any[]> = {};
+              const nonPassageQuestions: any[] = [];
+
+              data.forEach(q => {
+                let se = q.structured_explanation;
+                if (typeof se === 'string') {
+                  try { se = JSON.parse(se); } catch {}
+                }
+                const isPassage =
+                  PASSAGE_BASED_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
+
+                if (isPassage) {
+                  const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
+                  const groupKey =
+                    title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
+                  if (!passageBlocks[groupKey]) passageBlocks[groupKey] = [];
+                  passageBlocks[groupKey].push(q);
+                } else {
+                  nonPassageQuestions.push(q);
+                }
+              });
+
+              // Shuffle passage blocks as complete units, but keep internal 5 questions in strict sequential order
+              const shuffledBlockKeys = Object.keys(passageBlocks).sort(() => Math.random() - 0.5);
+              for (const key of shuffledBlockKeys) {
+                const block = passageBlocks[key];
+                // Sort by question_number ascending so Q1..5 are in exact stimulus order
+                block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
+                for (const q of block) {
+                  if (!usedQuestionIds.has(q.id)) {
+                    questionIds.push(q.id);
+                    usedQuestionIds.add(q.id);
+                  }
+                }
                 if (questionIds.length >= neededCount) break;
+              }
+
+              // If still needed, fill with remaining non-passage questions
+              if (questionIds.length < neededCount) {
+                const shuffledNonPassage = nonPassageQuestions.sort(() => Math.random() - 0.5);
+                for (const q of shuffledNonPassage) {
+                  if (!usedQuestionIds.has(q.id)) {
+                    questionIds.push(q.id);
+                    usedQuestionIds.add(q.id);
+                    if (questionIds.length >= neededCount) break;
+                  }
+                }
+              }
+            } else {
+              // Standard non-passage sampling
+              const shuffled = [...data].sort(() => Math.random() - 0.5);
+              for (const q of shuffled) {
+                if (!usedQuestionIds.has(q.id)) {
+                  questionIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  if (questionIds.length >= neededCount) break;
+                }
               }
             }
           }
@@ -4436,7 +4512,7 @@ export const tpoService = {
 
     let rawQuestions: any[] = [];
 
-    // 1. Direct query with structured_explanation for passages & diagrams
+    // 1. Direct query from topic_questions
     try {
       const { data, error } = await supabase
         .from('topic_questions')
@@ -4444,7 +4520,32 @@ export const tpoService = {
         .in('id', questionIds);
 
       if (!error && data && data.length > 0) {
-        rawQuestions = data;
+        // 🛡️ Security Sanitization: Strip finalAnswer, steps, and solution formulas during active test
+        rawQuestions = data.map(q => {
+          let sanitizedExplanation: any = undefined;
+          if (q.structured_explanation) {
+            let se = q.structured_explanation;
+            if (typeof se === 'string') {
+              try { se = JSON.parse(se); } catch {}
+            }
+            // Retain passage and passageTitle so reading comprehension / DI charts render perfectly
+            if (se && (se.passage || se.passageTitle)) {
+              sanitizedExplanation = {
+                passage: se.passage,
+                passageTitle: se.passageTitle,
+              };
+            }
+          }
+          return {
+            id: q.id,
+            statement: q.statement,
+            options: q.options,
+            difficulty: q.difficulty,
+            topic_id: q.topic_id,
+            question_number: q.question_number,
+            structured_explanation: sanitizedExplanation,
+          };
+        });
       }
     } catch (error) {
       console.error('Error fetching questions from Supabase:', error);
@@ -4472,11 +4573,12 @@ export const tpoService = {
       try {
         const { data: codingData } = await supabase
           .from('technical_problems')
-          .select('id, title, description, constraints, sample_input, sample_output, explanation, test_cases, solutions, level, category')
+          .select('id, title, description, constraints, sample_input, sample_output, explanation, test_cases, level, category')
           .in('id', missingIds);
 
         if (codingData && codingData.length > 0) {
           codingData.forEach(p => {
+            // 🛡️ Security Sanitization: Do NOT include solutions or explanation in active test payload
             rawQuestions.push({
               id: p.id,
               title: p.title,
@@ -4485,12 +4587,10 @@ export const tpoService = {
               options: [],
               difficulty: p.level || 'MEDIUM',
               topic_id: p.category,
-              structured_explanation: p.explanation,
               constraints: p.constraints,
               sample_input: p.sample_input,
               sample_output: p.sample_output,
               test_cases: p.test_cases,
-              solutions: p.solutions,
               isCodingProblem: true,
             });
           });
@@ -4508,21 +4608,20 @@ export const tpoService = {
       try {
         const { data: techMcqs } = await supabase
           .from('technical_mcqs')
-          .select('id, question, code_snippet, options, correct_option_index, explanation, difficulty, topic_id')
+          .select('id, question, code_snippet, options, difficulty, topic_id')
           .in('id', missingIds);
 
         if (techMcqs && techMcqs.length > 0) {
           techMcqs.forEach(m => {
             const lang = (m.topic_id || '').includes('python') ? 'python' : (m.topic_id || '').includes('java') ? 'java' : 'c';
             const codeBlock = m.code_snippet ? `\n\n\`\`\`${lang}\n${m.code_snippet}\n\`\`\`` : '';
+            // 🛡️ Security Sanitization: Do NOT include correct_option_index in active test payload
             rawQuestions.push({
               id: m.id,
               statement: `${m.question}${codeBlock}`,
               options: m.options || [],
               difficulty: m.difficulty || 'MEDIUM',
               topic_id: m.topic_id,
-              structured_explanation: m.explanation || '',
-              correct_option: m.correct_option_index,
               isTechnicalMcq: true,
             });
           });
@@ -4551,8 +4650,6 @@ export const tpoService = {
               options: s.options || [],
               difficulty: s.difficulty || 'MEDIUM',
               topic_id: s.topicId,
-              structured_explanation: s.explanation || '',
-              correct_option: s.correctOptionIndex,
               isTechnicalMcq: true,
             });
           }
@@ -5155,10 +5252,11 @@ export const tpoService = {
       effectiveStatusOverride = 'TIMED_OUT';
     }
 
-    // Fetch question solutions for grading
+    // Fetch question solutions for grading across all types (Aptitude MCQs, Technical MCQs, Seeds)
     const allQuestionIds = (exam.sections || []).flatMap(s => s.question_ids);
     let solutionMap: Record<string, number> = {};
 
+    // 1. Fetch Aptitude MCQ solutions
     try {
       const { data: questionsWithSolutions } = await supabase
         .from('topic_questions')
@@ -5166,9 +5264,46 @@ export const tpoService = {
         .in('id', allQuestionIds);
 
       (questionsWithSolutions || []).forEach(q => {
-        solutionMap[q.id] = q.correct_answer;
+        if (q.correct_answer !== undefined && q.correct_answer !== null) {
+          solutionMap[q.id] = Number(q.correct_answer);
+        }
       });
     } catch {}
+
+    // 2. Fetch Technical MCQ solutions from technical_mcqs table
+    const missingForSolution = allQuestionIds.filter(id => solutionMap[id] === undefined);
+    if (missingForSolution.length > 0) {
+      try {
+        const { data: techSolutions } = await supabase
+          .from('technical_mcqs')
+          .select('id, correct_option_index')
+          .in('id', missingForSolution);
+
+        (techSolutions || []).forEach(m => {
+          if (m.correct_option_index !== undefined && m.correct_option_index !== null) {
+            solutionMap[m.id] = Number(m.correct_option_index);
+          }
+        });
+      } catch {}
+
+      // 3. Fallback check against ALL_TECHNICAL_MCQ_SEEDS
+      const stillMissing = allQuestionIds.filter(id => solutionMap[id] === undefined);
+      if (stillMissing.length > 0) {
+        try {
+          const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
+          const seedMap = new Map(ALL_TECHNICAL_MCQ_SEEDS.map(s => [s.id, s]));
+          stillMissing.forEach(id => {
+            const s = seedMap.get(id);
+            if (s && s.correctOptionIndex !== undefined) {
+              solutionMap[id] = Number(s.correctOptionIndex);
+            }
+          });
+        } catch {}
+      }
+    }
+
+    // Record persistent assigned question sequence for student attempt verification
+    responses.__assigned_question_ids = allQuestionIds as any;
 
     // 1. Calculate full candidate result (score, percentage, accuracy, section breakdowns)
     const calculated = this.calculateAttemptResult(
@@ -5457,12 +5592,12 @@ export const tpoService = {
       attempt.result_summary = (attempt.responses as any).__result_summary;
     }
 
-    const questionIds = Object.keys(attempt.responses || {});
+    const questionIds = Object.keys(attempt.responses || {}).filter(k => !k.startsWith('__'));
     let questions: any[] = [];
     try {
       const { data } = await supabase
         .from('topic_questions')
-        .select('id, statement, options, correct_answer, explanation, difficulty, topic_id')
+        .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
         .in('id', questionIds);
       if (data) {
         questions = data.map((q: any) => ({
@@ -5471,6 +5606,68 @@ export const tpoService = {
         }));
       }
     } catch {}
+
+    // Check coding problems
+    const foundIds = new Set(questions.map(q => q.id));
+    const missingIds = questionIds.filter(id => !foundIds.has(id));
+    if (missingIds.length > 0) {
+      try {
+        const { data: codingData } = await supabase
+          .from('technical_problems')
+          .select('id, title, description, constraints, sample_input, sample_output, explanation, test_cases, solutions, level, category')
+          .in('id', missingIds);
+
+        if (codingData && codingData.length > 0) {
+          codingData.forEach(p => {
+            questions.push({
+              id: p.id,
+              title: p.title,
+              statement: p.description,
+              description: p.description,
+              options: [],
+              difficulty: p.level || 'MEDIUM',
+              topic_id: p.category,
+              structured_explanation: p.explanation,
+              constraints: p.constraints,
+              sample_input: p.sample_input,
+              sample_output: p.sample_output,
+              test_cases: p.test_cases,
+              solutions: p.solutions,
+              isCodingProblem: true,
+            });
+          });
+        }
+      } catch {}
+    }
+
+    // Check technical MCQs
+    const stillFound = new Set(questions.map(q => q.id));
+    const stillMissing = questionIds.filter(id => !stillFound.has(id));
+    if (stillMissing.length > 0) {
+      try {
+        const { data: techMcqs } = await supabase
+          .from('technical_mcqs')
+          .select('id, question, code_snippet, options, correct_option_index, explanation, difficulty, topic_id')
+          .in('id', stillMissing);
+
+        if (techMcqs && techMcqs.length > 0) {
+          techMcqs.forEach(m => {
+            const lang = (m.topic_id || '').includes('python') ? 'python' : (m.topic_id || '').includes('java') ? 'java' : 'c';
+            const codeBlock = m.code_snippet ? `\n\n\`\`\`${lang}\n${m.code_snippet}\n\`\`\`` : '';
+            questions.push({
+              id: m.id,
+              statement: `${m.question}${codeBlock}`,
+              options: normalizeQuestionOptions(m.options || []),
+              difficulty: m.difficulty || 'MEDIUM',
+              topic_id: m.topic_id,
+              explanation: m.explanation || '',
+              correct_answer: m.correct_option_index,
+              isTechnicalMcq: true,
+            });
+          });
+        }
+      } catch {}
+    }
 
     return {
       attempt,

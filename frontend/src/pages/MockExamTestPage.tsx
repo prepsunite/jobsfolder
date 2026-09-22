@@ -228,6 +228,8 @@ export default function MockExamTestPage() {
   const tabSwitchCountRef = useRef<number>(0);
   const lastViolationTimeRef = useRef<number>(0);
   const startedAtMsRef = useRef<number>(0);
+  const perfStartMsRef = useRef<number>(0);
+  const initialElapsedSecRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [warningMessage, setWarningMessage] = useState<string>('');
   const [proctorEvents, setProctorEvents] = useState<ProctorEvent[]>([]);
@@ -528,15 +530,22 @@ export default function MockExamTestPage() {
     [exam]
   );
 
-  // 4. Timer Countdown & Auto-Sync Hook (Strict Wall-Clock Anchored)
+  // 4. Timer Countdown & Auto-Sync Hook (Strict Monotonic High-Precision & Wall-Clock Anchored)
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
 
     const totalSec = (exam?.duration_minutes || 90) * 60;
+    perfStartMsRef.current = performance.now();
+    initialElapsedSecRef.current = timeSpentSeconds;
 
     const interval = setInterval(() => {
       const startedAtMs = startedAtMsRef.current || (startedAtMsRef.current = Date.now());
-      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+      const wallElapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+      const monotonicElapsedSec =
+        initialElapsedSecRef.current + Math.floor((performance.now() - perfStartMsRef.current) / 1000);
+
+      // Strictly monotonic elapsed: cannot be reduced by changing local system clock
+      const elapsedSec = Math.max(wallElapsedSec, monotonicElapsedSec);
       const remainingSec = Math.max(0, totalSec - elapsedSec);
 
       setTimeSpentSeconds(elapsedSec);
@@ -569,7 +578,7 @@ export default function MockExamTestPage() {
     };
   }, [testPhase, exam?.duration_minutes, handleFinalSubmit]);
 
-  // 5. Anti-Cheat & Anti-Inspect Watchdog (DevTools, Right-Click, Shortcuts, Tab Switch & Fullscreen)
+  // 5. Anti-Cheat & Anti-Inspect Watchdog (DevTools, Right-Click, Shortcuts, Tab Switch, Fullscreen, Copy/Cut & PrintScreen)
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
 
@@ -639,11 +648,41 @@ export default function MockExamTestPage() {
       return false;
     };
 
-    // 🛡️ Anti-Inspect 2: Block DevTools Keyboard Shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+U, etc.)
+    // 🛡️ Anti-Cheat 2: Block Copy & Cut Operations completely
+    const handleCopyOrCut = (e: ClipboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.clipboardData) {
+        e.clipboardData.clearData();
+        e.clipboardData.setData('text/plain', '');
+      }
+      try {
+        navigator.clipboard?.writeText('');
+      } catch {}
+      handleViolation('DEVTOOLS_OPEN', 'Copying or cutting question content is strictly prohibited.');
+      return false;
+    };
+
+    // 🛡️ Anti-Inspect 3: Block DevTools Keyboard Shortcuts & PrintScreen / Screenshots
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       const isShift = e.shiftKey;
       const key = (e.key || '').toUpperCase();
+
+      // PrintScreen / Snipping Tool (PrintScreen, Windows+Shift+S, Cmd+Shift+3/4)
+      if (
+        key === 'PRINTSCREEN' ||
+        e.key === 'PrintScreen' ||
+        (isCtrlOrCmd && isShift && (key === 'S' || key === '3' || key === '4'))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          navigator.clipboard?.writeText('');
+        } catch {}
+        handleViolation('DEVTOOLS_OPEN', 'Screenshot / Screen Capture attempt detected');
+        return false;
+      }
 
       // F12
       if (key === 'F12') {
@@ -677,9 +716,24 @@ export default function MockExamTestPage() {
         e.stopPropagation();
         return false;
       }
+
+      // Ctrl + C (Copy) outside code editor
+      if (isCtrlOrCmd && key === 'C') {
+        const target = e.target as HTMLElement;
+        const isEditor = target?.closest('.monaco-editor') || target?.tagName === 'TEXTAREA' || target?.tagName === 'INPUT';
+        if (!isEditor) {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            navigator.clipboard?.writeText('');
+          } catch {}
+          handleViolation('DEVTOOLS_OPEN', 'Copying question statement or options is prohibited');
+          return false;
+        }
+      }
     };
 
-    // 🛡️ Anti-Inspect 3: DevTools Window Docking Detection (outer vs inner differential)
+    // 🛡️ Anti-Inspect 4: DevTools Window Docking Detection (outer vs inner differential)
     const checkDevToolsOpen = () => {
       const threshold = 160;
       const widthDiff = window.outerWidth - window.innerWidth;
@@ -693,14 +747,24 @@ export default function MockExamTestPage() {
       checkDevToolsOpen();
     };
 
+    // 🛡️ Anti-Reload Guard: Warn before leaving / reloading page during active exam
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'You have an active mock exam in progress. Reloading or leaving will be recorded as a proctor violation.';
+      return e.returnValue;
+    };
+
     const devtoolsCheckInterval = setInterval(checkDevToolsOpen, 2000);
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     window.addEventListener('contextmenu', handleContextMenu, true);
+    window.addEventListener('copy', handleCopyOrCut, true);
+    window.addEventListener('cut', handleCopyOrCut, true);
     window.addEventListener('keydown', handleKeyDown, true);
     window.addEventListener('resize', handleResize);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       clearInterval(devtoolsCheckInterval);
@@ -708,8 +772,11 @@ export default function MockExamTestPage() {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       window.removeEventListener('contextmenu', handleContextMenu, true);
+      window.removeEventListener('copy', handleCopyOrCut, true);
+      window.removeEventListener('cut', handleCopyOrCut, true);
       window.removeEventListener('keydown', handleKeyDown, true);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [testPhase, exam, handleFinalSubmit]);
 
@@ -1573,7 +1640,7 @@ export default function MockExamTestPage() {
                   nextSectionName={sections[currentSectionIndex + 1]?.name}
                 />
               ) : (
-                <div className="bg-white dark:bg-[#151618] rounded-2xl p-6 border border-gray-200 dark:border-[#25262a] shadow-sm space-y-6">
+                <div className="bg-white dark:bg-[#151618] rounded-2xl p-6 border border-gray-200 dark:border-[#25262a] shadow-sm space-y-6 select-none">
                 
                 {/* Question Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#25262a] pb-4">

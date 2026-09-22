@@ -488,18 +488,28 @@ export const TECHNICAL_MCQ_SUBJECTS = [
 ];
 
 export const CODING_CATEGORIES = [
+  { id: 'SYNTAX_BASICS', name: 'Syntax & Language Fundamentals', track: 'PROGRAMMING_150' },
   { id: 'NUMBER_LOGIC', name: 'Number Logic & Math', track: 'PROGRAMMING_150' },
   { id: 'PATTERNS', name: 'Pattern Printing', track: 'PROGRAMMING_150' },
   { id: 'ARRAYS', name: 'Arrays & Subarrays', track: 'PROGRAMMING_150' },
   { id: 'STRINGS', name: 'Strings & Character Manipulation', track: 'PROGRAMMING_150' },
+  { id: 'MATRICES', name: '2D Arrays & Matrices', track: 'CAMPUS_DSA' },
   { id: 'RECURSION', name: 'Recursion & Backtracking', track: 'PROGRAMMING_150' },
+  { id: 'BIT_MANIPULATION', name: 'Bit Manipulation', track: 'CAMPUS_DSA' },
+  { id: 'SEARCHING', name: 'Searching & Sorting Algorithms', track: 'PROGRAMMING_150' },
+  { id: 'POINTERS_ARRAYS', name: 'Two Pointers & Sliding Window', track: 'CAMPUS_DSA' },
+  { id: 'LINEAR_STRUCTURES', name: 'Stacks, Queues & Linked Lists', track: 'CAMPUS_DSA' },
+  { id: 'HIERARCHICAL_STRUCTURES', name: 'Trees, BST & Heaps', track: 'CAMPUS_DSA' },
+  { id: 'SEARCH_INTERVALS', name: 'Binary Search & Intervals', track: 'CAMPUS_DSA' },
+  { id: 'EXHAUSTIVE_SEARCH_DP', name: 'Dynamic Programming & Exhaustive Search', track: 'CAMPUS_DSA' },
+  { id: 'NETWORK_GRAPH_ALGORITHMS', name: 'Graph Algorithms & Traversal', track: 'CAMPUS_DSA' },
+  // Compatibility Aliases
   { id: 'TWO_POINTERS', name: 'Two Pointers Technique', track: 'CAMPUS_DSA' },
   { id: 'SLIDING_WINDOW', name: 'Sliding Window', track: 'CAMPUS_DSA' },
   { id: 'STACKS_QUEUES', name: 'Stacks & Queues', track: 'CAMPUS_DSA' },
   { id: 'LINKED_LISTS', name: 'Linked Lists', track: 'CAMPUS_DSA' },
   { id: 'TREES_BINARY_TREES', name: 'Trees & Binary Search Trees', track: 'CAMPUS_DSA' },
   { id: 'DYNAMIC_PROGRAMMING', name: 'Dynamic Programming', track: 'CAMPUS_DSA' },
-  { id: 'BIT_MANIPULATION', name: 'Bit Manipulation', track: 'CAMPUS_DSA' },
   { id: 'SEARCHING_SORTING', name: 'Searching & Sorting Algorithms', track: 'PROGRAMMING_150' },
 ];
 
