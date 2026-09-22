@@ -65,6 +65,11 @@ export default function AdminQuestionBankPage() {
   const [bulkText, setBulkText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
 
+  // Multi-Topic Batch Import Form State
+  const [showMultiTopicModal, setShowMultiTopicModal] = useState(false);
+  const [multiTopicInput, setMultiTopicInput] = useState('');
+  const [isMultiImporting, setIsMultiImporting] = useState(false);
+
   // Load live inventories for all topics
   const { data: inventories = [], isLoading: isInventoryLoading } = useQuery<TopicInventoryItem[]>({
     queryKey: ['admin-question-inventories'],
@@ -127,6 +132,77 @@ export default function AdminQuestionBankPage() {
     } catch {}
     return { count: 0, valid: false, items: [] };
   }, [bulkText]);
+
+  // Parse multi-topic bulk text preview (JSON or formatted text)
+  const parsedMultiTopicPreview = useMemo(() => {
+    if (!multiTopicInput.trim()) return null;
+    const raw = multiTopicInput.trim();
+
+    // 1. Try JSON
+    try {
+      const parsed = safeJsonParse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const valid = parsed.every(p => p.topic_id && p.statement && Array.isArray(p.options));
+        return { count: parsed.length, valid, items: parsed };
+      }
+    } catch {}
+
+    // 2. Structured text parser: handles [Topic: topic_id] and questions 1..N
+    const items: Array<{
+      topic_id: string;
+      statement: string;
+      options: string[];
+      correct_answer: string;
+      explanation?: string;
+      difficulty?: string;
+    }> = [];
+
+    const blocks = raw.split(/(?=\[(?:Topic|topic):|\b(?:Topic|topic):)/i);
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      const topicMatch = block.match(/(?:\[)?topic:\s*([a-z0-9-_]+)(?:\])?/i);
+      const currentTopic = topicMatch ? topicMatch[1].trim().toLowerCase() : '';
+      if (!currentTopic) continue;
+
+      const qBlocks = block.split(/(?=(?:Statement:|\bQ\d+[:.]|\b\d+\.))/i);
+      for (const qBlock of qBlocks) {
+        if (!qBlock.trim() || qBlock.startsWith('[Topic:') || qBlock.startsWith('Topic:')) continue;
+        const stmtMatch = qBlock.match(/(?:Statement:\s*|\bQ\d+[:.]\s*|\b\d+\.\s*)([\s\S]*?)(?=(?:[A-D]\)|[A-D]:|\bOptions:))/i);
+        const statement = stmtMatch ? stmtMatch[1].trim() : '';
+
+        const optA = qBlock.match(/(?:A\)|A:)\s*([^\n\r]+)/i)?.[1]?.trim() || '';
+        const optB = qBlock.match(/(?:B\)|B:)\s*([^\n\r]+)/i)?.[1]?.trim() || '';
+        const optC = qBlock.match(/(?:C\)|C:)\s*([^\n\r]+)/i)?.[1]?.trim() || '';
+        const optD = qBlock.match(/(?:D\)|D:)\s*([^\n\r]+)/i)?.[1]?.trim() || '';
+
+        const ansMatch = qBlock.match(/(?:Answer|Correct|Ans):\s*([A-D])/i);
+        const correct = ansMatch ? ansMatch[1].toUpperCase() : 'A';
+
+        const diffMatch = qBlock.match(/(?:Difficulty|Level):\s*(EASY|MEDIUM|HARD)/i);
+        const difficulty = diffMatch ? diffMatch[1].toUpperCase() : 'MEDIUM';
+
+        const expMatch = qBlock.match(/(?:Explanation|Solution):\s*([\s\S]*?)(?=(?:$|\n\n\[Topic|\n\nStatement|\n\n\d+\.))/i);
+        const explanation = expMatch ? expMatch[1].trim() : 'Detailed solution.';
+
+        if (statement && optA && optB) {
+          items.push({
+            topic_id: currentTopic,
+            statement,
+            options: [optA, optB, optC, optD].filter(Boolean),
+            correct_answer: correct,
+            explanation,
+            difficulty,
+          });
+        }
+      }
+    }
+
+    if (items.length > 0) {
+      return { count: items.length, valid: true, items };
+    }
+
+    return { count: 0, valid: false, items: [] };
+  }, [multiTopicInput]);
 
   // Handlers
   const handleOpenAddModal = (topic: TopicInventoryItem, mode: 'SINGLE_MCQ' | 'SINGLE_CODING' | 'BULK' = 'BULK') => {
@@ -255,6 +331,27 @@ export default function AdminQuestionBankPage() {
     }
   };
 
+  const handleExecuteMultiTopicImport = async () => {
+    if (!parsedMultiTopicPreview || !parsedMultiTopicPreview.valid || parsedMultiTopicPreview.items.length === 0) {
+      toast.error('Please provide valid questions with specified topics (e.g. [Topic: numbers]).');
+      return;
+    }
+
+    try {
+      setIsMultiImporting(true);
+      const res = await questionBankService.bulkImportMultiTopicMcqs(parsedMultiTopicPreview.items);
+      queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+      if (selectedTopic) refetchQuestions();
+      toast.success(`Successfully imported ${res.inserted} questions across topics (${res.errors} errors)!`);
+      setMultiTopicInput('');
+      setShowMultiTopicModal(false);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to import multi-topic questions.');
+    } finally {
+      setIsMultiImporting(false);
+    }
+  };
+
   const handleDeleteQuestion = async (qId: string) => {
     if (!selectedTopic) return;
     const confirmed = await confirmModal({
@@ -291,8 +388,8 @@ export default function AdminQuestionBankPage() {
           </p>
         </div>
 
-        {/* High-level Counters */}
-        <div className="flex items-center gap-4 text-xs font-mono">
+        {/* High-level Counters & Multi-Topic Import Action */}
+        <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
           <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-center">
             <div className="text-gray-400 text-[10px] uppercase font-sans">Total Questions</div>
             <div className="text-base font-bold text-gray-900 dark:text-white">{totalQuestions}</div>
@@ -305,6 +402,15 @@ export default function AdminQuestionBankPage() {
             <div className="text-amber-600 dark:text-amber-400 text-[10px] uppercase font-sans">Needs Questions</div>
             <div className="text-base font-bold text-amber-600 dark:text-amber-400">{needsQuestionsCount}</div>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowMultiTopicModal(true)}
+            className="px-3.5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            title="Import questions spanning multiple topics (e.g. 1-5 Arithmetic, 6-10 Data Interpretation)"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>⚡ Multi-Topic Batch Import</span>
+          </button>
         </div>
       </div>
 
@@ -315,8 +421,10 @@ export default function AdminQuestionBankPage() {
           {[
             { id: 'ALL', label: 'All Topics' },
             { id: 'arithmetic-aptitude', label: 'Quantitative' },
+            { id: 'data-interpretation', label: 'Data Interpretation' },
             { id: 'logical-reasoning', label: 'Logical' },
-            { id: 'verbal-reasoning', label: 'Verbal' },
+            { id: 'verbal-ability', label: 'Verbal Ability' },
+            { id: 'verbal-reasoning', label: 'Verbal Reasoning' },
             { id: 'technical-aptitude', label: 'Technical MCQs' },
             { id: 'coding', label: 'Coding Problems' },
           ].map(c => (
@@ -1007,6 +1115,137 @@ export default function AdminQuestionBankPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Topic Batch Import Modal */}
+      {showMultiTopicModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-3xl my-6 p-5 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#27292e] shadow-2xl space-y-4">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-gray-100 dark:border-[#252830]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-[#FD4A32] text-white">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white font-display">
+                    Multi-Topic Batch Question Importer
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Paste questions across multiple topics at once (e.g. Questions 1–5 for Numerical, 6–10 for Data Interpretation).
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowMultiTopicModal(false)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#202228] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Format Guidelines */}
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#18191c] border border-gray-200 dark:border-[#282a32] text-xs space-y-1.5">
+              <div className="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                Accepted Formats (JSON Array or Structured Text):
+              </div>
+              <p className="text-[11px] text-gray-500">
+                You can paste JSON or simple structured text with topic headers like <code className="px-1.5 py-0.5 rounded bg-white dark:bg-[#22242a] border border-gray-200 dark:border-[#333] font-mono text-[#FD4A32]">[Topic: numbers]</code>, <code className="px-1.5 py-0.5 rounded bg-white dark:bg-[#22242a] border border-gray-200 dark:border-[#333] font-mono text-[#FD4A32]">[Topic: percentage]</code>, or <code className="px-1.5 py-0.5 rounded bg-white dark:bg-[#22242a] border border-gray-200 dark:border-[#333] font-mono text-[#FD4A32]">[Topic: data-interpretation]</code>.
+              </p>
+            </div>
+
+            {/* Input Textarea */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                Questions Data *
+              </label>
+              <textarea
+                rows={12}
+                value={multiTopicInput}
+                onChange={e => setMultiTopicInput(e.target.value)}
+                placeholder={`[Topic: numbers]
+1. What is the remainder when 2^50 is divided by 7?
+A) 1
+B) 2
+C) 4
+D) 6
+Answer: C
+Difficulty: Medium
+Explanation: 2^3 = 8 = 1 mod 7. 50 = 3*16 + 2. So remainder is 4.
+
+[Topic: data-interpretation]
+2. Which category accounted for over 45% of total sales?
+A) Electronics
+B) Apparel
+C) Footwear
+D) Groceries
+Answer: A
+Difficulty: Easy
+Explanation: Electronics sales reached 48% of gross revenue.`}
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#18191c] border border-gray-200 dark:border-[#2c2f38] text-xs font-mono text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32] custom-scrollbar"
+              />
+            </div>
+
+            {/* Live Parsing Preview */}
+            {parsedMultiTopicPreview && (
+              <div className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-3 ${
+                parsedMultiTopicPreview.valid && parsedMultiTopicPreview.count > 0
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {parsedMultiTopicPreview.valid && parsedMultiTopicPreview.count > 0 ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                  )}
+                  <span>
+                    {parsedMultiTopicPreview.valid && parsedMultiTopicPreview.count > 0
+                      ? `✓ Successfully detected ${parsedMultiTopicPreview.count} question(s) ready for import.`
+                      : 'Could not detect questions. Please check topic headers and option formatting.'}
+                  </span>
+                </div>
+
+                {parsedMultiTopicPreview.count > 0 && (
+                  <span className="font-mono font-bold text-xs bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded">
+                    {parsedMultiTopicPreview.count} Qs
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-[#252830]">
+              <button
+                type="button"
+                onClick={() => setShowMultiTopicModal(false)}
+                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-[#2c2f38] text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202228] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteMultiTopicImport}
+                disabled={isMultiImporting || !parsedMultiTopicPreview || !parsedMultiTopicPreview.valid || parsedMultiTopicPreview.count === 0}
+                className="px-5 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {isMultiImporting ? (
+                  <span>Importing Questions...</span>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>
+                      Import {parsedMultiTopicPreview?.count || 0} Questions into Bank
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

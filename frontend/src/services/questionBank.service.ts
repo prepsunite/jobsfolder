@@ -312,6 +312,58 @@ export const questionBankService = {
   },
 
   /**
+   * Multi-topic batch import: accepts an array of questions where each question specifies its topic_id
+   */
+  async bulkImportMultiTopicMcqs(
+    questions: Array<{
+      topic_id: string;
+      statement: string;
+      options: string[];
+      correct_answer: string;
+      explanation?: string;
+      difficulty?: string;
+      company_slug?: string;
+    }>
+  ): Promise<{ inserted: number; errors: number }> {
+    if (!questions || questions.length === 0) return { inserted: 0, errors: 0 };
+
+    let inserted = 0;
+    let errors = 0;
+    const batchSize = 50;
+
+    for (let i = 0; i < questions.length; i += batchSize) {
+      const chunk = questions.slice(i, i + batchSize);
+      const rows = chunk.map((q, idx) => ({
+        id: `bulk-${Date.now().toString(36)}-${i + idx}-${Math.random().toString(36).substring(2, 6)}`,
+        topic_id: q.topic_id,
+        exam_id: 'MOCK_EXAM_BANK',
+        statement: q.statement,
+        options: Array.isArray(q.options) ? q.options : [],
+        correct_answer: String(q.correct_answer || 'A'),
+        explanation: q.explanation || 'Detailed step-by-step solution.',
+        difficulty: q.difficulty || 'MEDIUM',
+        difficulty_level: (q.difficulty || 'MEDIUM') === 'EASY' ? 1 : (q.difficulty || 'MEDIUM') === 'HARD' ? 3 : 2,
+        company_slug: q.company_slug || null,
+        is_deleted: false,
+      }));
+
+      try {
+        const { error } = await supabase.from('topic_questions').insert(rows);
+        if (error) {
+          console.error('[bulkImportMultiTopicMcqs] Batch insert error:', error);
+          errors += chunk.length;
+        } else {
+          inserted += chunk.length;
+        }
+      } catch (err) {
+        errors += chunk.length;
+      }
+    }
+
+    return { inserted, errors };
+  },
+
+  /**
    * High-volume batch import: accepts an array of coding problems and batch-inserts into technical_problems
    */
   async bulkImportCodingProblems(
