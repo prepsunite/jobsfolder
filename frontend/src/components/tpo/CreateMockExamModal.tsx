@@ -15,6 +15,15 @@ import {
   Calendar,
   ArrowLeft,
   Check,
+  Code2,
+  Cpu,
+  BookOpen,
+  Terminal,
+  ChevronUp,
+  ChevronDown,
+  Clock,
+  Sliders,
+  Filter,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +31,12 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { MockExamTemplate, CollegeBatch } from '@/types/tpo';
 import { useToast } from '@/contexts/ToastContext';
+import {
+  APTITUDE_CATEGORIES,
+  TECHNICAL_MCQ_SUBJECTS,
+  CODING_CATEGORIES,
+  FALLBACK_APTITUDE_TOPICS,
+} from '@/services/mockExamBlueprint.service';
 
 interface CreateMockExamModalProps {
   isOpen: boolean;
@@ -32,11 +47,16 @@ interface CreateMockExamModalProps {
 
 interface SectionDraft {
   name: string;
+  section_type?: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ';
   topic_ids: string[];
   question_count: number;
   marks_per_correct: number;
   negative_marking: number;
   duration_minutes?: number;
+  category?: string;
+  coding_track?: 'PROGRAMMING_150' | 'CAMPUS_DSA';
+  difficulty?: 'ALL' | 'EASY' | 'MEDIUM' | 'HARD';
+  random_sampling?: boolean;
 }
 
 const PRESET_COMPANIES = [
@@ -113,6 +133,18 @@ export default function CreateMockExamModal({
     enabled: isOpen,
   });
 
+  // Merge DB topics with fallback aptitude topics
+  const allAptitudeTopics = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; category_slug: string; cluster?: string }>();
+    FALLBACK_APTITUDE_TOPICS.forEach(t => map.set(t.id, t));
+    dbTopics.forEach(t => map.set(t.id, { id: t.id, name: t.name, category_slug: t.category_slug || 'arithmetic-aptitude', cluster: t.cluster }));
+    return Array.from(map.values());
+  }, [dbTopics]);
+
+  // Per-section filter and search states
+  const [sectionCategoryFilters, setSectionCategoryFilters] = useState<Record<number, string>>({});
+  const [sectionSearchTerms, setSectionSearchTerms] = useState<Record<number, string>>({});
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast, confirmModal } = useToast();
@@ -147,24 +179,33 @@ export default function CreateMockExamModal({
   const [sections, setSections] = useState<SectionDraft[]>([
     {
       name: 'Numerical Ability & Quantitative Aptitude',
+      section_type: 'MCQ',
       topic_ids: [],
       question_count: 20,
       marks_per_correct: 1,
       negative_marking: 0,
+      difficulty: 'ALL',
+      category: 'arithmetic-aptitude',
     },
     {
       name: 'Reasoning & Logical Deduction',
+      section_type: 'MCQ',
       topic_ids: [],
       question_count: 20,
       marks_per_correct: 1,
       negative_marking: 0,
+      difficulty: 'ALL',
+      category: 'logical-reasoning',
     },
     {
       name: 'Verbal Ability & Reading Comprehension',
+      section_type: 'MCQ',
       topic_ids: [],
       question_count: 15,
       marks_per_correct: 1,
       negative_marking: 0,
+      difficulty: 'ALL',
+      category: 'verbal-ability',
     },
   ]);
 
@@ -271,14 +312,36 @@ export default function CreateMockExamModal({
     setShowResultsImmediately(tmpl.show_results_immediately ?? true);
 
     setSections(
-      tmpl.sections.map(s => ({
-        name: s.name,
-        question_count: s.question_count,
-        marks_per_correct: s.marks_per_correct,
-        negative_marking: s.negative_marking,
-        duration_minutes: s.duration_minutes,
-        topic_ids: s.topic_ids || [],
-      }))
+      tmpl.sections.map(s => {
+        const isCoding =
+          s.section_type === 'CODING' ||
+          s.category === 'coding' ||
+          s.coding_track !== undefined;
+        const isTech =
+          s.section_type === 'TECHNICAL_MCQ' ||
+          s.category === 'technical-mcqs' ||
+          s.category?.startsWith('mcq-') ||
+          (s.topic_ids && s.topic_ids.some(t => t.startsWith('mcq-')));
+        const type: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ' = isCoding
+          ? 'CODING'
+          : isTech
+          ? 'TECHNICAL_MCQ'
+          : 'MCQ';
+
+        return {
+          name: s.name,
+          section_type: type,
+          question_count: s.question_count,
+          marks_per_correct: s.marks_per_correct,
+          negative_marking: s.negative_marking,
+          duration_minutes: s.duration_minutes,
+          topic_ids: s.topic_ids || [],
+          category: s.category,
+          coding_track: s.coding_track,
+          difficulty: s.difficulty || 'ALL',
+          random_sampling: s.random_sampling ?? true,
+        };
+      })
     );
 
     setModalMode('CUSTOM');
@@ -375,15 +438,39 @@ export default function CreateMockExamModal({
     }
   };
 
-  const handleAddSection = () => {
+  const handleAddSection = (type: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ' = 'MCQ') => {
+    let defaultName = `Section ${sections.length + 1}: Aptitude & Reasoning`;
+    let defaultCount = 20;
+    let defaultMarks = 1;
+    let defaultCategory: string | undefined = 'arithmetic-aptitude';
+    let defaultTrack: 'PROGRAMMING_150' | 'CAMPUS_DSA' | undefined = undefined;
+
+    if (type === 'CODING') {
+      defaultName = `Section ${sections.length + 1}: Hands-on Coding Assessment`;
+      defaultCount = 2;
+      defaultMarks = 25;
+      defaultCategory = 'coding';
+      defaultTrack = 'CAMPUS_DSA';
+    } else if (type === 'TECHNICAL_MCQ') {
+      defaultName = `Section ${sections.length + 1}: Core CS Technical MCQs`;
+      defaultCount = 20;
+      defaultMarks = 1;
+      defaultCategory = 'technical-mcqs';
+    }
+
     setSections(prev => [
       ...prev,
       {
-        name: `Section ${prev.length + 1}`,
+        name: defaultName,
+        section_type: type,
         topic_ids: [],
-        question_count: 15,
-        marks_per_correct: 1,
+        question_count: defaultCount,
+        marks_per_correct: defaultMarks,
         negative_marking: 0,
+        difficulty: 'ALL',
+        category: defaultCategory,
+        coding_track: defaultTrack,
+        random_sampling: true,
       },
     ]);
   };
@@ -391,6 +478,66 @@ export default function CreateMockExamModal({
   const handleRemoveSection = (index: number) => {
     if (sections.length <= 1) return;
     setSections(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleMoveSection = (index: number, direction: 'up' | 'down') => {
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= sections.length) return;
+    setSections(prev => {
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[target];
+      copy[target] = temp;
+      return copy;
+    });
+  };
+
+  const handleSectionTypeChange = (index: number, newType: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ') => {
+    setSections(prev => {
+      return prev.map((s, i) => {
+        if (i !== index) return s;
+        if (newType === 'CODING') {
+          return {
+            ...s,
+            section_type: 'CODING',
+            name: s.name.startsWith('Section') || s.name.includes('Aptitude') || s.name.includes('Technical')
+              ? `Section ${i + 1}: Hands-on Coding Assessment`
+              : s.name,
+            question_count: s.question_count > 5 ? 2 : Math.max(1, s.question_count),
+            marks_per_correct: s.marks_per_correct === 1 ? 25 : s.marks_per_correct,
+            category: 'coding',
+            coding_track: s.coding_track || 'CAMPUS_DSA',
+            topic_ids: [],
+          };
+        } else if (newType === 'TECHNICAL_MCQ') {
+          return {
+            ...s,
+            section_type: 'TECHNICAL_MCQ',
+            name: s.name.startsWith('Section') || s.name.includes('Aptitude') || s.name.includes('Coding')
+              ? `Section ${i + 1}: Core CS Technical MCQs`
+              : s.name,
+            question_count: s.question_count <= 5 ? 20 : s.question_count,
+            marks_per_correct: s.marks_per_correct > 5 ? 1 : s.marks_per_correct,
+            category: 'technical-mcqs',
+            coding_track: undefined,
+            topic_ids: [],
+          };
+        } else {
+          return {
+            ...s,
+            section_type: 'MCQ',
+            name: s.name.startsWith('Section') || s.name.includes('Technical') || s.name.includes('Coding')
+              ? `Section ${i + 1}: Aptitude & Reasoning`
+              : s.name,
+            question_count: s.question_count <= 5 ? 20 : s.question_count,
+            marks_per_correct: s.marks_per_correct > 5 ? 1 : s.marks_per_correct,
+            category: 'arithmetic-aptitude',
+            coding_track: undefined,
+            topic_ids: [],
+          };
+        }
+      });
+    });
   };
 
   const handleUpdateSection = (index: number, updates: Partial<SectionDraft>) => {
@@ -440,7 +587,19 @@ export default function CreateMockExamModal({
           target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
           target_batch_year: targetBatchYear,
         },
-        sections
+        sections.map(s => ({
+          name: s.name,
+          section_type: s.section_type || (s.category === 'coding' ? 'CODING' : s.category === 'technical-mcqs' || s.topic_ids?.some(t => t.startsWith('mcq-')) ? 'TECHNICAL_MCQ' : 'MCQ'),
+          topic_ids: s.topic_ids || [],
+          question_count: Number(s.question_count) || 1,
+          marks_per_correct: Number(s.marks_per_correct) || 1,
+          negative_marking: Number(s.negative_marking) || 0,
+          duration_minutes: s.duration_minutes ? Number(s.duration_minutes) : undefined,
+          category: s.category,
+          coding_track: s.coding_track,
+          difficulty: s.difficulty || 'ALL',
+          random_sampling: s.random_sampling ?? true,
+        }))
       );
 
       toast.success('Mock exam published successfully.');
@@ -1126,6 +1285,62 @@ export default function CreateMockExamModal({
                         )}
                       </div>
 
+                      {/* Discipline Format Selector */}
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...editingTemplate.sections];
+                            updated[idx] = { ...updated[idx], section_type: 'MCQ', category: 'arithmetic-aptitude' };
+                            setEditingTemplate({ ...editingTemplate, sections: updated });
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                            (sec.section_type || 'MCQ') === 'MCQ'
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'bg-white dark:bg-[#151618] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-[#383a40]'
+                          }`}
+                        >
+                          📝 Aptitude
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...editingTemplate.sections];
+                            updated[idx] = { ...updated[idx], section_type: 'TECHNICAL_MCQ', category: 'technical-mcqs' };
+                            setEditingTemplate({ ...editingTemplate, sections: updated });
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                            sec.section_type === 'TECHNICAL_MCQ'
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'bg-white dark:bg-[#151618] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-[#383a40]'
+                          }`}
+                        >
+                          💻 Technical MCQs
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...editingTemplate.sections];
+                            updated[idx] = {
+                              ...updated[idx],
+                              section_type: 'CODING',
+                              category: 'coding',
+                              coding_track: 'CAMPUS_DSA',
+                              question_count: updated[idx].question_count > 5 ? 2 : updated[idx].question_count,
+                              marks_per_correct: updated[idx].marks_per_correct === 1 ? 25 : updated[idx].marks_per_correct,
+                            };
+                            setEditingTemplate({ ...editingTemplate, sections: updated });
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                            sec.section_type === 'CODING'
+                              ? 'bg-purple-600 text-white shadow-sm'
+                              : 'bg-white dark:bg-[#151618] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-[#383a40]'
+                          }`}
+                        >
+                          ⚡ Hands-on Coding
+                        </button>
+                      </div>
+
                       <div className="grid grid-cols-3 gap-3">
                         <div>
                           <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
@@ -1486,136 +1701,737 @@ export default function CreateMockExamModal({
 
               {/* Step 2: Sections */}
               {step === 2 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                      Sections & Question Pools ({totalQuestions} Questions • {totalMarks} Marks)
+                <div className="space-y-5">
+                  {/* Top Bar with Metrics & Quick Add */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10 border border-gray-200 dark:border-[#2e3035]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                            Section Architecture ({sections.length} Sections)
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white dark:bg-[#1a1b1e] border border-gray-200 dark:border-[#383a40] text-[#FD4A32]">
+                            {totalQuestions} Qs • {totalMarks} Marks
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                          Configure Aptitude, Core CS Technical MCQs, or Hands-on Coding rounds with customizable syllabus and difficulty.
+                        </p>
+                      </div>
+
+                      {/* Quick Add Buttons */}
+                      <div className="flex items-center flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleAddSection('MCQ')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-blue-600" /> + Aptitude
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddSection('TECHNICAL_MCQ')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
+                        >
+                          <Cpu className="w-3.5 h-3.5 text-emerald-600" /> + Technical MCQs
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddSection('CODING')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-colors"
+                        >
+                          <Code2 className="w-3.5 h-3.5 text-purple-600" /> + Coding Problem
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleAddSection}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FD4A32]/10 text-[#FD4A32] hover:bg-[#FD4A32]/20 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Section
-                    </button>
                   </div>
 
+                  {/* Section Cards */}
                   <div className="space-y-4">
-                    {sections.map((sec, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-xl border border-gray-200 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#202225] space-y-3"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 flex-1">
-                            <span className="w-6 h-6 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-bold flex items-center justify-center">
-                              {idx + 1}
-                            </span>
+                    {sections.map((sec, idx) => {
+                      const isCoding = sec.section_type === 'CODING';
+                      const isTech = sec.section_type === 'TECHNICAL_MCQ';
+                      const isAptitude = !isCoding && !isTech;
+
+                      const currentCategoryFilter = sectionCategoryFilters[idx] || 'all';
+                      const currentSearch = (sectionSearchTerms[idx] || '').toLowerCase();
+
+                      const filteredAptitudeTopics = allAptitudeTopics.filter(t => {
+                        const matchesCat = currentCategoryFilter === 'all' || t.category_slug === currentCategoryFilter;
+                        const matchesSearch = !currentSearch || t.name.toLowerCase().includes(currentSearch);
+                        return matchesCat && matchesSearch;
+                      });
+
+                      return (
+                        <div
+                          key={idx}
+                          className="p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-[#2e3035] bg-white dark:bg-[#1a1b1e] shadow-sm space-y-4 transition-all hover:border-gray-300 dark:hover:border-[#3e4046]"
+                        >
+                          {/* Card Top: Number, Badges, Reorder & Delete */}
+                          <div className="flex items-center justify-between gap-2 pb-3 border-b border-gray-100 dark:border-[#26282c]">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="w-6 h-6 rounded-full bg-[#FD4A32]/15 text-[#FD4A32] text-xs font-black flex items-center justify-center">
+                                {idx + 1}
+                              </span>
+                              {isCoding && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                  <Code2 className="w-3 h-3 text-purple-500" /> Hands-on Coding
+                                </span>
+                              )}
+                              {isTech && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                  <Cpu className="w-3 h-3 text-emerald-500" /> Core CS Technical MCQs
+                                </span>
+                              )}
+                              {isAptitude && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                  <BookOpen className="w-3 h-3 text-blue-500" /> Aptitude & Reasoning
+                                </span>
+                              )}
+                              <span className="text-[11px] font-bold text-gray-500">
+                                {sec.question_count} Qs • {(Number(sec.question_count) || 0) * (Number(sec.marks_per_correct) || 1)} Marks
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveSection(idx, 'up')}
+                                title="Move Earlier"
+                                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30 transition-colors"
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === sections.length - 1}
+                                onClick={() => handleMoveSection(idx, 'down')}
+                                title="Move Later"
+                                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30 transition-colors"
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
+                              {sections.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSection(idx)}
+                                  title="Delete Section"
+                                  className="p-1 text-gray-400 hover:text-rose-600 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 1. Discipline Switcher (3-Way Toggle) */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                              Section Discipline Format *
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleSectionTypeChange(idx, 'MCQ')}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
+                                  isAptitude
+                                    ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20 shadow-sm'
+                                    : 'border-gray-200 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#26282c]'
+                                }`}
+                              >
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isAptitude ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
+                                  <BookOpen className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-bold leading-tight">Aptitude & Reasoning</div>
+                                  <div className="text-[10px] opacity-70 truncate">Quant, Logical, Verbal, DI</div>
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleSectionTypeChange(idx, 'TECHNICAL_MCQ')}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
+                                  isTech
+                                    ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-sm'
+                                    : 'border-gray-200 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#26282c]'
+                                }`}
+                              >
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isTech ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
+                                  <Cpu className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-bold leading-tight">Core CS Technical</div>
+                                  <div className="text-[10px] opacity-70 truncate">DSA, DBMS, OS, Java, C++</div>
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleSectionTypeChange(idx, 'CODING')}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
+                                  isCoding
+                                    ? 'border-purple-500 bg-purple-50/70 dark:bg-purple-950/30 text-purple-900 dark:text-purple-200 ring-2 ring-purple-500/20 shadow-sm'
+                                    : 'border-gray-200 dark:border-[#2e3035] bg-gray-50/50 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#26282c]'
+                                }`}
+                              >
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isCoding ? 'bg-purple-600 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
+                                  <Code2 className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-bold leading-tight">Hands-on Coding</div>
+                                  <div className="text-[10px] opacity-70 truncate">Monaco IDE & Test Cases</div>
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 2. Section Title & Quick Suggestions */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                              Section Title *
+                            </label>
                             <input
                               type="text"
                               value={sec.name}
                               onChange={e => handleUpdateSection(idx, { name: e.target.value })}
-                              className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-bold"
+                              placeholder={isCoding ? 'e.g. Part B: Advanced Hands-on Coding' : isTech ? 'e.g. Core CS Technical Assessment' : 'e.g. Numerical Ability & Quantitative Aptitude'}
+                              className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FD4A32]/30"
                             />
+                            {/* Quick Title Suggestion Pills */}
+                            <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
+                              <span className="text-[10px] text-gray-400 font-semibold">Quick Ideas:</span>
+                              {(isCoding
+                                ? [
+                                    'Hands-on Coding Assessment',
+                                    'Part B: Advanced Coding Round',
+                                    'Pure Coding OA Round',
+                                    'Campus DSA Coding Challenge',
+                                    'Core Programming Logic',
+                                  ]
+                                : isTech
+                                ? [
+                                    'Core CS Technical Assessment',
+                                    'Programming Logic & CS Fundamentals',
+                                    'DBMS, SQL & Operating Systems',
+                                    'Campus OA Pseudo-Code & DSA',
+                                    'Full-Stack Technical Knowledge',
+                                  ]
+                                : [
+                                    'Numerical Ability & Quant',
+                                    'Reasoning & Logical Deduction',
+                                    'Verbal Ability & Reading',
+                                    'Data Interpretation & Caselets',
+                                    'Part A: Foundation Section',
+                                  ]
+                              ).map(idea => (
+                                <button
+                                  key={idea}
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { name: idea })}
+                                  className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-[#202225] hover:bg-gray-200 dark:hover:bg-[#2a2c30] text-gray-600 dark:text-gray-400 transition-colors"
+                                >
+                                  {idea}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
-                          {sections.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSection(idx)}
-                              className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          {/* 3. Discipline-Specific Curriculum Configuration */}
+                          {/* Case A: Aptitude */}
+                          {isAptitude && (
+                            <div className="p-3.5 rounded-xl border border-blue-200/70 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/20 space-y-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                                  <Filter className="w-3.5 h-3.5 text-blue-600" />
+                                  Aptitude Curriculum & Specific Topics
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px]">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateSection(idx, { topic_ids: [] })}
+                                    className="font-bold text-blue-600 hover:underline"
+                                  >
+                                    Auto-Pool All (Clear Selection)
+                                  </button>
+                                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateSection(idx, {
+                                        topic_ids: Array.from(
+                                          new Set([...sec.topic_ids, ...filteredAptitudeTopics.map(t => t.id)])
+                                        ),
+                                      })
+                                    }
+                                    className="font-bold text-blue-600 hover:underline"
+                                  >
+                                    Select All Filtered ({filteredAptitudeTopics.length})
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Domain Category Filter Tabs */}
+                              <div className="flex flex-wrap gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSectionCategoryFilters(prev => ({ ...prev, [idx]: 'all' }))
+                                  }
+                                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                                    currentCategoryFilter === 'all'
+                                      ? 'bg-blue-600 text-white shadow-sm'
+                                      : 'bg-white dark:bg-[#1f2124] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-[#383a40] hover:bg-gray-100'
+                                  }`}
+                                >
+                                  All Domains ({allAptitudeTopics.length})
+                                </button>
+                                {APTITUDE_CATEGORIES.map(cat => {
+                                  const isSelected = currentCategoryFilter === cat.id;
+                                  return (
+                                    <button
+                                      key={cat.id}
+                                      type="button"
+                                      onClick={() =>
+                                        setSectionCategoryFilters(prev => ({ ...prev, [idx]: cat.id }))
+                                      }
+                                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                                        isSelected
+                                          ? 'bg-blue-600 text-white shadow-sm'
+                                          : 'bg-white dark:bg-[#1f2124] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-[#383a40] hover:bg-gray-100'
+                                      }`}
+                                    >
+                                      {cat.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Search & Topic Chips */}
+                              <div className="space-y-2">
+                                <div className="relative">
+                                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-gray-400" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search topics (e.g. Numbers, Profit and Loss, Seating Arrangement)..."
+                                    value={sectionSearchTerms[idx] || ''}
+                                    onChange={e =>
+                                      setSectionSearchTerms(prev => ({ ...prev, [idx]: e.target.value }))
+                                    }
+                                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#383a40] bg-white dark:bg-[#151618] text-xs"
+                                  />
+                                </div>
+
+                                <div className="max-h-36 overflow-y-auto p-2 rounded-lg bg-white/70 dark:bg-[#151618] border border-gray-200 dark:border-[#2e3035] flex flex-wrap gap-1.5">
+                                  {filteredAptitudeTopics.map(t => {
+                                    const isChosen = sec.topic_ids.includes(t.id);
+                                    return (
+                                      <button
+                                        key={t.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const next = isChosen
+                                            ? sec.topic_ids.filter(id => id !== t.id)
+                                            : [...sec.topic_ids, t.id];
+                                          handleUpdateSection(idx, { topic_ids: next });
+                                        }}
+                                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+                                          isChosen
+                                            ? 'bg-blue-600 text-white font-bold shadow-sm'
+                                            : 'bg-gray-100 dark:bg-[#202225] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#282a2e]'
+                                        }`}
+                                      >
+                                        {isChosen ? <Check className="w-3 h-3" /> : null}
+                                        {t.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                  {sec.topic_ids.length === 0 ? (
+                                    <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                                      🌐 Auto-Pooling All Topics: Questions will be randomly sampled across all verified aptitude questions in this category.
+                                    </span>
+                                  ) : (
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                      ✓ Filtered Focus: Sampling exclusively from {sec.topic_ids.length} selected topic(s).
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           )}
-                        </div>
 
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                              Question Count
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="100"
-                              value={sec.question_count}
-                              onChange={e =>
-                                handleUpdateSection(idx, {
-                                  question_count: parseInt(e.target.value) || 1,
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-semibold text-center"
-                            />
+                          {/* Case B: Technical MCQs */}
+                          {isTech && (
+                            <div className="p-3.5 rounded-xl border border-emerald-200/70 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/20 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                                  <Cpu className="w-3.5 h-3.5 text-emerald-600" />
+                                  Core CS Subject Selection
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { topic_ids: [] })}
+                                  className="text-[10px] font-bold text-emerald-600 hover:underline"
+                                >
+                                  {sec.topic_ids.length === 0 ? '✓ Mixed Comprehensive Pool' : 'Reset to All Core CS'}
+                                </button>
+                              </div>
+
+                              <div className="flex flex-wrap gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { topic_ids: [] })}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    sec.topic_ids.length === 0
+                                      ? 'bg-emerald-600 text-white shadow-sm'
+                                      : 'bg-white dark:bg-[#151618] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#383a40] hover:bg-gray-100'
+                                  }`}
+                                >
+                                  🌐 All Core CS (Mixed Pool)
+                                </button>
+                                {TECHNICAL_MCQ_SUBJECTS.map(sub => {
+                                  const isSelected = sec.topic_ids.includes(sub.id);
+                                  return (
+                                    <button
+                                      key={sub.id}
+                                      type="button"
+                                      onClick={() => {
+                                        const next = isSelected
+                                          ? sec.topic_ids.filter(id => id !== sub.id)
+                                          : [...sec.topic_ids, sub.id];
+                                        handleUpdateSection(idx, { topic_ids: next });
+                                      }}
+                                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                                        isSelected
+                                          ? 'bg-emerald-600 text-white font-bold shadow-sm'
+                                          : 'bg-white dark:bg-[#151618] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#383a40] hover:bg-gray-100'
+                                      }`}
+                                    >
+                                      {isSelected && <Check className="w-3 h-3" />}
+                                      {sub.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                {sec.topic_ids.length === 0 ? (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    🌐 Auto-pooling across C, C++, Java, Python, OOPs, DBMS, OS, Networks & DSA logic.
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    ✓ Sampling exclusively from {sec.topic_ids.length} selected CS subject(s).
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Case C: Hands-on Coding */}
+                          {isCoding && (
+                            <div className="p-3.5 rounded-xl border border-purple-200/70 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/20 space-y-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                                  <Code2 className="w-3.5 h-3.5 text-purple-600" />
+                                  Hands-on Programming Track & Problem Domains
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { topic_ids: [] })}
+                                  className="text-[10px] font-bold text-purple-600 hover:underline"
+                                >
+                                  {sec.topic_ids.length === 0 ? '✓ Auto-Sampling All Problem Types' : 'Clear Domain Filter'}
+                                </button>
+                              </div>
+
+                              {/* Track Selection */}
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider self-center mr-1">
+                                  Track:
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { coding_track: 'CAMPUS_DSA' })}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                                    sec.coding_track === 'CAMPUS_DSA'
+                                      ? 'bg-purple-600 text-white shadow-sm'
+                                      : 'bg-white dark:bg-[#151618] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#383a40]'
+                                  }`}
+                                >
+                                  🗺️ Campus DSA Roadmap
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { coding_track: 'PROGRAMMING_150' })}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                                    sec.coding_track === 'PROGRAMMING_150'
+                                      ? 'bg-purple-600 text-white shadow-sm'
+                                      : 'bg-white dark:bg-[#151618] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#383a40]'
+                                  }`}
+                                >
+                                  🧱 Programming 150 Foundation
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSection(idx, { coding_track: undefined })}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                                    !sec.coding_track
+                                      ? 'bg-purple-600 text-white shadow-sm'
+                                      : 'bg-white dark:bg-[#151618] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#383a40]'
+                                  }`}
+                                >
+                                  🌐 All Tracks (Mixed)
+                                </button>
+                              </div>
+
+                              {/* Problem Categories Chips */}
+                              <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                                  Select Target Problem Domains (Optional)
+                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {CODING_CATEGORIES.map(cat => {
+                                    const isChosen = sec.topic_ids.includes(cat.id);
+                                    return (
+                                      <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const next = isChosen
+                                            ? sec.topic_ids.filter(id => id !== cat.id)
+                                            : [...sec.topic_ids, cat.id];
+                                          handleUpdateSection(idx, { topic_ids: next });
+                                        }}
+                                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+                                          isChosen
+                                            ? 'bg-purple-600 text-white font-bold shadow-sm'
+                                            : 'bg-white dark:bg-[#151618] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#383a40] hover:bg-gray-100'
+                                        }`}
+                                      >
+                                        {isChosen && <Check className="w-3 h-3" />}
+                                        {cat.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="p-2 rounded-lg bg-purple-100/50 dark:bg-purple-950/40 text-[11px] text-purple-800 dark:text-purple-300 flex items-start gap-1.5">
+                                <Terminal className="w-3.5 h-3.5 text-purple-600 shrink-0 mt-0.5" />
+                                <span>
+                                  Students will solve coding problems in the integrated Monaco IDE (supporting C, C++, Java, Python, and JavaScript) with live test-case validation.
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 4. Difficulty, Question Count, Marks & Scoring Rules */}
+                          <div className="space-y-3 pt-1 border-t border-gray-100 dark:border-[#26282c]">
+                            {/* Difficulty Selector */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                Difficulty Rigor
+                              </label>
+                              <div className="flex flex-wrap gap-1.5">
+                                {[
+                                  { id: 'ALL', label: 'Mixed (Auto-Distributed)' },
+                                  { id: 'EASY', label: '● Easy (L1 Foundation)' },
+                                  { id: 'MEDIUM', label: '● Medium (L2 Standard)' },
+                                  { id: 'HARD', label: '● Hard (L3 Advanced)' },
+                                ].map(diff => (
+                                  <button
+                                    key={diff.id}
+                                    type="button"
+                                    onClick={() => handleUpdateSection(idx, { difficulty: diff.id as any })}
+                                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                                      (sec.difficulty || 'ALL') === diff.id
+                                        ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-sm'
+                                        : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {diff.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Numbers Grid */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {/* Question Count */}
+                              <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  {isCoding ? 'Problem Count *' : 'Question Count *'}
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max={isCoding ? 10 : 100}
+                                  value={sec.question_count}
+                                  onChange={e =>
+                                    handleUpdateSection(idx, {
+                                      question_count: parseInt(e.target.value) || 1,
+                                    })
+                                  }
+                                  className="w-full px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-bold text-center"
+                                />
+                                <div className="flex items-center gap-1 mt-1">
+                                  {(isCoding ? [1, 2, 3, 5] : [5, 10, 15, 20, 25, 30]).map(cnt => (
+                                    <button
+                                      key={cnt}
+                                      type="button"
+                                      onClick={() => handleUpdateSection(idx, { question_count: cnt })}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                        sec.question_count === cnt
+                                          ? 'bg-[#FD4A32] text-white'
+                                          : 'bg-gray-100 dark:bg-[#202225] text-gray-500 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      {cnt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Marks Per Correct */}
+                              <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Marks / Correct
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max={isCoding ? 100 : 20}
+                                  value={sec.marks_per_correct}
+                                  onChange={e =>
+                                    handleUpdateSection(idx, {
+                                      marks_per_correct: parseInt(e.target.value) || 1,
+                                    })
+                                  }
+                                  className="w-full px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-bold text-center"
+                                />
+                                <div className="flex items-center gap-1 mt-1">
+                                  {(isCoding ? [10, 25, 50] : [1, 2, 3, 5]).map(m => (
+                                    <button
+                                      key={m}
+                                      type="button"
+                                      onClick={() => handleUpdateSection(idx, { marks_per_correct: m })}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                        sec.marks_per_correct === m
+                                          ? 'bg-[#FD4A32] text-white'
+                                          : 'bg-gray-100 dark:bg-[#202225] text-gray-500 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      +{m}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Negative Marking */}
+                              <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Negative Penalty
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.25"
+                                  min="0"
+                                  max="5"
+                                  value={sec.negative_marking}
+                                  onChange={e =>
+                                    handleUpdateSection(idx, {
+                                      negative_marking: parseFloat(e.target.value) || 0,
+                                    })
+                                  }
+                                  className="w-full px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-bold text-center"
+                                />
+                                <div className="flex items-center gap-1 mt-1">
+                                  {[0, 0.25, 0.33, 0.5].map(neg => (
+                                    <button
+                                      key={neg}
+                                      type="button"
+                                      onClick={() => handleUpdateSection(idx, { negative_marking: neg })}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                        sec.negative_marking === neg
+                                          ? 'bg-rose-600 text-white'
+                                          : 'bg-gray-100 dark:bg-[#202225] text-gray-500 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      {neg === 0 ? '0' : `-${neg}`}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Optional Section Timer */}
+                              <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Section Timer (Mins)
+                                </label>
+                                <input
+                                  type="number"
+                                  min="5"
+                                  max="180"
+                                  placeholder="Auto (Flexible)"
+                                  value={sec.duration_minutes || ''}
+                                  onChange={e =>
+                                    handleUpdateSection(idx, {
+                                      duration_minutes: e.target.value ? parseInt(e.target.value) : undefined,
+                                    })
+                                  }
+                                  className="w-full px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-bold text-center"
+                                />
+                                <div className="text-[9px] text-gray-400 mt-1 text-center truncate">
+                                  {sec.duration_minutes ? `${sec.duration_minutes}m limit` : 'Shared test timer'}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-
-                          <div>
-                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                              Marks / Correct
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={sec.marks_per_correct}
-                              onChange={e =>
-                                handleUpdateSection(idx, {
-                                  marks_per_correct: parseInt(e.target.value) || 1,
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-semibold text-center"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                              Negative Marks
-                            </label>
-                            <input
-                              type="number"
-                              step="0.25"
-                              min="0"
-                              max="2"
-                              value={sec.negative_marking}
-                              onChange={e =>
-                                handleUpdateSection(idx, {
-                                  negative_marking: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs font-semibold text-center"
-                            />
-                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                            Topic Clusters (Optional - Leave empty to pool from all verified questions)
-                          </label>
-                          <select
-                            multiple
-                            value={sec.topic_ids}
-                            onChange={e => {
-                              const selected = Array.from(e.target.selectedOptions, o => o.value);
-                              handleUpdateSection(idx, { topic_ids: selected });
-                            }}
-                            className="w-full h-24 p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151618] text-xs"
-                          >
-                            {dbTopics.map(t => (
-                              <option key={t.id} value={t.id}>
-                                {t.name} ({t.cluster || t.category_slug})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    ))}
+                  {/* Bottom Add Section Controls */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl border border-dashed border-gray-300 dark:border-[#383a40] bg-gray-50/50 dark:bg-[#1a1b1e] gap-3">
+                    <div className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                      Add another assessment section:
+                    </div>
+                    <div className="flex items-center flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleAddSection('MCQ')}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Aptitude Section
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSection('TECHNICAL_MCQ')}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Technical MCQ Section
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSection('CODING')}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Coding Round
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Step 3: Anti-Cheat & Review */}
               {step === 3 && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#202225] border border-gray-200 dark:border-[#2e3035] space-y-4">
                     <div className="flex items-center gap-2 text-xs font-bold text-gray-900 dark:text-white">
                       <ShieldCheck className="w-4 h-4 text-[#FD4A32]" />
@@ -1707,16 +2523,67 @@ export default function CreateMockExamModal({
                     </div>
                   </div>
 
-                  {/* Summary Box */}
-                  <div className="p-4 rounded-xl bg-orange-50/60 dark:bg-[#FD4A32]/10 border border-orange-200 dark:border-[#FD4A32]/30 flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-bold text-gray-900 dark:text-white">{title || 'Untitled Exam'}</div>
-                      <div className="text-gray-600 dark:text-gray-400 mt-0.5">
-                        {sections.length} Sections • {totalQuestions} Questions • {totalMarks} Total Marks • {durationMinutes} Mins
+                  {/* Detailed Exam Blueprint Summary */}
+                  <div className="p-4 rounded-2xl bg-orange-50/60 dark:bg-[#FD4A32]/10 border border-orange-200 dark:border-[#FD4A32]/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-gray-900 dark:text-white text-sm">
+                          {title || 'Untitled Exam'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          Target: {targetCompany} • {durationMinutes} Mins Duration • Pass Cutoff: {passingPercentage}%
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-black text-[#FD4A32]">
+                          {totalQuestions} Qs • {totalMarks} Marks
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right font-bold text-[#FD4A32]">
-                      Target: {targetDepartment === 'ALL' ? 'College-Wide' : targetDepartment} ({targetBatchYear})
+
+                    {/* Section Breakdown List */}
+                    <div className="space-y-1.5 pt-2 border-t border-orange-200/60 dark:border-[#FD4A32]/20">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                        Configured Section Blueprint ({sections.length} Sections):
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {sections.map((s, i) => (
+                          <div
+                            key={i}
+                            className="p-2 rounded-xl bg-white/80 dark:bg-[#1a1b1e] border border-gray-200 dark:border-[#2e3035] flex items-center justify-between text-xs"
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="w-5 h-5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-[10px] font-bold flex items-center justify-center shrink-0">
+                                {i + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="font-bold text-gray-800 dark:text-gray-200 truncate">
+                                  {s.name}
+                                </div>
+                                <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                  <span>
+                                    {s.section_type === 'CODING'
+                                      ? '⚡ Coding'
+                                      : s.section_type === 'TECHNICAL_MCQ'
+                                      ? '💻 Tech MCQs'
+                                      : '📝 Aptitude'}
+                                  </span>
+                                  <span>•</span>
+                                  <span>{s.difficulty || 'Mixed'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="font-bold text-gray-700 dark:text-gray-300">
+                                {s.question_count} Qs
+                              </span>
+                              <span className="text-[10px] text-gray-400 block">
+                                ({(Number(s.question_count) || 0) * (Number(s.marks_per_correct) || 1)} pts)
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1746,6 +2613,18 @@ export default function CreateMockExamModal({
                       if (step === 1 && !title.trim()) {
                         toast.error('Please enter an exam title.');
                         return;
+                      }
+                      if (step === 2) {
+                        for (let i = 0; i < sections.length; i++) {
+                          if (!sections[i].name.trim()) {
+                            toast.error(`Please enter a title for Section ${i + 1}.`);
+                            return;
+                          }
+                          if (!sections[i].question_count || sections[i].question_count <= 0) {
+                            toast.error(`Section ${i + 1} must have at least 1 question.`);
+                            return;
+                          }
+                        }
                       }
                       setStep((step + 1) as any);
                     }}
