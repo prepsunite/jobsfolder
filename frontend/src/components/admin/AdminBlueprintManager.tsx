@@ -36,6 +36,7 @@ import {
   CODING_CATEGORIES,
   APTITUDE_CATEGORIES,
   TECHNICAL_MCQ_SUBJECTS,
+  EXAM_PRESET_TEMPLATES,
 } from '@/services/mockExamBlueprint.service';
 import type { MockExamTemplate, TemplateSectionDraft } from '@/types/tpo';
 import { useToast } from '@/contexts/ToastContext';
@@ -76,51 +77,28 @@ export default function AdminBlueprintManager() {
     );
   }, [blueprints, searchFilter]);
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = (preset?: MockExamTemplate) => {
+    const base = preset || EXAM_PRESET_TEMPLATES[0]; // defaults to TCS NQT 2026/2027 official pattern
     const newBlueprint: MockExamTemplate = {
+      ...JSON.parse(JSON.stringify(base)),
       id: `bp-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
-      name: 'New Campus Drive Pattern',
-      target_company: 'Custom Recruiter',
-      badge: 'Campus Drive',
-      description: 'Official test blueprint with multi-section structure.',
-      duration_minutes: 90,
-      passing_percentage: 45,
-      enable_fullscreen_lock: true,
-      enable_tab_switch_detection: true,
-      max_tab_switches_allowed: 3,
-      shuffle_questions: true,
-      shuffle_options: true,
-      show_results_immediately: true,
-      sections: [
-        {
-          name: 'Section 1: Quantitative & Numerical Ability',
-          section_type: 'MCQ',
-          question_count: 20,
-          marks_per_correct: 1,
-          negative_marking: 0,
-          duration_minutes: 30,
-          category: 'arithmetic-aptitude',
-          topic_ids: ['numbers', 'time-and-work'],
-          random_sampling: true,
-        },
-        {
-          name: 'Section 2: Hands-on Coding Assessment',
-          section_type: 'CODING',
-          question_count: 2,
-          marks_per_correct: 15,
-          negative_marking: 0,
-          duration_minutes: 45,
-          category: 'coding',
-          coding_track: 'PROGRAMMING_150',
-          topic_ids: ['ARRAYS', 'STRINGS'],
-          random_sampling: true,
-        },
-      ],
+      name: preset ? preset.name : 'TCS NQT 2026/2027 Official Pattern',
+      is_default: false,
     };
     setEditingBlueprint(newBlueprint);
     setActiveModalTab('sections');
     setActiveSectionIdx(0);
     setIsModalOpen(true);
+  };
+
+  const handleLoadPreset = (preset: MockExamTemplate) => {
+    if (!editingBlueprint) return;
+    const cloned: MockExamTemplate = JSON.parse(JSON.stringify(preset));
+    cloned.id = editingBlueprint.id;
+    setEditingBlueprint(cloned);
+    setActiveSectionIdx(0);
+    setActiveModalTab('sections');
+    toast.success(`Loaded "${preset.name}" with ${cloned.sections.length} sections (${cloned.duration_minutes}m total)!`);
   };
 
   const handleOpenEdit = (bp: MockExamTemplate) => {
@@ -223,7 +201,7 @@ export default function AdminBlueprintManager() {
       marks_per_correct: isCoding ? 15 : 1,
       negative_marking: 0,
       duration_minutes: isCoding ? 45 : 20,
-      category: isCoding ? 'coding' : isTech ? 'technical-mcqs' : 'arithmetic-aptitude',
+      category: isCoding ? 'coding' : isTech ? 'technical-mcqs' : 'all',
       coding_track: isCoding ? 'PROGRAMMING_150' : undefined,
       topic_ids: isCoding ? ['ARRAYS', 'STRINGS'] : [],
       random_sampling: true,
@@ -320,7 +298,7 @@ export default function AdminBlueprintManager() {
     } else {
       const isDefaultName = !sec.name || sec.name.includes('Technical') || sec.name.includes('Coding') || sec.name.startsWith(`Section ${sNum}`);
       handleSectionChange(safeIdx, 'section_type', 'MCQ');
-      handleSectionChange(safeIdx, 'category', 'arithmetic-aptitude');
+      handleSectionChange(safeIdx, 'category', 'all');
       handleSectionChange(safeIdx, 'coding_track', undefined);
       handleSectionChange(safeIdx, 'topic_ids', []);
       if (isDefaultName) {
@@ -367,7 +345,7 @@ export default function AdminBlueprintManager() {
       marks_per_correct: nextType === 'CODING' ? 15 : 1,
       negative_marking: 0,
       duration_minutes: nextType === 'CODING' ? 45 : 20,
-      category: nextType === 'CODING' ? 'coding' : nextType === 'TECHNICAL_MCQ' ? 'technical-mcqs' : 'arithmetic-aptitude',
+      category: nextType === 'CODING' ? 'coding' : nextType === 'TECHNICAL_MCQ' ? 'technical-mcqs' : 'all',
       coding_track: nextType === 'CODING' ? 'PROGRAMMING_150' : undefined,
       topic_ids: nextType === 'CODING' ? ['ARRAYS', 'STRINGS'] : [],
       random_sampling: true,
@@ -411,6 +389,23 @@ export default function AdminBlueprintManager() {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Define multi-section mock exam patterns (MCQ & Coding), assign topics from the 500-Q bank, and enable random sampling.
           </p>
+
+          {/* Quick-Launch 1-Click Presets */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-[#FD4A32]" /> Fast Templates:
+            </span>
+            {EXAM_PRESET_TEMPLATES.slice(0, 4).map(preset => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => handleOpenCreate(preset)}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#1c1d22] text-gray-700 dark:text-gray-300 hover:bg-[#FD4A32] hover:text-white border border-gray-200 dark:border-[#2c2f38] transition-all cursor-pointer"
+              >
+                + {preset.badge || preset.target_company}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -424,7 +419,7 @@ export default function AdminBlueprintManager() {
           </button>
           <button
             type="button"
-            onClick={handleOpenCreate}
+            onClick={() => handleOpenCreate(EXAM_PRESET_TEMPLATES[0])}
             className="px-4 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -612,7 +607,17 @@ export default function AdminBlueprintManager() {
           const activeCategory = activeSec.category || 'all';
           visibleItems = aptitudeTopics
             .filter(t => activeCategory === 'all' || t.category_slug === activeCategory)
-            .map(t => ({ id: t.id, name: t.name, badge: t.category_slug }))
+            .map(t => {
+              let badge = t.category_slug;
+              if (badge === 'arithmetic-aptitude') badge = 'Quant';
+              else if (badge === 'data-interpretation') badge = 'DI';
+              else if (badge === 'logical-reasoning') badge = 'Logical';
+              else if (badge === 'verbal-ability') badge = 'Verbal';
+              else if (badge === 'verbal-reasoning') badge = 'Verbal Reas';
+              else if (badge === 'non-verbal-reasoning') badge = 'Nonverbal';
+              else if (badge === 'technical-aptitude') badge = 'Cognitive';
+              return { id: t.id, name: t.name, badge };
+            })
             .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery) || t.id.toLowerCase().includes(searchQuery));
         } else if (isTechnicalMcq) {
           const activeSubject = activeSec.category || 'technical-mcqs';
@@ -684,6 +689,38 @@ export default function AdminBlueprintManager() {
                   >
                     <X className="w-4 h-4" />
                   </button>
+                </div>
+              </div>
+
+              {/* ⚡ Quick-Load Industry Blueprint Presets */}
+              <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent border border-[#FD4A32]/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-[#FD4A32] text-white shrink-0">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white block font-display">
+                      ⚡ Quick-Load Official Company Patterns
+                    </span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                      Pre-fill exact sections, timings, marks, and topics in 1-click
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {EXAM_PRESET_TEMPLATES.map(preset => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleLoadPreset(preset)}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white dark:bg-[#18191c] hover:bg-[#FD4A32] hover:text-white text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-[#2c2f38] hover:border-[#FD4A32] transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                      title={`${preset.name} (${preset.sections.length} sections, ${preset.duration_minutes}m)`}
+                    >
+                      <span>{preset.badge || preset.target_company}</span>
+                      <span className="text-[9px] opacity-75 font-mono">({preset.sections.length}S)</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -946,6 +983,58 @@ export default function AdminBlueprintManager() {
                             className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
                             placeholder="e.g. Section 1: Quantitative Ability"
                           />
+                          {/* Quick Title Suggestions */}
+                          <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">Quick Ideas:</span>
+                            {isAptitudeMcq && [
+                              'Numerical Ability',
+                              'Reasoning Ability',
+                              'Verbal Ability',
+                              'Part A: Numerical Ability',
+                              'Part A: Reasoning Ability',
+                              'Part A: Verbal Ability',
+                              'Part B: Advanced Quant & Reasoning',
+                            ].map(suggestion => (
+                              <button
+                                key={suggestion}
+                                type="button"
+                                onClick={() => handleSectionChange(safeSectionIdx, 'name', suggestion)}
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#202228] hover:bg-amber-600 hover:text-white text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                            {isTechnicalMcq && [
+                              'Core CS Technical Assessment',
+                              'Programming Logic & CS Fundamentals',
+                              'Data Structures & Algorithms MCQs',
+                              'DBMS & Cloud Systems',
+                            ].map(suggestion => (
+                              <button
+                                key={suggestion}
+                                type="button"
+                                onClick={() => handleSectionChange(safeSectionIdx, 'name', suggestion)}
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#202228] hover:bg-violet-600 hover:text-white text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                            {isCoding && [
+                              'Part B: Advanced Hands-on Coding',
+                              'Hands-on Coding Assessment',
+                              'DSA Coding Challenge',
+                              'Pure Coding OA Round',
+                            ].map(suggestion => (
+                              <button
+                                key={suggestion}
+                                type="button"
+                                onClick={() => handleSectionChange(safeSectionIdx, 'name', suggestion)}
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#202228] hover:bg-blue-600 hover:text-white text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Category / Subject / Track Filter */}
@@ -953,21 +1042,20 @@ export default function AdminBlueprintManager() {
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                             <Filter className="w-3 h-3 text-gray-400" />
                             {isAptitudeMcq
-                              ? 'Aptitude Category Focus'
+                              ? 'Aptitude Category Filter'
                               : isTechnicalMcq
-                              ? 'Core CS Subject Focus'
+                              ? 'Core CS Subject Filter'
                               : 'Target Coding Track'}
                           </label>
                           {isAptitudeMcq ? (
                             <select
-                              value={activeSec.category || 'arithmetic-aptitude'}
+                              value={activeSec.category || 'all'}
                               onChange={e => {
                                 handleSectionChange(safeSectionIdx, 'category', e.target.value);
-                                handleSectionChange(safeSectionIdx, 'topic_ids', []);
                               }}
                               className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
                             >
-                              <option value="all">All Aptitude Categories (Mixed Pool)</option>
+                              <option value="all">🌐 All Aptitude Domains (Cross-Select Quant + DI + Logical + Verbal)</option>
                               {APTITUDE_CATEGORIES.map(cat => (
                                 <option key={cat.id} value={cat.id}>
                                   {cat.name}
@@ -980,11 +1068,6 @@ export default function AdminBlueprintManager() {
                               onChange={e => {
                                 const val = e.target.value;
                                 handleSectionChange(safeSectionIdx, 'category', val);
-                                if (val !== 'technical-mcqs') {
-                                  handleSectionChange(safeSectionIdx, 'topic_ids', [val]);
-                                } else {
-                                  handleSectionChange(safeSectionIdx, 'topic_ids', []);
-                                }
                               }}
                               className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
                             >
@@ -1001,7 +1084,6 @@ export default function AdminBlueprintManager() {
                               onChange={e => {
                                 const val = e.target.value as any;
                                 handleSectionChange(safeSectionIdx, 'coding_track', val);
-                                handleSectionChange(safeSectionIdx, 'topic_ids', []);
                               }}
                               className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
                             >
@@ -1169,6 +1251,150 @@ export default function AdminBlueprintManager() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Domain Quick Filters */}
+                      {isAptitudeMcq && (
+                        <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-gray-50/80 dark:bg-[#18191c]/80 border border-gray-200/60 dark:border-[#282a32]">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Filter Domain:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSectionChange(safeSectionIdx, 'category', 'all')}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                              (!activeSec.category || activeSec.category === 'all')
+                                ? 'bg-amber-600 text-white shadow-2xs'
+                                : 'bg-white dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#282a32]'
+                            }`}
+                          >
+                            🌐 All Categories
+                          </button>
+                          {APTITUDE_CATEGORIES.map(cat => {
+                            const isCatActive = activeSec.category === cat.id;
+                            let shortLabel = cat.name.replace(' Aptitude', '').replace(' Reasoning', '').replace(' Ability', '');
+                            return (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => handleSectionChange(safeSectionIdx, 'category', cat.id)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                  isCatActive
+                                    ? 'bg-amber-600 text-white shadow-2xs'
+                                    : 'bg-white dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#282a32]'
+                                }`}
+                              >
+                                {shortLabel}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {isTechnicalMcq && (
+                        <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-gray-50/80 dark:bg-[#18191c]/80 border border-gray-200/60 dark:border-[#282a32]">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Filter Subject:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSectionChange(safeSectionIdx, 'category', 'technical-mcqs')}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                              (!activeSec.category || activeSec.category === 'technical-mcqs')
+                                ? 'bg-violet-600 text-white shadow-2xs'
+                                : 'bg-white dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#282a32]'
+                            }`}
+                          >
+                            All CS Subjects
+                          </button>
+                          {TECHNICAL_MCQ_SUBJECTS.map(subj => {
+                            const isSubjActive = activeSec.category === subj.id;
+                            return (
+                              <button
+                                key={subj.id}
+                                type="button"
+                                onClick={() => handleSectionChange(safeSectionIdx, 'category', subj.id)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                  isSubjActive
+                                    ? 'bg-violet-600 text-white shadow-2xs'
+                                    : 'bg-white dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#282a32]'
+                                }`}
+                              >
+                                {subj.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {isCoding && (
+                        <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-gray-50/80 dark:bg-[#18191c]/80 border border-gray-200/60 dark:border-[#282a32]">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Filter Track:</span>
+                          {[
+                            { id: 'ALL', label: 'All Coding Topics' },
+                            { id: 'PROGRAMMING_150', label: 'Programming 150 Foundation' },
+                            { id: 'CAMPUS_DSA', label: 'Campus DSA Roadmap' },
+                          ].map(trk => {
+                            const isTrackActive = (activeSec.coding_track || 'ALL') === trk.id;
+                            return (
+                              <button
+                                key={trk.id}
+                                type="button"
+                                onClick={() => handleSectionChange(safeSectionIdx, 'coding_track', trk.id)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                  isTrackActive
+                                    ? 'bg-blue-600 text-white shadow-2xs'
+                                    : 'bg-white dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#282a32]'
+                                }`}
+                              >
+                                {trk.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Selected Topics Tray */}
+                      {selectedCount > 0 && (
+                        <div className="p-3 rounded-xl bg-white dark:bg-[#18191c] border border-gray-200 dark:border-[#27292e] space-y-2 shadow-2xs">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                              <Check className="w-4 h-4 text-emerald-500" />
+                              Selected Topics for Section #{safeSectionIdx + 1} ({selectedCount})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleSectionChange(safeSectionIdx, 'topic_ids', [])}
+                              className="text-[11px] text-red-500 hover:text-red-600 font-semibold cursor-pointer"
+                            >
+                              Clear All ({selectedCount})
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar pt-0.5">
+                            {activeSec.topic_ids?.map(tid => {
+                              let label = tid;
+                              const aptItem = aptitudeTopics.find((t: any) => t.id === tid);
+                              const techItem = TECHNICAL_MCQ_SUBJECTS.find(t => t.id === tid);
+                              const codeItem = CODING_CATEGORIES.find(t => t.id === tid);
+                              if (aptItem) label = aptItem.name;
+                              else if (techItem) label = techItem.name;
+                              else if (codeItem) label = codeItem.name;
+
+                              return (
+                                <span
+                                  key={tid}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-[#202228] border border-gray-200 dark:border-[#2f323c] text-gray-800 dark:text-gray-200 shadow-2xs"
+                                >
+                                  <span>{label}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleTopic(safeSectionIdx, tid)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer ml-1"
+                                    title={`Remove ${label}`}
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Chips Container */}
                       <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-3 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] custom-scrollbar">
