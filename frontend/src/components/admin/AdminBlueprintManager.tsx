@@ -26,6 +26,10 @@ import {
   Filter,
   Cpu,
   Brain,
+  Settings,
+  ShieldCheck,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import {
   mockExamBlueprintService,
@@ -44,6 +48,8 @@ export default function AdminBlueprintManager() {
   const [editingBlueprint, setEditingBlueprint] = useState<MockExamTemplate | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState<'sections' | 'settings'>('sections');
+  const [activeSectionIdx, setActiveSectionIdx] = useState<number>(0);
   const [sectionTopicSearch, setSectionTopicSearch] = useState<Record<number, string>>({});
 
   // Load all blueprints
@@ -112,11 +118,15 @@ export default function AdminBlueprintManager() {
       ],
     };
     setEditingBlueprint(newBlueprint);
+    setActiveModalTab('sections');
+    setActiveSectionIdx(0);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (bp: MockExamTemplate) => {
     setEditingBlueprint(JSON.parse(JSON.stringify(bp)));
+    setActiveModalTab('sections');
+    setActiveSectionIdx(0);
     setIsModalOpen(true);
   };
 
@@ -195,31 +205,61 @@ export default function AdminBlueprintManager() {
   };
 
   // Section manipulation helpers
-  const handleAddSection = () => {
+  const handleAddSection = (preferredType?: 'MCQ' | 'TECHNICAL_MCQ' | 'CODING') => {
     if (!editingBlueprint) return;
+    const newIdx = editingBlueprint.sections.length;
+    const type = preferredType || 'MCQ';
+    const isCoding = type === 'CODING';
+    const isTech = type === 'TECHNICAL_MCQ';
+
     const newSec: TemplateSectionDraft = {
-      name: `Section ${editingBlueprint.sections.length + 1}`,
-      section_type: 'MCQ',
-      question_count: 15,
-      marks_per_correct: 1,
+      name: isCoding
+        ? `Section ${newIdx + 1}: Hands-on Coding Assessment`
+        : isTech
+        ? `Section ${newIdx + 1}: Core CS Technical MCQs`
+        : `Section ${newIdx + 1}: Aptitude & Analytical Reasoning`,
+      section_type: type,
+      question_count: isCoding ? 2 : 15,
+      marks_per_correct: isCoding ? 15 : 1,
       negative_marking: 0,
-      duration_minutes: 20,
-      category: 'arithmetic-aptitude',
-      topic_ids: [],
+      duration_minutes: isCoding ? 45 : 20,
+      category: isCoding ? 'coding' : isTech ? 'technical-mcqs' : 'arithmetic-aptitude',
+      coding_track: isCoding ? 'PROGRAMMING_150' : undefined,
+      topic_ids: isCoding ? ['ARRAYS', 'STRINGS'] : [],
       random_sampling: true,
     };
     setEditingBlueprint({
       ...editingBlueprint,
       sections: [...editingBlueprint.sections, newSec],
     });
+    setActiveSectionIdx(newIdx);
+    setActiveModalTab('sections');
   };
 
   const handleRemoveSection = (idx: number) => {
     if (!editingBlueprint) return;
+    if (editingBlueprint.sections.length <= 1) {
+      toast.error('A blueprint pattern must have at least one test section.');
+      return;
+    }
+    const updated = editingBlueprint.sections.filter((_, i) => i !== idx);
     setEditingBlueprint({
       ...editingBlueprint,
-      sections: editingBlueprint.sections.filter((_, i) => i !== idx),
+      sections: updated,
     });
+    setActiveSectionIdx(Math.max(0, Math.min(activeSectionIdx, updated.length - 1)));
+  };
+
+  const handleMoveSection = (idx: number, direction: 'LEFT' | 'RIGHT') => {
+    if (!editingBlueprint) return;
+    const targetIdx = direction === 'LEFT' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= editingBlueprint.sections.length) return;
+    const updated = [...editingBlueprint.sections];
+    const temp = updated[idx];
+    updated[idx] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    setEditingBlueprint({ ...editingBlueprint, sections: updated });
+    setActiveSectionIdx(targetIdx);
   };
 
   const handleSectionChange = (idx: number, field: keyof TemplateSectionDraft, value: any) => {
@@ -236,6 +276,109 @@ export default function AdminBlueprintManager() {
     const exists = current.includes(topicId);
     const next = exists ? current.filter(t => t !== topicId) : [...current, topicId];
     handleSectionChange(secIdx, 'topic_ids', next);
+  };
+
+  const handleSwitchDomain = (domain: 'MCQ' | 'TECHNICAL_MCQ' | 'CODING') => {
+    if (!editingBlueprint) return;
+    const safeIdx = Math.max(0, Math.min(activeSectionIdx, editingBlueprint.sections.length - 1));
+    const sec = editingBlueprint.sections[safeIdx];
+    const isCurrentlyCoding = sec.section_type === 'CODING';
+    const sNum = safeIdx + 1;
+
+    if (domain === 'CODING') {
+      const isDefaultName = !sec.name || sec.name.includes('Aptitude') || sec.name.includes('Technical') || sec.name.startsWith(`Section ${sNum}`);
+      handleSectionChange(safeIdx, 'section_type', 'CODING');
+      handleSectionChange(safeIdx, 'category', 'coding');
+      handleSectionChange(safeIdx, 'coding_track', 'PROGRAMMING_150');
+      handleSectionChange(safeIdx, 'topic_ids', ['ARRAYS', 'STRINGS']);
+      if (isDefaultName) {
+        handleSectionChange(safeIdx, 'name', `Section ${sNum}: Hands-on Coding Assessment`);
+      }
+      if (sec.question_count > 5) {
+        handleSectionChange(safeIdx, 'question_count', 2);
+      }
+      if (sec.marks_per_correct <= 1) {
+        handleSectionChange(safeIdx, 'marks_per_correct', 15);
+      }
+      if (!sec.duration_minutes || sec.duration_minutes < 30) {
+        handleSectionChange(safeIdx, 'duration_minutes', 45);
+      }
+    } else if (domain === 'TECHNICAL_MCQ') {
+      const isDefaultName = !sec.name || sec.name.includes('Aptitude') || sec.name.includes('Coding') || sec.name.startsWith(`Section ${sNum}`);
+      handleSectionChange(safeIdx, 'section_type', 'TECHNICAL_MCQ');
+      handleSectionChange(safeIdx, 'category', 'technical-mcqs');
+      handleSectionChange(safeIdx, 'coding_track', undefined);
+      handleSectionChange(safeIdx, 'topic_ids', []);
+      if (isDefaultName) {
+        handleSectionChange(safeIdx, 'name', `Section ${sNum}: Core CS Technical MCQs`);
+      }
+      if (isCurrentlyCoding || sec.question_count <= 2) {
+        handleSectionChange(safeIdx, 'question_count', 15);
+        handleSectionChange(safeIdx, 'marks_per_correct', 1);
+        handleSectionChange(safeIdx, 'duration_minutes', 20);
+      }
+    } else {
+      const isDefaultName = !sec.name || sec.name.includes('Technical') || sec.name.includes('Coding') || sec.name.startsWith(`Section ${sNum}`);
+      handleSectionChange(safeIdx, 'section_type', 'MCQ');
+      handleSectionChange(safeIdx, 'category', 'arithmetic-aptitude');
+      handleSectionChange(safeIdx, 'coding_track', undefined);
+      handleSectionChange(safeIdx, 'topic_ids', []);
+      if (isDefaultName) {
+        handleSectionChange(safeIdx, 'name', `Section ${sNum}: Aptitude & Analytical Reasoning`);
+      }
+      if (isCurrentlyCoding || sec.question_count <= 2) {
+        handleSectionChange(safeIdx, 'question_count', 20);
+        handleSectionChange(safeIdx, 'marks_per_correct', 1);
+        handleSectionChange(safeIdx, 'duration_minutes', 25);
+      }
+    }
+  };
+
+  const handleCompleteAndAddNext = () => {
+    if (!editingBlueprint) return;
+    const safeIdx = Math.max(0, Math.min(activeSectionIdx, editingBlueprint.sections.length - 1));
+    const currentSec = editingBlueprint.sections[safeIdx];
+    if (!currentSec.name.trim()) {
+      toast.error(`Please provide a name for Section ${safeIdx + 1}.`);
+      return;
+    }
+    if (!currentSec.question_count || currentSec.question_count < 1) {
+      toast.error(`Section ${safeIdx + 1} must have at least 1 question.`);
+      return;
+    }
+
+    const nextIdx = editingBlueprint.sections.length;
+    const nextType: 'MCQ' | 'TECHNICAL_MCQ' | 'CODING' =
+      currentSec.section_type === 'MCQ'
+        ? 'TECHNICAL_MCQ'
+        : currentSec.section_type === 'TECHNICAL_MCQ'
+        ? 'CODING'
+        : 'MCQ';
+
+    const newSec: TemplateSectionDraft = {
+      name:
+        nextType === 'CODING'
+          ? `Section ${nextIdx + 1}: Hands-on Coding Assessment`
+          : nextType === 'TECHNICAL_MCQ'
+          ? `Section ${nextIdx + 1}: Core CS Technical MCQs`
+          : `Section ${nextIdx + 1}: Aptitude & Analytical Reasoning`,
+      section_type: nextType,
+      question_count: nextType === 'CODING' ? 2 : 15,
+      marks_per_correct: nextType === 'CODING' ? 15 : 1,
+      negative_marking: 0,
+      duration_minutes: nextType === 'CODING' ? 45 : 20,
+      category: nextType === 'CODING' ? 'coding' : nextType === 'TECHNICAL_MCQ' ? 'technical-mcqs' : 'arithmetic-aptitude',
+      coding_track: nextType === 'CODING' ? 'PROGRAMMING_150' : undefined,
+      topic_ids: nextType === 'CODING' ? ['ARRAYS', 'STRINGS'] : [],
+      random_sampling: true,
+    };
+
+    setEditingBlueprint({
+      ...editingBlueprint,
+      sections: [...editingBlueprint.sections, newSec],
+    });
+    setActiveSectionIdx(nextIdx);
+    toast.success(`Section ${safeIdx + 1} completed! Choose the discipline for Section ${nextIdx + 1}.`);
   };
 
   const getSectionDomain = (sec: TemplateSectionDraft): 'MCQ' | 'TECHNICAL_MCQ' | 'CODING' => {
@@ -448,544 +591,929 @@ export default function AdminBlueprintManager() {
       )}
 
       {/* Blueprint Editor Modal */}
-      {isModalOpen && editingBlueprint && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-3xl my-8 p-6 rounded-2xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#27292e] shadow-2xl space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#252830]">
-              <div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-white font-display">
-                  {editingBlueprint.id.startsWith('bp-') ? 'Edit Blueprint Pattern' : 'Create Exam Blueprint'}
-                </h3>
-                <p className="text-xs text-gray-500">Configure multi-section examination rules, topics, and question counts.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#202228] text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {isModalOpen && editingBlueprint && (() => {
+        const modalTotalQuestions = editingBlueprint.sections.reduce((acc, s) => acc + (s.question_count || 0), 0);
+        const modalTotalMarks = editingBlueprint.sections.reduce(
+          (acc, s) => acc + (s.question_count || 0) * (s.marks_per_correct || 1),
+          0
+        );
+        const safeSectionIdx = Math.max(0, Math.min(activeSectionIdx, editingBlueprint.sections.length - 1));
+        const activeSec = editingBlueprint.sections[safeSectionIdx] || editingBlueprint.sections[0];
+        const secDomain = getSectionDomain(activeSec);
+        const isCoding = secDomain === 'CODING';
+        const isTechnicalMcq = secDomain === 'TECHNICAL_MCQ';
+        const isAptitudeMcq = secDomain === 'MCQ';
 
-            {/* Form Fields */}
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    Blueprint Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingBlueprint.name}
-                    onChange={e => setEditingBlueprint({ ...editingBlueprint, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                  />
+        // Filter topics for the active section
+        const searchQuery = (sectionTopicSearch[safeSectionIdx] || '').toLowerCase().trim();
+        let visibleItems: { id: string; name: string; badge?: string }[] = [];
+
+        if (isAptitudeMcq) {
+          const activeCategory = activeSec.category || 'all';
+          visibleItems = aptitudeTopics
+            .filter(t => activeCategory === 'all' || t.category_slug === activeCategory)
+            .map(t => ({ id: t.id, name: t.name, badge: t.category_slug }))
+            .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery) || t.id.toLowerCase().includes(searchQuery));
+        } else if (isTechnicalMcq) {
+          const activeSubject = activeSec.category || 'technical-mcqs';
+          visibleItems = TECHNICAL_MCQ_SUBJECTS
+            .filter(s => activeSubject === 'technical-mcqs' || s.id === activeSubject)
+            .map(s => ({ id: s.id, name: s.name, badge: s.cluster }))
+            .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery) || t.id.toLowerCase().includes(searchQuery));
+        } else if (isCoding) {
+          const activeTrack = activeSec.coding_track || 'ALL';
+          visibleItems = CODING_CATEGORIES
+            .filter(c => activeTrack === 'ALL' || c.track === activeTrack)
+            .map(c => ({ id: c.id, name: c.name, badge: c.track === 'PROGRAMMING_150' ? 'P150' : 'DSA' }))
+            .filter(c => !searchQuery || c.name.toLowerCase().includes(searchQuery) || c.id.toLowerCase().includes(searchQuery));
+        }
+
+        const selectedCount = (activeSec.topic_ids || []).length;
+        const visibleIds = visibleItems.map(item => item.id);
+
+        const handleSelectAllVisible = () => {
+          const merged = Array.from(new Set([...(activeSec.topic_ids || []), ...visibleIds]));
+          handleSectionChange(safeSectionIdx, 'topic_ids', merged);
+        };
+
+        const handleClearAllVisible = () => {
+          const remaining = (activeSec.topic_ids || []).filter(id => !visibleIds.includes(id));
+          handleSectionChange(safeSectionIdx, 'topic_ids', remaining);
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
+            <div className="w-full max-w-4xl my-6 p-5 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#27292e] shadow-2xl space-y-5">
+              {/* Top Modal Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-[#252830]">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white font-display">
+                      {editingBlueprint.id.startsWith('bp-') ? 'Edit Blueprint Pattern' : 'Create Exam Blueprint'}
+                    </h3>
+                    {editingBlueprint.target_company && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#22242a] text-gray-600 dark:text-gray-300">
+                        {editingBlueprint.target_company}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Configure multi-section examination rules, topics, and question counts with guided flow.
+                  </p>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    Target Recruiter / Company *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingBlueprint.target_company}
-                    onChange={e => setEditingBlueprint({ ...editingBlueprint, target_company: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                  />
-                </div>
-              </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  {/* Live Quick Stats */}
+                  <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono bg-gray-50 dark:bg-[#1c1d22] px-3 py-1.5 rounded-xl border border-gray-200 dark:border-[#2c2f38] text-gray-600 dark:text-gray-300">
+                    <span className="font-bold text-[#FD4A32]">{editingBlueprint.sections.length} Secs</span>
+                    <span>•</span>
+                    <span>{modalTotalQuestions} Qs</span>
+                    <span>•</span>
+                    <span>{modalTotalMarks} Marks</span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      {editingBlueprint.duration_minutes}m
+                    </span>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    Badge / Tag
-                  </label>
-                  <input
-                    type="text"
-                    value={editingBlueprint.badge || ''}
-                    onChange={e => setEditingBlueprint({ ...editingBlueprint, badge: e.target.value })}
-                    placeholder="e.g. ₹7–9 LPA Prime"
-                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    Total Duration (Mins)
-                  </label>
-                  <input
-                    type="number"
-                    value={editingBlueprint.duration_minutes}
-                    onChange={e => setEditingBlueprint({ ...editingBlueprint, duration_minutes: Number(e.target.value) || 90 })}
-                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    Passing % (Scorecard)
-                  </label>
-                  <input
-                    type="number"
-                    value={editingBlueprint.passing_percentage}
-                    onChange={e => setEditingBlueprint({ ...editingBlueprint, passing_percentage: Number(e.target.value) || 45 })}
-                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={editingBlueprint.description || ''}
-                  onChange={e => setEditingBlueprint({ ...editingBlueprint, description: e.target.value })}
-                  placeholder="Overview of this pattern..."
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                />
-              </div>
-
-              {/* Sections Builder */}
-              <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-[#252830]">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-[#FD4A32]" />
-                    Test Sections ({editingBlueprint.sections.length})
-                  </h4>
                   <button
                     type="button"
-                    onClick={handleAddSection}
-                    className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#282a32] text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1 cursor-pointer"
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#202228] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Section
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
 
-                <div className="space-y-4">
-                  {editingBlueprint.sections.map((sec, sIdx) => {
-                    const domain = getSectionDomain(sec);
-                    const isCoding = domain === 'CODING';
-                    const isTechnicalMcq = domain === 'TECHNICAL_MCQ';
-                    const isAptitudeMcq = domain === 'MCQ';
+              {/* Mode Switcher Tabs */}
+              <div className="flex items-center gap-2 border-b border-gray-100 dark:border-[#222428] pb-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModalTab('sections')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeModalTab === 'sections'
+                      ? 'bg-[#FD4A32] text-white shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#202228]'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Sections & Curriculum Flow</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                    activeModalTab === 'sections'
+                      ? 'bg-black/20 text-white'
+                      : 'bg-gray-100 dark:bg-[#282a32] text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {editingBlueprint.sections.length}
+                  </span>
+                </button>
 
-                    // Topic search query for this section
-                    const searchQuery = (sectionTopicSearch[sIdx] || '').toLowerCase().trim();
+                <button
+                  type="button"
+                  onClick={() => setActiveModalTab('settings')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeModalTab === 'settings'
+                      ? 'bg-[#FD4A32] text-white shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#202228]'
+                  }`}
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Pattern Rules & Anti-Cheat</span>
+                </button>
+              </div>
 
-                    // Visible topics calculation based on domain and category/track filter
-                    let visibleItems: { id: string; name: string; badge?: string }[] = [];
+              {/* TAB 1: SECTIONS & CURRICULUM FLOW */}
+              {activeModalTab === 'sections' && (
+                <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
+                  {/* Horizontal Section Stepper Rail */}
+                  <div className="flex items-center justify-between gap-3 pb-1 border-b border-gray-100 dark:border-[#222428]">
+                    <div className="flex items-center gap-2 overflow-x-auto py-1 custom-scrollbar">
+                      {editingBlueprint.sections.map((sec, sIdx) => {
+                        const domain = getSectionDomain(sec);
+                        const isSelected = sIdx === safeSectionIdx;
+                        const isSecCoding = domain === 'CODING';
+                        const isSecTech = domain === 'TECHNICAL_MCQ';
 
-                    if (isAptitudeMcq) {
-                      const activeCategory = sec.category || 'all';
-                      visibleItems = aptitudeTopics
-                        .filter(t => activeCategory === 'all' || t.category_slug === activeCategory)
-                        .map(t => ({ id: t.id, name: t.name, badge: t.category_slug }))
-                        .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery) || t.id.toLowerCase().includes(searchQuery));
-                    } else if (isTechnicalMcq) {
-                      const activeSubject = sec.category || 'technical-mcqs';
-                      visibleItems = TECHNICAL_MCQ_SUBJECTS
-                        .filter(s => activeSubject === 'technical-mcqs' || s.id === activeSubject)
-                        .map(s => ({ id: s.id, name: s.name, badge: s.cluster }))
-                        .filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery) || s.id.toLowerCase().includes(searchQuery));
-                    } else if (isCoding) {
-                      const activeTrack = sec.coding_track || 'ALL';
-                      visibleItems = CODING_CATEGORIES
-                        .filter(c => activeTrack === 'ALL' || c.track === activeTrack)
-                        .map(c => ({ id: c.id, name: c.name, badge: c.track === 'PROGRAMMING_150' ? 'P150' : 'DSA' }))
-                        .filter(c => !searchQuery || c.name.toLowerCase().includes(searchQuery) || c.id.toLowerCase().includes(searchQuery));
-                    }
-
-                    const selectedCount = (sec.topic_ids || []).length;
-                    const visibleIds = visibleItems.map(item => item.id);
-
-                    const handleSelectAllVisible = () => {
-                      const merged = Array.from(new Set([...(sec.topic_ids || []), ...visibleIds]));
-                      handleSectionChange(sIdx, 'topic_ids', merged);
-                    };
-
-                    const handleClearAllVisible = () => {
-                      const remaining = (sec.topic_ids || []).filter(id => !visibleIds.includes(id));
-                      handleSectionChange(sIdx, 'topic_ids', remaining);
-                    };
-
-                    return (
-                      <div
-                        key={sIdx}
-                        className={`p-4 rounded-xl border space-y-3 transition-colors ${
-                          isCoding
-                            ? 'bg-blue-500/5 border-blue-500/30 dark:bg-blue-950/10'
-                            : isTechnicalMcq
-                            ? 'bg-violet-500/5 border-violet-500/30 dark:bg-violet-950/10'
-                            : 'bg-gray-50 dark:bg-[#18191c] border-gray-200 dark:border-[#27292e]'
-                        }`}
-                      >
-                        {/* Section Header & 3-way Domain Switcher */}
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono text-white ${
-                              isCoding ? 'bg-blue-600' : isTechnicalMcq ? 'bg-violet-600' : 'bg-[#FD4A32]'
+                        return (
+                          <button
+                            key={sIdx}
+                            type="button"
+                            onClick={() => setActiveSectionIdx(sIdx)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 border-gray-900 dark:border-white shadow-sm font-bold'
+                                : 'bg-white dark:bg-[#18191c] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-[#2c2f38] hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                              isSelected
+                                ? 'bg-[#FD4A32] text-white'
+                                : 'bg-gray-100 dark:bg-[#252830] text-gray-500'
                             }`}>
-                              #{sIdx + 1}
+                              {sIdx + 1}
                             </span>
+                            {isSecCoding ? (
+                              <Code2 className="w-3.5 h-3.5 text-blue-500" />
+                            ) : isSecTech ? (
+                              <Cpu className="w-3.5 h-3.5 text-violet-500" />
+                            ) : (
+                              <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                            )}
+                            <span className="truncate max-w-[130px]">
+                              {sec.name.replace(/^Section \d+:\s*/i, '') || `Section ${sIdx + 1}`}
+                            </span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                              isSelected
+                                ? 'bg-white/20 dark:bg-black/20'
+                                : 'bg-gray-100 dark:bg-[#252830] text-gray-500'
+                            }`}>
+                              {sec.question_count} Qs
+                            </span>
+                          </button>
+                        );
+                      })}
 
-                            {/* 3-Domain Switcher */}
-                            <div className="inline-flex rounded-lg border border-gray-200 dark:border-[#2c2f38] bg-white dark:bg-[#141414] p-0.5 shadow-xs">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleSectionChange(sIdx, 'section_type', 'MCQ');
-                                  handleSectionChange(sIdx, 'category', 'arithmetic-aptitude');
-                                  handleSectionChange(sIdx, 'coding_track', undefined);
-                                  handleSectionChange(sIdx, 'topic_ids', []);
-                                }}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                  isAptitudeMcq
-                                    ? 'bg-[#FD4A32] text-white shadow-xs'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                              >
-                                <BookOpen className="w-3 h-3" />
-                                <span>Aptitude MCQs</span>
-                              </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSection()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FD4A32] bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 border border-[#FD4A32]/30 transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Section</span>
+                      </button>
+                    </div>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleSectionChange(sIdx, 'section_type', 'TECHNICAL_MCQ');
-                                  handleSectionChange(sIdx, 'category', 'technical-mcqs');
-                                  handleSectionChange(sIdx, 'coding_track', undefined);
-                                  handleSectionChange(sIdx, 'topic_ids', []);
-                                }}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                  isTechnicalMcq
-                                    ? 'bg-violet-600 text-white shadow-xs'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                              >
-                                <Cpu className="w-3 h-3" />
-                                <span>Technical MCQs</span>
-                              </button>
+                    <div className="hidden sm:flex items-center gap-1 text-[11px] text-gray-400 font-mono whitespace-nowrap">
+                      <span>Section {safeSectionIdx + 1} of {editingBlueprint.sections.length}</span>
+                    </div>
+                  </div>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleSectionChange(sIdx, 'section_type', 'CODING');
-                                  handleSectionChange(sIdx, 'category', 'coding');
-                                  handleSectionChange(sIdx, 'coding_track', 'PROGRAMMING_150');
-                                  handleSectionChange(sIdx, 'topic_ids', ['ARRAYS', 'STRINGS']);
-                                }}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                  isCoding
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                              >
-                                <Code2 className="w-3 h-3" />
-                                <span>Hands-on Coding</span>
-                              </button>
+                  {/* Active Section Canvas */}
+                  <div
+                    className={`p-4 sm:p-5 rounded-2xl border space-y-5 transition-colors ${
+                      isCoding
+                        ? 'bg-blue-500/5 border-blue-500/30 dark:bg-blue-950/10'
+                        : isTechnicalMcq
+                        ? 'bg-violet-500/5 border-violet-500/30 dark:bg-violet-950/10'
+                        : 'bg-amber-500/5 border-amber-500/30 dark:bg-amber-950/10'
+                    }`}
+                  >
+                    {/* STAGE 1: What should be evaluated in this section? */}
+                    <div className="space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-5 h-5 rounded-full text-white text-[11px] font-bold flex items-center justify-center ${
+                            isCoding ? 'bg-blue-600' : isTechnicalMcq ? 'bg-violet-600' : 'bg-amber-500'
+                          }`}>
+                            1
+                          </span>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                            What should be evaluated in Section #{safeSectionIdx + 1}?
+                          </h4>
+                        </div>
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                          Select the discipline format for this section
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Option 1: Aptitude MCQs */}
+                        <button
+                          type="button"
+                          onClick={() => handleSwitchDomain('MCQ')}
+                          className={`p-3.5 rounded-xl border-2 text-left transition-all relative cursor-pointer flex flex-col justify-between ${
+                            isAptitudeMcq
+                              ? 'bg-white dark:bg-[#18191c] border-amber-500 dark:border-amber-500 shadow-md ring-2 ring-amber-500/20'
+                              : 'bg-white/60 dark:bg-[#141414]/60 border-gray-200 dark:border-[#282a32] hover:border-amber-300 dark:hover:border-amber-800/60 opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className={`p-2 rounded-lg ${
+                                isAptitudeMcq ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-[#22242a] text-gray-500'
+                              }`}>
+                                <BookOpen className="w-4 h-4" />
+                              </div>
+                              {isAptitudeMcq && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                  <Check className="w-3 h-3" /> Selected
+                                </span>
+                              )}
                             </div>
+                            <h5 className="text-xs font-bold text-gray-900 dark:text-white">Aptitude & Reasoning</h5>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                              Quantitative, Logical, Verbal, and Data Interpretation question bank.
+                            </p>
+                          </div>
+                          <div className="mt-3 pt-2 border-t border-gray-100 dark:border-[#22242a] flex items-center justify-between text-[10px] text-gray-400">
+                            <span>Aptitude Bank</span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400">500+ Questions</span>
+                          </div>
+                        </button>
+
+                        {/* Option 2: Technical MCQs */}
+                        <button
+                          type="button"
+                          onClick={() => handleSwitchDomain('TECHNICAL_MCQ')}
+                          className={`p-3.5 rounded-xl border-2 text-left transition-all relative cursor-pointer flex flex-col justify-between ${
+                            isTechnicalMcq
+                              ? 'bg-white dark:bg-[#18191c] border-violet-500 dark:border-violet-500 shadow-md ring-2 ring-violet-500/20'
+                              : 'bg-white/60 dark:bg-[#141414]/60 border-gray-200 dark:border-[#282a32] hover:border-violet-300 dark:hover:border-violet-800/60 opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className={`p-2 rounded-lg ${
+                                isTechnicalMcq ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-[#22242a] text-gray-500'
+                              }`}>
+                                <Cpu className="w-4 h-4" />
+                              </div>
+                              {isTechnicalMcq && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-600 text-white shadow-xs">
+                                  <Check className="w-3 h-3" /> Selected
+                                </span>
+                              )}
+                            </div>
+                            <h5 className="text-xs font-bold text-gray-900 dark:text-white">Core CS Technical MCQs</h5>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                              DSA, DBMS, OS, Computer Networks, OOPs, Web, Cloud & AI with code snippets.
+                            </p>
+                          </div>
+                          <div className="mt-3 pt-2 border-t border-gray-100 dark:border-[#22242a] flex items-center justify-between text-[10px] text-gray-400">
+                            <span>Technical Bank</span>
+                            <span className="font-semibold text-violet-600 dark:text-violet-400">All CS Subjects</span>
+                          </div>
+                        </button>
+
+                        {/* Option 3: Hands-on Coding */}
+                        <button
+                          type="button"
+                          onClick={() => handleSwitchDomain('CODING')}
+                          className={`p-3.5 rounded-xl border-2 text-left transition-all relative cursor-pointer flex flex-col justify-between ${
+                            isCoding
+                              ? 'bg-white dark:bg-[#18191c] border-blue-500 dark:border-blue-500 shadow-md ring-2 ring-blue-500/20'
+                              : 'bg-white/60 dark:bg-[#141414]/60 border-gray-200 dark:border-[#282a32] hover:border-blue-300 dark:hover:border-blue-800/60 opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className={`p-2 rounded-lg ${
+                                isCoding ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-[#22242a] text-gray-500'
+                              }`}>
+                                <Code2 className="w-4 h-4" />
+                              </div>
+                              {isCoding && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white shadow-xs">
+                                  <Check className="w-3 h-3" /> Selected
+                                </span>
+                              )}
+                            </div>
+                            <h5 className="text-xs font-bold text-gray-900 dark:text-white">Hands-on Coding Assessment</h5>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                              Real-time IDE code execution against comprehensive test cases.
+                            </p>
+                          </div>
+                          <div className="mt-3 pt-2 border-t border-gray-100 dark:border-[#22242a] flex items-center justify-between text-[10px] text-gray-400">
+                            <span>IDE Runner</span>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">P150 & DSA Tracks</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* STAGE 2: Configure Rules & Scoring */}
+                    <div className="space-y-3 pt-3 border-t border-gray-200/60 dark:border-[#282a32]">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[11px] font-bold flex items-center justify-center">
+                          2
+                        </span>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                          Section Configuration & Scoring Rules
+                        </h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        {/* Section Name */}
+                        <div className="sm:col-span-6 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Section Title *
+                          </label>
+                          <input
+                            type="text"
+                            value={activeSec.name}
+                            onChange={e => handleSectionChange(safeSectionIdx, 'name', e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                            placeholder="e.g. Section 1: Quantitative Ability"
+                          />
+                        </div>
+
+                        {/* Category / Subject / Track Filter */}
+                        <div className="sm:col-span-6 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                            <Filter className="w-3 h-3 text-gray-400" />
+                            {isAptitudeMcq
+                              ? 'Aptitude Category Focus'
+                              : isTechnicalMcq
+                              ? 'Core CS Subject Focus'
+                              : 'Target Coding Track'}
+                          </label>
+                          {isAptitudeMcq ? (
+                            <select
+                              value={activeSec.category || 'arithmetic-aptitude'}
+                              onChange={e => {
+                                handleSectionChange(safeSectionIdx, 'category', e.target.value);
+                                handleSectionChange(safeSectionIdx, 'topic_ids', []);
+                              }}
+                              className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                            >
+                              <option value="all">All Aptitude Categories (Mixed Pool)</option>
+                              {APTITUDE_CATEGORIES.map(cat => (
+                                <option key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : isTechnicalMcq ? (
+                            <select
+                              value={activeSec.category || 'technical-mcqs'}
+                              onChange={e => {
+                                const val = e.target.value;
+                                handleSectionChange(safeSectionIdx, 'category', val);
+                                if (val !== 'technical-mcqs') {
+                                  handleSectionChange(safeSectionIdx, 'topic_ids', [val]);
+                                } else {
+                                  handleSectionChange(safeSectionIdx, 'topic_ids', []);
+                                }
+                              }}
+                              className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                            >
+                              <option value="technical-mcqs">All Core CS Subjects (Mixed Technical Pool)</option>
+                              {TECHNICAL_MCQ_SUBJECTS.map(subj => (
+                                <option key={subj.id} value={subj.id}>
+                                  {subj.name} • {subj.cluster}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <select
+                              value={activeSec.coding_track || 'ALL'}
+                              onChange={e => {
+                                const val = e.target.value as any;
+                                handleSectionChange(safeSectionIdx, 'coding_track', val);
+                                handleSectionChange(safeSectionIdx, 'topic_ids', []);
+                              }}
+                              className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                            >
+                              <option value="ALL">All Tracks (Foundation + Advanced DSA)</option>
+                              <option value="PROGRAMMING_150">Programming 150 Foundation (Arrays, Strings, Maths)</option>
+                              <option value="CAMPUS_DSA">Campus DSA Roadmap (Trees, Graphs, DP, Linked Lists)</option>
+                            </select>
+                          )}
+                        </div>
+
+                        {/* Difficulty */}
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Difficulty Level
+                          </label>
+                          <select
+                            value={activeSec.difficulty || 'ALL'}
+                            onChange={e => handleSectionChange(safeSectionIdx, 'difficulty', e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                          >
+                            <option value="ALL">Mixed Difficulty</option>
+                            <option value="EASY">Easy (Foundation L1)</option>
+                            <option value="MEDIUM">Medium (Standard L2)</option>
+                            <option value="HARD">Hard (Advanced L3)</option>
+                          </select>
+                        </div>
+
+                        {/* Question Count & Presets */}
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Question Count
+                          </label>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={activeSec.question_count}
+                              onChange={e => handleSectionChange(safeSectionIdx, 'question_count', Math.max(1, Number(e.target.value) || 1))}
+                              className="w-16 px-2 py-1.5 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs font-bold text-center text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                            />
+                            <div className="flex items-center gap-1">
+                              {(isCoding ? [1, 2, 3, 5] : [10, 15, 20, 30]).map(num => (
+                                <button
+                                  key={num}
+                                  type="button"
+                                  onClick={() => handleSectionChange(safeSectionIdx, 'question_count', num)}
+                                  className={`px-1.5 py-1 rounded text-[10px] font-bold font-mono transition-colors cursor-pointer ${
+                                    activeSec.question_count === num
+                                      ? 'bg-[#FD4A32] text-white'
+                                      : 'bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#2a2c34]'
+                                  }`}
+                                >
+                                  {num}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Marks per Correct */}
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Marks per Question
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={activeSec.marks_per_correct}
+                            onChange={e => handleSectionChange(safeSectionIdx, 'marks_per_correct', Math.max(1, Number(e.target.value) || 1))}
+                            className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs font-bold text-center text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                          />
+                        </div>
+
+                        {/* Negative Penalty & Time Limit */}
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Penalty / Time Limit
+                          </label>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              step="0.25"
+                              min={0}
+                              value={activeSec.negative_marking}
+                              onChange={e => handleSectionChange(safeSectionIdx, 'negative_marking', Math.max(0, Number(e.target.value) || 0))}
+                              title="Negative marking penalty per wrong answer"
+                              placeholder="-0.25"
+                              className="w-1/2 px-2 py-1.5 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-center text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                            />
+                            <div className="w-1/2 flex items-center gap-1 bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] px-2 py-1.5 rounded-xl">
+                              <Clock className="w-3 h-3 text-gray-400 shrink-0" />
+                              <input
+                                type="number"
+                                min={5}
+                                value={activeSec.duration_minutes || 20}
+                                onChange={e => handleSectionChange(safeSectionIdx, 'duration_minutes', Math.max(1, Number(e.target.value) || 1))}
+                                title="Section duration in minutes"
+                                className="w-full text-xs text-center text-gray-900 dark:text-white bg-transparent focus:outline-hidden"
+                              />
+                              <span className="text-[10px] text-gray-400">m</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* STAGE 3: Curriculum Scope & Topic Selection */}
+                    <div className="space-y-3 pt-3 border-t border-gray-200/60 dark:border-[#282a32]">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[11px] font-bold flex items-center justify-center">
+                            3
+                          </span>
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                              Curriculum Scope & Topic Selection
+                            </h4>
+                            <p className="text-[11px] text-gray-500">
+                              Target specific topics or leave unselected to auto-sample across all subjects.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold font-mono ${
+                            selectedCount > 0
+                              ? isCoding
+                                ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                                : isTechnicalMcq
+                                ? 'bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300'
+                                : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                          }`}>
+                            {selectedCount > 0 ? `${selectedCount} Selected` : 'All Topics Included'}
+                          </span>
+
+                          <div className="relative">
+                            <Search className="w-3 h-3 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="text"
+                              value={sectionTopicSearch[safeSectionIdx] || ''}
+                              onChange={e =>
+                                setSectionTopicSearch({ ...sectionTopicSearch, [safeSectionIdx]: e.target.value })
+                              }
+                              placeholder="Filter topics..."
+                              className="pl-7 pr-2.5 py-1 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white placeholder-gray-400 w-36 sm:w-44 focus:outline-hidden focus:border-[#FD4A32]"
+                            />
                           </div>
 
                           <button
                             type="button"
-                            onClick={() => handleRemoveSection(sIdx)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                            title="Remove Section"
+                            onClick={handleSelectAllVisible}
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#2a2c34] text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            Select All
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handleClearAllVisible}
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#2a2c34] text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                          >
+                            Clear
                           </button>
                         </div>
-
-                        {/* Row 1: Section Name, Category/Track Dropdown, Difficulty, Questions, Marks */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                          {/* Section Name */}
-                          <div className="sm:col-span-4 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                              Section Name
-                            </label>
-                            <input
-                              type="text"
-                              value={sec.name}
-                              onChange={e => handleSectionChange(sIdx, 'name', e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
-                              placeholder="e.g. Quantitative Ability"
-                            />
-                          </div>
-
-                          {/* Domain Category / Subject / Track Selector */}
-                          <div className="sm:col-span-3 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                              <Filter className="w-2.5 h-2.5 text-gray-400" />
-                              {isAptitudeMcq
-                                ? 'Category / Domain'
-                                : isTechnicalMcq
-                                ? 'Core CS Subject'
-                                : 'Coding Track'}
-                            </label>
-
-                            {isAptitudeMcq ? (
-                              <select
-                                value={sec.category || 'arithmetic-aptitude'}
-                                onChange={e => {
-                                  handleSectionChange(sIdx, 'category', e.target.value);
-                                  handleSectionChange(sIdx, 'topic_ids', []);
-                                }}
-                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
-                              >
-                                <option value="all">All Aptitude Categories (Mixed)</option>
-                                {APTITUDE_CATEGORIES.map(cat => (
-                                  <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : isTechnicalMcq ? (
-                              <select
-                                value={sec.category || 'technical-mcqs'}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  handleSectionChange(sIdx, 'category', val);
-                                  if (val !== 'technical-mcqs') {
-                                    handleSectionChange(sIdx, 'topic_ids', [val]);
-                                  } else {
-                                    handleSectionChange(sIdx, 'topic_ids', []);
-                                  }
-                                }}
-                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
-                              >
-                                <option value="technical-mcqs">All Core CS Subjects (Mixed Pool)</option>
-                                {TECHNICAL_MCQ_SUBJECTS.map(subj => (
-                                  <option key={subj.id} value={subj.id}>
-                                    {subj.name} • {subj.cluster}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <select
-                                value={sec.coding_track || 'ALL'}
-                                onChange={e => {
-                                  const val = e.target.value as any;
-                                  handleSectionChange(sIdx, 'coding_track', val);
-                                  handleSectionChange(sIdx, 'topic_ids', []);
-                                }}
-                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
-                              >
-                                <option value="ALL">All Tracks (Foundation & Advanced)</option>
-                                <option value="PROGRAMMING_150">Programming 150 Foundation</option>
-                                <option value="CAMPUS_DSA">Campus DSA Roadmap</option>
-                              </select>
-                            )}
-                          </div>
-
-                          {/* Difficulty */}
-                          <div className="sm:col-span-2 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                              Difficulty
-                            </label>
-                            <select
-                              value={sec.difficulty || 'ALL'}
-                              onChange={e => handleSectionChange(sIdx, 'difficulty', e.target.value)}
-                              className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
-                            >
-                              <option value="ALL">Mixed</option>
-                              <option value="EASY">Easy (L1)</option>
-                              <option value="MEDIUM">Med (L2)</option>
-                              <option value="HARD">Hard (L3)</option>
-                            </select>
-                          </div>
-
-                          {/* Question Count */}
-                          <div className="sm:col-span-1 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                              Questions
-                            </label>
-                            <input
-                              type="number"
-                              value={sec.question_count}
-                              onChange={e => handleSectionChange(sIdx, 'question_count', Number(e.target.value) || 1)}
-                              className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden text-center"
-                            />
-                          </div>
-
-                          {/* Marks (+ / -) */}
-                          <div className="sm:col-span-2 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                              Marks (+ / -)
-                            </label>
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                value={sec.marks_per_correct}
-                                onChange={e => handleSectionChange(sIdx, 'marks_per_correct', Number(e.target.value) || 1)}
-                                className="w-1/2 px-1.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden text-center"
-                                title="Marks per correct"
-                              />
-                              <input
-                                type="number"
-                                step="0.25"
-                                value={sec.negative_marking}
-                                onChange={e => handleSectionChange(sIdx, 'negative_marking', Number(e.target.value) || 0)}
-                                className="w-1/2 px-1.5 py-1.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden text-center"
-                                title="Negative marking penalty"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Row 2: Topic Picker with Search, Select All, Clear All, and Chips */}
-                        <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-[#24262c]">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                                {isCoding
-                                  ? 'Target Coding Problem Types'
-                                  : isTechnicalMcq
-                                  ? 'Target Core CS Topics'
-                                  : 'Target Aptitude Topics'}
-                              </span>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
-                                selectedCount > 0
-                                  ? isCoding
-                                    ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
-                                    : isTechnicalMcq
-                                    ? 'bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300'
-                                    : 'bg-[#FD4A32]/10 text-[#FD4A32]'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                              }`}>
-                                {selectedCount > 0 ? `${selectedCount} selected` : 'Auto-Sample All'}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              {/* Topic Search within this section */}
-                              <div className="relative">
-                                <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                                <input
-                                  type="text"
-                                  value={sectionTopicSearch[sIdx] || ''}
-                                  onChange={e =>
-                                    setSectionTopicSearch({ ...sectionTopicSearch, [sIdx]: e.target.value })
-                                  }
-                                  placeholder="Filter topics..."
-                                  className="pl-6 pr-2 py-1 rounded-md bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-[10px] text-gray-900 dark:text-white placeholder-gray-400 w-32 sm:w-40 focus:outline-hidden"
-                                />
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={handleSelectAllVisible}
-                                className="px-2 py-1 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#2a2c34] text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                              >
-                                Select All
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={handleClearAllVisible}
-                                className="px-2 py-1 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-[#202228] hover:bg-gray-200 dark:hover:bg-[#2a2c34] text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                              >
-                                Clear
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Chips Container */}
-                          <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2.5 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] custom-scrollbar">
-                            {visibleItems.length === 0 ? (
-                              <div className="py-3 text-center w-full text-xs text-gray-400">
-                                No topics match current filter.
-                              </div>
-                            ) : (
-                              visibleItems.map(item => {
-                                const isChecked = (sec.topic_ids || []).includes(item.id);
-                                const activeColor = isCoding
-                                  ? 'bg-blue-600 text-white shadow-xs font-bold'
-                                  : isTechnicalMcq
-                                  ? 'bg-violet-600 text-white shadow-xs font-bold'
-                                  : 'bg-[#FD4A32] text-white shadow-xs font-bold';
-
-                                return (
-                                  <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => handleToggleTopic(sIdx, item.id)}
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
-                                      isChecked
-                                        ? activeColor
-                                        : 'bg-gray-100 dark:bg-[#202228] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#282a32]'
-                                    }`}
-                                  >
-                                    <Check
-                                      className={`w-3 h-3 transition-opacity ${
-                                        isChecked ? 'opacity-100' : 'opacity-0 -mr-3'
-                                      }`}
-                                    />
-                                    <span>{item.name}</span>
-                                    {item.badge && (
-                                      <span className={`text-[9px] px-1 py-0.2 rounded ${
-                                        isChecked
-                                          ? 'bg-black/20 text-white/90'
-                                          : 'bg-gray-200 dark:bg-[#2c2f38] text-gray-500'
-                                      }`}>
-                                        {item.badge}
-                                      </span>
-                                    )}
-                                  </button>
-                                );
-                              })
-                            )}
-                          </div>
-
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">
-                            {selectedCount === 0
-                              ? 'ℹ️ With 0 topics selected, questions will be automatically sampled across all topics in this domain.'
-                              : `✓ Questions will only be drawn from the ${selectedCount} selected topic(s).`}
-                          </p>
-                        </div>
-
-                        {/* Random Sampling Toggle */}
-                        <div className="flex items-center gap-2 pt-1 text-[11px] text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-[#24262c]">
-                          <input
-                            type="checkbox"
-                            id={`random-sec-${sIdx}`}
-                            checked={sec.random_sampling !== false}
-                            onChange={e => handleSectionChange(sIdx, 'random_sampling', e.target.checked)}
-                            className="rounded text-[#FD4A32] focus:ring-[#FD4A32]"
-                          />
-                          <label htmlFor={`random-sec-${sIdx}`} className="cursor-pointer">
-                            🎲 <strong>Random Question Selection</strong>: Pull randomized questions from the 500-question pool every time an exam is generated.
-                          </label>
-                        </div>
                       </div>
-                    );
-                  })}
+
+                      {/* Chips Container */}
+                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-3 rounded-xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] custom-scrollbar">
+                        {visibleItems.length === 0 ? (
+                          <div className="py-4 text-center w-full text-xs text-gray-400">
+                            No topics match current filter.
+                          </div>
+                        ) : (
+                          visibleItems.map(item => {
+                            const isChecked = (activeSec.topic_ids || []).includes(item.id);
+                            const activeColor = isCoding
+                              ? 'bg-blue-600 text-white shadow-xs font-bold'
+                              : isTechnicalMcq
+                              ? 'bg-violet-600 text-white shadow-xs font-bold'
+                              : 'bg-amber-600 text-white shadow-xs font-bold';
+
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleToggleTopic(safeSectionIdx, item.id)}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                                  isChecked
+                                    ? activeColor
+                                    : 'bg-gray-100 dark:bg-[#202228] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#282a32]'
+                                }`}
+                              >
+                                <Check
+                                  className={`w-3 h-3 transition-opacity ${
+                                    isChecked ? 'opacity-100' : 'opacity-0 -mr-3'
+                                  }`}
+                                />
+                                <span>{item.name}</span>
+                                {item.badge && (
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+                                    isChecked
+                                      ? 'bg-black/20 text-white/90'
+                                      : 'bg-gray-200 dark:bg-[#2c2f38] text-gray-500'
+                                  }`}>
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Random Question Sampling Checkbox */}
+                      <div className="flex items-center gap-2 pt-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-[#22242a]">
+                        <input
+                          type="checkbox"
+                          id={`random-sec-${safeSectionIdx}`}
+                          checked={activeSec.random_sampling !== false}
+                          onChange={e => handleSectionChange(safeSectionIdx, 'random_sampling', e.target.checked)}
+                          className="rounded text-[#FD4A32] focus:ring-[#FD4A32] cursor-pointer"
+                        />
+                        <label htmlFor={`random-sec-${safeSectionIdx}`} className="cursor-pointer">
+                          🎲 <strong>Dynamic Random Sampling</strong>: Pull randomized questions from the pool every time an exam session is generated.
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* STAGE 4: Guided Flow Navigation Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-200/80 dark:border-[#282a32] bg-white/40 dark:bg-[#141414]/40 p-3 rounded-xl">
+                      {/* Left: Reorder & Remove Section */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveSection(safeSectionIdx, 'LEFT')}
+                          disabled={safeSectionIdx === 0}
+                          title="Move section earlier"
+                          className="p-2 rounded-lg border border-gray-200 dark:border-[#2c2f38] hover:bg-gray-100 dark:hover:bg-[#202228] text-gray-600 dark:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1 text-xs"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Move Earlier</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveSection(safeSectionIdx, 'RIGHT')}
+                          disabled={safeSectionIdx === editingBlueprint.sections.length - 1}
+                          title="Move section later"
+                          className="p-2 rounded-lg border border-gray-200 dark:border-[#2c2f38] hover:bg-gray-100 dark:hover:bg-[#202228] text-gray-600 dark:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1 text-xs"
+                        >
+                          <span className="hidden sm:inline">Move Later</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSection(safeSectionIdx)}
+                          disabled={editingBlueprint.sections.length <= 1}
+                          title={editingBlueprint.sections.length <= 1 ? 'An exam blueprint must have at least 1 section' : 'Delete Section'}
+                          className="p-2 rounded-lg border border-red-200 dark:border-red-950/50 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1 text-xs ml-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </button>
+                      </div>
+
+                      {/* Right: Section Navigation & Hero Progression Button */}
+                      <div className="flex items-center gap-2">
+                        {safeSectionIdx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveSectionIdx(safeSectionIdx - 1)}
+                            className="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-[#2c2f38] hover:bg-gray-100 dark:hover:bg-[#202228] text-xs font-semibold text-gray-700 dark:text-gray-300 transition-colors cursor-pointer flex items-center gap-1.5"
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                            <span>Prev Section</span>
+                          </button>
+                        )}
+
+                        {safeSectionIdx < editingBlueprint.sections.length - 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => setActiveSectionIdx(safeSectionIdx + 1)}
+                            className="px-4 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors cursor-pointer flex items-center gap-1.5"
+                          >
+                            <span>Next Section</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        ) : null}
+
+                        {/* Google-Grade Hero Action: Complete and Add Next Section */}
+                        <button
+                          type="button"
+                          onClick={handleCompleteAndAddNext}
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FD4A32] to-[#E0351D] hover:from-[#E0351D] hover:to-[#C02510] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Complete & Add Next Section</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: PATTERN RULES & ANTI-CHEAT SETTINGS */}
+              {activeModalTab === 'settings' && (
+                <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
+                  {/* General Meta */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                        Blueprint Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={editingBlueprint.name}
+                        onChange={e => setEditingBlueprint({ ...editingBlueprint, name: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                        Target Recruiter / Company *
+                      </label>
+                      <input
+                        type="text"
+                        value={editingBlueprint.target_company}
+                        onChange={e => setEditingBlueprint({ ...editingBlueprint, target_company: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                        Badge / Tag
+                      </label>
+                      <input
+                        type="text"
+                        value={editingBlueprint.badge || ''}
+                        onChange={e => setEditingBlueprint({ ...editingBlueprint, badge: e.target.value })}
+                        placeholder="e.g. ₹7–9 LPA Prime"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                        Total Exam Duration (Mins)
+                      </label>
+                      <input
+                        type="number"
+                        value={editingBlueprint.duration_minutes}
+                        onChange={e => setEditingBlueprint({ ...editingBlueprint, duration_minutes: Number(e.target.value) || 90 })}
+                        className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                        Passing % (Scorecard)
+                      </label>
+                      <input
+                        type="number"
+                        value={editingBlueprint.passing_percentage}
+                        onChange={e => setEditingBlueprint({ ...editingBlueprint, passing_percentage: Number(e.target.value) || 45 })}
+                        className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                      Description / Overview
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={editingBlueprint.description || ''}
+                      onChange={e => setEditingBlueprint({ ...editingBlueprint, description: e.target.value })}
+                      placeholder="Overview of this evaluation pattern..."
+                      className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden focus:border-[#FD4A32]"
+                    />
+                  </div>
+
+                  {/* Proctoring, Anti-Cheat & Exam Rules */}
+                  <div className="p-4 rounded-xl border border-gray-200 dark:border-[#27292e] bg-gray-50 dark:bg-[#18191c] space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">
+                        Proctoring & Exam Integrity Rules
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingBlueprint.enable_fullscreen_lock !== false}
+                          onChange={e => setEditingBlueprint({ ...editingBlueprint, enable_fullscreen_lock: e.target.checked })}
+                          className="mt-0.5 rounded text-[#FD4A32] focus:ring-[#FD4A32]"
+                        />
+                        <div className="text-xs">
+                          <span className="font-bold text-gray-900 dark:text-white block">Enforce Fullscreen Lock</span>
+                          <span className="text-gray-500 text-[11px]">Requires student to enter and remain in full screen.</span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingBlueprint.enable_tab_switch_detection !== false}
+                          onChange={e => setEditingBlueprint({ ...editingBlueprint, enable_tab_switch_detection: e.target.checked })}
+                          className="mt-0.5 rounded text-[#FD4A32] focus:ring-[#FD4A32]"
+                        />
+                        <div className="text-xs">
+                          <span className="font-bold text-gray-900 dark:text-white block">Tab Switch Detection</span>
+                          <span className="text-gray-500 text-[11px]">Records unfocus/blur proctor events automatically.</span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingBlueprint.shuffle_questions !== false}
+                          onChange={e => setEditingBlueprint({ ...editingBlueprint, shuffle_questions: e.target.checked })}
+                          className="mt-0.5 rounded text-[#FD4A32] focus:ring-[#FD4A32]"
+                        />
+                        <div className="text-xs">
+                          <span className="font-bold text-gray-900 dark:text-white block">Randomize Question Order</span>
+                          <span className="text-gray-500 text-[11px]">Shuffles question sequence for every candidate.</span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingBlueprint.shuffle_options !== false}
+                          onChange={e => setEditingBlueprint({ ...editingBlueprint, shuffle_options: e.target.checked })}
+                          className="mt-0.5 rounded text-[#FD4A32] focus:ring-[#FD4A32]"
+                        />
+                        <div className="text-xs">
+                          <span className="font-bold text-gray-900 dark:text-white block">Randomize Option Order</span>
+                          <span className="text-gray-500 text-[11px]">Shuffles MCQ options (A, B, C, D) dynamically.</span>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-200 dark:border-[#252830] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <label className="text-gray-600 dark:text-gray-400">Max allowed tab switches before warning:</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={10}
+                          value={editingBlueprint.max_tab_switches_allowed || 3}
+                          onChange={e => setEditingBlueprint({ ...editingBlueprint, max_tab_switches_allowed: Number(e.target.value) || 3 })}
+                          className="w-16 px-2 py-1 rounded-lg bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#2c2f38] text-xs text-center font-bold text-gray-900 dark:text-white focus:outline-hidden"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveModalTab('sections')}
+                        className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-[#282a32] hover:bg-gray-300 dark:hover:bg-[#32353e] text-xs font-semibold text-gray-800 dark:text-gray-200 transition-colors cursor-pointer self-end sm:self-auto flex items-center gap-1.5"
+                      >
+                        <span>Return to Sections Flow</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Bottom Footer */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#252830]">
+                <div className="flex items-center gap-3 text-xs text-gray-500 font-mono">
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {editingBlueprint.sections.length} Section{editingBlueprint.sections.length > 1 ? 's' : ''}
+                  </span>
+                  <span>•</span>
+                  <span>{modalTotalQuestions} Total Qs</span>
+                  <span>•</span>
+                  <span>{modalTotalMarks} Max Marks</span>
+                  <span>•</span>
+                  <span className="text-[#FD4A32] font-semibold">{editingBlueprint.duration_minutes}m Duration</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 dark:border-[#2c2f38] hover:bg-gray-50 dark:hover:bg-[#1c1d22] text-xs font-semibold text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveBlueprint}
+                    disabled={isSaving}
+                    className="px-5 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSaving ? 'Saving Blueprint...' : 'Save Blueprint'}
+                  </button>
                 </div>
               </div>
             </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#252830]">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-[#2c2f38] hover:bg-gray-50 dark:hover:bg-[#1c1d22] text-xs font-semibold text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveBlueprint}
-                disabled={isSaving}
-                className="px-5 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {isSaving ? 'Saving Blueprint...' : 'Save Blueprint'}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
