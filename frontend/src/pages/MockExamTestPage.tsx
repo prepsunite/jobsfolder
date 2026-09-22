@@ -34,6 +34,7 @@ import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import MockExamCodingWorkspace from '@/components/mock-exams/MockExamCodingWorkspace';
+import { isTemplateOrEmptyCode } from '@/services/codeExecution.service';
 import type {
   MockExam,
   MockExamSection,
@@ -801,7 +802,7 @@ export default function MockExamTestPage() {
   const isQuestionAnswered = (r?: StudentExamResponse) => {
     if (!r) return false;
     if (r.selected_option !== null && r.selected_option !== undefined && (r.selected_option as unknown) !== '') return true;
-    if (r.code_solution && r.code_solution.trim().length > 0) return true;
+    if (r.code_solution && !isTemplateOrEmptyCode(r.code_solution, r.code_language)) return true;
     return false;
   };
 

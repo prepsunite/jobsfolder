@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
+import { isTemplateOrEmptyCode } from '@/services/codeExecution.service';
 import type {
   College,
   CollegeBatch,
@@ -4945,7 +4946,10 @@ export const tpoService = {
 
         const resp = responses[qId];
         const isCodingSection = section.section_type === 'CODING' || section.category === 'coding';
-        const hasCodeSubmitted = Boolean(resp?.code_solution && resp.code_solution.trim().length > 0);
+        const hasCodeSubmitted = Boolean(
+          resp?.code_solution &&
+          !isTemplateOrEmptyCode(resp.code_solution, resp.code_language)
+        );
         const hasSelected = resp && resp.selected_option !== null && resp.selected_option !== undefined && (resp.selected_option as unknown) !== '';
 
         if (isCodingSection || hasCodeSubmitted) {
@@ -4957,8 +4961,8 @@ export const tpoService = {
             const passRatio = Math.min(1, Math.max(0, passedTests / totalTests));
             const isCorrect = passRatio >= 0.8 || Boolean(resp?.is_correct);
 
-            // Award marks proportional to test cases passed, or 50% partial credit if code is written
-            const earnedMarks = Math.round(marksPerQ * (passRatio > 0 ? passRatio : 0.5) * 100) / 100;
+            // Award marks strictly proportional to test cases passed (no free credit for empty/failing code)
+            const earnedMarks = passRatio > 0 ? Math.round(marksPerQ * passRatio * 100) / 100 : 0;
             secScore += earnedMarks;
             if (isCorrect || earnedMarks > 0) {
               secCorrect++;
@@ -4979,8 +4983,10 @@ export const tpoService = {
             totalUnattempted++;
             gradedResponses[qId] = {
               ...resp,
-              code_solution: '',
+              code_solution: resp?.code_solution || '',
               is_correct: false,
+              test_cases_passed: 0,
+              total_test_cases: Number(resp?.total_test_cases) || 1,
             };
           }
         } else if (hasSelected) {

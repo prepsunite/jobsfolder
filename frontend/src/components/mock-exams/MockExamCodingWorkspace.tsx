@@ -21,6 +21,14 @@ import {
 } from 'lucide-react';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import type { StudentExamResponse } from '@/types/tpo';
+import {
+  codeExecutionService,
+  isTemplateOrEmptyCode,
+  STARTER_TEMPLATES,
+  LANGUAGE_LABELS,
+  type TestCaseRunResult,
+  type EvaluatedTestCase,
+} from '@/services/codeExecution.service';
 
 interface TestCaseItem {
   input: string;
@@ -61,61 +69,6 @@ interface MockExamCodingWorkspaceProps {
   nextSectionName?: string;
 }
 
-const STARTER_TEMPLATES: Record<string, string> = {
-  python: `import sys
-
-def solve():
-    # Read input from stdin
-    # lines = sys.stdin.read().split()
-    pass
-
-if __name__ == '__main__':
-    solve()
-`,
-  cpp: `#include <iostream>
-#include <vector>
-#include <string>
-#include <algorithm>
-using namespace std;
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-
-    // Write your solution here
-
-    return 0;
-}
-`,
-  java: `import java.util.*;
-import java.io.*;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        // Write your solution here
-    }
-}
-`,
-  c: `#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-int main() {
-    // Write your solution here
-
-    return 0;
-}
-`,
-};
-
-const LANGUAGE_LABELS: Record<string, string> = {
-  python: 'Python 3.10',
-  cpp: 'C++ 20 (GCC)',
-  java: 'Java 17 (OpenJDK)',
-  c: 'C11 (GCC)',
-};
-
 export default function MockExamCodingWorkspace({
   question,
   sectionName,
@@ -145,17 +98,7 @@ export default function MockExamCodingWorkspace({
   const [activeTestTab, setActiveTestTab] = useState<number>(0);
   const [copiedInput, setCopiedInput] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);
-  const [testResults, setTestResults] = useState<{
-    cases: {
-      input: string;
-      expected: string;
-      actual: string;
-      passed: boolean;
-      timeMs: number;
-    }[];
-    passedCount: number;
-    totalCount: number;
-  } | null>(null);
+  const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -219,8 +162,14 @@ export default function MockExamCodingWorkspace({
     return Math.max(16, count);
   }, [code]);
 
-  // Code editor keyboard handling (Tab key support)
+  // Code editor keyboard handling (Tab key and Ctrl+Enter execution)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleRunTests();
+      return;
+    }
+
     if (e.key === 'Tab') {
       e.preventDefault();
       const textarea = textareaRef.current;
@@ -266,8 +215,10 @@ export default function MockExamCodingWorkspace({
     }
   };
 
-  // Run Sample Tests Simulator
-  const handleRunTests = () => {
+  // Run Real Sandboxed Tests via Judge0 Engine + Pre-Execution Empty Code Guard
+  const handleRunTests = async () => {
+    if (isRunningTests) return;
+
     if (!code || code.trim().length === 0) {
       alert('Please write your solution code before running tests.');
       return;
@@ -275,52 +226,23 @@ export default function MockExamCodingWorkspace({
 
     setIsRunningTests(true);
 
-    setTimeout(() => {
-      const casesToTest = testCases.slice(0, 3); // Test visible sample cases
-      const evaluated = casesToTest.map((tc, idx) => {
-        const expected = (tc.expected_output || tc.output || '').trim();
-        const hasCodeContent = code.trim().length > 30;
+    try {
+      const result = await codeExecutionService.runTestCases(
+        selectedLanguage,
+        code,
+        testCases
+      );
 
-        // Simulated test execution logic
-        let actual = expected;
-        let passed = true;
+      setTestResults(result);
+      setActiveTestTab(0);
 
-        if (!hasCodeContent) {
-          passed = false;
-          actual = 'Empty output (No return value / print output received)';
-        } else if (code.includes('TODO') || code.includes('pass\n')) {
-          passed = false;
-          actual = 'Program finished with code 0. Standard output was empty.';
-        } else {
-          // Check if candidate code contains expected algorithmic indicators or patterns
-          passed = true;
-          actual = expected || 'Success';
-        }
-
-        return {
-          input: (tc.input || '').trim() || `Test Case #${idx + 1}`,
-          expected: expected || 'OK',
-          actual,
-          passed,
-          timeMs: Math.floor(Math.random() * 25) + 8,
-        };
-      });
-
-      const passedCount = evaluated.filter(c => c.passed).length;
-      const totalCount = evaluated.length;
-
-      const resultObj = {
-        cases: evaluated,
-        passedCount,
-        totalCount,
-      };
-
-      setTestResults(resultObj);
+      // Persist test pass count to student response record
+      onUpdateCode(code, selectedLanguage, result.passedCount, result.totalCount);
+    } catch (err: any) {
+      console.error('Failed to run code tests:', err);
+    } finally {
       setIsRunningTests(false);
-
-      // Persist test pass result to response
-      onUpdateCode(code, selectedLanguage, passedCount, totalCount);
-    }, 700);
+    }
   };
 
   return (
@@ -561,68 +483,115 @@ export default function MockExamCodingWorkspace({
 
             {/* Test Results Output Tabs & Viewer */}
             {testResults && (
-              <div className="p-3.5 bg-[#0d1117] space-y-3 max-h-52 overflow-y-auto custom-scrollbar">
-                {/* Test Case Selectors */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                  {testResults.cases.map((c, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setActiveTestTab(idx)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        activeTestTab === idx
-                          ? 'bg-[#21262d] text-white border border-[#388bfd]'
-                          : 'bg-[#161b22] text-[#8b949e] hover:text-white'
-                      }`}
-                    >
-                      {c.passed ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      ) : (
-                        <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                      )}
-                      <span>Case {idx + 1}</span>
-                    </button>
-                  ))}
-                </div>
+              <div className="p-3.5 bg-[#0d1117] space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                
+                {/* 1. Empty Code / Unmodified Boilerplate Warning */}
+                {testResults.isTemplateOrEmpty && (
+                  <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/80 text-amber-200 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-400 uppercase tracking-wider text-[11px]">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>No Solution Code Implemented</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-amber-200/90 font-sans">
+                      You ran tests on unmodified template code. Please write your algorithm logic inside{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono">solve()</code> or{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono">main()</code> before checking test cases.
+                    </p>
+                  </div>
+                )}
 
-                {/* Active Case Details */}
-                {testResults.cases[activeTestTab] && (
-                  <div className="p-3 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2 text-xs font-mono">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-[#8b949e]">Status:</span>
-                      <span
-                        className={`font-black ${
-                          testResults.cases[activeTestTab].passed
-                            ? 'text-emerald-400'
-                            : 'text-rose-400'
+                {/* 2. Real Compilation Error Diagnostic Console */}
+                {testResults.compileError && (
+                  <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-800/80 text-rose-200 font-mono text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 font-bold text-rose-400 uppercase tracking-wider text-[11px]">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>Compilation Error Diagnostics</span>
+                    </div>
+                    <pre className="whitespace-pre-wrap overflow-x-auto text-[11px] leading-relaxed p-2.5 bg-[#080b0f] rounded-lg border border-rose-900/60 text-rose-300 custom-scrollbar max-h-36 font-mono">
+                      {testResults.compileError}
+                    </pre>
+                  </div>
+                )}
+
+                {/* 3. Test Case Selectors */}
+                {testResults.cases.length > 0 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {testResults.cases.map((c, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActiveTestTab(idx)}
+                        className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          activeTestTab === idx
+                            ? 'bg-[#21262d] text-white border border-[#388bfd]'
+                            : 'bg-[#161b22] text-[#8b949e] hover:text-white'
                         }`}
                       >
-                        {testResults.cases[activeTestTab].passed ? 'PASSED' : 'FAILED'} (
-                        {testResults.cases[activeTestTab].timeMs} ms)
-                      </span>
-                    </div>
+                        {c.passed ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        ) : (
+                          <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        )}
+                        <span>Case {idx + 1}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-                    <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase">Input:</span>
-                      <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5">
-                        {testResults.cases[activeTestTab].input}
+                {/* 4. Active Case Details */}
+                {testResults.cases[activeTestTab] && (
+                  <div className="p-3 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2.5 text-xs font-mono">
+                    <div className="flex items-center justify-between text-[11px] flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#8b949e]">Status:</span>
+                        <span
+                          className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
+                            testResults.cases[activeTestTab].passed
+                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                              : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
+                              ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                              : testResults.cases[activeTestTab].status === 'RUNTIME_ERROR'
+                              ? 'bg-amber-950/80 text-amber-400 border border-amber-800'
+                              : testResults.cases[activeTestTab].status === 'TIME_LIMIT_EXCEEDED'
+                              ? 'bg-purple-950/80 text-purple-400 border border-purple-800'
+                              : testResults.cases[activeTestTab].status === 'EMPTY_CODE'
+                              ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-800'
+                              : 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                          }`}
+                        >
+                          {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-[#8b949e] text-[10px]">
+                        <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
+                        {testResults.cases[activeTestTab].memoryKb ? (
+                          <span>• Mem: {Math.round(testResults.cases[activeTestTab].memoryKb! / 1024 * 10) / 10} MB</span>
+                        ) : null}
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase">Expected Output:</span>
-                      <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5">
-                        {testResults.cases[activeTestTab].expected}
+                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Input (stdin):</span>
+                      <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5 border border-[#21262d]">
+                        {testResults.cases[activeTestTab].input || '<No input provided>'}
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase">Your Output:</span>
+                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Expected Output:</span>
+                      <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5 border border-[#21262d]">
+                        {testResults.cases[activeTestTab].expected || '<Empty>'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Your Program Output:</span>
                       <div
-                        className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 ${
+                        className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 border ${
                           testResults.cases[activeTestTab].passed
-                            ? 'text-emerald-400'
-                            : 'text-rose-400'
+                            ? 'text-emerald-400 border-emerald-950'
+                            : 'text-rose-400 border-rose-950'
                         }`}
                       >
                         {testResults.cases[activeTestTab].actual}
