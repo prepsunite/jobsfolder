@@ -294,7 +294,9 @@ export default function MockExamTestPage() {
       tabSwitchCountRef.current = count;
       setTabSwitchCount(count);
       setProctorEvents(existingAttempt.proctor_events || []);
-      const totalSec = (exam?.duration_minutes || 90) * 60;
+      const sumSectionMinutes = exam?.sections?.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) || 0;
+      const effectiveMinutes = sumSectionMinutes > 0 && (exam?.duration_minutes === 90 || !exam?.duration_minutes) ? sumSectionMinutes : (exam?.duration_minutes || 90);
+      const totalSec = effectiveMinutes * 60;
       const startedAtMs = existingAttempt.started_at
         ? new Date(existingAttempt.started_at).getTime()
         : Date.now() - (existingAttempt.time_spent_seconds || 0) * 1000;
@@ -309,6 +311,34 @@ export default function MockExamTestPage() {
   const sections = useMemo(() => {
     return [...(exam?.sections || [])].sort((a, b) => (a.section_order || 0) - (b.section_order || 0));
   }, [exam?.sections]);
+
+  // Effective exam duration in minutes (auto-synced to section duration sum if exam duration was left at default)
+  const effectiveExamMinutes = useMemo(() => {
+    const sumSectionMinutes = exam?.sections?.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) || 0;
+    if (sumSectionMinutes > 0 && (exam?.duration_minutes === 90 || !exam?.duration_minutes)) {
+      return sumSectionMinutes;
+    }
+    return exam?.duration_minutes || 90;
+  }, [exam?.duration_minutes, exam?.sections]);
+
+  // Sanitize section names for display (overriding legacy verbal/aptitude titles on coding sections)
+  const getSanitizedSectionName = useCallback((sec?: MockExamSection | null) => {
+    if (!sec) return '';
+    if (sec.section_type === 'CODING' || sec.category === 'coding') {
+      const lower = (sec.name || '').toLowerCase();
+      if (
+        lower.includes('verbal') ||
+        lower.includes('reading') ||
+        lower.includes('aptitude') ||
+        lower.includes('reasoning') ||
+        lower.includes('numerical') ||
+        lower.includes('quant')
+      ) {
+        return 'Hands-on Coding Assessment';
+      }
+    }
+    return sec.name || '';
+  }, []);
 
   // 1. Fetch Questions for this Exam
   useEffect(() => {
@@ -454,7 +484,7 @@ export default function MockExamTestPage() {
         ? new Date(attempt.started_at).getTime()
         : Date.now() - (attempt.time_spent_seconds || 0) * 1000;
       startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : Date.now();
-      const totalSec = (exam.duration_minutes || 90) * 60;
+      const totalSec = effectiveExamMinutes * 60;
       const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMsRef.current) / 1000));
       setTimeSpentSeconds(elapsedSec);
       setTimeRemainingSeconds(Math.max(0, totalSec - elapsedSec));
@@ -534,7 +564,7 @@ export default function MockExamTestPage() {
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
 
-    const totalSec = (exam?.duration_minutes || 90) * 60;
+    const totalSec = effectiveExamMinutes * 60;
     perfStartMsRef.current = performance.now();
     initialElapsedSecRef.current = timeSpentSeconds;
 
@@ -822,17 +852,17 @@ export default function MockExamTestPage() {
   ) => {
     if (!currentQuestionId) return;
     setResponses(prev => {
-      const existing = prev[currentQuestionId] || {};
-      const updated = {
+      const existing = prev[currentQuestionId];
+      const updated: Record<string, StudentExamResponse> = {
         ...prev,
         [currentQuestionId]: {
-          ...existing,
+          selected_option: existing?.selected_option ?? null,
           code_solution: codeText,
-          code_language: language || existing.code_language || 'python',
-          test_cases_passed: testCasesPassed !== undefined ? testCasesPassed : existing.test_cases_passed,
-          total_test_cases: totalTestCases !== undefined ? totalTestCases : existing.total_test_cases,
-          marked_review: existing.marked_review || false,
-          time_spent_sec: (existing.time_spent_sec || 0) + 1,
+          code_language: language || existing?.code_language || 'python',
+          test_cases_passed: testCasesPassed !== undefined ? testCasesPassed : existing?.test_cases_passed,
+          total_test_cases: totalTestCases !== undefined ? totalTestCases : existing?.total_test_cases,
+          marked_review: existing?.marked_review || false,
+          time_spent_sec: (existing?.time_spent_sec || 0) + 1,
         },
       };
       if (typeof window !== 'undefined' && examId) {
@@ -1094,7 +1124,7 @@ export default function MockExamTestPage() {
           <div className="grid grid-cols-3 gap-3 p-4 bg-gray-50 dark:bg-[#1e1f23] rounded-2xl text-center border border-gray-200 dark:border-[#2e3035]">
             <div>
               <div className="text-[11px] font-semibold text-gray-500 uppercase">Duration</div>
-              <div className="text-lg font-black text-gray-900 dark:text-white mt-0.5">{exam.duration_minutes} Mins</div>
+              <div className="text-lg font-black text-gray-900 dark:text-white mt-0.5">{effectiveExamMinutes} Mins</div>
             </div>
             <div>
               <div className="text-[11px] font-semibold text-gray-500 uppercase">Total Questions</div>
@@ -1371,7 +1401,7 @@ export default function MockExamTestPage() {
                       : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#282a2e]'
                   }`}
                 >
-                  <span className="truncate max-w-[110px] sm:max-w-[150px]">{sec.name}</span>
+                  <span className="truncate max-w-[110px] sm:max-w-[150px]">{getSanitizedSectionName(sec)}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                       isCurrent
@@ -1428,7 +1458,7 @@ export default function MockExamTestPage() {
                     Question Palette
                   </h4>
                   <p className="text-[11px] text-[#FD4A32] font-bold mt-0.5 truncate max-w-[200px]">
-                    {currentSection?.name}
+                    {getSanitizedSectionName(currentSection)}
                   </p>
                 </div>
                 <button
@@ -1466,7 +1496,7 @@ export default function MockExamTestPage() {
                               : 'bg-gray-50 dark:bg-[#1c1e22] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#25272c]'
                           }`}
                         >
-                          <span className="truncate mr-2">{sec.name}</span>
+                          <span className="truncate mr-2">{getSanitizedSectionName(sec)}</span>
                           <span
                             className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold shrink-0 ${
                               isCur
@@ -1594,7 +1624,7 @@ export default function MockExamTestPage() {
             
             {/* Section Banner on Mobile */}
             <div className="md:hidden flex items-center justify-between bg-white dark:bg-[#151618] p-3 rounded-xl border border-gray-200 dark:border-[#25262a] text-xs">
-              <span className="font-bold text-[#FD4A32]">{currentSection?.name}</span>
+              <span className="font-bold text-[#FD4A32]">{getSanitizedSectionName(currentSection)}</span>
               <span className="text-gray-400">
                 Q {currentQuestionIndex + 1} of {currentSectionQIds.length}
               </span>
@@ -1604,7 +1634,7 @@ export default function MockExamTestPage() {
               isCodingProblem ? (
                 <MockExamCodingWorkspace
                   question={currentQuestion}
-                  sectionName={currentSection?.name}
+                  sectionName={getSanitizedSectionName(currentSection)}
                   questionIndex={currentQuestionIndex}
                   totalQuestions={currentSectionQIds.length}
                   marksPerCorrect={currentSection?.marks_per_correct || 10}
@@ -1637,7 +1667,7 @@ export default function MockExamTestPage() {
                   isFirstQuestion={currentSectionIndex === 0 && currentQuestionIndex === 0}
                   isLastQuestion={isLastQuestionInSection}
                   isLastSection={isLastSection}
-                  nextSectionName={sections[currentSectionIndex + 1]?.name}
+                  nextSectionName={getSanitizedSectionName(sections[currentSectionIndex + 1])}
                 />
               ) : (
                 <div className="bg-white dark:bg-[#151618] rounded-2xl p-6 border border-gray-200 dark:border-[#25262a] shadow-sm space-y-6 select-none">
@@ -1830,7 +1860,7 @@ export default function MockExamTestPage() {
                     >
                       {isLastQuestionInSection && !isLastSection ? (
                         <>
-                          Next Section: {sections[currentSectionIndex + 1]?.name || `Section ${currentSectionIndex + 2}`}
+                          Next Section: {getSanitizedSectionName(sections[currentSectionIndex + 1]) || `Section ${currentSectionIndex + 2}`}
                           <ArrowRight className="w-3.5 h-3.5 ml-1" />
                         </>
                       ) : isLastQuestionInSection && isLastSection ? (

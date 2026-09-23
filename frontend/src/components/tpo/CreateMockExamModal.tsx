@@ -497,10 +497,12 @@ export default function CreateMockExamModal({
       return prev.map((s, i) => {
         if (i !== index) return s;
         if (newType === 'CODING') {
+          const isVerbalOrAptitude = /verbal|reading|aptitude|quant|numerical|reasoning|technical/i.test(s.name);
+          const shouldRename = s.name.startsWith('Section') || isVerbalOrAptitude || !/coding/i.test(s.name);
           return {
             ...s,
             section_type: 'CODING',
-            name: s.name.startsWith('Section') || s.name.includes('Aptitude') || s.name.includes('Technical')
+            name: shouldRename
               ? `Section ${i + 1}: Hands-on Coding Assessment`
               : s.name,
             question_count: s.question_count > 5 ? 2 : Math.max(1, s.question_count),
@@ -510,10 +512,12 @@ export default function CreateMockExamModal({
             topic_ids: [],
           };
         } else if (newType === 'TECHNICAL_MCQ') {
+          const isAptitudeOrCoding = /verbal|reading|aptitude|quant|numerical|reasoning|coding/i.test(s.name);
+          const shouldRename = s.name.startsWith('Section') || isAptitudeOrCoding || !/technical|cs/i.test(s.name);
           return {
             ...s,
             section_type: 'TECHNICAL_MCQ',
-            name: s.name.startsWith('Section') || s.name.includes('Aptitude') || s.name.includes('Coding')
+            name: shouldRename
               ? `Section ${i + 1}: Core CS Technical MCQs`
               : s.name,
             question_count: s.question_count <= 5 ? 20 : s.question_count,
@@ -523,10 +527,12 @@ export default function CreateMockExamModal({
             topic_ids: [],
           };
         } else {
+          const isTechOrCoding = /technical|coding|cs/i.test(s.name);
+          const shouldRename = s.name.startsWith('Section') || isTechOrCoding;
           return {
             ...s,
             section_type: 'MCQ',
-            name: s.name.startsWith('Section') || s.name.includes('Technical') || s.name.includes('Coding')
+            name: shouldRename
               ? `Section ${i + 1}: Aptitude & Reasoning`
               : s.name,
             question_count: s.question_count <= 5 ? 20 : s.question_count,
@@ -541,9 +547,16 @@ export default function CreateMockExamModal({
   };
 
   const handleUpdateSection = (index: number, updates: Partial<SectionDraft>) => {
-    setSections(prev =>
-      prev.map((s, i) => (i === index ? { ...s, ...updates } : s))
-    );
+    setSections(prev => {
+      const next = prev.map((s, i) => (i === index ? { ...s, ...updates } : s));
+      if ('duration_minutes' in updates) {
+        const sumMinutes = next.reduce((acc, s) => acc + (Number(s.duration_minutes) || 0), 0);
+        if (sumMinutes > 0) {
+          setDurationMinutes(sumMinutes);
+        }
+      }
+      return next;
+    });
   };
 
   const totalQuestions = sections.reduce((acc, s) => acc + (Number(s.question_count) || 0), 0);
@@ -562,6 +575,9 @@ export default function CreateMockExamModal({
       return;
     }
 
+    const sumSectionDurations = sections.reduce((acc, s) => acc + (Number(s.duration_minutes) || 0), 0);
+    const finalDuration = sumSectionDurations > 0 ? sumSectionDurations : durationMinutes;
+
     setIsSubmitting(true);
     try {
       await tpoService.createMockExam(
@@ -571,7 +587,7 @@ export default function CreateMockExamModal({
           target_company: targetCompany,
           description,
           instructions,
-          duration_minutes: durationMinutes,
+          duration_minutes: finalDuration,
           total_marks: totalMarks,
           passing_percentage: passingPercentage,
           start_time: new Date(startTime).toISOString(),

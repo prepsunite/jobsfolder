@@ -24,6 +24,7 @@ import type { StudentExamResponse } from '@/types/tpo';
 import {
   codeExecutionService,
   isTemplateOrEmptyCode,
+  normalizeStdin,
   STARTER_TEMPLATES,
   LANGUAGE_LABELS,
   type TestCaseRunResult,
@@ -154,12 +155,15 @@ export default function MockExamCodingWorkspace({
   // Parse test cases
   const testCases = useMemo<TestCaseItem[]>(() => {
     if (question.test_cases && question.test_cases.length > 0) {
-      return question.test_cases;
+      return question.test_cases.map(tc => ({
+        ...tc,
+        input: normalizeStdin(tc.input),
+      }));
     }
     const sampleCases: TestCaseItem[] = [];
     if (question.sample_input || question.sample_output) {
       sampleCases.push({
-        input: question.sample_input || '',
+        input: normalizeStdin(question.sample_input || ''),
         expected_output: question.sample_output || '',
       });
     }
@@ -172,6 +176,8 @@ export default function MockExamCodingWorkspace({
           },
         ];
   }, [question.test_cases, question.sample_input, question.sample_output]);
+
+  const displaySampleInput = useMemo(() => normalizeStdin(question.sample_input || ''), [question.sample_input]);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -221,6 +227,22 @@ export default function MockExamCodingWorkspace({
     }
   };
 
+  const displaySectionName = useMemo(() => {
+    if (!sectionName) return 'Hands-on Coding Assessment';
+    const lower = sectionName.toLowerCase();
+    if (
+      lower.includes('verbal') ||
+      lower.includes('reading') ||
+      lower.includes('aptitude') ||
+      lower.includes('reasoning') ||
+      lower.includes('numerical') ||
+      lower.includes('quant')
+    ) {
+      return 'Hands-on Coding Assessment';
+    }
+    return sectionName;
+  }, [sectionName]);
+
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-[#151618] rounded-2xl border border-gray-200 dark:border-[#25262a] shadow-sm overflow-hidden animate-fadeIn">
       {/* Question Header */}
@@ -231,7 +253,7 @@ export default function MockExamCodingWorkspace({
             Coding Challenge {questionIndex + 1}
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400 font-bold hidden sm:inline">
-            {sectionName || 'Coding Section'}
+            {displaySectionName}
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
@@ -290,13 +312,13 @@ export default function MockExamCodingWorkspace({
                 Sample Test Case
               </h4>
 
-              {question.sample_input && (
+              {displaySampleInput && (
                 <div className="rounded-xl border border-gray-200 dark:border-[#2d3036] overflow-hidden">
                   <div className="px-3 py-1.5 bg-gray-100 dark:bg-[#1f2125] flex items-center justify-between text-[11px] font-bold text-gray-600 dark:text-gray-300">
                     <span>Sample Input</span>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(question.sample_input || '', 'input')}
+                      onClick={() => copyToClipboard(displaySampleInput, 'input')}
                       className="inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-900 dark:hover:text-white"
                     >
                       {copiedInput ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
@@ -304,7 +326,7 @@ export default function MockExamCodingWorkspace({
                     </button>
                   </div>
                   <pre className="p-3 bg-gray-50 dark:bg-[#121315] font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap">
-                    {question.sample_input}
+                    {displaySampleInput}
                   </pre>
                 </div>
               )}

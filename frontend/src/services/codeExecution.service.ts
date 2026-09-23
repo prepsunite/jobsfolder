@@ -244,6 +244,41 @@ export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): b
 }
 
 /**
+ * Normalizes standard input by converting any variable-assignment formatted inputs
+ * (e.g., "Y = 2000", "A = 4, B = 6", "A = 15, B = 4, op = '*'", "ch = 'A'")
+ * into pure competitive programming stdin tokens ("2000", "4 6", "15 4 *", "A").
+ * Preserves normal unformatted stdin (arrays, raw lines, numbers) untouched.
+ */
+export function normalizeStdin(rawStdin?: string): string {
+  if (!rawStdin) return '';
+  const trimmed = rawStdin.trim();
+  if (!trimmed) return '';
+
+  // Check if the input contains variable assignments like 'X = 5' or 'A = 1, B = 2' or 'op = "*"'
+  const hasVariableAssignment = /(?:^|[\n,;])\s*[A-Za-z_]\w*\s*=\s*[^=]/m.test(trimmed);
+
+  if (!hasVariableAssignment) {
+    return rawStdin;
+  }
+
+  // Handle line by line or comma-separated pairs
+  const lines = trimmed.split(/\r?\n/);
+  const normalizedLines = lines.map(line => {
+    if (/(?:^|[,;])\s*[A-Za-z_]\w*\s*=\s*/.test(line)) {
+      const parts = line.split(/[,;]\s*(?=[A-Za-z_]\w*\s*=)/);
+      const extracted = parts.map(part => {
+        const val = part.replace(/^\s*[A-Za-z_]\w*\s*=\s*/, '').trim();
+        return val.replace(/^['"](.*)['"]$/, '$1');
+      });
+      return extracted.join(' ');
+    }
+    return line;
+  });
+
+  return normalizedLines.join('\n');
+}
+
+/**
  * Normalizes program output (standardizing newlines and trailing spaces for clean comparison)
  */
 export function normalizeOutput(str?: string): string {
@@ -281,11 +316,12 @@ export const codeExecutionService = {
   ): Promise<ExecutionResult> {
     const langId = JUDGE0_LANGUAGE_IDS[language] || JUDGE0_LANGUAGE_IDS.python;
     const url = this.getApiUrl();
+    const sanitizedStdin = normalizeStdin(stdin);
 
     const payload = {
       source_code: encodeBase64(sourceCode),
       language_id: langId,
-      stdin: encodeBase64(stdin),
+      stdin: encodeBase64(sanitizedStdin),
     };
 
     const controller = new AbortController();

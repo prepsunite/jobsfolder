@@ -3880,8 +3880,43 @@ export const tpoService = {
         (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-')));
 
       if (isCodingSection) {
-        // Query coding problems from technical_problems
+        // Query coding problems from technical_problems with alias mapping & topic keyword prioritization
         try {
+          const CODING_TOPIC_TO_DB_CATEGORIES: Record<string, string[]> = {
+            'LINKED_LISTS': ['LINEAR_STRUCTURES'],
+            'STACKS_QUEUES': ['LINEAR_STRUCTURES'],
+            'TWO_POINTERS': ['POINTERS_ARRAYS'],
+            'SLIDING_WINDOW': ['POINTERS_ARRAYS'],
+            'TREES_BINARY_TREES': ['HIERARCHICAL_STRUCTURES'],
+            'DYNAMIC_PROGRAMMING': ['EXHAUSTIVE_SEARCH_DP'],
+            'SEARCHING_SORTING': ['SEARCHING', 'SEARCH_INTERVALS'],
+            'POINTERS_ARRAYS': ['POINTERS_ARRAYS'],
+            'LINEAR_STRUCTURES': ['LINEAR_STRUCTURES'],
+            'HIERARCHICAL_STRUCTURES': ['HIERARCHICAL_STRUCTURES'],
+            'SEARCH_INTERVALS': ['SEARCH_INTERVALS'],
+            'EXHAUSTIVE_SEARCH_DP': ['EXHAUSTIVE_SEARCH_DP'],
+            'NETWORK_GRAPH_ALGORITHMS': ['NETWORK_GRAPH_ALGORITHMS'],
+            'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS'],
+            'STRINGS': ['STRINGS'],
+            'SYNTAX_BASICS': ['SYNTAX_BASICS'],
+            'NUMBER_LOGIC': ['NUMBER_LOGIC'],
+            'PATTERNS': ['PATTERNS'],
+            'MATRICES': ['MATRICES', 'ARRAYS'],
+            'RECURSION': ['RECURSION'],
+            'BIT_MANIPULATION': ['BIT_MANIPULATION'],
+            'SEARCHING': ['SEARCHING', 'SEARCH_INTERVALS'],
+          };
+
+          const CODING_TOPIC_TITLE_KEYWORDS: Record<string, string[]> = {
+            'LINKED_LISTS': ['list', 'linked list', 'node', 'cycle', 'reverse list', 'sort list', 'merge list', 'reorder list', 'palindrome linked list'],
+            'STACKS_QUEUES': ['stack', 'queue', 'parentheses', 'histogram', 'polish', 'greater element', 'temperatures', 'calculator', 'asteroid', 'digits'],
+            'TWO_POINTERS': ['pointer', 'two sum', '3sum', 'water', 'duplicate', 'palindrome', 'sorted', 'reverse', 'sort'],
+            'SLIDING_WINDOW': ['window', 'subarray', 'substring', 'longest', 'k distinct', 'minimum window', 'character replacement', 'anagram'],
+            'TREES_BINARY_TREES': ['tree', 'bst', 'binary tree', 'traversal', 'depth', 'diameter', 'ancestor', 'invert', 'path sum'],
+            'DYNAMIC_PROGRAMMING': ['dp', 'knapsack', 'subsequence', 'coin', 'jump', 'stock', 'path', 'climb', 'house robber', 'word break'],
+            'SEARCHING_SORTING': ['search', 'binary search', 'sort', 'rotated', 'median', 'peak', 'find minimum'],
+          };
+
           let codingQuery = supabase
             .from('technical_problems')
             .select('id, title, category, level')
@@ -3892,19 +3927,63 @@ export const tpoService = {
             codingQuery = codingQuery.eq('level', codingLevel);
           }
 
-          if (sec.topic_ids && sec.topic_ids.length > 0) {
-            const categoryVariants = sec.topic_ids.flatMap(t => [t, t.toUpperCase(), t.toLowerCase()]);
-            codingQuery = codingQuery.in('category', Array.from(new Set(categoryVariants)));
+          const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+          let titleKeywords: string[] = [];
+
+          if (hasTopicIds) {
+            const targetCategories = new Set<string>();
+            sec.topic_ids.forEach(t => {
+              const upper = t.toUpperCase();
+              const mapped = CODING_TOPIC_TO_DB_CATEGORIES[upper] || [t, upper, t.toLowerCase()];
+              mapped.forEach(c => targetCategories.add(c));
+
+              if (CODING_TOPIC_TITLE_KEYWORDS[upper]) {
+                titleKeywords.push(...CODING_TOPIC_TITLE_KEYWORDS[upper]);
+              }
+            });
+
+            codingQuery = codingQuery.in('category', Array.from(targetCategories));
           }
 
           const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
           if (codingData && codingData.length > 0) {
-            const shuffled = [...codingData].sort(() => Math.random() - 0.5);
-            for (const q of shuffled) {
+            // If topic-specific keywords are present, prioritize problems matching those keywords
+            let prioritized: typeof codingData = [];
+            let nonPrioritized: typeof codingData = [];
+
+            if (titleKeywords.length > 0) {
+              codingData.forEach(q => {
+                const titleLower = (q.title || '').toLowerCase();
+                const matchesKeyword = titleKeywords.some(kw => titleLower.includes(kw));
+                if (matchesKeyword) {
+                  prioritized.push(q);
+                } else {
+                  nonPrioritized.push(q);
+                }
+              });
+            } else {
+              prioritized = codingData;
+            }
+
+            // Shuffle prioritized first
+            const shuffledPrioritized = [...prioritized].sort(() => Math.random() - 0.5);
+            for (const q of shuffledPrioritized) {
               if (!usedQuestionIds.has(q.id)) {
                 questionIds.push(q.id);
                 usedQuestionIds.add(q.id);
                 if (questionIds.length >= neededCount) break;
+              }
+            }
+
+            // If still needed, fill from non-prioritized in the same category
+            if (questionIds.length < neededCount && nonPrioritized.length > 0) {
+              const shuffledRemaining = [...nonPrioritized].sort(() => Math.random() - 0.5);
+              for (const q of shuffledRemaining) {
+                if (!usedQuestionIds.has(q.id)) {
+                  questionIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  if (questionIds.length >= neededCount) break;
+                }
               }
             }
           }

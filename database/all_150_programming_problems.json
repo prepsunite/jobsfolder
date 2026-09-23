@@ -14,17 +14,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 5",
+        "input": "5",
         "output": "120",
         "explanation": "5! = 5 * 4 * 3 * 2 * 1 = 120."
       },
       {
-        "input": "N = 0",
+        "input": "0",
         "output": "1",
         "explanation": "0! is mathematically defined as 1."
       }
     ],
-    "sample_input": "N = 5",
+    "sample_input": "5",
     "sample_output": "120",
     "explanation": "5! = 5 * 4 * 3 * 2 * 1 = 120.",
     "solutions": {
@@ -63,17 +63,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 7, K = 3",
+        "input": "7 3",
         "output": "7 x 1 = 7\\n7 x 2 = 14\\n7 x 3 = 21",
         "explanation": "Multiples of 7 for iterations 1, 2, and 3."
       },
       {
-        "input": "N = 12, K = 2",
+        "input": "12 2",
         "output": "12 x 1 = 12\\n12 x 2 = 24",
         "explanation": "Multiples of 12 for iterations 1 and 2."
       }
     ],
-    "sample_input": "N = 7, K = 3",
+    "sample_input": "7 3",
     "sample_output": "7 x 1 = 7\\n7 x 2 = 14\\n7 x 3 = 21",
     "explanation": "First 3 multiples of 7.",
     "solutions": {
@@ -112,17 +112,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 15, X = 3, Y = 5",
+        "input": "15 3 5",
         "output": "7",
         "explanation": "Multiples of 3 or 5 up to 15 are 3, 5, 6, 9, 10, 12, 15 (7 total numbers)."
       },
       {
-        "input": "N = 10, X = 2, Y = 4",
+        "input": "10 2 4",
         "output": "5",
         "explanation": "Multiples of 2 or 4 are 2, 4, 6, 8, 10 (5 total numbers)."
       }
     ],
-    "sample_input": "N = 15, X = 3, Y = 5",
+    "sample_input": "15 3 5",
     "sample_output": "7",
     "explanation": "Multiples of 3 or 5 up to 15 are 3, 5, 6, 9, 10, 12, 15 (7 total numbers).",
     "solutions": {
@@ -161,17 +161,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 4, B = 6",
+        "input": "4 6",
         "output": "12",
         "explanation": "12 is the smallest positive integer that leaves 0 remainder when divided by 4 and 6."
       },
       {
-        "input": "A = 5, B = 7",
+        "input": "5 7",
         "output": "35",
         "explanation": "Since 5 and 7 are prime to each other, their LCM is 5 * 7 = 35."
       }
     ],
-    "sample_input": "A = 4, B = 6",
+    "sample_input": "4 6",
     "sample_output": "12",
     "explanation": "12 is the smallest number divisible by both 4 and 6.",
     "solutions": {
@@ -209,17 +209,17 @@
     ],
     "test_cases": [
       {
-        "input": "Y = 2000",
+        "input": "2000",
         "output": "LEAP_YEAR",
         "explanation": "2000 is a century year divisible by 400, so it is a leap year."
       },
       {
-        "input": "Y = 1900",
+        "input": "1900",
         "output": "NOT_LEAP_YEAR",
         "explanation": "1900 is divisible by 4 and 100, but NOT by 400, so it is not a leap year."
       }
     ],
-    "sample_input": "Y = 2000",
+    "sample_input": "2000",
     "sample_output": "LEAP_YEAR",
     "explanation": "2000 is a century year divisible by 400, so it is a leap year.",
     "solutions": {
@@ -257,17 +257,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 25, B = 78, C = 42",
+        "input": "25 78 42",
         "output": "78",
         "explanation": "78 is greater than both 25 and 42."
       },
       {
-        "input": "A = -10, B = -50, C = -5",
+        "input": "-10 -50 -5",
         "output": "-5",
         "explanation": "-5 is the largest value among negative numbers."
       }
     ],
-    "sample_input": "A = 25, B = 78, C = 42",
+    "sample_input": "25 78 42",
     "sample_output": "78",
     "explanation": "78 is greater than both 25 and 42.",
     "solutions": {
@@ -305,17 +305,17 @@
     ],
     "test_cases": [
       {
-        "input": "X = -3, Y = 7",
+        "input": "-3 7",
         "output": "Quadrant 2",
         "explanation": "X < 0 and Y > 0 corresponds to Quadrant 2."
       },
       {
-        "input": "X = 0, Y = 5",
+        "input": "0 5",
         "output": "Y-Axis",
         "explanation": "X = 0 with non-zero Y lies on the Y-Axis."
       }
     ],
-    "sample_input": "X = -3, Y = 7",
+    "sample_input": "-3 7",
     "sample_output": "Quadrant 2",
     "explanation": "X < 0 and Y > 0 corresponds to Quadrant 2.",
     "solutions": {
@@ -353,17 +353,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 5, B = 5, C = 5",
+        "input": "5 5 5",
         "output": "EQUILATERAL",
         "explanation": "All three sides are equal and satisfy triangle inequality (5+5 > 5)."
       },
       {
-        "input": "A = 1, B = 2, C = 3",
+        "input": "1 2 3",
         "output": "INVALID",
         "explanation": "1 + 2 is not strictly greater than 3, so a degenerate line is formed."
       }
     ],
-    "sample_input": "A = 5, B = 5, C = 5",
+    "sample_input": "5 5 5",
     "sample_output": "EQUILATERAL",
     "explanation": "All three sides are equal and satisfy triangle inequality.",
     "solutions": {
@@ -402,17 +402,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 15, B = 4, op = '*'",
+        "input": "15 4 *",
         "output": "60",
         "explanation": "15 * 4 = 60."
       },
       {
-        "input": "A = 10, B = 0, op = '/'",
+        "input": "10 0 /",
         "output": "DIVISION_BY_ZERO",
         "explanation": "Dividing by zero is mathematically undefined."
       }
     ],
-    "sample_input": "A = 15, B = 4, op = '*'",
+    "sample_input": "15 4 *",
     "sample_output": "60",
     "explanation": "15 * 4 = 60.",
     "solutions": {
@@ -450,17 +450,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 5",
+        "input": "5",
         "output": "Total Sum: 15, Even Sum: 6",
         "explanation": "Natural numbers up to 5 sum to 1+2+3+4+5 = 15. Even numbers are 2, 4 with sum = 6."
       },
       {
-        "input": "N = 10",
+        "input": "10",
         "output": "Total Sum: 55, Even Sum: 30",
         "explanation": "1 to 10 sum = 55. Even numbers 2+4+6+8+10 sum = 30."
       }
     ],
-    "sample_input": "N = 5",
+    "sample_input": "5",
     "sample_output": "Total Sum: 15, Even Sum: 6",
     "explanation": "1+2+3+4+5 = 15. Even numbers are 2, 4 with sum = 6.",
     "solutions": {
@@ -499,17 +499,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 16",
+        "input": "16",
         "output": "YES",
         "explanation": "16 = 2^4, which is an exact power of two."
       },
       {
-        "input": "N = 18",
+        "input": "18",
         "output": "NO",
         "explanation": "18 is not an exact power of two."
       }
     ],
-    "sample_input": "N = 16",
+    "sample_input": "16",
     "sample_output": "YES",
     "explanation": "",
     "solutions": {
@@ -548,17 +548,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 12, B = 29",
+        "input": "12 29",
         "output": "17",
         "explanation": "|12 - 29| = |-17| = 17."
       },
       {
-        "input": "A = -5, B = -15",
+        "input": "-5 -15",
         "output": "10",
         "explanation": "|-5 - (-15)| = |10| = 10."
       }
     ],
-    "sample_input": "A = 12, B = 29",
+    "sample_input": "12 29",
     "sample_output": "17",
     "explanation": "",
     "solutions": {
@@ -596,17 +596,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 4, B = 6",
+        "input": "4 6",
         "output": "12",
         "explanation": "12 is the smallest positive integer that leaves 0 remainder when divided by 4 and 6."
       },
       {
-        "input": "A = 5, B = 7",
+        "input": "5 7",
         "output": "35",
         "explanation": "Since 5 and 7 are prime to each other, their LCM is 5 * 7 = 35."
       }
     ],
-    "sample_input": "A = 4, B = 6",
+    "sample_input": "4 6",
     "sample_output": "12",
     "explanation": "",
     "solutions": {
@@ -644,17 +644,17 @@
     ],
     "test_cases": [
       {
-        "input": "ch = 'A'",
+        "input": "A",
         "output": "65",
         "explanation": "The ASCII integer encoding for uppercase letter 'A' is 65."
       },
       {
-        "input": "ch = 'z'",
+        "input": "z",
         "output": "122",
         "explanation": "The ASCII integer encoding for lowercase letter 'z' is 122."
       }
     ],
-    "sample_input": "ch = 'A'",
+    "sample_input": "A",
     "sample_output": "65",
     "explanation": "",
     "solutions": {
@@ -693,17 +693,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 5, B = 9",
+        "input": "5 9",
         "output": "A = 9, B = 5",
         "explanation": "Values of A and B are swapped in place without using temporary storage."
       },
       {
-        "input": "A = -12, B = 45",
+        "input": "-12 45",
         "output": "A = 45, B = -12",
         "explanation": "Negative integers are swapped correctly due to XOR bitwise properties."
       }
     ],
-    "sample_input": "A = 5, B = 9",
+    "sample_input": "5 9",
     "sample_output": "A = 9, B = 5",
     "explanation": "",
     "solutions": {
@@ -742,17 +742,17 @@
     ],
     "test_cases": [
       {
-        "input": "F = 98.6",
+        "input": "98.6",
         "output": "37.00",
         "explanation": "(98.6 - 32) * 5 / 9 = 66.6 * 5 / 9 = 37.00°C."
       },
       {
-        "input": "F = 32.0",
+        "input": "32.0",
         "output": "0.00",
         "explanation": "32°F is the freezing point of water, which is 0.00°C."
       }
     ],
-    "sample_input": "F = 98.6",
+    "sample_input": "98.6",
     "sample_output": "37.00",
     "explanation": "",
     "solutions": {
@@ -790,17 +790,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 42",
+        "input": "42",
         "output": "EVEN",
         "explanation": "42 in binary is 101010. The least significant bit is 0, meaning it is even."
       },
       {
-        "input": "N = -7",
+        "input": "-7",
         "output": "ODD",
         "explanation": "Odd numbers always have a least significant bit of 1 in two's complement representation."
       }
     ],
-    "sample_input": "N = 42",
+    "sample_input": "42",
     "sample_output": "EVEN",
     "explanation": "",
     "solutions": {
@@ -839,17 +839,17 @@
     ],
     "test_cases": [
       {
-        "input": "A = 100000, B = 50000",
+        "input": "100000 50000",
         "output": "OVERFLOW",
         "explanation": "100000 * 50000 = 5 * 10^9, which exceeds 2^31 - 1 (2,147,483,647)."
       },
       {
-        "input": "A = 15, B = 20",
+        "input": "15 20",
         "output": "SAFE",
         "explanation": "15 * 20 = 300, which comfortably fits inside a 32-bit integer."
       }
     ],
-    "sample_input": "A = 100000, B = 50000",
+    "sample_input": "100000 50000",
     "sample_output": "OVERFLOW",
     "explanation": "",
     "solutions": {
@@ -887,17 +887,17 @@
     ],
     "test_cases": [
       {
-        "input": "N = 84",
+        "input": "84",
         "output": "1",
         "explanation": "84 is strictly positive."
       },
       {
-        "input": "N = -50",
+        "input": "-50",
         "output": "-1",
         "explanation": "-50 is strictly negative."
       }
     ],
-    "sample_input": "N = 84",
+    "sample_input": "84",
     "sample_output": "1",
     "explanation": "",
     "solutions": {
