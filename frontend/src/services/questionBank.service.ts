@@ -758,34 +758,28 @@ export const questionBankService = {
    * Soft-deletes a question from the correct table, throwing on failure.
    * Returns true only when the update succeeds.
    */
-  async deleteQuestion(id: string, isCoding: boolean): Promise<boolean> {
-    try {
-      if (isCoding) {
-        // Coding problems live exclusively in technical_problems
-        const { error } = await supabase
-          .from('technical_problems')
-          .update({ is_deleted: true })
-          .eq('id', id);
-        if (error) throw new Error(error.message);
-      } else if (id.startsWith('tech-') || id.startsWith('mcq-')) {
-        // Technical MCQs (IDs start with 'tech-bulk-' or 'tech-mcq-')
-        const { error } = await supabase
-          .from('technical_mcqs')
-          .update({ is_deleted: true })
-          .eq('id', id);
-        if (error) throw new Error(error.message);
-      } else {
-        // Aptitude MCQs in topic_questions
-        const { error } = await supabase
-          .from('topic_questions')
-          .update({ is_deleted: true })
-          .eq('id', id);
-        if (error) throw new Error(error.message);
-      }
-      return true;
-    } catch (err: any) {
-      console.error('[questionBankService.deleteQuestion] Failed to delete question:', id, err?.message);
-      return false;
+  async deleteQuestion(id: string, isCoding?: boolean): Promise<boolean> {
+    const table = isCoding || id.startsWith('custom-p150-')
+      ? 'technical_problems'
+      : (id.startsWith('tech-') || id.startsWith('mcq-'))
+        ? 'technical_mcqs'
+        : 'topic_questions';
+
+    const { data, error } = await supabase
+      .from(table)
+      .update({ is_deleted: true })
+      .eq('id', id)
+      .select('id');
+
+    if (error) {
+      console.error('[questionBankService.deleteQuestion] Failed to delete question:', id, error.message);
+      throw new Error(error.message || 'Failed to delete question from database.');
     }
+
+    if (!data || data.length === 0) {
+      console.warn('[questionBankService.deleteQuestion] Question not found or already deleted:', id);
+    }
+
+    return true;
   },
 };

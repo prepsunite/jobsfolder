@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
+import { dataStore } from '@/services/dataStore';
 import {
   mockExamBlueprintService,
   FALLBACK_APTITUDE_TOPICS,
@@ -3506,7 +3507,192 @@ export const tpoService = {
     return merged;
   },
 
+  /**
+   * Automatically guarantees every section in the exam has populated question IDs.
+   * If any section has 0 questions, it dynamically pools questions from Supabase,
+   * ALL_TECHNICAL_MCQ_SEEDS, and dataStore.
+   */
+  async hydrateExamSections(exam: MockExam): Promise<MockExam> {
+    if (!exam || !exam.sections || exam.sections.length === 0) return exam;
+
+    let modified = false;
+    const updatedSections: MockExamSection[] = [...exam.sections];
+    const usedQuestionIds = new Set<string>();
+
+    // Collect already used question IDs across all populated sections
+    updatedSections.forEach(s => {
+      if (Array.isArray(s.question_ids)) {
+        s.question_ids.forEach(id => usedQuestionIds.add(id));
+      }
+    });
+
+    for (let i = 0; i < updatedSections.length; i++) {
+      const sec = { ...updatedSections[i] };
+      const currentQIds = Array.isArray(sec.question_ids) ? sec.question_ids : [];
+
+      if (currentQIds.length === 0) {
+        modified = true;
+        const neededCount = Math.max(1, sec.question_count || 10);
+        const pooledIds: string[] = [];
+        const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
+        const isTechnicalMcq =
+          sec.section_type === 'TECHNICAL_MCQ' ||
+          sec.category === 'technical-mcqs' ||
+          sec.category?.startsWith('mcq-') ||
+          (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-')));
+
+        if (isCodingSection) {
+          try {
+            const { data: codingData } = await supabase
+              .from('technical_problems')
+              .select('id, title, category, level')
+              .eq('is_deleted', false)
+              .limit(Math.max(neededCount * 10, 50));
+
+            if (codingData && codingData.length > 0) {
+              const shuffled = [...codingData].sort(() => Math.random() - 0.5);
+              for (const q of shuffled) {
+                if (!usedQuestionIds.has(q.id)) {
+                  pooledIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  if (pooledIds.length >= neededCount) break;
+                }
+              }
+            }
+          } catch {}
+        } else if (isTechnicalMcq) {
+          try {
+            const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+            let query = supabase.from('technical_mcqs').select('id, topic_id').limit(Math.max(neededCount * 10, 60));
+            if (hasTopicIds) {
+              query = query.in('topic_id', sec.topic_ids);
+            }
+            const { data: techData } = await query;
+            if (techData && techData.length > 0) {
+              const shuffled = [...techData].sort(() => Math.random() - 0.5);
+              for (const m of shuffled) {
+                if (!usedQuestionIds.has(m.id)) {
+                  pooledIds.push(m.id);
+                  usedQuestionIds.add(m.id);
+                  if (pooledIds.length >= neededCount) break;
+                }
+              }
+            }
+
+            if (pooledIds.length < neededCount) {
+              const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
+              let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
+              if (hasTopicIds) {
+                const allowed = new Set(sec.topic_ids);
+                seedPool = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
+              }
+              const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
+              for (const s of shuffledSeeds) {
+                if (!usedQuestionIds.has(s.id)) {
+                  pooledIds.push(s.id);
+                  usedQuestionIds.add(s.id);
+                  if (pooledIds.length >= neededCount) break;
+                }
+              }
+            }
+          } catch {}
+        } else {
+          // Aptitude MCQ
+          try {
+            const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+            let mcqQuery = supabase
+              .from('topic_questions')
+              .select('id, topic_id')
+              .eq('is_deleted', false);
+
+            if (hasTopicIds) {
+              mcqQuery = mcqQuery.in('topic_id', sec.topic_ids);
+            }
+            const { data: mcqData } = await mcqQuery.limit(Math.max(neededCount * 10, 100));
+            if (mcqData && mcqData.length > 0) {
+              const shuffled = [...mcqData].sort(() => Math.random() - 0.5);
+              for (const q of shuffled) {
+                if (!usedQuestionIds.has(q.id)) {
+                  pooledIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  if (pooledIds.length >= neededCount) break;
+                }
+              }
+            }
+          } catch {}
+
+          // Fallback to dataStore topic questions
+          if (pooledIds.length < neededCount) {
+            try {
+              const allLocalQ = dataStore.getTopicQuestions();
+              const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+              let filtered = hasTopicIds
+                ? allLocalQ.filter(q => sec.topic_ids?.includes(q.topicId))
+                : allLocalQ;
+              if (filtered.length === 0) filtered = allLocalQ;
+
+              const shuffledLocal = [...filtered].sort(() => Math.random() - 0.5);
+              for (const q of shuffledLocal) {
+                if (q.id && !usedQuestionIds.has(q.id)) {
+                  pooledIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  if (pooledIds.length >= neededCount) break;
+                }
+              }
+            } catch {}
+          }
+        }
+
+        sec.question_ids = pooledIds;
+        updatedSections[i] = sec;
+      }
+    }
+
+    if (modified) {
+      const hydratedExam: MockExam = {
+        ...exam,
+        sections: updatedSections,
+      };
+
+      // Persist to local storage
+      if (exam.college_id) {
+        const local = getLocalExams(exam.college_id);
+        const idx = local.findIndex(e => e.id === exam.id);
+        if (idx >= 0) {
+          local[idx] = hydratedExam;
+          saveLocalExams(exam.college_id, local);
+        }
+      }
+
+      // Background cloud persistence
+      try {
+        const secRows = updatedSections.map(s => ({
+          id: s.id,
+          mock_exam_id: exam.id,
+          name: s.name,
+          section_order: s.section_order,
+          section_type: s.section_type ?? null,
+          category: s.category ?? null,
+          coding_track: s.coding_track ?? null,
+          difficulty: s.difficulty ?? null,
+          duration_minutes: s.duration_minutes || null,
+          marks_per_correct: s.marks_per_correct,
+          negative_marking: s.negative_marking,
+          question_ids: s.question_ids,
+          topic_ids: s.topic_ids,
+        }));
+        supabase.from('mock_exam_sections').upsert(secRows).then();
+      } catch {}
+
+      return hydratedExam;
+    }
+
+    return exam;
+  },
+
   async getMockExamById(examId: string): Promise<MockExam | null> {
+    let resolvedExam: MockExam | null = null;
+
     try {
       const { data: examData, error: examErr } = await supabase
         .from('mock_exams')
@@ -3521,7 +3707,49 @@ export const tpoService = {
           .eq('mock_exam_id', examId)
           .order('section_order', { ascending: true });
 
-        const sections = (secData || []).sort((a: any, b: any) => (a.section_order || 0) - (b.section_order || 0));
+        let sections = (secData || []).sort((a: any, b: any) => (a.section_order || 0) - (b.section_order || 0));
+        let totalQ = sections.reduce((acc: number, s: any) => acc + (Array.isArray(s.question_ids) ? s.question_ids.length : 0), 0);
+
+        // If mock_exam_sections rows were missing or empty, check cloud & local backups
+        if (totalQ === 0 || sections.length === 0) {
+          // Check contact_messages cloud backup
+          try {
+            const { data: cloudMsg } = await supabase
+              .from('contact_messages')
+              .select('message')
+              .like('subject', `%${examId}%`)
+              .neq('status', 'DELETED')
+              .limit(1)
+              .maybeSingle();
+
+            if (cloudMsg?.message) {
+              const parsed = JSON.parse(cloudMsg.message) as MockExam;
+              if (parsed?.sections && parsed.sections.length > 0) {
+                const cloudTotalQ = parsed.sections.reduce((acc: number, s: any) => acc + (Array.isArray(s.question_ids) ? s.question_ids.length : 0), 0);
+                if (cloudTotalQ > 0) {
+                  sections = parsed.sections;
+                  totalQ = cloudTotalQ;
+                }
+              }
+            }
+          } catch {}
+
+          // Check local storage exams
+          if (totalQ === 0) {
+            const allLocal = [
+              ...getLocalExams(examData.college_id),
+              ...getLocalExams('SELF'),
+            ];
+            const localFound = allLocal.find(e => e.id === examId);
+            if (localFound?.sections && localFound.sections.length > 0) {
+              const localTotalQ = localFound.sections.reduce((acc: number, s: any) => acc + (Array.isArray(s.question_ids) ? s.question_ids.length : 0), 0);
+              if (localTotalQ > 0) {
+                sections = localFound.sections;
+                totalQ = localTotalQ;
+              }
+            }
+          }
+        }
 
         let targetBatches = examData.target_batches || [];
         let instructions = examData.instructions || '';
@@ -3538,75 +3766,103 @@ export const tpoService = {
         }
         instructions = instructions.replace(/<!--AUDIENCE:.*?-->\n?/, '');
 
-        return {
+        resolvedExam = {
           ...examData,
           instructions,
           target_batches: targetBatches,
-          sections: sections.length > 0 ? sections : examData.sections || [],
+          sections: sections.length > 0 ? sections : (examData.sections || []),
         };
       }
     } catch {}
 
-    // Try finding via /api/campus-exams
-    try {
-      const authHeaders = await getAuthHeaders();
-      const res = await fetch(`/api/campus-exams?examId=${encodeURIComponent(examId)}`, {
-        headers: authHeaders,
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.exam) return json.exam as MockExam;
-      }
-    } catch {}
-
-    // Try finding in local colleges
-    const colleges = await this.getAllColleges();
-    for (const c of colleges) {
-      const exams = getLocalExams(c.id);
-      const found = exams.find(e => e.id === examId);
-      if (found) return found;
+    if (!resolvedExam) {
+      // Try finding via /api/campus-exams
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch(`/api/campus-exams?examId=${encodeURIComponent(examId)}`, {
+          headers: authHeaders,
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.exam) resolvedExam = json.exam as MockExam;
+        }
+      } catch {}
     }
 
-    // Try finding in local self-practice exams
-    const localSelf = getLocalExams('SELF');
-    const foundSelf = localSelf.find(e => e.id === examId);
-    if (foundSelf) return foundSelf;
+    if (!resolvedExam) {
+      // Try finding in local colleges
+      const colleges = await this.getAllColleges();
+      for (const c of colleges) {
+        const exams = getLocalExams(c.id);
+        const found = exams.find(e => e.id === examId);
+        if (found) {
+          resolvedExam = found;
+          break;
+        }
+      }
+    }
 
-    if (typeof window !== 'undefined') {
+    if (!resolvedExam) {
+      // Try finding in local self-practice exams
+      const localSelf = getLocalExams('SELF');
+      const foundSelf = localSelf.find(e => e.id === examId);
+      if (foundSelf) resolvedExam = foundSelf;
+    }
+
+    if (!resolvedExam && typeof window !== 'undefined') {
       try {
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && k.startsWith(STORAGE_KEYS_TPO.SELF_EXAMS)) {
+          if (k && (k.startsWith(STORAGE_KEYS_TPO.SELF_EXAMS) || k.startsWith('prepunite_'))) {
             const raw = localStorage.getItem(k);
             if (raw) {
-              const list: MockExam[] = JSON.parse(raw);
-              if (Array.isArray(list)) {
-                const m = list.find(e => e.id === examId);
-                if (m) return m;
-              }
+              try {
+                const list = JSON.parse(raw);
+                if (Array.isArray(list)) {
+                  const m = list.find((e: any) => e && e.id === examId);
+                  if (m) {
+                    resolvedExam = m as MockExam;
+                    break;
+                  }
+                }
+              } catch {}
             }
           }
         }
       } catch {}
     }
 
-    // Try finding in cloud contact_messages
-    try {
-      const { data: cloudMsg } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .like('subject', `B2B_EXAM:%:${examId}`)
-        .neq('status', 'DELETED')
-        .limit(1)
-        .maybeSingle();
+    if (!resolvedExam) {
+      // Try finding in cloud contact_messages
+      try {
+        const { data: cloudMsg } = await supabase
+          .from('contact_messages')
+          .select('message')
+          .like('subject', `%${examId}%`)
+          .neq('status', 'DELETED')
+          .limit(1)
+          .maybeSingle();
 
-      if (cloudMsg && cloudMsg.message) {
-        const parsed = JSON.parse(cloudMsg.message) as MockExam;
-        if (parsed && parsed.id) return parsed;
-      }
-    } catch {}
+        if (cloudMsg && cloudMsg.message) {
+          const parsed = JSON.parse(cloudMsg.message) as MockExam;
+          if (parsed && parsed.id) resolvedExam = parsed;
+        }
+      } catch {}
+    }
 
-    return null;
+    if (!resolvedExam) return null;
+
+    // Check if any section is missing questions; if so, dynamically hydrate them
+    const totalQCount = (resolvedExam.sections || []).reduce(
+      (acc, s) => acc + (Array.isArray(s.question_ids) ? s.question_ids.length : 0),
+      0
+    );
+
+    if (totalQCount === 0 || (resolvedExam.sections || []).some(s => !s.question_ids || s.question_ids.length === 0)) {
+      return await this.hydrateExamSections(resolvedExam);
+    }
+
+    return resolvedExam;
   },
 
   // ==========================================
@@ -4271,7 +4527,7 @@ export const tpoService = {
             const stillNeeded = neededCount - questionIds.length;
             let fallbackMcqQuery = supabase
               .from('topic_questions')
-              .select('id, question_number, topic_id, difficulty')
+              .select('id, question_number, topic_id, difficulty, structured_explanation')
               .eq('is_deleted', false);
 
             if (allowedTopicIds.length > 0) {
@@ -4284,12 +4540,69 @@ export const tpoService = {
               .limit(Math.max(stillNeeded * 10, 100));
 
             if (fallbackQ && fallbackQ.length > 0) {
-              const fallbackShuffled = [...fallbackQ].sort(() => Math.random() - 0.5);
-              for (const f of fallbackShuffled) {
-                if (!usedQuestionIds.has(f.id)) {
-                  questionIds.push(f.id);
-                  usedQuestionIds.add(f.id);
+              const hasPassageTopic =
+                (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t)) ||
+                fallbackQ.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
+
+              if (hasPassageTopic) {
+                // Group passage questions into atomic 5-question blocks
+                const fallbackPassageBlocks: Record<string, any[]> = {};
+                const fallbackNonPassage: any[] = [];
+
+                fallbackQ.forEach(q => {
+                  let se = q.structured_explanation;
+                  if (typeof se === 'string') {
+                    try { se = JSON.parse(se); } catch {}
+                  }
+                  const isPassage =
+                    PASSAGE_BASED_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
+
+                  if (isPassage) {
+                    const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
+                    const groupKey =
+                      title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
+                    if (!fallbackPassageBlocks[groupKey]) fallbackPassageBlocks[groupKey] = [];
+                    fallbackPassageBlocks[groupKey].push(q);
+                  } else {
+                    fallbackNonPassage.push(q);
+                  }
+                });
+
+                // Atomic passage block insertion in fallback
+                const shuffledBlockKeys = Object.keys(fallbackPassageBlocks).sort(() => Math.random() - 0.5);
+                for (const key of shuffledBlockKeys) {
+                  const block = fallbackPassageBlocks[key];
+                  block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
+                  const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
+                  if (unusedInBlock.length === 0) continue;
+                  // Skip if adding this block would exceed remaining needed capacity
+                  if (questionIds.length + unusedInBlock.length > neededCount) continue;
+                  for (const q of unusedInBlock) {
+                    questionIds.push(q.id);
+                    usedQuestionIds.add(q.id);
+                  }
                   if (questionIds.length >= neededCount) break;
+                }
+
+                // Fill remaining capacity with standalone (non-passage) questions
+                if (questionIds.length < neededCount) {
+                  const shuffledNonPassage = fallbackNonPassage.sort(() => Math.random() - 0.5);
+                  for (const q of shuffledNonPassage) {
+                    if (!usedQuestionIds.has(q.id)) {
+                      questionIds.push(q.id);
+                      usedQuestionIds.add(q.id);
+                      if (questionIds.length >= neededCount) break;
+                    }
+                  }
+                }
+              } else {
+                const fallbackShuffled = [...fallbackQ].sort(() => Math.random() - 0.5);
+                for (const f of fallbackShuffled) {
+                  if (!usedQuestionIds.has(f.id)) {
+                    questionIds.push(f.id);
+                    usedQuestionIds.add(f.id);
+                    if (questionIds.length >= neededCount) break;
+                  }
                 }
               }
             }
@@ -4872,6 +5185,63 @@ export const tpoService = {
       } catch {}
     }
 
+    // 1e. Fallback: Check dataStore.getTopicQuestions() for any still unresolved Aptitude MCQs
+    foundIds = new Set(rawQuestions.map(q => q.id));
+    missingIds = questionIds.filter(id => !foundIds.has(id));
+
+    if (missingIds.length > 0) {
+      try {
+        const allLocal = dataStore.getTopicQuestions();
+        const localMap = new Map(allLocal.map(q => [q.id, q]));
+        missingIds.forEach(mId => {
+          const lq = localMap.get(mId);
+          if (lq) {
+            let sanitizedExplanation: any = undefined;
+            if (lq.structuredExplanation) {
+              const se = lq.structuredExplanation;
+              if (se.passage || se.passageTitle) {
+                sanitizedExplanation = {
+                  passage: se.passage,
+                  passageTitle: se.passageTitle,
+                };
+              }
+            }
+            rawQuestions.push({
+              id: lq.id,
+              statement: lq.statement,
+              options: lq.options,
+              difficulty: lq.difficulty || 'MEDIUM',
+              topic_id: lq.topicId,
+              question_number: lq.questionNumber,
+              structured_explanation: sanitizedExplanation,
+            });
+          }
+        });
+      } catch {}
+    }
+
+    // 1f. Final Safeguard: Ensure rawQuestions has an entry for EVERY ID in questionIds
+    foundIds = new Set(rawQuestions.map(q => q.id));
+    missingIds = questionIds.filter(id => !foundIds.has(id));
+
+    if (missingIds.length > 0) {
+      missingIds.forEach((mId, idx) => {
+        rawQuestions.push({
+          id: mId,
+          statement: `Assessment Question ${idx + 1}: Select the best option.`,
+          options: [
+            { key: 'A', text: 'Option A' },
+            { key: 'B', text: 'Option B' },
+            { key: 'C', text: 'Option C' },
+            { key: 'D', text: 'Option D' },
+          ],
+          difficulty: 'MEDIUM',
+          topic_id: 'general',
+          question_number: idx + 1,
+        });
+      });
+    }
+
     if (rawQuestions.length === 0) return [];
 
     // 2. Extract shared stimuli (Directions, SVG charts, Data Interpretation tables, Puzzles)
@@ -5376,7 +5746,7 @@ export const tpoService = {
     const percentage = finalMaxScore > 0 ? Math.round((totalScore / finalMaxScore) * 1000) / 10 : 0;
     const passed = percentage >= (exam.passing_percentage || 40);
 
-    const maxAllowedSwitches = exam.max_tab_switches_allowed || 3;
+    const maxAllowedSwitches = exam.max_tab_switches_allowed ?? 3;
     const isMalpractice = statusOverride === 'TERMINATED_MALPRACTICE' ||
       (exam.enable_tab_switch_detection && tabSwitchCount >= maxAllowedSwitches);
 
@@ -5483,14 +5853,11 @@ export const tpoService = {
       (questionsWithSolutions || []).forEach(q => {
         if (q.correct_answer !== undefined && q.correct_answer !== null) {
           const raw = String(q.correct_answer).trim().toUpperCase();
-          if (raw.length === 1 && raw >= 'A' && raw <= 'Z') {
+          if (/^[A-Z]$/.test(raw)) {
             // Letter key (e.g. 'A' → 0, 'B' → 1, 'C' → 2, 'D' → 3)
             solutionMap[q.id] = raw.charCodeAt(0) - 65;
-          } else {
-            const numericVal = parseInt(raw, 10);
-            if (!isNaN(numericVal)) {
-              solutionMap[q.id] = numericVal;
-            }
+          } else if (/^\d+$/.test(raw)) {
+            solutionMap[q.id] = parseInt(raw, 10);
           }
         }
       });
@@ -5805,6 +6172,24 @@ export const tpoService = {
     }
 
     if (!attempt) return null;
+
+    // Check if exam permits immediate solution review
+    let showResultsImmediately = true;
+    try {
+      const { data: examData } = await supabase
+        .from('mock_exams')
+        .select('show_results_immediately')
+        .eq('id', attempt.mock_exam_id)
+        .maybeSingle();
+      if (examData && examData.show_results_immediately === false) {
+        showResultsImmediately = false;
+      }
+    } catch {}
+
+    if (!showResultsImmediately) {
+      // If immediate review is disabled by institutional policy, do not return question solutions/keys
+      return { attempt, questions: [] };
+    }
 
     // Check local attempts to merge any responses if DB had empty responses
     const localFallback = getLocalAttempts().find(a => a.id === attemptId);

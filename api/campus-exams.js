@@ -143,11 +143,11 @@ export default async function handler(req, res) {
         return true;
       }
 
-      // 5. Check cloud contact_messages for B2B_TPO_AUTH
+      // 5. Check cloud contact_messages for B2B_TPO_AUTH strictly bound to collegeId
       const { data: tpoMsg } = await supabaseAdmin
         .from('contact_messages')
         .select('subject, message')
-        .eq('subject', `B2B_TPO_AUTH:${userEmail}`)
+        .eq('subject', `B2B_TPO_AUTH:${collegeId}:${userEmail}`)
         .eq('status', 'ACTIVE')
         .maybeSingle();
       if (tpoMsg) {
@@ -229,15 +229,16 @@ export default async function handler(req, res) {
       }
 
       try {
-        let examCollegeId = collegeId;
-        if (!examCollegeId && examId) {
+        let targetCollegeId = collegeId;
+        if (examId) {
+          let foundCollegeId = null;
           const { data: ex } = await supabaseAdmin
             .from('mock_exams')
             .select('college_id')
             .eq('id', examId)
             .maybeSingle();
           if (ex?.college_id) {
-            examCollegeId = ex.college_id;
+            foundCollegeId = ex.college_id;
           } else {
             // Check contact_messages cloud backup
             const { data: cloudExam } = await supabaseAdmin
@@ -248,15 +249,21 @@ export default async function handler(req, res) {
               .maybeSingle();
             if (cloudExam?.subject) {
               const parts = cloudExam.subject.split(':');
-              if (parts.length >= 2) examCollegeId = parts[1];
+              if (parts.length >= 2) foundCollegeId = parts[1];
             }
+          }
+
+          if (foundCollegeId) {
+            if (collegeId && collegeId !== foundCollegeId) {
+              return res.status(403).json({ error: 'Exam and college mismatch' });
+            }
+            targetCollegeId = foundCollegeId;
           }
         }
 
         const canAccess =
           isSuperAdmin ||
-          (examCollegeId ? await isTpoForCollege(examCollegeId) : false) ||
-          (await isTpoForCollege(user?.college_id || ''));
+          (targetCollegeId ? await isTpoForCollege(targetCollegeId) : false);
         if (!canAccess) {
           return res.status(403).json({ error: 'Forbidden: Caller is not authorized to inspect attempts for this assessment.' });
         }

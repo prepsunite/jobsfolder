@@ -343,8 +343,15 @@ export default function MockExamTestPage() {
   // 1. Fetch Questions for this Exam
   useEffect(() => {
     if (!exam || sections.length === 0) return;
-    const allQIds = sections.flatMap(s => s.question_ids);
-    if (allQIds.length === 0) return;
+    const allQIds = sections.flatMap(s => s.question_ids || []);
+    if (allQIds.length === 0) {
+      tpoService.hydrateExamSections(exam).then(hydrated => {
+        if (hydrated && hydrated.sections) {
+          queryClient.setQueryData(['candidate-mock-exam', examId], hydrated);
+        }
+      });
+      return;
+    }
 
     setQuestionsLoading(true);
     tpoService
@@ -365,7 +372,7 @@ export default function MockExamTestPage() {
       .finally(() => {
         setQuestionsLoading(false);
       });
-  }, [exam, sections]);
+  }, [exam, sections, examId, queryClient]);
 
   // 1b. Fetch Full Solutions & Explanations post-submission
   // F20: Only fetch/reveal answer keys when show_results_immediately is enabled.
@@ -573,7 +580,8 @@ export default function MockExamTestPage() {
     // This ensures the timer respects the institutional window close, not just personal duration.
     const startedAtMs = startedAtMsRef.current || Date.now();
     const durationDeadlineMs = startedAtMs + durationSec * 1000;
-    const endTimeDeadlineMs = exam?.end_time ? new Date(exam.end_time).getTime() : Infinity;
+    const parsedEndTime = exam?.end_time ? new Date(exam.end_time).getTime() : Infinity;
+    const endTimeDeadlineMs = Number.isFinite(parsedEndTime) ? parsedEndTime : Infinity;
     const deadlineMs = Math.min(durationDeadlineMs, endTimeDeadlineMs);
 
     perfStartMsRef.current = performance.now();
@@ -693,20 +701,25 @@ export default function MockExamTestPage() {
       return false;
     };
 
-    // 🛡️ Anti-Cheat 2: Block Copy & Cut Operations (exempt code editor)
-    const handleCopyOrCut = (e: ClipboardEvent) => {
-      // F15: Allow copy/cut inside the Monaco code editor (students need to edit code)
-      if (e.target instanceof Element && e.target.closest('.monaco-editor')) return;
+    // 🛡️ Anti-Cheat 2: Block Copy, Cut & Paste Operations (exempt code editor & editable form fields)
+    const handleClipboard = (e: ClipboardEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      const isExempt = target?.closest('.monaco-editor') || target?.tagName === 'TEXTAREA' || target?.tagName === 'INPUT';
+      if (isExempt) return;
+
       e.preventDefault();
       e.stopPropagation();
-      if (e.clipboardData) {
+      if (e.clipboardData && (e.type === 'copy' || e.type === 'cut')) {
         e.clipboardData.clearData();
         e.clipboardData.setData('text/plain', '');
       }
       try {
-        navigator.clipboard?.writeText('');
+        if (e.type === 'copy' || e.type === 'cut') {
+          navigator.clipboard?.writeText('');
+        }
       } catch {}
-      handleViolation('DEVTOOLS_OPEN', 'Copying or cutting question content is strictly prohibited.');
+      const actionName = e.type === 'paste' ? 'Pasting external content' : 'Copying or cutting question content';
+      handleViolation('DEVTOOLS_OPEN', `${actionName} is strictly prohibited.`);
       return false;
     };
 
@@ -778,6 +791,18 @@ export default function MockExamTestPage() {
           return false;
         }
       }
+
+      // Ctrl + V (Paste) outside code editor / inputs
+      if (isCtrlOrCmd && key === 'V') {
+        const target = e.target as HTMLElement;
+        const isEditor = target?.closest('.monaco-editor') || target?.tagName === 'TEXTAREA' || target?.tagName === 'INPUT';
+        if (!isEditor) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleViolation('DEVTOOLS_OPEN', 'Pasting external content into the exam is prohibited');
+          return false;
+        }
+      }
     };
 
     // 🛡️ Anti-Inspect 4: DevTools Window Docking Detection (outer vs inner differential)
@@ -811,8 +836,9 @@ export default function MockExamTestPage() {
     window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     window.addEventListener('contextmenu', handleContextMenu, true);
-    window.addEventListener('copy', handleCopyOrCut, true);
-    window.addEventListener('cut', handleCopyOrCut, true);
+    window.addEventListener('copy', handleClipboard, true);
+    window.addEventListener('cut', handleClipboard, true);
+    window.addEventListener('paste', handleClipboard, true);
     window.addEventListener('keydown', handleKeyDown, true);
     window.addEventListener('resize', handleResize);
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -823,8 +849,9 @@ export default function MockExamTestPage() {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       window.removeEventListener('contextmenu', handleContextMenu, true);
-      window.removeEventListener('copy', handleCopyOrCut, true);
-      window.removeEventListener('cut', handleCopyOrCut, true);
+      window.removeEventListener('copy', handleClipboard, true);
+      window.removeEventListener('cut', handleClipboard, true);
+      window.removeEventListener('paste', handleClipboard, true);
       window.removeEventListener('keydown', handleKeyDown, true);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -884,9 +911,9 @@ export default function MockExamTestPage() {
           code_language: language || existing?.code_language || 'python',
           // Only preserve test results when the caller explicitly provides fresh data.
           // If code changed without re-running tests, invalidate stale verdicts by
-          // setting both fields to undefined so grading treats them as "not yet tested".
-          test_cases_passed: hasNewTestResult ? testCasesPassed : undefined,
-          total_test_cases: hasNewTestResult ? totalTestCases : undefined,
+          // setting both fields to 0 so grading treats untested modifications with 0 pass count.
+          test_cases_passed: hasNewTestResult ? testCasesPassed : 0,
+          total_test_cases: hasNewTestResult ? totalTestCases : 0,
           marked_review: existing?.marked_review || false,
           time_spent_sec: (existing?.time_spent_sec || 0) + 1,
         },
@@ -1325,8 +1352,8 @@ export default function MockExamTestPage() {
                 {warningMessage || 'An unauthorized action was detected. This incident has been logged.'}
               </p>
               <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300">
-                Violation {tabSwitchCount} of {exam?.max_tab_switches_allowed || 3}.<br />
-                Remaining allowed warnings: {Math.max(0, (exam?.max_tab_switches_allowed || 3) - tabSwitchCount)}.
+                Violation {tabSwitchCount} of {exam?.max_tab_switches_allowed ?? 3}.<br />
+                Remaining allowed warnings: {Math.max(0, (exam?.max_tab_switches_allowed ?? 3) - tabSwitchCount)}.
               </div>
               <button
                 onClick={() => setShowWarningModal(false)}
@@ -1593,7 +1620,11 @@ export default function MockExamTestPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                   <span>Questions ({currentSectionQIds.length})</span>
-                  <span className="font-mono text-[#FD4A32]">Q {currentQuestionIndex + 1} Active</span>
+                  {currentSectionQIds.length > 0 ? (
+                    <span className="font-mono text-[#FD4A32]">Q {currentQuestionIndex + 1} Active</span>
+                  ) : (
+                    <span className="font-mono text-gray-400">Empty Section</span>
+                  )}
                 </div>
                 <div className="grid grid-cols-5 gap-2 overflow-y-auto max-h-72 sm:max-h-80 p-1 pr-1.5">
                   {currentSectionQIds.map((qId, idx) => {
@@ -1908,8 +1939,46 @@ export default function MockExamTestPage() {
 
               </div>
             )
+            ) : questionsLoading ? (
+              <div className="flex flex-col items-center justify-center p-16 space-y-4 text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#FD4A32]" />
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Loading assessment questions...</p>
+                <p className="text-xs text-gray-400">Preparing test environment & secure proctoring sandbox</p>
+              </div>
             ) : (
-              <div className="p-8 text-center text-xs text-gray-400">Loading question content...</div>
+              <div className="flex flex-col items-center justify-center p-16 space-y-4 text-center">
+                <AlertTriangle className="w-8 h-8 text-amber-500" />
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Question content unavailable</p>
+                <p className="text-xs text-gray-500 max-w-sm">
+                  We are recovering question data from the cloud repository. Click below to refresh questions immediately.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (exam) {
+                      tpoService.hydrateExamSections(exam).then(hydrated => {
+                        if (hydrated) {
+                          queryClient.setQueryData(['candidate-mock-exam', examId], hydrated);
+                          const allQ = hydrated.sections?.flatMap(s => s.question_ids || []) || [];
+                          if (allQ.length > 0) {
+                            setQuestionsLoading(true);
+                            tpoService.getQuestionsForExam(allQ).then(qs => {
+                              const map: Record<string, any> = {};
+                              qs.forEach(q => {
+                                map[q.id] = { ...q, options: normalizeQuestionOptions(q.options) };
+                              });
+                              setQuestionsMap(map);
+                            }).finally(() => setQuestionsLoading(false));
+                          }
+                        }
+                      });
+                    }
+                  }}
+                  className="px-4 py-2 text-xs font-bold text-white bg-[#FD4A32] hover:bg-[#e03f29] rounded-lg shadow-xs cursor-pointer transition-all"
+                >
+                  Reload Question Bank
+                </button>
+              </div>
             )}
           </div>
         </div>

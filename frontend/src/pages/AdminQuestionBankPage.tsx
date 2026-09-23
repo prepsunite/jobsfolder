@@ -374,8 +374,8 @@ export default function AdminQuestionBankPage() {
       invalidateAllBankCaches();
       refetchQuestions();
       toast.success('Question deleted.');
-    } catch {
-      toast.error('Failed to delete question.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete question.');
     }
   };
 

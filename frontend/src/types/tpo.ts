@@ -94,6 +94,7 @@ export interface MockExamSection {
   marks_per_correct: number;
   negative_marking: number;
   question_ids: string[];
+  question_count?: number;
   topic_ids: string[];
   created_at?: string;
 }

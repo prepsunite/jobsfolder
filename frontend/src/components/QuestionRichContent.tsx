@@ -11,18 +11,49 @@ export interface QuestionRichContentProps {
 
 function sanitizeRichHtml(html: string): string {
   if (!html) return '';
-  return html
+
+  let sanitized = html
     // Strip script blocks and contents
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    // Strip iframes, embeds, objects, forms
-    .replace(/<(iframe|embed|object|form)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, '')
-    .replace(/<(iframe|embed|object|form)[^>]*\/?>/gi, '')
-    // Strip inline event attributes (e.g. onerror=, onload=, onclick=)
-    .replace(/\s+on[a-zA-Z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
-    // Strip javascript: URLs
-    .replace(/(href|src)\s*=\s*['"]\s*javascript:[^'"]*['"]/gi, '')
-    // Strip dangerous data URLs (allow data:image/...)
-    .replace(/(href|src)\s*=\s*['"]\s*data:(?!image\/)[^'"]*['"]/gi, '');
+    .replace(/<script\b[\s\S]*?(?:<\/script>|$)/gi, '')
+    // Strip iframe, embed, object, form blocks and contents
+    .replace(/<(iframe|embed|object|form|applet|meta|link|style|base)\b[\s\S]*?(?:<\/\1>|$)/gi, '')
+    .replace(/<(iframe|embed|object|form|applet|meta|link|style|base)[^>]*\/?>/gi, '');
+
+  // Strip event handlers with any leading delimiter (whitespace, slash, quotes, or tag start)
+  // e.g. <svg/onload=...>, <div onclick=...>, <img onerror = ...>
+  sanitized = sanitized.replace(/[\s\/>]on[a-zA-Z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, ' ');
+
+  // Decode common HTML entities in URI attributes (href, src, xlink:href) to prevent obfuscated javascript: attacks
+  for (let i = 0; i < 3; i++) {
+    sanitized = sanitized.replace(
+      /(href|src|xlink:href|action)\s*=\s*(['"]?)([\s\S]*?)\2(?=[\s\/>])/gi,
+      (match, attr, quote, val) => {
+        const decoded = val
+          .replace(/&#(\d+);?/g, (_: string, num: string) => String.fromCharCode(parseInt(num, 10)))
+          .replace(/&#x([0-9a-f]+);?/gi, (_: string, hex: string) => String.fromCharCode(parseInt(hex, 16)))
+          .replace(/&tab;/gi, '')
+          .replace(/&newline;/gi, '')
+          .replace(/[\u0000-\u001F\s]/g, '');
+
+        const lowerDecoded = decoded.toLowerCase();
+        if (
+          lowerDecoded.startsWith('javascript:') ||
+          lowerDecoded.startsWith('vbscript:') ||
+          (lowerDecoded.startsWith('data:') && !lowerDecoded.startsWith('data:image/'))
+        ) {
+          return `${attr}="#"`;
+        }
+        return match;
+      }
+    );
+  }
+
+  // Final sweep for unquoted or remaining javascript/data URIs
+  sanitized = sanitized
+    .replace(/(href|src|xlink:href)\s*=\s*['"]?\s*javascript:[^'"]*['"]?/gi, '$1="#"')
+    .replace(/(href|src|xlink:href)\s*=\s*['"]?\s*data:(?!image\/)[^'"]*['"]?/gi, '$1="#"');
+
+  return sanitized;
 }
 
 export default function QuestionRichContent({

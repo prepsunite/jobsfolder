@@ -110,9 +110,12 @@ export default function MockExamCodingWorkspace({
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
 
   const editorRef = useRef<any>(null);
+  // Run revision tracker to invalidate in-flight async results if candidate edits code or changes language
+  const runRevisionRef = useRef(0);
 
   // Sync state if savedResponse changes (e.g. Navigating between questions)
   useEffect(() => {
+    runRevisionRef.current += 1;
     const lang = savedResponse?.code_language || 'python';
     setSelectedLanguage(lang);
     const initialCode = savedResponse?.code_solution || STARTER_TEMPLATES[lang] || STARTER_TEMPLATES.python;
@@ -126,7 +129,9 @@ export default function MockExamCodingWorkspace({
 
   // Handle language switch
   const handleLanguageChange = (newLang: string) => {
+    runRevisionRef.current += 1;
     setSelectedLanguage(newLang);
+    setTestResults(null); // Clear displayed test results on language change
     // If the candidate hasn't modified the default code for old language, switch to new template
     const oldTemplate = STARTER_TEMPLATES[selectedLanguage];
     if (!code || code.trim() === oldTemplate?.trim()) {
@@ -143,6 +148,7 @@ export default function MockExamCodingWorkspace({
 
   // Reset to starter template
   const handleResetTemplate = () => {
+    runRevisionRef.current += 1;
     const template = STARTER_TEMPLATES[selectedLanguage] || '';
     setCode(template);
     if (editorRef.current) {
@@ -167,20 +173,15 @@ export default function MockExamCodingWorkspace({
         expected_output: question.sample_output || '',
       });
     }
-    return sampleCases.length > 0
-      ? sampleCases
-      : [
-          {
-            input: 'Sample Test Input',
-            expected_output: 'Sample Test Expected Output',
-          },
-        ];
+    return sampleCases;
   }, [question.test_cases, question.sample_input, question.sample_output]);
 
   const displaySampleInput = useMemo(() => normalizeStdin(question.sample_input || ''), [question.sample_input]);
 
   const handleCodeChange = (newCode: string) => {
+    runRevisionRef.current += 1;
     setCode(newCode);
+    setTestResults(null); // Clear displayed test verdicts immediately on source modification
     onUpdateCode(newCode, selectedLanguage);
   };
 
@@ -197,7 +198,7 @@ export default function MockExamCodingWorkspace({
     }
   };
 
-  // Run Real Sandboxed Tests via Judge0 Engine + Pre-Execution Empty Code Guard
+  // Run Real Sandboxed Tests via Judge0 Engine + Pre-Execution Empty Code Guard & Revision Validation
   const handleRunTests = async () => {
     if (isRunningTests) return;
 
@@ -206,24 +207,41 @@ export default function MockExamCodingWorkspace({
       return;
     }
 
+    if (testCases.length === 0) {
+      alert('No test cases are available for this problem.');
+      return;
+    }
+
+    const currentRevision = ++runRevisionRef.current;
+    const capturedCode = code;
+    const capturedLang = selectedLanguage;
+    const capturedQId = question.id;
+
     setIsRunningTests(true);
 
     try {
       const result = await codeExecutionService.runTestCases(
-        selectedLanguage,
-        code,
+        capturedLang,
+        capturedCode,
         testCases
       );
+
+      // Discard async results if code, language, or question changed while tests were running
+      if (runRevisionRef.current !== currentRevision || question.id !== capturedQId) {
+        return;
+      }
 
       setTestResults(result);
       setActiveTestTab(0);
 
       // Persist test pass count to student response record
-      onUpdateCode(code, selectedLanguage, result.passedCount, result.totalCount);
+      onUpdateCode(capturedCode, capturedLang, result.passedCount, result.totalCount);
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
     } finally {
-      setIsRunningTests(false);
+      if (runRevisionRef.current === currentRevision) {
+        setIsRunningTests(false);
+      }
     }
   };
 
