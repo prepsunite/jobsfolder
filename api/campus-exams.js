@@ -105,13 +105,13 @@ export default async function handler(req, res) {
         return true;
       }
 
-      // 3. Check user profile for college assignment or admin/tpo role
+      // 3. Check user profile for college assignment AND admin/tpo role
       const { data: profRecord } = await supabaseAdmin
         .from('profiles')
         .select('role, college_id')
         .eq('id', user.id)
         .maybeSingle();
-      if (profRecord && (profRecord.college_id === collegeId || profRecord.role === 'admin' || profRecord.role === 'tpo')) {
+      if (profRecord && (profRecord.role === 'admin' || (profRecord.role === 'tpo' && profRecord.college_id === collegeId))) {
         try {
           await supabaseAdmin.from('tpo_authorizations').upsert({
             college_id: collegeId,
@@ -691,6 +691,10 @@ export default async function handler(req, res) {
             mock_exam_id: exam.id,
             name: s.name,
             section_order: s.section_order || idx + 1,
+            section_type: s.section_type || 'MCQ',
+            category: s.category || null,
+            coding_track: s.coding_track || null,
+            difficulty: s.difficulty || null,
             duration_minutes: s.duration_minutes || null,
             marks_per_correct: s.marks_per_correct || 1,
             negative_marking: s.negative_marking || 0,

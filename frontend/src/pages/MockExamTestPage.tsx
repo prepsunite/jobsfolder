@@ -367,9 +367,13 @@ export default function MockExamTestPage() {
       });
   }, [exam, sections]);
 
-  // 1b. Fetch Full Solutions & Explanations post-submission (Zero answers during active test)
+  // 1b. Fetch Full Solutions & Explanations post-submission
+  // F20: Only fetch/reveal answer keys when show_results_immediately is enabled.
+  // If false, students see their score but NOT explanations or correct answers.
   useEffect(() => {
     if (testPhase !== 'SUBMITTED' || !attemptId) return;
+    // Respect the TPO's result-release policy
+    if (!exam?.show_results_immediately) return;
 
     tpoService.getAttemptResultWithReview(attemptId).then(res => {
       if (res && res.questions && res.questions.length > 0) {
@@ -404,7 +408,7 @@ export default function MockExamTestPage() {
         }
       }
     });
-  }, [testPhase, attemptId]);
+  }, [testPhase, attemptId, exam?.show_results_immediately]);
 
   // Current Section & its Questions
   const currentSection: MockExamSection | undefined = sections[currentSectionIndex];
@@ -564,19 +568,25 @@ export default function MockExamTestPage() {
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
 
-    const totalSec = effectiveExamMinutes * 60;
+    const durationSec = effectiveExamMinutes * 60;
+    // F16: Compute an absolute deadline = min(start + duration, exam end_time if set).
+    // This ensures the timer respects the institutional window close, not just personal duration.
+    const startedAtMs = startedAtMsRef.current || Date.now();
+    const durationDeadlineMs = startedAtMs + durationSec * 1000;
+    const endTimeDeadlineMs = exam?.end_time ? new Date(exam.end_time).getTime() : Infinity;
+    const deadlineMs = Math.min(durationDeadlineMs, endTimeDeadlineMs);
+
     perfStartMsRef.current = performance.now();
     initialElapsedSecRef.current = timeSpentSeconds;
 
     const interval = setInterval(() => {
-      const startedAtMs = startedAtMsRef.current || (startedAtMsRef.current = Date.now());
-      const wallElapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+      const now = Date.now();
+      const remainingSec = Math.max(0, Math.ceil((deadlineMs - now) / 1000));
+      // Monotonic elapsed: cannot be reduced by changing local system clock
       const monotonicElapsedSec =
         initialElapsedSecRef.current + Math.floor((performance.now() - perfStartMsRef.current) / 1000);
-
-      // Strictly monotonic elapsed: cannot be reduced by changing local system clock
+      const wallElapsedSec = Math.max(0, Math.floor((now - startedAtMs) / 1000));
       const elapsedSec = Math.max(wallElapsedSec, monotonicElapsedSec);
-      const remainingSec = Math.max(0, totalSec - elapsedSec);
 
       setTimeSpentSeconds(elapsedSec);
       setTimeRemainingSeconds(remainingSec);
@@ -606,7 +616,7 @@ export default function MockExamTestPage() {
       clearInterval(interval);
       clearInterval(syncInterval);
     };
-  }, [testPhase, exam?.duration_minutes, handleFinalSubmit]);
+  }, [testPhase, exam?.duration_minutes, exam?.end_time, handleFinalSubmit]);
 
   // 5. Anti-Cheat & Anti-Inspect Watchdog (DevTools, Right-Click, Shortcuts, Tab Switch, Fullscreen, Copy/Cut & PrintScreen)
   useEffect(() => {
@@ -620,7 +630,8 @@ export default function MockExamTestPage() {
       }
       lastViolationTimeRef.current = now;
 
-      const maxAllowed = exam?.max_tab_switches_allowed || 3;
+      // F15: Use ?? so configured zero means zero-tolerance (not 3)
+      const maxAllowed = exam?.max_tab_switches_allowed ?? 3;
       tabSwitchCountRef.current += 1;
       const nextCount = tabSwitchCountRef.current;
       setTabSwitchCount(nextCount);
@@ -635,7 +646,11 @@ export default function MockExamTestPage() {
         type,
         details: defaultMsg,
       };
-      setProctorEvents(prev => [...prev, newEvent]);
+
+      // F15: Commit new event to syncRef BEFORE submission so the snapshot is complete
+      const updatedEvents = [...syncRef.current.events, newEvent];
+      syncRef.current = { ...syncRef.current, tabSwitches: nextCount, events: updatedEvents };
+      setProctorEvents(updatedEvents);
 
       if (customMessage) {
         setWarningMessage(customMessage);
@@ -678,8 +693,10 @@ export default function MockExamTestPage() {
       return false;
     };
 
-    // 🛡️ Anti-Cheat 2: Block Copy & Cut Operations completely
+    // 🛡️ Anti-Cheat 2: Block Copy & Cut Operations (exempt code editor)
     const handleCopyOrCut = (e: ClipboardEvent) => {
+      // F15: Allow copy/cut inside the Monaco code editor (students need to edit code)
+      if (e.target instanceof Element && e.target.closest('.monaco-editor')) return;
       e.preventDefault();
       e.stopPropagation();
       if (e.clipboardData) {
@@ -764,12 +781,16 @@ export default function MockExamTestPage() {
     };
 
     // 🛡️ Anti-Inspect 4: DevTools Window Docking Detection (outer vs inner differential)
+    // F15: This is now TELEMETRY-ONLY — window-size differences are logged but do not
+    // auto-fire a violation. External monitors, OS taskbars, and zoomed browsers cause
+    // constant false positives that penalise legitimate students.
     const checkDevToolsOpen = () => {
       const threshold = 160;
       const widthDiff = window.outerWidth - window.innerWidth;
       const heightDiff = window.outerHeight - window.innerHeight;
       if (widthDiff > threshold || heightDiff > threshold) {
-        handleViolation('DEVTOOLS_OPEN', 'Developer tools inspection dock detected');
+        // Log as a proctor telemetry note without incrementing the violation counter
+        console.info('[Proctor] Window-size differential detected (telemetry only):', { widthDiff, heightDiff });
       }
     };
 
@@ -853,14 +874,19 @@ export default function MockExamTestPage() {
     if (!currentQuestionId) return;
     setResponses(prev => {
       const existing = prev[currentQuestionId];
+      const hasNewTestResult = testCasesPassed !== undefined;
+
       const updated: Record<string, StudentExamResponse> = {
         ...prev,
         [currentQuestionId]: {
           selected_option: existing?.selected_option ?? null,
           code_solution: codeText,
           code_language: language || existing?.code_language || 'python',
-          test_cases_passed: testCasesPassed !== undefined ? testCasesPassed : existing?.test_cases_passed,
-          total_test_cases: totalTestCases !== undefined ? totalTestCases : existing?.total_test_cases,
+          // Only preserve test results when the caller explicitly provides fresh data.
+          // If code changed without re-running tests, invalidate stale verdicts by
+          // setting both fields to undefined so grading treats them as "not yet tested".
+          test_cases_passed: hasNewTestResult ? testCasesPassed : undefined,
+          total_test_cases: hasNewTestResult ? totalTestCases : undefined,
           marked_review: existing?.marked_review || false,
           time_spent_sec: (existing?.time_spent_sec || 0) + 1,
         },
@@ -906,12 +932,14 @@ export default function MockExamTestPage() {
   const handleToggleReview = () => {
     if (!currentQuestionId) return;
     setResponses(prev => {
+      // Spread ALL existing fields first so coding state (code_solution, code_language,
+      // test_cases_passed, total_test_cases) is never silently dropped.
+      const existing = prev[currentQuestionId] || {};
       const updated = {
         ...prev,
         [currentQuestionId]: {
-          selected_option: prev[currentQuestionId]?.selected_option ?? null,
-          marked_review: !prev[currentQuestionId]?.marked_review,
-          time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
+          ...existing,
+          marked_review: !existing.marked_review,
         },
       };
       if (typeof window !== 'undefined' && examId) {

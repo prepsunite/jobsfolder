@@ -424,7 +424,7 @@ export const codeExecutionService = {
   ): Promise<TestCaseRunResult> {
     // 1. Guard against empty code or unmodified starter template
     if (isTemplateOrEmptyCode(sourceCode, language)) {
-      const emptyCases: EvaluatedTestCase[] = testCases.map((tc) => ({
+      const emptyCases: EvaluatedTestCase[] = (testCases || []).map((tc) => ({
         input: tc.input || '',
         expected: tc.expected_output || tc.output || '',
         actual: 'No solution code detected. Please write your algorithm before running tests.',
@@ -437,7 +437,7 @@ export const codeExecutionService = {
       return {
         cases: emptyCases,
         passedCount: 0,
-        totalCount: testCases.length,
+        totalCount: (testCases || []).length,
         isTemplateOrEmpty: true,
         compileError: null,
         runtimeError: null,
@@ -457,7 +457,10 @@ export const codeExecutionService = {
       };
     }
 
-    const casesToRun = testCases.slice(0, 5); // Evaluate up to 5 test cases
+    // Run all test cases (no hard cap – the UI should render as many as needed).
+    // For very large private suites this stays safe because the browser only
+    // receives sample cases; private grading must run server-side.
+    const casesToRun = testCases;
     const evaluatedCases: EvaluatedTestCase[] = [];
     let compileErrorEncountered: string | null = null;
     let firstRuntimeError: string | null = null;
@@ -530,9 +533,11 @@ export const codeExecutionService = {
         continue;
       }
 
-      // Check Output Match
+      // Check Output Match — REQUIRES successful execution (isSuccess).
+      // An internal error, empty stdout, or network failure must NEVER count as a pass,
+      // even if the expected output is also empty.
       const actual = normalizeOutput(execResult.stdout);
-      const isMatch = actual === expected;
+      const isMatch = execResult.isSuccess && actual === expected;
 
       evaluatedCases.push({
         input: stdin,

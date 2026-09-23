@@ -1,7 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
-import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
+import {
+  mockExamBlueprintService,
+  FALLBACK_APTITUDE_TOPICS,
+  TECHNICAL_MCQ_SUBJECTS,
+  CODING_CATEGORIES,
+} from '@/services/mockExamBlueprint.service';
 import { isTemplateOrEmptyCode } from '@/services/codeExecution.service';
 import type {
   College,
@@ -3883,19 +3888,20 @@ export const tpoService = {
         // Query coding problems from technical_problems with alias mapping & topic keyword prioritization
         try {
           const CODING_TOPIC_TO_DB_CATEGORIES: Record<string, string[]> = {
-            'LINKED_LISTS': ['LINEAR_STRUCTURES'],
-            'STACKS_QUEUES': ['LINEAR_STRUCTURES'],
-            'TWO_POINTERS': ['POINTERS_ARRAYS'],
-            'SLIDING_WINDOW': ['POINTERS_ARRAYS'],
-            'TREES_BINARY_TREES': ['HIERARCHICAL_STRUCTURES'],
-            'DYNAMIC_PROGRAMMING': ['EXHAUSTIVE_SEARCH_DP'],
-            'SEARCHING_SORTING': ['SEARCHING', 'SEARCH_INTERVALS'],
-            'POINTERS_ARRAYS': ['POINTERS_ARRAYS'],
-            'LINEAR_STRUCTURES': ['LINEAR_STRUCTURES'],
-            'HIERARCHICAL_STRUCTURES': ['HIERARCHICAL_STRUCTURES'],
-            'SEARCH_INTERVALS': ['SEARCH_INTERVALS'],
-            'EXHAUSTIVE_SEARCH_DP': ['EXHAUSTIVE_SEARCH_DP'],
-            'NETWORK_GRAPH_ALGORITHMS': ['NETWORK_GRAPH_ALGORITHMS'],
+            'LINKED_LISTS': ['LINEAR_STRUCTURES', 'LINKED_LISTS'],
+            'STACKS_QUEUES': ['LINEAR_STRUCTURES', 'STACKS_QUEUES'],
+            'TWO_POINTERS': ['POINTERS_ARRAYS', 'TWO_POINTERS'],
+            'SLIDING_WINDOW': ['POINTERS_ARRAYS', 'SLIDING_WINDOW'],
+            'TREES_BINARY_TREES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
+            'DYNAMIC_PROGRAMMING': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
+            'SEARCHING_SORTING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
+            'POINTERS_ARRAYS': ['POINTERS_ARRAYS', 'TWO_POINTERS', 'SLIDING_WINDOW'],
+            'LINEAR_STRUCTURES': ['LINEAR_STRUCTURES', 'LINKED_LISTS', 'STACKS_QUEUES'],
+            'HIERARCHICAL_STRUCTURES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
+            'SEARCH_INTERVALS': ['SEARCH_INTERVALS', 'SEARCHING', 'SEARCHING_SORTING'],
+            'EXHAUSTIVE_SEARCH_DP': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
+            'NETWORK_GRAPH_ALGORITHMS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
+            'GRAPHS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
             'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS'],
             'STRINGS': ['STRINGS'],
             'SYNTAX_BASICS': ['SYNTAX_BASICS'],
@@ -3904,7 +3910,7 @@ export const tpoService = {
             'MATRICES': ['MATRICES', 'ARRAYS'],
             'RECURSION': ['RECURSION'],
             'BIT_MANIPULATION': ['BIT_MANIPULATION'],
-            'SEARCHING': ['SEARCHING', 'SEARCH_INTERVALS'],
+            'SEARCHING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
           };
 
           const CODING_TOPIC_TITLE_KEYWORDS: Record<string, string[]> = {
@@ -3929,9 +3935,9 @@ export const tpoService = {
 
           const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
           let titleKeywords: string[] = [];
+          const targetCategories = new Set<string>();
 
           if (hasTopicIds) {
-            const targetCategories = new Set<string>();
             sec.topic_ids.forEach(t => {
               const upper = t.toUpperCase();
               const mapped = CODING_TOPIC_TO_DB_CATEGORIES[upper] || [t, upper, t.toLowerCase()];
@@ -3943,6 +3949,16 @@ export const tpoService = {
             });
 
             codingQuery = codingQuery.in('category', Array.from(targetCategories));
+          } else if (sec.coding_track) {
+            const trackCats = CODING_CATEGORIES.filter(c => c.track === sec.coding_track).map(c => c.id);
+            if (trackCats.length > 0) {
+              const expandedCats = new Set<string>();
+              trackCats.forEach(cat => {
+                const mapped = CODING_TOPIC_TO_DB_CATEGORIES[cat] || [cat];
+                mapped.forEach(m => expandedCats.add(m));
+              });
+              codingQuery = codingQuery.in('category', Array.from(expandedCats));
+            }
           }
 
           const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
@@ -3988,12 +4004,29 @@ export const tpoService = {
             }
           }
 
-          // Fallback if needed count is not met: query any available coding problems
+          // Fallback if needed count is not met:
+          // If specific topics were chosen, relax difficulty constraint BUT STRICTLY KEEP category filter!
           if (questionIds.length < neededCount) {
-            const { data: fallbackCoding } = await supabase
+            let fallbackCodingQuery = supabase
               .from('technical_problems')
               .select('id, title, category, level')
-              .eq('is_deleted', false)
+              .eq('is_deleted', false);
+
+            if (hasTopicIds && targetCategories.size > 0) {
+              fallbackCodingQuery = fallbackCodingQuery.in('category', Array.from(targetCategories));
+            } else if (sec.coding_track) {
+              const trackCats = CODING_CATEGORIES.filter(c => c.track === sec.coding_track).map(c => c.id);
+              if (trackCats.length > 0) {
+                const expandedCats = new Set<string>();
+                trackCats.forEach(cat => {
+                  const mapped = CODING_TOPIC_TO_DB_CATEGORIES[cat] || [cat];
+                  mapped.forEach(m => expandedCats.add(m));
+                });
+                fallbackCodingQuery = fallbackCodingQuery.in('category', Array.from(expandedCats));
+              }
+            }
+
+            const { data: fallbackCoding } = await fallbackCodingQuery
               .limit(Math.max((neededCount - questionIds.length) * 10, 50));
 
             if (fallbackCoding && fallbackCoding.length > 0) {
@@ -4013,6 +4046,22 @@ export const tpoService = {
       } else if (isTechnicalMcq) {
         // Query Technical MCQs from technical_mcqs table
         try {
+          const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+          let allowedTopics: string[] = [];
+
+          if (hasTopicIds) {
+            allowedTopics = sec.topic_ids;
+          } else if (sec.category && sec.category.startsWith('mcq-')) {
+            allowedTopics = [sec.category];
+          }
+
+          // F11: If technical topics/category specified but none resolved, throw rather than pooling unrestricted
+          if ((hasTopicIds || (sec.category && sec.category.startsWith('mcq-'))) && allowedTopics.length === 0) {
+            throw new Error(
+              `Technical section "${sec.name || 'Tech MCQ'}" requested category "${sec.category}", but no matching technical topic IDs were found.`
+            );
+          }
+
           let techQuery = supabase
             .from('technical_mcqs')
             .select('id, topic_id, difficulty')
@@ -4022,10 +4071,8 @@ export const tpoService = {
             techQuery = techQuery.eq('difficulty', sec.difficulty);
           }
 
-          if (sec.topic_ids && sec.topic_ids.length > 0) {
-            techQuery = techQuery.in('topic_id', sec.topic_ids);
-          } else if (sec.category && sec.category.startsWith('mcq-')) {
-            techQuery = techQuery.eq('topic_id', sec.category);
+          if (allowedTopics.length > 0) {
+            techQuery = techQuery.in('topic_id', allowedTopics);
           }
 
           const { data: techData } = await techQuery.limit(Math.max(neededCount * 25, 200));
@@ -4045,11 +4092,9 @@ export const tpoService = {
             try {
               const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
               let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
-              if (sec.topic_ids && sec.topic_ids.length > 0) {
-                const allowed = new Set(sec.topic_ids);
+              if (allowedTopics.length > 0) {
+                const allowed = new Set(allowedTopics);
                 seedPool = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
-              } else if (sec.category && sec.category.startsWith('mcq-')) {
-                seedPool = seedPool.filter(s => (s.topicId || (s as any).topic_id) === sec.category);
               }
               const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
               for (const s of shuffledSeeds) {
@@ -4085,6 +4130,50 @@ export const tpoService = {
             'making-judgments',
           ]);
 
+          const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+          let allowedTopicIds: string[] = [];
+
+          if (hasTopicIds) {
+            // STRICT TOPIC ISOLATION: Only pull questions from the selected topic IDs
+            allowedTopicIds = sec.topic_ids;
+          } else if (sec.category && sec.category !== 'all') {
+            // DOMAIN-SCOPED DEFAULT MIXING: Resolve all topic IDs for this domain category
+            const domainCategory = sec.category.toLowerCase().trim();
+            const extraCategoryVariants: Record<string, string[]> = {
+              'arithmetic-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
+              'quantitative-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
+              'quant': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
+              'data-interpretation': ['data-interpretation', 'di'],
+              'di': ['data-interpretation', 'di'],
+              'logical-reasoning': ['logical-reasoning', 'logic', 'reasoning'],
+              'logic': ['logical-reasoning', 'logic', 'reasoning'],
+              'reasoning': ['logical-reasoning', 'logic', 'reasoning'],
+              'verbal-reasoning': ['verbal-reasoning', 'vr'],
+              'vr': ['verbal-reasoning', 'vr'],
+              'verbal-ability': ['verbal-ability', 'verbal', 'english'],
+              'verbal': ['verbal-ability', 'verbal', 'english'],
+              'english': ['verbal-ability', 'verbal', 'english'],
+              'non-verbal-reasoning': ['non-verbal-reasoning', 'nonverbal', 'nv'],
+              'nonverbal': ['non-verbal-reasoning', 'nonverbal', 'nv'],
+              'technical-aptitude': ['technical-aptitude', 'tech-aptitude'],
+              'tech-aptitude': ['technical-aptitude', 'tech-aptitude'],
+            };
+
+            const matchingVariants = extraCategoryVariants[domainCategory] || [domainCategory];
+            const matchingTopics = FALLBACK_APTITUDE_TOPICS
+              .filter(t => matchingVariants.includes(t.category_slug))
+              .map(t => t.id);
+
+            allowedTopicIds = Array.from(new Set(matchingTopics));
+          }
+
+          // F11: If an aptitude category or explicit topic list was requested but no topic IDs resolved, reject rather than falling back to an unrestricted database-wide pool
+          if ((hasTopicIds || (sec.category && sec.category !== 'all')) && allowedTopicIds.length === 0) {
+            throw new Error(
+              `Section "${sec.name || 'MCQ'}" requested category "${sec.category}" or topics [${(sec.topic_ids || []).join(', ')}], but no matching topics were found in the question taxonomy.`
+            );
+          }
+
           let mcqQuery = supabase
             .from('topic_questions')
             .select('id, question_number, topic_id, difficulty, structured_explanation')
@@ -4094,8 +4183,8 @@ export const tpoService = {
             mcqQuery = mcqQuery.eq('difficulty', sec.difficulty);
           }
 
-          if (sec.topic_ids && sec.topic_ids.length > 0) {
-            mcqQuery = mcqQuery.in('topic_id', sec.topic_ids);
+          if (allowedTopicIds.length > 0) {
+            mcqQuery = mcqQuery.in('topic_id', allowedTopicIds);
           }
 
           const { data } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
@@ -4129,22 +4218,29 @@ export const tpoService = {
                 }
               });
 
-              // Shuffle passage blocks as complete units, but keep internal 5 questions in strict sequential order
+              // F10 Fix: Passage blocks MUST be included as atomic units.
+              // Only include a block if the entire block fits within the remaining capacity.
+              // This means we may end up with fewer questions than requested — that's correct
+              // and preferable to showing a half-passage with missing context.
               const shuffledBlockKeys = Object.keys(passageBlocks).sort(() => Math.random() - 0.5);
+              const usedPassageQIds = new Set<string>();
               for (const key of shuffledBlockKeys) {
                 const block = passageBlocks[key];
-                // Sort by question_number ascending so Q1..5 are in exact stimulus order
+                // Sort by question_number ascending so Q1..N are in exact stimulus order
                 block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
-                for (const q of block) {
-                  if (!usedQuestionIds.has(q.id)) {
-                    questionIds.push(q.id);
-                    usedQuestionIds.add(q.id);
-                  }
+                const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
+                if (unusedInBlock.length === 0) continue;
+                // Skip this block if it would overshoot — never show a partial passage
+                if (questionIds.length + unusedInBlock.length > neededCount) continue;
+                for (const q of unusedInBlock) {
+                  questionIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                  usedPassageQIds.add(q.id);
                 }
                 if (questionIds.length >= neededCount) break;
               }
 
-              // If still needed, fill with remaining non-passage questions
+              // Fill remaining capacity with standalone (non-passage) questions only
               if (questionIds.length < neededCount) {
                 const shuffledNonPassage = nonPassageQuestions.sort(() => Math.random() - 0.5);
                 for (const q of shuffledNonPassage) {
@@ -4168,12 +4264,23 @@ export const tpoService = {
             }
           }
 
+          // Fallback if needed count is not met:
+          // Relax difficulty constraint IF it was set, BUT STRICTLY RETAIN allowedTopicIds!
+          // NEVER query unselected foreign topics when topics/category are scoped!
           if (questionIds.length < neededCount) {
             const stillNeeded = neededCount - questionIds.length;
-            const { data: fallbackQ } = await supabase
+            let fallbackMcqQuery = supabase
               .from('topic_questions')
               .select('id, question_number, topic_id, difficulty')
-              .eq('is_deleted', false)
+              .eq('is_deleted', false);
+
+            if (allowedTopicIds.length > 0) {
+              fallbackMcqQuery = fallbackMcqQuery.in('topic_id', allowedTopicIds);
+            } else if (sec.category && sec.category !== 'all') {
+              fallbackMcqQuery = fallbackMcqQuery.in('topic_id', ['__NONE__']);
+            }
+
+            const { data: fallbackQ } = await fallbackMcqQuery
               .limit(Math.max(stillNeeded * 10, 100));
 
             if (fallbackQ && fallbackQ.length > 0) {
@@ -4209,6 +4316,26 @@ export const tpoService = {
         created_at: new Date().toISOString(),
       });
     }
+
+    // F13: Validate every section has questions before publishing.
+    // Hard-fail on empty sections; warn (but continue) when underfilled.
+    for (const sec of sections) {
+      const neededCount = sectionConfigs[sections.indexOf(sec)]?.question_count || 0;
+      const gotCount = sec.question_ids?.length || 0;
+      if (gotCount === 0) {
+        throw new Error(
+          `Section "${sec.name}": requested ${neededCount} questions but the question bank returned 0. ` +
+          `Please add questions to the selected topics before publishing.`
+        );
+      }
+      if (gotCount < neededCount) {
+        console.warn(
+          `[createMockExam] Section "${sec.name}": requested ${neededCount}, got ${gotCount}. ` +
+          `Exam will be created with fewer questions than configured.`
+        );
+      }
+    }
+
 
     const newLocalExam: MockExam = {
       id: examId,
@@ -4309,13 +4436,22 @@ export const tpoService = {
             mock_exam_id: examId,
             name: s.name,
             section_order: s.section_order,
+            // F14 Fix: persist all routing/classification fields so cross-device reads
+            // don't lose section type, domain, track, and difficulty.
+            section_type: s.section_type ?? null,
+            category: s.category ?? null,
+            coding_track: s.coding_track ?? null,
+            difficulty: s.difficulty ?? null,
             duration_minutes: s.duration_minutes || null,
             marks_per_correct: s.marks_per_correct,
             negative_marking: s.negative_marking,
             question_ids: s.question_ids,
             topic_ids: s.topic_ids,
           }));
-          await supabase.from('mock_exam_sections').upsert(secRows);
+          const { error: secErr } = await supabase.from('mock_exam_sections').upsert(secRows);
+          if (secErr) {
+            console.warn('[createMockExam] Section persistence warning:', secErr.message);
+          }
         }
       }
     } catch (err: any) {
@@ -5336,6 +5472,8 @@ export const tpoService = {
     let solutionMap: Record<string, number> = {};
 
     // 1. Fetch Aptitude MCQ solutions
+    // NOTE: topic_questions.correct_answer is stored as a letter ('A','B','C','D').
+    // We must convert to a 0-based numeric index before storing in solutionMap.
     try {
       const { data: questionsWithSolutions } = await supabase
         .from('topic_questions')
@@ -5344,7 +5482,16 @@ export const tpoService = {
 
       (questionsWithSolutions || []).forEach(q => {
         if (q.correct_answer !== undefined && q.correct_answer !== null) {
-          solutionMap[q.id] = Number(q.correct_answer);
+          const raw = String(q.correct_answer).trim().toUpperCase();
+          if (raw.length === 1 && raw >= 'A' && raw <= 'Z') {
+            // Letter key (e.g. 'A' → 0, 'B' → 1, 'C' → 2, 'D' → 3)
+            solutionMap[q.id] = raw.charCodeAt(0) - 65;
+          } else {
+            const numericVal = parseInt(raw, 10);
+            if (!isNaN(numericVal)) {
+              solutionMap[q.id] = numericVal;
+            }
+          }
         }
       });
     } catch {}

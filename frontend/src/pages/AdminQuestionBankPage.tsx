@@ -204,6 +204,14 @@ export default function AdminQuestionBankPage() {
     return { count: 0, valid: false, items: [] };
   }, [multiTopicInput]);
 
+  // F21: Invalidate all caches that read from the question bank catalog.
+  // This ensures admin page, exam creation modal, and aptitude page stay in sync.
+  const invalidateAllBankCaches = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+    queryClient.invalidateQueries({ queryKey: ['tpo-aptitude-topics'] });
+    queryClient.invalidateQueries({ queryKey: ['aptitude-topics-db'] });
+  };
+
   // Handlers
   const handleOpenAddModal = (topic: TopicInventoryItem, mode: 'SINGLE_MCQ' | 'SINGLE_CODING' | 'BULK' = 'BULK') => {
     setSelectedTopic(topic);
@@ -235,7 +243,7 @@ export default function AdminQuestionBankPage() {
         difficulty: mcqDifficulty,
       };
       await questionBankService.addSingleMcq(input);
-      queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+      invalidateAllBankCaches();
       refetchQuestions();
       toast.success('Question added to bank successfully.');
       setMcqStatement('');
@@ -290,7 +298,7 @@ export default function AdminQuestionBankPage() {
       };
 
       await questionBankService.addSingleCodingProblem(input);
-      queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+      invalidateAllBankCaches();
       refetchQuestions();
       toast.success('Coding problem added to bank successfully.');
       setCodingTitle('');
@@ -320,7 +328,7 @@ export default function AdminQuestionBankPage() {
         const res = await questionBankService.bulkImportMcqs(selectedTopic.id, parsedBulkPreview.items);
         toast.success(`Imported ${res.inserted} MCQs (${res.errors} errors).`);
       }
-      queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+      invalidateAllBankCaches();
       refetchQuestions();
       setBulkText('');
       setShowAddModal(false);
@@ -340,7 +348,7 @@ export default function AdminQuestionBankPage() {
     try {
       setIsMultiImporting(true);
       const res = await questionBankService.bulkImportMultiTopicMcqs(parsedMultiTopicPreview.items);
-      queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+      invalidateAllBankCaches();
       if (selectedTopic) refetchQuestions();
       toast.success(`Successfully imported ${res.inserted} questions across topics (${res.errors} errors)!`);
       setMultiTopicInput('');
@@ -363,7 +371,7 @@ export default function AdminQuestionBankPage() {
     if (!confirmed) return;
     try {
       await questionBankService.deleteQuestion(qId, selectedTopic.type === 'CODING');
-      queryClient.invalidateQueries({ queryKey: ['admin-question-inventories'] });
+      invalidateAllBankCaches();
       refetchQuestions();
       toast.success('Question deleted.');
     } catch {
@@ -422,10 +430,12 @@ export default function AdminQuestionBankPage() {
             { id: 'ALL', label: 'All Topics' },
             { id: 'arithmetic-aptitude', label: 'Quantitative' },
             { id: 'data-interpretation', label: 'Data Interpretation' },
-            { id: 'logical-reasoning', label: 'Logical' },
-            { id: 'verbal-ability', label: 'Verbal Ability' },
+            { id: 'logical-reasoning', label: 'Logical Reasoning' },
             { id: 'verbal-reasoning', label: 'Verbal Reasoning' },
-            { id: 'technical-aptitude', label: 'Technical MCQs' },
+            { id: 'verbal-ability', label: 'Verbal Ability' },
+            { id: 'non-verbal-reasoning', label: 'Non-Verbal' },
+            { id: 'technical-aptitude', label: 'Tech Aptitude' },
+            { id: 'technical-mcqs', label: 'Core CS MCQs' },
             { id: 'coding', label: 'Coding Problems' },
           ].map(c => (
             <button

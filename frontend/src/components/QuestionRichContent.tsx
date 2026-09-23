@@ -9,6 +9,22 @@ export interface QuestionRichContentProps {
   isOption?: boolean;
 }
 
+function sanitizeRichHtml(html: string): string {
+  if (!html) return '';
+  return html
+    // Strip script blocks and contents
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Strip iframes, embeds, objects, forms
+    .replace(/<(iframe|embed|object|form)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, '')
+    .replace(/<(iframe|embed|object|form)[^>]*\/?>/gi, '')
+    // Strip inline event attributes (e.g. onerror=, onload=, onclick=)
+    .replace(/\s+on[a-zA-Z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
+    // Strip javascript: URLs
+    .replace(/(href|src)\s*=\s*['"]\s*javascript:[^'"]*['"]/gi, '')
+    // Strip dangerous data URLs (allow data:image/...)
+    .replace(/(href|src)\s*=\s*['"]\s*data:(?!image\/)[^'"]*['"]/gi, '');
+}
+
 export default function QuestionRichContent({
   content,
   className = '',
@@ -47,7 +63,7 @@ export default function QuestionRichContent({
                     ? 'my-0.5 inline-flex items-center justify-start text-left [&_svg]:max-h-14 sm:[&_svg]:max-h-16 [&_svg]:w-auto [&_svg]:h-auto [&_img]:max-h-14 sm:[&_img]:max-h-16 [&_img]:w-auto'
                     : 'my-3 w-full overflow-x-auto flex justify-center items-center text-center [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:rounded-lg [&_img]:max-w-full [&_img]:h-auto [&_table]:w-full [&_table]:border-collapse'
                 }
-                dangerouslySetInnerHTML={{ __html: part }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(part) }}
               />
             );
           }
