@@ -202,6 +202,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(getInitialUser);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Track the previous confirmed role so we can detect downgrades AFTER live DB sync.
+  // When syncProfileWithSupabase() confirms TPO was revoked or student was removed from college,
+  // we fire a custom DOM event so any mounted layout can react and redirect immediately.
+  const prevRoleRef = React.useRef<UserRole>(getInitialRole());
+  const prevCollegeIdRef = React.useRef<string | undefined>(
+    typeof window !== 'undefined' ? (localStorage.getItem('prepunite_college_id') || undefined) : undefined
+  );
+
   // Helper to persist profile state from Supabase database
   const applyUserProfile = (
     email: string,
@@ -220,9 +228,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     // 🛡️ Super Admin Protection: ONLY whitelisted emails can EVER be ADMIN. No exceptions!
     const isSuperAdmin = isSuperAdminEmail(email);
-    // 🛡️ TPO Protection: STRICTLY require verified TPO authorization, NEVER self-declared or ADMIN
-    const verifiedTpoAuth = !isSuperAdmin ? tpoService.findTpoAuthByEmail(email) : null;
-    const isTpo = !isSuperAdmin && (Boolean(verifiedTpoAuth) || (assignedRole === 'TPO_ADMIN' && Boolean(collegeData?.isTpoAdmin)));
+    // 🛡️ TPO Protection: STRICTLY driven by verified assignedRole from live Supabase sync
+    const isTpo = !isSuperAdmin && assignedRole === 'TPO_ADMIN' && Boolean(collegeData?.isTpoAdmin);
     const finalRole: UserRole = isSuperAdmin ? 'ADMIN' : isTpo ? 'TPO_ADMIN' : 'USER';
     const name = formatDisplayNameFromEmail(email, nameInput);
 
@@ -275,10 +282,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         localStorage.setItem('prepunite_student_entitlements', JSON.stringify(entitlements));
       } catch {}
+    } else {
+      // User has no college affiliation or was removed from college
+      localStorage.removeItem('prepunite_college_id');
+      localStorage.removeItem('prepunite_college_name');
+      try {
+        const raw = localStorage.getItem('prepunite_student_entitlements');
+        if (raw) {
+          const entitlements = JSON.parse(raw);
+          delete entitlements[email.trim().toLowerCase()];
+          localStorage.setItem('prepunite_student_entitlements', JSON.stringify(entitlements));
+        }
+      } catch {}
     }
     if (collegeData?.collegeName) {
       localStorage.setItem('prepunite_college_name', collegeData.collegeName);
+    } else if (!collegeData?.collegeId) {
+      localStorage.removeItem('prepunite_college_name');
     }
+
+    // 🚦 ROLE DOWNGRADE WATCHDOG:
+    // If the user was previously a TPO (cached) but the live DB sync confirmed they are no longer,
+    // fire a custom DOM event so TpoLayout can immediately redirect them to /dashboard.
+    const previousRole = prevRoleRef.current;
+    const previousCollegeId = prevCollegeIdRef.current;
+    prevRoleRef.current = finalRole;
+    prevCollegeIdRef.current = finalRole !== 'ADMIN' ? (collegeData?.collegeId || undefined) : undefined;
+
+    // TPO was revoked → fire redirect event
+    if (previousRole === 'TPO_ADMIN' && finalRole !== 'TPO_ADMIN') {
+      window.dispatchEvent(new CustomEvent('prepunite-role-downgraded', {
+        detail: { from: previousRole, to: finalRole, email },
+      }));
+    }
+    // Student was removed from college (had a college, now doesn't)
+    if (previousCollegeId && !collegeData?.collegeId && finalRole === 'USER') {
+      window.dispatchEvent(new CustomEvent('prepunite-college-removed', {
+        detail: { previousCollegeId, email },
+      }));
+    }
+
     return newProfile;
   };
 
@@ -302,11 +345,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       // 2. Check pre-authorized TPO records (NEVER an authorized super admin)
+      // Must verify against live Supabase tpo_authorizations table!
       const tpoAuth = !isMasterAdmin ? await tpoService.findTpoAuthByEmailAsync(email) : null;
-      const isDbTpo = !isMasterAdmin && (Boolean(tpoAuth) || Boolean(dbProfile?.is_tpo_admin));
+      const isDbTpo = !isMasterAdmin && Boolean(tpoAuth);
 
       if (profileError) {
         console.warn('[syncProfileWithSupabase] Profile lookup notice:', profileError.message);
+      }
+
+      // If user was revoked in tpo_authorizations but profiles table still had is_tpo_admin = true,
+      // clean up profiles table immediately so DB consistency is maintained!
+      if (!isMasterAdmin && !isDbTpo && dbProfile?.is_tpo_admin) {
+        try {
+          await supabase.from('profiles').update({
+            is_tpo_admin: false,
+            college_id: null,
+            role: 'user',
+            updated_at: new Date().toISOString(),
+          }).eq('id', userId);
+        } catch {}
       }
 
       // Check database role column
@@ -314,7 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 🛡️ ROLE HIERARCHY ENFORCEMENT:
       // ONLY whitelisted emails can EVER be ADMIN.
-      // TPO coordinators get TPO_ADMIN.
+      // Verified active TPO coordinators get TPO_ADMIN.
       // ALL other users, students, etc. get strictly USER.
       let assignedRole: UserRole = 'USER';
       if (isMasterAdmin) {
@@ -387,73 +444,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 🏛️ Multi-Device Student College Resolution:
-      // Check if student was enrolled by a TPO into college_students or user_subscriptions
-      let resolvedCollegeId = dbProfile?.college_id || null;
+      let resolvedCollegeId: string | undefined = undefined;
       let resolvedRollNumber = dbProfile?.roll_number || null;
       let resolvedDepartment = dbProfile?.department || null;
       let resolvedBatchYear = dbProfile?.batch_year || null;
       let resolvedCollegeName = '';
 
-      if (!isMasterAdmin && !isDbTpo && !resolvedCollegeId && email) {
+      if (!isMasterAdmin && !isDbTpo && email) {
         const cleanEmail = email.trim().toLowerCase();
-        // A. Check college_students table
-        try {
-          const { data: cs } = await supabase
-            .from('college_students')
-            .select('college_id, roll_number, department, batch_year')
-            .eq('email', cleanEmail)
-            .maybeSingle();
-          if (cs?.college_id) {
-            resolvedCollegeId = cs.college_id;
-            resolvedRollNumber = cs.roll_number || resolvedRollNumber;
-            resolvedDepartment = cs.department || resolvedDepartment;
-            resolvedBatchYear = cs.batch_year || resolvedBatchYear;
-          }
-        } catch {}
+        // Live verification against check_student_college_entitlement RPC
+        const liveEntitlement = await tpoService.verifyStudentEntitlementLive(cleanEmail);
+        if (liveEntitlement?.isEntitled && liveEntitlement.collegeId) {
+          resolvedCollegeId = liveEntitlement.collegeId;
+          resolvedCollegeName = liveEntitlement.collegeName || '';
 
-        // B. Check user_subscriptions for active B2B Campus Pro Pass
-        if (!resolvedCollegeId) {
-          try {
-            const { data: sub } = await supabase
-              .from('user_subscriptions')
-              .select('payment_id, plan_name')
-              .eq('user_email', cleanEmail)
-              .ilike('payment_id', 'B2B_CAMPUS_%')
-              .eq('status', 'ACTIVE')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (sub?.payment_id) {
-              const rawCid = sub.payment_id.replace(/^B2B_CAMPUS_/, '');
-              const parts = rawCid.split('_');
-              resolvedCollegeId = parts.length > 1 && parts[parts.length - 1].length >= 16
-                ? parts.slice(0, -1).join('_')
-                : rawCid;
-              if (sub.plan_name) {
-                const match = sub.plan_name.match(/Campus Pro Pass \((.+)\)/i);
-                if (match) resolvedCollegeName = match[1];
+          // Fetch student record metadata if missing
+          if (!resolvedRollNumber || !resolvedDepartment) {
+            try {
+              const { data: cs } = await supabase
+                .from('college_students')
+                .select('roll_number, department, batch_year')
+                .eq('email', cleanEmail)
+                .maybeSingle();
+              if (cs) {
+                resolvedRollNumber = cs.roll_number || resolvedRollNumber;
+                resolvedDepartment = cs.department || resolvedDepartment;
+                resolvedBatchYear = cs.batch_year || resolvedBatchYear;
               }
-            }
-          } catch {}
-        }
+            } catch {}
+          }
 
-        // C. Self-heal profiles row with discovered college attributes
-        if (resolvedCollegeId && userId) {
-          try {
-            await supabase.from('profiles').update({
-              college_id: resolvedCollegeId,
-              roll_number: resolvedRollNumber,
-              department: resolvedDepartment,
-              batch_year: resolvedBatchYear,
-              updated_at: new Date().toISOString(),
-            }).eq('id', userId);
-          } catch {}
+          // Sync verified college attributes to profiles table
+          if (userId && resolvedCollegeId && dbProfile?.college_id !== resolvedCollegeId) {
+            try {
+              await supabase.from('profiles').update({
+                college_id: resolvedCollegeId,
+                roll_number: resolvedRollNumber,
+                department: resolvedDepartment,
+                batch_year: resolvedBatchYear,
+                updated_at: new Date().toISOString(),
+              }).eq('id', userId);
+            } catch {}
+          }
+        } else {
+          // 🛑 Student is NOT entitled (was removed by TPO, revoked, or expired)
+          resolvedCollegeId = undefined;
+          resolvedCollegeName = '';
+          // Clean up any stale college link from profiles table
+          if (userId && dbProfile?.college_id) {
+            try {
+              await supabase.from('profiles').update({
+                college_id: null,
+                roll_number: null,
+                department: null,
+                batch_year: null,
+                updated_at: new Date().toISOString(),
+              }).eq('id', userId);
+            } catch {}
+          }
         }
       }
 
-      const studentInfo = !isDbTpo ? tpoService.getStudentEntitlementInfo(email) : null;
-      const finalCollegeId = tpoAuth?.college_id || studentInfo?.collegeId || resolvedCollegeId || (dbProfile as any)?.college_id;
-      const finalCollegeName = tpoAuth?.college_name || studentInfo?.collegeName || resolvedCollegeName;
+      const finalCollegeId = tpoAuth?.college_id || (isDbTpo ? (dbProfile as any)?.college_id : resolvedCollegeId);
+      const finalCollegeName = tpoAuth?.college_name || resolvedCollegeName;
 
       applyUserProfile(email, finalName, finalAvatar, assignedRole, {
         collegeId: finalCollegeId,
@@ -726,8 +779,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isEffectiveAdmin = isSuperAdminEmail(user?.email);
-  const currentTpoAuth = !isEffectiveAdmin ? tpoService.findTpoAuthByEmail(user?.email) : null;
-  const isEffectiveTpo = !isEffectiveAdmin && (Boolean(currentTpoAuth) || Boolean(user?.isTpoAdmin) || role === 'TPO_ADMIN');
+  const isEffectiveTpo = !isEffectiveAdmin && role === 'TPO_ADMIN' && Boolean(user?.isTpoAdmin);
   const effectiveRole: UserRole = isEffectiveAdmin ? 'ADMIN' : isEffectiveTpo ? 'TPO_ADMIN' : (role === 'GUEST' ? 'GUEST' : 'USER');
 
   return (

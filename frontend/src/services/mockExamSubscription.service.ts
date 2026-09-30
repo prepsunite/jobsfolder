@@ -40,23 +40,61 @@ export const mockExamSubscriptionService = {
     const cleanEmail = userEmail.trim().toLowerCase();
 
     // 1. Institutional / Campus pass check
-    let entitlement: { isEntitled?: boolean; collegeName?: string; expiresAt?: string } | null = null;
+    // Verify live with Supabase user_subscriptions to ensure access hasn't been revoked by TPO
     try {
-      const raw = localStorage.getItem('prepunite_student_entitlements');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        entitlement = parsed[cleanEmail] || null;
-      }
-    } catch {}
+      const { data: campusSub } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_email', cleanEmail)
+        .ilike('payment_id', 'B2B_CAMPUS_%')
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', new Date().toISOString())
+        .limit(1)
+        .maybeSingle();
 
-    if (entitlement && entitlement.isEntitled) {
-      return {
-        plan: 'COLLEGE',
-        planName: entitlement.collegeName ? `Campus Partner Pass (${entitlement.collegeName})` : 'Campus Pro Pass',
-        isPaid: true,
-        mockExamLimit: 999,
-        expiresAt: entitlement.expiresAt,
-      };
+      if (campusSub) {
+        return {
+          plan: 'COLLEGE',
+          planName: campusSub.plan_name || 'Campus Pro Pass',
+          isPaid: true,
+          mockExamLimit: 999,
+          expiresAt: campusSub.expires_at,
+        };
+      } else {
+        // If Supabase confirms no active campus pass, purge stale local entitlements
+        try {
+          const raw = localStorage.getItem('prepunite_student_entitlements');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed[cleanEmail]) {
+              delete parsed[cleanEmail];
+              localStorage.setItem('prepunite_student_entitlements', JSON.stringify(parsed));
+            }
+          }
+          localStorage.removeItem('prepunite_college_id');
+          localStorage.removeItem('prepunite_college_name');
+        } catch {}
+      }
+    } catch (e) {
+      // If network fails / offline, fallback to cached entitlement only if not expired
+      let entitlement: { isEntitled?: boolean; collegeName?: string; expiresAt?: string } | null = null;
+      try {
+        const raw = localStorage.getItem('prepunite_student_entitlements');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          entitlement = parsed[cleanEmail] || null;
+        }
+      } catch {}
+
+      if (entitlement && entitlement.isEntitled && entitlement.expiresAt && new Date(entitlement.expiresAt) > new Date()) {
+        return {
+          plan: 'COLLEGE',
+          planName: entitlement.collegeName ? `Campus Partner Pass (${entitlement.collegeName})` : 'Campus Pro Pass',
+          isPaid: true,
+          mockExamLimit: 999,
+          expiresAt: entitlement.expiresAt,
+        };
+      }
     }
 
     // 2. Personal retail B2C plan check from user_subscriptions

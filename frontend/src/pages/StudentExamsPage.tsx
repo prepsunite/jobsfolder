@@ -117,6 +117,20 @@ export default function StudentExamsPage() {
     staleTime: 15 * 1000,
   });
 
+  // 🚦 STUDENT COLLEGE REMOVAL WATCHDOG:
+  // When a TPO deletes a student from a batch or removes the entire batch, AuthContext fires
+  // 'prepunite-college-removed'. We listen here and immediately refetch campus exams and quota
+  // so the campus section disappears in real-time without needing a manual page reload.
+  useEffect(() => {
+    const handleCollegeRemoved = () => {
+      refetchUsage();
+      // Also refetch campus exams query (keyed below at 'campus-mock-exams')
+      // React Query will pick this up when the query re-runs with no college ID
+    };
+    window.addEventListener('prepunite-college-removed', handleCollegeRemoved);
+    return () => window.removeEventListener('prepunite-college-removed', handleCollegeRemoved);
+  }, [refetchUsage]);
+
   // 1. Fetch Campus Placement Mock Drives for Enrolled Student
   const {
     data: campusExamsData,

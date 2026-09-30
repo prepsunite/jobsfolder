@@ -22,8 +22,10 @@ import BulkStudentImportModal from '@/components/tpo/BulkStudentImportModal';
 import AddStudentModal from '@/components/tpo/AddStudentModal';
 import ManageBatchesModal from '@/components/tpo/ManageBatchesModal';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TpoStudentsPage() {
+  const { user } = useAuth();
   const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
@@ -79,12 +81,18 @@ export default function TpoStudentsPage() {
     enabled: !!collegeId,
   });
 
+  // Exclude current logged-in TPO from student directory display
+  const visibleStudents = useMemo(() => {
+    const myEmail = (user?.email || '').toLowerCase().trim();
+    return students.filter(s => s.email.toLowerCase().trim() !== myEmail);
+  }, [students, user?.email]);
+
   // Export full CSV roster
   const handleExportRoster = () => {
-    if (students.length === 0) return;
+    if (visibleStudents.length === 0) return;
 
     const headers = 'Roll Number,Name,Email,Department,Passout Year,Cohort Batch,Status\n';
-    const rows = students
+    const rows = visibleStudents
       .map(
         s =>
           `"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || 'GENERAL'}",${s.batch_year || 2026},"${s.batch_name || 'Normal Batch'}",Active`
@@ -104,6 +112,11 @@ export default function TpoStudentsPage() {
 
   // Remove Single Student
   const handleRemoveStudent = async (studentEmail: string, studentName: string) => {
+    if (user?.email && studentEmail.toLowerCase().trim() === user.email.toLowerCase().trim()) {
+      toast.error('You cannot remove your own administrator account from the student directory.');
+      return;
+    }
+
     const confirmDelete = await confirmModal({
       title: 'Remove Student',
       message: `Are you sure you want to remove ${studentName} (${studentEmail}) from ${currentCollege.name}?\n\nThis will revoke their Campus Pro Pass access and free up 1 student license seat.`,
@@ -414,7 +427,7 @@ export default function TpoStudentsPage() {
                   Loading student records...
                 </td>
               </tr>
-            ) : students.length === 0 ? (
+            ) : visibleStudents.length === 0 ? (
               <tr>
                 <td colSpan={8} className="p-12 text-center space-y-2">
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
@@ -427,7 +440,7 @@ export default function TpoStudentsPage() {
                 </td>
               </tr>
             ) : (
-              students.map(s => (
+              visibleStudents.map(s => (
                 <tr key={s.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="p-4 font-mono font-bold text-slate-900 dark:text-white">
                     {s.roll_number || '—'}

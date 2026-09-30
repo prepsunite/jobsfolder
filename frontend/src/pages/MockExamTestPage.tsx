@@ -86,14 +86,22 @@ export default function MockExamTestPage() {
     queryFn: async () => {
       if (!user?.email || !exam?.college_id) return false;
       const cleanEmail = user.email.trim().toLowerCase();
+      const targetCids = [exam.college_id];
+      try {
+        const col = await tpoService.getCollegeDetails(exam.college_id);
+        if (col?.id && !targetCids.includes(col.id)) targetCids.push(col.id);
+        if (col?.code && !targetCids.includes(col.code)) targetCids.push(col.code);
+        if (col?.slug && !targetCids.includes(col.slug)) targetCids.push(col.slug);
+      } catch {}
+
       try {
         const { data: sub } = await supabase
           .from('user_subscriptions')
           .select('id')
           .eq('user_email', cleanEmail)
-          .ilike('payment_id', `B2B_CAMPUS_${exam.college_id}%`)
           .eq('status', 'ACTIVE')
           .gt('expires_at', new Date().toISOString())
+          .or(targetCids.map(id => `payment_id.ilike.B2B_CAMPUS_${id}%`).join(','))
           .limit(1)
           .maybeSingle();
         if (sub) return true;
@@ -104,7 +112,7 @@ export default function MockExamTestPage() {
           .from('college_students')
           .select('id')
           .eq('email', cleanEmail)
-          .eq('college_id', exam.college_id)
+          .in('college_id', targetCids)
           .limit(1)
           .maybeSingle();
         if (cs) return true;
@@ -178,7 +186,7 @@ export default function MockExamTestPage() {
     Boolean(user?.email && exam?.target_departments?.includes(user.email.toLowerCase())) ||
     Boolean(user?.email && exam?.instructions?.includes(`<!--STUDENT:${user.email.trim().toLowerCase()}-->`));
   const isEnrolledStudent = Boolean(
-    exam?.college_id && (dbEnrollmentVerified || userCollegeId === exam.college_id)
+    exam?.college_id && dbEnrollmentVerified
   );
   const isAuthorizedCandidate = !exam?.college_id || isSelfPracticeExam || isAdminOrTpo || isEnrolledStudent;
 

@@ -55,6 +55,20 @@ export default function DashboardPage() {
   const [deletionRequested, setDeletionRequested] = useState(false);
   const { toast, confirmModal } = useToast();
 
+  // 🚦 STUDENT COLLEGE REMOVAL WATCHDOG:
+  // When a TPO deletes a batch or removes a student, AuthContext fires 'prepunite-college-removed'.
+  // We listen here and immediately:
+  //   1. Invalidate the subscription query so the campus exam section disappears
+  //   2. Show a toast informing the student their college access was removed
+  useEffect(() => {
+    const handleCollegeRemoved = () => {
+      queryClient.invalidateQueries({ queryKey: ['user-subscription'] });
+      toast.info('Your campus access has been updated. Some features may no longer be available.');
+    };
+    window.addEventListener('prepunite-college-removed', handleCollegeRemoved);
+    return () => window.removeEventListener('prepunite-college-removed', handleCollegeRemoved);
+  }, [queryClient, toast]);
+
 
   // Live Supabase subscription query for Pro Pass
   const { data: subData } = useQuery({

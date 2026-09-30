@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { dataStore } from '@/services/dataStore';
+import { expandTopicAliases, resolveTopicSlug } from '@/services/topicMap';
 import {
   mockExamBlueprintService,
   FALLBACK_APTITUDE_TOPICS,
@@ -637,37 +638,59 @@ export const tpoService = {
   async findTpoAuthByEmailAsync(email?: string | null): Promise<TpoAuthorizationRecord | undefined> {
     if (!email) return undefined;
     const clean = email.trim().toLowerCase();
-    const local = this.findTpoAuthByEmail(clean);
-    if (local) return local;
 
+    // 1. Primary Source of Truth: public.tpo_authorizations table in Supabase
     try {
-      // 1. Try public.tpo_authorizations table if created
-      const { data: directData } = await supabase
+      const { data: directData, error: dbErr } = await supabase
         .from('tpo_authorizations')
         .select('id, email, college_id, max_licenses, assigned_at, created_at, status')
-        .eq('email', clean)
-        .eq('status', 'ACTIVE')
+        .ilike('email', clean)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (directData) {
-        const colleges = await this.getAllColleges();
-        const col = colleges.find(c => c.id === directData.college_id);
-        const record: TpoAuthorizationRecord = {
-          id: directData.id,
-          email: directData.email,
-          college_id: directData.college_id,
-          college_name: col?.name || 'Partner College',
-          college_code: col?.code || 'CRT',
-          max_licenses: directData.max_licenses || col?.max_licenses || 1000,
-          assigned_at: directData.assigned_at || directData.created_at || new Date().toISOString(),
-          status: 'ACTIVE',
-        };
-        const auths = getLocalTpoAuths().filter(a => a.email.toLowerCase() !== clean);
-        auths.push(record);
-        saveLocalTpoAuths(auths);
-        return record;
+      if (!dbErr) {
+        if (directData && directData.status === 'ACTIVE') {
+          const colleges = await this.getAllColleges();
+          const col = colleges.find(c => c.id === directData.college_id);
+          const record: TpoAuthorizationRecord = {
+            id: directData.id,
+            email: directData.email,
+            college_id: directData.college_id,
+            college_name: col?.name || 'Partner College',
+            college_code: col?.code || 'CRT',
+            max_licenses: directData.max_licenses || col?.max_licenses || 1000,
+            assigned_at: directData.assigned_at || directData.created_at || new Date().toISOString(),
+            status: 'ACTIVE',
+          };
+          const auths = getLocalTpoAuths().filter(a => a.email.toLowerCase() !== clean);
+          auths.push(record);
+          saveLocalTpoAuths(auths);
+          return record;
+        } else {
+          // 🛑 SUPABASE CONFIRMS NOT ACTIVE (status === 'REVOKED' / 'SUSPENDED' or no record at all!)
+          // Purge stale local authorizations immediately so the user cannot resurrect as TPO
+          const auths = getLocalTpoAuths().filter(a => a.email.toLowerCase() !== clean);
+          saveLocalTpoAuths(auths);
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('prepunite_college_id');
+              localStorage.removeItem('prepunite_college_name');
+              if (localStorage.getItem('prepunite_role') === 'TPO_ADMIN') {
+                localStorage.setItem('prepunite_role', 'USER');
+              }
+            }
+          } catch {}
+          return undefined;
+        }
       }
-    } catch {}
+    } catch (netErr) {
+      console.warn('[findTpoAuthByEmailAsync] Network error checking Supabase:', netErr);
+    }
+
+    // 2. Offline fallback ONLY if network failed
+    const local = this.findTpoAuthByEmail(clean);
+    if (local && local.status === 'ACTIVE') return local;
 
     try {
       // 2. Resilient cloud sync fallback: contact_messages with subject B2B_TPO_AUTH:cleanEmail
@@ -810,61 +833,46 @@ export const tpoService = {
     // 1. Fetch complete list of colleges (from DB + cloud messages + local store)
     const colleges = await this.getAllColleges();
     const tpoAdmins = await this.getTpoAdmins();
+    const allTpoEmails = new Set<string>(
+      tpoAdmins.map(a => (a.email || '').trim().toLowerCase()).filter(Boolean)
+    );
 
     // 2. Query server-side RPC get_colleges_usage_summary safely
     const rpcUsageMap = new Map<string, { enrolled_count: number; active_exams_count: number }>();
+    let rpcSuccess = false;
     try {
       const { data: summaryData, error: rpcErr } = await supabase.rpc('get_colleges_usage_summary');
       if (!rpcErr && summaryData && Array.isArray(summaryData)) {
         summaryData.forEach((row: any) => {
           const cid = row.college_id || row.id;
           if (cid) {
-            rpcUsageMap.set(cid, {
+            rpcUsageMap.set(String(cid).toLowerCase(), {
               enrolled_count: Number(row.enrolled_count || 0),
               active_exams_count: Number(row.active_exams_count || 0),
             });
           }
         });
+        rpcSuccess = true;
       }
     } catch (rpcError) {
       console.warn('RPC get_colleges_usage_summary notice:', rpcError);
     }
 
-    // 3. Multi-vector queries across database tables & backups:
-    // A. Institutional roster: college_students table
+    // 3. Fallback table queries ONLY if server RPC failed or unavailable:
     let collegeStudents: any[] = [];
-    try {
-      const { data: csData } = await supabase
-        .from('college_students')
-        .select('id, email, college_id, college_name, role')
-        .neq('role', 'TPO_ADMIN');
-      if (csData) collegeStudents = csData;
-    } catch (e) {
-      console.warn('Notice fetching college_students for usage:', e);
+    if (!rpcSuccess) {
+      try {
+        const { data: csData } = await supabase
+          .from('college_students')
+          .select('id, email, college_id, college_name, role')
+          .neq('role', 'TPO_ADMIN');
+        if (csData) collegeStudents = csData;
+      } catch (e) {
+        console.warn('Notice fetching college_students for usage:', e);
+      }
     }
 
-    // B. Cloud resilience backup: contact_messages with B2B_STUDENT:*
-    let studentCloudMsgs: any[] = [];
-    try {
-      const { data: cmData } = await supabase
-        .from('contact_messages')
-        .select('subject, message')
-        .like('subject', 'B2B_STUDENT:%')
-        .neq('status', 'DELETED');
-      if (cmData) studentCloudMsgs = cmData;
-    } catch {}
-
-    // C. Institutional subscriptions in user_subscriptions (without strict future expiry filter)
-    let subscriptions: any[] = [];
-    try {
-      const { data: sData } = await supabase
-        .from('user_subscriptions')
-        .select('user_email, plan_name, payment_id, status')
-        .neq('status', 'REVOKED');
-      if (sData) subscriptions = sData;
-    } catch {}
-
-    // D. Mock exams
+    // Mock exams
     let exams: any[] = [];
     try {
       const { data: eData } = await supabase
@@ -874,101 +882,54 @@ export const tpoService = {
       if (eData) exams = eData;
     } catch {}
 
-    // E. Profiles with college_id
-    let profiles: any[] = [];
-    try {
-      const { data: pData } = await supabase
-        .from('profiles')
-        .select('id, email, college_id, role')
-        .not('college_id', 'is', null)
-        .neq('role', 'TPO_ADMIN');
-      if (pData) profiles = pData;
-    } catch {}
-
     // 4. Map each college with its aggregated enrolled count and active exams count
     return colleges.map(c => {
-      // 1. Find assigned TPO email from resolved TPO admins
+      // Find assigned TPO email from resolved TPO admins
       const assignedTpo = tpoAdmins.find(
         a => a.college_id === c.id || (c.code && (a.college_id === c.code || (a as any).college_code === c.code))
       );
       const tpoEmail = assignedTpo?.email;
 
-      // Unique student emails set for deduplication
-      const enrolledEmails = new Set<string>();
+      // Check if server-side RPC returned real data for this college
+      const rpcData =
+        rpcUsageMap.get(c.id.toLowerCase()) ||
+        (c.code ? rpcUsageMap.get(c.code.toLowerCase()) : undefined) ||
+        (c.slug ? rpcUsageMap.get(c.slug.toLowerCase()) : undefined);
 
-      // From college_students table
-      collegeStudents.forEach(s => {
-        if (!s.email) return;
-        const matchesCollege =
-          s.college_id === c.id ||
-          (c.code && s.college_id === c.code) ||
-          (s.college_name && s.college_name.trim().toLowerCase() === c.name.trim().toLowerCase());
-        if (matchesCollege) {
-          enrolledEmails.add(s.email.trim().toLowerCase());
-        }
-      });
+      let finalEnrolledCount: number;
 
-      // From contact_messages cloud backups
-      studentCloudMsgs.forEach(m => {
-        const parts = (m.subject || '').split(':');
-        if (parts.length >= 2) {
-          const msgCid = parts[1];
-          if (msgCid === c.id || (c.code && msgCid === c.code)) {
-            try {
-              const parsed = JSON.parse(m.message);
-              if (parsed?.email && parsed.role !== 'TPO_ADMIN') {
-                enrolledEmails.add(parsed.email.trim().toLowerCase());
-              }
-            } catch {}
+      if (rpcData !== undefined) {
+        // Authoritative server-side count from PostgreSQL get_colleges_usage_summary()
+        finalEnrolledCount = rpcData.enrolled_count;
+      } else {
+        // Fallback: strictly deduplicated active students excluding any TPO
+        const enrolledEmails = new Set<string>();
+        collegeStudents.forEach(s => {
+          if (!s.email) return;
+          const matchesCollege =
+            s.college_id === c.id ||
+            (c.code && s.college_id === c.code) ||
+            (s.college_name && s.college_name.trim().toLowerCase() === c.name.trim().toLowerCase());
+          if (matchesCollege) {
+            const clean = s.email.trim().toLowerCase();
+            if (!allTpoEmails.has(clean) && s.role !== 'TPO_ADMIN') {
+              enrolledEmails.add(clean);
+            }
           }
-        }
-      });
-
-      // From user_subscriptions
-      subscriptions.forEach(s => {
-        if (!s.user_email) return;
-        const matchesCollege =
-          (s.payment_id && s.payment_id.includes(c.id)) ||
-          (s.plan_name && (
-            s.plan_name.toLowerCase().includes(c.name.toLowerCase()) ||
-            (c.code && s.plan_name.toLowerCase().includes(c.code.toLowerCase()))
-          ));
-        if (matchesCollege) {
-          enrolledEmails.add(s.user_email.trim().toLowerCase());
-        }
-      });
-
-      // From profiles
-      profiles.forEach(p => {
-        if (!p.email) return;
-        if (p.college_id === c.id || (c.code && p.college_id === c.code)) {
-          enrolledEmails.add(p.email.trim().toLowerCase());
-        }
-      });
-
-      // From local storage
-      const localStudents = [...getLocalStudents(c.id), ...(c.code ? getLocalStudents(c.code) : [])];
-      localStudents.forEach(s => {
-        if (s.email && s.role !== 'TPO_ADMIN' && !s.is_tpo_admin) {
-          enrolledEmails.add(s.email.trim().toLowerCase());
-        }
-      });
-
-      // Also compare with RPC summary count if available
-      const rpcData = rpcUsageMap.get(c.id) || (c.code ? rpcUsageMap.get(c.code) : undefined);
-      const rpcEnrolled = rpcData?.enrolled_count || 0;
-      const finalEnrolledCount = Math.max(enrolledEmails.size, rpcEnrolled);
+        });
+        if (tpoEmail) enrolledEmails.delete(tpoEmail.trim().toLowerCase());
+        finalEnrolledCount = enrolledEmails.size;
+      }
 
       // Active mock exams count
       const localExams = [...getLocalExams(c.id), ...(c.code ? getLocalExams(c.code) : [])];
       const dbExamsCount = exams.filter(
-        e => e.college_id === c.id || (c.code && e.college_id === c.code)
+        e => (e.college_id === c.id || (c.code && e.college_id === c.code)) && e.is_active !== false
       ).length;
-      const finalActiveExamsCount = Math.max(
-        dbExamsCount,
-        localExams.length,
-        rpcData?.active_exams_count || 0
-      );
+      const finalActiveExamsCount =
+        rpcData !== undefined
+          ? rpcData.active_exams_count
+          : Math.max(dbExamsCount, localExams.length);
 
       return {
         ...c,
@@ -1478,7 +1439,23 @@ export const tpoService = {
       return { success: false, message: 'Target college not found.' };
     }
 
-    // 1. Persist in Pre-authorized TPO records
+    // 1. Atomic Database Promotion via assign_college_tpo RPC
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('assign_college_tpo', {
+        p_college_id: collegeId,
+        p_email: cleanEmail,
+        p_max_licenses: targetCollege.max_licenses || 1500,
+      });
+      if (rpcErr) {
+        console.warn('assign_college_tpo RPC notice:', rpcErr);
+      } else if (rpcRes && rpcRes.success === false) {
+        return { success: false, message: rpcRes.error || 'Failed to assign TPO' };
+      }
+    } catch (e) {
+      console.warn('RPC assign_college_tpo fallback:', e);
+    }
+
+    // 2. Persist in Pre-authorized TPO records
     const auths = getLocalTpoAuths();
     const existingAuthIdx = auths.findIndex(a => a.email.toLowerCase() === cleanEmail);
 
@@ -1500,7 +1477,16 @@ export const tpoService = {
     }
     saveLocalTpoAuths(auths);
 
-    // 2. Primary Database Write: public.tpo_authorizations table in Supabase
+    // 3. Remove this email from local student roster across all colleges so they do not appear as a student
+    colleges.forEach(c => {
+      const localStus = getLocalStudents(c.id);
+      const filtered = localStus.filter(s => s.email.toLowerCase() !== cleanEmail);
+      if (filtered.length !== localStus.length) {
+        saveLocalStudents(c.id, filtered);
+      }
+    });
+
+    // 4. Primary Database Write: public.tpo_authorizations table in Supabase
     try {
       await supabase.from('tpo_authorizations').upsert({
         college_id: collegeId,
@@ -1514,7 +1500,32 @@ export const tpoService = {
       console.warn('Notice writing to public.tpo_authorizations:', dbErr);
     }
 
-    // 3. Resilient Cloud Sync to Supabase for multi-device/multi-browser availability
+    // 5. Update profiles table: explicitly set is_tpo_admin = true and college_id
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          is_tpo_admin: true,
+          college_id: collegeId,
+          role: 'user',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('email', cleanEmail);
+    } catch (profErr) {
+      console.warn('Notice updating profile for TPO:', profErr);
+    }
+
+    // 6. Delete from college_students if this email was previously enrolled as a student
+    try {
+      await supabase
+        .from('college_students')
+        .delete()
+        .eq('email', cleanEmail);
+    } catch (csErr) {
+      console.warn('Notice cleaning up college_students on TPO promotion:', csErr);
+    }
+
+    // 7. Resilient Cloud Sync to Supabase for multi-device/multi-browser availability
     try {
       // Deactivate any previous records for this email
       await supabase
@@ -1534,29 +1545,6 @@ export const tpoService = {
       console.warn('Notice syncing TPO auth to cloud:', syncErr);
     }
 
-    // 4. Demote from 'admin' in Supabase profiles if this user previously had admin role
-    // This guarantees an authorized TPO Coordinator NEVER becomes a PrepUnite platform admin!
-    try {
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id, email, role')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (existingProfile && existingProfile.role === 'admin') {
-        await supabase
-          .from('profiles')
-          .update({
-            role: 'user',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingProfile.id);
-        console.log(`[assignTpoAdmin] Demoted ${cleanEmail} from platform admin to user/TPO in DB.`);
-      }
-    } catch (err) {
-      console.warn('Notice ensuring non-admin DB role for TPO:', err);
-    }
-
     return {
       success: true,
       message: `Authorized ${cleanEmail} as TPO Coordinator for ${targetCollege.name}. Their student capacity is locked to ${targetCollege.max_licenses} seats.`,
@@ -1566,12 +1554,24 @@ export const tpoService = {
   async revokeTpoAdmin(identifier: string): Promise<boolean> {
     const clean = identifier.trim().toLowerCase();
 
-    // 1. Remove from local authorizations
+    // 1. Database Atomic Revocation via revoke_college_tpo RPC
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('revoke_college_tpo', {
+        p_email: clean,
+      });
+      if (rpcErr) {
+        console.warn('revoke_college_tpo RPC notice:', rpcErr);
+      }
+    } catch (e) {
+      console.warn('RPC revoke_college_tpo fallback:', e);
+    }
+
+    // 2. Remove from local authorizations
     const auths = getLocalTpoAuths();
     const filtered = auths.filter(a => a.id !== clean && a.email.toLowerCase() !== clean);
     saveLocalTpoAuths(filtered);
 
-    // 2. Primary Database Revocation: public.tpo_authorizations table
+    // 3. Primary Database Revocation: public.tpo_authorizations table
     try {
       await supabase
         .from('tpo_authorizations')
@@ -1579,7 +1579,7 @@ export const tpoService = {
         .eq('email', clean);
     } catch {}
 
-    // 3. Cloud sync revocation in Supabase
+    // 4. Cloud sync revocation in Supabase
     try {
       await supabase
         .from('contact_messages')
@@ -1587,11 +1587,11 @@ export const tpoService = {
         .or(`email.eq.${clean},subject.eq.B2B_TPO_AUTH:${clean}`);
     } catch {}
 
-    // 4. Ensure profile in Supabase is role 'user'
+    // 5. Ensure profile in Supabase is stripped of TPO status
     try {
       await supabase
         .from('profiles')
-        .update({ role: 'user' })
+        .update({ role: 'user', is_tpo_admin: false, college_id: null, updated_at: new Date().toISOString() })
         .or(`id.eq.${clean},email.eq.${clean}`);
     } catch {}
 
@@ -1913,6 +1913,8 @@ export const tpoService = {
 
     try {
       await supabase.from('college_batches').delete().eq('id', batchId).eq('college_id', effectiveCollegeId);
+      // Clean up orphaned cohort references in college_students table
+      await supabase.from('college_students').update({ batch_id: null }).eq('batch_id', batchId).eq('college_id', effectiveCollegeId);
     } catch {}
 
     return true;
@@ -1995,6 +1997,7 @@ export const tpoService = {
     } catch {}
 
     // 1. Try dedicated college_students table first (multi-device institutional roster)
+    let hasAuthoritativeDb = false;
     try {
       const { data: csData, error: csErr } = await supabase
         .from('college_students')
@@ -2002,66 +2005,93 @@ export const tpoService = {
         .in('college_id', targetCollegeIds)
         .order('created_at', { ascending: false });
 
-      if (!csErr && csData && csData.length > 0) {
+      if (!csErr && csData !== null) {
         list = csData;
+        hasAuthoritativeDb = true;
       }
     } catch {}
 
-    // 2. Cloud resilience: Fetch students stored as B2B_STUDENT in contact_messages
-    try {
-      const { data: studentMsgs } = await supabase
-        .from('contact_messages')
-        .select('subject, message')
-        .like('subject', 'B2B_STUDENT:%')
-        .neq('status', 'DELETED');
+    // Only if DB query failed (e.g. table not available or network error), use resilience backups:
+    if (!hasAuthoritativeDb) {
+      // 2. Cloud resilience: Fetch students stored as B2B_STUDENT in contact_messages
+      try {
+        const { data: studentMsgs } = await supabase
+          .from('contact_messages')
+          .select('subject, message')
+          .like('subject', 'B2B_STUDENT:%')
+          .neq('status', 'DELETED');
 
-      if (studentMsgs && studentMsgs.length > 0) {
-        studentMsgs.forEach(m => {
-          const parts = (m.subject || '').split(':');
-          if (parts.length >= 2) {
-            const msgCid = parts[1];
-            if (targetCollegeIds.includes(msgCid)) {
-              try {
-                const parsed = JSON.parse(m.message) as CollegeStudent;
-                if (parsed && parsed.email && !list.some(s => s.email.toLowerCase() === parsed.email.toLowerCase())) {
-                  list.push(parsed);
-                }
-              } catch {}
+        if (studentMsgs && studentMsgs.length > 0) {
+          studentMsgs.forEach(m => {
+            const parts = (m.subject || '').split(':');
+            if (parts.length >= 2) {
+              const msgCid = parts[1];
+              if (targetCollegeIds.includes(msgCid)) {
+                try {
+                  const parsed = JSON.parse(m.message) as CollegeStudent;
+                  if (parsed && parsed.email && !list.some(s => s.email.toLowerCase() === parsed.email.toLowerCase())) {
+                    list.push(parsed);
+                  }
+                } catch {}
+              }
             }
+          });
+        }
+      } catch {}
+
+      // 3. Fallback to profiles table if list is still empty
+      if (list.length === 0) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, email, name, roll_number, department, batch_year, college_id, is_tpo_admin, role, created_at')
+            .in('college_id', targetCollegeIds)
+            .neq('role', 'TPO_ADMIN')
+            .order('created_at', { ascending: false });
+
+          if (!error && data && data.length > 0) list = data;
+        } catch {}
+      }
+
+      // Merge with local students across all resolved identifiers only in fallback mode
+      const studentMap = new Map<string, CollegeStudent>();
+      list.forEach(s => {
+        if (s.email) studentMap.set(s.email.toLowerCase(), s);
+      });
+      targetCollegeIds.forEach(tId => {
+        const localStudents = getLocalStudents(tId);
+        localStudents.forEach(s => {
+          if (s.email && !studentMap.has(s.email.toLowerCase())) {
+            studentMap.set(s.email.toLowerCase(), s);
           }
+        });
+      });
+      list = Array.from(studentMap.values());
+    }
+
+    // Resolve all active TPO emails for exclusion so administrators never appear on student roster
+    const activeTpoEmails = new Set<string>();
+    try {
+      const localTpos = getLocalTpoAuths();
+      localTpos.forEach(t => {
+        if (t.status === 'ACTIVE' && t.email) activeTpoEmails.add(t.email.toLowerCase().trim());
+      });
+      const { data: dbTpos } = await supabase
+        .from('tpo_authorizations')
+        .select('email')
+        .eq('status', 'ACTIVE');
+      if (dbTpos) {
+        dbTpos.forEach(t => {
+          if (t.email) activeTpoEmails.add(t.email.toLowerCase().trim());
         });
       }
     } catch {}
 
-    // 3. Fallback to profiles table if list is still empty
-    if (list.length === 0) {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, email, name, roll_number, department, batch_year, college_id, is_tpo_admin, role, created_at')
-          .in('college_id', targetCollegeIds)
-          .neq('role', 'TPO_ADMIN')
-          .order('created_at', { ascending: false });
-
-        if (!error && data && data.length > 0) list = data;
-      } catch {}
-    }
-
-    // Merge with local students across all resolved identifiers
-    const studentMap = new Map<string, CollegeStudent>();
-    list.forEach(s => {
-      if (s.email) studentMap.set(s.email.toLowerCase(), s);
+    // Exclude TPO administrators so they do not consume student seats or appear on student directory
+    list = list.filter(s => {
+      const clean = (s.email || '').toLowerCase().trim();
+      return !activeTpoEmails.has(clean) && !s.is_tpo_admin && s.role !== 'TPO_ADMIN';
     });
-
-    targetCollegeIds.forEach(tId => {
-      const local = getLocalStudents(tId);
-      local.forEach(s => {
-        if (s.email && !studentMap.has(s.email.toLowerCase()) && !s.is_tpo_admin && s.role !== 'TPO_ADMIN') {
-          studentMap.set(s.email.toLowerCase(), s);
-        }
-      });
-    });
-    list = Array.from(studentMap.values());
 
     // Resolve batch_name using college batches
     try {
@@ -2525,8 +2555,8 @@ export const tpoService = {
           };
           this.cacheStudentEntitlement(clean, info);
           return info;
-        } else if (rpcRes.is_expired) {
-          // Explicitly clear local entitlement if expired
+        } else {
+          // Explicitly clear local entitlement if revoked, removed, or not enrolled
           try {
             const raw = localStorage.getItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS);
             if (raw) {
@@ -2534,6 +2564,8 @@ export const tpoService = {
               delete parsed[clean];
               localStorage.setItem(STORAGE_KEYS_TPO.STUDENT_ENTITLEMENTS, JSON.stringify(parsed));
             }
+            localStorage.removeItem('prepunite_college_id');
+            localStorage.removeItem('prepunite_college_name');
           } catch {}
           return null;
         }
@@ -2542,7 +2574,7 @@ export const tpoService = {
       console.warn('[tpoService.verifyStudentEntitlementLive] RPC notice:', e);
     }
 
-    // 2. Direct Supabase Query Fallback (Resolves college from college_students or B2B subscriptions)
+    // 2. Direct Supabase Query Fallback (Resolves college from college_students or active B2B subscriptions)
     try {
       let targetCollegeId: string | null = null;
       const { data: student } = await supabase
@@ -2556,13 +2588,15 @@ export const tpoService = {
         targetCollegeId = student.college_id;
       }
 
-      // If not in college_students, check user_subscriptions for any B2B Campus pass
+      // If not in college_students, check user_subscriptions strictly for an ACTIVE, unexpired B2B Campus pass
       if (!targetCollegeId) {
         const { data: sub } = await supabase
           .from('user_subscriptions')
           .select('payment_id')
           .eq('user_email', clean)
           .ilike('payment_id', 'B2B_CAMPUS_%')
+          .eq('status', 'ACTIVE')
+          .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -2783,6 +2817,24 @@ export const tpoService = {
       if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
     } catch {}
 
+    // 0. Primary Database Deletion via Atomic SECURITY DEFINER RPC
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('remove_college_student', {
+        p_college_id: collegeId,
+        p_student_email: cleanEmail,
+      });
+
+      if (rpcErr) {
+        console.warn('[removeStudent] remove_college_student RPC notice:', rpcErr);
+      } else if (rpcRes && rpcRes.success === false) {
+        throw new Error(rpcRes.error || 'Failed to remove student');
+      }
+    } catch (e: any) {
+      if (e.message && !e.message.includes('RPC notice') && !e.message.includes('failed to fetch')) {
+        throw e;
+      }
+    }
+
     // 1. Remove from local storage across all resolved identifiers
     targetCollegeIds.forEach(tId => {
       const localStudents = getLocalStudents(tId);
@@ -2790,25 +2842,32 @@ export const tpoService = {
       saveLocalStudents(tId, filtered);
     });
 
-    // 2. Remove from Supabase college_students table
+    // 2. Direct Supabase fallback: college_students table
     try {
-      await supabase
+      const { error: csDelErr } = await supabase
         .from('college_students')
         .delete()
         .in('college_id', targetCollegeIds)
         .eq('email', cleanEmail);
+      if (csDelErr) console.warn('[removeStudent] college_students fallback notice:', csDelErr);
     } catch {}
 
-    // 3. Clear college_id in Supabase profiles
+    // 3. Direct Supabase fallback: Clear college affiliation in profiles table
     try {
       await supabase
         .from('profiles')
-        .update({ college_id: null })
+        .update({
+          college_id: null,
+          roll_number: null,
+          department: null,
+          batch_year: null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('email', cleanEmail)
         .in('college_id', targetCollegeIds);
     } catch {}
 
-    // 4. Cloud resilience: Mark any B2B_STUDENT backup in contact_messages as DELETED
+    // 4. Cloud resilience fallback: Mark any B2B_STUDENT backup in contact_messages as DELETED
     try {
       await supabase
         .from('contact_messages')
@@ -3543,11 +3602,24 @@ export const tpoService = {
 
         if (isCodingSection) {
           try {
-            const { data: codingData } = await supabase
+            const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+            let codingQuery = supabase
               .from('technical_problems')
               .select('id, title, category, level')
-              .eq('is_deleted', false)
-              .limit(Math.max(neededCount * 10, 50));
+              .eq('is_deleted', false);
+
+            if (hasTopicIds) {
+              const expandedCoding = expandTopicAliases(sec.topic_ids);
+              const targetCats = new Set<string>();
+              expandedCoding.forEach(t => {
+                targetCats.add(t);
+                targetCats.add(t.toUpperCase());
+                targetCats.add(t.toLowerCase());
+              });
+              codingQuery = codingQuery.in('category', Array.from(targetCats));
+            }
+
+            const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 10, 50));
 
             if (codingData && codingData.length > 0) {
               const shuffled = [...codingData].sort(() => Math.random() - 0.5);
@@ -3563,9 +3635,20 @@ export const tpoService = {
         } else if (isTechnicalMcq) {
           try {
             const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-            let query = supabase.from('technical_mcqs').select('id, topic_id').limit(Math.max(neededCount * 10, 60));
-            if (hasTopicIds) {
-              query = query.in('topic_id', sec.topic_ids);
+            const allowedTopics = hasTopicIds
+              ? expandTopicAliases(sec.topic_ids)
+              : (sec.category && sec.category.startsWith('mcq-'))
+              ? expandTopicAliases([sec.category])
+              : [];
+
+            let query = supabase
+              .from('technical_mcqs')
+              .select('id, topic_id')
+              .eq('is_deleted', false)
+              .limit(Math.max(neededCount * 15, 80));
+
+            if (allowedTopics.length > 0) {
+              query = query.in('topic_id', allowedTopics);
             }
             const { data: techData } = await query;
             if (techData && techData.length > 0) {
@@ -3582,8 +3665,8 @@ export const tpoService = {
             if (pooledIds.length < neededCount) {
               const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
               let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
-              if (hasTopicIds) {
-                const allowed = new Set(sec.topic_ids);
+              if (allowedTopics.length > 0) {
+                const allowed = new Set(allowedTopics);
                 seedPool = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
               }
               const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
@@ -3600,15 +3683,16 @@ export const tpoService = {
           // Aptitude MCQ
           try {
             const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
+            const allowedTopicIds = hasTopicIds ? expandTopicAliases(sec.topic_ids) : [];
             let mcqQuery = supabase
               .from('topic_questions')
               .select('id, topic_id')
               .eq('is_deleted', false);
 
-            if (hasTopicIds) {
-              mcqQuery = mcqQuery.in('topic_id', sec.topic_ids);
+            if (allowedTopicIds.length > 0) {
+              mcqQuery = mcqQuery.in('topic_id', allowedTopicIds);
             }
-            const { data: mcqData } = await mcqQuery.limit(Math.max(neededCount * 10, 100));
+            const { data: mcqData } = await mcqQuery.limit(Math.max(neededCount * 15, 100));
             if (mcqData && mcqData.length > 0) {
               const shuffled = [...mcqData].sort(() => Math.random() - 0.5);
               for (const q of shuffled) {
@@ -3621,15 +3705,16 @@ export const tpoService = {
             }
           } catch {}
 
-          // Fallback to dataStore topic questions
+          // Multi-tier Fallback to dataStore topic questions with alias matching
           if (pooledIds.length < neededCount) {
             try {
               const allLocalQ = dataStore.getTopicQuestions();
               const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-              let filtered = hasTopicIds
-                ? allLocalQ.filter(q => sec.topic_ids?.includes(q.topicId))
+              const allowedSet = hasTopicIds ? new Set(expandTopicAliases(sec.topic_ids)) : null;
+              let filtered = allowedSet
+                ? allLocalQ.filter(q => allowedSet.has(q.topicId) || allowedSet.has(resolveTopicSlug(q.topicId, q.topicId)))
                 : allLocalQ;
-              if (filtered.length === 0) filtered = allLocalQ;
+              if (filtered.length === 0 && !hasTopicIds) filtered = allLocalQ;
 
               const shuffledLocal = [...filtered].sort(() => Math.random() - 0.5);
               for (const q of shuffledLocal) {
@@ -4194,7 +4279,8 @@ export const tpoService = {
           const targetCategories = new Set<string>();
 
           if (hasTopicIds) {
-            sec.topic_ids.forEach(t => {
+            const expandedCoding = expandTopicAliases(sec.topic_ids);
+            expandedCoding.forEach(t => {
               const upper = t.toUpperCase();
               const mapped = CODING_TOPIC_TO_DB_CATEGORIES[upper] || [t, upper, t.toLowerCase()];
               mapped.forEach(c => targetCategories.add(c));
@@ -4306,9 +4392,9 @@ export const tpoService = {
           let allowedTopics: string[] = [];
 
           if (hasTopicIds) {
-            allowedTopics = sec.topic_ids;
+            allowedTopics = expandTopicAliases(sec.topic_ids);
           } else if (sec.category && sec.category.startsWith('mcq-')) {
-            allowedTopics = [sec.category];
+            allowedTopics = expandTopicAliases([sec.category]);
           }
 
           // F11: If technical topics/category specified but none resolved, throw rather than pooling unrestricted
@@ -4390,8 +4476,9 @@ export const tpoService = {
           let allowedTopicIds: string[] = [];
 
           if (hasTopicIds) {
-            // STRICT TOPIC ISOLATION: Only pull questions from the selected topic IDs
-            allowedTopicIds = sec.topic_ids;
+            // STRICT TOPIC ISOLATION WITH ALIAS EXPANSION:
+            // Expand selected topic IDs to cover canonical slugs and DB aliases
+            allowedTopicIds = expandTopicAliases(sec.topic_ids);
           } else if (sec.category && sec.category !== 'all') {
             // DOMAIN-SCOPED DEFAULT MIXING: Resolve all topic IDs for this domain category
             const domainCategory = sec.category.toLowerCase().trim();
@@ -4420,7 +4507,7 @@ export const tpoService = {
               .filter(t => matchingVariants.includes(t.category_slug))
               .map(t => t.id);
 
-            allowedTopicIds = Array.from(new Set(matchingTopics));
+            allowedTopicIds = expandTopicAliases(matchingTopics);
           }
 
           // F11: If an aptitude category or explicit topic list was requested but no topic IDs resolved, reject rather than falling back to an unrestricted database-wide pool
@@ -4605,6 +4692,30 @@ export const tpoService = {
                   }
                 }
               }
+            }
+          }
+
+          // Multi-tier Fallback: Pull from dataStore local topic questions bank if Supabase yields fewer than needed
+          if (questionIds.length < neededCount) {
+            try {
+              const allLocalQ = dataStore.getTopicQuestions();
+              const allowedSet = allowedTopicIds.length > 0 ? new Set(allowedTopicIds) : null;
+              let matchingLocal = allowedSet
+                ? allLocalQ.filter(q => allowedSet.has(q.topicId) || allowedSet.has(resolveTopicSlug(q.topicId, q.topicId)))
+                : allLocalQ;
+
+              if (matchingLocal.length > 0) {
+                const shuffledLocal = [...matchingLocal].sort(() => Math.random() - 0.5);
+                for (const lq of shuffledLocal) {
+                  if (lq.id && !usedQuestionIds.has(lq.id)) {
+                    questionIds.push(lq.id);
+                    usedQuestionIds.add(lq.id);
+                    if (questionIds.length >= neededCount) break;
+                  }
+                }
+              }
+            } catch (localErr) {
+              console.warn('Notice pulling fallback questions from dataStore for section:', sec.name, localErr);
             }
           }
         } catch (e) {
@@ -6364,75 +6475,11 @@ export const tpoService = {
     let resolvedCollegeCode = '';
 
     if (!resolvedCollegeId) {
-      const entitlement = this.getStudentEntitlementInfo(cleanEmail);
-      if (entitlement?.collegeId) {
-        resolvedCollegeId = entitlement.collegeId;
-        resolvedCollegeName = entitlement.collegeName || '';
-      }
-    }
-
-    if (!resolvedCollegeId) {
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('college_id')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-        if (profile?.college_id) {
-          resolvedCollegeId = profile.college_id;
-        }
-      } catch {}
-    }
-
-    if (!resolvedCollegeId) {
-      try {
-        const { data: cs } = await supabase
-          .from('college_students')
-          .select('college_id')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-        if (cs?.college_id) {
-          resolvedCollegeId = cs.college_id;
-        }
-      } catch {}
-    }
-
-    if (!resolvedCollegeId) {
-      try {
-        const { data: sub } = await supabase
-          .from('user_subscriptions')
-          .select('payment_id, plan_name')
-          .eq('user_email', cleanEmail)
-          .ilike('payment_id', 'B2B_CAMPUS_%')
-          .eq('status', 'ACTIVE')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (sub?.payment_id) {
-          const rawCid = sub.payment_id.replace(/^B2B_CAMPUS_/, '');
-          const parts = rawCid.split('_');
-          resolvedCollegeId = parts.length > 1 && parts[parts.length - 1].length >= 16
-            ? parts.slice(0, -1).join('_')
-            : rawCid;
-          if (sub.plan_name) {
-            const match = sub.plan_name.match(/Campus Pro Pass \((.+)\)/i);
-            if (match) resolvedCollegeName = match[1];
-          }
-        }
-      } catch {}
-    }
-
-    if (!resolvedCollegeId) {
-      // Check local students across all colleges
-      const allColleges = await this.getAllColleges();
-      for (const col of allColleges) {
-        const localStudents = getLocalStudents(col.id);
-        if (localStudents.some(s => s.email.toLowerCase() === cleanEmail)) {
-          resolvedCollegeId = col.id;
-          resolvedCollegeName = col.name;
-          resolvedCollegeCode = col.code;
-          break;
-        }
+      // Live Supabase verification: check if candidate is actively entitled to any college
+      const liveEntitlement = await this.verifyStudentEntitlementLive(cleanEmail);
+      if (liveEntitlement?.isEntitled && liveEntitlement.collegeId) {
+        resolvedCollegeId = liveEntitlement.collegeId;
+        resolvedCollegeName = liveEntitlement.collegeName || '';
       }
     }
 

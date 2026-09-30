@@ -26,7 +26,7 @@ export interface TpoOutletContext {
 }
 
 export default function TpoLayout() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isTpoAdmin, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -35,6 +35,22 @@ export default function TpoLayout() {
     queryKey: ['tpo-colleges-list'],
     queryFn: () => tpoService.getAllColleges(),
   });
+
+  // 🚦 ROLE DOWNGRADE WATCHDOG:
+  // When AuthContext live-syncs with Supabase and detects the TPO was revoked,
+  // it fires 'prepunite-role-downgraded'. We listen here and hard-redirect to /dashboard
+  // so the user exits the TPO portal immediately instead of seeing a broken "Access Expired" state.
+  useEffect(() => {
+    const handleRoleDowngrade = () => {
+      // Clear admin inspect session state before leaving
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('prepunite_admin_inspect_college_id');
+      }
+      window.location.replace('/dashboard');
+    };
+    window.addEventListener('prepunite-role-downgraded', handleRoleDowngrade);
+    return () => window.removeEventListener('prepunite-role-downgraded', handleRoleDowngrade);
+  }, []);
 
   const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
   const isPureSuperAdmin = Boolean(isAdmin && !tpoAuth);
@@ -105,6 +121,14 @@ export default function TpoLayout() {
     return <Navigate to="/admin/colleges" replace />;
   }
 
+  // 🛡️ TPO ACCESS ENFORCEMENT: If user is neither a Super Admin nor a verified active TPO Coordinator,
+  // kick them out immediately to /dashboard.
+  if (!isLoading && !isAdmin && !isTpoAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // While the DB college details are loading and we have no cached result yet, show a proper
+  // loading screen — NOT the fallback expired object which causes a flash of "Access Expired" UI.
   if (isDetailsLoading && !dbCollegeDetails && allColleges.length === 0) {
     return <LoadingScreen fullScreen size="md" />;
   }
@@ -114,8 +138,10 @@ export default function TpoLayout() {
     name: tpoAuth?.college_name || user?.collegeName || 'Engineering College',
     code: tpoAuth?.college_code || 'CRT',
     slug: (effectiveCollegeId || 'crt').replace(/^col-/, ''),
-    contract_status: 'EXPIRED',
-    valid_until: new Date(0).toISOString(),
+    // ✅ FIX: Do NOT hardcode EXPIRED here. If DB hasn't confirmed status yet, stay neutral.
+    // The role-downgrade watchdog will redirect if the user truly lost access.
+    contract_status: 'ACTIVE',
+    valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
     created_at: new Date().toISOString(),
     max_licenses: tpoAuth?.max_licenses || 1500,
   };

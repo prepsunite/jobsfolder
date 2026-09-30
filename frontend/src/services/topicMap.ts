@@ -301,3 +301,180 @@ export function resolveTopicSlug(topicName?: string, defaultTopicId: string = 'n
     
   return slugified || defaultTopicId;
 }
+
+export const TOPIC_ALIAS_FAMILIES: Readonly<Record<string, string[]>> = Object.freeze({
+  // Arithmetic Aptitude
+  'numbers': ['numbers', 'number-system', 'problems-on-numbers', 'num'],
+  'problems-on-numbers': ['problems-on-numbers', 'numbers', 'number-system'],
+  'hcf-lcm': ['hcf-lcm', 'hcf-and-lcm', 'lcm-and-hcf', 'hcf_lcm'],
+  'decimal-fraction': ['decimal-fraction', 'decimal-fractions', 'decimals'],
+  'simplification': ['simplification', 'simplifications'],
+  'square-cube-root': ['square-cube-root', 'square-roots', 'cube-roots', 'square-root-and-cube-root'],
+  'percentage': ['percentage', 'percentages', 'percent'],
+  'profit-and-loss': ['profit-and-loss', 'profit-loss', 'profit_and_loss'],
+  'ratio-and-proportion': ['ratio-and-proportion', 'ratio', 'ratios', 'ratio-proportion', 'ratio_and_proportion'],
+  'partnership': ['partnership', 'partnerships'],
+  'chain-rule': ['chain-rule', 'chain_rule'],
+  'time-and-work': ['time-and-work', 'time-work', 'work-and-time', 'time_and_work', 'pipes-and-cistern'],
+  'pipes-and-cistern': ['pipes-and-cistern', 'pipes-and-cisterns', 'pipes-cistern', 'pipes_and_cistern', 'time-and-work'],
+  'time-and-distance': ['time-and-distance', 'time-distance', 'speed-time-distance', 'time_and_distance'],
+  'problems-on-trains': ['problems-on-trains', 'trains', 'problems-trains', 'problems_on_trains', 'time-and-distance'],
+  'boats-and-streams': ['boats-and-streams', 'boats-streams', 'boats_and_streams'],
+  'alligation-or-mixture': ['alligation-or-mixture', 'alligation-and-mixture', 'alligation', 'mixtures'],
+  'simple-interest': ['simple-interest', 'si', 'simple_interest'],
+  'compound-interest': ['compound-interest', 'ci', 'compound_interest'],
+  'stocks-and-shares': ['stocks-and-shares', 'stocks-shares', 'stocks'],
+  'true-discount': ['true-discount', 'true_discount'],
+  'bankers-discount': ['bankers-discount', 'banker-discount', 'bankers_discount'],
+  'geometry-theorems': ['geometry-theorems', 'geometry', 'polygons'],
+  'height-and-distance': ['height-and-distance', 'heights-and-distances', 'height-distance', 'hd'],
+  'area': ['area', 'area-and-perimeter', 'perimeter'],
+  'volume-and-surface-area': ['volume-and-surface-area', 'volume-surface-area', 'mensuration'],
+  'coordinate-geometry': ['coordinate-geometry', 'co-ordinate-geometry'],
+  'trigonometry': ['trigonometry', 'trigonometric-identities'],
+  'algebra-quadratic-equations': ['algebra-quadratic-equations', 'algebra', 'quadratic-equations'],
+  'progressions-ap-gp-hp': ['progressions-ap-gp-hp', 'progressions', 'ap-gp-hp', 'sequences-series'],
+  'set-theory': ['set-theory', 'sets', 'venn-math'],
+  'races-and-games': ['races-and-games', 'races-games', 'races'],
+  'permutation-and-combination': ['permutation-and-combination', 'permutations-and-combinations', 'pnc', 'permutation_and_combination'],
+  'probability': ['probability', 'probabilities'],
+  'average': ['average', 'averages'],
+  'problems-on-ages': ['problems-on-ages', 'ages', 'problems-ages'],
+  'calendar': ['calendar', 'calendars'],
+  'clock': ['clock', 'clocks'],
+  'odd-man-out-and-series': ['odd-man-out-and-series', 'odd-man-out', 'series'],
+  'surds-and-indices': ['surds-and-indices', 'surds-indices', 'surds', 'indices'],
+  'surds-indices': ['surds-and-indices', 'surds-indices', 'surds', 'indices'],
+  'logarithm': ['logarithm', 'logarithms', 'logs'],
+
+  // Data Interpretation
+  'table-charts': ['table-charts', 'table-chart', 'tables'],
+  'bar-charts': ['bar-charts', 'bar-chart', 'bars'],
+  'pie-charts': ['pie-charts', 'pie-chart', 'pies'],
+  'line-charts': ['line-charts', 'line-chart', 'lines'],
+  'caselet-di': ['caselet-di', 'caselets', 'caselet'],
+  'missing-di': ['missing-di', 'missing-data'],
+  'radar-web-charts': ['radar-web-charts', 'radar-charts', 'spider-charts'],
+  'scatter-bubble-charts': ['scatter-bubble-charts', 'scatter-plots', 'scatter-charts'],
+  'scatter-plots': ['scatter-plots', 'scatter-bubble-charts'],
+
+  // Logical Reasoning
+  'number-series': ['number-series', 'number_series'],
+  'letter-and-symbol-series': ['letter-and-symbol-series', 'letter-series', 'symbol-series'],
+  'verbal-classification': ['verbal-classification', 'classification'],
+  'analogies': ['analogies', 'analogy'],
+  'matching-definitions': ['matching-definitions', 'definitions'],
+  'verbal-reasoning': ['verbal-reasoning', 'vr', 'vr-critical-reasoning'],
+  'logical-games': ['logical-games', 'games'],
+  'cryptarithmetic': ['cryptarithmetic', 'alphametics'],
+  'machine-input-output': ['machine-input-output', 'input-output'],
+  'inequalities': ['inequalities', 'coded-inequalities'],
+  'order-and-ranking': ['order-and-ranking', 'ranking', 'order-ranking'],
+  'floor-scheduling-puzzles': ['floor-scheduling-puzzles', 'floor-puzzles', 'scheduling-puzzles', 'puzzles'],
+  'games-and-tournaments': ['games-and-tournaments', 'tournaments'],
+  'truth-tellers-liars': ['truth-tellers-liars', 'binary-logic'],
+  'eligibility-test': ['eligibility-test', 'decision-making'],
+  'statement-and-assumption': ['statement-and-assumption', 'statement-assumption', 'assumptions'],
+  'statement-and-conclusion': ['statement-and-conclusion', 'statement-conclusion', 'conclusions'],
+  'cause-and-effect': ['cause-and-effect', 'cause-effect'],
+  'essential-part': ['essential-part'],
+  'artificial-language': ['artificial-language'],
+  'making-judgments': ['making-judgments', 'judgments'],
+  'logical-problems': ['logical-problems'],
+  'analyzing-arguments': ['analyzing-arguments', 'arguments'],
+  'course-of-action': ['course-of-action'],
+  'theme-detection': ['theme-detection'],
+  'statement-and-argument': ['statement-and-argument', 'statement-argument'],
+  'logical-deduction': ['logical-deduction', 'deduction'],
+  'logical-sequence-of-words': ['logical-sequence-of-words', 'word-sequence'],
+  'syllogisms': ['syllogisms', 'syllogism'],
+  'blood-relations': ['blood-relations', 'blood-relation', 'blood-relation-test', 'blood_relations'],
+  'seating-arrangement': ['seating-arrangement', 'seating-arrangements', 'linear-seating', 'circular-seating', 'seating_arrangement'],
+  'direction-sense': ['direction-sense', 'direction-sense-test', 'direction_sense', 'directions'],
+  'cubes-and-dice': ['cubes-and-dice', 'dice', 'cube-and-cuboid', 'cubes-and-dice-nv'],
+
+  // Verbal Ability
+  'synonyms': ['synonyms', 'synonym'],
+  'antonyms': ['antonyms', 'antonym'],
+  'spellings': ['spellings', 'spelling-test'],
+  'one-word-substitutes': ['one-word-substitutes', 'one-word-substitution'],
+  'idioms-and-phrases': ['idioms-and-phrases', 'idioms', 'phrases'],
+  'spotting-errors': ['spotting-errors', 'error-spotting'],
+  'sentence-correction': ['sentence-correction', 'correction'],
+  'sentence-improvement': ['sentence-improvement'],
+  'change-of-voice': ['change-of-voice', 'active-passive-voice', 'voice'],
+  'change-of-speech': ['change-of-speech', 'direct-indirect-speech', 'speech'],
+  'ordering-of-words': ['ordering-of-words', 'word-order'],
+  'ordering-of-sentences': ['ordering-of-sentences', 'para-jumbles', 'sentence-ordering'],
+  'sentence-formation': ['sentence-formation'],
+  'paragraph-formation': ['paragraph-formation'],
+  'completing-statements': ['completing-statements'],
+  'selecting-words': ['selecting-words'],
+  'double-fillers': ['double-fillers', 'fillers'],
+  'cloze-test': ['cloze-test', 'closet-test'],
+  'reading-comprehension': ['reading-comprehension', 'comprehension', 'rc', 'reading_comprehension'],
+  'verbal-analogies': ['verbal-analogies'],
+
+  // Technical MCQs
+  'mcq-c-programming': ['mcq-c-programming', 'c', 'c-programming', 'C_PROGRAMMING', 'c-basics'],
+  'mcq-cpp-programming': ['mcq-cpp-programming', 'cpp', 'c++', 'cpp-programming', 'CPP_PROGRAMMING', 'cplusplus'],
+  'mcq-java-programming': ['mcq-java-programming', 'java', 'java-programming', 'JAVA_PROGRAMMING', 'core-java'],
+  'mcq-python-programming': ['mcq-python-programming', 'python', 'python-programming', 'PYTHON_PROGRAMMING'],
+  'mcq-oops-concepts': ['mcq-oops-concepts', 'oops', 'oop', 'object-oriented-programming', 'SYNTAX_BASICS'],
+  'mcq-database-systems': ['mcq-database-systems', 'dbms', 'sql', 'database', 'DATABASE', 'dbms-sql'],
+  'mcq-operating-systems': ['mcq-operating-systems', 'os', 'operating-systems', 'OPERATING_SYSTEMS'],
+  'mcq-computer-networks': ['mcq-computer-networks', 'networks', 'computer-networks', 'NETWORKING', 'cn'],
+  'mcq-data-structures': ['mcq-data-structures', 'dsa', 'data-structures', 'DATA_STRUCTURES', 'dsa-logic'],
+  'mcq-pseudo-code': ['mcq-pseudo-code', 'pseudo-code', 'pseudocode', 'PSEUDO_CODE', 'pseudocode-tracing'],
+
+  // Coding Categories
+  'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS', 'arrays', 'array'],
+  'STRINGS': ['STRINGS', 'strings', 'string'],
+  'LINKED_LISTS': ['LINKED_LISTS', 'LINEAR_STRUCTURES', 'linked-lists', 'linked_lists'],
+  'STACKS_QUEUES': ['STACKS_QUEUES', 'LINEAR_STRUCTURES', 'stacks-queues', 'stacks_queues'],
+  'TWO_POINTERS': ['TWO_POINTERS', 'POINTERS_ARRAYS', 'two-pointers', 'two_pointers'],
+  'SLIDING_WINDOW': ['SLIDING_WINDOW', 'POINTERS_ARRAYS', 'sliding-window', 'sliding_window'],
+  'TREES_BINARY_TREES': ['TREES_BINARY_TREES', 'HIERARCHICAL_STRUCTURES', 'trees', 'binary-trees'],
+  'DYNAMIC_PROGRAMMING': ['DYNAMIC_PROGRAMMING', 'EXHAUSTIVE_SEARCH_DP', 'dp', 'dynamic-programming'],
+  'SEARCHING_SORTING': ['SEARCHING_SORTING', 'SEARCHING', 'SEARCH_INTERVALS', 'searching-sorting'],
+  'PATTERNS': ['PATTERNS', 'patterns'],
+  'NUMBER_LOGIC': ['NUMBER_LOGIC', 'number-logic', 'math'],
+  'RECURSION': ['RECURSION', 'recursion', 'backtracking'],
+  'BIT_MANIPULATION': ['BIT_MANIPULATION', 'bit-manipulation'],
+  'MATRICES': ['MATRICES', 'matrices', '2d-arrays'],
+  'GRAPHS': ['GRAPHS', 'NETWORK_GRAPH_ALGORITHMS', 'graphs'],
+});
+
+/**
+ * Expands an array of topic slugs into the full deduplicated set of alias variations
+ */
+export function expandTopicAliases(topicIds: string[]): string[] {
+  if (!topicIds || topicIds.length === 0) return [];
+  const result = new Set<string>();
+
+  topicIds.forEach(id => {
+    if (!id) return;
+    const clean = id.trim();
+    result.add(clean);
+    result.add(clean.toLowerCase());
+
+    const slug = resolveTopicSlug(clean, clean);
+    result.add(slug);
+
+    if (TOPIC_ALIAS_FAMILIES[clean]) {
+      TOPIC_ALIAS_FAMILIES[clean].forEach(a => result.add(a));
+    }
+    if (TOPIC_ALIAS_FAMILIES[slug]) {
+      TOPIC_ALIAS_FAMILIES[slug].forEach(a => result.add(a));
+    }
+
+    // Try uppercase for coding tracks
+    const upper = clean.toUpperCase();
+    if (TOPIC_ALIAS_FAMILIES[upper]) {
+      TOPIC_ALIAS_FAMILIES[upper].forEach(a => result.add(a));
+    }
+  });
+
+  return Array.from(result);
+}
+

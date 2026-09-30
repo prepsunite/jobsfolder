@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { expandTopicAliases } from './topicMap';
 import {
   FALLBACK_APTITUDE_TOPICS,
   TECHNICAL_MCQ_SUBJECTS,
@@ -131,7 +132,8 @@ export const questionBankService = {
       }
 
       Array.from(topicMap.values()).forEach(t => {
-        const count = countMap[t.id] || 0;
+        const aliases = expandTopicAliases([t.id]);
+        const count = aliases.reduce((sum, a) => sum + (countMap[a] || 0), 0);
         const target = 500;
         const percentage = Math.min(100, Math.round((count / target) * 100));
         let status: 'NEEDS_QUESTIONS' | 'HALF_STOCKED' | 'FULLY_STOCKED' = 'NEEDS_QUESTIONS';
@@ -179,7 +181,8 @@ export const questionBankService = {
       }
 
       TECHNICAL_MCQ_SUBJECTS.forEach(s => {
-        const count = techCountMap[s.id] || 0;
+        const aliases = expandTopicAliases([s.id]);
+        const count = aliases.reduce((sum, a) => sum + (techCountMap[a] || 0), 0);
         const target = 500;
         const percentage = Math.min(100, Math.round((count / target) * 100));
         let status: 'NEEDS_QUESTIONS' | 'HALF_STOCKED' | 'FULLY_STOCKED' = 'NEEDS_QUESTIONS';
@@ -234,7 +237,8 @@ export const questionBankService = {
         if (processedCodingIds.has(catKey)) return;
         processedCodingIds.add(catKey);
 
-        const count = codingCountMap[catKey] || 0;
+        const aliases = Array.from(new Set(expandTopicAliases([c.id]).map(a => a.trim().toUpperCase())));
+        const count = aliases.reduce((sum, a) => sum + (codingCountMap[a] || 0), 0);
         const target = 500;
         const percentage = Math.min(100, Math.round((count / target) * 100));
         let status: 'NEEDS_QUESTIONS' | 'HALF_STOCKED' | 'FULLY_STOCKED' = 'NEEDS_QUESTIONS';
@@ -296,7 +300,12 @@ export const questionBankService = {
     difficulty?: string
   ): Promise<{ items: any[]; total: number }> {
     if (isCoding) {
-      const categoryVariants = Array.from(new Set([topicId, topicId.toUpperCase(), topicId.toLowerCase()]));
+      const categoryVariants = Array.from(new Set([
+        ...expandTopicAliases([topicId]),
+        topicId,
+        topicId.toUpperCase(),
+        topicId.toLowerCase()
+      ]));
       let query = supabase
         .from('technical_problems')
         .select('*', { count: 'exact' })
@@ -323,10 +332,11 @@ export const questionBankService = {
 
     // Core CS Technical MCQs
     if (topicId.startsWith('mcq-')) {
+      const expandedTechTopics = expandTopicAliases([topicId]);
       let query = supabase
         .from('technical_mcqs')
         .select('*', { count: 'exact' })
-        .eq('topic_id', topicId)
+        .in('topic_id', expandedTechTopics)
         .eq('is_deleted', false)
         .order('created_at', { ascending: true });
 
@@ -370,12 +380,13 @@ export const questionBankService = {
     }
 
     // Aptitude MCQ Topic Questions
+    const expandedAptTopics = expandTopicAliases([topicId]);
     let query = supabase
       .from('topic_questions')
       .select('id, statement, options, correct_answer, explanation, difficulty, difficulty_level, question_number, created_at, exam_id', {
         count: 'exact',
       })
-      .eq('topic_id', topicId)
+      .in('topic_id', expandedAptTopics)
       .eq('is_deleted', false)
       .order('question_number', { ascending: true });
 
