@@ -236,6 +236,35 @@ export const technicalService = {
     return isNowSolved;
   },
 
+  markProblemSolved(problemId: string, userEmail?: string, track: TechnicalTrack = 'PROGRAMMING_150'): void {
+    const solvedSet = this.getSolvedProblemIds();
+    if (!solvedSet.has(problemId)) {
+      solvedSet.add(problemId);
+      try {
+        localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
+        }
+      } catch {}
+
+      if (userEmail && userEmail !== GUEST_EMAIL) {
+        supabase
+          .from('user_technical_progress')
+          .upsert({
+            user_email: userEmail,
+            problem_id: problemId,
+            track,
+            is_solved: true,
+            completed_at: new Date().toISOString(),
+            last_attempted_at: new Date().toISOString(),
+          }, { onConflict: 'user_email,problem_id' })
+          .then(({ error }) => {
+            if (error) console.warn('Supabase technical problem progress sync failed:', error.message);
+          });
+      }
+    }
+  },
+
   async fetchAndSyncFromSupabase(userEmail?: string): Promise<void> {
     if (!userEmail || userEmail === GUEST_EMAIL || typeof window === 'undefined') return;
 
@@ -654,6 +683,38 @@ export const technicalService = {
         keyIntuition: p.keyIntuition,
       };
     });
+  },
+
+  async getProblemById(problemIdOrSlug: string): Promise<ProgrammingProblem | null> {
+    if (!problemIdOrSlug) return null;
+    const solvedSet = this.getSolvedProblemIds();
+
+    try {
+      const { data, error } = await supabase
+        .from('technical_problems')
+        .select(TECHNICAL_PROBLEM_COLUMNS)
+        .or(`id.eq.${problemIdOrSlug},slug.eq.${problemIdOrSlug}`)
+        .eq('is_deleted', false)
+        .maybeSingle();
+
+      if (data && !error) {
+        return normalizeDbProblem(data, solvedSet);
+      }
+    } catch (e) {
+      console.warn('Error fetching problem by id from Supabase:', e);
+    }
+
+    // Check Programming 150 local / imported
+    const p150 = await this.getProgramming150Problems();
+    const foundP150 = p150.find(p => p.id === problemIdOrSlug || p.slug === problemIdOrSlug);
+    if (foundP150) return foundP150;
+
+    // Check Campus DSA
+    const dsa = await this.getCampusDsaProblems();
+    const foundDsa = dsa.find(p => p.id === problemIdOrSlug || p.slug === problemIdOrSlug);
+    if (foundDsa) return foundDsa;
+
+    return null;
   },
 
   async getProblemsByTopic(topicId: string): Promise<ProgrammingProblem[]> {

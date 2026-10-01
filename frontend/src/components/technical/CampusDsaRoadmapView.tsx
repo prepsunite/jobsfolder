@@ -683,6 +683,19 @@ export default function CampusDsaRoadmapView() {
                                 <span>{isIntuitionOpen ? 'Hide Tip' : 'Approach'}</span>
                               </button>
 
+                              {/* Solve in Dedicated Coding IDE */}
+                              <a
+                                href={`/technical/solve/${p.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1 bg-[#FD4A32] hover:bg-[#E0351D] text-white rounded-md text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                title="Solve in Code Studio IDE (Opens in new tab)"
+                              >
+                                <Terminal className="w-3.5 h-3.5" />
+                                <span>Solve</span>
+                                <ExternalLink className="w-3 h-3 opacity-80" />
+                              </a>
+
                               {/* Primary External Action: Solve on LeetCode */}
                               <a
                                 href={p.leetcodeUrl}

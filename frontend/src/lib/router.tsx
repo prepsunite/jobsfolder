@@ -37,6 +37,7 @@ const TpoAnalyticsPage = lazy(() => import('@/pages/tpo/TpoAnalyticsPage'));
 const TpoSettingsPage = lazy(() => import('@/pages/tpo/TpoSettingsPage'));
 
 const MockExamTestPage = lazy(() => import('@/pages/MockExamTestPage'));
+const TechnicalCodingWorkspacePage = lazy(() => import('@/pages/TechnicalCodingWorkspacePage'));
 
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
@@ -270,6 +271,12 @@ export const router = createBrowserRouter([
         {withSuspense(MockExamTestPage)}
       </ProtectedRoute>
     ),
+    errorElement: <ErrorBoundary />,
+  },
+  // 4. Distraction-Free Technical Practice Coding Studio (Full-screen Monaco IDE)
+  {
+    path: '/technical/solve/:problemId',
+    element: withSuspense(TechnicalCodingWorkspacePage),
     errorElement: <ErrorBoundary />,
   },
 ]);

@@ -1619,23 +1619,38 @@ export default function TechnicalHubPage() {
                         </div>
                       </div>
 
-                      {/* 1. Problem Title & LeetCode Direct Button */}
+                      {/* 1. Problem Title & Action Buttons */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h3 className="font-display text-base sm:text-lg font-bold text-[#121417] dark:text-[#FFFFFF] leading-snug">
                           {problem.title}
                         </h3>
 
-                        {problem.leetcodeUrl && (
+                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto flex-wrap">
+                          {/* Solve in Dedicated Coding IDE (Opens in new tab) */}
                           <a
-                            href={problem.leetcodeUrl}
+                            href={`/technical/solve/${problem.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FFA116]/10 hover:bg-[#FFA116] text-[#FFA116] hover:text-white border border-[#FFA116]/30 transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32] hover:bg-[#E0351D] text-white transition-all shadow-xs cursor-pointer group"
+                            title="Open in Full-Screen Coding IDE (Opens in new tab)"
                           >
-                            <span>Solve on LeetCode</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <Terminal className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                            <span>Solve</span>
+                            <ExternalLink className="w-3 h-3 opacity-80" />
                           </a>
-                        )}
+
+                          {problem.leetcodeUrl && (
+                            <a
+                              href={problem.leetcodeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FFA116]/10 hover:bg-[#FFA116] text-[#FFA116] hover:text-white border border-[#FFA116]/30 transition-all shadow-xs cursor-pointer"
+                            >
+                              <span>LeetCode</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </div>
                       </div>
 
                       {/* 2. Problem Statement / Description (Elaborating Question) */}
