@@ -10,6 +10,9 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -505,7 +508,7 @@ export default function TechnicalCodingWorkspacePage() {
                 className="p-1 rounded text-[#8b949e] hover:text-white hover:bg-[#30363d] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title={prevProblem ? `Previous: ${prevProblem.title}` : 'First problem'}
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
 
               <span className="px-2 text-[11px] text-[#8b949e] font-bold">
@@ -523,7 +526,7 @@ export default function TechnicalCodingWorkspacePage() {
                 className="p-1 rounded text-[#8b949e] hover:text-white hover:bg-[#30363d] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title={nextProblem ? `Next: ${nextProblem.title}` : 'Last problem'}
               >
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
@@ -594,30 +597,74 @@ export default function TechnicalCodingWorkspacePage() {
             mobileTab === 'problem' ? 'block' : 'hidden lg:block'
           }`}
         >
-          {/* Header Metadata: Category, Pattern & LeetCode link */}
-          <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-gray-200 dark:border-[#25262a]">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-[#202226] text-gray-700 dark:text-gray-300">
-                {problem.categoryLabel || problem.category || 'General Programming'}
+          {/* Header Metadata: Topic Name & Aptitude-style Question Stepper Pagination */}
+          <div className="flex items-center justify-between gap-2.5 flex-wrap pb-3 border-b border-gray-200 dark:border-[#25262a]">
+            {/* Left: Topic Name & Pattern Badge */}
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25 font-display flex items-center gap-1.5 shadow-2xs">
+                <Layers className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{problem.categoryLabel || problem.category || 'General Programming'}</span>
               </span>
+
               {problem.pattern && problem.pattern !== problem.categoryLabel && (
-                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-[#202226] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#2e3238]">
                   {problem.pattern}
                 </span>
               )}
             </div>
 
-            {problem.leetcodeUrl && (
-              <a
-                href={problem.leetcodeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-[#FFA116] hover:underline"
-              >
-                <span>Solve on LeetCode</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
+            {/* Right: Aptitude-style Question Stepper & LeetCode link */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              {currentIndex >= 0 && trackProblems.length > 0 && (
+                <div className="inline-flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#16181c] p-0.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (prevProblem) {
+                        navigate(`/technical/solve/${prevProblem.id}`);
+                      }
+                    }}
+                    disabled={!prevProblem}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-gray-200 dark:border-[#2e3238] bg-white dark:bg-[#1c1f24] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:border-[#FD4A32] dark:hover:border-[#FD4A32] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+                    title={prevProblem ? `Previous: ${prevProblem.title}` : 'First problem'}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+
+                  <span className="px-2.5 py-1 rounded-md bg-transparent font-display font-bold text-xs text-gray-800 dark:text-gray-200 font-mono">
+                    {currentIndex + 1} / {trackProblems.length}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (nextProblem) {
+                        navigate(`/technical/solve/${nextProblem.id}`);
+                      }
+                    }}
+                    disabled={!nextProblem}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-gray-200 dark:border-[#2e3238] bg-white dark:bg-[#1c1f24] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:border-[#FD4A32] dark:hover:border-[#FD4A32] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+                    title={nextProblem ? `Next: ${nextProblem.title}` : 'Last problem'}
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {problem.leetcodeUrl && (
+                <a
+                  href={problem.leetcodeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-display font-bold text-[#FFA116] hover:bg-[#FFA116]/10 transition-colors border border-transparent hover:border-[#FFA116]/30"
+                >
+                  <span>LeetCode</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Problem Statement */}
