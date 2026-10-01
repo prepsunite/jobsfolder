@@ -56,6 +56,17 @@
       "destination": "/api/og-preview?type=experience&id=:id"
     },
     {
+      "source": "/exam/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|TelegramBot|Discordbot|Slackbot|Slack-ImgProxy|SkypeUriPreview|Google-Structured-Data-Testing-Tool).*"
+        }
+      ],
+      "destination": "/api/og-preview?type=exam&id=:id"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

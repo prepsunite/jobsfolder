@@ -60,8 +60,6 @@ const KNOWN_COMPANIES = {
   },
 };
 
-const DEFAULT_BRAND_IMAGE = 'https://prepunite.com/og-image.png';
-
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -74,23 +72,29 @@ function escapeHtml(str) {
 
 export default async function handler(req, res) {
   const { type = 'company', slug = '', id = '' } = req.query;
-  const baseUrl = 'https://prepunite.com';
 
+  // Resolve actual live host dynamically (e.g. jobsfolder.vercel.app or prepunite.com)
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'jobsfolder.vercel.app';
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const baseUrl = `${proto}://${host}`;
+
+  const defaultSquareLogo = `${baseUrl}/og-square.png`;
   let title = 'PrepUnite – Placement Intelligence Operating System';
   let description =
     'Master campus recruitment with authentic memory-based OA papers, solved questions, and real interview experiences across 50+ hiring giants.';
-  let imageUrl = DEFAULT_BRAND_IMAGE;
+  let imageUrl = defaultSquareLogo;
   let pageUrl = baseUrl;
+  let imageWidth = '400';
+  let imageHeight = '400';
 
   const normalizedSlug = (slug || '').toLowerCase().trim();
 
+  // 1. Company Route Preview (/companies/:slug)
   if (type === 'company' && normalizedSlug) {
     pageUrl = `${baseUrl}/companies/${encodeURIComponent(normalizedSlug)}`;
 
-    // 1. Check known fast-cache dictionary
     let company = KNOWN_COMPANIES[normalizedSlug];
 
-    // 2. Query Supabase if not found or to get freshest company name and logo
     if (!company) {
       try {
         const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -127,18 +131,64 @@ export default async function handler(req, res) {
       const displayName = company.shortName || company.name;
       title = `${displayName} Campus Drive 2026: OA Papers, Syllabus & Questions – PrepUnite`;
       description = `Practice real memory-based OA questions, test patterns, aptitude question banks, and interview transcripts for ${company.name} on PrepUnite.`;
-      imageUrl = company.logoUrl || DEFAULT_BRAND_IMAGE;
+      imageUrl = company.logoUrl || defaultSquareLogo;
     } else {
       const formattedName = normalizedSlug.toUpperCase();
       title = `${formattedName} Placement Drive 2026: Papers & Patterns – PrepUnite`;
       description = `Master ${formattedName} campus recruitment drives with authentic OA papers, solved questions, and interview experiences on PrepUnite.`;
-      imageUrl = DEFAULT_BRAND_IMAGE;
+      imageUrl = defaultSquareLogo;
     }
-  } else if (type === 'experience' && id) {
+  }
+
+  // 2. Exam Route Preview (/exam/:id)
+  else if (type === 'exam' && id) {
+    pageUrl = `${baseUrl}/exam/${encodeURIComponent(id)}`;
+    title = 'Online Mock Assessment Drive 2026 – PrepUnite';
+    description =
+      'Attempt full-length memory-based placement mock test with real company test patterns, aptitude, reasoning, and proctoring on PrepUnite.';
+    imageUrl = defaultSquareLogo;
+
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey =
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.VITE_SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (supabaseUrl && supabaseAnonKey) {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        const { data: exam } = await supabase
+          .from('mock_exams')
+          .select('title, target_company, description, duration_minutes, total_marks')
+          .eq('id', id)
+          .limit(1)
+          .maybeSingle();
+
+        if (exam) {
+          const comp = exam.target_company || 'Campus Recruitment';
+          title = `${exam.title || comp + ' Mock Test 2026'} | PrepUnite Assessment`;
+          description =
+            exam.description ||
+            `Practice authentic ${comp} placement assessment (${exam.duration_minutes || 60} mins, ${exam.total_marks || 100} marks) with instant scorecard on PrepUnite.`;
+
+          const normComp = (exam.target_company || '').toLowerCase().trim();
+          if (KNOWN_COMPANIES[normComp]?.logoUrl) {
+            imageUrl = KNOWN_COMPANIES[normComp].logoUrl;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[og-preview] Exam query notice:', err.message);
+    }
+  }
+
+  // 3. Interview Experience Route Preview (/experiences/:id)
+  else if (type === 'experience' && id) {
     pageUrl = `${baseUrl}/experiences`;
-    title = `Verified Campus Interview Experience – PrepUnite`;
-    description = `Explore round-by-round interview questions, technical rounds, coding questions, and candidate verdict on PrepUnite.`;
-    imageUrl = DEFAULT_BRAND_IMAGE;
+    title = 'Verified Campus Interview Experience – PrepUnite';
+    description =
+      'Explore round-by-round interview questions, technical rounds, coding problems, and candidate verdicts on PrepUnite.';
+    imageUrl = defaultSquareLogo;
   }
 
   // Ensure image URL is absolute
@@ -168,6 +218,9 @@ export default async function handler(req, res) {
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:image" content="${safeImageUrl}" />
     <meta property="og:image:secure_url" content="${safeImageUrl}" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="${imageWidth}" />
+    <meta property="og:image:height" content="${imageHeight}" />
     <meta property="og:image:alt" content="${safeTitle}" />
 
     <!-- Twitter Card -->

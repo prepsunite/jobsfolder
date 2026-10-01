@@ -5,10 +5,8 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
   Maximize2,
   Flag,
-  HelpCircle,
   ArrowRight,
   ArrowLeft,
   RotateCcw,
@@ -29,7 +27,6 @@ import {
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import LoadingScreen from '@/components/LoadingScreen';
-import LogoLoader from '@/components/LogoLoader';
 import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -977,12 +974,17 @@ export default function MockExamTestPage() {
     setResponses(prev => {
       // Spread ALL existing fields first so coding state (code_solution, code_language,
       // test_cases_passed, total_test_cases) is never silently dropped.
-      const existing = prev[currentQuestionId] || {};
-      const updated = {
+      const existing = prev[currentQuestionId];
+      const fallback: StudentExamResponse = existing || {
+        selected_option: null,
+        time_spent_sec: 0,
+        marked_review: false,
+      };
+      const updated: Record<string, StudentExamResponse> = {
         ...prev,
         [currentQuestionId]: {
-          ...existing,
-          marked_review: !existing.marked_review,
+          ...fallback,
+          marked_review: !existing?.marked_review,
         },
       };
       if (typeof window !== 'undefined' && examId) {
