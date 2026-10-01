@@ -91,26 +91,58 @@ export default async function handler(req, res) {
       recentAcSubmissionList.map(s => s.title.toLowerCase().trim())
     );
 
-    // If recent list is small or empty, attempt secondary lookup from public mirror to maximize matching
-    if (recentAcSubmissionList.length < 50 && totalSolved > 0) {
-      try {
-        const mirrorRes = await fetch(
+    // Always attempt secondary lookup from public mirrors to maximize accepted submissions collection
+    try {
+      const [acRes, allSubRes, userProfRes] = await Promise.allSettled([
+        fetch(
           `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/acSubmission?limit=100`,
           { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' } }
-        );
-        if (mirrorRes.ok) {
-          const mirrorData = await mirrorRes.json();
-          if (Array.isArray(mirrorData.submission)) {
-            mirrorData.submission.forEach(sub => {
+        ),
+        fetch(
+          `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/submission`,
+          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' } }
+        ),
+        fetch(
+          `https://alfa-leetcode-api.onrender.com/userProfile/${encodeURIComponent(cleanUsername)}`,
+          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' } }
+        ),
+      ]);
+
+      if (acRes.status === 'fulfilled' && acRes.value.ok) {
+        const mirrorData = await acRes.value.json().catch(() => ({}));
+        if (Array.isArray(mirrorData.submission)) {
+          mirrorData.submission.forEach(sub => {
+            if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
+            if (sub.title) titlesSet.add(sub.title.toLowerCase().trim());
+          });
+        }
+      }
+
+      if (allSubRes.status === 'fulfilled' && allSubRes.value.ok) {
+        const subData = await allSubRes.value.json().catch(() => ({}));
+        if (Array.isArray(subData.submission)) {
+          subData.submission.forEach(sub => {
+            if (sub.statusDisplay === 'Accepted') {
               if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
               if (sub.title) titlesSet.add(sub.title.toLowerCase().trim());
-            });
-          }
+            }
+          });
         }
-      } catch (mirrorErr) {
-        // Silently continue with primary GraphQL data
-        console.warn('[leetcode-sync mirror notice]:', mirrorErr.message);
       }
+
+      if (userProfRes.status === 'fulfilled' && userProfRes.value.ok) {
+        const profData = await userProfRes.value.json().catch(() => ({}));
+        if (Array.isArray(profData.recentSubmissions)) {
+          profData.recentSubmissions.forEach(sub => {
+            if (sub.statusDisplay === 'Accepted') {
+              if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
+              if (sub.title) titlesSet.add(sub.title.toLowerCase().trim());
+            }
+          });
+        }
+      }
+    } catch (mirrorErr) {
+      console.warn('[leetcode-sync mirror notice]:', mirrorErr.message);
     }
 
     return res.status(200).json({

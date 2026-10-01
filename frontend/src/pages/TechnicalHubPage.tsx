@@ -870,6 +870,10 @@ export default function TechnicalHubPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12 font-sans relative w-full">
+      {/* ⚡ Top-level LeetCode Auto-Sync Hub for Campus DSA - Always pinned at the top */}
+      {activeTrack === 'CAMPUS_DSA' && (
+        <LeetCodeSyncWidget onSyncSuccess={refetchDsa} className="w-full shadow-sm" />
+      )}
 
       {activeTopic ? (
         <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
@@ -980,11 +984,6 @@ export default function TechnicalHubPage() {
               </div>
             </div>
           </div>
-
-          {/* ⚡ LeetCode Auto-Sync Hub for Campus DSA */}
-          {activeTrack === 'CAMPUS_DSA' && (
-            <LeetCodeSyncWidget onSyncSuccess={refetchDsa} />
-          )}
 
           {/* 3. Unified Filter Bar & Pagination Toolbar */}
           <div className="p-2.5 sm:p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs overflow-x-auto no-scrollbar">
@@ -2097,11 +2096,6 @@ export default function TechnicalHubPage() {
               </div>
             </div>
           </div>
-
-          {/* ⚡ LeetCode Auto-Sync Hub for Campus DSA */}
-          {activeTrack === 'CAMPUS_DSA' && (
-            <LeetCodeSyncWidget onSyncSuccess={refetchDsa} />
-          )}
 
           {/* 🏷️ 2. STAGE CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ACTIONS */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">

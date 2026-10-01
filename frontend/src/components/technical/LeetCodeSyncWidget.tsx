@@ -15,6 +15,7 @@ import {
   leetcodeSyncService,
   type LeetCodeProfile,
 } from '@/services/leetcodeSync.service';
+import { ALL_CAMPUS_DSA_PROBLEMS } from '@/services/campusDsaRoadmapData';
 
 interface LeetCodeSyncWidgetProps {
   onSyncSuccess?: () => void;
@@ -34,14 +35,15 @@ export default function LeetCodeSyncWidget({
   const [isEditing, setIsEditing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Load stored profile on mount
+  // Load stored profile and reconcile with solved set on mount
   useEffect(() => {
+    leetcodeSyncService.reconcileStoredProfile(user?.email);
     const stored = leetcodeSyncService.getStoredProfile();
     if (stored) {
       setProfile(stored);
       setUsernameInput(stored.username);
     }
-  }, []);
+  }, [user?.email]);
 
   const handleSync = async (targetUsername?: string) => {
     const handle = (targetUsername || usernameInput).replace(/^@/, '').trim();
@@ -189,7 +191,7 @@ export default function LeetCodeSyncWidget({
                 </div>
                 <div className="font-display font-extrabold text-sm sm:text-base text-[#121417] dark:text-white">
                   <span className="text-[#FFA116]">{profile.verifiedCampusDsaCount}</span>
-                  <span className="text-gray-400 text-xs font-normal"> / 100 Verified</span>
+                  <span className="text-gray-400 text-xs font-normal"> / {ALL_CAMPUS_DSA_PROBLEMS.length} Verified</span>
                 </div>
               </div>
 

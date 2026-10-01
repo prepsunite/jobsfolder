@@ -181,12 +181,20 @@ export const technicalService = {
   // ─── Solved Problem State Management ─────────────────────────────────────
   getSolvedProblemIds(): Set<string> {
     if (typeof window === 'undefined') return new Set();
+    const set = new Set<string>();
     try {
       const stored = localStorage.getItem(SOLVED_PROBLEMS_KEY);
-      return stored ? new Set(JSON.parse(stored)) : new Set();
+      if (stored) {
+        JSON.parse(stored).forEach((id: string) => set.add(id));
+      }
+      const legacy = localStorage.getItem('prepunite_solved_problems');
+      if (legacy) {
+        JSON.parse(legacy).forEach((id: string) => set.add(id));
+      }
     } catch {
       return new Set();
     }
+    return set;
   },
 
 
@@ -201,7 +209,9 @@ export const technicalService = {
       isNowSolved = true;
     }
     try {
-      localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
+      const arr = Array.from(solvedSet);
+      localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(arr));
+      localStorage.setItem('prepunite_solved_problems', JSON.stringify(arr));
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
       }
@@ -242,7 +252,9 @@ export const technicalService = {
     if (!solvedSet.has(problemId)) {
       solvedSet.add(problemId);
       try {
-        localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
+        const arr = Array.from(solvedSet);
+        localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(arr));
+        localStorage.setItem('prepunite_solved_problems', JSON.stringify(arr));
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
         }

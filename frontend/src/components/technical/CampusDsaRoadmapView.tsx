@@ -204,7 +204,7 @@ export default function CampusDsaRoadmapView() {
             <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-[#868E96] dark:text-[#777777]">
               <span>🎯 10 Progressive Patterns</span>
               <span>•</span>
-              <span>⚡ 67 Curated LeetCode Problems</span>
+              <span>⚡ {ALL_CAMPUS_DSA_PROBLEMS.length} Curated LeetCode Problems</span>
             </div>
           </div>
 
