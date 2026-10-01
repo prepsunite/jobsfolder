@@ -533,15 +533,6 @@ export default function TechnicalHubPage() {
     }));
   };
 
-  const handleToggleSolve = (problemId: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    technicalService.toggleProblemSolved(problemId, user?.email, activeTrack);
-    if (activeTrack === 'PROGRAMMING_150') refetchP150();
-    else refetchDsa();
-    if (selectedProblem && selectedProblem.id === problemId) {
-      setSelectedProblem(prev => (prev ? { ...prev, solved: !prev.solved } : null));
-    }
-  };
 
   const toggleSolution = (problemId: string) => {
     setExpandedSolutions(prev => ({
@@ -1561,21 +1552,20 @@ export default function TechnicalHubPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {/* Verified Status Badge (Only marked solved by passing tests in the IDE) */}
+                          {/* Verified Status Badge (Only marked solved by passing tests in the Coding IDE) */}
                           {isSolved ? (
                             <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 select-none shadow-2xs"
-                              title="Verified Solved in Coding IDE"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 select-none pointer-events-none cursor-default shadow-2xs"
+                              title="Verified: All test cases passed in Coding IDE"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                               <span>Solved</span>
                             </span>
                           ) : (
                             <span
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-display font-bold bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#282828] text-[#868E96] dark:text-[#666666] select-none"
-                              title="Solve this problem in the Coding IDE"
+                              className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-display font-medium bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#282828] text-[#868E96] dark:text-[#666666] select-none pointer-events-none cursor-default"
+                              title="Pass all test cases in the Coding IDE to mark solved"
                             >
-                              <Circle className="w-3 h-3 text-gray-400" />
                               <span>Unsolved</span>
                             </span>
                           )}

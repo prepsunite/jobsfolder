@@ -189,52 +189,6 @@ export const technicalService = {
     }
   },
 
-  toggleProblemSolved(problemId: string, userEmail?: string, track: TechnicalTrack = 'PROGRAMMING_150'): boolean {
-    const solvedSet = this.getSolvedProblemIds();
-    let isNowSolved = false;
-    if (solvedSet.has(problemId)) {
-      solvedSet.delete(problemId);
-      isNowSolved = false;
-    } else {
-      solvedSet.add(problemId);
-      isNowSolved = true;
-    }
-    try {
-      localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(solvedSet)));
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
-      }
-    } catch {}
-
-    if (userEmail && userEmail !== GUEST_EMAIL) {
-      if (isNowSolved) {
-        supabase
-          .from('user_technical_progress')
-          .upsert({
-            user_email: userEmail,
-            problem_id: problemId,
-            track,
-            is_solved: true,
-            completed_at: new Date().toISOString(),
-            last_attempted_at: new Date().toISOString(),
-          }, { onConflict: 'user_email,problem_id' })
-          .then(({ error }) => {
-            if (error) console.warn('Supabase technical problem progress sync failed:', error.message);
-          });
-      } else {
-        supabase
-          .from('user_technical_progress')
-          .delete()
-          .eq('user_email', userEmail)
-          .eq('problem_id', problemId)
-          .then(({ error }) => {
-            if (error) console.warn('Supabase technical problem progress delete failed:', error.message);
-          });
-      }
-    }
-
-    return isNowSolved;
-  },
 
   markProblemSolved(problemId: string, userEmail?: string, track: TechnicalTrack = 'PROGRAMMING_150'): void {
     const solvedSet = this.getSolvedProblemIds();
