@@ -1323,38 +1323,51 @@ export default function TechnicalHubPage() {
                         </div>
                       )}
 
-                      {/* Options Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {mcq.options.map((opt, optIdx) => {
-                          const isOptionCorrect = optIdx === mcq.correctOptionIndex;
-                          const wasPickedWrong = wrongPicks.includes(optIdx);
-                          const isPickedAndCorrect = isSolved && isOptionCorrect;
+                      {/* Options Grid (Adaptive Smart Responsive Grid: 2-in-a-row for short options, 1-col for long paragraphs) */}
+                      {(() => {
+                        const hasLongOpt = mcq.options.some(o => (o || '').length > 55 || (o || '').includes('\n'));
+                        return (
+                          <div className={hasLongOpt ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2.5"}>
+                            {mcq.options.map((opt, optIdx) => {
+                              const isOptionCorrect = optIdx === mcq.correctOptionIndex;
+                              const wasPickedWrong = wrongPicks.includes(optIdx);
+                              const isPickedAndCorrect = isSolved && isOptionCorrect;
 
-                          let btnClasses =
-                            'bg-[#F8F9FA] dark:bg-[#191919] border-[#E9ECEF] dark:border-[#2A2A2A] text-[#121417] dark:text-[#EEEEEE] hover:border-[#FD4A32]';
-                          if (isPickedAndCorrect) {
-                            btnClasses =
-                              'bg-emerald-500/15 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-bold';
-                          } else if (wasPickedWrong) {
-                            btnClasses =
-                              'bg-rose-500/15 border-rose-500/50 text-rose-700 dark:text-rose-300 font-semibold';
-                          }
+                              let btnClasses =
+                                'bg-[#F8F9FA] dark:bg-[#121316] border-[#E9ECEF] dark:border-[#26282E] text-[#121417] dark:text-[#EEEEEE] hover:border-neutral-400 dark:hover:border-neutral-600';
+                              if (isPickedAndCorrect) {
+                                btnClasses =
+                                  'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs';
+                              } else if (wasPickedWrong) {
+                                btnClasses =
+                                  'bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-300 font-semibold';
+                              }
 
-                          return (
-                            <button
-                              key={optIdx}
-                              type="button"
-                              onClick={() => handleSelectMcqOption(mcq, optIdx)}
-                              className={`p-3 rounded-lg border text-left text-xs transition-all flex items-start gap-2.5 cursor-pointer ${btnClasses}`}
-                            >
-                              <span className="font-mono font-bold text-[10px] w-5 h-5 rounded flex items-center justify-center bg-black/5 dark:bg-white/10 shrink-0">
-                                {String.fromCharCode(65 + optIdx)}
-                              </span>
-                              <span className="font-sans flex-1 leading-snug">{opt}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                              return (
+                                <button
+                                  key={optIdx}
+                                  type="button"
+                                  onClick={() => handleSelectMcqOption(mcq, optIdx)}
+                                  className={`p-2.5 sm:p-3 rounded-xl border text-left text-xs transition-all flex items-center gap-3 cursor-pointer ${btnClasses}`}
+                                >
+                                  <span className={`font-mono font-bold text-[11px] w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${
+                                    isPickedAndCorrect
+                                      ? 'bg-emerald-500 text-white border-emerald-500'
+                                      : wasPickedWrong
+                                      ? 'bg-rose-500 text-white border-rose-500'
+                                      : 'bg-black/5 dark:bg-white/5 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400'
+                                  }`}>
+                                    {String.fromCharCode(65 + optIdx)}
+                                  </span>
+                                  <span className="font-sans flex-1 leading-snug">{opt}</span>
+                                  {isPickedAndCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-1" />}
+                                  {wasPickedWrong && <XCircle className="w-4 h-4 text-rose-500 shrink-0 ml-1" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {/* Company Tags */}
                       {mcq.companyTags && mcq.companyTags.length > 0 && (

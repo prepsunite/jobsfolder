@@ -1811,34 +1811,40 @@ export default function MockExamTestPage() {
                         <QuestionRichContent content={currentQuestion.statement} />
                       </div>
 
-                      {/* Options List */}
-                      <div className="space-y-2.5 pt-1">
-                        {normalizeQuestionOptions(currentQuestion.options).map((opt, oIdx: number) => {
-                          const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
-                          return (
-                            <div
-                              key={opt.key || oIdx}
-                              onClick={() => handleSelectOption(oIdx)}
-                              className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-xs ${
-                                isSelected
-                                  ? 'border-[#FD4A32] bg-[#FD4A32]/5 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32]'
-                                  : 'border-gray-200 dark:border-[#25262a] hover:border-gray-300 dark:hover:border-[#383a40] bg-gray-50/50 dark:bg-[#1c1d20]'
-                              }`}
-                            >
-                              <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                  isSelected
-                                    ? 'bg-[#FD4A32] text-white'
-                                    : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
-                                }`}
-                              >
-                                {opt.key || String.fromCharCode(65 + oIdx)}
-                              </div>
-                              <QuestionRichContent content={opt.text} isOption={true} className="mt-0.5 leading-relaxed flex-1 font-sans" />
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {/* Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
+                      {(() => {
+                        const normOpts = normalizeQuestionOptions(currentQuestion.options);
+                        const hasLong = normOpts.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
+                        return (
+                          <div className={hasLong ? "space-y-2.5 pt-1" : "grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1"}>
+                            {normOpts.map((opt, oIdx: number) => {
+                              const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
+                              return (
+                                <div
+                                  key={opt.key || oIdx}
+                                  onClick={() => handleSelectOption(oIdx)}
+                                  className={`p-3 sm:p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3 text-xs ${
+                                    isSelected
+                                      ? 'border-[#FD4A32] bg-[#FD4A32]/8 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32] shadow-xs'
+                                      : 'border-gray-200 dark:border-[#25262a] hover:border-neutral-400 dark:hover:border-neutral-600 bg-gray-50/50 dark:bg-[#1c1d20]'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border ${
+                                      isSelected
+                                        ? 'bg-[#FD4A32] text-white border-[#FD4A32]'
+                                        : 'bg-black/5 dark:bg-[#2b2d31] border-neutral-200 dark:border-neutral-700/60 text-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {opt.key || String.fromCharCode(65 + oIdx)}
+                                  </div>
+                                  <QuestionRichContent content={opt.text} isOption={true} className="leading-snug flex-1 font-sans" />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ) : (
@@ -1848,34 +1854,40 @@ export default function MockExamTestPage() {
                       <QuestionRichContent content={currentQuestion.statement} />
                     </div>
 
-                    {/* Options List */}
-                    <div className="space-y-3 pt-2">
-                      {normalizeQuestionOptions(currentQuestion.options).map((opt, oIdx: number) => {
-                        const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
-                        return (
-                          <div
-                            key={opt.key || oIdx}
-                            onClick={() => handleSelectOption(oIdx)}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-xs ${
-                              isSelected
-                                ? 'border-[#FD4A32] bg-[#FD4A32]/5 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32]'
-                                : 'border-gray-200 dark:border-[#25262a] hover:border-gray-300 dark:hover:border-[#383a40] bg-gray-50/50 dark:bg-[#1c1d20]'
-                            }`}
-                          >
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                isSelected
-                                  ? 'bg-[#FD4A32] text-white'
-                                  : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
-                              }`}
-                            >
-                              {opt.key || String.fromCharCode(65 + oIdx)}
-                            </div>
-                            <QuestionRichContent content={opt.text} isOption={true} className="mt-0.5 leading-relaxed flex-1 font-sans" />
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {/* Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
+                    {(() => {
+                      const normOpts = normalizeQuestionOptions(currentQuestion.options);
+                      const hasLong = normOpts.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
+                      return (
+                        <div className={hasLong ? "space-y-3 pt-2" : "grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2"}>
+                          {normOpts.map((opt, oIdx: number) => {
+                            const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
+                            return (
+                              <div
+                                key={opt.key || oIdx}
+                                onClick={() => handleSelectOption(oIdx)}
+                                className={`p-3.5 sm:p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 text-xs ${
+                                  isSelected
+                                    ? 'border-[#FD4A32] bg-[#FD4A32]/8 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32] shadow-xs'
+                                    : 'border-gray-200 dark:border-[#25262a] hover:border-neutral-400 dark:hover:border-neutral-600 bg-gray-50/50 dark:bg-[#1c1d20]'
+                                }`}
+                              >
+                                <div
+                                  className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border ${
+                                    isSelected
+                                      ? 'bg-[#FD4A32] text-white border-[#FD4A32]'
+                                      : 'bg-black/5 dark:bg-[#2b2d31] border-neutral-200 dark:border-neutral-700/60 text-gray-700 dark:text-gray-300'
+                                  }`}
+                                >
+                                  {opt.key || String.fromCharCode(65 + oIdx)}
+                                </div>
+                                <QuestionRichContent content={opt.text} isOption={true} className="leading-snug flex-1 font-sans" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
 

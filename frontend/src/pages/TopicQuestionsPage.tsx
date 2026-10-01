@@ -1174,53 +1174,65 @@ export default function TopicQuestionsPage() {
                   </pre>
                 )}
 
-                {/* MCQ Options List (Active Learning Attempt Flow) */}
-                <div className="space-y-1.5 pl-1">
-                  {q.options.map((opt) => {
-                    const optId = opt.id || opt.key || 'A';
-                    const isCorrect = optId.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
-                    const wasWrong = wrongOptions.includes(optId) || (!isSolved && prog?.selectedOption === optId && !isCorrect);
+                {/* MCQ Options List (Adaptive Smart Responsive Grid: 2-in-a-row for short/math/number options, 1-col for long paragraphs) */}
+                {(() => {
+                  const hasLongOption = q.options.some(o => {
+                    const txt = o.text || '';
+                    return txt.length > 55 || txt.includes('\n') || txt.includes('<pre') || txt.includes('<table');
+                  });
+                  const gridClass = hasLongOption
+                    ? 'grid grid-cols-1 gap-2'
+                    : 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
 
-                    let optionStyle = 'bg-[#F8F9FA] dark:bg-[#0C0C0C] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] hover:border-[#121417] dark:hover:border-[#444444]';
+                  return (
+                    <div className={gridClass}>
+                      {q.options.map((opt) => {
+                        const optId = opt.id || opt.key || 'A';
+                        const isCorrect = optId.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
+                        const wasWrong = wrongOptions.includes(optId) || (!isSolved && prog?.selectedOption === optId && !isCorrect);
 
-                    if (isSolved && isCorrect) {
-                      // Correctly solved: Green badge!
-                      optionStyle = 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs';
-                    } else if (wasWrong) {
-                      // Wrong pick: Stays RED until correct option is chosen!
-                      optionStyle = 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
-                    } else if (isExplVisible && isCorrect) {
-                      // Revealed via "Show Answer" button
-                      optionStyle = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-semibold';
-                    }
+                        let optionStyle = 'bg-[#F8F9FA] dark:bg-[#121316] border-[#E9ECEF] dark:border-[#26282E] text-[#121417] dark:text-[#FFFFFF] hover:border-neutral-400 dark:hover:border-neutral-600';
 
-                    return (
-                      <button
-                        key={optId}
-                        onClick={() => handleSelectOption(q, optId)}
-                        className={`w-full flex items-center gap-2.5 p-2 rounded-md border text-xs text-left transition-all ${optionStyle}`}
-                      >
-                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center font-display font-bold text-[10px] shrink-0 ${
-                          (isSolved && isCorrect) || (isExplVisible && isCorrect)
-                            ? 'bg-emerald-500 text-white border-emerald-500'
-                            : wasWrong
-                              ? 'bg-rose-500 text-white border-rose-500'
-                              : 'border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555]'
-                        }`}>
-                          {optId}
-                        </div>
-                        <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
+                        if (isSolved && isCorrect) {
+                          // Correctly solved: Green badge!
+                          optionStyle = 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs';
+                        } else if (wasWrong) {
+                          // Wrong pick: Stays RED until correct option is chosen!
+                          optionStyle = 'bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-300 font-bold';
+                        } else if (isExplVisible && isCorrect) {
+                          // Revealed via "Show Answer" button
+                          optionStyle = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-semibold';
+                        }
 
-                        {((isSolved && isCorrect) || (isExplVisible && isCorrect)) && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        )}
-                        {wasWrong && !isSolved && (
-                          <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                        return (
+                          <button
+                            key={optId}
+                            onClick={() => handleSelectOption(q, optId)}
+                            className={`w-full flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border text-xs text-left transition-all cursor-pointer ${optionStyle}`}
+                          >
+                            <div className={`w-6 h-6 rounded-lg border flex items-center justify-center font-display font-bold text-[11px] shrink-0 ${
+                              (isSolved && isCorrect) || (isExplVisible && isCorrect)
+                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                : wasWrong
+                                  ? 'bg-rose-500 text-white border-rose-500'
+                                  : 'bg-black/5 dark:bg-white/5 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400'
+                            }`}>
+                              {optId}
+                            </div>
+                            <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans leading-snug" />
+
+                            {((isSolved && isCorrect) || (isExplVisible && isCorrect)) && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-1" />
+                            )}
+                            {wasWrong && !isSolved && (
+                              <XCircle className="w-4 h-4 text-rose-500 shrink-0 ml-1" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* ACTION TOOLBAR */}
                 <div className="pt-2.5 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2">

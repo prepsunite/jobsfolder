@@ -1015,29 +1015,38 @@ export default function DashboardPage() {
                       />
                     </div>
 
-                    {/* MCQ Options List */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {q.options?.map((opt, oIdx) => {
-                        const optId = opt.id || opt.key || optKeys[oIdx] || 'A';
-                        const isCorrect = optId === q.correctAnswer;
-                        return (
-                          <div
-                            key={optId}
-                            className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 ${
-                              isCorrect
-                                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
-                                : 'bg-[#F8F9FA] dark:bg-[#141517] border-[#E9ECEF] dark:border-[#2b2d31] text-[#121417] dark:text-[#e3e3e3]'
-                            }`}
-                          >
-                            <span className="font-bold w-5 h-5 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-[11px] shrink-0">
-                              {optId}
-                            </span>
-                            <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans" />
-                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {/* MCQ Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
+                    {(() => {
+                      const hasLong = q.options?.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
+                      return (
+                        <div className={hasLong ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2"}>
+                          {q.options?.map((opt, oIdx) => {
+                            const optId = opt.id || opt.key || optKeys[oIdx] || 'A';
+                            const isCorrect = optId === q.correctAnswer;
+                            return (
+                              <div
+                                key={optId}
+                                className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 ${
+                                  isCorrect
+                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold'
+                                    : 'bg-[#F8F9FA] dark:bg-[#121316] border-[#E9ECEF] dark:border-[#26282E] text-[#121417] dark:text-[#e3e3e3]'
+                                }`}
+                              >
+                                <span className={`font-bold w-6 h-6 rounded-lg border flex items-center justify-center text-[11px] shrink-0 ${
+                                  isCorrect
+                                    ? 'bg-emerald-500 text-white border-emerald-500'
+                                    : 'bg-black/5 dark:bg-white/5 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400'
+                                }`}>
+                                  {optId}
+                                </span>
+                                <QuestionRichContent content={opt.text} isOption={true} className="flex-1 font-sans leading-snug" />
+                                {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
 
                     {/* Toggle Explanation Button */}
                     <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#2b2d31] flex items-center justify-between">
