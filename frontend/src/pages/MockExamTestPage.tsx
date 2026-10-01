@@ -135,11 +135,19 @@ export default function MockExamTestPage() {
       let batchName = '';
 
       try {
+        const targetCids = [exam.college_id];
+        try {
+          const col = await tpoService.getCollegeDetails(exam.college_id);
+          if (col?.id && !targetCids.includes(col.id)) targetCids.push(col.id);
+          if (col?.code && !targetCids.includes(col.code)) targetCids.push(col.code);
+          if (col?.slug && !targetCids.includes(col.slug)) targetCids.push(col.slug);
+        } catch {}
+
         const { data: cs } = await supabase
           .from('college_students')
           .select('id, college_id, batch_id, department, roll_number, email, name')
           .eq('email', cleanEmail)
-          .eq('college_id', exam.college_id)
+          .in('college_id', targetCids)
           .maybeSingle();
 
         if (cs) {

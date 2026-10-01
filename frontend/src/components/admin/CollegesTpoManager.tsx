@@ -737,18 +737,18 @@ export default function CollegesTpoManager() {
 
             <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-xs space-y-2">
               <label className="block font-bold text-slate-700 dark:text-slate-300">
-                Paid Student License Cap:
+                Total Paid Student License Cap (All Batches Combined):
               </label>
               <input
                 type="number"
-                min="100"
-                step="100"
+                min="50"
+                step="50"
                 value={newCapValue}
                 onChange={e => setNewCapValue(parseInt(e.target.value) || 0)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-[#151618] text-base font-black text-slate-900 dark:text-white font-mono"
               />
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                If college paid for 1,500 students, enter <strong>1500</strong>. The system will strictly reject any student import beyond this number.
+                If the college paid for 2,500 students, enter <strong>2500</strong>. This is the total institutional capacity across all batches combined (NOT per batch). The system strictly enforces this limit across all cohorts.
               </p>
             </div>
 
@@ -829,7 +829,7 @@ export default function CollegesTpoManager() {
 
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Paid Student Seats Limit *
+                  Total Institutional Paid Student Seats (All Batches Combined) *
                 </label>
                 <input
                   type="number"
@@ -838,11 +838,11 @@ export default function CollegesTpoManager() {
                   step="50"
                   value={newCollegeLicenses}
                   onChange={e => setNewCollegeLicenses(parseInt(e.target.value) || 1500)}
-                  placeholder="e.g. 1500"
+                  placeholder="e.g. 2500"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#151618] text-slate-900 dark:text-white font-mono font-bold"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
-                  How many students this college has paid for. The system will enforce this cap strictly.
+                  Total students this college has paid for across all batches combined. (e.g. If set to 2,500, the TPO can divide these 2,500 students into multiple batches like Top Batch, Normal Batch, etc. It is NOT 2,500 per batch).
                 </p>
               </div>
 

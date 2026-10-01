@@ -170,14 +170,14 @@ export default function AddStudentModal({
         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
           <span className="text-slate-500 flex items-center gap-1.5 font-medium">
             <Users className="w-3.5 h-3.5 text-slate-400" />
-            Available License Capacity:
+            College-Wide Capacity:
           </span>
           <span
             className={`font-mono font-black ${
               isQuotaFull ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
             }`}
           >
-            {remainingSeats} seats free (of {maxLicenses})
+            {remainingSeats} seats free of {maxLicenses} total ({currentEnrolled} enrolled across all batches)
           </span>
         </div>
 

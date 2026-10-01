@@ -29,6 +29,7 @@ import {
   BarChart3,
   Database,
   SlidersHorizontal,
+  Lock,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
@@ -45,7 +46,7 @@ import type { MockExam, StudentExamAttempt } from '@/types/tpo';
 type ExamFilterTab = 'ACTIVE' | 'COMPLETED' | 'UPCOMING' | 'ALL';
 
 export default function StudentExamsPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isTpoAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -117,20 +118,6 @@ export default function StudentExamsPage() {
     staleTime: 15 * 1000,
   });
 
-  // 🚦 STUDENT COLLEGE REMOVAL WATCHDOG:
-  // When a TPO deletes a student from a batch or removes the entire batch, AuthContext fires
-  // 'prepunite-college-removed'. We listen here and immediately refetch campus exams and quota
-  // so the campus section disappears in real-time without needing a manual page reload.
-  useEffect(() => {
-    const handleCollegeRemoved = () => {
-      refetchUsage();
-      // Also refetch campus exams query (keyed below at 'campus-mock-exams')
-      // React Query will pick this up when the query re-runs with no college ID
-    };
-    window.addEventListener('prepunite-college-removed', handleCollegeRemoved);
-    return () => window.removeEventListener('prepunite-college-removed', handleCollegeRemoved);
-  }, [refetchUsage]);
-
   // 1. Fetch Campus Placement Mock Drives for Enrolled Student
   const {
     data: campusExamsData,
@@ -146,6 +133,19 @@ export default function StudentExamsPage() {
     staleTime: 30 * 1000,
   });
 
+  // 🚦 STUDENT COLLEGE REMOVAL WATCHDOG:
+  // When a TPO deletes a student from a batch or removes the entire batch, AuthContext fires
+  // 'prepunite-college-removed'. We listen here and immediately refetch campus exams and quota
+  // so the campus section disappears in real-time without needing a manual page reload.
+  useEffect(() => {
+    const handleCollegeRemoved = () => {
+      refetchUsage();
+      refetchExams();
+    };
+    window.addEventListener('prepunite-college-removed', handleCollegeRemoved);
+    return () => window.removeEventListener('prepunite-college-removed', handleCollegeRemoved);
+  }, [refetchUsage, refetchExams]);
+
   const enrolledCollege = campusExamsData?.college;
   const campusExams = useMemo(() => campusExamsData?.exams || [], [campusExamsData]);
 
@@ -158,18 +158,25 @@ export default function StudentExamsPage() {
       let department = '';
       let batchName = '';
       let rollNumber = '';
+      let batchYear: number | undefined = undefined;
 
       try {
+        const targetCids = [enrolledCollege.id];
+        if (enrolledCollege.code && !targetCids.includes(enrolledCollege.code)) {
+          targetCids.push(enrolledCollege.code);
+        }
+
         const { data: cs } = await supabase
           .from('college_students')
-          .select('id, college_id, batch_id, department, roll_number, email, name')
+          .select('id, college_id, batch_id, department, roll_number, email, name, batch_year')
           .eq('email', cleanEmail)
-          .eq('college_id', enrolledCollege.id)
+          .in('college_id', targetCids)
           .maybeSingle();
 
         if (cs) {
           if (cs.department) department = cs.department;
           if (cs.roll_number) rollNumber = cs.roll_number;
+          if (cs.batch_year) batchYear = cs.batch_year;
           if (cs.batch_id) {
             const { data: b } = await supabase
               .from('college_batches')
@@ -183,7 +190,7 @@ export default function StudentExamsPage() {
         console.warn('Error fetching student record:', e);
       }
 
-      return { department, batch_name: batchName, roll_number: rollNumber };
+      return { department, batch_name: batchName, roll_number: rollNumber, batch_year: batchYear };
     },
     enabled: !!user?.email && !!enrolledCollege?.id,
     staleTime: 60 * 1000,
@@ -196,8 +203,8 @@ export default function StudentExamsPage() {
       if (!user?.email) return null;
       const cleanEmail = user.email.trim().toLowerCase();
 
-      // Check Campus Pass
-      const entitlement = tpoService.getStudentEntitlementInfo(cleanEmail);
+      // Check Campus Pass live against Supabase
+      const entitlement = await tpoService.verifyStudentEntitlementLive(cleanEmail);
       if (entitlement && entitlement.isEntitled) {
         return {
           isPro: true,
@@ -406,18 +413,24 @@ export default function StudentExamsPage() {
                 <span className="text-gray-400 block text-[10px] uppercase font-bold">Candidate</span>
                 <span className="font-bold text-gray-900 dark:text-white">{user?.name || user?.email}</span>
               </div>
+              {studentRecord?.roll_number && (
+                <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Roll No</span>
+                  <span className="font-bold text-gray-900 dark:text-white font-mono">{studentRecord.roll_number}</span>
+                </div>
+              )}
               {studentRecord?.department && (
                 <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
                   <span className="text-gray-400 block text-[10px] uppercase font-bold">Branch</span>
                   <span className="font-bold text-gray-900 dark:text-white">{studentRecord.department}</span>
                 </div>
               )}
-              {studentRecord?.batch_name && (
-                <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
-                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Batch</span>
-                  <span className="font-bold text-gray-900 dark:text-white">{studentRecord.batch_name}</span>
-                </div>
-              )}
+              <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
+                <span className="text-gray-400 block text-[10px] uppercase font-bold">Cohort Batch</span>
+                <span className="font-bold text-gray-900 dark:text-white">
+                  {studentRecord?.batch_name || 'Standard Batch'} {studentRecord?.batch_year ? `(${studentRecord.batch_year})` : ''}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -751,6 +764,22 @@ export default function StudentExamsPage() {
               !!attempt &&
               (attempt.passed ?? (attempt.percentage >= (exam.passing_percentage || 50)));
 
+            const isTargetBatchRestricted = Boolean(
+              exam.target_batches &&
+              exam.target_batches.length > 0 &&
+              !exam.target_batches.some(b => b.toUpperCase() === 'ALL') &&
+              (!studentRecord?.batch_name || !exam.target_batches.some(b => b.trim().toLowerCase() === studentRecord.batch_name.trim().toLowerCase()))
+            );
+
+            const isTargetDeptRestricted = Boolean(
+              exam.target_departments &&
+              exam.target_departments.length > 0 &&
+              !exam.target_departments.some(d => d.toUpperCase() === 'ALL') &&
+              (!studentRecord?.department || !exam.target_departments.some(d => d.trim().toUpperCase() === studentRecord.department.trim().toUpperCase()))
+            );
+
+            const isRestrictedForStudent = !isAdmin && !isTpoAdmin && (isTargetBatchRestricted || isTargetDeptRestricted);
+
             return (
               <div
                 key={exam.id}
@@ -863,26 +892,33 @@ export default function StudentExamsPage() {
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
+                      <span>
+                        Cohort: <strong className="text-gray-700 dark:text-gray-300">{exam.target_batches?.length ? exam.target_batches.join(', ') : 'All Batches'}</strong>
+                      </span>
                       {exam.enable_tab_switch_detection ? (
                         <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500">
                           <ShieldCheck className="w-3 h-3 text-[#FD4A32]" />
-                          Anti-Cheat Proctoring (Max {exam.max_tab_switches_allowed || 3} switches)
+                          Anti-Cheat (Max {exam.max_tab_switches_allowed || 3})
                         </span>
                       ) : (
                         <span className="text-[10px] text-gray-400">Standard Test</span>
                       )}
-
-                      {isUpcoming && exam.start_time && (
-                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                          Starts: {new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
-                      {isConcluded && exam.end_time && (
-                        <span className="text-[10px] font-bold text-slate-500">
-                          Ended: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
                     </div>
+
+                    {(isUpcoming || isConcluded) && (
+                      <div className="flex items-center justify-between pt-0.5">
+                        {isUpcoming && exam.start_time && (
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                            Starts: {new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                        {isConcluded && exam.end_time && (
+                          <span className="text-[10px] font-bold text-slate-500">
+                            Ended: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -908,6 +944,15 @@ export default function StudentExamsPage() {
                       <Clock className="w-3.5 h-3.5" />
                       <span>Resume In-Progress →</span>
                     </Link>
+                  ) : isRestrictedForStudent ? (
+                    <button
+                      disabled
+                      className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed border border-gray-200 dark:border-gray-800"
+                      title={`Restricted to: ${isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Target Cohort') : (exam.target_departments?.join(', ') || 'Target Branch')} (Your cohort: ${studentRecord?.batch_name || 'Standard Batch'})`}
+                    >
+                      <Lock className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Cohort Restricted — {isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Batch Only') : targetDepts}</span>
+                    </button>
                   ) : isUpcoming ? (
                     <button
                       disabled

@@ -237,16 +237,16 @@ export default function BulkStudentImportModal({
               </div>
               <div>
                 <span className="font-bold text-slate-900 dark:text-white block">
-                  Enrolled Students: <span className="font-mono text-[#FD4A32]">{currentEnrolled}</span> / {maxLicenses} Max Seats
+                  Total College Enrollment: <span className="font-mono text-[#FD4A32]">{currentEnrolled}</span> / {maxLicenses} Max Seats (Shared Across All Batches)
                 </span>
                 <span className="text-slate-400 text-[11px]">
-                  {remainingSeats > 0 ? `${remainingSeats} student seat(s) currently available` : 'Zero seats available (Quota Full)'}
+                  {remainingSeats > 0 ? `${remainingSeats} student seat(s) currently available for the entire college` : 'Zero seats available (College Quota Full)'}
                 </span>
               </div>
             </div>
             <div className="text-right">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                Admin-Controlled Quota
+                College-Wide Quota
               </span>
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function BulkStudentImportModal({
                 </h4>
               </div>
               <span className="text-[11px] text-slate-400">
-                Determines student batch classification
+                Groups students into a cohort • Consumes from college total ({maxLicenses} seats)
               </span>
             </div>
 

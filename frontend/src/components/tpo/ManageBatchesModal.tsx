@@ -66,6 +66,17 @@ export default function ManageBatchesModal({
     enabled: isOpen && !!collegeId,
   });
 
+  // Fetch College details for total license quota
+  const { data: collegeDetails } = useQuery({
+    queryKey: ['tpo-college-details', collegeId],
+    queryFn: () => tpoService.getCollegeDetails(collegeId),
+    enabled: isOpen && !!collegeId,
+  });
+
+  const maxLicenses = collegeDetails?.max_licenses || 1500;
+  const totalEnrolled = students.length;
+  const remainingSeats = Math.max(0, maxLicenses - totalEnrolled);
+
   if (!isOpen) return null;
 
   // Toggle Department Selection
@@ -193,6 +204,24 @@ export default function ManageBatchesModal({
               {errorMsg}
             </div>
           )}
+
+          {/* Institutional Quota Clarification Banner */}
+          <div className="p-4 rounded-2xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 flex items-start gap-3 shadow-2xs">
+            <Layers className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-purple-900 dark:text-purple-200">
+                  College Quota: {totalEnrolled} / {maxLicenses} Total Seats Enrolled
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 font-extrabold">
+                  {remainingSeats} seats available across all batches
+                </span>
+              </div>
+              <p className="text-purple-700 dark:text-purple-300/80 leading-relaxed text-[11px]">
+                Batches are sub-groups/cohorts to organize students for mock drives. <strong>The {maxLicenses} seat limit applies to your college as a whole</strong>—batches do not each have {maxLicenses} seats; all batches share your college's total purchased license pool.
+              </p>
+            </div>
+          </div>
 
           {/* 1. Create New Batch Section */}
           <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#202225] border border-slate-200/80 dark:border-[#2e3035] space-y-4">

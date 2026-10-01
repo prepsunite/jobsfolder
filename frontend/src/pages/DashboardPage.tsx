@@ -63,6 +63,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleCollegeRemoved = () => {
       queryClient.invalidateQueries({ queryKey: ['user-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['student-campus-mock-exams'] });
       toast.info('Your campus access has been updated. Some features may no longer be available.');
     };
     window.addEventListener('prepunite-college-removed', handleCollegeRemoved);

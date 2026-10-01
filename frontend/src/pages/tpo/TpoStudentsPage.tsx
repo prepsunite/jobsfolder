@@ -219,13 +219,14 @@ export default function TpoStudentsPage() {
       {/* License Capacity & Expiry Progress Card */}
       {(() => {
         const maxLicenses = currentCollege.max_licenses || 1500;
-        const enrolledCount = students.length;
-        const freeSeats = Math.max(0, maxLicenses - enrolledCount);
-        const percentUsed = Math.min(100, Math.round((enrolledCount / maxLicenses) * 100));
+        const totalCollegeEnrolled = allStudents.length;
+        const freeSeats = Math.max(0, maxLicenses - totalCollegeEnrolled);
+        const percentUsed = Math.min(100, Math.round((totalCollegeEnrolled / maxLicenses) * 100));
         const validUntilDate = currentCollege.valid_until ? new Date(currentCollege.valid_until) : null;
         const daysLeft = validUntilDate
           ? Math.ceil((validUntilDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
           : 0;
+        const isFiltered = batchFilter !== 'ALL' || deptFilter !== 'ALL' || !!searchTerm.trim() || !!batchYearFilter;
 
         return (
           <div className="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
@@ -234,9 +235,12 @@ export default function TpoStudentsPage() {
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    Institutional Seat Capacity
+                    College-Wide Seat Capacity
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                    Total Quota (Shared Across All Batches)
                   </span>
                   <span
                     className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
@@ -248,8 +252,23 @@ export default function TpoStudentsPage() {
                     {freeSeats === 0 ? 'Capacity Full' : `${freeSeats} Seats Remaining`}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {enrolledCount} of {maxLicenses} allocated student licenses enrolled • Each student is automatically provisioned with Campus Pro Pass.
+                <p className="text-xs text-slate-500 mt-1">
+                  <span className="font-extrabold text-slate-900 dark:text-white">
+                    {totalCollegeEnrolled}
+                  </span>{' '}
+                  of{' '}
+                  <span className="font-bold text-slate-700 dark:text-slate-300">
+                    {maxLicenses}
+                  </span>{' '}
+                  total institutional seats used
+                  {isFiltered ? (
+                    <span className="text-[#FD4A32] font-semibold ml-1.5">
+                      (Showing {visibleStudents.length} student{visibleStudents.length === 1 ? '' : 's'} in current filter)
+                    </span>
+                  ) : (
+                    ' across all cohorts'
+                  )}
+                  {' '}• Batches divide this total quota into groups; each batch does NOT get a separate {maxLicenses} seats.
                 </p>
               </div>
             </div>
@@ -276,10 +295,16 @@ export default function TpoStudentsPage() {
       })()}
 
       {/* Quick Cohort Tabs Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" /> Cohort Batches:
-        </span>
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] text-slate-400">
+          <span className="font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" /> Cohort Batches:
+          </span>
+          <span className="hidden sm:inline text-[10px]">
+            All batches share your college's total {currentCollege.max_licenses || 1500} seat quota ({allStudents.length} enrolled)
+          </span>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setBatchFilter('ALL')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
@@ -324,6 +349,7 @@ export default function TpoStudentsPage() {
         >
           <Plus className="w-3.5 h-3.5" /> New Batch
         </button>
+      </div>
       </div>
 
       {/* Filter & Search Toolbar */}

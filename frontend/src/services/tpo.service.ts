@@ -2181,7 +2181,7 @@ export const tpoService = {
 
     if (currentEnrolled + trulyNewCount > maxLicenses) {
       throw new Error(
-        `Seat Limit Exceeded! Your institution has paid for ${maxLicenses} student licenses. Currently enrolled: ${currentEnrolled}. You only have ${remainingSeats} seat(s) remaining, but tried to import ${trulyNewCount} new student(s). Please contact PrepUnite Admin to increase your student capacity.`
+        `College Seat Limit Exceeded! Your institution has paid for ${maxLicenses} total student licenses across all batches combined. Currently enrolled: ${currentEnrolled}. You only have ${remainingSeats} seat(s) remaining, but tried to import ${trulyNewCount} new student(s). All batches share this total pool. Please contact PrepUnite Admin to increase your student capacity.`
       );
     }
 
@@ -2696,7 +2696,7 @@ export const tpoService = {
     if (!alreadyExists && currentStudents.length >= maxLicenses) {
       return {
         success: false,
-        error: `Seat Limit Exceeded! Your institution has paid for ${maxLicenses} student licenses and all seats are filled. Please contact PrepUnite to upgrade capacity.`,
+        error: `College Seat Limit Exceeded! Your institution has paid for ${maxLicenses} total student licenses across all batches combined, and all seats are currently filled. Batches share this total quota. Please contact PrepUnite to upgrade capacity.`,
       };
     }
 
@@ -2897,16 +2897,24 @@ export const tpoService = {
 
     const attemptsMap = new Map<string, StudentExamAttempt>();
 
+    const targetCollegeIds = [collegeId];
+    try {
+      const col = await this.getCollegeDetails(collegeId);
+      if (col?.id && !targetCollegeIds.includes(col.id)) targetCollegeIds.push(col.id);
+      if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
+    } catch {}
+
     // 1. Direct query from Supabase student_exam_attempts
     try {
       let query = supabase
         .from('student_exam_attempts')
         .select('*');
 
+      const cidClauses = targetCollegeIds.map(cid => `college_id.eq.${cid}`).join(',');
       if (examIds.length > 0) {
-        query = query.or(`college_id.eq.${collegeId},mock_exam_id.in.(${examIds.join(',')})`);
+        query = query.or(`${cidClauses},mock_exam_id.in.(${examIds.join(',')})`);
       } else {
-        query = query.eq('college_id', collegeId);
+        query = query.or(cidClauses);
       }
 
       const { data, error } = await query.order('total_score', { ascending: false });
@@ -3460,7 +3468,19 @@ export const tpoService = {
   // ==========================================
 
   async getMockExamsForCollege(collegeId: string): Promise<MockExam[]> {
-    const local = getLocalExams(collegeId);
+    if (!collegeId) return [];
+
+    const targetCollegeIds = [collegeId];
+    try {
+      const col = await this.getCollegeDetails(collegeId);
+      if (col?.id && !targetCollegeIds.includes(col.id)) targetCollegeIds.push(col.id);
+      if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
+    } catch {}
+
+    const local = [
+      ...getLocalExams(collegeId),
+      ...(targetCollegeIds.length > 1 ? getLocalExams(targetCollegeIds[1]) : [])
+    ];
     const map = new Map<string, MockExam>();
     local.forEach(e => map.set(e.id, e));
 
@@ -3468,7 +3488,7 @@ export const tpoService = {
       const { data: dbExams, error: examErr } = await supabase
         .from('mock_exams')
         .select('*')
-        .eq('college_id', collegeId)
+        .in('college_id', targetCollegeIds)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
@@ -6094,6 +6114,24 @@ export const tpoService = {
             department: localStu.department || 'CSE',
           };
         }
+      }
+
+      if ((!candidateStudent || candidateStudent.roll_number === '—') && cleanEmail) {
+        try {
+          const { data: dbStu } = await supabase
+            .from('college_students')
+            .select('name, email, roll_number, department')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+          if (dbStu) {
+            candidateStudent = {
+              name: dbStu.name || cleanEmail.split('@')[0],
+              email: dbStu.email || cleanEmail,
+              roll_number: dbStu.roll_number || '—',
+              department: dbStu.department || 'CSE',
+            };
+          }
+        } catch {}
       }
     }
 
