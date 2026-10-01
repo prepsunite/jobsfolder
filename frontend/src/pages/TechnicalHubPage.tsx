@@ -533,6 +533,15 @@ export default function TechnicalHubPage() {
     }));
   };
 
+  const handleToggleDsaSolve = (problemId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const isNowSolved = technicalService.toggleCampusDsaProblemSolved(problemId, user?.email);
+    if (!isMuted) {
+      if (isNowSolved) audioEffects.playSuccessChime();
+      else audioEffects.playErrorBuzz();
+    }
+    refetchDsa();
+  };
 
   const toggleSolution = (problemId: string) => {
     setExpandedSolutions(prev => ({
@@ -1552,22 +1561,48 @@ export default function TechnicalHubPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {/* Verified Status Badge (Only marked solved by passing tests in the Coding IDE) */}
-                          {isSolved ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 select-none pointer-events-none cursor-default shadow-2xs"
-                              title="Verified: All test cases passed in Coding IDE"
+                          {(activeTrack === 'CAMPUS_DSA' || problem.track === 'CAMPUS_DSA') ? (
+                            /* Campus DSA: User can toggle solved / unsolved directly */
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleDsaSolve(problem.id, e)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold transition-all cursor-pointer select-none shadow-2xs ${
+                                isSolved
+                                  ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                                  : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] hover:bg-[#FFA116]/10 hover:border-[#FFA116]/40 hover:text-[#FFA116] border border-[#E9ECEF] dark:border-[#282828] text-[#868E96] dark:text-[#666666]'
+                              }`}
+                              title={isSolved ? 'Click to mark as Unsolved' : 'Click to mark as Solved'}
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                              <span>Solved</span>
-                            </span>
+                              {isSolved ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                  <span>Solved</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Circle className="w-3 h-3 text-gray-400 group-hover:text-[#FFA116] transition-colors" />
+                                  <span>Mark Solved</span>
+                                </>
+                              )}
+                            </button>
                           ) : (
-                            <span
-                              className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-display font-medium bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#282828] text-[#868E96] dark:text-[#666666] select-none pointer-events-none cursor-default"
-                              title="Pass all test cases in the Coding IDE to mark solved"
-                            >
-                              <span>Unsolved</span>
-                            </span>
+                            /* Programming 150: Strictly verified by passing tests in the Coding IDE */
+                            isSolved ? (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 select-none pointer-events-none cursor-default shadow-2xs"
+                                title="Verified: All test cases passed in Coding IDE"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>Solved</span>
+                              </span>
+                            ) : (
+                              <span
+                                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-display font-medium bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#282828] text-[#868E96] dark:text-[#666666] select-none pointer-events-none cursor-default"
+                                title="Pass all test cases in the Coding IDE to mark solved"
+                              >
+                                <span>Unsolved</span>
+                              </span>
+                            )
                           )}
 
                           {isAdmin && (
@@ -1612,29 +1647,45 @@ export default function TechnicalHubPage() {
                         </h3>
 
                         <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto flex-wrap">
-                          {/* Solve in Dedicated Coding IDE (Opens in new tab) */}
-                          <a
-                            href={`/technical/solve/${problem.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32] hover:bg-[#E0351D] text-white transition-all shadow-xs cursor-pointer group"
-                            title="Open in Full-Screen Coding IDE (Opens in new tab)"
-                          >
-                            <Terminal className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                            <span>Solve</span>
-                            <ExternalLink className="w-3 h-3 opacity-80" />
-                          </a>
-
-                          {problem.leetcodeUrl && (
+                          {(activeTrack === 'CAMPUS_DSA' || problem.track === 'CAMPUS_DSA') ? (
+                            /* Campus DSA: Direct solve on LeetCode */
                             <a
-                              href={problem.leetcodeUrl}
+                              href={problem.leetcodeUrl || `https://leetcode.com/problemset/?search=${encodeURIComponent(problem.title)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FFA116]/10 hover:bg-[#FFA116] text-[#FFA116] hover:text-white border border-[#FFA116]/30 transition-all shadow-xs cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FFA116] hover:bg-[#E08A00] text-black hover:text-black font-semibold transition-all shadow-xs cursor-pointer group"
+                              title="Solve on LeetCode (Opens in new tab)"
                             >
-                              <span>LeetCode</span>
-                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>Solve on LeetCode</span>
+                              <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </a>
+                          ) : (
+                            /* Programming 150: Dedicated in-house Coding IDE */
+                            <>
+                              <a
+                                href={`/technical/solve/${problem.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32] hover:bg-[#E0351D] text-white transition-all shadow-xs cursor-pointer group"
+                                title="Open in Full-Screen Coding IDE (Opens in new tab)"
+                              >
+                                <Terminal className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                <span>Solve</span>
+                                <ExternalLink className="w-3 h-3 opacity-80" />
+                              </a>
+
+                              {problem.leetcodeUrl && (
+                                <a
+                                  href={problem.leetcodeUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FFA116]/10 hover:bg-[#FFA116] text-[#FFA116] hover:text-white border border-[#FFA116]/30 transition-all shadow-xs cursor-pointer"
+                                >
+                                  <span>LeetCode</span>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>

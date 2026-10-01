@@ -74,7 +74,15 @@ export default function CampusDsaRoadmapView() {
     setIsMuted(next);
   };
 
-
+  const handleToggleSolved = useCallback((problemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const isNowSolved = technicalService.toggleCampusDsaProblemSolved(problemId, user?.email);
+    if (!isMuted) {
+      if (isNowSolved) audioEffects.playSuccessChime();
+      else audioEffects.playErrorBuzz();
+    }
+    setSolvedIds(technicalService.getSolvedProblemIds());
+  }, [user?.email, isMuted]);
 
   const toggleStageCollapse = (stageId: string) => {
     setCollapsedStages(prev => ({ ...prev, [stageId]: !prev[stageId] }));
@@ -587,17 +595,19 @@ export default function CampusDsaRoadmapView() {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             {/* Left: Checkbox + Title + Pattern Info */}
                             <div className="flex items-start gap-3 min-w-0 flex-1">
-                              {/* Solved Status Indicator (Read-only verified via Coding IDE) */}
-                              <div
-                                className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center shrink-0 border select-none pointer-events-none cursor-default ${
+                              {/* Solved Toggle Checkbox for Campus DSA */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleSolved(p.id, e)}
+                                className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-all cursor-pointer select-none ${
                                   isSolved
                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs'
-                                    : 'border-[#E9ECEF] dark:border-[#282828] bg-neutral-100/60 dark:bg-neutral-800/40 text-transparent'
+                                    : 'border-[#CED4DA] dark:border-[#3A3A3A] bg-white dark:bg-[#1A1A1A] hover:border-[#FFA116]'
                                 }`}
-                                title={isSolved ? 'Verified Solved in Coding IDE' : 'Unsolved: Run & pass tests in Coding IDE'}
+                                title={isSolved ? 'Click to mark as Unsolved' : 'Click to mark as Solved'}
                               >
                                 {isSolved && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                              </div>
+                              </button>
 
                               <div className="min-w-0 flex-1 space-y-1">
                                 <div className="flex items-center gap-2 flex-wrap">
