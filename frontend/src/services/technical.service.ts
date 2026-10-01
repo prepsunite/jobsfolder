@@ -564,57 +564,58 @@ export const technicalService = {
   async getCampusDsaProblems(): Promise<ProgrammingProblem[]> {
     const solvedSet = this.getSolvedProblemIds();
 
+    const dbProblemMap = new Map<string, any>();
     try {
       const { data, error } = await supabase
         .from('technical_problems')
         .select(TECHNICAL_PROBLEM_COLUMNS)
         .eq('track', 'CAMPUS_DSA')
-        .eq('is_deleted', false)
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: true });
+        .eq('is_deleted', false);
 
-      if (error) throw error;
-      if (data && data.length > 0) {
-        return data.map(d => normalizeDbProblem(d, solvedSet));
+      if (!error && data && data.length > 0) {
+        data.forEach(d => dbProblemMap.set(d.id, d));
       }
     } catch (e) {
-      console.error('Failed to query Campus DSA problems from Supabase:', e);
+      console.warn('Notice querying Campus DSA problems from Supabase, using roadmap data:', e);
     }
 
-    return CAMPUS_DSA_ROADMAP_STAGES.flatMap(s => s.problems).map(p => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      track: 'CAMPUS_DSA' as const,
-      level: p.difficulty === 'EASY' ? 'BASIC' : p.difficulty,
-      category: 'ARRAYS',
-      categoryLabel: p.pattern,
-      topicId: p.stageId,
-      description: p.keyIntuition,
-      constraints: [`LC_URL:${p.leetcodeUrl}`, `LC_NUM:${p.leetcodeNumber}`],
-      testCases: [],
-      sampleInput: '',
-      sampleOutput: '',
-      explanation: p.keyIntuition,
-      solutions: {
-        java: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
-        python: `# LeetCode ${p.leetcodeNumber}: ${p.title}\n# Pattern: ${p.pattern}`,
-        cpp: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
-        c: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
-      },
-      timeComplexity: 'O(N)',
-      spaceComplexity: 'O(1)',
-      hints: [p.keyIntuition],
-      companyTags: p.companyTags,
-      is_hidden: false,
-      is_deleted: false,
-      sort_order: p.order,
-      solved: solvedSet.has(p.id),
-      leetcodeUrl: p.leetcodeUrl,
-      leetcodeNumber: p.leetcodeNumber,
-      pattern: p.pattern,
-      keyIntuition: p.keyIntuition,
-    }));
+    return CAMPUS_DSA_ROADMAP_STAGES.flatMap(s => s.problems).map((p, idx) => {
+      const dbRow = dbProblemMap.get(p.id);
+      return {
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        track: 'CAMPUS_DSA' as const,
+        level: p.difficulty === 'EASY' ? 'BASIC' : p.difficulty,
+        category: (dbRow?.category || 'POINTERS_ARRAYS') as ProblemCategory,
+        categoryLabel: p.pattern,
+        topicId: p.stageId,
+        description: p.keyIntuition,
+        constraints: [`LC_URL:${p.leetcodeUrl}`, `LC_NUM:${p.leetcodeNumber}`],
+        testCases: dbRow?.test_cases || [],
+        sampleInput: dbRow?.sample_input || '',
+        sampleOutput: dbRow?.sample_output || '',
+        explanation: p.keyIntuition,
+        solutions: dbRow?.solutions || {
+          java: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
+          python: `# LeetCode ${p.leetcodeNumber}: ${p.title}\n# Pattern: ${p.pattern}`,
+          cpp: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
+          c: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
+        },
+        timeComplexity: dbRow?.time_complexity || 'O(N)',
+        spaceComplexity: dbRow?.space_complexity || 'O(1)',
+        hints: [p.keyIntuition],
+        companyTags: p.companyTags,
+        is_hidden: false,
+        is_deleted: false,
+        sort_order: p.order || idx + 1,
+        solved: solvedSet.has(p.id),
+        leetcodeUrl: p.leetcodeUrl,
+        leetcodeNumber: p.leetcodeNumber,
+        pattern: p.pattern,
+        keyIntuition: p.keyIntuition,
+      };
+    });
   },
 
   async getProblemsByTopic(topicId: string): Promise<ProgrammingProblem[]> {
