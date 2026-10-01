@@ -392,6 +392,62 @@ export const technicalService = {
       return PROGRAMMING_150_STAGES;
     }
 
+    if (track === 'CAMPUS_DSA') {
+      try {
+        const { data, error } = await supabase
+          .from('technical_topics')
+          .select('*')
+          .eq('track', 'CAMPUS_DSA')
+          .order('sort_order', { ascending: true });
+
+        const dbMap = new Map<string, any>();
+        if (!error && Array.isArray(data)) {
+          for (const d of data) {
+            dbMap.set(d.id, d);
+          }
+        }
+
+        return CAMPUS_DSA_ROADMAP_STAGES.map((s, idx) => {
+          const d = dbMap.get(s.id);
+          return {
+            id: s.id,
+            title: s.title,
+            name: s.title,
+            cluster: s.cluster,
+            description: s.description,
+            iconName: s.iconName || d?.icon_name || 'Sliders',
+            icon_name: s.iconName || d?.icon_name || 'Sliders',
+            category: 'DSA' as ProblemCategory,
+            track: 'CAMPUS_DSA' as TechnicalTrack,
+            order: s.stageNumber || idx + 1,
+            sort_order: s.stageNumber || idx + 1,
+            is_hidden: d?.is_hidden || false,
+            tips: [`Core Pattern: ${s.corePattern}`, `Estimated Time: ${s.estimatedHours}`],
+            created_at: d?.created_at,
+            updated_at: d?.updated_at,
+          };
+        });
+      } catch (err) {
+        console.warn('Failed to query technical_topics for Campus DSA, using fallback stages:', err);
+      }
+
+      return CAMPUS_DSA_ROADMAP_STAGES.map((s, idx) => ({
+        id: s.id,
+        title: s.title,
+        name: s.title,
+        cluster: s.cluster,
+        description: s.description,
+        iconName: s.iconName || 'Sliders',
+        icon_name: s.iconName || 'Sliders',
+        category: 'DSA' as ProblemCategory,
+        track: 'CAMPUS_DSA' as TechnicalTrack,
+        order: s.stageNumber || idx + 1,
+        sort_order: s.stageNumber || idx + 1,
+        is_hidden: false,
+        tips: [`Core Pattern: ${s.corePattern}`, `Estimated Time: ${s.estimatedHours}`],
+      }));
+    }
+
     try {
       const { data, error } = await supabase
         .from('technical_topics')
@@ -422,24 +478,6 @@ export const technicalService = {
       console.warn('Failed to query technical_topics from Supabase, using fallback seed:', err);
     }
 
-    // Fallback seed
-    if (track === 'CAMPUS_DSA') {
-      return CAMPUS_DSA_ROADMAP_STAGES.map((s, idx) => ({
-        id: s.id,
-        title: s.title,
-        name: s.title,
-        cluster: s.cluster,
-        description: s.description,
-        iconName: s.iconName || 'Sliders',
-        icon_name: s.iconName || 'Sliders',
-        category: 'DSA',
-        track: 'CAMPUS_DSA' as TechnicalTrack,
-        order: s.stageNumber || idx + 1,
-        sort_order: s.stageNumber || idx + 1,
-        is_hidden: false,
-        tips: [`Core Pattern: ${s.corePattern}`, `Estimated Time: ${s.estimatedHours}`],
-      }));
-    }
     if (track === 'TECHNICAL_MCQS') return TECHNICAL_MCQ_TOPICS;
     return PROGRAMMING_150_STAGES;
   },
