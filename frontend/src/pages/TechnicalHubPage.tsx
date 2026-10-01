@@ -1482,7 +1482,7 @@ export default function TechnicalHubPage() {
                       className={`p-5 sm:p-6 rounded-xl border transition-all duration-300 space-y-4 shadow-xs relative ${
                         problem.is_hidden
                           ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
-                          : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/40 text-[#121417] dark:text-[#FFFFFF]'
+                          : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-neutral-400 dark:hover:border-neutral-600 text-[#121417] dark:text-[#FFFFFF]'
                       } ${selectedItemIds.has(problem.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                     >
                       <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#242424]">
@@ -1496,12 +1496,12 @@ export default function TechnicalHubPage() {
                             />
                           )}
 
-                          <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
+                          <span className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-[#1C1C1C] text-neutral-700 dark:text-neutral-300 font-display font-bold text-[10px] tracking-tight border border-neutral-200 dark:border-neutral-700/60">
                             Question #{globalIdx + 1}
                           </span>
 
                           {problem.leetcodeNumber && (
-                            <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-mono font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
+                            <span className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-[#1C1C1C] text-neutral-700 dark:text-neutral-300 font-mono font-bold text-[10px] tracking-tight border border-neutral-200 dark:border-neutral-700/60">
                               LC #{problem.leetcodeNumber}
                             </span>
                           )}
@@ -1617,7 +1617,7 @@ export default function TechnicalHubPage() {
                             href={problem.leetcodeUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32]/10 hover:bg-[#FD4A32] text-[#FD4A32] hover:text-white border border-[#FD4A32]/25 transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FFA116]/10 hover:bg-[#FFA116] text-[#FFA116] hover:text-white border border-[#FFA116]/30 transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
                           >
                             <span>Solve on LeetCode</span>
                             <ExternalLink className="w-3.5 h-3.5" />

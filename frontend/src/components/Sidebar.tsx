@@ -441,11 +441,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         title={link.name}
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all relative ${
                           isActive
-                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
-                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
-                        <Icon className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                        <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                         {'badge' in link && (link as any).badge && (
                           <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FD4A32]" />
                         )}
@@ -462,11 +462,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     title="Aptitude & Reasoning"
                     className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                       location.pathname.startsWith('/aptitude')
-                        ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E]'
-                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                        ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                        : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                     }`}
                   >
-                    <Calculator className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                    <Calculator className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${location.pathname.startsWith('/aptitude') ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                   </Link>
                 </div>
 
@@ -485,11 +485,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         title={`Technical: ${item.name}`}
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                           isItemActive
-                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E]'
-                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
-                        <ItemIcon className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                        <ItemIcon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isItemActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                       </Link>
                     );
                   })}
@@ -510,11 +510,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         title={`Interview: ${item.name}`}
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                           isItemActive
-                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white border border-[#121417] dark:border-[#2E2E2E]'
-                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
-                        <ItemIcon className="w-4 h-4 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                        <ItemIcon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isItemActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                       </Link>
                     );
                   })}
@@ -628,12 +628,12 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         onClick={onClose}
                         className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                           isActive
-                            ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E] shadow-2xs'
-                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30 shadow-xs'
+                            : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Icon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                          <Icon className={`w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                           <span>{link.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -676,12 +676,12 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             onClick={onClose}
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isCatActive
-                                ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                                ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30'
+                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <CatIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                              <CatIcon className={`w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110 ${isCatActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                               <span className="truncate">{cat.name}</span>
                             </div>
                           </Link>
@@ -720,12 +720,12 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             onClick={onClose}
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isItemActive
-                                ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                                ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30'
+                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110 ${isItemActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                               <span className="truncate">{item.name}</span>
                             </div>
                             {item.badge && (
@@ -769,12 +769,12 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             onClick={onClose}
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isItemActive
-                                ? 'bg-[#121417] dark:bg-[#1C1C1C] text-white dark:text-white border border-[#121417] dark:border-[#2E2E2E]'
-                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                                ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30'
+                                : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <ItemIcon className="w-3.5 h-3.5 shrink-0 text-[#FD4A32] transition-transform group-hover:scale-110" />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110 ${isItemActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
                               <span className="truncate">{item.name}</span>
                             </div>
                             {item.badge && (

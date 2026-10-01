@@ -1097,7 +1097,7 @@ export default function TopicQuestionsPage() {
                     )}
 
                     {/* Question Number Badge (Permanent ID) */}
-                    <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] font-display font-bold text-[10px] tracking-tight border border-[#FD4A32]/25">
+                    <span className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-[#1C1C1C] text-neutral-700 dark:text-neutral-300 font-display font-bold text-[10px] tracking-tight border border-neutral-200 dark:border-neutral-700/60">
                       Question #{q.permanentNumber}
                     </span>
 
