@@ -1561,28 +1561,24 @@ export default function TechnicalHubPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSolve(problem.id)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold transition-all border cursor-pointer ${
-                              isSolved
-                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-[#F8F9FA] dark:bg-[#202020] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] hover:text-emerald-600 hover:border-emerald-500/30'
-                            }`}
-                            title={isSolved ? 'Click to mark as unsolved' : 'Click to mark as solved'}
-                          >
-                            {isSolved ? (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                <span>Solved</span>
-                              </>
-                            ) : (
-                              <>
-                                <Circle className="w-3.5 h-3.5" />
-                                <span>Mark Solved</span>
-                              </>
-                            )}
-                          </button>
+                          {/* Verified Status Badge (Only marked solved by passing tests in the IDE) */}
+                          {isSolved ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 select-none shadow-2xs"
+                              title="Verified Solved in Coding IDE"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              <span>Solved</span>
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-display font-bold bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#282828] text-[#868E96] dark:text-[#666666] select-none"
+                              title="Solve this problem in the Coding IDE"
+                            >
+                              <Circle className="w-3 h-3 text-gray-400" />
+                              <span>Unsolved</span>
+                            </span>
+                          )}
 
                           {isAdmin && (
                             <div className="flex items-center gap-1 ml-2 border-l border-gray-200 dark:border-gray-800 pl-2">

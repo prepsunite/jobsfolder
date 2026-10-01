@@ -287,21 +287,6 @@ export default function TechnicalCodingWorkspacePage() {
     }
   };
 
-  // Manual Toggle Solved button
-  const handleToggleSolvedManual = () => {
-    if (!problem) return;
-    const nowSolved = technicalService.toggleProblemSolved(problem.id, user?.email, problem.track);
-    setIsSolved(nowSolved);
-    if (nowSolved) {
-      audioEffects.playSuccessChime();
-      toast.success('Marked as solved!');
-    } else {
-      toast.info('Marked as unsolved');
-    }
-    queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
-    queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
-  };
-
   // Run Test Cases against Sandboxed Judge Engine
   const handleRunTests = async (isSubmit: boolean = false) => {
     if (isRunningTests || isSubmitting || !problem) return;
@@ -479,16 +464,14 @@ export default function TechnicalCodingWorkspacePage() {
               {problem.level}
             </span>
 
-            {/* Solved Status Pill */}
-            <button
-              type="button"
-              onClick={handleToggleSolvedManual}
-              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all cursor-pointer shrink-0 ${
+            {/* Solved Status Badge (Auto-verified when submitting all tests) */}
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 select-none ${
                 isSolved
                   ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800'
-                  : 'bg-[#21262d] text-[#8b949e] border-[#30363d] hover:text-white'
+                  : 'bg-[#21262d] text-[#8b949e] border-[#30363d]'
               }`}
-              title="Click to toggle solved status"
+              title={isSolved ? 'Solution verified & all test cases passed' : 'Submit your code and pass all test cases to mark as solved'}
             >
               {isSolved ? (
                 <>
@@ -497,11 +480,11 @@ export default function TechnicalCodingWorkspacePage() {
                 </>
               ) : (
                 <>
-                  <Circle className="w-3 h-3" />
+                  <Circle className="w-3 h-3 text-gray-400" />
                   <span className="hidden md:inline">Unsolved</span>
                 </>
               )}
-            </button>
+            </span>
           </div>
         </div>
 
