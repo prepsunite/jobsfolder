@@ -12,16 +12,19 @@ export default async function handler(req, res) {
   }
 
   const rawUsername = req.method === 'POST' ? req.body?.username : req.query?.username;
-  const username = (rawUsername || '').trim();
+  // Robust username extraction from raw input (supports plain handles, @handles, or full leetcode profile URLs)
+  let cleanUsername = (rawUsername || '').trim();
+  cleanUsername = cleanUsername.replace(/^(https?:\/\/)?(www\.)?leetcode\.com\/(u\/)?/i, '');
+  cleanUsername = cleanUsername.replace(/[/?#].*$/, '');
+  cleanUsername = cleanUsername.replace(/^@/, '').trim();
 
-  if (!username) {
+  if (!cleanUsername) {
     return res.status(400).json({ success: false, error: 'LeetCode username is required.' });
   }
 
-  // Sanitize username (alphanumeric, dashes, underscores)
-  const cleanUsername = username.replace(/^@/, '').trim();
+  // Sanitize username (alphanumeric, dashes, underscores up to 60 chars)
   if (!/^[a-zA-Z0-9_\-]{1,60}$/.test(cleanUsername)) {
-    return res.status(400).json({ success: false, error: 'Invalid LeetCode username format.' });
+    return res.status(400).json({ success: false, error: 'Invalid LeetCode username format. Please provide a valid username or profile link.' });
   }
 
   try {
@@ -41,10 +44,17 @@ export default async function handler(req, res) {
             }
           }
         }
-        recentAcSubmissionList(username: $username, limit: 100) {
+        recentAcSubmissionList(username: $username, limit: 50) {
           id
           title
           titleSlug
+          timestamp
+        }
+        recentSubmissionList(username: $username) {
+          id
+          title
+          titleSlug
+          statusDisplay
           timestamp
         }
       }
@@ -61,6 +71,7 @@ export default async function handler(req, res) {
         query,
         variables: { username: cleanUsername },
       }),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!leetCodeResponse.ok) {
@@ -72,11 +83,11 @@ export default async function handler(req, res) {
     if (!data.data?.matchedUser) {
       return res.status(404).json({
         success: false,
-        error: `LeetCode user '@${cleanUsername}' not found. Please double-check your username.`,
+        error: `LeetCode user '@${cleanUsername}' not found. Please double-check your username or profile URL.`,
       });
     }
 
-    const { matchedUser, recentAcSubmissionList = [] } = data.data;
+    const { matchedUser, recentAcSubmissionList = [], recentSubmissionList = [] } = data.data;
     const acStats = matchedUser.submitStatsGlobal?.acSubmissionNum || [];
 
     const totalSolved = acStats.find(s => s.difficulty === 'All')?.count || 0;
@@ -91,20 +102,31 @@ export default async function handler(req, res) {
       recentAcSubmissionList.map(s => s.title.toLowerCase().trim())
     );
 
-    // Always attempt secondary lookup from public mirrors to maximize accepted submissions collection
+    // Also include accepted submissions from recentSubmissionList
+    if (Array.isArray(recentSubmissionList)) {
+      recentSubmissionList.forEach(s => {
+        if (s.statusDisplay === 'Accepted' || s.statusDisplay === '10' || s.status === 'Accepted') {
+          if (s.titleSlug) slugsSet.add(s.titleSlug.toLowerCase().trim());
+          if (s.title) titlesSet.add(s.title.toLowerCase().trim());
+        }
+      });
+    }
+
+    // Attempt secondary lookup from public mirrors with 3.5s timeout (never blocks if sleeping)
     try {
+      const mirrorTimeout = AbortSignal.timeout(3500);
       const [acRes, allSubRes, userProfRes] = await Promise.allSettled([
         fetch(
           `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/acSubmission?limit=100`,
-          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' } }
+          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' }, signal: mirrorTimeout }
         ),
         fetch(
           `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/submission`,
-          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' } }
+          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' }, signal: mirrorTimeout }
         ),
         fetch(
           `https://alfa-leetcode-api.onrender.com/userProfile/${encodeURIComponent(cleanUsername)}`,
-          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' } }
+          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' }, signal: mirrorTimeout }
         ),
       ]);
 

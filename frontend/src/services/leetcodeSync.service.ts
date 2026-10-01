@@ -9,6 +9,15 @@ const LEGACY_SOLVED_KEY = 'prepunite_solved_problems';
 
 const cleanStr = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+const extractCleanUsername = (raw: string): string => {
+  if (!raw) return '';
+  let u = raw.trim();
+  u = u.replace(/^(https?:\/\/)?(www\.)?leetcode\.com\/(u\/)?/i, '');
+  u = u.replace(/[/?#].*$/, '');
+  u = u.replace(/^@/, '').trim();
+  return u;
+};
+
 export interface LeetCodeStats {
   totalSolved: number;
   easySolved: number;
@@ -37,6 +46,8 @@ export interface LeetCodeSyncResult {
 }
 
 export const leetcodeSyncService = {
+  extractCleanUsername,
+
   // ─── Local Profile Storage ────────────────────────────────────────────────
   getStoredProfile(): LeetCodeProfile | null {
     if (typeof window === 'undefined') return null;
@@ -90,10 +101,10 @@ export const leetcodeSyncService = {
   },
 
   // ─── Fetch Raw Data from LeetCode (API with fallback) ───────────────────────
-  async fetchProfileData(username: string): Promise<{ success: boolean; data?: any; error?: string }> {
-    const cleanUsername = username.replace(/^@/, '').trim();
+  async fetchProfileData(rawInput: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    const cleanUsername = extractCleanUsername(rawInput);
     if (!cleanUsername) {
-      return { success: false, error: 'Please enter a valid LeetCode username.' };
+      return { success: false, error: 'Please enter a valid LeetCode username or profile link.' };
     }
 
     // Attempt 1: Call Vercel serverless function /api/leetcode-sync
@@ -279,11 +290,20 @@ export const leetcodeSyncService = {
       syncedAt,
     } = fetchRes.data;
 
-    // Normalization sets for O(1) matching
-    const exactSlugs = new Set<string>(solvedSlugs.map((s: string) => s.toLowerCase().trim()));
-    const cleanedSlugs = new Set<string>(solvedSlugs.map((s: string) => cleanStr(s)));
-    const exactTitles = new Set<string>(solvedTitles.map((t: string) => t.toLowerCase().trim()));
-    const cleanedTitles = new Set<string>(solvedTitles.map((t: string) => cleanStr(t)));
+    // Accumulate with previously stored profile if same username
+    const prevProfile = this.getStoredProfile();
+    const isSameUser = prevProfile && prevProfile.username.toLowerCase() === confirmedUsername.toLowerCase();
+    const prevSlugs = isSameUser && Array.isArray(prevProfile.solvedSlugs) ? prevProfile.solvedSlugs : [];
+    const prevTitles = isSameUser && Array.isArray(prevProfile.solvedTitles) ? prevProfile.solvedTitles : [];
+
+    const cumulativeSlugs = Array.from(new Set([...prevSlugs, ...solvedSlugs]));
+    const cumulativeTitles = Array.from(new Set([...prevTitles, ...solvedTitles]));
+
+    // Normalization sets for O(1) matching using cumulative solved data
+    const exactSlugs = new Set<string>(cumulativeSlugs.map((s: string) => s.toLowerCase().trim()));
+    const cleanedSlugs = new Set<string>(cumulativeSlugs.map((s: string) => cleanStr(s)));
+    const exactTitles = new Set<string>(cumulativeTitles.map((t: string) => t.toLowerCase().trim()));
+    const cleanedTitles = new Set<string>(cumulativeTitles.map((t: string) => cleanStr(t)));
 
     // Get unified solved set
     const currentSolvedIds = this.getSolvedSet();
@@ -336,8 +356,8 @@ export const leetcodeSyncService = {
       ranking,
       realName,
       stats,
-      solvedSlugs,
-      solvedTitles,
+      solvedSlugs: cumulativeSlugs,
+      solvedTitles: cumulativeTitles,
       syncedAt: syncedAt || new Date().toISOString(),
       verifiedCampusDsaCount: totalMatchedCount,
     };

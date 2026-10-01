@@ -46,9 +46,9 @@ export default function LeetCodeSyncWidget({
   }, [user?.email]);
 
   const handleSync = async (targetUsername?: string) => {
-    const handle = (targetUsername || usernameInput).replace(/^@/, '').trim();
+    const handle = leetcodeSyncService.extractCleanUsername(targetUsername || usernameInput);
     if (!handle) {
-      setErrorMsg('Please enter your LeetCode username.');
+      setErrorMsg('Please enter your LeetCode username or profile URL.');
       return;
     }
 
@@ -60,6 +60,7 @@ export default function LeetCodeSyncWidget({
 
       if (result.success && result.profile) {
         setProfile(result.profile);
+        setUsernameInput(result.profile.username);
         setIsEditing(false);
         audioEffects.playSuccessChime();
 
@@ -272,7 +273,7 @@ export default function LeetCodeSyncWidget({
                     setUsernameInput(e.target.value);
                     if (errorMsg) setErrorMsg(null);
                   }}
-                  placeholder="Enter LeetCode username (e.g. 'tourist', 'lee215')"
+                  placeholder="Enter username or LeetCode profile URL (e.g. 'tourist', 'leetcode.com/u/lee215')"
                   disabled={isSyncing}
                   className="w-full pl-8 pr-4 py-2.5 text-xs sm:text-sm font-sans rounded-xl border border-[#E9ECEF] dark:border-[#282828] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FFA116]/50 focus:border-[#FFA116] transition-all"
                 />
