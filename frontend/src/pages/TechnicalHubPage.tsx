@@ -58,6 +58,7 @@ import audioEffects from '@/utils/audioEffects';
 import TechnicalBulkImportModal from '@/components/technical/TechnicalBulkImportModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import CampusDsaRoadmapView from '@/components/technical/CampusDsaRoadmapView';
+import LeetCodeSyncWidget from '@/components/technical/LeetCodeSyncWidget';
 import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLevel, TechnicalTrack, ProgrammingTopic } from '@/types/technical';
 import { useToast } from '@/contexts/ToastContext';
 import AdSpaceSlot from '@/components/AdSpaceSlot';
@@ -979,6 +980,11 @@ export default function TechnicalHubPage() {
               </div>
             </div>
           </div>
+
+          {/* ⚡ LeetCode Auto-Sync Hub for Campus DSA */}
+          {activeTrack === 'CAMPUS_DSA' && (
+            <LeetCodeSyncWidget onSyncSuccess={refetchDsa} />
+          )}
 
           {/* 3. Unified Filter Bar & Pagination Toolbar */}
           <div className="p-2.5 sm:p-3 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs overflow-x-auto no-scrollbar">
@@ -2091,6 +2097,11 @@ export default function TechnicalHubPage() {
               </div>
             </div>
           </div>
+
+          {/* ⚡ LeetCode Auto-Sync Hub for Campus DSA */}
+          {activeTrack === 'CAMPUS_DSA' && (
+            <LeetCodeSyncWidget onSyncSuccess={refetchDsa} />
+          )}
 
           {/* 🏷️ 2. STAGE CLUSTER FILTER PILLS + SEARCH BAR + ADMIN ACTIONS */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
