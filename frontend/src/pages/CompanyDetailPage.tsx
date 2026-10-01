@@ -15,6 +15,7 @@ import { useToast } from '@/contexts/ToastContext';
 import PaywallModal from '@/components/PaywallModal';
 import DocumentExplorer from '@/components/DocumentExplorer';
 import ShareModal from '@/components/ShareModal';
+import { useSeo } from '@/hooks/useSeo';
 import {
   Building2,
   Globe,
@@ -122,6 +123,12 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       };
 
   const companyName = currentCompanyStoreItem.name;
+
+  useSeo({
+    title: `${companyName} Placement Papers, Drive Syllabus & Solutions 2026`,
+    description: `Master ${companyName} campus recruitment with real memory-based OA questions, interview transcripts, and round patterns on PrepUnite.`,
+    image: currentCompanyStoreItem.logoUrl || '/og-image.png',
+  });
 
   const [selectedExamId, setSelectedExamId] = useState<string>('');
 
@@ -1224,6 +1231,9 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         title={`${companyName} Placement Papers, Drive Syllabus & Solutions 2026`}
+        description={`Master ${companyName} campus recruitment with real memory-based OA questions, interview transcripts, and round patterns on PrepUnite.`}
+        companyLogoUrl={currentCompanyStoreItem.logoUrl}
+        companyName={companyName}
       />
     </div>
   );

@@ -7,6 +7,8 @@ interface ShareModalProps {
   title: string;
   url?: string;
   description?: string;
+  companyLogoUrl?: string;
+  companyName?: string;
 }
 
 export const ShareModal: React.FC<ShareModalProps> = ({
@@ -15,13 +17,15 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   title,
   url,
   description = 'Solved placement drive papers, memory questions, and interview transcripts on PrepUnite.',
+  companyLogoUrl,
+  companyName,
 }) => {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
-  const shareMessage = `Check out this on PrepUnite:\n${title}\n${shareUrl}`;
+  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://prepunite.com');
+  const shareMessage = `🎯 *${title}*\n\nPractice genuine memory-based placement papers, online assessment patterns, and interview transcripts:\n${shareUrl}`;
 
   const handleCopy = async () => {
     try {
@@ -49,6 +53,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const handleTelegram = () => {
     const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`;
     window.open(tgUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleLinkedIn = () => {
+    const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+    window.open(liUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleNativeShare = async () => {
@@ -97,22 +106,48 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           </button>
         </div>
 
-        {/* Content Preview */}
-        <div className="p-3 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#242424] space-y-1">
-          <span className="text-[10px] font-display font-bold uppercase tracking-wider text-[#FD4A32]">
-            Target Resource
-          </span>
-          <p className="text-xs font-semibold text-[#121417] dark:text-white line-clamp-2">
-            {title}
-          </p>
+        {/* Content Preview (Realistic Social Card) */}
+        <div className="rounded-xl overflow-hidden border border-[#E9ECEF] dark:border-[#26282E] bg-[#F8F9FA] dark:bg-[#16171B] shadow-2xs">
+          <div className="p-3.5 flex items-start gap-3">
+            {companyLogoUrl ? (
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#202226] border border-gray-200 dark:border-[#2e3138] p-1.5 flex items-center justify-center shrink-0 overflow-hidden">
+                <img
+                  src={companyLogoUrl}
+                  alt={companyName || 'Company'}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0">
+                <Share2 className="w-6 h-6" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FD4A32]/15 text-[#FD4A32]">
+                  {companyName || 'PrepUnite Card'}
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono">prepunite.com</span>
+              </div>
+              <h4 className="font-bold text-xs text-gray-900 dark:text-white mt-1 leading-snug line-clamp-2">
+                {title}
+              </h4>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
+                {description}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Quick Social Share Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2.5">
           {/* WhatsApp */}
           <button
             onClick={handleWhatsApp}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-display font-bold transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-display font-bold transition-all cursor-pointer"
           >
             <MessageCircle className="w-4 h-4 fill-emerald-500 text-emerald-500" />
             <span>WhatsApp</span>
@@ -121,10 +156,19 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           {/* Telegram */}
           <button
             onClick={handleTelegram}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-display font-bold transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-display font-bold transition-all cursor-pointer"
           >
             <Send className="w-4 h-4 text-sky-500" />
             <span>Telegram</span>
+          </button>
+
+          {/* LinkedIn */}
+          <button
+            onClick={handleLinkedIn}
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-xs font-display font-bold transition-all cursor-pointer"
+          >
+            <span className="w-4 h-4 font-black text-blue-500 text-xs flex items-center justify-center">in</span>
+            <span>LinkedIn</span>
           </button>
         </div>
 
