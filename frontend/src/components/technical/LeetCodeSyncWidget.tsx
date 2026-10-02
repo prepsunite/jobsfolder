@@ -11,6 +11,9 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
+  History,
+  ArrowRight,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -341,30 +344,88 @@ export default function LeetCodeSyncWidget({
               </div>
             </div>
 
-            {/* Contextual notice if user has LC solves but public API recent submission window returned 0 */}
+            {/* ── Past Solves Notice ── shown when LC has solves but recent activity window is empty */}
             {profile.stats.totalSolved > 0 && profile.verifiedCampusDsaCount === 0 && (
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200 animate-fadeIn">
-                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <div className="font-bold text-xs text-[#121417] dark:text-white flex items-center gap-1.5">
-                    <span>LeetCode Recent Activity Window Notice</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-700 dark:text-amber-300">
-                      {profile.stats.totalSolved} Solved on LeetCode
+              <div className="rounded-2xl border border-amber-400/30 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 overflow-hidden animate-fadeIn">
+                {/* Top accent stripe */}
+                <div className="h-0.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 opacity-80" />
+
+                <div className="p-4 sm:p-5 space-y-4">
+                  {/* Header row */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center shrink-0">
+                      <History className="w-4.5 h-4.5 text-amber-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-display font-extrabold text-sm text-[#121417] dark:text-white">
+                          Your past LeetCode solves aren't visible yet
+                        </h4>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[10px] font-display font-bold text-amber-700 dark:text-amber-300">
+                          <AlertCircle className="w-3 h-3" />
+                          API Limitation
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                        LeetCode's public API only returns recent submissions. Your older solves can't be auto-fetched.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Stat Pills */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-1">
+                      Detected on LeetCode:
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FFA116]" />
+                      <span className="text-[11px] font-display font-bold text-[#121417] dark:text-white">{profile.stats.totalSolved}</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Total</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-[11px] font-display font-bold text-emerald-600 dark:text-emerald-400">{profile.stats.easySolved}</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Easy</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      <span className="text-[11px] font-display font-bold text-amber-600 dark:text-amber-400">{profile.stats.mediumSolved}</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Med</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      <span className="text-[11px] font-display font-bold text-rose-600 dark:text-rose-400">{profile.stats.hardSolved}</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Hard</span>
                     </span>
                   </div>
-                  <p className="text-[11px] leading-relaxed text-gray-600 dark:text-gray-300">
-                    You have <strong className="text-[#FFA116]">{profile.stats.totalSolved} solved problems</strong> on LeetCode ({profile.stats.easySolved} Easy, {profile.stats.mediumSolved} Med, {profile.stats.hardSolved} Hard)! 
-                    LeetCode's public API only exposes recent submissions (which is currently empty for @{profile.username}).
-                    Any new problems you solve on LeetCode will automatically auto-sync here. To quickly verify your earlier solves, click{' '}
+
+                  {/* CTA Row */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 border-t border-amber-400/15">
                     <button
                       type="button"
                       onClick={() => setShowImportBox(true)}
-                      className="font-bold text-[#FFA116] hover:underline cursor-pointer"
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#FFA116] hover:bg-[#E08A00] text-black font-display font-bold text-xs transition-all shadow-xs cursor-pointer"
                     >
-                      Import Solves
-                    </button>{' '}
-                    to paste problem numbers or URLs, or 1-click <strong>"Mark Solved"</strong> directly on the cards below!
-                  </p>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Paste Problem Numbers</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+
+                    <span className="text-[10px] text-gray-400 font-mono text-center sm:text-left shrink-0">or</span>
+
+                    <div className="flex-1 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] text-[11px] text-gray-500 dark:text-gray-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span>Click <strong className="text-[#121417] dark:text-white">"Mark Solved"</strong> on any question card below</span>
+                    </div>
+                  </div>
+
+                  {/* Auto-sync footnote */}
+                  <div className="flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-gray-500">
+                    <Zap className="w-3 h-3 text-emerald-500 shrink-0" />
+                    <span>
+                      New solves on LeetCode will <strong className="text-gray-500 dark:text-gray-400">auto-sync instantly</strong> when you return to this tab — no action needed.
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
