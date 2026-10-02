@@ -44,6 +44,9 @@ export default function LeetCodeSyncWidget({
   const [importInput, setImportInput] = useState('');
   const [importResult, setImportResult] = useState<{ count: number; error?: string } | null>(null);
 
+  // Track timestamp of last sync for smart tab-return auto-sync throttling
+  const lastSyncTimestampRef = React.useRef<number>(Date.now());
+
   // Load stored profile and reconcile with solved set on mount
   useEffect(() => {
     leetcodeSyncService.reconcileStoredProfile(user?.email);
@@ -54,15 +57,37 @@ export default function LeetCodeSyncWidget({
     }
   }, [user?.email]);
 
-  const handleSync = async (targetUsername?: string) => {
+  // ⚡ Smart Auto-Sync: When user solves a question on LeetCode and switches back to Prepunite
+  useEffect(() => {
+    const handleReturnToTab = () => {
+      if (document.visibilityState === 'visible' && profile && !isSyncing && !isEditing) {
+        const now = Date.now();
+        // Throttle auto-sync to at most once every 45 seconds to avoid spamming LeetCode
+        if (now - lastSyncTimestampRef.current >= 45000) {
+          lastSyncTimestampRef.current = now;
+          handleSync(profile.username, { isSilent: true });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleReturnToTab);
+    window.addEventListener('focus', handleReturnToTab);
+    return () => {
+      document.removeEventListener('visibilitychange', handleReturnToTab);
+      window.removeEventListener('focus', handleReturnToTab);
+    };
+  }, [profile, isSyncing, isEditing]);
+
+  const handleSync = async (targetUsername?: string, options?: { isSilent?: boolean }) => {
     const handle = leetcodeSyncService.extractCleanUsername(targetUsername || usernameInput);
     if (!handle) {
-      setErrorMsg('Please enter your LeetCode username or profile URL.');
+      if (!options?.isSilent) setErrorMsg('Please enter your LeetCode username or profile URL.');
       return;
     }
 
-    setIsSyncing(true);
+    if (!options?.isSilent) setIsSyncing(true);
     setErrorMsg(null);
+    lastSyncTimestampRef.current = Date.now();
 
     try {
       const result = await leetcodeSyncService.syncCampusDsa(handle, user?.email);
@@ -71,38 +96,45 @@ export default function LeetCodeSyncWidget({
         setProfile(result.profile);
         setUsernameInput(result.profile.username);
         setIsEditing(false);
-        audioEffects.playSuccessChime();
 
-        if (result.isAccountSwitched) {
-          toast.info(
-            `Switched to @${result.profile.username}. Roadmap refreshed with ${result.matchedCount} verified problems for this account.`
-          );
-        } else if (result.newlyMatchedCount && result.newlyMatchedCount > 0) {
+        if (result.newlyMatchedCount && result.newlyMatchedCount > 0) {
+          audioEffects.playSuccessChime();
           toast.success(
-            `⚡ Verified ${result.newlyMatchedCount} new solved problems from LeetCode! Total Campus DSA verified: ${result.matchedCount}`
+            `⚡ Auto-verified ${result.newlyMatchedCount} newly solved question from LeetCode! Total Campus DSA verified: ${result.matchedCount}`
           );
-        } else {
-          toast.success(
-            `LeetCode profile synced! ${result.matchedCount} Campus DSA problems matched.`
-          );
+          if (onSyncSuccess) {
+            onSyncSuccess();
+          }
+        } else if (!options?.isSilent) {
+          audioEffects.playSuccessChime();
+          if (result.isAccountSwitched) {
+            toast.info(
+              `Switched to @${result.profile.username}. Roadmap refreshed with ${result.matchedCount} verified problems for this account.`
+            );
+          } else {
+            toast.success(
+              `LeetCode profile synced! ${result.matchedCount} Campus DSA problems matched.`
+            );
+          }
+          if (onSyncSuccess) {
+            onSyncSuccess();
+          }
         }
-
-        if (onSyncSuccess) {
-          onSyncSuccess();
-        }
-      } else {
+      } else if (!options?.isSilent) {
         audioEffects.playErrorBuzz();
         const err = result.error || 'Failed to sync LeetCode profile.';
         setErrorMsg(err);
         toast.error(err);
       }
     } catch (err: any) {
-      audioEffects.playErrorBuzz();
-      const msg = err.message || 'An unexpected error occurred while syncing with LeetCode.';
-      setErrorMsg(msg);
-      toast.error(msg);
+      if (!options?.isSilent) {
+        audioEffects.playErrorBuzz();
+        const msg = err.message || 'An unexpected error occurred while syncing with LeetCode.';
+        setErrorMsg(msg);
+        toast.error(msg);
+      }
     } finally {
-      setIsSyncing(false);
+      if (!options?.isSilent) setIsSyncing(false);
     }
   };
 
