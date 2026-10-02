@@ -136,25 +136,38 @@ export const leetcodeSyncService = {
   },
 
   // ─── Clean Unlink (Disconnect) ───────────────────────────────────────────
+  // Removes ALL Campus DSA progress — both LC-verified and manually marked — from
+  // localStorage and Supabase. Source of truth for "solved" is the LeetCode problem
+  // number (embedded in IDs like "lc-1", "lc-26", etc.), which means only LC-synced
+  // or explicitly user-confirmed problems should be solved. Delink wipes the slate clean.
   unlinkAccount(userEmail?: string): void {
-    const verifiedIds = this.getVerifiedProblemIds();
+    // Collect ALL campus DSA problem IDs from the static roadmap
+    const allCampusDsaIds = new Set(ALL_CAMPUS_DSA_PROBLEMS.map(p => p.id));
+
+    // Remove all of them from the unified solved set
     const currentSolved = this.getSolvedSet();
-
-    if (verifiedIds.size > 0) {
-      verifiedIds.forEach(id => currentSolved.delete(id));
-      this.saveSolvedSet(currentSolved);
-
-      if (userEmail && userEmail !== GUEST_EMAIL) {
-        supabase
-          .from('user_technical_progress')
-          .delete()
-          .eq('user_email', userEmail)
-          .in('problem_id', Array.from(verifiedIds))
-          .eq('track', 'CAMPUS_DSA')
-          .then(({ error }) => {
-            if (error) console.warn('[leetcodeSyncService] Unlink Supabase notice:', error.message);
-          });
+    let removed = 0;
+    allCampusDsaIds.forEach(id => {
+      if (currentSolved.has(id)) {
+        currentSolved.delete(id);
+        removed++;
       }
+    });
+
+    if (removed > 0) {
+      this.saveSolvedSet(currentSolved);
+    }
+
+    // Also nuke all CAMPUS_DSA progress rows in Supabase for this user
+    if (userEmail && userEmail !== GUEST_EMAIL) {
+      supabase
+        .from('user_technical_progress')
+        .delete()
+        .eq('user_email', userEmail)
+        .eq('track', 'CAMPUS_DSA')
+        .then(({ error }) => {
+          if (error) console.warn('[leetcodeSyncService] Unlink Supabase notice:', error.message);
+        });
     }
 
     this.clearStoredProfile();
@@ -163,6 +176,7 @@ export const leetcodeSyncService = {
       window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
     }
   },
+
 
   // ─── Fetch Raw Data from LeetCode (API with Multi-Mirror Fallback) ─────────
   async fetchProfileData(rawInput: string): Promise<{ success: boolean; data?: any; error?: string }> {
@@ -516,6 +530,10 @@ export const leetcodeSyncService = {
   },
 
   // ─── Sync and Match LeetCode Solved Problems with Campus DSA ─────────────────
+  // Source of truth: LeetCode problem NUMBER (e.g. #206 for Reverse Linked List).
+  // Matching priority: (1) LeetCode number exact match → (2) slug → (3) title.
+  // This ensures a problem is only marked solved if the actual LeetCode question
+  // was solved, not just because of a name coincidence.
   async syncCampusDsa(username: string, userEmail?: string): Promise<LeetCodeSyncResult> {
     const fetchRes = await this.fetchProfileData(username);
     if (!fetchRes.success || !fetchRes.data) {
@@ -530,25 +548,26 @@ export const leetcodeSyncService = {
       stats,
       solvedSlugs = [],
       solvedTitles = [],
+      solvedNumbers = [], // NEW: Array<number> of LeetCode question numbers confirmed solved
       syncedAt,
     } = fetchRes.data;
 
     const prevProfile = this.getStoredProfile();
     const isNewAccount = !prevProfile || prevProfile.username.toLowerCase() !== confirmedUsername.toLowerCase();
 
-    // 1. Account Switch Isolation: If switching to a NEW account, prune previous account's verified solves
+    // 1. Account Switch Isolation: If switching to a NEW account, remove ALL previous
+    //    campus DSA solved state (both LC-verified and manually marked).
     const currentSolvedIds = this.getSolvedSet();
-    const previouslyVerifiedIds = this.getVerifiedProblemIds();
 
-    if (isNewAccount && previouslyVerifiedIds.size > 0) {
-      previouslyVerifiedIds.forEach(id => currentSolvedIds.delete(id));
+    if (isNewAccount) {
+      const allCampusDsaIds = new Set(ALL_CAMPUS_DSA_PROBLEMS.map(p => p.id));
+      allCampusDsaIds.forEach(id => currentSolvedIds.delete(id));
 
       if (userEmail && userEmail !== GUEST_EMAIL) {
         supabase
           .from('user_technical_progress')
           .delete()
           .eq('user_email', userEmail)
-          .in('problem_id', Array.from(previouslyVerifiedIds))
           .eq('track', 'CAMPUS_DSA')
           .then(({ error }) => {
             if (error) console.warn('[leetcodeSyncService] Old profile cleanup notice:', error.message);
@@ -556,20 +575,25 @@ export const leetcodeSyncService = {
       }
     }
 
-    // 2. Cumulative slugs only for the SAME user
+    // 2. Accumulate all evidence from previous syncs (same user only)
     const prevSlugs = !isNewAccount && Array.isArray(prevProfile?.solvedSlugs) ? prevProfile.solvedSlugs : [];
     const prevTitles = !isNewAccount && Array.isArray(prevProfile?.solvedTitles) ? prevProfile.solvedTitles : [];
+    const prevNumbers: number[] = !isNewAccount && Array.isArray((prevProfile as any)?.solvedNumbers)
+      ? (prevProfile as any).solvedNumbers
+      : [];
 
     const cumulativeSlugs = Array.from(new Set([...prevSlugs, ...solvedSlugs]));
     const cumulativeTitles = Array.from(new Set([...prevTitles, ...solvedTitles]));
+    const cumulativeNumbers = Array.from(new Set([...prevNumbers, ...solvedNumbers]));
 
-    // Normalization sets
+    // Build normalized lookup sets
     const exactSlugs = new Set<string>(cumulativeSlugs.map((s: string) => s.toLowerCase().trim()));
     const cleanedSlugs = new Set<string>(cumulativeSlugs.map((s: string) => cleanStr(s)));
     const exactTitles = new Set<string>(cumulativeTitles.map((t: string) => t.toLowerCase().trim()));
     const cleanedTitles = new Set<string>(cumulativeTitles.map((t: string) => cleanStr(t)));
+    const numberSet = new Set<number>(cumulativeNumbers.filter(n => typeof n === 'number' && n > 0));
 
-    // Strip leading question numbers from titles (e.g. "1. Two Sum" -> "Two Sum")
+    // Strip leading question numbers from titles (e.g. "1. Two Sum" → "Two Sum")
     cumulativeTitles.forEach((t: string) => {
       const stripped = stripTitlePrefix(t.toLowerCase().trim());
       exactTitles.add(stripped);
@@ -580,8 +604,9 @@ export const leetcodeSyncService = {
     const newVerifiedIds = new Set<string>();
 
     // Match against all 150 Campus DSA roadmap problems
+    // LeetCode number is primary key — slug and title are fallbacks
     ALL_CAMPUS_DSA_PROBLEMS.forEach(prob => {
-      if (this.matchesProblem(prob, exactSlugs, cleanedSlugs, exactTitles, cleanedTitles)) {
+      if (this.matchesProblem(prob, exactSlugs, cleanedSlugs, exactTitles, cleanedTitles, numberSet)) {
         newVerifiedIds.add(prob.id);
         if (!currentSolvedIds.has(prob.id)) {
           newlyMatchedCount++;
@@ -629,6 +654,8 @@ export const leetcodeSyncService = {
       syncedAt: syncedAt || new Date().toISOString(),
       verifiedCampusDsaCount: matchedProblemIds.length,
     };
+    // Store accumulated numbers on the profile (not in the interface to avoid TS changes)
+    (fullProfile as any).solvedNumbers = cumulativeNumbers;
 
     // Store profile locally
     this.saveStoredProfile(fullProfile);
