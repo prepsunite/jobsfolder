@@ -282,16 +282,34 @@ export const technicalService = {
     if (!userEmail || userEmail === GUEST_EMAIL || typeof window === 'undefined') return;
 
     try {
-      // Sync Solved Problems
+      // Sync Solved Problems — track-aware:
+      // - PROGRAMMING_150: always restore from Supabase (user directly solves these)
+      // - CAMPUS_DSA: only restore if a LeetCode account is actively linked.
+      //   Without a linked account, campus DSA solved state should be 0 (source of
+      //   truth is LeetCode, not a stale Supabase row). This prevents ghost-restoring
+      //   manually-marked rows after the user de-links their LeetCode account.
       const { data: probData } = await supabase
         .from('user_technical_progress')
-        .select('problem_id')
+        .select('problem_id, track')
         .eq('user_email', userEmail)
         .eq('is_solved', true);
 
       if (probData && probData.length > 0) {
+        // Check if a LeetCode profile is currently linked
+        const lcProfile = (() => {
+          try {
+            const raw = localStorage.getItem('prepunite_leetcode_profile');
+            return raw ? JSON.parse(raw) : null;
+          } catch { return null; }
+        })();
+        const isLeetCodeLinked = !!lcProfile?.username;
+
         const currentSet = this.getSolvedProblemIds();
-        probData.forEach(r => currentSet.add(r.problem_id));
+        probData.forEach(r => {
+          // Skip CAMPUS_DSA rows when no LeetCode account is linked
+          if (r.track === 'CAMPUS_DSA' && !isLeetCodeLinked) return;
+          currentSet.add(r.problem_id);
+        });
         localStorage.setItem(SOLVED_PROBLEMS_KEY, JSON.stringify(Array.from(currentSet)));
       }
 
