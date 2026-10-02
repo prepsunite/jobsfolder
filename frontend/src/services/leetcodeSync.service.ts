@@ -1,13 +1,15 @@
 import { supabase } from '@/lib/supabase';
 import { GUEST_EMAIL } from '@/contexts/AuthContext';
 import { ALL_CAMPUS_DSA_PROBLEMS } from './campusDsaRoadmapData';
-import { technicalService } from './technical.service';
 
 const LEETCODE_PROFILE_KEY = 'prepunite_leetcode_profile';
+const LEETCODE_VERIFIED_KEY = 'prepunite_leetcode_verified_problems';
 const PRIMARY_SOLVED_KEY = 'prepunite_solved_coding_problems';
 const LEGACY_SOLVED_KEY = 'prepunite_solved_problems';
 
 const cleanStr = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const stripTitlePrefix = (t: string) => t.replace(/^[0-9]+[.\-:\s\]]+\s*/, '').trim();
 
 const extractCleanUsername = (raw: string): string => {
   if (!raw) return '';
@@ -33,6 +35,7 @@ export interface LeetCodeProfile {
   stats: LeetCodeStats;
   solvedSlugs: string[];
   solvedTitles: string[];
+  verifiedProblemIds?: string[];
   syncedAt: string;
   verifiedCampusDsaCount: number;
 }
@@ -43,6 +46,7 @@ export interface LeetCodeSyncResult {
   matchedCount?: number;
   newlyMatchedCount?: number;
   error?: string;
+  isAccountSwitched?: boolean;
 }
 
 export const leetcodeSyncService = {
@@ -73,6 +77,37 @@ export const leetcodeSyncService = {
     } catch {}
   },
 
+  // ─── Verified Problem IDs Storage (Tied to active LeetCode profile) ───────
+  getVerifiedProblemIds(): Set<string> {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const stored = localStorage.getItem(LEETCODE_VERIFIED_KEY);
+      if (stored) {
+        return new Set(JSON.parse(stored));
+      }
+      const prof = this.getStoredProfile();
+      if (prof?.verifiedProblemIds && Array.isArray(prof.verifiedProblemIds)) {
+        return new Set(prof.verifiedProblemIds);
+      }
+    } catch {}
+    return new Set();
+  },
+
+  saveVerifiedProblemIds(ids: string[] | Set<string>): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const arr = Array.isArray(ids) ? ids : Array.from(ids);
+      localStorage.setItem(LEETCODE_VERIFIED_KEY, JSON.stringify(arr));
+    } catch {}
+  },
+
+  clearVerifiedProblemIds(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(LEETCODE_VERIFIED_KEY);
+    } catch {}
+  },
+
   // ─── Get Unified Solved Set from LocalStorage ────────────────────────────
   getSolvedSet(): Set<string> {
     if (typeof window === 'undefined') return new Set();
@@ -100,7 +135,36 @@ export const leetcodeSyncService = {
     } catch {}
   },
 
-  // ─── Fetch Raw Data from LeetCode (API with fallback) ───────────────────────
+  // ─── Clean Unlink (Disconnect) ───────────────────────────────────────────
+  unlinkAccount(userEmail?: string): void {
+    const verifiedIds = this.getVerifiedProblemIds();
+    const currentSolved = this.getSolvedSet();
+
+    if (verifiedIds.size > 0) {
+      verifiedIds.forEach(id => currentSolved.delete(id));
+      this.saveSolvedSet(currentSolved);
+
+      if (userEmail && userEmail !== GUEST_EMAIL) {
+        supabase
+          .from('user_technical_progress')
+          .delete()
+          .eq('user_email', userEmail)
+          .in('problem_id', Array.from(verifiedIds))
+          .eq('track', 'CAMPUS_DSA')
+          .then(({ error }) => {
+            if (error) console.warn('[leetcodeSyncService] Unlink Supabase notice:', error.message);
+          });
+      }
+    }
+
+    this.clearStoredProfile();
+    this.clearVerifiedProblemIds();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
+    }
+  },
+
+  // ─── Fetch Raw Data from LeetCode (API with Multi-Mirror Fallback) ─────────
   async fetchProfileData(rawInput: string): Promise<{ success: boolean; data?: any; error?: string }> {
     const cleanUsername = extractCleanUsername(rawInput);
     if (!cleanUsername) {
@@ -119,58 +183,99 @@ export const leetcodeSyncService = {
       }
       if (res.status === 404) {
         const json = await res.json().catch(() => ({}));
-        return { success: false, error: json.error || `LeetCode user '@${cleanUsername}' not found.` };
+        if (json.error) {
+          return { success: false, error: json.error };
+        }
       }
     } catch (apiErr) {
-      console.warn('[leetcodeSyncService] Primary API unreachable, attempting fallback:', apiErr);
+      console.warn('[leetcodeSyncService] Primary API unreachable, attempting fast fallback mirrors:', apiErr);
     }
 
-    // Attempt 2: Fallback to public mirror API (useful in local dev when Vercel serverless is not running)
+    // Attempt 2: Fallback to fast public mirror APIs (Faisalshohag on Vercel + Alfa on Render)
     try {
-      const [profileRes, acRes, allSubRes] = await Promise.allSettled([
-        fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/solved`),
-        fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/acSubmission?limit=100`),
-        fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/submission`),
+      const mirrorTimeout = AbortSignal.timeout(4500);
+      const [faisalRes, alfaSolvedRes, alfaAcRes] = await Promise.allSettled([
+        fetch(`https://leetcode-api-faisalshohag.vercel.app/${encodeURIComponent(cleanUsername)}`, {
+          signal: mirrorTimeout,
+        }),
+        fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/solved`, {
+          signal: mirrorTimeout,
+        }),
+        fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/acSubmission?limit=100`, {
+          signal: mirrorTimeout,
+        }),
       ]);
 
-      if (profileRes.status !== 'fulfilled' || !profileRes.value.ok) {
-        return { success: false, error: `LeetCode user '@${cleanUsername}' not found.` };
-      }
-
-      const pData = await profileRes.value.json().catch(() => ({}));
-      const acData = acRes.status === 'fulfilled' && acRes.value.ok ? await acRes.value.json().catch(() => ({})) : { submission: [] };
-      const subData = allSubRes.status === 'fulfilled' && allSubRes.value.ok ? await allSubRes.value.json().catch(() => ({})) : { submission: [] };
+      let totalSolved = 0;
+      let easySolved = 0;
+      let mediumSolved = 0;
+      let hardSolved = 0;
+      let ranking: number | null = null;
+      let userAvatar: string | null = null;
+      let userFound = false;
 
       const slugs = new Set<string>();
       const titles = new Set<string>();
 
-      if (Array.isArray(acData.submission)) {
-        acData.submission.forEach((s: any) => {
-          if (s.titleSlug) slugs.add(s.titleSlug.toLowerCase().trim());
-          if (s.title) titles.add(s.title.toLowerCase().trim());
-        });
+      // Parse Faisalshohag mirror (Fast Vercel deployment)
+      if (faisalRes.status === 'fulfilled' && faisalRes.value.ok) {
+        const fData = await faisalRes.value.json().catch(() => ({}));
+        if (fData && !fData.errors && (fData.totalSolved !== undefined || fData.matchedUserStats)) {
+          userFound = true;
+          totalSolved = fData.totalSolved || 0;
+          easySolved = fData.easySolved || 0;
+          mediumSolved = fData.mediumSolved || 0;
+          hardSolved = fData.hardSolved || 0;
+          ranking = fData.ranking || null;
+
+          if (Array.isArray(fData.recentSubmissions)) {
+            fData.recentSubmissions.forEach((s: any) => {
+              if (s.statusDisplay === 'Accepted' || s.statusDisplay === '10' || !s.statusDisplay) {
+                if (s.titleSlug) slugs.add(s.titleSlug.toLowerCase().trim());
+                if (s.title) titles.add(s.title.toLowerCase().trim());
+              }
+            });
+          }
+        }
       }
 
-      if (Array.isArray(subData.submission)) {
-        subData.submission.forEach((s: any) => {
-          if (s.statusDisplay === 'Accepted') {
+      // Parse Alfa mirror as secondary
+      if (alfaSolvedRes.status === 'fulfilled' && alfaSolvedRes.value.ok) {
+        const aData = await alfaSolvedRes.value.json().catch(() => ({}));
+        if (aData && (aData.solvedProblem !== undefined || aData.totalSolved !== undefined)) {
+          userFound = true;
+          if (!totalSolved) totalSolved = aData.solvedProblem || aData.totalSolved || 0;
+          if (!easySolved) easySolved = aData.easySolved || 0;
+          if (!mediumSolved) mediumSolved = aData.mediumSolved || 0;
+          if (!hardSolved) hardSolved = aData.hardSolved || 0;
+        }
+      }
+
+      if (alfaAcRes.status === 'fulfilled' && alfaAcRes.value.ok) {
+        const acData = await alfaAcRes.value.json().catch(() => ({}));
+        if (Array.isArray(acData.submission)) {
+          acData.submission.forEach((s: any) => {
             if (s.titleSlug) slugs.add(s.titleSlug.toLowerCase().trim());
             if (s.title) titles.add(s.title.toLowerCase().trim());
-          }
-        });
+          });
+        }
+      }
+
+      if (!userFound) {
+        return { success: false, error: `LeetCode user '@${cleanUsername}' not found. Please double-check the username.` };
       }
 
       return {
         success: true,
         data: {
           username: cleanUsername,
-          avatar: null,
-          ranking: null,
+          avatar: userAvatar,
+          ranking,
           stats: {
-            totalSolved: pData.solvedProblem || pData.totalSolved || slugs.size,
-            easySolved: pData.easySolved || 0,
-            mediumSolved: pData.mediumSolved || 0,
-            hardSolved: pData.hardSolved || 0,
+            totalSolved: totalSolved || slugs.size,
+            easySolved,
+            mediumSolved,
+            hardSolved,
           },
           solvedSlugs: Array.from(slugs),
           solvedTitles: Array.from(titles),
@@ -179,7 +284,7 @@ export const leetcodeSyncService = {
       };
     } catch (fallbackErr: any) {
       console.error('[leetcodeSyncService] Fallback also failed:', fallbackErr);
-      return { success: false, error: 'Could not connect to LeetCode. Please check your internet connection.' };
+      return { success: false, error: 'Could not connect to LeetCode. Please check your internet connection and try again.' };
     }
   },
 
@@ -189,8 +294,14 @@ export const leetcodeSyncService = {
     exactSlugs: Set<string>,
     cleanedSlugs: Set<string>,
     exactTitles: Set<string>,
-    cleanedTitles: Set<string>
+    cleanedTitles: Set<string>,
+    numberSet?: Set<number>
   ): boolean {
+    // 0. LeetCode Problem Number Match (Highest precision)
+    if (prob.leetcodeNumber && numberSet && numberSet.has(prob.leetcodeNumber)) {
+      return true;
+    }
+
     // 1. Direct slug match
     if (prob.slug) {
       const lower = prob.slug.toLowerCase().trim();
@@ -208,47 +319,179 @@ export const leetcodeSyncService = {
       }
     }
 
-    // 3. Exact & normalized title match
+    // 3. Exact & normalized title match (with and without question numbers)
     if (prob.title) {
       const lower = prob.title.toLowerCase().trim();
       if (exactTitles.has(lower)) return true;
       if (cleanedTitles.has(cleanStr(lower))) return true;
+
+      const stripped = stripTitlePrefix(lower);
+      if (exactTitles.has(stripped)) return true;
+      if (cleanedTitles.has(cleanStr(stripped))) return true;
     }
 
     return false;
   },
 
-  // ─── Reconcile Stored Profile With Local Solved Set (Auto-fix on mount) ────
-  reconcileStoredProfile(userEmail?: string): number {
-    const profile = this.getStoredProfile();
-    if (!profile || !Array.isArray(profile.solvedSlugs) || profile.solvedSlugs.length === 0) {
-      return 0;
+  // ─── Import Past Solves / Quick Match Problem Numbers ─────────────────────
+  importPastSolves(
+    input: string,
+    userEmail?: string
+  ): { success: boolean; count: number; newlyAddedCount: number; matchedProblems: string[]; error?: string } {
+    if (!input || !input.trim()) {
+      return {
+        success: false,
+        count: 0,
+        newlyAddedCount: 0,
+        matchedProblems: [],
+        error: 'Please enter at least one problem number, slug, or URL.',
+      };
     }
 
-    const exactSlugs = new Set(profile.solvedSlugs.map(s => s.toLowerCase().trim()));
-    const cleanedSlugs = new Set(profile.solvedSlugs.map(s => cleanStr(s)));
-    const exactTitles = new Set((profile.solvedTitles || []).map(t => t.toLowerCase().trim()));
-    const cleanedTitles = new Set((profile.solvedTitles || []).map(t => cleanStr(t)));
+    // Extract all problem numbers (e.g. "1, 26, 88, 283" or "LC 1" or "#1")
+    const numberMatches = input.match(/\b\d+\b/g);
+    const parsedNumbers = new Set<number>();
+    if (numberMatches) {
+      numberMatches.forEach(n => {
+        const num = parseInt(n, 10);
+        if (num > 0 && num < 10000) parsedNumbers.add(num);
+      });
+    }
+
+    // Extract all slugs and URLs
+    const tokens = input
+      .split(/[\s,;\n]+/)
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    const slugTokens = new Set<string>();
+    tokens.forEach(t => {
+      const urlMatch = t.match(/leetcode\.com\/problems\/([^/?#]+)/i);
+      if (urlMatch && urlMatch[1]) {
+        slugTokens.add(urlMatch[1].toLowerCase());
+      } else if (/^[a-z0-9-]+$/i.test(t) && !/^\d+$/.test(t)) {
+        slugTokens.add(t.toLowerCase());
+      }
+    });
+
+    const cleanedSlugs = new Set(Array.from(slugTokens).map(s => cleanStr(s)));
 
     const currentSolved = this.getSolvedSet();
-    const matchedProblemIds: string[] = [];
-    let newlyAdded = 0;
+    const verifiedIds = this.getVerifiedProblemIds();
+    const newlyMatched: string[] = [];
+    const allMatched: string[] = [];
 
     ALL_CAMPUS_DSA_PROBLEMS.forEach(prob => {
-      if (this.matchesProblem(prob, exactSlugs, cleanedSlugs, exactTitles, cleanedTitles)) {
-        matchedProblemIds.push(prob.id);
+      const matchByNum = prob.leetcodeNumber && parsedNumbers.has(prob.leetcodeNumber);
+      const matchBySlug = prob.slug && (slugTokens.has(prob.slug.toLowerCase()) || cleanedSlugs.has(cleanStr(prob.slug)));
+
+      if (matchByNum || matchBySlug) {
+        allMatched.push(prob.id);
+        verifiedIds.add(prob.id);
         if (!currentSolved.has(prob.id)) {
+          newlyMatched.push(prob.id);
           currentSolved.add(prob.id);
-          newlyAdded++;
         }
       }
     });
 
+    if (allMatched.length === 0) {
+      return {
+        success: false,
+        count: 0,
+        newlyAddedCount: 0,
+        matchedProblems: [],
+        error: 'None of the provided numbers or slugs matched the 150 curated Campus DSA problems. Check the problem numbers or URLs and try again.',
+      };
+    }
+
+    // Update verified list and solved set
+    this.saveVerifiedProblemIds(verifiedIds);
+    this.saveSolvedSet(currentSolved);
+
+    // Update stored profile
+    const profile = this.getStoredProfile();
+    if (profile) {
+      profile.verifiedCampusDsaCount = verifiedIds.size;
+      profile.verifiedProblemIds = Array.from(verifiedIds);
+      this.saveStoredProfile(profile);
+    }
+
+    // Sync to Supabase if authenticated
+    if (userEmail && userEmail !== GUEST_EMAIL && allMatched.length > 0) {
+      const dbPayloads = allMatched.map(pId => ({
+        user_email: userEmail,
+        problem_id: pId,
+        track: 'CAMPUS_DSA',
+        is_solved: true,
+        completed_at: new Date().toISOString(),
+        last_attempted_at: new Date().toISOString(),
+      }));
+
+      for (let i = 0; i < dbPayloads.length; i += 50) {
+        const chunk = dbPayloads.slice(i, i + 50);
+        supabase
+          .from('user_technical_progress')
+          .upsert(chunk, { onConflict: 'user_email,problem_id' })
+          .then(({ error }) => {
+            if (error) console.warn('[leetcodeSyncService] Import past solves Supabase notice:', error.message);
+          });
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite-storage-update'));
+    }
+
+    return {
+      success: true,
+      count: allMatched.length,
+      newlyAddedCount: newlyMatched.length,
+      matchedProblems: allMatched,
+    };
+  },
+
+  // ─── Reconcile Stored Profile With Local Solved Set (Auto-fix on mount) ────
+  reconcileStoredProfile(userEmail?: string): number {
+    const profile = this.getStoredProfile();
+    if (!profile) return 0;
+
+    const currentSolved = this.getSolvedSet();
+    const verifiedIds = this.getVerifiedProblemIds();
+    let newlyAdded = 0;
+
+    // 1. Ensure verified IDs from stored profile are reflected in solved set
+    verifiedIds.forEach(id => {
+      if (!currentSolved.has(id)) {
+        currentSolved.add(id);
+        newlyAdded++;
+      }
+    });
+
+    // 2. Also match any solvedSlugs from the profile
+    if (Array.isArray(profile.solvedSlugs) && profile.solvedSlugs.length > 0) {
+      const exactSlugs = new Set(profile.solvedSlugs.map(s => s.toLowerCase().trim()));
+      const cleanedSlugs = new Set(profile.solvedSlugs.map(s => cleanStr(s)));
+      const exactTitles = new Set((profile.solvedTitles || []).map(t => t.toLowerCase().trim()));
+      const cleanedTitles = new Set((profile.solvedTitles || []).map(t => cleanStr(t)));
+
+      ALL_CAMPUS_DSA_PROBLEMS.forEach(prob => {
+        if (this.matchesProblem(prob, exactSlugs, cleanedSlugs, exactTitles, cleanedTitles)) {
+          verifiedIds.add(prob.id);
+          if (!currentSolved.has(prob.id)) {
+            currentSolved.add(prob.id);
+            newlyAdded++;
+          }
+        }
+      });
+    }
+
     if (newlyAdded > 0) {
+      this.saveVerifiedProblemIds(verifiedIds);
       this.saveSolvedSet(currentSolved);
 
-      if (userEmail && userEmail !== GUEST_EMAIL && matchedProblemIds.length > 0) {
-        const dbPayloads = matchedProblemIds.map(pId => ({
+      if (userEmail && userEmail !== GUEST_EMAIL && verifiedIds.size > 0) {
+        const dbPayloads = Array.from(verifiedIds).map(pId => ({
           user_email: userEmail,
           problem_id: pId,
           track: 'CAMPUS_DSA',
@@ -269,7 +512,7 @@ export const leetcodeSyncService = {
       }
     }
 
-    return matchedProblemIds.length;
+    return verifiedIds.size;
   },
 
   // ─── Sync and Match LeetCode Solved Problems with Campus DSA ─────────────────
@@ -290,33 +533,56 @@ export const leetcodeSyncService = {
       syncedAt,
     } = fetchRes.data;
 
-    // Accumulate with previously stored profile if same username
     const prevProfile = this.getStoredProfile();
-    const isSameUser = prevProfile && prevProfile.username.toLowerCase() === confirmedUsername.toLowerCase();
-    const prevSlugs = isSameUser && Array.isArray(prevProfile.solvedSlugs) ? prevProfile.solvedSlugs : [];
-    const prevTitles = isSameUser && Array.isArray(prevProfile.solvedTitles) ? prevProfile.solvedTitles : [];
+    const isNewAccount = !prevProfile || prevProfile.username.toLowerCase() !== confirmedUsername.toLowerCase();
+
+    // 1. Account Switch Isolation: If switching to a NEW account, prune previous account's verified solves
+    const currentSolvedIds = this.getSolvedSet();
+    const previouslyVerifiedIds = this.getVerifiedProblemIds();
+
+    if (isNewAccount && previouslyVerifiedIds.size > 0) {
+      previouslyVerifiedIds.forEach(id => currentSolvedIds.delete(id));
+
+      if (userEmail && userEmail !== GUEST_EMAIL) {
+        supabase
+          .from('user_technical_progress')
+          .delete()
+          .eq('user_email', userEmail)
+          .in('problem_id', Array.from(previouslyVerifiedIds))
+          .eq('track', 'CAMPUS_DSA')
+          .then(({ error }) => {
+            if (error) console.warn('[leetcodeSyncService] Old profile cleanup notice:', error.message);
+          });
+      }
+    }
+
+    // 2. Cumulative slugs only for the SAME user
+    const prevSlugs = !isNewAccount && Array.isArray(prevProfile?.solvedSlugs) ? prevProfile.solvedSlugs : [];
+    const prevTitles = !isNewAccount && Array.isArray(prevProfile?.solvedTitles) ? prevProfile.solvedTitles : [];
 
     const cumulativeSlugs = Array.from(new Set([...prevSlugs, ...solvedSlugs]));
     const cumulativeTitles = Array.from(new Set([...prevTitles, ...solvedTitles]));
 
-    // Normalization sets for O(1) matching using cumulative solved data
+    // Normalization sets
     const exactSlugs = new Set<string>(cumulativeSlugs.map((s: string) => s.toLowerCase().trim()));
     const cleanedSlugs = new Set<string>(cumulativeSlugs.map((s: string) => cleanStr(s)));
     const exactTitles = new Set<string>(cumulativeTitles.map((t: string) => t.toLowerCase().trim()));
     const cleanedTitles = new Set<string>(cumulativeTitles.map((t: string) => cleanStr(t)));
 
-    // Get unified solved set
-    const currentSolvedIds = this.getSolvedSet();
-    let newlyMatchedCount = 0;
-    let totalMatchedCount = 0;
+    // Strip leading question numbers from titles (e.g. "1. Two Sum" -> "Two Sum")
+    cumulativeTitles.forEach((t: string) => {
+      const stripped = stripTitlePrefix(t.toLowerCase().trim());
+      exactTitles.add(stripped);
+      cleanedTitles.add(cleanStr(stripped));
+    });
 
-    const matchedProblemIds: string[] = [];
+    let newlyMatchedCount = 0;
+    const newVerifiedIds = new Set<string>();
 
     // Match against all 150 Campus DSA roadmap problems
     ALL_CAMPUS_DSA_PROBLEMS.forEach(prob => {
       if (this.matchesProblem(prob, exactSlugs, cleanedSlugs, exactTitles, cleanedTitles)) {
-        totalMatchedCount++;
-        matchedProblemIds.push(prob.id);
+        newVerifiedIds.add(prob.id);
         if (!currentSolvedIds.has(prob.id)) {
           newlyMatchedCount++;
           currentSolvedIds.add(prob.id);
@@ -324,10 +590,12 @@ export const leetcodeSyncService = {
       }
     });
 
-    // Save updated solved set to LocalStorage (both primary & legacy keys)
+    // Save updated solved set & verified IDs
+    this.saveVerifiedProblemIds(newVerifiedIds);
     this.saveSolvedSet(currentSolvedIds);
 
     // Batch upsert to Supabase if authenticated
+    const matchedProblemIds = Array.from(newVerifiedIds);
     if (userEmail && userEmail !== GUEST_EMAIL && matchedProblemIds.length > 0) {
       const dbPayloads = matchedProblemIds.map(pId => ({
         user_email: userEmail,
@@ -338,7 +606,6 @@ export const leetcodeSyncService = {
         last_attempted_at: new Date().toISOString(),
       }));
 
-      // Fire and forget batch upsert in chunks of 50
       for (let i = 0; i < dbPayloads.length; i += 50) {
         const chunk = dbPayloads.slice(i, i + 50);
         supabase
@@ -358,8 +625,9 @@ export const leetcodeSyncService = {
       stats,
       solvedSlugs: cumulativeSlugs,
       solvedTitles: cumulativeTitles,
+      verifiedProblemIds: matchedProblemIds,
       syncedAt: syncedAt || new Date().toISOString(),
-      verifiedCampusDsaCount: totalMatchedCount,
+      verifiedCampusDsaCount: matchedProblemIds.length,
     };
 
     // Store profile locally
@@ -373,8 +641,9 @@ export const leetcodeSyncService = {
     return {
       success: true,
       profile: fullProfile,
-      matchedCount: totalMatchedCount,
+      matchedCount: matchedProblemIds.length,
       newlyMatchedCount,
+      isAccountSwitched: isNewAccount && !!prevProfile,
     };
   },
 };

@@ -872,7 +872,15 @@ export default function TechnicalHubPage() {
     <div className="space-y-6 animate-fadeIn pb-12 font-sans relative w-full">
       {/* ⚡ Top-level LeetCode Auto-Sync Hub for Campus DSA - Always pinned at the top */}
       {activeTrack === 'CAMPUS_DSA' && (
-        <LeetCodeSyncWidget onSyncSuccess={refetchDsa} className="w-full shadow-sm" />
+        <LeetCodeSyncWidget
+          onSyncSuccess={() => {
+            refetchDsa();
+            refetchCounts();
+            queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
+            queryClient.invalidateQueries({ queryKey: ['technical-topic-counts'] });
+          }}
+          className="w-full shadow-sm"
+        />
       )}
 
       {activeTopic ? (

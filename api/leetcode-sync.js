@@ -107,7 +107,11 @@ export default async function handler(req, res) {
       recentSubmissionList.forEach(s => {
         if (s.statusDisplay === 'Accepted' || s.statusDisplay === '10' || s.status === 'Accepted') {
           if (s.titleSlug) slugsSet.add(s.titleSlug.toLowerCase().trim());
-          if (s.title) titlesSet.add(s.title.toLowerCase().trim());
+          if (s.title) {
+            const t = s.title.toLowerCase().trim();
+            titlesSet.add(t);
+            titlesSet.add(t.replace(/^[0-9]+[.\-:\s\]]+\s*/, '').trim());
+          }
         }
       });
     }
@@ -115,7 +119,11 @@ export default async function handler(req, res) {
     // Attempt secondary lookup from public mirrors with 3.5s timeout (never blocks if sleeping)
     try {
       const mirrorTimeout = AbortSignal.timeout(3500);
-      const [acRes, allSubRes, userProfRes] = await Promise.allSettled([
+      const [faisalRes, acRes, allSubRes, userProfRes] = await Promise.allSettled([
+        fetch(
+          `https://leetcode-api-faisalshohag.vercel.app/${encodeURIComponent(cleanUsername)}`,
+          { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' }, signal: mirrorTimeout }
+        ),
         fetch(
           `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(cleanUsername)}/acSubmission?limit=100`,
           { headers: { 'User-Agent': 'PrepUnite-Sync/1.0' }, signal: mirrorTimeout }
@@ -130,12 +138,32 @@ export default async function handler(req, res) {
         ),
       ]);
 
+      if (faisalRes.status === 'fulfilled' && faisalRes.value.ok) {
+        const fData = await faisalRes.value.json().catch(() => ({}));
+        if (Array.isArray(fData.recentSubmissions)) {
+          fData.recentSubmissions.forEach(sub => {
+            if (sub.statusDisplay === 'Accepted' || sub.statusDisplay === '10' || !sub.statusDisplay) {
+              if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
+              if (sub.title) {
+                const t = sub.title.toLowerCase().trim();
+                titlesSet.add(t);
+                titlesSet.add(t.replace(/^[0-9]+[.\-:\s\]]+\s*/, '').trim());
+              }
+            }
+          });
+        }
+      }
+
       if (acRes.status === 'fulfilled' && acRes.value.ok) {
         const mirrorData = await acRes.value.json().catch(() => ({}));
         if (Array.isArray(mirrorData.submission)) {
           mirrorData.submission.forEach(sub => {
             if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
-            if (sub.title) titlesSet.add(sub.title.toLowerCase().trim());
+            if (sub.title) {
+              const t = sub.title.toLowerCase().trim();
+              titlesSet.add(t);
+              titlesSet.add(t.replace(/^[0-9]+[.\-:\s\]]+\s*/, '').trim());
+            }
           });
         }
       }
@@ -146,7 +174,11 @@ export default async function handler(req, res) {
           subData.submission.forEach(sub => {
             if (sub.statusDisplay === 'Accepted') {
               if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
-              if (sub.title) titlesSet.add(sub.title.toLowerCase().trim());
+              if (sub.title) {
+                const t = sub.title.toLowerCase().trim();
+                titlesSet.add(t);
+                titlesSet.add(t.replace(/^[0-9]+[.\-:\s\]]+\s*/, '').trim());
+              }
             }
           });
         }
@@ -158,7 +190,11 @@ export default async function handler(req, res) {
           profData.recentSubmissions.forEach(sub => {
             if (sub.statusDisplay === 'Accepted') {
               if (sub.titleSlug) slugsSet.add(sub.titleSlug.toLowerCase().trim());
-              if (sub.title) titlesSet.add(sub.title.toLowerCase().trim());
+              if (sub.title) {
+                const t = sub.title.toLowerCase().trim();
+                titlesSet.add(t);
+                titlesSet.add(t.replace(/^[0-9]+[.\-:\s\]]+\s*/, '').trim());
+              }
             }
           });
         }
