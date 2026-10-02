@@ -873,6 +873,7 @@ export default function TechnicalHubPage() {
       {/* ⚡ Top-level LeetCode Auto-Sync Hub for Campus DSA - Always pinned at the top */}
       {activeTrack === 'CAMPUS_DSA' && (
         <LeetCodeSyncWidget
+          roadmapSolvedCount={activeTrackSolved}
           onSyncSuccess={() => {
             refetchDsa();
             refetchCounts();

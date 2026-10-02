@@ -24,11 +24,13 @@ import { ALL_CAMPUS_DSA_PROBLEMS } from '@/services/campusDsaRoadmapData';
 interface LeetCodeSyncWidgetProps {
   onSyncSuccess?: () => void;
   className?: string;
+  roadmapSolvedCount?: number;
 }
 
 export default function LeetCodeSyncWidget({
   onSyncSuccess,
   className = '',
+  roadmapSolvedCount,
 }: LeetCodeSyncWidgetProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -45,7 +47,7 @@ export default function LeetCodeSyncWidget({
   const [importResult, setImportResult] = useState<{ count: number; error?: string } | null>(null);
 
   // Track timestamp of last sync for smart tab-return auto-sync throttling
-  const lastSyncTimestampRef = React.useRef<number>(Date.now());
+  const lastSyncTimestampRef = React.useRef<number>(0);
 
   // Load stored profile and reconcile with solved set on mount
   useEffect(() => {
@@ -57,13 +59,27 @@ export default function LeetCodeSyncWidget({
     }
   }, [user?.email]);
 
+  // Listen for storage updates across tabs / components
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      const stored = leetcodeSyncService.getStoredProfile();
+      if (stored) {
+        setProfile(stored);
+      }
+    };
+    window.addEventListener('prepunite-storage-update', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('prepunite-storage-update', handleStorageUpdate);
+    };
+  }, []);
+
   // ⚡ Smart Auto-Sync: When user solves a question on LeetCode and switches back to Prepunite
   useEffect(() => {
     const handleReturnToTab = () => {
       if (document.visibilityState === 'visible' && profile && !isSyncing && !isEditing) {
         const now = Date.now();
-        // Throttle auto-sync to at most once every 45 seconds to avoid spamming LeetCode
-        if (now - lastSyncTimestampRef.current >= 45000) {
+        // Throttle auto-sync to at most once every 30 seconds to avoid spamming LeetCode
+        if (now - lastSyncTimestampRef.current >= 30000) {
           lastSyncTimestampRef.current = now;
           handleSync(profile.username, { isSilent: true });
         }
@@ -264,9 +280,16 @@ export default function LeetCodeSyncWidget({
                     <span>Roadmap Solved</span>
                   </div>
                   <div className="font-display font-extrabold text-sm sm:text-base text-[#121417] dark:text-white">
-                    <span className="text-[#FFA116]">{profile.verifiedCampusDsaCount}</span>
-                    <span className="text-gray-400 text-xs font-normal"> / {ALL_CAMPUS_DSA_PROBLEMS.length} Verified</span>
+                    <span className="text-[#FFA116]">
+                      {roadmapSolvedCount !== undefined ? roadmapSolvedCount : profile.verifiedCampusDsaCount}
+                    </span>
+                    <span className="text-gray-400 text-xs font-normal"> / {ALL_CAMPUS_DSA_PROBLEMS.length} Solved</span>
                   </div>
+                  {profile.verifiedCampusDsaCount > 0 && (
+                    <div className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                      {profile.verifiedCampusDsaCount} verified via LC
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -317,6 +340,34 @@ export default function LeetCodeSyncWidget({
                 </div>
               </div>
             </div>
+
+            {/* Contextual notice if user has LC solves but public API recent submission window returned 0 */}
+            {profile.stats.totalSolved > 0 && profile.verifiedCampusDsaCount === 0 && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200 animate-fadeIn">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold text-xs text-[#121417] dark:text-white flex items-center gap-1.5">
+                    <span>LeetCode Recent Activity Window Notice</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                      {profile.stats.totalSolved} Solved on LeetCode
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-gray-600 dark:text-gray-300">
+                    You have <strong className="text-[#FFA116]">{profile.stats.totalSolved} solved problems</strong> on LeetCode ({profile.stats.easySolved} Easy, {profile.stats.mediumSolved} Med, {profile.stats.hardSolved} Hard)! 
+                    LeetCode's public API only exposes recent submissions (which is currently empty for @{profile.username}).
+                    Any new problems you solve on LeetCode will automatically auto-sync here. To quickly verify your earlier solves, click{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowImportBox(true)}
+                      className="font-bold text-[#FFA116] hover:underline cursor-pointer"
+                    >
+                      Import Solves
+                    </button>{' '}
+                    to paste problem numbers or URLs, or 1-click <strong>"Mark Solved"</strong> directly on the cards below!
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Quick Import Solves Expandable Tray */}
             {showImportBox && (
