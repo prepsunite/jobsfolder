@@ -154,9 +154,8 @@ export const leetcodeSyncService = {
       }
     });
 
-    if (removed > 0) {
-      this.saveSolvedSet(currentSolved);
-    }
+    // Always save the cleansed solved set to ensure storage consistency
+    this.saveSolvedSet(currentSolved);
 
     // Also nuke all CAMPUS_DSA progress rows in Supabase for this user
     if (userEmail && userEmail !== GUEST_EMAIL) {
