@@ -147,9 +147,9 @@ export default function TopicQuestionsPage() {
         .eq('topic_id', topicId)
         .eq('is_deleted', false);
 
-      // Guard: Do not load mock exam question bank questions onto regular students during practice
+      // For regular students, practice up to 60 questions per topic
       if (!isAdmin) {
-        query = query.or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK').limit(60);
+        query = query.limit(60);
       }
 
       const { data, error } = await query

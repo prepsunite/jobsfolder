@@ -171,7 +171,6 @@ export default function DashboardPage() {
           .from('topic_questions')
           .select('id, difficulty, topic_id')
           .eq('is_deleted', false)
-          .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error) {

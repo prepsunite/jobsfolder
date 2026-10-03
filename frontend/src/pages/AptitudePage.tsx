@@ -281,76 +281,7 @@ export default function AptitudePage() {
   // Filter topics (Admins see all, Users see only visible)
   const currentCategoryTopics = rawTopics.filter(t => isAdmin || !t.is_hidden);
 
-  // Fetch live question counts
-  const { data: liveCountMap = {} } = useQuery<Record<string, number>>({
-    queryKey: ['topic-question-counts', categorySlug, currentCategoryTopics.length],
-    queryFn: async () => {
-      if (!currentCategoryTopics.length) return {};
-      const topicIds = currentCategoryTopics.map(t => t.id);
-      
-      let allFetchedData: any[] = [];
-      let page = 0;
-      const PAGE_SIZE = 1000;
-      let hasMore = true;
-
-      while (hasMore && page < 5) {
-        const { data, error } = await supabase
-          .from('topic_questions')
-          .select('topic_id')
-          .in('topic_id', topicIds)
-          .eq('is_deleted', false)
-          .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-        if (error) {
-          console.warn('Failed to fetch live topic question counts:', error);
-          break;
-        }
-
-        if (data && data.length > 0) {
-          allFetchedData = allFetchedData.concat(data);
-          if (data.length < PAGE_SIZE) {
-            hasMore = false;
-          } else {
-            page++;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
-
-      const countMap: Record<string, number> = {};
-      topicIds.forEach(id => { countMap[id] = 0; });
-      allFetchedData.forEach((row: any) => {
-        if (row.topic_id) {
-          countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
-        }
-      });
-
-      if (allFetchedData.length > 0) {
-        try {
-          localStorage.setItem(`prepunite_counts_cache_${categorySlug}`, JSON.stringify(countMap));
-        } catch {}
-      }
-
-      return countMap;
-    },
-    initialData: () => {
-      try {
-        const cached = localStorage.getItem(`prepunite_counts_cache_${categorySlug}`);
-        if (!cached) return undefined;
-        const parsed = JSON.parse(cached) as Record<string, number>;
-        // Only use cache if it has at least one non-zero count (avoids serving stale all-zero cache)
-        const hasAnyCount = Object.values(parsed).some(v => v > 0);
-        return hasAnyCount ? parsed : undefined;
-      } catch { return undefined; }
-    },
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    enabled: currentCategoryTopics.length > 0
-  });
-
-  // Fetch questions for this category to compute live progress stats
+  // Fetch questions for this category to compute live progress stats and topic counts
   const { data: categoryQuestions = [], isLoading: isCatLoading } = useQuery({
     queryKey: ['category-questions-stats', categorySlug, currentCategoryTopics.length],
     queryFn: async () => {
@@ -362,13 +293,12 @@ export default function AptitudePage() {
       const PAGE_SIZE = 1000;
       let hasMore = true;
 
-      while (hasMore && page < 5) {
+      while (hasMore && page < 10) {
         const { data, error } = await supabase
           .from('topic_questions')
           .select('id, difficulty, topic_id')
           .in('topic_id', topicIds)
           .eq('is_deleted', false)
-          .or('exam_id.is.null,exam_id.neq.MOCK_EXAM_BANK')
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error) {
@@ -399,12 +329,27 @@ export default function AptitudePage() {
     initialData: () => {
       try {
         const cached = localStorage.getItem(`prepunite_cat_q_cache_${categorySlug}`);
-        return cached ? JSON.parse(cached) : undefined;
+        if (!cached) return undefined;
+        const parsed = JSON.parse(cached);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined;
       } catch { return undefined; }
     },
     enabled: currentCategoryTopics.length > 0,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
+
+  // Derive per-topic question counts directly from categoryQuestions
+  const liveCountMap = useMemo(() => {
+    const countMap: Record<string, number> = {};
+    currentCategoryTopics.forEach(t => { countMap[t.id] = 0; });
+    categoryQuestions.forEach((q: any) => {
+      if (q.topic_id) {
+        countMap[q.topic_id] = (countMap[q.topic_id] || 0) + 1;
+      }
+    });
+    return countMap;
+  }, [currentCategoryTopics, categoryQuestions]);
 
   const queryClient = useQueryClient();
 

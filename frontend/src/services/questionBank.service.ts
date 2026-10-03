@@ -456,7 +456,7 @@ export const questionBankService = {
       .insert({
         id,
         topic_id: input.topic_id,
-        exam_id: 'MOCK_EXAM_BANK',
+        exam_id: null,
         statement: input.statement,
         options: input.options,
         correct_answer: input.correct_answer,
@@ -580,7 +580,7 @@ export const questionBankService = {
       const rows = chunk.map((q, idx) => ({
         id: `bulk-${Date.now().toString(36)}-${i + idx}-${Math.random().toString(36).substring(2, 6)}`,
         topic_id: topicId,
-        exam_id: 'MOCK_EXAM_BANK',
+        exam_id: null,
         statement: q.statement,
         options: Array.isArray(q.options) ? q.options : [],
         correct_answer: String(q.correct_answer || 'A'),
@@ -681,7 +681,7 @@ export const questionBankService = {
         const rows = chunk.map((q, idx) => ({
           id: `bulk-${Date.now().toString(36)}-${i + idx}-${Math.random().toString(36).substring(2, 6)}`,
           topic_id: q.topic_id,
-          exam_id: 'MOCK_EXAM_BANK',
+          exam_id: null,
           statement: q.statement,
           options: Array.isArray(q.options) ? q.options : [],
           correct_answer: String(q.correct_answer || 'A'),

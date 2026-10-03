@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastItem {
   id: string;
@@ -22,6 +22,7 @@ interface ToastContextValue {
     success: (message: string) => void;
     error: (message: string) => void;
     info: (message: string) => void;
+    warning: (message: string) => void;
   };
   confirmModal: (options: ConfirmModalOptions) => Promise<boolean>;
 }
@@ -54,6 +55,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     success: (msg: string) => addToast('success', msg),
     error: (msg: string) => addToast('error', msg),
     info: (msg: string) => addToast('info', msg),
+    warning: (msg: string) => addToast('warning', msg),
   };
 
   const confirmModal = useCallback((options: ConfirmModalOptions): Promise<boolean> => {
@@ -92,6 +94,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           } else if (t.type === 'error') {
             bgBorder = 'bg-white dark:bg-[#1A1A1A] border-red-500/30 text-[#121417] dark:text-[#FFFFFF]';
             icon = <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />;
+          } else if (t.type === 'warning') {
+            bgBorder = 'bg-white dark:bg-[#1A1A1A] border-amber-500/30 text-[#121417] dark:text-[#FFFFFF]';
+            icon = <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />;
           }
 
           return (
