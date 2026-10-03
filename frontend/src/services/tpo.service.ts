@@ -6,10 +6,15 @@ import { expandTopicAliases, resolveTopicSlug } from '@/services/topicMap';
 import {
   mockExamBlueprintService,
   FALLBACK_APTITUDE_TOPICS,
-  TECHNICAL_MCQ_SUBJECTS,
   CODING_CATEGORIES,
 } from '@/services/mockExamBlueprint.service';
 import { isTemplateOrEmptyCode } from '@/services/codeExecution.service';
+import {
+  enrichCodingProblemForExam,
+  getCampusDsaExamProblem,
+  isProblemTestable,
+  CAMPUS_DSA_EXAM_PROBLEMS,
+} from './campusDsaExamDataset';
 import type {
   College,
   CollegeBatch,
@@ -4325,12 +4330,17 @@ export const tpoService = {
 
           const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
           if (codingData && codingData.length > 0) {
+            // 🛡️ Prioritize curated placement problems with full test cases
+            const testableCurated = codingData.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
+            const otherCodingData = codingData.filter(q => !CAMPUS_DSA_EXAM_PROBLEMS[q.id] && !isProblemTestable(q));
+            const poolToSample = testableCurated.length >= neededCount ? testableCurated : [...testableCurated, ...otherCodingData];
+
             // If topic-specific keywords are present, prioritize problems matching those keywords
             let prioritized: typeof codingData = [];
             let nonPrioritized: typeof codingData = [];
 
             if (titleKeywords.length > 0) {
-              codingData.forEach(q => {
+              poolToSample.forEach(q => {
                 const titleLower = (q.title || '').toLowerCase();
                 const matchesKeyword = titleKeywords.some(kw => titleLower.includes(kw));
                 if (matchesKeyword) {
@@ -4340,7 +4350,7 @@ export const tpoService = {
                 }
               });
             } else {
-              prioritized = codingData;
+              prioritized = poolToSample;
             }
 
             // Shuffle prioritized first
@@ -5237,19 +5247,20 @@ export const tpoService = {
 
         if (codingData && codingData.length > 0) {
           codingData.forEach(p => {
-            // 🛡️ Security Sanitization: Do NOT include solutions or explanation in active test payload
+            // 🛡️ Security Sanitization & Full Placement Exam Spec Enrichment
+            const enriched = enrichCodingProblemForExam(p);
             rawQuestions.push({
-              id: p.id,
-              title: p.title,
-              statement: p.description,
-              description: p.description,
+              id: enriched.id,
+              title: enriched.title,
+              statement: enriched.statement || enriched.description,
+              description: enriched.description,
               options: [],
-              difficulty: p.level || 'MEDIUM',
-              topic_id: p.category,
-              constraints: p.constraints,
-              sample_input: p.sample_input,
-              sample_output: p.sample_output,
-              test_cases: p.test_cases,
+              difficulty: enriched.level || enriched.difficulty || 'MEDIUM',
+              topic_id: enriched.category,
+              constraints: enriched.constraints,
+              sample_input: enriched.sample_input,
+              sample_output: enriched.sample_output,
+              test_cases: enriched.test_cases || enriched.testCases || [],
               isCodingProblem: true,
             });
           });
@@ -5257,6 +5268,33 @@ export const tpoService = {
       } catch (e) {
         console.warn('Notice checking coding problems in getQuestionsForExam:', e);
       }
+    }
+
+    // 1b-2. Direct Campus DSA Hydration for any missing coding problem IDs
+    foundIds = new Set(rawQuestions.map(q => q.id));
+    missingIds = questionIds.filter(id => !foundIds.has(id));
+    const campusDsaMissing = missingIds.filter(id => id.startsWith('lc-') || CAMPUS_DSA_EXAM_PROBLEMS[id]);
+    if (campusDsaMissing.length > 0) {
+      campusDsaMissing.forEach(id => {
+        const curated = getCampusDsaExamProblem(id);
+        if (curated) {
+          const enriched = enrichCodingProblemForExam(curated);
+          rawQuestions.push({
+            id: enriched.id,
+            title: enriched.title,
+            statement: enriched.statement || enriched.description,
+            description: enriched.description,
+            options: [],
+            difficulty: enriched.difficulty || 'MEDIUM',
+            topic_id: enriched.category,
+            constraints: enriched.constraints,
+            sample_input: enriched.sample_input,
+            sample_output: enriched.sample_output,
+            test_cases: enriched.test_cases || enriched.testCases || [],
+            isCodingProblem: true,
+          });
+        }
+      });
     }
 
     // 1c. Check if any remaining question IDs are Technical MCQs from technical_mcqs table

@@ -31,6 +31,7 @@ import {
   type EvaluatedTestCase,
 } from '@/services/codeExecution.service';
 import Editor from '@monaco-editor/react';
+import { getCampusDsaExamProblem } from '@/services/campusDsaExamDataset';
 
 const MONACO_LANGUAGE_MAP: Record<string, string> = {
   python: 'python',
@@ -52,11 +53,18 @@ interface MockExamCodingWorkspaceProps {
     title?: string;
     statement: string;
     passage?: string;
-    constraints?: string;
+    constraints?: string | string[];
     sample_input?: string;
     sample_output?: string;
+    sampleInput?: string;
+    sampleOutput?: string;
+    input_format?: string;
+    output_format?: string;
+    inputFormat?: string;
+    outputFormat?: string;
     explanation?: string;
     test_cases?: TestCaseItem[];
+    testCases?: TestCaseItem[];
     solutions?: Record<string, string>;
     difficulty?: string;
   };
@@ -160,23 +168,80 @@ export default function MockExamCodingWorkspace({
 
   // Parse test cases
   const testCases = useMemo<TestCaseItem[]>(() => {
-    if (question.test_cases && question.test_cases.length > 0) {
-      return question.test_cases.map(tc => ({
+    const explicitCases = (question.test_cases && question.test_cases.length > 0)
+      ? question.test_cases
+      : (question.testCases && question.testCases.length > 0)
+        ? question.testCases
+        : null;
+
+    if (explicitCases && explicitCases.length > 0) {
+      return explicitCases.map((tc: any) => ({
         ...tc,
         input: normalizeStdin(tc.input),
+        expected_output: tc.expected_output || tc.output || '',
+        output: tc.output || tc.expected_output || '',
       }));
     }
+
     const sampleCases: TestCaseItem[] = [];
-    if (question.sample_input || question.sample_output) {
+    const sIn = question.sample_input || question.sampleInput;
+    const sOut = question.sample_output || question.sampleOutput;
+    if (sIn || sOut) {
       sampleCases.push({
-        input: normalizeStdin(question.sample_input || ''),
-        expected_output: question.sample_output || '',
+        input: normalizeStdin(sIn || ''),
+        expected_output: sOut || '',
+        output: sOut || '',
       });
     }
-    return sampleCases;
-  }, [question.test_cases, question.sample_input, question.sample_output]);
 
-  const displaySampleInput = useMemo(() => normalizeStdin(question.sample_input || ''), [question.sample_input]);
+    // Emergency dataset fallback for Campus DSA problems
+    if (sampleCases.length === 0 && question.id) {
+      const fallback = getCampusDsaExamProblem(question.id, question);
+      if (fallback && fallback.testCases && fallback.testCases.length > 0) {
+        return fallback.testCases.map((tc: any) => ({
+          ...tc,
+          input: normalizeStdin(tc.input),
+          expected_output: tc.expected_output || tc.output || '',
+          output: tc.output || tc.expected_output || '',
+        }));
+      }
+    }
+
+    return sampleCases;
+  }, [question]);
+
+  const displayConstraints = useMemo(() => {
+    const raw = question.constraints || question.passage;
+    if (!raw) return null;
+    if (Array.isArray(raw)) {
+      const filtered = raw.filter(
+        (c: any) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:')
+      );
+      return filtered.length > 0 ? filtered.join('\n') : null;
+    }
+    if (typeof raw === 'string') {
+      const lines = raw
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith('LC_URL:') && !l.startsWith('LC_NUM:'));
+      return lines.length > 0 ? lines.join('\n') : null;
+    }
+    return null;
+  }, [question.constraints, question.passage]);
+
+  const displaySampleInput = useMemo(() => {
+    const raw = question.sample_input || question.sampleInput;
+    if (raw) return normalizeStdin(raw);
+    if (testCases.length > 0) return normalizeStdin(testCases[0].input);
+    return '';
+  }, [question.sample_input, question.sampleInput, testCases]);
+
+  const displaySampleOutput = useMemo(() => {
+    const raw = question.sample_output || question.sampleOutput;
+    if (raw) return raw;
+    if (testCases.length > 0) return testCases[0].expected_output || testCases[0].output || '';
+    return '';
+  }, [question.sample_output, question.sampleOutput, testCases]);
 
   const handleCodeChange = (newCode: string) => {
     runRevisionRef.current += 1;
@@ -311,20 +376,20 @@ export default function MockExamCodingWorkspace({
           </div>
 
           {/* Constraints */}
-          {(question.constraints || question.passage) && (
+          {displayConstraints && (
             <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/5 border border-amber-500/20 space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>Constraints</span>
               </div>
               <div className="text-xs font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {question.constraints || question.passage}
+                {displayConstraints}
               </div>
             </div>
           )}
 
           {/* Sample Input / Output */}
-          {(question.sample_input || question.sample_output) && (
+          {(displaySampleInput || displaySampleOutput) && (
             <div className="space-y-3">
               <h4 className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 Sample Test Case
@@ -349,13 +414,13 @@ export default function MockExamCodingWorkspace({
                 </div>
               )}
 
-              {question.sample_output && (
+              {displaySampleOutput && (
                 <div className="rounded-xl border border-gray-200 dark:border-[#2d3036] overflow-hidden">
                   <div className="px-3 py-1.5 bg-gray-100 dark:bg-[#1f2125] flex items-center justify-between text-[11px] font-bold text-gray-600 dark:text-gray-300">
                     <span>Sample Output</span>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(question.sample_output || '', 'output')}
+                      onClick={() => copyToClipboard(displaySampleOutput, 'output')}
                       className="inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-900 dark:hover:text-white"
                     >
                       {copiedOutput ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
@@ -363,7 +428,7 @@ export default function MockExamCodingWorkspace({
                     </button>
                   </div>
                   <pre className="p-3 bg-gray-50 dark:bg-[#121315] font-mono text-xs text-emerald-600 dark:text-emerald-400 overflow-x-auto whitespace-pre-wrap">
-                    {question.sample_output}
+                    {displaySampleOutput}
                   </pre>
                 </div>
               )}

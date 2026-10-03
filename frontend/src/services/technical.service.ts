@@ -4,6 +4,7 @@ import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLev
 import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICAL_MCQ_TOPICS, STAGE_SUBTOPIC_TO_STAGE_MAP } from './programmingTopicsData';
 import { CAMPUS_DSA_ROADMAP_STAGES } from './campusDsaRoadmapData';
 import { computeSha256Hex } from '@/utils/questionParser';
+import { enrichCodingProblemForExam } from './campusDsaExamDataset';
 
 import type { TechnicalProblemRow, TechnicalMcqRow } from '@/lib/database.types';
 
@@ -29,7 +30,10 @@ type RawDbMcq = Partial<TechnicalMcqRow> & Partial<TechnicalMcq> & {
   id: string;
 };
 
-const normalizeDbProblem = (d: RawDbProblem, solvedSet: Set<string>): ProgrammingProblem => {
+const normalizeDbProblem = (rawD: RawDbProblem, solvedSet: Set<string>): ProgrammingProblem => {
+  const d: any = (rawD.id?.startsWith('lc-') || rawD.track === 'CAMPUS_DSA')
+    ? enrichCodingProblemForExam(rawD)
+    : rawD;
   const solutionsObj = (typeof d.solutions === 'object' && d.solutions !== null) ? d.solutions as any : {};
   const leetcodeUrl =
     (d as any).leetcode_url ||
@@ -679,21 +683,31 @@ export const technicalService = {
 
     return CAMPUS_DSA_ROADMAP_STAGES.flatMap(s => s.problems).map((p, idx) => {
       const dbRow = dbProblemMap.get(p.id);
-      return {
+      const enriched = enrichCodingProblemForExam({
+        ...p,
+        ...dbRow,
         id: p.id,
         title: p.title,
+        keyIntuition: p.keyIntuition,
+      });
+
+      return {
+        id: p.id,
+        title: enriched.title || p.title,
         slug: p.slug,
         track: 'CAMPUS_DSA' as const,
         level: p.difficulty === 'EASY' ? 'BASIC' : p.difficulty,
-        category: (dbRow?.category || 'POINTERS_ARRAYS') as ProblemCategory,
+        category: (enriched.category || dbRow?.category || 'POINTERS_ARRAYS') as ProblemCategory,
         categoryLabel: p.pattern,
         topicId: p.stageId,
-        description: p.keyIntuition,
-        constraints: [`LC_URL:${p.leetcodeUrl}`, `LC_NUM:${p.leetcodeNumber}`],
-        testCases: dbRow?.test_cases || [],
-        sampleInput: dbRow?.sample_input || '',
-        sampleOutput: dbRow?.sample_output || '',
-        explanation: p.keyIntuition,
+        description: enriched.description || p.keyIntuition,
+        statement: enriched.statement || enriched.description || p.keyIntuition,
+        constraints: Array.isArray(enriched.constraints) ? enriched.constraints : [`LC_URL:${p.leetcodeUrl}`, `LC_NUM:${p.leetcodeNumber}`],
+        testCases: enriched.testCases || enriched.test_cases || dbRow?.test_cases || [],
+        test_cases: enriched.test_cases || enriched.testCases || dbRow?.test_cases || [],
+        sampleInput: enriched.sample_input || enriched.sampleInput || dbRow?.sample_input || '',
+        sampleOutput: enriched.sample_output || enriched.sampleOutput || dbRow?.sample_output || '',
+        explanation: enriched.explanation || p.keyIntuition,
         solutions: dbRow?.solutions || {
           java: `// LeetCode ${p.leetcodeNumber}: ${p.title}\n// Pattern: ${p.pattern}`,
           python: `# LeetCode ${p.leetcodeNumber}: ${p.title}\n# Pattern: ${p.pattern}`,

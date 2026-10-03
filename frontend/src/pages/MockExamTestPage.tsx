@@ -32,6 +32,7 @@ import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import MockExamCodingWorkspace from '@/components/mock-exams/MockExamCodingWorkspace';
 import { isTemplateOrEmptyCode } from '@/services/codeExecution.service';
+import { enrichCodingProblemForExam } from '@/services/campusDsaExamDataset';
 import type {
   MockExam,
   MockExamSection,
@@ -372,9 +373,10 @@ export default function MockExamTestPage() {
       .then(questions => {
         const map: Record<string, any> = {};
         (questions || []).forEach(q => {
+          const enriched = q.isCodingProblem || q.id?.startsWith('lc-') ? enrichCodingProblemForExam(q) : q;
           map[q.id] = {
-            ...q,
-            options: normalizeQuestionOptions(q.options),
+            ...enriched,
+            options: normalizeQuestionOptions(enriched.options),
           };
         });
         setQuestionsMap(map);
@@ -1995,7 +1997,8 @@ export default function MockExamTestPage() {
                             tpoService.getQuestionsForExam(allQ).then(qs => {
                               const map: Record<string, any> = {};
                               qs.forEach(q => {
-                                map[q.id] = { ...q, options: normalizeQuestionOptions(q.options) };
+                                const enriched = q.isCodingProblem || q.id?.startsWith('lc-') ? enrichCodingProblemForExam(q) : q;
+                                map[q.id] = { ...enriched, options: normalizeQuestionOptions(enriched.options) };
                               });
                               setQuestionsMap(map);
                             }).finally(() => setQuestionsLoading(false));
