@@ -5844,6 +5844,25 @@ export const tpoService = {
           secAttempted++;
           totalAttempted++;
           const correctAns = solutionMap[qId];
+
+          // 🛡️ FIX Issue 7: If no answer key exists for this question ID at all, it's a
+          // system-generated placeholder (injected when getQuestionsForExam() couldn't resolve
+          // the ID from any source). Penalizing students for selecting an option on a question
+          // that never existed in the bank is unfair. Award full marks as a system compensation.
+          const isPlaceholderQuestion = correctAns === undefined && !resp?.is_correct;
+          if (isPlaceholderQuestion) {
+            // Void this question entirely — award full credit, no penalty
+            secScore += marksPerQ;
+            secCorrect++;
+            totalCorrect++;
+            gradedResponses[qId] = {
+              ...resp,
+              selected_option: Number(resp.selected_option),
+              is_correct: true,
+            };
+            continue;
+          }
+
           const isCorrect = correctAns !== undefined
             ? Number(resp.selected_option) === Number(correctAns)
             : Boolean(resp?.is_correct);

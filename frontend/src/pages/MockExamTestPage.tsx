@@ -31,7 +31,7 @@ import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import MockExamCodingWorkspace from '@/components/mock-exams/MockExamCodingWorkspace';
-import { isTemplateOrEmptyCode } from '@/services/codeExecution.service';
+import { isTemplateOrEmptyCode, codeExecutionService } from '@/services/codeExecution.service';
 import { enrichCodingProblemForExam } from '@/services/campusDsaExamDataset';
 import type {
   MockExam,
@@ -525,7 +525,17 @@ export default function MockExamTestPage() {
   const isSubmittingRef = useRef(false);
   const handleFinalSubmit = useCallback(
     async (statusOverride?: 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT') => {
-      const aId = syncRef.current.attemptId;
+      // 🛡️ FIX Issue 9: Self-heal attemptId if it failed to hydrate due to a network blip at exam start.
+      // Without this, the countdown hits 00:00, handleFinalSubmit silently returns, and the page
+      // freezes permanently with no way to submit.
+      let aId = syncRef.current.attemptId;
+      if (!aId && exam?.id) {
+        const candidateSlug = user?.email?.split('@')[0] || user?.id?.slice(0, 8) || 'candidate';
+        aId = `att-${exam.id}-${candidateSlug}-${Date.now().toString(36)}`;
+        setAttemptId(aId);
+        syncRef.current = { ...syncRef.current, attemptId: aId };
+      }
+
       if (!exam || !aId || isSubmittingRef.current) return;
 
       isSubmittingRef.current = true;
@@ -538,10 +548,49 @@ export default function MockExamTestPage() {
           events: currentEvents,
         } = syncRef.current;
 
+        // 🛡️ FIX Issue 1: Auto-evaluate any coding question where the student wrote code but
+        // didn't click "Run Tests" (or made a last-minute edit that reset test_cases_passed to 0).
+        // Without this, a student with a perfect solution gets 0 marks if the timer expired
+        // before they could click "Run Tests" on their latest edit.
+        const autoEvaluatedResponses = { ...currentResponses };
+        if (statusOverride !== 'TERMINATED_MALPRACTICE') {
+          const codingQIds = Object.keys(autoEvaluatedResponses).filter(qId => {
+            const resp = autoEvaluatedResponses[qId];
+            const qData = questionsMap[qId];
+            if (!resp || !qData) return false;
+            const hasCode = resp.code_solution && !isTemplateOrEmptyCode(resp.code_solution, resp.code_language);
+            const isUntested = !resp.total_test_cases || resp.test_cases_passed === 0;
+            return hasCode && isUntested;
+          });
+
+          for (const qId of codingQIds) {
+            const resp = autoEvaluatedResponses[qId];
+            const qData = questionsMap[qId];
+            const cases = (qData.test_cases || qData.testCases || []);
+            if (cases.length > 0) {
+              try {
+                const runResult = await codeExecutionService.runTestCases(
+                  resp.code_language || 'python',
+                  resp.code_solution!,
+                  cases
+                );
+                autoEvaluatedResponses[qId] = {
+                  ...resp,
+                  test_cases_passed: runResult.passedCount,
+                  total_test_cases: runResult.totalCount,
+                };
+              } catch (runErr) {
+                // Judge0 unavailable — keep 0/0; coding has no negative marking so student isn't penalized
+                console.warn(`[AutoEval] Judge0 call failed for ${qId}:`, runErr);
+              }
+            }
+          }
+        }
+
         const graded = await tpoService.submitAttempt(
           aId,
           exam,
-          currentResponses,
+          autoEvaluatedResponses,
           currentTimeSpent,
           currentEvents,
           currentTabSwitches,
@@ -560,9 +609,9 @@ export default function MockExamTestPage() {
           } catch {}
         }
 
-        // Merge graded responses with currentResponses so no answer is ever wiped
+        // Merge graded responses with autoEvaluatedResponses so no answer is ever wiped
         const mergedResponses = {
-          ...currentResponses,
+          ...autoEvaluatedResponses,
           ...(graded.responses || {}),
         };
         graded.responses = mergedResponses;
@@ -583,8 +632,9 @@ export default function MockExamTestPage() {
         setShowSubmitConfirm(false);
       }
     },
-    [exam]
+    [exam, questionsMap, user]
   );
+
 
   // 4. Timer Countdown & Auto-Sync Hook (Strict Monotonic High-Precision & Wall-Clock Anchored)
   useEffect(() => {
@@ -697,9 +747,18 @@ export default function MockExamTestPage() {
     };
 
     const handleWindowBlur = () => {
-      if (exam?.enable_tab_switch_detection) {
-        handleViolation('BLUR', 'Examination window lost focus');
+      // 🛡️ FIX Issue 8: Distinguish between actual tab switching (document.hidden === true)
+      // and momentary OS-level focus loss (e.g. Windows Defender popup, Teams/Outlook toast,
+      // browser "Allow fullscreen" bar). When document.hidden is false, the exam page is still
+      // visible on screen — the user has NOT navigated away, so this must NOT count as a
+      // malpractice violation. Only show a gentle warning to keep the window focused.
+      if (!exam?.enable_tab_switch_detection) return;
+      if (document.hidden) {
+        // True tab switch / window minimization — let visibilitychange handle it to avoid double-counting
+        return;
       }
+      // OS notification stole focus but page is still visible — soft warning only, no penalty
+      toast.warning('Keep the exam window focused. Moving away will be flagged.');
     };
 
     const handleFullscreenChange = () => {

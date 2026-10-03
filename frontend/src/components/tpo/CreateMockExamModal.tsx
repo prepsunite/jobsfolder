@@ -71,6 +71,22 @@ const PRESET_COMPANIES = [
 
 const ALL_DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AI/ML', 'DATA SCIENCE'];
 
+/**
+ * 🛡️ FIX Issue 2 (Timezone Bug): Convert a Date to the "YYYY-MM-DDTHH:mm" format that
+ * HTML5 `<input type="datetime-local">` expects — using LOCAL time, not UTC.
+ *
+ * The bug: `new Date().toISOString().slice(0, 16)` produces UTC time.
+ * In IST (UTC+5:30), a 1 PM exam end stored as "07:30" (UTC) gets re-parsed as 7:30 AM IST,
+ * closing the exam 5.5 hours early and locking out all students.
+ */
+function toLocalDatetimeInputValue(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  );
+}
+
 export default function CreateMockExamModal({
   isOpen,
   onClose,
@@ -97,9 +113,9 @@ export default function CreateMockExamModal({
   const [targetBatches, setTargetBatches] = useState<string[]>(['ALL']);
   const [targetDepartments, setTargetDepartments] = useState<string[]>(['ALL']);
   const [targetGradYear, setTargetGradYear] = useState<number>(new Date().getFullYear());
-  const [targetStartTime, setTargetStartTime] = useState(new Date().toISOString().slice(0, 16));
+  const [targetStartTime, setTargetStartTime] = useState(toLocalDatetimeInputValue(new Date()));
   const [targetEndTime, setTargetEndTime] = useState(
-    new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+    toLocalDatetimeInputValue(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000))
   );
   const [inlineNewBatchName, setInlineNewBatchName] = useState('');
   const [isAddingInlineBatch, setIsAddingInlineBatch] = useState(false);
@@ -158,9 +174,9 @@ export default function CreateMockExamModal({
   );
   const [durationMinutes, setDurationMinutes] = useState(90);
   const [passingPercentage, setPassingPercentage] = useState(40);
-  const [startTime, setStartTime] = useState(new Date().toISOString().slice(0, 16));
+  const [startTime, setStartTime] = useState(toLocalDatetimeInputValue(new Date()));
   const [endTime, setEndTime] = useState(
-    new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+    toLocalDatetimeInputValue(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000))
   );
 
   // Anti-Cheat Settings
@@ -217,8 +233,8 @@ export default function CreateMockExamModal({
     setTargetBatches(['ALL']);
     setTargetDepartments(['ALL']);
     setTargetGradYear(now.getFullYear());
-    setTargetStartTime(now.toISOString().slice(0, 16));
-    setTargetEndTime(new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+    setTargetStartTime(toLocalDatetimeInputValue(now));
+    setTargetEndTime(toLocalDatetimeInputValue(new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)));
     setIsAddingInlineBatch(false);
     setInlineNewBatchName('');
   };
