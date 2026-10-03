@@ -14,6 +14,7 @@ import {
   History,
   ArrowRight,
   Zap,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -49,8 +50,54 @@ export default function LeetCodeSyncWidget({
   const [importInput, setImportInput] = useState('');
   const [importResult, setImportResult] = useState<{ count: number; error?: string } | null>(null);
 
+  // Past Solves API Warning Popup & Dismiss State
+  const [showPastSolvesModal, setShowPastSolvesModal] = useState(false);
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = leetcodeSyncService.getStoredProfile();
+    if (!stored?.username) return false;
+    return localStorage.getItem(`prepunite_dismiss_lc_past_solves_${stored.username}`) === 'true';
+  });
+
   // Track timestamp of last sync for smart tab-return auto-sync throttling
   const lastSyncTimestampRef = React.useRef<number>(0);
+
+  // Keep dismissal state synced when profile username changes
+  useEffect(() => {
+    if (profile?.username) {
+      const dismissed = localStorage.getItem(`prepunite_dismiss_lc_past_solves_${profile.username}`) === 'true';
+      setIsNoticeDismissed(dismissed);
+    } else {
+      setIsNoticeDismissed(false);
+    }
+  }, [profile?.username]);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showPastSolvesModal) {
+        setShowPastSolvesModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPastSolvesModal]);
+
+  const handleDismissNotice = () => {
+    if (profile?.username) {
+      localStorage.setItem(`prepunite_dismiss_lc_past_solves_${profile.username}`, 'true');
+    }
+    setIsNoticeDismissed(true);
+  };
+
+  const handleOpenImportFromModal = () => {
+    handleDismissNotice();
+    setShowPastSolvesModal(false);
+    setShowImportBox(true);
+    setTimeout(() => {
+      document.getElementById('lc-import-input')?.focus();
+    }, 150);
+  };
 
   // Load stored profile and reconcile with solved set on mount
   useEffect(() => {
@@ -138,6 +185,12 @@ export default function LeetCodeSyncWidget({
           if (onSyncSuccess) {
             onSyncSuccess();
           }
+
+          // If LC has solves but 0 matched on campus roadmap, show popup notice if not dismissed yet
+          const dismissed = localStorage.getItem(`prepunite_dismiss_lc_past_solves_${result.profile.username}`) === 'true';
+          if (!dismissed && result.profile.stats.totalSolved > 0 && result.matchedCount === 0) {
+            setShowPastSolvesModal(true);
+          }
         }
       } else if (!options?.isSilent) {
         audioEffects.playErrorBuzz();
@@ -158,12 +211,17 @@ export default function LeetCodeSyncWidget({
   };
 
   const handleDisconnect = () => {
+    if (profile?.username) {
+      localStorage.removeItem(`prepunite_dismiss_lc_past_solves_${profile.username}`);
+    }
     leetcodeSyncService.unlinkAccount(user?.email);
     setProfile(null);
     setUsernameInput('');
     setIsEditing(false);
     setShowImportBox(false);
     setImportResult(null);
+    setIsNoticeDismissed(false);
+    setShowPastSolvesModal(false);
     toast.info('LeetCode account unlinked. Verified questions have been reset.');
     if (onSyncSuccess) {
       onSyncSuccess();
@@ -182,6 +240,7 @@ export default function LeetCodeSyncWidget({
       );
       setImportInput('');
       setShowImportBox(false);
+      handleDismissNotice();
       const updated = leetcodeSyncService.getStoredProfile();
       if (updated) setProfile(updated);
       if (onSyncSuccess) onSyncSuccess();
@@ -333,6 +392,19 @@ export default function LeetCodeSyncWidget({
                     {showImportBox ? <ChevronUp className="w-3 h-3 ml-0.5" /> : <ChevronDown className="w-3 h-3 ml-0.5" />}
                   </button>
 
+                  {/* Past Solves Info Button - opens modal popup */}
+                  {profile.stats.totalSolved > 0 && profile.verifiedCampusDsaCount === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPastSolvesModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-display font-bold transition-all cursor-pointer shadow-2xs"
+                      title="Why aren't older LeetCode solves visible? Click to see API limitation details"
+                    >
+                      <History className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Past Solves Info</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
@@ -354,88 +426,39 @@ export default function LeetCodeSyncWidget({
               </div>
             </div>
 
-            {/* ── Past Solves Notice ── shown when LC has solves but recent activity window is empty */}
-            {profile.stats.totalSolved > 0 && profile.verifiedCampusDsaCount === 0 && (
-              <div className="rounded-2xl border border-amber-400/30 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 overflow-hidden animate-fadeIn">
-                {/* Top accent stripe */}
-                <div className="h-0.5 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 opacity-80" />
-
-                <div className="p-4 sm:p-5 space-y-4">
-                  {/* Header row */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center shrink-0">
-                      <History className="w-4.5 h-4.5 text-amber-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-display font-extrabold text-sm text-[#121417] dark:text-white">
-                          Your past LeetCode solves aren't visible yet
-                        </h4>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[10px] font-display font-bold text-amber-700 dark:text-amber-300">
-                          <AlertCircle className="w-3 h-3" />
-                          API Limitation
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
-                        LeetCode's public API only returns recent submissions. Your older solves can't be auto-fetched.
-                      </p>
-                    </div>
+            {/* ── Minimized Past Solves Notice ── shown only when LC has solves, 0 matched, and not dismissed */}
+            {profile.stats.totalSolved > 0 && profile.verifiedCampusDsaCount === 0 && !isNoticeDismissed && (
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs animate-fadeIn">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <History className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   </div>
-
-                  {/* Stat Pills */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] font-display font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-1">
-                      Detected on LeetCode:
+                  <div className="min-w-0">
+                    <span className="font-semibold text-amber-900 dark:text-amber-200">
+                      LeetCode detected {profile.stats.totalSolved} past solves
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FFA116]" />
-                      <span className="text-[11px] font-display font-bold text-[#121417] dark:text-white">{profile.stats.totalSolved}</span>
-                      <span className="text-[10px] text-gray-400 font-mono">Total</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span className="text-[11px] font-display font-bold text-emerald-600 dark:text-emerald-400">{profile.stats.easySolved}</span>
-                      <span className="text-[10px] text-gray-400 font-mono">Easy</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      <span className="text-[11px] font-display font-bold text-amber-600 dark:text-amber-400">{profile.stats.mediumSolved}</span>
-                      <span className="text-[10px] text-gray-400 font-mono">Med</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                      <span className="text-[11px] font-display font-bold text-rose-600 dark:text-rose-400">{profile.stats.hardSolved}</span>
-                      <span className="text-[10px] text-gray-400 font-mono">Hard</span>
+                    <span className="text-amber-700/80 dark:text-amber-400/80 text-[11px] hidden sm:inline ml-1.5">
+                      — older solves aren't auto-fetched due to API limits.
                     </span>
                   </div>
+                </div>
 
-                  {/* CTA Row */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 border-t border-amber-400/15">
-                    <button
-                      type="button"
-                      onClick={() => setShowImportBox(prev => !prev)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#FFA116] hover:bg-[#E08A00] text-black font-display font-bold text-xs transition-all shadow-xs cursor-pointer"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{showImportBox ? 'Hide Import Box' : 'Paste Problem Numbers'}</span>
-                      {showImportBox ? <ChevronUp className="w-3 h-3" /> : <ArrowRight className="w-3 h-3" />}
-                    </button>
-
-                    <span className="text-[10px] text-gray-400 font-mono text-center sm:text-left shrink-0">or</span>
-
-                    <div className="flex-1 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] text-[11px] text-gray-500 dark:text-gray-400">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>Click <strong className="text-[#121417] dark:text-white">"Mark Solved"</strong> on any question card below</span>
-                    </div>
-                  </div>
-
-                  {/* Auto-sync footnote */}
-                  <div className="flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-gray-500">
-                    <Zap className="w-3 h-3 text-emerald-500 shrink-0" />
-                    <span>
-                      New solves on LeetCode will <strong className="text-gray-500 dark:text-gray-400">auto-sync instantly</strong> when you return to this tab — no action needed.
-                    </span>
-                  </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowPastSolvesModal(true)}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-100 font-display font-bold text-[11px] transition-colors cursor-pointer"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDismissNotice}
+                    className="p-1 rounded-lg text-amber-600/70 hover:text-amber-900 dark:hover:text-amber-200 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                    title="Dismiss notice"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             )}
@@ -475,6 +498,7 @@ export default function LeetCodeSyncWidget({
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
+                    id="lc-import-input"
                     type="text"
                     value={importInput}
                     onChange={e => setImportInput(e.target.value)}
@@ -537,11 +561,22 @@ export default function LeetCodeSyncWidget({
 
             {/* Transparent Note / Helper Footnote */}
             <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 pt-1 border-t border-[#FFA116]/15 flex-wrap gap-2">
-              <span className="flex items-center gap-1">
-                <HelpCircle className="w-3.5 h-3.5 text-[#FFA116]" />
-                <span>
-                  Auto-sync checks your recent submissions. You can also 1-click <strong>"Mark Solved"</strong> directly on any question card below.
+              <span className="flex items-center gap-1.5 flex-wrap">
+                <span className="flex items-center gap-1">
+                  <HelpCircle className="w-3.5 h-3.5 text-[#FFA116]" />
+                  <span>
+                    Auto-sync checks your recent submissions. You can also 1-click <strong>"Mark Solved"</strong> directly on any question card below.
+                  </span>
                 </span>
+                {profile.stats.totalSolved > 0 && profile.verifiedCampusDsaCount === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPastSolvesModal(true)}
+                    className="text-amber-600 dark:text-amber-400 hover:underline font-medium cursor-pointer inline-flex items-center gap-1 ml-1"
+                  >
+                    <span>• Why aren't older solves showing?</span>
+                  </button>
+                )}
               </span>
               <span className="font-mono text-[10px] text-gray-400">
                 Synced: {new Date(profile.syncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -645,6 +680,160 @@ export default function LeetCodeSyncWidget({
           </div>
         )}
       </div>
+
+      {/* ── Past Solves Info Modal Dialog ── */}
+      {showPastSolvesModal && profile && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="past-solves-modal-title"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPastSolvesModal(false);
+            }
+          }}
+        >
+          <div className="bg-white dark:bg-[#161616] border border-amber-400/40 dark:border-amber-500/30 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden text-[#121417] dark:text-white">
+            {/* Top accent stripe */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300" />
+
+            {/* Header row with title & close button */}
+            <div className="flex items-start justify-between gap-3 pt-1">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <History className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 id="past-solves-modal-title" className="font-display font-extrabold text-base sm:text-lg text-[#121417] dark:text-white">
+                      Your past LeetCode solves aren't visible yet
+                    </h3>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[10px] font-display font-bold text-amber-700 dark:text-amber-300">
+                      <AlertCircle className="w-3 h-3" />
+                      API Limitation
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                    LeetCode's public API only returns recent submissions (last ~20 accepted). Older solves cannot be auto-fetched automatically.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPastSolvesModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shrink-0"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Stat Pills - Detected on LeetCode */}
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#282828] space-y-2">
+              <span className="text-[10px] font-display font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Detected on LeetCode Profile:
+              </span>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#262626] shadow-2xs">
+                  <div className="text-sm font-display font-extrabold text-[#FFA116]">{profile.stats.totalSolved}</div>
+                  <div className="text-[10px] font-mono text-gray-400">Total</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#262626] shadow-2xs">
+                  <div className="text-sm font-display font-extrabold text-emerald-600 dark:text-emerald-400">{profile.stats.easySolved}</div>
+                  <div className="text-[10px] font-mono text-gray-400">Easy</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#262626] shadow-2xs">
+                  <div className="text-sm font-display font-extrabold text-amber-600 dark:text-amber-400">{profile.stats.mediumSolved}</div>
+                  <div className="text-[10px] font-mono text-gray-400">Med</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#262626] shadow-2xs">
+                  <div className="text-sm font-display font-extrabold text-rose-600 dark:text-rose-400">{profile.stats.hardSolved}</div>
+                  <div className="text-[10px] font-mono text-gray-400">Hard</div>
+                </div>
+              </div>
+            </div>
+
+            {/* How to verify older solves */}
+            <div className="space-y-2.5">
+              <span className="text-[11px] font-display font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                How to verify your older solves:
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleOpenImportFromModal}
+                  className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 text-left transition-all cursor-pointer group flex flex-col justify-between space-y-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-amber-500" />
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white group-hover:text-[#FFA116] transition-colors">
+                      Paste Problem Numbers
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-normal">
+                    Quickly paste problem numbers (e.g. 1, 26, 88, 121) or URLs to verify in batch.
+                  </p>
+                  <div className="inline-flex items-center gap-1 text-[11px] font-display font-bold text-[#FFA116]">
+                    <span>Open Import Tray</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+
+                <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#282828] bg-gray-50 dark:bg-[#1A1A1A] flex flex-col justify-between space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white">
+                      1-Click "Mark Solved"
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-normal">
+                    Browse questions in the Campus DSA roadmap below and click <strong>"Mark Solved"</strong> directly.
+                  </p>
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                    Instant sync to roadmap
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Auto-Sync Footnote Banner */}
+            <div className="flex items-start gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300">
+              <Zap className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">
+                <strong>No manual work for new solves:</strong> Whenever you solve any question on LeetCode, it will auto-sync instantly the moment you return to this tab!
+              </span>
+            </div>
+
+            {/* Modal Actions / Footer */}
+            <div className="flex items-center justify-between pt-2 border-t border-[#E9ECEF] dark:border-[#262626]">
+              <button
+                type="button"
+                onClick={() => {
+                  handleDismissNotice();
+                  setShowPastSolvesModal(false);
+                }}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
+              >
+                Don't show this again
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleDismissNotice();
+                  setShowPastSolvesModal(false);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-display font-bold bg-[#FFA116] hover:bg-[#E08A00] text-black transition-all shadow-xs cursor-pointer"
+              >
+                Got it, thanks!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
