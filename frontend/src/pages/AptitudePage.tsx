@@ -283,7 +283,7 @@ export default function AptitudePage() {
 
   // Fetch live question counts
   const { data: liveCountMap = {} } = useQuery<Record<string, number>>({
-    queryKey: ['topic-question-counts', categorySlug],
+    queryKey: ['topic-question-counts', categorySlug, currentCategoryTopics.length],
     queryFn: async () => {
       if (!currentCategoryTopics.length) return {};
       const topicIds = currentCategoryTopics.map(t => t.id);
@@ -338,17 +338,21 @@ export default function AptitudePage() {
     initialData: () => {
       try {
         const cached = localStorage.getItem(`prepunite_counts_cache_${categorySlug}`);
-        return cached ? JSON.parse(cached) : undefined;
+        if (!cached) return undefined;
+        const parsed = JSON.parse(cached) as Record<string, number>;
+        // Only use cache if it has at least one non-zero count (avoids serving stale all-zero cache)
+        const hasAnyCount = Object.values(parsed).some(v => v > 0);
+        return hasAnyCount ? parsed : undefined;
       } catch { return undefined; }
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     enabled: currentCategoryTopics.length > 0
   });
 
   // Fetch questions for this category to compute live progress stats
   const { data: categoryQuestions = [], isLoading: isCatLoading } = useQuery({
-    queryKey: ['category-questions-stats', categorySlug],
+    queryKey: ['category-questions-stats', categorySlug, currentCategoryTopics.length],
     queryFn: async () => {
       if (!currentCategoryTopics.length) return [];
       const topicIds = currentCategoryTopics.map((t) => t.id);
