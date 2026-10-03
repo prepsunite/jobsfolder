@@ -72,6 +72,7 @@ export interface MockExam {
   shuffle_questions: boolean;
   shuffle_options: boolean;
   show_results_immediately: boolean;
+  enable_sectional_lock?: boolean;
   target_departments: string[];
   target_batches?: string[];
   target_batch_year?: number;
@@ -252,6 +253,7 @@ export interface MockExamTemplate {
   shuffle_questions?: boolean;
   shuffle_options?: boolean;
   show_results_immediately?: boolean;
+  enable_sectional_lock?: boolean;
   target_batches?: string[];
   target_departments?: string[];
   target_batch_year?: number;

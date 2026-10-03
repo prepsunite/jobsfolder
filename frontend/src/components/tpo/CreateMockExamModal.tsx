@@ -185,6 +185,7 @@ export default function CreateMockExamModal({
   const [enableFullscreenLock, setEnableFullscreenLock] = useState(true);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
+  const [enableSectionalLock, setEnableSectionalLock] = useState(false);
   const [showResultsImmediately, setShowResultsImmediately] = useState(true);
 
   // Target Filter
@@ -325,6 +326,7 @@ export default function CreateMockExamModal({
     setMaxTabSwitchesAllowed(tmpl.max_tab_switches_allowed ?? 3);
     setShuffleQuestions(tmpl.shuffle_questions ?? true);
     setShuffleOptions(tmpl.shuffle_options ?? true);
+    setEnableSectionalLock(tmpl.enable_sectional_lock ?? false);
     setShowResultsImmediately(tmpl.show_results_immediately ?? true);
 
     setSections(
@@ -614,6 +616,7 @@ export default function CreateMockExamModal({
           enable_fullscreen_lock: enableFullscreenLock,
           shuffle_questions: shuffleQuestions,
           shuffle_options: shuffleOptions,
+          enable_sectional_lock: enableSectionalLock,
           show_results_immediately: showResultsImmediately,
           target_batches: targetBatches.includes('ALL') ? [] : targetBatches,
           target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
@@ -2532,7 +2535,27 @@ export default function CreateMockExamModal({
                       <input
                         type="checkbox"
                         checked={shuffleQuestions}
-                        onChange={e => setShuffleQuestions(e.target.checked)}
+                        onChange={e => {
+                          setShuffleQuestions(e.target.checked);
+                          setShuffleOptions(e.target.checked);
+                        }}
+                        className="w-4 h-4 accent-[#FD4A32]"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-gray-200 dark:border-[#2e3035] pt-3">
+                      <div>
+                        <div className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                          Enforce Sectional Time Limits & Lockout
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          Auto-advance when section time expires, and lock previous sections (TCS NQT / Corporate Pattern).
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={enableSectionalLock}
+                        onChange={e => setEnableSectionalLock(e.target.checked)}
                         className="w-4 h-4 accent-[#FD4A32]"
                       />
                     </div>

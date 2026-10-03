@@ -84,6 +84,7 @@ interface MockExamCodingWorkspaceProps {
   isLastQuestion: boolean;
   isLastSection: boolean;
   nextSectionName?: string;
+  onRunningStateChange?: (isRunning: boolean) => void;
 }
 
 export default function MockExamCodingWorkspace({
@@ -104,6 +105,7 @@ export default function MockExamCodingWorkspace({
   isLastQuestion,
   isLastSection,
   nextSectionName,
+  onRunningStateChange,
 }: MockExamCodingWorkspaceProps) {
   const initialLang = savedResponse?.code_language || 'python';
   const [selectedLanguage, setSelectedLanguage] = useState<string>(initialLang);
@@ -112,6 +114,10 @@ export default function MockExamCodingWorkspace({
   );
 
   const [isRunningTests, setIsRunningTests] = useState(false);
+
+  useEffect(() => {
+    onRunningStateChange?.(isRunningTests);
+  }, [isRunningTests, onRunningStateChange]);
   const [activeTestTab, setActiveTestTab] = useState<number>(0);
   const [copiedInput, setCopiedInput] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);

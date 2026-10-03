@@ -327,13 +327,25 @@ export const codeExecutionService = {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s network timeout
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    const apiKey = typeof import.meta !== 'undefined' &&
+      (import.meta.env?.VITE_CODE_EXECUTION_API_KEY || import.meta.env?.VITE_JUDGE0_API_KEY || import.meta.env?.VITE_RAPIDAPI_KEY);
+    if (apiKey) {
+      headers['X-RapidAPI-Key'] = apiKey;
+      headers['X-Auth-Token'] = apiKey;
+    }
+    const apiHost = typeof import.meta !== 'undefined' && import.meta.env?.VITE_RAPIDAPI_HOST;
+    if (apiHost) {
+      headers['X-RapidAPI-Host'] = apiHost;
+    }
+
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers,
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
@@ -457,55 +469,41 @@ export const codeExecutionService = {
       };
     }
 
-    // Run all test cases (no hard cap – the UI should render as many as needed).
-    // For very large private suites this stays safe because the browser only
-    // receives sample cases; private grading must run server-side.
+    // 🛡️ Optimize execution:
+    // 1. Run test case 0 first to verify compilation.
+    //    If there is a compile error, abort immediately and skip the rest.
+    // 2. If test case 0 compiles, run test cases 1..N-1 in parallel to slash latency.
     const casesToRun = testCases;
     const evaluatedCases: EvaluatedTestCase[] = [];
     let compileErrorEncountered: string | null = null;
     let firstRuntimeError: string | null = null;
 
-    for (let i = 0; i < casesToRun.length; i++) {
-      const tc = casesToRun[i];
+    const processExecResult = (
+      tc: TestCaseInput,
+      execResult: ExecutionResult
+    ): EvaluatedTestCase => {
       const stdin = tc.input || '';
       const expected = normalizeOutput(tc.expected_output || tc.output || '');
 
-      // Execute on Judge0
-      const execResult = await this.execute(language, sourceCode, stdin);
-
-      // If compilation error occurs on test case 1, abort remaining cases immediately
       if (execResult.isCompileError) {
-        compileErrorEncountered = execResult.compileOutput || execResult.stderr || 'Compilation error occurred.';
-        evaluatedCases.push({
+        const err = execResult.compileOutput || execResult.stderr || 'Compilation error occurred.';
+        if (!compileErrorEncountered) compileErrorEncountered = err;
+        return {
           input: stdin,
           expected,
-          actual: compileErrorEncountered,
+          actual: err,
           passed: false,
           status: 'COMPILATION_ERROR',
           timeMs: execResult.timeMs,
           memoryKb: execResult.memoryKb,
-          error: compileErrorEncountered,
-        });
-
-        // Mark remaining cases as skipped
-        for (let j = i + 1; j < casesToRun.length; j++) {
-          evaluatedCases.push({
-            input: casesToRun[j].input || '',
-            expected: normalizeOutput(casesToRun[j].expected_output || casesToRun[j].output || ''),
-            actual: 'Skipped due to compilation error.',
-            passed: false,
-            status: 'SKIPPED',
-            timeMs: 0,
-          });
-        }
-        break;
+          error: err,
+        };
       }
 
-      // Handle Runtime Error
       if (execResult.isRuntimeError) {
         const rErr = execResult.stderr || execResult.errorMessage || 'Runtime exception thrown.';
         if (!firstRuntimeError) firstRuntimeError = rErr;
-        evaluatedCases.push({
+        return {
           input: stdin,
           expected,
           actual: rErr,
@@ -514,13 +512,11 @@ export const codeExecutionService = {
           timeMs: execResult.timeMs,
           memoryKb: execResult.memoryKb,
           error: rErr,
-        });
-        continue;
+        };
       }
 
-      // Handle Time Limit Exceeded
       if (execResult.isTimeLimitExceeded) {
-        evaluatedCases.push({
+        return {
           input: stdin,
           expected,
           actual: 'Time Limit Exceeded (> 2.0s). Check for infinite loops or inefficient algorithms.',
@@ -529,17 +525,12 @@ export const codeExecutionService = {
           timeMs: execResult.timeMs || 2000,
           memoryKb: execResult.memoryKb,
           error: 'Time Limit Exceeded',
-        });
-        continue;
+        };
       }
 
-      // Check Output Match — REQUIRES successful execution (isSuccess).
-      // An internal error, empty stdout, or network failure must NEVER count as a pass,
-      // even if the expected output is also empty.
       const actual = normalizeOutput(execResult.stdout);
       const isMatch = execResult.isSuccess && actual === expected;
-
-      evaluatedCases.push({
+      return {
         input: stdin,
         expected,
         actual: execResult.stdout.trim().length > 0 ? execResult.stdout.trim() : '[No output printed to stdout]',
@@ -547,7 +538,35 @@ export const codeExecutionService = {
         status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
         timeMs: execResult.timeMs,
         memoryKb: execResult.memoryKb,
+      };
+    };
+
+    // Run first case to verify compilation
+    const firstTc = casesToRun[0];
+    const execResult0 = await this.execute(language, sourceCode, firstTc.input || '');
+    const evaluated0 = processExecResult(firstTc, execResult0);
+    evaluatedCases.push(evaluated0);
+
+    if (evaluated0.status === 'COMPILATION_ERROR') {
+      // Abort and skip remaining cases
+      for (let j = 1; j < casesToRun.length; j++) {
+        evaluatedCases.push({
+          input: casesToRun[j].input || '',
+          expected: normalizeOutput(casesToRun[j].expected_output || casesToRun[j].output || ''),
+          actual: 'Skipped due to compilation error.',
+          passed: false,
+          status: 'SKIPPED',
+          timeMs: 0,
+        });
+      }
+    } else if (casesToRun.length > 1) {
+      // Run remaining cases concurrently to slash execution latency from ~12s to ~3s
+      const remainingPromises = casesToRun.slice(1).map(async (tc) => {
+        const res = await this.execute(language, sourceCode, tc.input || '');
+        return processExecResult(tc, res);
       });
+      const remainingEvaluated = await Promise.all(remainingPromises);
+      evaluatedCases.push(...remainingEvaluated);
     }
 
     const passedCount = evaluatedCases.filter(c => c.passed).length;

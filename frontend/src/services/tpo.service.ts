@@ -3515,9 +3515,11 @@ export const tpoService = {
           const eSections = secMap.get(e.id) || e.sections || [];
           eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
 
-          // Unpack audience metadata if stored in instructions
+          // Unpack audience and sectional lock metadata if stored in instructions
           let targetBatches = e.target_batches || [];
           let instructions = e.instructions || '';
+          const isSectionalLock = Boolean(e.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
+          instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
           if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
             try {
               const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
@@ -3534,6 +3536,7 @@ export const tpoService = {
           map.set(e.id, {
             ...e,
             instructions,
+            enable_sectional_lock: isSectionalLock,
             target_batches: targetBatches,
             sections: eSections,
           });
@@ -3863,6 +3866,8 @@ export const tpoService = {
 
         let targetBatches = examData.target_batches || [];
         let instructions = examData.instructions || '';
+        const isSectionalLock = Boolean(examData.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
+        instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
         if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
           try {
             const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
@@ -3879,6 +3884,7 @@ export const tpoService = {
         resolvedExam = {
           ...examData,
           instructions,
+          enable_sectional_lock: isSectionalLock,
           target_batches: targetBatches,
           sections: sections.length > 0 ? sections : (examData.sections || []),
         };
@@ -4810,6 +4816,7 @@ export const tpoService = {
       shuffle_questions: examData.shuffle_questions,
       shuffle_options: examData.shuffle_options,
       show_results_immediately: examData.show_results_immediately,
+      enable_sectional_lock: Boolean(examData.enable_sectional_lock),
       target_departments: examData.target_departments || [],
       target_batches: examData.target_batches || [],
       target_batch_year: examData.target_batch_year || undefined,
@@ -4849,11 +4856,12 @@ export const tpoService = {
     }
 
     // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
-    // Pack target_batches into instructions metadata for universal multi-device persistence
+    // Pack target_batches and sectional lock into instructions metadata for universal multi-device persistence
+    const sectionalLockMeta = examData.enable_sectional_lock ? `<!--SECTIONAL_LOCK-->\n` : '';
     const audienceMeta = examData.target_batches && examData.target_batches.length > 0
       ? `<!--AUDIENCE:${JSON.stringify({ target_batches: examData.target_batches })}-->\n`
       : '';
-    const instructionsToSave = `${audienceMeta}${examData.instructions || ''}`;
+    const instructionsToSave = `${sectionalLockMeta}${audienceMeta}${examData.instructions || ''}`;
 
     try {
       const { data: newExam, error: examErr } = await supabase

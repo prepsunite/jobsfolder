@@ -19,6 +19,7 @@ export const BUILTIN_BLUEPRINTS: MockExamTemplate[] = [
     shuffle_questions: true,
     shuffle_options: true,
     show_results_immediately: true,
+    enable_sectional_lock: true,
     is_default: true,
     sections: [
       {

@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Layers,
   Calendar,
+  Lock,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -41,6 +42,30 @@ import type {
   ProctorEvent,
 } from '@/types/tpo';
 import { useToast } from '@/contexts/ToastContext';
+
+/**
+ * 🛡️ FIX Issue 6: Deterministic Pseudo-Random Seeded Shuffle (LCG)
+ * Shuffles items reproducibly for a candidate based on (examId + studentIdentifier + context).
+ * Ensures refreshing or navigating between questions does NOT change question or option positions,
+ * but each candidate receives a uniquely randomized layout to prevent screen-copying in physical labs.
+ */
+function seededShuffle<T>(items: T[], seedStr: string): T[] {
+  if (!items || items.length <= 1) return items;
+  let seed = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    seed = (seed * 31 + seedStr.charCodeAt(i)) & 0xffffffff;
+  }
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) & 0xffffffff;
+    return (seed >>> 0) / 4294967296;
+  };
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 export default function MockExamTestPage() {
   const { examId } = useParams<{ examId: string }>();
@@ -251,7 +276,14 @@ export default function MockExamTestPage() {
   // Submission Modal & Final Result
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCodeExecuting, setIsCodeExecuting] = useState(false);
   const [finalGradedAttempt, setFinalGradedAttempt] = useState<StudentExamAttempt | null>(null);
+
+  // Sectional Timer & Lockout State (Issue 5)
+  const [sectionTimeSpent, setSectionTimeSpent] = useState<Record<number, number>>({});
+  const sectionTimeSpentRef = useRef<Record<number, number>>({});
+  const currentSectionIndexRef = useRef<number>(0);
+  currentSectionIndexRef.current = currentSectionIndex;
 
   // Sync ref to avoid stale closures in interval
   const syncRef = useRef<{
@@ -434,9 +466,40 @@ export default function MockExamTestPage() {
 
   // Current Section & its Questions
   const currentSection: MockExamSection | undefined = sections[currentSectionIndex];
-  const currentSectionQIds = currentSection?.question_ids || [];
+
+  // 🛡️ FIX Issue 6: Candidate-specific deterministic seed for question & option shuffling
+  const studentShuffleSeed = useMemo(() => {
+    return `${exam?.id || 'exam'}_${user?.email || user?.id || 'candidate'}`;
+  }, [exam?.id, user?.email, user?.id]);
+
+  // Deterministically shuffle questions within the current section if shuffle_questions is enabled
+  const currentSectionQIds = useMemo(() => {
+    const rawIds = currentSection?.question_ids || [];
+    if (!exam?.shuffle_questions || rawIds.length <= 1) return rawIds;
+    return seededShuffle(rawIds, `${studentShuffleSeed}_sec_${currentSectionIndex}`);
+  }, [currentSection?.question_ids, exam?.shuffle_questions, studentShuffleSeed, currentSectionIndex]);
+
   const currentQuestionId = currentSectionQIds[currentQuestionIndex];
   const currentQuestion = questionsMap[currentQuestionId];
+
+  // Deterministically shuffle MCQ options for the current question if shuffle_options is enabled
+  const displayOptions = useMemo(() => {
+    const normOpts = normalizeQuestionOptions(currentQuestion?.options);
+    const withOriginalIndex = normOpts.map((opt, origIdx) => ({
+      ...opt,
+      originalIndex: origIdx,
+    }));
+    if (!exam?.shuffle_options || !currentQuestionId || withOriginalIndex.length <= 1) {
+      return withOriginalIndex;
+    }
+    return seededShuffle(withOriginalIndex, `${studentShuffleSeed}_opt_${currentQuestionId}`);
+  }, [currentQuestion?.options, exam?.shuffle_options, studentShuffleSeed, currentQuestionId]);
+
+  // Sectional Timer & Lockout computations (Issue 5)
+  const currentSectionDurationMinutes = currentSection?.duration_minutes || 0;
+  const isSectionalLockActive = Boolean(exam?.enable_sectional_lock && currentSectionDurationMinutes > 0);
+  const currentSectionElapsedSec = sectionTimeSpent[currentSectionIndex] || 0;
+  const currentSectionRemainingSec = Math.max(0, currentSectionDurationMinutes * 60 - currentSectionElapsedSec);
 
   // 2. Start Exam Handler
   const handleStartExam = async () => {
@@ -536,6 +599,12 @@ export default function MockExamTestPage() {
         syncRef.current = { ...syncRef.current, attemptId: aId };
       }
 
+      // 🛡️ FIX Issue 4: Guard against submitting while Judge0 tests are actively in-flight
+      if (isCodeExecuting && statusOverride !== 'TIMED_OUT' && statusOverride !== 'TERMINATED_MALPRACTICE') {
+        toast.warning('Code execution is currently in progress. Please wait for test results before submitting.');
+        return;
+      }
+
       if (!exam || !aId || isSubmittingRef.current) return;
 
       isSubmittingRef.current = true;
@@ -632,7 +701,7 @@ export default function MockExamTestPage() {
         setShowSubmitConfirm(false);
       }
     },
-    [exam, questionsMap, user]
+    [exam, questionsMap, user, isCodeExecuting]
   );
 
 
@@ -663,6 +732,30 @@ export default function MockExamTestPage() {
 
       setTimeSpentSeconds(elapsedSec);
       setTimeRemainingSeconds(remainingSec);
+
+      // 🛡️ FIX Issue 5: Track and enforce sectional time limits when enable_sectional_lock is active
+      const secIdx = currentSectionIndexRef.current;
+      const prevSpent = sectionTimeSpentRef.current[secIdx] || 0;
+      const nextSpent = prevSpent + 1;
+      sectionTimeSpentRef.current[secIdx] = nextSpent;
+      setSectionTimeSpent({ ...sectionTimeSpentRef.current });
+
+      const curSec = sections[secIdx];
+      const secDurationMinutes = curSec?.duration_minutes || 0;
+      if (exam?.enable_sectional_lock && secDurationMinutes > 0) {
+        if (nextSpent >= secDurationMinutes * 60) {
+          if (secIdx < sections.length - 1) {
+            toast.warning(`Time limit for ${getSanitizedSectionName(curSec)} has ended. Advancing to next section.`);
+            setCurrentSectionIndex(secIdx + 1);
+            setCurrentQuestionIndex(0);
+          } else {
+            clearInterval(interval);
+            setTimeout(() => {
+              handleFinalSubmit('TIMED_OUT');
+            }, 0);
+          }
+        }
+      }
 
       if (remainingSec <= 0) {
         clearInterval(interval);
@@ -1477,10 +1570,10 @@ export default function MockExamTestPage() {
                 </button>
                 <button
                   onClick={() => handleFinalSubmit('SUBMITTED')}
-                  disabled={isSubmitting}
-                  className="flex-1 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  disabled={isSubmitting || isCodeExecuting}
+                  className="flex-1 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
                 >
-                  {isSubmitting ? 'Grading...' : 'Yes, Submit'}
+                  {isCodeExecuting ? 'Waiting for Tests...' : isSubmitting ? 'Grading...' : 'Yes, Submit'}
                 </button>
               </div>
             </div>
@@ -1518,23 +1611,45 @@ export default function MockExamTestPage() {
           {/* Responsive Section Selector Tabs (visible on mobile and desktop) */}
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-[48vw] sm:max-w-md md:max-w-xl py-1 no-scrollbar">
             {sections.map((sec, idx) => {
-              const secAnswered = sec.question_ids.filter(
+              const secAnswered = (sec.question_ids || []).filter(
                 qId => isQuestionAnswered(responses[qId])
               ).length;
               const isCurrent = currentSectionIndex === idx;
+              const isPastSectionLocked = isSectionalLockActive && idx < currentSectionIndex;
+              const isFutureSectionLocked = isSectionalLockActive && idx > currentSectionIndex;
+
               return (
                 <button
                   key={sec.id || idx}
+                  disabled={isPastSectionLocked || isFutureSectionLocked}
                   onClick={() => {
+                    if (isPastSectionLocked) {
+                      toast.warning('This section has concluded and cannot be reopened.');
+                      return;
+                    }
+                    if (isFutureSectionLocked) {
+                      toast.info('Please complete your current section before proceeding.');
+                      return;
+                    }
                     setCurrentSectionIndex(idx);
                     setCurrentQuestionIndex(0);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 ${
                     isCurrent
                       ? 'bg-[#FD4A32] text-white shadow-sm'
+                      : isPastSectionLocked
+                      ? 'bg-gray-100/60 dark:bg-[#1a1b1d] text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60'
                       : 'bg-gray-100 dark:bg-[#202225] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#282a2e]'
                   }`}
+                  title={
+                    isPastSectionLocked
+                      ? 'Section time expired (Locked)'
+                      : isFutureSectionLocked
+                      ? 'Future section (Locked until reached)'
+                      : sec.name
+                  }
                 >
+                  {isPastSectionLocked && <Lock className="w-3 h-3 text-gray-400 shrink-0" />}
                   <span className="truncate max-w-[110px] sm:max-w-[150px]">{getSanitizedSectionName(sec)}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
@@ -1543,7 +1658,7 @@ export default function MockExamTestPage() {
                         : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    {secAnswered}/{sec.question_ids.length}
+                    {secAnswered}/{(sec.question_ids || []).length}
                   </span>
                 </button>
               );
@@ -1557,6 +1672,22 @@ export default function MockExamTestPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Autosaved</span>
             </div>
+
+            {/* Section Timer (when sectional lock is active) */}
+            {isSectionalLockActive && (
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-xs font-black tracking-wider ${
+                  currentSectionRemainingSec < 120
+                    ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 animate-pulse'
+                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                }`}
+                title="Active Section Time Remaining"
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span>Sec: {formatTime(currentSectionRemainingSec)}</span>
+              </div>
+            )}
+
             <div
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-xs font-black tracking-wider ${
                 timeRemainingSeconds < 300
@@ -1569,11 +1700,27 @@ export default function MockExamTestPage() {
             </div>
 
             <button
-              onClick={() => setShowSubmitConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
+              onClick={() => {
+                if (isCodeExecuting) {
+                  toast.warning('Code execution is currently in progress. Please wait for test results before submitting.');
+                  return;
+                }
+                setShowSubmitConfirm(true);
+              }}
+              disabled={isSubmitting || isCodeExecuting}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
             >
-              <Send className="w-3.5 h-3.5" />
-              Submit
+              {isCodeExecuting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  Submit
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -1782,10 +1929,11 @@ export default function MockExamTestPage() {
                   onClearCode={handleClearResponse}
                   onToggleReview={handleToggleReview}
                   isMarkedReview={Boolean(responses[currentQuestionId]?.marked_review)}
+                  onRunningStateChange={setIsCodeExecuting}
                   onPrev={() => {
                     if (currentQuestionIndex > 0) {
                       setCurrentQuestionIndex(prev => prev - 1);
-                    } else if (currentSectionIndex > 0) {
+                    } else if (!isSectionalLockActive && currentSectionIndex > 0) {
                       const prevSec = sections[currentSectionIndex - 1];
                       const prevQCount = prevSec?.question_ids?.length || 1;
                       setCurrentSectionIndex(prev => prev - 1);
@@ -1802,7 +1950,7 @@ export default function MockExamTestPage() {
                       setShowSubmitConfirm(true);
                     }
                   }}
-                  isFirstQuestion={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                  isFirstQuestion={isSectionalLockActive ? currentQuestionIndex === 0 : (currentSectionIndex === 0 && currentQuestionIndex === 0)}
                   isLastQuestion={isLastQuestionInSection}
                   isLastSection={isLastSection}
                   nextSectionName={getSanitizedSectionName(sections[currentSectionIndex + 1])}
@@ -1874,16 +2022,15 @@ export default function MockExamTestPage() {
 
                       {/* Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
                       {(() => {
-                        const normOpts = normalizeQuestionOptions(currentQuestion.options);
-                        const hasLong = normOpts.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
+                        const hasLong = displayOptions.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
                         return (
                           <div className={hasLong ? "space-y-2.5 pt-1" : "grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1"}>
-                            {normOpts.map((opt, oIdx: number) => {
-                              const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
+                            {displayOptions.map((opt, oIdx: number) => {
+                              const isSelected = responses[currentQuestionId]?.selected_option === opt.originalIndex;
                               return (
                                 <div
-                                  key={opt.key || oIdx}
-                                  onClick={() => handleSelectOption(oIdx)}
+                                  key={opt.key || opt.originalIndex}
+                                  onClick={() => handleSelectOption(opt.originalIndex)}
                                   className={`p-3 sm:p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-3 text-xs ${
                                     isSelected
                                       ? 'border-[#FD4A32] bg-[#FD4A32]/8 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32] shadow-xs'
@@ -1897,7 +2044,7 @@ export default function MockExamTestPage() {
                                         : 'bg-black/5 dark:bg-[#2b2d31] border-neutral-200 dark:border-neutral-700/60 text-gray-700 dark:text-gray-300'
                                     }`}
                                   >
-                                    {opt.key || String.fromCharCode(65 + oIdx)}
+                                    {String.fromCharCode(65 + oIdx)}
                                   </div>
                                   <QuestionRichContent content={opt.text} isOption={true} className="leading-snug flex-1 font-sans" />
                                 </div>
@@ -1917,16 +2064,15 @@ export default function MockExamTestPage() {
 
                     {/* Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
                     {(() => {
-                      const normOpts = normalizeQuestionOptions(currentQuestion.options);
-                      const hasLong = normOpts.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
+                      const hasLong = displayOptions.some(o => (o.text || '').length > 55 || (o.text || '').includes('\n'));
                       return (
                         <div className={hasLong ? "space-y-3 pt-2" : "grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2"}>
-                          {normOpts.map((opt, oIdx: number) => {
-                            const isSelected = responses[currentQuestionId]?.selected_option === oIdx;
+                          {displayOptions.map((opt, oIdx: number) => {
+                            const isSelected = responses[currentQuestionId]?.selected_option === opt.originalIndex;
                             return (
                               <div
-                                key={opt.key || oIdx}
-                                onClick={() => handleSelectOption(oIdx)}
+                                key={opt.key || opt.originalIndex}
+                                onClick={() => handleSelectOption(opt.originalIndex)}
                                 className={`p-3.5 sm:p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 text-xs ${
                                   isSelected
                                     ? 'border-[#FD4A32] bg-[#FD4A32]/8 text-gray-900 dark:text-white font-semibold ring-1 ring-[#FD4A32] shadow-xs'
@@ -1940,7 +2086,7 @@ export default function MockExamTestPage() {
                                       : 'bg-black/5 dark:bg-[#2b2d31] border-neutral-200 dark:border-neutral-700/60 text-gray-700 dark:text-gray-300'
                                   }`}
                                 >
-                                  {opt.key || String.fromCharCode(65 + oIdx)}
+                                  {String.fromCharCode(65 + oIdx)}
                                 </div>
                                 <QuestionRichContent content={opt.text} isOption={true} className="leading-snug flex-1 font-sans" />
                               </div>
@@ -1981,14 +2127,14 @@ export default function MockExamTestPage() {
                       onClick={() => {
                         if (currentQuestionIndex > 0) {
                           setCurrentQuestionIndex(prev => prev - 1);
-                        } else if (currentSectionIndex > 0) {
+                        } else if (!isSectionalLockActive && currentSectionIndex > 0) {
                           const prevSec = sections[currentSectionIndex - 1];
                           const prevQCount = prevSec?.question_ids?.length || 1;
                           setCurrentSectionIndex(prev => prev - 1);
                           setCurrentQuestionIndex(Math.max(0, prevQCount - 1));
                         }
                       }}
-                      disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                      disabled={isSectionalLockActive ? currentQuestionIndex === 0 : (currentSectionIndex === 0 && currentQuestionIndex === 0)}
                       className="px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-[#383a40] disabled:opacity-40 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202225] transition-all cursor-pointer disabled:cursor-not-allowed"
                     >
                       <ArrowLeft className="w-3.5 h-3.5 inline mr-1" />
