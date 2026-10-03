@@ -305,11 +305,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       title={link.name}
                       className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-[#FD4A32] text-white shadow-xs'
+                          ? 'bg-black dark:bg-white text-[#FD4A32] shadow-xs border border-black dark:border-white'
                           : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#FD4A32]'} transition-transform group-hover:scale-110`} />
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400'} transition-transform group-hover:scale-110`} />
                     </Link>
                   );
                 })}
@@ -332,15 +332,15 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         onClick={onClose}
                         className={`group flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold transition-all ${
                           isActive
-                            ? 'bg-[#FD4A32] text-white shadow-xs font-bold'
+                            ? 'bg-black dark:bg-white text-[#FD4A32] shadow-xs font-bold border border-black dark:border-white'
                             : 'text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#FD4A32]'} transition-transform group-hover:scale-110`} />
+                          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400'} transition-transform group-hover:scale-110`} />
                           <span>{link.name}</span>
                         </div>
-                        {isActive && <ChevronRight className="w-3 h-3 text-white" />}
+                        {isActive && <ChevronRight className="w-3 h-3 text-[#FD4A32]" />}
                       </Link>
                     );
                   })}
@@ -441,7 +441,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         title={link.name}
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all relative ${
                           isActive
-                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                            ? 'bg-black dark:bg-white text-[#FD4A32] border border-black dark:border-white shadow-xs'
                             : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
@@ -462,7 +462,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     title="Aptitude & Reasoning"
                     className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                       location.pathname.startsWith('/aptitude')
-                        ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                        ? 'bg-black dark:bg-white text-[#FD4A32] border border-black dark:border-white shadow-xs'
                         : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                     }`}
                   >
@@ -485,7 +485,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         title={`Technical: ${item.name}`}
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                           isItemActive
-                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                            ? 'bg-black dark:bg-white text-[#FD4A32] border border-black dark:border-white shadow-xs'
                             : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
@@ -510,7 +510,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         title={`Interview: ${item.name}`}
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                           isItemActive
-                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30 shadow-xs'
+                            ? 'bg-black dark:bg-white text-[#FD4A32] border border-black dark:border-white shadow-xs'
                             : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
@@ -541,7 +541,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       title="Colleges & TPOs"
                       className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/colleges')
-                          ? 'bg-orange-500/20 text-[#FD4A32] border border-orange-500/40'
+                          ? 'bg-black dark:bg-white text-[#FD4A32] border border-black dark:border-white shadow-xs'
                           : 'text-[#868E96] hover:text-[#FD4A32] hover:bg-orange-500/10'
                       }`}
                     >
@@ -628,7 +628,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         onClick={onClose}
                         className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                           isActive
-                            ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30 shadow-xs'
+                            ? 'bg-black dark:bg-white text-[#FD4A32] font-bold border border-black dark:border-white shadow-xs'
                             : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                         }`}
                       >
@@ -638,7 +638,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         </div>
                         <div className="flex items-center gap-1.5">
                           {'badge' in link && (link as any).badge && (
-                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                            <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full border ${
+                              isActive
+                                ? 'bg-[#FD4A32]/15 text-[#FD4A32] border-[#FD4A32]/30'
+                                : 'bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20'
+                            }`}>
                               {(link as any).badge}
                             </span>
                           )}
@@ -676,7 +680,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             onClick={onClose}
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isCatActive
-                                ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30'
+                                ? 'bg-black dark:bg-white text-[#FD4A32] font-bold border border-black dark:border-white shadow-xs'
                                 : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                             }`}
                           >
@@ -720,7 +724,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             onClick={onClose}
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isItemActive
-                                ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30'
+                                ? 'bg-black dark:bg-white text-[#FD4A32] font-bold border border-black dark:border-white shadow-xs'
                                 : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                             }`}
                           >
@@ -729,7 +733,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                               <span className="truncate">{item.name}</span>
                             </div>
                             {item.badge && (
-                              <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
+                              <span className={`text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded shrink-0 border ${
+                                isItemActive
+                                  ? 'bg-[#FD4A32]/15 text-[#FD4A32] border-[#FD4A32]/30'
+                                  : 'bg-[#FD4A32]/10 text-[#FD4A32] border-transparent'
+                              }`}>
                                 {item.badge}
                               </span>
                             )}
@@ -769,7 +777,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             onClick={onClose}
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isItemActive
-                                ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] font-bold border border-[#FD4A32]/30'
+                                ? 'bg-black dark:bg-white text-[#FD4A32] font-bold border border-black dark:border-white shadow-xs'
                                 : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
                             }`}
                           >
@@ -778,7 +786,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                               <span className="truncate">{item.name}</span>
                             </div>
                             {item.badge && (
-                              <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-[#FD4A32]/10 text-[#FD4A32] shrink-0">
+                              <span className={`text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded shrink-0 border ${
+                                isItemActive
+                                  ? 'bg-[#FD4A32]/15 text-[#FD4A32] border-[#FD4A32]/30'
+                                  : 'bg-[#FD4A32]/10 text-[#FD4A32] border-transparent'
+                              }`}>
                                 {item.badge}
                               </span>
                             )}
@@ -818,7 +830,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       onClick={onClose}
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/colleges')
-                          ? 'bg-orange-500/10 dark:bg-orange-500/20 text-[#FD4A32] border border-orange-500/30'
+                          ? 'bg-black dark:bg-white text-[#FD4A32] border border-black dark:border-white shadow-xs font-bold'
                           : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
                       }`}
                     >
