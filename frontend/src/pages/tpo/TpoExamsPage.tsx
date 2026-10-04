@@ -14,6 +14,7 @@ import {
 import type { MockExam, CollegeBatch } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
 import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
+import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
 import LogoLoader from '@/components/LogoLoader';
 
 function formatExamDateTime(isoString?: string): string {
@@ -78,6 +79,7 @@ export default function TpoExamsPage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
+  const [selectedScheduleExam, setSelectedScheduleExam] = useState<MockExam | null>(null);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE'>('ALL');
   const [selectedBatchFilter, setSelectedBatchFilter] = useState<string>('ALL');
 
@@ -342,6 +344,14 @@ export default function TpoExamsPage() {
                   Leaderboard &amp; Analytics
                 </Link>
                 <button
+                  onClick={() => setSelectedScheduleExam(exam)}
+                  title="Extend test window or conclude assessment immediately"
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition-colors shrink-0 cursor-pointer"
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>Window</span>
+                </button>
+                <button
                   onClick={() => setSelectedShareExam(exam)}
                   title="Share with Students via WhatsApp, Link & Email"
                   className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-bold transition-colors shrink-0"
@@ -374,6 +384,19 @@ export default function TpoExamsPage() {
         onClose={() => setSelectedShareExam(null)}
         exam={selectedShareExam}
         collegeName={currentCollege?.name}
+      />
+
+      {/* Manage Exam Window & Emergency Conclude Modal */}
+      <ManageExamScheduleModal
+        isOpen={!!selectedScheduleExam}
+        onClose={() => setSelectedScheduleExam(null)}
+        exam={selectedScheduleExam}
+        collegeId={collegeId}
+        onSuccess={() => {
+          setSelectedScheduleExam(null);
+          queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+        }}
       />
 
     </div>

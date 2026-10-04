@@ -5032,6 +5032,94 @@ export const tpoService = {
     return true;
   },
 
+  async concludeMockExam(examId: string, collegeId?: string): Promise<boolean> {
+    const nowIso = new Date().toISOString();
+    if (collegeId) {
+      const local = getLocalExams(collegeId);
+      const updated = local.map(e => (e.id === examId ? { ...e, end_time: nowIso } : e));
+      saveLocalExams(collegeId, updated);
+    }
+
+    try {
+      await supabase
+        .from('mock_exams')
+        .update({ end_time: nowIso })
+        .eq('id', examId);
+    } catch (err) {
+      console.warn('Notice concluding mock exam in Supabase:', err);
+    }
+
+    try {
+      await supabase
+        .from('contact_messages')
+        .update({ status: 'CONCLUDED' })
+        .like('subject', `B2B_EXAM:%:${examId}`);
+    } catch {}
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('prepunite-storage-update'));
+    }
+    return true;
+  },
+
+  async extendMockExamWindow(examId: string, newEndTimeIso: string, collegeId?: string): Promise<boolean> {
+    if (collegeId) {
+      const local = getLocalExams(collegeId);
+      const updated = local.map(e => (e.id === examId ? { ...e, end_time: newEndTimeIso } : e));
+      saveLocalExams(collegeId, updated);
+    }
+
+    try {
+      await supabase
+        .from('mock_exams')
+        .update({ end_time: newEndTimeIso })
+        .eq('id', examId);
+    } catch (err) {
+      console.warn('Notice extending mock exam window in Supabase:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('prepunite-storage-update'));
+    }
+    return true;
+  },
+
+  async unlockStudentAttempt(
+    attemptId: string,
+    options: { resetViolations?: boolean; markAsSubmitted?: boolean } = {}
+  ): Promise<boolean> {
+    const local = getLocalAttempts();
+    const existing = local.find(a => a.id === attemptId);
+    const newStatus = options.markAsSubmitted ? 'SUBMITTED' : 'IN_PROGRESS';
+    const newTabSwitches = options.resetViolations ? 0 : (existing?.tab_switch_count || 0);
+
+    if (existing) {
+      const updated: StudentExamAttempt = {
+        ...existing,
+        status: newStatus,
+        tab_switch_count: newTabSwitches,
+      };
+      saveLocalAttempt(updated);
+    }
+
+    try {
+      await supabase
+        .from('student_exam_attempts')
+        .update({
+          status: newStatus,
+          tab_switch_count: newTabSwitches,
+        })
+        .eq('id', attemptId);
+    } catch (err) {
+      console.warn('Notice unlocking attempt in Supabase:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('prepunite-storage-update'));
+    }
+    return true;
+  },
+
   async getExamAttempts(examId: string, explicitCollegeId?: string): Promise<StudentExamAttempt[]> {
     let cloudAttempts: StudentExamAttempt[] = [];
 

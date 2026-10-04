@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import {
   ArrowLeft,
@@ -16,21 +16,28 @@ import {
   Clock,
   Award,
   AlertCircle,
+  Unlock,
+  Radio,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { useToast } from '@/contexts/ToastContext';
+import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
 
 export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
   const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE'>('ALL');
   const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   // Fetch Exam Metadata
   const { data: exam, isLoading: examLoading } = useQuery<MockExam | null>({
@@ -92,8 +99,33 @@ export default function TpoExamDetailPage() {
     };
   };
 
+  // Real-time Candidate Telemetry Groups
+  const inProgressAttempts = useMemo(() => attempts.filter(a => a.status === 'IN_PROGRESS'), [attempts]);
+  const submittedAttempts = useMemo(
+    () => attempts.filter(a => a.status === 'SUBMITTED' || a.status === 'GRADED' || a.status === 'TIMED_OUT'),
+    [attempts]
+  );
+  const malpracticeAttempts = useMemo(
+    () => attempts.filter(a => a.status === 'TERMINATED_MALPRACTICE'),
+    [attempts]
+  );
+
   // Filter attempts
   const filteredAttempts = attempts.filter(att => {
+    if (statusFilter === 'IN_PROGRESS' && att.status !== 'IN_PROGRESS') return false;
+    if (
+      statusFilter === 'SUBMITTED' &&
+      att.status !== 'SUBMITTED' &&
+      att.status !== 'GRADED' &&
+      att.status !== 'TIMED_OUT'
+    )
+      return false;
+    if (
+      statusFilter === 'TERMINATED_MALPRACTICE' &&
+      att.status !== 'TERMINATED_MALPRACTICE'
+    )
+      return false;
+
     const student = resolveStudent(att);
     const matchesSearch =
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,6 +134,35 @@ export default function TpoExamDetailPage() {
     const matchesDept = deptFilter === 'ALL' || student.department === deptFilter;
     return matchesSearch && matchesDept;
   });
+
+  const handleUnlockAttempt = async (
+    attemptId: string,
+    targetStatus: 'IN_PROGRESS' | 'SUBMITTED'
+  ) => {
+    setIsUnlocking(true);
+    try {
+      const success = await tpoService.unlockStudentAttempt(attemptId, {
+        resetViolations: true,
+        markAsSubmitted: targetStatus === 'SUBMITTED',
+      });
+      if (success) {
+        toast.success(
+          targetStatus === 'IN_PROGRESS'
+            ? 'Candidate re-admitted! They can now refresh and continue their test.'
+            : 'Candidate submission accepted and unlocked.'
+        );
+        queryClient.invalidateQueries({ queryKey: ['tpo-exam-attempts', examId, collegeId] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-exam-detail', examId] });
+        setSelectedAttempt(null);
+      } else {
+        toast.error('Failed to unlock candidate attempt. Please try again.');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error unlocking candidate attempt.');
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
 
   const totalSubmitted = attempts.length;
   const uniqueCandidatesCount = useMemo(() => {
@@ -250,7 +311,14 @@ export default function TpoExamDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsScheduleModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-2xs cursor-pointer"
+          >
+            <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            Manage Window &amp; Conclude
+          </button>
           <button
             onClick={copyExamLink}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs"
@@ -261,12 +329,110 @@ export default function TpoExamDetailPage() {
           <button
             onClick={handleExportCSV}
             disabled={attempts.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20 cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            Export CSV Leaderboard
+            Export CSV
           </button>
         </div>
+      </div>
+
+      {/* 🔴 LIVE HALL TELEMETRY & PROCTOR MONITOR */}
+      <div className="p-4.5 rounded-3xl bg-slate-900 text-white shadow-lg border border-slate-800 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+              <Radio className="w-5 h-5 animate-pulse text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xs font-black tracking-wider uppercase text-slate-100">
+                  Live Exam Hall Telemetry &amp; Proctor Monitor
+                </h3>
+                {getExamTimingStatus(exam) === 'LIVE' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    HALL OPEN
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                    HALL CLOSED
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Real-time tracking of candidates in proctored session vs completed vs flagged for malpractice.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Telemetry Filter Chips */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setStatusFilter(statusFilter === 'IN_PROGRESS' ? 'ALL' : 'IN_PROGRESS')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                statusFilter === 'IN_PROGRESS'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'bg-slate-800/80 hover:bg-slate-700/80 text-emerald-400 border border-emerald-500/20'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>In Hall: {inProgressAttempts.length}</span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter(statusFilter === 'SUBMITTED' ? 'ALL' : 'SUBMITTED')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                statusFilter === 'SUBMITTED'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-slate-800/80 hover:bg-slate-700/80 text-blue-300 border border-blue-500/20'
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Submitted: {submittedAttempts.length}</span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter(statusFilter === 'TERMINATED_MALPRACTICE' ? 'ALL' : 'TERMINATED_MALPRACTICE')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                statusFilter === 'TERMINATED_MALPRACTICE'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : malpracticeAttempts.length > 0
+                  ? 'bg-rose-950/70 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 animate-pulse'
+                  : 'bg-slate-800/80 text-slate-400 border border-slate-700'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Disqualified: {malpracticeAttempts.length}</span>
+            </button>
+
+            {statusFilter !== 'ALL' && (
+              <button
+                onClick={() => setStatusFilter('ALL')}
+                className="text-[11px] font-bold text-slate-400 hover:text-white underline ml-1 cursor-pointer"
+              >
+                Clear Filter
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Proctoring Disqualification Warning Notice */}
+        {malpracticeAttempts.length > 0 && (
+          <div className="pt-2.5 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-rose-300 bg-rose-500/10 -mx-4.5 -mb-4.5 px-4.5 py-2.5 rounded-b-3xl">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>
+                <strong>{malpracticeAttempts.length} student(s)</strong> disqualified due to tab switch limits. Inspect their row below to grant <strong>Emergency Re-admission</strong> if false-positive.
+              </span>
+            </div>
+            <button
+              onClick={() => setStatusFilter('TERMINATED_MALPRACTICE')}
+              className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold self-start sm:self-auto cursor-pointer"
+            >
+              Filter Disqualified Candidates
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Metrics Bar */}
@@ -390,8 +556,15 @@ export default function TpoExamDetailPage() {
                       )}
                     </td>
                     <td className="p-4">
-                      {att.status === 'TERMINATED_MALPRACTICE' ? (
-                        <span className="text-rose-600 font-bold">Malpractice Terminated</span>
+                      {att.status === 'IN_PROGRESS' ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                          Live in Hall
+                        </span>
+                      ) : att.status === 'TERMINATED_MALPRACTICE' ? (
+                        <span className="text-rose-600 font-bold flex items-center gap-1">
+                          <ShieldAlert className="w-3.5 h-3.5" /> Disqualified
+                        </span>
                       ) : att.passed ? (
                         <span className="text-emerald-600 font-bold flex items-center gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Cleared
@@ -403,14 +576,27 @@ export default function TpoExamDetailPage() {
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <button
-                        onClick={() => setSelectedAttempt(att)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
-                        title="View Detailed Student Scorecard & Responses"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Inspect</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {att.status === 'TERMINATED_MALPRACTICE' && (
+                          <button
+                            onClick={() => handleUnlockAttempt(att.id, 'IN_PROGRESS')}
+                            disabled={isUnlocking}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                            title="Emergency Unlock & Re-admit Candidate"
+                          >
+                            <Unlock className="w-3.5 h-3.5" />
+                            <span>Unlock</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setSelectedAttempt(att)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-[#FD4A32] hover:text-white hover:border-[#FD4A32] text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                          title="View Detailed Student Scorecard & Responses"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Inspect</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -492,6 +678,42 @@ export default function TpoExamDetailPage() {
 
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto space-y-6 text-xs">
+                {/* 🚨 Emergency Proctor Re-Admission Action Card */}
+                {selectedAttempt.status === 'TERMINATED_MALPRACTICE' && (
+                  <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <ShieldAlert className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                          Disqualified for Tab Switching / Focus Loss
+                        </div>
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                          Detected {selectedAttempt.tab_switch_count} violations (limit: {exam.max_tab_switches_allowed || 3}). If caused by OS notifications, anti-virus alerts, or lab network glitches, TPO can grant re-admission.
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => handleUnlockAttempt(selectedAttempt.id, 'IN_PROGRESS')}
+                        disabled={isUnlocking}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Unlock className="w-3.5 h-3.5" />
+                        <span>Unlock &amp; Resume</span>
+                      </button>
+                      <button
+                        onClick={() => handleUnlockAttempt(selectedAttempt.id, 'SUBMITTED')}
+                        disabled={isUnlocking}
+                        className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <span>Accept Answers</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* 1. Placement Verdict & Cutoff Banner */}
                 <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${
                   selectedAttempt.passed
@@ -656,6 +878,20 @@ export default function TpoExamDetailPage() {
           </div>
         );
       })()}
+
+      {/* Manage Exam Window & Emergency Conclude Modal */}
+      <ManageExamScheduleModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        exam={exam}
+        collegeId={collegeId}
+        onSuccess={() => {
+          setIsScheduleModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['tpo-exam-detail', examId] });
+          queryClient.invalidateQueries({ queryKey: ['tpo-exam-attempts', examId, collegeId] });
+          queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
+        }}
+      />
 
     </div>
   );
