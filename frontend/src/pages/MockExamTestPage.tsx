@@ -24,6 +24,10 @@ import {
   Layers,
   Calendar,
   Lock,
+  Wifi,
+  WifiOff,
+  KeyRound,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -86,6 +90,17 @@ export default function MockExamTestPage() {
   const [testPhase, setTestPhase] = useState<'INSTRUCTIONS' | 'IN_PROGRESS' | 'SUBMITTED'>('INSTRUCTIONS');
   const [isStimulusExpanded, setIsStimulusExpanded] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(true);
+
+  // 🛡️ Pillar 4: Offline Network Drop Shield State
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+  const [justReconnected, setJustReconnected] = useState(false);
+
+  // 🛡️ Pillar 4: Physical Lab Invigilator Passcode Lock State
+  const [enteredPasscode, setEnteredPasscode] = useState('');
+  const [passcodeError, setPasscodeError] = useState<string | null>(null);
+  const [isPasscodeUnlocked, setIsPasscodeUnlocked] = useState(false);
 
   // Fetch Exam configuration
   const { data: exam, isLoading: examLoading } = useQuery<MockExam | null>({
@@ -693,6 +708,30 @@ export default function MockExamTestPage() {
       return;
     }
 
+    // 🛡️ Pillar 4: Verify Physical Lab Invigilator Passcode if enabled
+    const requiresPasscode = Boolean(
+      exam.enable_passcode_lock &&
+      exam.access_passcode &&
+      existingAttempt?.status !== 'IN_PROGRESS'
+    );
+
+    if (requiresPasscode && !isPasscodeUnlocked) {
+      const cleanEntered = enteredPasscode.trim().toUpperCase();
+      const cleanExpected = (exam.access_passcode || '').trim().toUpperCase();
+      if (!cleanEntered) {
+        setPasscodeError('Please enter the lab access PIN provided by your invigilator.');
+        toast.error('Passcode required. Please enter the lab access PIN to begin.');
+        return;
+      }
+      if (cleanEntered !== cleanExpected) {
+        setPasscodeError('Invalid passcode PIN. Please check with your lab faculty or invigilator.');
+        toast.error('Incorrect lab access PIN. Please verify with your invigilator.');
+        return;
+      }
+      setIsPasscodeUnlocked(true);
+      setPasscodeError(null);
+    }
+
     try {
       // Enter Fullscreen if required
       if (exam.enable_fullscreen_lock && document.documentElement.requestFullscreen) {
@@ -943,6 +982,44 @@ export default function MockExamTestPage() {
       clearInterval(syncInterval);
     };
   }, [testPhase, exam?.duration_minutes, exam?.end_time, handleFinalSubmit]);
+
+  // 🛡️ Pillar 4: Network Drop Shield Monitor
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setJustReconnected(true);
+      toast.success('Internet connection restored! Exam progress synchronized with server.');
+
+      const { attemptId: aId, responses: resp, timeSpent, tabSwitches, events } = syncRef.current;
+      if (aId) {
+        tpoService.syncAttemptProgress(aId, {
+          responses: resp,
+          timeSpentSeconds: timeSpent,
+          tabSwitchCount: tabSwitches,
+          proctorEvents: events,
+        });
+      }
+      tpoService.syncOfflineAttempts();
+
+      const timer = setTimeout(() => {
+        setJustReconnected(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning('Network connection lost! Offline protection active: your answers and countdown are safely saved locally.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // 5. Anti-Cheat & Anti-Inspect Watchdog (DevTools, Right-Click, Shortcuts, Tab Switch, Fullscreen, Copy/Cut & PrintScreen)
   useEffect(() => {
@@ -1623,28 +1700,72 @@ export default function MockExamTestPage() {
               </Link>
             </div>
           ) : (
-            <button
-              onClick={() => handleStartExam()}
-              disabled={questionsLoading}
-              className="w-full py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-sm uppercase tracking-wider transition-all shadow-lg shadow-[#FD4A32]/25 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {questionsLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Preparing Question Palette...
-                </>
-              ) : existingAttempt?.status === 'IN_PROGRESS' ? (
-                <>
-                  <Clock className="w-4 h-4" />
-                  Resume In-Progress Exam ({formatTime(timeRemainingSeconds)})
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-4 h-4" />
-                  I Understand — Start Fullscreen Exam
-                </>
+            <div className="space-y-4">
+              {exam?.enable_passcode_lock && exam?.access_passcode && existingAttempt?.status !== 'IN_PROGRESS' && (
+                <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-left space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-indigo-950 dark:text-indigo-200 uppercase tracking-wide">
+                        Physical Lab Invigilator Code Required
+                      </div>
+                      <div className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80">
+                        Enter the secret access PIN announced by your lab faculty or invigilator to unlock this terminal.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      maxLength={8}
+                      value={enteredPasscode}
+                      onChange={e => {
+                        setEnteredPasscode(e.target.value.toUpperCase());
+                        if (passcodeError) setPasscodeError(null);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleStartExam();
+                      }}
+                      placeholder="ENTER PIN"
+                      className="w-full px-4 py-2.5 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-[#151618] text-center font-mono font-black text-xl tracking-widest text-indigo-600 dark:text-indigo-400 uppercase placeholder:text-gray-400 placeholder:text-sm placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+
+                  {passcodeError && (
+                    <p className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5 animate-fadeIn">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      {passcodeError}
+                    </p>
+                  )}
+                </div>
               )}
-            </button>
+
+              <button
+                onClick={() => handleStartExam()}
+                disabled={questionsLoading}
+                className="w-full py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-sm uppercase tracking-wider transition-all shadow-lg shadow-[#FD4A32]/25 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {questionsLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Preparing Question Palette...
+                  </>
+                ) : existingAttempt?.status === 'IN_PROGRESS' ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    Resume In-Progress Exam ({formatTime(timeRemainingSeconds)})
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="w-4 h-4" />
+                    I Understand — Start Fullscreen Exam
+                  </>
+                )}
+              </button>
+            </div>
           )}
 
         </div>
@@ -1741,6 +1862,33 @@ export default function MockExamTestPage() {
           </div>
         )}
 
+        {/* 🛡️ Pillar 4: Offline Network Drop Shield Banners */}
+        {!isOnline && (
+          <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md shrink-0 z-30 animate-pulse">
+            <div className="flex items-center gap-2">
+              <WifiOff className="w-4 h-4 shrink-0 text-slate-950" />
+              <span>
+                <strong>Offline Protection Shield Active:</strong> Internet connection lost. Keep solving! All answers and time are preserved locally and will auto-sync upon reconnection. Do not refresh.
+              </span>
+            </div>
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-black/15 text-[10px] font-black uppercase tracking-wider">
+              Local Cache Protected
+            </span>
+          </div>
+        )}
+
+        {justReconnected && (
+          <div className="bg-emerald-600 text-white px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-md shrink-0 z-30 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <Wifi className="w-4 h-4 shrink-0" />
+              <span>
+                <strong>Connection Restored:</strong> Online connectivity resumed. All responses and timer synchronized with server.
+              </span>
+            </div>
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+        )}
+
         {/* Top Sticky Test Bar */}
         <div className="sticky top-0 z-20 bg-white dark:bg-[#151618] border-b border-gray-200 dark:border-[#25262a] px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shadow-sm gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
@@ -1828,11 +1976,18 @@ export default function MockExamTestPage() {
 
           {/* Timer & Finish Button */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Live Autosave Indicator */}
-            <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Autosaved</span>
-            </div>
+            {/* Live Autosave Indicator / Offline Shield Badge */}
+            {!isOnline ? (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[10px] font-bold animate-pulse">
+                <WifiOff className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                <span>Offline Protected</span>
+              </div>
+            ) : (
+              <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Autosaved</span>
+              </div>
+            )}
 
             {/* Section Timer (when sectional lock is active) */}
             {isSectionalLockActive && (

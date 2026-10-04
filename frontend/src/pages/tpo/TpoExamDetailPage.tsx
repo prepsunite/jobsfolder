@@ -21,6 +21,7 @@ import {
   FileText,
   Sparkles,
   BarChart3,
+  KeyRound,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -314,6 +315,12 @@ export default function TpoExamDetailPage() {
                 </span>
               );
             })()}
+            {exam.enable_passcode_lock && exam.access_passcode && (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 font-mono">
+                <KeyRound className="w-3 h-3 text-indigo-500" />
+                Lab PIN: {exam.access_passcode}
+              </span>
+            )}
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {exam.title}
             </h1>

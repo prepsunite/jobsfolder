@@ -117,6 +117,8 @@ export default function CreateMockExamModal({
   const [targetEndTime, setTargetEndTime] = useState(
     toLocalDatetimeInputValue(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000))
   );
+  const [targetEnablePasscode, setTargetEnablePasscode] = useState(false);
+  const [targetPasscode, setTargetPasscode] = useState('');
   const [inlineNewBatchName, setInlineNewBatchName] = useState('');
   const [isAddingInlineBatch, setIsAddingInlineBatch] = useState(false);
 
@@ -187,6 +189,8 @@ export default function CreateMockExamModal({
   const [shuffleOptions, setShuffleOptions] = useState(true);
   const [enableSectionalLock, setEnableSectionalLock] = useState(false);
   const [showResultsImmediately, setShowResultsImmediately] = useState(true);
+  const [enablePasscodeLock, setEnablePasscodeLock] = useState(false);
+  const [accessPasscode, setAccessPasscode] = useState('');
 
   // Target Filter
   const [targetDepartment, setTargetDepartment] = useState('ALL');
@@ -302,6 +306,8 @@ export default function CreateMockExamModal({
         target_batch_year: targetGradYear,
         start_time: new Date(targetStartTime).toISOString(),
         end_time: new Date(targetEndTime).toISOString(),
+        enable_passcode_lock: targetEnablePasscode,
+        access_passcode: targetEnablePasscode ? (targetPasscode.trim().toUpperCase() || undefined) : undefined,
       });
       setTargetingTemplate(null);
       toast.success('Assessment launched successfully.');
@@ -328,6 +334,8 @@ export default function CreateMockExamModal({
     setShuffleOptions(tmpl.shuffle_options ?? true);
     setEnableSectionalLock(tmpl.enable_sectional_lock ?? false);
     setShowResultsImmediately(tmpl.show_results_immediately ?? true);
+    setEnablePasscodeLock(tmpl.enable_passcode_lock ?? false);
+    setAccessPasscode(tmpl.access_passcode || '');
 
     setSections(
       tmpl.sections.map(s => {
@@ -618,6 +626,8 @@ export default function CreateMockExamModal({
           shuffle_options: shuffleOptions,
           enable_sectional_lock: enableSectionalLock,
           show_results_immediately: showResultsImmediately,
+          enable_passcode_lock: enablePasscodeLock,
+          access_passcode: enablePasscodeLock ? (accessPasscode.trim().toUpperCase() || undefined) : undefined,
           target_batches: targetBatches.includes('ALL') ? [] : targetBatches,
           target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
           target_batch_year: targetBatchYear,
@@ -993,6 +1003,46 @@ export default function CreateMockExamModal({
                     }
                     return null;
                   })()}
+
+                  {/* Lab Invigilator Passcode Lock (Optional) */}
+                  <div className="p-3.5 rounded-xl border border-gray-200 dark:border-[#2e3035] bg-gray-50/70 dark:bg-[#1f2125] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                          <span>Physical Lab Invigilator Passcode Lock</span>
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-500">Security</span>
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          Require candidates to enter a PIN announced by the lab faculty to begin.
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={targetEnablePasscode}
+                        onChange={e => {
+                          setTargetEnablePasscode(e.target.checked);
+                          if (e.target.checked && !targetPasscode) {
+                            setTargetPasscode(Math.floor(1000 + Math.random() * 9000).toString());
+                          }
+                        }}
+                        className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                      />
+                    </div>
+
+                    {targetEnablePasscode && (
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-[#2b2d31]">
+                        <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold">Access PIN:</span>
+                        <input
+                          type="text"
+                          maxLength={8}
+                          value={targetPasscode}
+                          onChange={e => setTargetPasscode(e.target.value.toUpperCase())}
+                          placeholder="e.g. 4821"
+                          className="w-32 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-[#151618] text-xs font-mono font-black tracking-widest text-center text-indigo-600 dark:text-indigo-400 uppercase"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Footer Buttons */}
                   <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-[#2e3035]">
@@ -2628,6 +2678,46 @@ export default function CreateMockExamModal({
                         className="w-4 h-4 accent-[#FD4A32]"
                       />
                     </div>
+
+                    <div className="flex items-center justify-between border-t border-gray-200 dark:border-[#2e3035] pt-3">
+                      <div>
+                        <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                          <span>Physical Lab Invigilator Passcode Lock</span>
+                          <span className="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider rounded bg-indigo-500/10 text-indigo-500">Security</span>
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          Students cannot start until the faculty/invigilator announces or unlocks with a secret code.
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={enablePasscodeLock}
+                        onChange={e => {
+                          setEnablePasscodeLock(e.target.checked);
+                          if (e.target.checked && !accessPasscode) {
+                            setAccessPasscode(Math.floor(1000 + Math.random() * 9000).toString());
+                          }
+                        }}
+                        className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                      />
+                    </div>
+
+                    {enablePasscodeLock && (
+                      <div className="flex items-center justify-between pl-4 border-l-2 border-indigo-500 bg-indigo-500/5 p-2.5 rounded-r-xl">
+                        <div className="text-xs text-gray-700 dark:text-gray-300">
+                          <span className="font-semibold">Lab Access Passcode PIN:</span>
+                          <p className="text-[11px] text-gray-500">Announce this code inside the examination hall to begin.</p>
+                        </div>
+                        <input
+                          type="text"
+                          maxLength={8}
+                          value={accessPasscode}
+                          onChange={e => setAccessPasscode(e.target.value.toUpperCase())}
+                          placeholder="e.g. 4821"
+                          className="w-28 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-[#202225] text-sm font-mono font-black tracking-widest text-center text-indigo-600 dark:text-indigo-400 uppercase"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Detailed Exam Blueprint Summary */}

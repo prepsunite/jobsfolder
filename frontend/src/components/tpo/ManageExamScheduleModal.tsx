@@ -9,6 +9,9 @@ import {
   ArrowRight,
   ShieldAlert,
   Loader2,
+  KeyRound,
+  ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import type { MockExam } from '@/types/tpo';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
@@ -56,7 +59,7 @@ export default function ManageExamScheduleModal({
 }: ManageExamScheduleModalProps) {
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'EXTEND' | 'CONCLUDE'>('EXTEND');
+  const [activeTab, setActiveTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>('EXTEND');
   const [selectedExtensionMinutes, setSelectedExtensionMinutes] = useState<number | null>(30);
   const [customEndTime, setCustomEndTime] = useState<string>(() => {
     if (exam?.end_time) {
@@ -66,8 +69,41 @@ export default function ManageExamScheduleModal({
     return toLocalDatetimeInputValue(new Date(Date.now() + 60 * 60 * 1000));
   });
 
+  const [passcodeEnabled, setPasscodeEnabled] = useState<boolean>(() => Boolean(exam?.enable_passcode_lock));
+  const [passcodeVal, setPasscodeVal] = useState<string>(() => exam?.access_passcode || '');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmConcludeStep, setConfirmConcludeStep] = useState(false);
+
+  // Quick PIN generator (4-digit numeric)
+  const generateRandomPin = () => {
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    setPasscodeVal(pin);
+  };
+
+  const handleSavePasscode = async () => {
+    if (!exam) return;
+    const clean = passcodeVal.trim().toUpperCase();
+    if (passcodeEnabled && !clean) {
+      toast.error('Please enter a 4 to 8 character passcode, or uncheck the passcode lock.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await tpoService.updateExamPasscode(exam.id, clean, passcodeEnabled, collegeId || exam.college_id);
+      toast.success(
+        passcodeEnabled
+          ? `Lab passcode lock active with PIN: ${clean}`
+          : 'Lab passcode lock disabled. Candidates can enter freely.'
+      );
+      onSuccess?.();
+      onClose();
+    } catch {
+      toast.error('Failed to update passcode. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (!isOpen || !exam) return null;
 
@@ -211,7 +247,22 @@ export default function ManageExamScheduleModal({
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>Extend Assessment Window</span>
+            <span>Extend Window</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('PASSCODE');
+              setConfirmConcludeStep(false);
+            }}
+            className={`flex-1 py-3 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'PASSCODE'
+                ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20'
+                : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Lab Passcode Lock</span>
           </button>
           <button
             type="button"
@@ -226,7 +277,7 @@ export default function ManageExamScheduleModal({
             }`}
           >
             <StopCircle className="w-3.5 h-3.5" />
-            <span>Conclude Assessment Now</span>
+            <span>Conclude Now</span>
           </button>
         </div>
 
@@ -298,6 +349,77 @@ export default function ManageExamScheduleModal({
                 </div>
               </div>
             </div>
+          ) : activeTab === 'PASSCODE' ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40 text-xs text-indigo-950 dark:text-indigo-200 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-indigo-700 dark:text-indigo-400">
+                  <KeyRound className="w-4 h-4 shrink-0" />
+                  Physical Lab Invigilator Lock
+                </div>
+                <p className="leading-relaxed text-indigo-800 dark:text-indigo-300">
+                  Require candidates in computer labs to enter an invigilator PIN before they can enter full-screen testing. This prevents students who aren't physically present in the lab from starting the test remotely.
+                </p>
+              </div>
+
+              {/* Toggle Card */}
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-[#1f2125] border border-gray-200 dark:border-[#2e3035]">
+                <div>
+                  <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <span>Enforce Lab Passcode</span>
+                    {passcodeEnabled && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-gray-500 mt-0.5">
+                    Students must enter this PIN to unlock the examination hall session.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={passcodeEnabled}
+                  onChange={e => {
+                    setPasscodeEnabled(e.target.checked);
+                    if (e.target.checked && !passcodeVal) {
+                      generateRandomPin();
+                    }
+                  }}
+                  className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Passcode Input & Regenerate */}
+              {passcodeEnabled && (
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1c21] border-2 border-indigo-200 dark:border-indigo-800/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Active Lab Passcode PIN:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={generateRandomPin}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Generate Random PIN
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      maxLength={8}
+                      value={passcodeVal}
+                      onChange={e => setPasscodeVal(e.target.value.toUpperCase())}
+                      placeholder="e.g. 4821"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/30 dark:bg-indigo-950/20 text-center font-mono font-black text-xl tracking-widest text-indigo-600 dark:text-indigo-400 uppercase"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    Announce this PIN on the lab projector or whiteboard once candidates are seated at their terminals.
+                  </p>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs text-rose-900 dark:text-rose-200 space-y-2">
@@ -353,6 +475,25 @@ export default function ManageExamScheduleModal({
                 <>
                   <span>Save &amp; Extend Window</span>
                   <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          ) : activeTab === 'PASSCODE' ? (
+            <button
+              type="button"
+              onClick={handleSavePasscode}
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Saving PIN...</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Update Passcode Settings</span>
                 </>
               )}
             </button>

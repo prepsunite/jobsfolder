@@ -3538,11 +3538,21 @@ export const tpoService = {
           const eSections = secMap.get(e.id) || e.sections || [];
           eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
 
-          // Unpack audience and sectional lock metadata if stored in instructions
+          // Unpack audience, sectional lock, and lab passcode metadata if stored in instructions
           let targetBatches = e.target_batches || [];
           let instructions = e.instructions || '';
           const isSectionalLock = Boolean(e.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
           instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
+          let isPasscodeLock = Boolean(e.enable_passcode_lock || instructions.includes('<!--PASSCODE:'));
+          let accessPasscode = e.access_passcode || '';
+          if (instructions.includes('<!--PASSCODE:')) {
+            const match = instructions.match(/<!--PASSCODE:(.*?)-->/);
+            if (match && match[1]) {
+              accessPasscode = match[1].trim().toUpperCase();
+              isPasscodeLock = true;
+            }
+          }
+          instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
           if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
             try {
               const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
@@ -3560,6 +3570,8 @@ export const tpoService = {
             ...e,
             instructions,
             enable_sectional_lock: isSectionalLock,
+            enable_passcode_lock: isPasscodeLock,
+            access_passcode: accessPasscode,
             target_batches: targetBatches,
             sections: eSections,
           });
@@ -3951,6 +3963,16 @@ export const tpoService = {
         let instructions = examData.instructions || '';
         const isSectionalLock = Boolean(examData.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
         instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
+        let isPasscodeLock = Boolean(examData.enable_passcode_lock || instructions.includes('<!--PASSCODE:'));
+        let accessPasscode = examData.access_passcode || '';
+        if (instructions.includes('<!--PASSCODE:')) {
+          const match = instructions.match(/<!--PASSCODE:(.*?)-->/);
+          if (match && match[1]) {
+            accessPasscode = match[1].trim().toUpperCase();
+            isPasscodeLock = true;
+          }
+        }
+        instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
         if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
           try {
             const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
@@ -3968,6 +3990,8 @@ export const tpoService = {
           ...examData,
           instructions,
           enable_sectional_lock: isSectionalLock,
+          enable_passcode_lock: isPasscodeLock,
+          access_passcode: accessPasscode,
           target_batches: targetBatches,
           sections: sections.length > 0 ? sections : (examData.sections || []),
         };
@@ -4104,6 +4128,8 @@ export const tpoService = {
       start_time?: string;
       end_time?: string;
       passing_percentage?: number;
+      enable_passcode_lock?: boolean;
+      access_passcode?: string;
     }
   ): Promise<MockExam> {
     const now = new Date();
@@ -4136,6 +4162,8 @@ export const tpoService = {
         shuffle_questions: template.shuffle_questions ?? true,
         shuffle_options: template.shuffle_options ?? true,
         show_results_immediately: template.show_results_immediately ?? true,
+        enable_passcode_lock: overrides?.enable_passcode_lock ?? template.enable_passcode_lock ?? false,
+        access_passcode: overrides?.access_passcode || template.access_passcode || undefined,
         target_departments: overrides?.target_departments || template.target_departments || [],
         target_batches: overrides?.target_batches || template.target_batches || [],
         target_batch_year: overrides?.target_batch_year || template.target_batch_year || 2026,
@@ -4902,6 +4930,8 @@ export const tpoService = {
       shuffle_options: examData.shuffle_options !== false,
       show_results_immediately: examData.show_results_immediately ?? true,
       enable_sectional_lock: Boolean(examData.enable_sectional_lock),
+      enable_passcode_lock: Boolean(examData.enable_passcode_lock),
+      access_passcode: examData.access_passcode ? examData.access_passcode.trim().toUpperCase() : undefined,
       target_departments: examData.target_departments || [],
       target_batches: examData.target_batches || [],
       target_batch_year: examData.target_batch_year || undefined,
@@ -4941,12 +4971,15 @@ export const tpoService = {
     }
 
     // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
-    // Pack target_batches and sectional lock into instructions metadata for universal multi-device persistence
+    // Pack target_batches, sectional lock, and lab passcode into instructions metadata for universal multi-device persistence
     const sectionalLockMeta = examData.enable_sectional_lock ? `<!--SECTIONAL_LOCK-->\n` : '';
+    const passcodeMeta = examData.enable_passcode_lock && examData.access_passcode
+      ? `<!--PASSCODE:${examData.access_passcode.trim().toUpperCase()}-->\n`
+      : '';
     const audienceMeta = examData.target_batches && examData.target_batches.length > 0
       ? `<!--AUDIENCE:${JSON.stringify({ target_batches: examData.target_batches })}-->\n`
       : '';
-    const instructionsToSave = `${sectionalLockMeta}${audienceMeta}${examData.instructions || ''}`;
+    const instructionsToSave = `${sectionalLockMeta}${passcodeMeta}${audienceMeta}${examData.instructions || ''}`;
 
     try {
       const { data: newExam, error: examErr } = await supabase
@@ -4970,6 +5003,8 @@ export const tpoService = {
           shuffle_questions: examData.shuffle_questions !== false,
           shuffle_options: examData.shuffle_options !== false,
           show_results_immediately: examData.show_results_immediately ?? true,
+          enable_passcode_lock: Boolean(examData.enable_passcode_lock),
+          access_passcode: examData.access_passcode ? examData.access_passcode.trim().toUpperCase() : null,
           target_departments: examData.target_departments || [],
           target_batch_year: examData.target_batch_year || null,
         }])
@@ -5082,6 +5117,97 @@ export const tpoService = {
       window.dispatchEvent(new Event('prepunite-storage-update'));
     }
     return true;
+  },
+
+  async updateExamPasscode(
+    examId: string,
+    passcode: string,
+    enabled: boolean,
+    collegeId?: string
+  ): Promise<boolean> {
+    const cleanPasscode = passcode.trim().toUpperCase();
+    if (collegeId) {
+      const local = getLocalExams(collegeId);
+      const updated = local.map(e =>
+        e.id === examId
+          ? { ...e, enable_passcode_lock: enabled, access_passcode: cleanPasscode }
+          : e
+      );
+      saveLocalExams(collegeId, updated);
+    }
+
+    try {
+      await supabase
+        .from('mock_exams')
+        .update({
+          enable_passcode_lock: enabled,
+          access_passcode: cleanPasscode,
+        })
+        .eq('id', examId);
+    } catch (err) {
+      console.warn('Notice updating exam passcode in Supabase:', err);
+    }
+
+    try {
+      const { data: currentExam } = await supabase
+        .from('mock_exams')
+        .select('instructions')
+        .eq('id', examId)
+        .maybeSingle();
+
+      if (currentExam) {
+        let cleanInstructions = (currentExam.instructions || '').replace(/<!--PASSCODE:.*?-->\n?/, '');
+        if (enabled && cleanPasscode) {
+          cleanInstructions = `<!--PASSCODE:${cleanPasscode}-->\n${cleanInstructions}`;
+        }
+        await supabase
+          .from('mock_exams')
+          .update({ instructions: cleanInstructions })
+          .eq('id', examId);
+      }
+    } catch (metaErr) {
+      console.warn('Notice updating exam passcode metadata in instructions:', metaErr);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('prepunite-storage-update'));
+    }
+    return true;
+  },
+
+  async syncOfflineAttempts(): Promise<number> {
+    const local = getLocalAttempts();
+    if (!local || local.length === 0) return 0;
+    let synced = 0;
+    // Sync the 15 most recent attempts
+    for (const attempt of local.slice(0, 15)) {
+      try {
+        await supabase
+          .from('student_exam_attempts')
+          .upsert({
+            id: attempt.id,
+            mock_exam_id: attempt.mock_exam_id,
+            student_id: attempt.student_id,
+            student_email: attempt.student_email || (attempt.student_id?.includes('@') ? attempt.student_id : undefined),
+            college_id: attempt.college_id,
+            status: attempt.status,
+            started_at: attempt.started_at,
+            submitted_at: attempt.submitted_at,
+            time_spent_seconds: attempt.time_spent_seconds,
+            total_score: attempt.total_score,
+            max_possible_score: attempt.max_possible_score,
+            percentage: attempt.percentage,
+            passed: attempt.passed,
+            responses: attempt.responses,
+            result_summary: attempt.result_summary,
+            tab_switch_count: attempt.tab_switch_count,
+            proctor_events: attempt.proctor_events,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+        synced++;
+      } catch {}
+    }
+    return synced;
   },
 
   async unlockStudentAttempt(

@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Layers,
   Calendar,
+  KeyRound,
 } from 'lucide-react';
 import type { MockExam, CollegeBatch } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
@@ -220,9 +221,17 @@ export default function TpoExamsPage() {
 
                 {/* Badge Row */}
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
-                    {exam.target_company}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                      {exam.target_company}
+                    </span>
+                    {exam.enable_passcode_lock && exam.access_passcode && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 font-mono" title={`Lab Passcode: ${exam.access_passcode}`}>
+                        <KeyRound className="w-3 h-3 text-indigo-500" />
+                        PIN: {exam.access_passcode}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     {(() => {
                       const timing = getExamTimingStatus(exam, now);
