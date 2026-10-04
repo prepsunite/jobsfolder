@@ -282,7 +282,11 @@ export default function TpoOverviewPage() {
                         <span>•</span>
                         <span>Total Marks: {exam.total_marks}</span>
                         <span>•</span>
-                        <span>Target: {exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}</span>
+                        <span>
+                          {exam.start_time && exam.end_time
+                            ? `Live Window: ${new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                            : `Target: ${exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}`}
+                        </span>
                       </div>
                     </div>
 

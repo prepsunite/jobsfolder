@@ -9,11 +9,65 @@ import {
   Share2,
   ShieldCheck,
   Layers,
+  Calendar,
 } from 'lucide-react';
 import type { MockExam, CollegeBatch } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
 import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
 import LogoLoader from '@/components/LogoLoader';
+
+function formatExamDateTime(isoString?: string): string {
+  if (!isoString) return 'Flexible / Anytime';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return 'Flexible / Anytime';
+    return d.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return 'Flexible / Anytime';
+  }
+}
+
+function getWindowDurationLabel(startIso?: string, endIso?: string): string | null {
+  if (!startIso || !endIso) return null;
+  try {
+    const s = new Date(startIso).getTime();
+    const e = new Date(endIso).getTime();
+    if (isNaN(s) || isNaN(e) || e <= s) return null;
+    const diffHours = Math.round((e - s) / (1000 * 60 * 60));
+    if (diffHours < 24) return `${diffHours}h window`;
+    const days = Math.round((diffHours / 24) * 10) / 10;
+    return `${days === 1 ? '1 day' : `${days} days`} window`;
+  } catch {
+    return null;
+  }
+}
+
+function getWindowRemainingLabel(endIso?: string): string | null {
+  if (!endIso) return null;
+  try {
+    const endMs = new Date(endIso).getTime();
+    if (isNaN(endMs)) return null;
+    const nowMs = Date.now();
+    const diffMs = endMs - nowMs;
+    if (diffMs <= 0) return 'Window ended';
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 1) {
+      const mins = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+      return `${mins}m left`;
+    }
+    if (diffHours < 24) return `${diffHours}h left`;
+    const days = Math.floor(diffHours / 24);
+    const remHours = diffHours % 24;
+    return remHours > 0 ? `${days}d ${remHours}h left` : `${days}d left`;
+  } catch {
+    return null;
+  }
+}
 
 export default function TpoExamsPage() {
   const { collegeId, currentCollege } = useOutletContext<{
@@ -209,33 +263,65 @@ export default function TpoExamsPage() {
                 </h3>
 
                 {/* Info Pills */}
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl text-xs space-y-1 text-slate-600 dark:text-slate-300">
-                  <div className="flex justify-between">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
+                  <div className="flex justify-between items-center">
                     <span className="text-slate-400">Total Marks:</span>
                     <strong className="text-slate-900 dark:text-white">{exam.total_marks}</strong>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-slate-400">Passing Cutoff:</span>
                     <strong className="text-emerald-600 dark:text-emerald-400">{exam.passing_percentage}%</strong>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Target Depts:</span>
-                    <strong className="text-slate-900 dark:text-white truncate max-w-[140px]">
-                      {exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}
+                  <div className="flex justify-between items-center pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400" />
+                      Live From:
+                    </span>
+                    <strong className="text-slate-900 dark:text-white">
+                      {formatExamDateTime(exam.start_time)}
                     </strong>
                   </div>
-                  <div className="flex justify-between items-center pt-0.5">
-                    <span className="text-slate-400">Target Batch:</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                        exam.target_batches?.length
-                          ? 'bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300'
-                          : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {exam.target_batches?.length ? exam.target_batches.join(', ') : 'All Batches'}
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      Live Until:
                     </span>
+                    <div className="text-right">
+                      <strong className="text-slate-900 dark:text-white">
+                        {formatExamDateTime(exam.end_time)}
+                      </strong>
+                      {(() => {
+                        const timing = getExamTimingStatus(exam, now);
+                        if (timing === 'LIVE') {
+                          const rem = getWindowRemainingLabel(exam.end_time);
+                          return rem ? (
+                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 block -mt-0.5">
+                              ({rem})
+                            </span>
+                          ) : null;
+                        }
+                        if (timing === 'UPCOMING') {
+                          const dur = getWindowDurationLabel(exam.start_time, exam.end_time);
+                          return dur ? (
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 block -mt-0.5">
+                              ({dur})
+                            </span>
+                          ) : null;
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
+                </div>
+
+                {/* Subtle Audience Footer */}
+                <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-0.5">
+                  <span className="truncate max-w-[150px]" title={exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}>
+                    Depts: <strong className="text-slate-600 dark:text-slate-300 font-semibold">{exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches'}</strong>
+                  </span>
+                  <span>
+                    Batch: <strong className="text-slate-600 dark:text-slate-300 font-semibold">{exam.target_batches?.length ? exam.target_batches.join(', ') : 'All Batches'}</strong>
+                  </span>
                 </div>
 
                 {/* Anti-Cheat Badge */}

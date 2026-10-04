@@ -905,8 +905,14 @@ export default function StudentExamsPage() {
                       )}
                     </div>
 
-                    {(isUpcoming || isConcluded) && (
+                    {(isUpcoming || isConcluded || isLive) && (
                       <div className="flex items-center justify-between pt-0.5">
+                        {isLive && exam.end_time && (
+                          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-500" />
+                            Live Window Closes: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
                         {isUpcoming && exam.start_time && (
                           <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
                             Starts: {new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

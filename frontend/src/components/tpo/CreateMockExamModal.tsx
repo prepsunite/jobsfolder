@@ -968,6 +968,32 @@ export default function CreateMockExamModal({
                     </div>
                   </div>
 
+                  {/* Window Duration & Student Attempt Helper */}
+                  {(() => {
+                    const s = new Date(targetStartTime).getTime();
+                    const e = new Date(targetEndTime).getTime();
+                    if (s && e && e > s) {
+                      const diffHours = Math.round((e - s) / (1000 * 60 * 60));
+                      const windowText = diffHours >= 24
+                        ? `${Math.round((diffHours / 24) * 10) / 10} Day(s) (${diffHours} Hours)`
+                        : `${diffHours} Hour(s)`;
+                      return (
+                        <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span>
+                              <strong>Live Window:</strong> Open for <strong>{windowText}</strong>
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                            Each candidate gets <strong>{targetingTemplate.duration_minutes} mins</strong> once started.
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   {/* Footer Buttons */}
                   <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-[#2e3035]">
                     <button
@@ -1601,6 +1627,32 @@ export default function CreateMockExamModal({
                       </select>
                     </div>
                   </div>
+
+                  {/* Window Duration & Student Attempt Helper */}
+                  {(() => {
+                    const s = new Date(startTime).getTime();
+                    const e = new Date(endTime).getTime();
+                    if (s && e && e > s) {
+                      const diffHours = Math.round((e - s) / (1000 * 60 * 60));
+                      const windowText = diffHours >= 24
+                        ? `${Math.round((diffHours / 24) * 10) / 10} Day(s) (${diffHours} Hours)`
+                        : `${diffHours} Hour(s)`;
+                      return (
+                        <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span>
+                              <strong>Live Window:</strong> Open for <strong>{windowText}</strong>
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                            Each candidate gets <strong>{durationMinutes} mins</strong> once started.
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
                   {/* Custom Wizard Target Batches */}
                   <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-[#2e3035]">
