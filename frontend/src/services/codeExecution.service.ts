@@ -178,16 +178,22 @@ function stripCommentsAndWhitespace(code: string, lang: string): string {
 }
 
 /**
- * Detects whether the provided code is empty, whitespace only, or untouched starter boilerplate.
- * Prevents false positives where candidates run tests without writing any logic.
+ * Normalizes input language string (e.g. 'Python 3.10', 'C++ 20 (GCC)', 'CPP') to standard canonical key.
  */
-export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): boolean {
-  if (!code) return true;
-  const rawTrimmed = code.trim();
-  if (rawTrimmed.length === 0) return true;
+export function normalizeLanguageKey(lang?: string): string {
+  if (!lang) return 'python';
+  const l = lang.toLowerCase().trim();
+  if (l.includes('python') || l === 'py') return 'python';
+  if (l.includes('cpp') || l.includes('c++')) return 'cpp';
+  if (l.includes('java')) return 'java';
+  if (l === 'c' || l.includes('c11')) return 'c';
+  return 'python';
+}
 
+function checkIsTemplateForSingleLang(code: string, lang: string): boolean {
   const normalized = normalizeCode(code);
   const template = STARTER_TEMPLATES[lang] || '';
+  if (!template) return false;
   const normalizedTemplate = normalizeCode(template);
 
   // Exact template match
@@ -238,6 +244,29 @@ export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): b
       .replace(/[{}\s]/g, '')
       .trim();
     if (withoutBoilerplate.length === 0) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Detects whether the provided code is empty, whitespace only, or untouched starter boilerplate.
+ * Prevents false positives where candidates run tests without writing any logic or when switching languages.
+ */
+export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): boolean {
+  if (!code) return true;
+  const rawTrimmed = code.trim();
+  if (rawTrimmed.length === 0) return true;
+
+  const targetLang = normalizeLanguageKey(lang);
+  if (checkIsTemplateForSingleLang(code, targetLang)) return true;
+
+  // Universal Fail-Safe: Check against ALL known starter templates!
+  // If the candidate's code matches ANY starter boilerplate, it is untouched template code.
+  for (const k of ['python', 'cpp', 'java', 'c']) {
+    if (k !== targetLang && checkIsTemplateForSingleLang(code, k)) {
+      return true;
+    }
   }
 
   return false;

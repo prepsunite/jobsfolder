@@ -126,16 +126,22 @@ export default function MockExamCodingWorkspace({
   const editorRef = useRef<any>(null);
   // Run revision tracker to invalidate in-flight async results if candidate edits code or changes language
   const runRevisionRef = useRef(0);
+  const isProgrammaticUpdateRef = useRef(false);
+  const selectedLanguageRef = useRef(selectedLanguage);
+  selectedLanguageRef.current = selectedLanguage;
 
   // Sync state if savedResponse changes (e.g. Navigating between questions)
   useEffect(() => {
     runRevisionRef.current += 1;
     const lang = savedResponse?.code_language || 'python';
+    selectedLanguageRef.current = lang;
     setSelectedLanguage(lang);
     const initialCode = savedResponse?.code_solution || STARTER_TEMPLATES[lang] || STARTER_TEMPLATES.python;
     setCode(initialCode);
     if (editorRef.current && editorRef.current.getValue() !== initialCode) {
+      isProgrammaticUpdateRef.current = true;
       editorRef.current.setValue(initialCode);
+      isProgrammaticUpdateRef.current = false;
     }
     setTestResults(null);
     setActiveTestTab(0);
@@ -144,15 +150,20 @@ export default function MockExamCodingWorkspace({
   // Handle language switch
   const handleLanguageChange = (newLang: string) => {
     runRevisionRef.current += 1;
+    const prevLang = selectedLanguageRef.current;
+    selectedLanguageRef.current = newLang;
     setSelectedLanguage(newLang);
     setTestResults(null); // Clear displayed test results on language change
-    // If the candidate hasn't modified the default code for old language, switch to new template
-    const oldTemplate = STARTER_TEMPLATES[selectedLanguage];
-    if (!code || code.trim() === oldTemplate?.trim()) {
+
+    // If candidate hasn't modified the default code for old language, switch to new template
+    const isOldUntouched = !code || isTemplateOrEmptyCode(code, prevLang);
+    if (isOldUntouched) {
       const newCode = STARTER_TEMPLATES[newLang] || '';
       setCode(newCode);
       if (editorRef.current) {
+        isProgrammaticUpdateRef.current = true;
         editorRef.current.setValue(newCode);
+        isProgrammaticUpdateRef.current = false;
       }
       onUpdateCode(newCode, newLang);
     } else {
@@ -163,12 +174,15 @@ export default function MockExamCodingWorkspace({
   // Reset to starter template
   const handleResetTemplate = () => {
     runRevisionRef.current += 1;
-    const template = STARTER_TEMPLATES[selectedLanguage] || '';
+    const currentLang = selectedLanguageRef.current;
+    const template = STARTER_TEMPLATES[currentLang] || '';
     setCode(template);
     if (editorRef.current) {
+      isProgrammaticUpdateRef.current = true;
       editorRef.current.setValue(template);
+      isProgrammaticUpdateRef.current = false;
     }
-    onUpdateCode(template, selectedLanguage, 0, testCases.length);
+    onUpdateCode(template, currentLang, 0, testCases.length);
     setTestResults(null);
   };
 
@@ -250,10 +264,25 @@ export default function MockExamCodingWorkspace({
   }, [question.sample_output, question.sampleOutput, testCases]);
 
   const handleCodeChange = (newCode: string) => {
+    if (isProgrammaticUpdateRef.current) return;
     runRevisionRef.current += 1;
     setCode(newCode);
     setTestResults(null); // Clear displayed test verdicts immediately on source modification
-    onUpdateCode(newCode, selectedLanguage);
+    onUpdateCode(newCode, selectedLanguageRef.current);
+  };
+
+  const handleClearCode = () => {
+    runRevisionRef.current += 1;
+    const currentLang = selectedLanguageRef.current;
+    const template = STARTER_TEMPLATES[currentLang] || '';
+    setCode(template);
+    if (editorRef.current) {
+      isProgrammaticUpdateRef.current = true;
+      editorRef.current.setValue(template);
+      isProgrammaticUpdateRef.current = false;
+    }
+    setTestResults(null);
+    onClearCode();
   };
 
   // Copy helpers
@@ -736,7 +765,7 @@ export default function MockExamCodingWorkspace({
 
           <button
             type="button"
-            onClick={onClearCode}
+            onClick={handleClearCode}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors flex items-center gap-1 cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />

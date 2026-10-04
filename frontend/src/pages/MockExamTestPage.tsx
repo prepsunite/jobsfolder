@@ -266,6 +266,21 @@ export default function MockExamTestPage() {
 
   // Responses Map: { [questionId]: { selected_option: number | null, marked_review: boolean, time_spent_sec: number } }
   const [responses, setResponses] = useState<Record<string, StudentExamResponse>>({});
+
+  // Visited Question IDs tracking (TCS / GATE competitive exam standard)
+  const [visitedQuestionIds, setVisitedQuestionIds] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined' && examId) {
+      try {
+        const saved = localStorage.getItem(`prepunite_visited_${examId}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return new Set(parsed);
+        }
+      } catch {}
+    }
+    return new Set<string>();
+  });
+
   const [attemptId, setAttemptId] = useState<string>('');
   const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(0);
   const [timeSpentSeconds, setTimeSpentSeconds] = useState<number>(0);
@@ -344,6 +359,13 @@ export default function MockExamTestPage() {
         } catch {}
       }
       setResponses(recoveredResponses);
+      if (recoveredResponses) {
+        setVisitedQuestionIds(prev => {
+          const next = new Set(prev);
+          Object.keys(recoveredResponses).forEach(k => next.add(k));
+          return next;
+        });
+      }
       const count = existingAttempt.tab_switch_count || 0;
       tabSwitchCountRef.current = count;
       setTabSwitchCount(count);
@@ -567,6 +589,22 @@ export default function MockExamTestPage() {
 
   const currentQuestionId = currentSectionQIds[currentQuestionIndex];
   const currentQuestion = questionsMap[currentQuestionId];
+
+  // Automatically record current question as visited
+  useEffect(() => {
+    if (!currentQuestionId || testPhase !== 'IN_PROGRESS') return;
+    setVisitedQuestionIds(prev => {
+      if (prev.has(currentQuestionId)) return prev;
+      const next = new Set(prev);
+      next.add(currentQuestionId);
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          localStorage.setItem(`prepunite_visited_${examId}`, JSON.stringify(Array.from(next)));
+        } catch {}
+      }
+      return next;
+    });
+  }, [currentQuestionId, testPhase, examId]);
 
   // Helper to get passage question progress (e.g. "Question 2 of 5" for current passage)
   const passageInfo = useMemo(() => {
@@ -796,6 +834,7 @@ export default function MockExamTestPage() {
         if (typeof window !== 'undefined' && exam?.id) {
           try {
             localStorage.removeItem(`prepunite_active_responses_${exam.id}`);
+            localStorage.removeItem(`prepunite_visited_${exam.id}`);
           } catch {}
         }
 
@@ -1240,6 +1279,7 @@ export default function MockExamTestPage() {
   const isQuestionAnswered = (r?: StudentExamResponse) => {
     if (!r) return false;
     if (r.selected_option !== null && r.selected_option !== undefined && (r.selected_option as unknown) !== '') return true;
+    if (Number(r.test_cases_passed) > 0) return true;
     if (r.code_solution && !isTemplateOrEmptyCode(r.code_solution, r.code_language)) return true;
     return false;
   };
@@ -1923,11 +1963,12 @@ export default function MockExamTestPage() {
                 const secMarked = currentSectionQIds.filter(
                   qId => responses[qId]?.marked_review
                 ).length;
-                const secVisited = currentSectionQIds.filter(
-                  qId => responses[qId] !== undefined
+                const secNotAnswered = currentSectionQIds.filter(
+                  qId => (visitedQuestionIds.has(qId) || responses[qId] !== undefined) && !isQuestionAnswered(responses[qId]) && !responses[qId]?.marked_review
                 ).length;
-                const secNotAnswered = Math.max(0, secVisited - secAns);
-                const secNotVisited = Math.max(0, currentSectionQIds.length - secVisited);
+                const secNotVisited = currentSectionQIds.filter(
+                  qId => !visitedQuestionIds.has(qId) && responses[qId] === undefined
+                ).length;
 
                 return (
                   <div className="grid grid-cols-2 gap-2 text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#1c1d20] p-3 rounded-xl border border-gray-200 dark:border-[#2b2d31]">
@@ -1978,8 +2019,8 @@ export default function MockExamTestPage() {
                     const resp = responses[qId];
                     const isCurrent = idx === currentQuestionIndex;
                     const isAnswered = isQuestionAnswered(resp);
-                    const isMarked = resp && resp.marked_review;
-                    const isVisited = resp !== undefined;
+                    const isMarked = Boolean(resp && resp.marked_review);
+                    const isVisited = visitedQuestionIds.has(qId) || resp !== undefined;
                     const qData = questionsMap[qId];
                     const isPassageQ = Boolean(qData?.passage || qData?.contextData || qData?.passageTitle);
 
@@ -1999,11 +2040,30 @@ export default function MockExamTestPage() {
                         className={`h-9 rounded-lg font-bold text-xs transition-all relative flex items-center justify-center cursor-pointer ${colorClasses} ${
                           isCurrent ? 'ring-2 ring-[#FD4A32] scale-105 shadow-md z-10' : 'hover:opacity-90'
                         }`}
-                        title={isPassageQ ? `Passage-based Question ${idx + 1}` : `Question ${idx + 1}`}
+                        title={
+                          isMarked && isAnswered
+                            ? `Question ${idx + 1} (Answered & Marked for Review)`
+                            : isMarked
+                            ? `Question ${idx + 1} (Marked for Review)`
+                            : isAnswered
+                            ? `Question ${idx + 1} (Answered)`
+                            : isVisited
+                            ? `Question ${idx + 1} (Visited, Unanswered)`
+                            : `Question ${idx + 1} (Not Visited)`
+                        }
                       >
                         {idx + 1}
+                        {isMarked && isAnswered && (
+                          <span
+                            className="absolute top-1 left-1 w-2 h-2 rounded-full bg-emerald-400 border border-purple-800"
+                            title="Answered & Marked for Review"
+                          />
+                        )}
                         {isPassageQ && (
-                          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          <span
+                            className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500"
+                            title="Passage Question"
+                          />
                         )}
                       </button>
                     );
