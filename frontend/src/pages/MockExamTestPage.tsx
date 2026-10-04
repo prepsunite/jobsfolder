@@ -418,8 +418,16 @@ export default function MockExamTestPage() {
           if (typeof se === 'string') {
             try { se = JSON.parse(se); } catch {}
           }
+          let stmt = enriched.statement || enriched.question || '';
+          const snippet = enriched.code_snippet || enriched.codeSnippet;
+          if (snippet && typeof snippet === 'string' && snippet.trim() && !stmt.includes('```') && !stmt.includes(snippet.trim())) {
+            const tId = (enriched.topic_id || enriched.topicId || '').toLowerCase();
+            const lang = tId.includes('python') ? 'python' : tId.includes('cpp') || tId.includes('c++') ? 'cpp' : tId.includes('java') ? 'java' : tId.includes('pseudo') ? 'pseudocode' : tId.includes('sql') ? 'sql' : 'c';
+            stmt = `${stmt}\n\n\`\`\`${lang}\n${snippet.trim()}\n\`\`\``;
+          }
           map[q.id] = {
             ...enriched,
+            statement: stmt,
             passage: enriched.passage || se?.passage || null,
             passageTitle: enriched.passageTitle || se?.passageTitle || null,
             options: normalizeQuestionOptions(enriched.options),
@@ -2323,7 +2331,14 @@ export default function MockExamTestPage() {
                               const map: Record<string, any> = {};
                               qs.forEach(q => {
                                 const enriched = q.isCodingProblem || q.id?.startsWith('lc-') ? enrichCodingProblemForExam(q) : q;
-                                map[q.id] = { ...enriched, options: normalizeQuestionOptions(enriched.options) };
+                                let stmt = enriched.statement || enriched.question || '';
+                                const snippet = enriched.code_snippet || enriched.codeSnippet;
+                                if (snippet && typeof snippet === 'string' && snippet.trim() && !stmt.includes('```') && !stmt.includes(snippet.trim())) {
+                                  const tId = (enriched.topic_id || enriched.topicId || '').toLowerCase();
+                                  const lang = tId.includes('python') ? 'python' : tId.includes('cpp') || tId.includes('c++') ? 'cpp' : tId.includes('java') ? 'java' : tId.includes('pseudo') ? 'pseudocode' : tId.includes('sql') ? 'sql' : 'c';
+                                  stmt = `${stmt}\n\n\`\`\`${lang}\n${snippet.trim()}\n\`\`\``;
+                                }
+                                map[q.id] = { ...enriched, statement: stmt, options: normalizeQuestionOptions(enriched.options) };
                               });
                               setQuestionsMap(map);
                             }).finally(() => setQuestionsLoading(false));

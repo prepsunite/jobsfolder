@@ -374,7 +374,7 @@ export default function MockExamCodingWorkspace({
           {/* Problem Statement */}
           <div className="space-y-2">
             <h4 className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              Problem Statement
+              Problem Description & Specifications
             </h4>
             <div className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed font-sans">
               <QuestionRichContent content={question.statement} />

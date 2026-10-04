@@ -5396,6 +5396,17 @@ export const tpoService = {
     foundIds = new Set(rawQuestions.map(q => q.id));
     missingIds = questionIds.filter(id => !foundIds.has(id));
 
+    const detectTechnicalMcqLanguage = (topicId?: string): string => {
+      const t = (topicId || '').toLowerCase();
+      if (t.includes('python')) return 'python';
+      if (t.includes('cpp') || t.includes('c++')) return 'cpp';
+      if (t.includes('java')) return 'java';
+      if (t.includes('sql') || t.includes('database')) return 'sql';
+      if (t.includes('pseudo')) return 'pseudocode';
+      if (t.includes('javascript') || t.includes('js')) return 'javascript';
+      return 'c';
+    };
+
     if (missingIds.length > 0) {
       try {
         const { data: techMcqs } = await supabase
@@ -5405,8 +5416,9 @@ export const tpoService = {
 
         if (techMcqs && techMcqs.length > 0) {
           techMcqs.forEach(m => {
-            const lang = (m.topic_id || '').includes('python') ? 'python' : (m.topic_id || '').includes('java') ? 'java' : 'c';
-            const codeBlock = m.code_snippet ? `\n\n\`\`\`${lang}\n${m.code_snippet}\n\`\`\`` : '';
+            const lang = detectTechnicalMcqLanguage(m.topic_id);
+            const hasCode = m.question && (m.question.includes('```') || (m.code_snippet && m.question.includes(m.code_snippet.trim())));
+            const codeBlock = (!hasCode && m.code_snippet && m.code_snippet.trim()) ? `\n\n\`\`\`${lang}\n${m.code_snippet.trim()}\n\`\`\`` : '';
             // 🛡️ Security Sanitization: Do NOT include correct_option_index in active test payload
             rawQuestions.push({
               id: m.id,
@@ -5434,8 +5446,9 @@ export const tpoService = {
         missingIds.forEach(mId => {
           const s = seedMap.get(mId);
           if (s) {
-            const lang = (s.topicId || '').includes('python') ? 'python' : (s.topicId || '').includes('java') ? 'java' : 'c';
-            const codeBlock = s.codeSnippet ? `\n\n\`\`\`${lang}\n${s.codeSnippet}\n\`\`\`` : '';
+            const lang = detectTechnicalMcqLanguage(s.topicId);
+            const hasCode = s.question && (s.question.includes('```') || (s.codeSnippet && s.question.includes(s.codeSnippet.trim())));
+            const codeBlock = (!hasCode && s.codeSnippet && s.codeSnippet.trim()) ? `\n\n\`\`\`${lang}\n${s.codeSnippet.trim()}\n\`\`\`` : '';
             rawQuestions.push({
               id: s.id,
               statement: `${s.question}${codeBlock}`,
@@ -6563,9 +6576,20 @@ export const tpoService = {
           .in('id', stillMissing);
 
         if (techMcqs && techMcqs.length > 0) {
+          const detectLang = (topicId?: string): string => {
+            const t = (topicId || '').toLowerCase();
+            if (t.includes('python')) return 'python';
+            if (t.includes('cpp') || t.includes('c++')) return 'cpp';
+            if (t.includes('java')) return 'java';
+            if (t.includes('sql') || t.includes('database')) return 'sql';
+            if (t.includes('pseudo')) return 'pseudocode';
+            if (t.includes('javascript') || t.includes('js')) return 'javascript';
+            return 'c';
+          };
           techMcqs.forEach(m => {
-            const lang = (m.topic_id || '').includes('python') ? 'python' : (m.topic_id || '').includes('java') ? 'java' : 'c';
-            const codeBlock = m.code_snippet ? `\n\n\`\`\`${lang}\n${m.code_snippet}\n\`\`\`` : '';
+            const lang = detectLang(m.topic_id);
+            const hasCode = m.question && (m.question.includes('```') || (m.code_snippet && m.question.includes(m.code_snippet.trim())));
+            const codeBlock = (!hasCode && m.code_snippet && m.code_snippet.trim()) ? `\n\n\`\`\`${lang}\n${m.code_snippet.trim()}\n\`\`\`` : '';
             questions.push({
               id: m.id,
               statement: `${m.question}${codeBlock}`,
