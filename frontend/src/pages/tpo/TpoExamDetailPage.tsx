@@ -19,6 +19,8 @@ import {
   Unlock,
   Radio,
   FileText,
+  Sparkles,
+  BarChart3,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +28,8 @@ import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { useToast } from '@/contexts/ToastContext';
 import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
 import TpoQuestionPaperModal from '@/components/tpo/TpoQuestionPaperModal';
+import TpoRecruiterShortlistModal from '@/components/tpo/TpoRecruiterShortlistModal';
+import TpoBatchDiagnosticModal from '@/components/tpo/TpoBatchDiagnosticModal';
 
 export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
@@ -40,6 +44,8 @@ export default function TpoExamDetailPage() {
   const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isPreviewPaperOpen, setIsPreviewPaperOpen] = useState(false);
+  const [isShortlistModalOpen, setIsShortlistModalOpen] = useState(false);
+  const [isDiagnosticModalOpen, setIsDiagnosticModalOpen] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
   // Fetch Exam Metadata
@@ -315,6 +321,22 @@ export default function TpoExamDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsShortlistModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-purple-300 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 text-xs font-bold text-purple-800 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors shadow-2xs cursor-pointer"
+            title="Generate Dual/Multi-Threshold Recruiter Shortlist & Export CSV"
+          >
+            <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            Recruiter Shortlist
+          </button>
+          <button
+            onClick={() => setIsDiagnosticModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shadow-2xs cursor-pointer"
+            title="Cohort Skill Gap Matrix & Placement Remedial Analysis"
+          >
+            <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            Skill Diagnostics
+          </button>
           <button
             onClick={() => setIsPreviewPaperOpen(true)}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/30 text-xs font-bold text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors shadow-2xs cursor-pointer"
@@ -909,6 +931,24 @@ export default function TpoExamDetailPage() {
         isOpen={isPreviewPaperOpen}
         onClose={() => setIsPreviewPaperOpen(false)}
         examId={examId || null}
+        collegeName={currentCollege?.name}
+      />
+
+      {/* Recruiter Placement Dual-Cutoff Shortlist Generator Modal */}
+      <TpoRecruiterShortlistModal
+        isOpen={isShortlistModalOpen}
+        onClose={() => setIsShortlistModalOpen(false)}
+        exam={exam}
+        attempts={attempts}
+        resolveStudent={resolveStudent}
+      />
+
+      {/* Cohort Skill Gap & Remedial Training Diagnostic Modal */}
+      <TpoBatchDiagnosticModal
+        isOpen={isDiagnosticModalOpen}
+        onClose={() => setIsDiagnosticModalOpen(false)}
+        exam={exam}
+        attempts={attempts}
         collegeName={currentCollege?.name}
       />
 
