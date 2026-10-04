@@ -186,11 +186,7 @@ export default function LeetCodeSyncWidget({
             onSyncSuccess();
           }
 
-          // If LC has solves but 0 matched on campus roadmap, show popup notice if not dismissed yet
-          const dismissed = localStorage.getItem(`prepunite_dismiss_lc_past_solves_${result.profile.username}`) === 'true';
-          if (!dismissed && result.profile.stats.totalSolved > 0 && result.matchedCount === 0) {
-            setShowPastSolvesModal(true);
-          }
+          // Notice stays collapsed by default; user can click 'View Details' or 'Past Solves Info' on demand
         }
       } else if (!options?.isSilent) {
         audioEffects.playErrorBuzz();

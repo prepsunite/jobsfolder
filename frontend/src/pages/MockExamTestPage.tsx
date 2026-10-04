@@ -406,8 +406,14 @@ export default function MockExamTestPage() {
         const map: Record<string, any> = {};
         (questions || []).forEach(q => {
           const enriched = q.isCodingProblem || q.id?.startsWith('lc-') ? enrichCodingProblemForExam(q) : q;
+          let se = enriched.structured_explanation;
+          if (typeof se === 'string') {
+            try { se = JSON.parse(se); } catch {}
+          }
           map[q.id] = {
             ...enriched,
+            passage: enriched.passage || se?.passage || null,
+            passageTitle: enriched.passageTitle || se?.passageTitle || null,
             options: normalizeQuestionOptions(enriched.options),
           };
         });
@@ -472,15 +478,97 @@ export default function MockExamTestPage() {
     return `${exam?.id || 'exam'}_${user?.email || user?.id || 'candidate'}`;
   }, [exam?.id, user?.email, user?.id]);
 
-  // Deterministically shuffle questions within the current section if shuffle_questions is enabled
+  // Deterministically shuffle questions within the current section if shuffle_questions is enabled,
+  // respecting atomic passage blocks so reading comprehension, cloze tests & DI sets stay 100% consecutive in order.
   const currentSectionQIds = useMemo(() => {
     const rawIds = currentSection?.question_ids || [];
     if (!exam?.shuffle_questions || rawIds.length <= 1) return rawIds;
-    return seededShuffle(rawIds, `${studentShuffleSeed}_sec_${currentSectionIndex}`);
-  }, [currentSection?.question_ids, exam?.shuffle_questions, studentShuffleSeed, currentSectionIndex]);
+
+    // 1. Group questions into cohesive blocks
+    const blocks: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+    const keyToBlockIndex = new Map<string, number>();
+
+    for (const qId of rawIds) {
+      const q = questionsMap[qId];
+      // Determine if question belongs to a passage / stimulus set
+      const passageKey =
+        q?.passageTitle ||
+        q?.contextTitle ||
+        q?.structured_explanation?.passageTitle ||
+        (q?.passage ? `passage-${q.passage.slice(0, 40)}` : null) ||
+        (q?.topic_id && q?.question_number
+          ? (['reading-comprehension', 'cloze-test'].includes(q.topic_id)
+              ? `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`
+              : null)
+          : null);
+
+      if (passageKey) {
+        if (keyToBlockIndex.has(passageKey)) {
+          const idx = keyToBlockIndex.get(passageKey)!;
+          blocks[idx].qIds.push(qId);
+        } else {
+          const newIdx = blocks.length;
+          blocks.push({ key: passageKey, qIds: [qId], isPassage: true });
+          keyToBlockIndex.set(passageKey, newIdx);
+        }
+      } else {
+        // Standalone question
+        blocks.push({ key: `solo-${qId}`, qIds: [qId], isPassage: false });
+      }
+    }
+
+    // Sort questions within each passage block by question_number so Q1..N are in exact stimulus order
+    blocks.forEach(b => {
+      if (b.isPassage && b.qIds.length > 1) {
+        b.qIds.sort((aId, bId) => {
+          const qA = questionsMap[aId]?.question_number || 0;
+          const qB = questionsMap[bId]?.question_number || 0;
+          return qA - qB;
+        });
+      }
+    });
+
+    // Seeded shuffle on the blocks (atomic units)
+    const shuffledBlocks = seededShuffle(blocks, `${studentShuffleSeed}_sec_${currentSectionIndex}`);
+    return shuffledBlocks.flatMap(b => b.qIds);
+  }, [currentSection?.question_ids, exam?.shuffle_questions, studentShuffleSeed, currentSectionIndex, questionsMap]);
 
   const currentQuestionId = currentSectionQIds[currentQuestionIndex];
   const currentQuestion = questionsMap[currentQuestionId];
+
+  // Helper to get passage question progress (e.g. "Question 2 of 5" for current passage)
+  const passageInfo = useMemo(() => {
+    if (!currentQuestion?.passage && !currentQuestion?.contextData && !currentQuestion?.passageTitle) {
+      return null;
+    }
+    const currentPassageKey =
+      currentQuestion?.passageTitle ||
+      currentQuestion?.contextTitle ||
+      (currentQuestion?.passage ? `passage-${currentQuestion.passage.slice(0, 40)}` : null) ||
+      (currentQuestion?.topic_id && currentQuestion?.question_number
+        ? `${currentQuestion.topic_id}-block-${Math.floor(((currentQuestion.question_number || 1) - 1) / 5)}`
+        : null);
+
+    if (!currentPassageKey) return null;
+
+    const passageQIds = currentSectionQIds.filter(id => {
+      const q = questionsMap[id];
+      const pKey =
+        q?.passageTitle ||
+        q?.contextTitle ||
+        (q?.passage ? `passage-${q.passage.slice(0, 40)}` : null) ||
+        (q?.topic_id && q?.question_number
+          ? `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`
+          : null);
+      return pKey === currentPassageKey;
+    });
+
+    const indexInPassage = passageQIds.indexOf(currentQuestionId) + 1;
+    return {
+      indexInPassage: indexInPassage > 0 ? indexInPassage : 1,
+      totalInPassage: passageQIds.length || 5,
+    };
+  }, [currentQuestion, currentSectionQIds, questionsMap, currentQuestionId]);
 
   // Deterministically shuffle MCQ options for the current question if shuffle_options is enabled
   const displayOptions = useMemo(() => {
@@ -1859,6 +1947,8 @@ export default function MockExamTestPage() {
                     const isAnswered = isQuestionAnswered(resp);
                     const isMarked = resp && resp.marked_review;
                     const isVisited = resp !== undefined;
+                    const qData = questionsMap[qId];
+                    const isPassageQ = Boolean(qData?.passage || qData?.contextData || qData?.passageTitle);
 
                     let colorClasses = 'bg-gray-100 dark:bg-[#202225] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#2e3035]';
                     if (isMarked) {
@@ -1873,11 +1963,15 @@ export default function MockExamTestPage() {
                       <button
                         key={qId}
                         onClick={() => setCurrentQuestionIndex(idx)}
-                        className={`h-9 rounded-lg font-bold text-xs transition-all flex items-center justify-center cursor-pointer ${colorClasses} ${
+                        className={`h-9 rounded-lg font-bold text-xs transition-all relative flex items-center justify-center cursor-pointer ${colorClasses} ${
                           isCurrent ? 'ring-2 ring-[#FD4A32] scale-105 shadow-md z-10' : 'hover:opacity-90'
                         }`}
+                        title={isPassageQ ? `Passage-based Question ${idx + 1}` : `Question ${idx + 1}`}
                       >
                         {idx + 1}
+                        {isPassageQ && (
+                          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        )}
                       </button>
                     );
                   })}
@@ -1967,6 +2061,7 @@ export default function MockExamTestPage() {
                     {(currentQuestion.passage || currentQuestion.contextData) && (
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         {currentQuestion.passage ? 'Passage Based' : 'Data Reference Based'}
+                        {passageInfo && ` • Sub-Question ${passageInfo.indexInPassage} of ${passageInfo.totalInPassage}`}
                       </span>
                     )}
                   </div>

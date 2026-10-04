@@ -60,6 +60,29 @@ export function isAttemptCompleted(attempt?: StudentExamAttempt | null): boolean
 }
 
 /**
+ * Topics whose questions are linked to a shared reading passage, chart, table, or puzzle context.
+ * These questions must always be handled as atomic, cohesive blocks and never scattered or pruned by difficulty.
+ */
+export const PASSAGE_BASED_TOPICS = new Set([
+  'reading-comprehension',
+  'cloze-test',
+  'table-charts',
+  'line-charts',
+  'bar-charts',
+  'pie-charts',
+  'caselet-di',
+  'missing-di',
+  'radar-web-charts',
+  'scatter-bubble-charts',
+  'floor-scheduling-puzzles',
+  'games-and-tournaments',
+  'logical-games',
+  'machine-input-output',
+  'making-judgments',
+]);
+
+
+/**
  * Helper to get the real-time scheduling lifecycle of an exam
  */
 export function getExamTimingStatus(
@@ -3708,26 +3731,86 @@ export const tpoService = {
             }
           } catch {}
         } else {
-          // Aptitude MCQ
+          // Aptitude MCQ with Atomic Passage Grouping
           try {
             const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
             const allowedTopicIds = hasTopicIds ? expandTopicAliases(sec.topic_ids) : [];
+            const isRequestingPassageTopic = (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t));
+
             let mcqQuery = supabase
               .from('topic_questions')
-              .select('id, topic_id')
+              .select('id, question_number, topic_id, difficulty, structured_explanation')
               .eq('is_deleted', false);
+
+            if (!isRequestingPassageTopic && sec.difficulty && sec.difficulty !== 'ALL') {
+              mcqQuery = mcqQuery.eq('difficulty', sec.difficulty);
+            }
 
             if (allowedTopicIds.length > 0) {
               mcqQuery = mcqQuery.in('topic_id', allowedTopicIds);
             }
-            const { data: mcqData } = await mcqQuery.limit(Math.max(neededCount * 15, 100));
+            const { data: mcqData } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
             if (mcqData && mcqData.length > 0) {
-              const shuffled = [...mcqData].sort(() => Math.random() - 0.5);
-              for (const q of shuffled) {
-                if (!usedQuestionIds.has(q.id)) {
-                  pooledIds.push(q.id);
-                  usedQuestionIds.add(q.id);
+              const hasPassageTopic =
+                isRequestingPassageTopic ||
+                mcqData.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
+
+              if (hasPassageTopic) {
+                const passageBlocks: Record<string, any[]> = {};
+                const nonPassageQuestions: any[] = [];
+
+                mcqData.forEach(q => {
+                  let se = q.structured_explanation;
+                  if (typeof se === 'string') {
+                    try { se = JSON.parse(se); } catch {}
+                  }
+                  const isPassage =
+                    PASSAGE_BASED_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
+
+                  if (isPassage) {
+                    const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
+                    const groupKey =
+                      title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
+                    if (!passageBlocks[groupKey]) passageBlocks[groupKey] = [];
+                    passageBlocks[groupKey].push(q);
+                  } else {
+                    nonPassageQuestions.push(q);
+                  }
+                });
+
+                const shuffledBlockKeys = Object.keys(passageBlocks).sort(() => Math.random() - 0.5);
+                for (const key of shuffledBlockKeys) {
+                  const block = passageBlocks[key];
+                  block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
+                  const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
+                  if (unusedInBlock.length === 0) continue;
+                  // Skip if it would overshoot, unless we have no questions yet
+                  if (pooledIds.length > 0 && pooledIds.length + unusedInBlock.length > neededCount) continue;
+                  for (const q of unusedInBlock) {
+                    pooledIds.push(q.id);
+                    usedQuestionIds.add(q.id);
+                  }
                   if (pooledIds.length >= neededCount) break;
+                }
+
+                if (pooledIds.length < neededCount) {
+                  const shuffledNonPassage = nonPassageQuestions.sort(() => Math.random() - 0.5);
+                  for (const q of shuffledNonPassage) {
+                    if (!usedQuestionIds.has(q.id)) {
+                      pooledIds.push(q.id);
+                      usedQuestionIds.add(q.id);
+                      if (pooledIds.length >= neededCount) break;
+                    }
+                  }
+                }
+              } else {
+                const shuffled = [...mcqData].sort(() => Math.random() - 0.5);
+                for (const q of shuffled) {
+                  if (!usedQuestionIds.has(q.id)) {
+                    pooledIds.push(q.id);
+                    usedQuestionIds.add(q.id);
+                    if (pooledIds.length >= neededCount) break;
+                  }
                 }
               }
             }
@@ -4553,12 +4636,15 @@ export const tpoService = {
             );
           }
 
+          const isRequestingPassageTopic = (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t));
+
           let mcqQuery = supabase
             .from('topic_questions')
             .select('id, question_number, topic_id, difficulty, structured_explanation')
             .eq('is_deleted', false);
 
-          if (sec.difficulty && sec.difficulty !== 'ALL') {
+          // Only filter by difficulty if not a passage-based topic, to preserve full progressive 5-question passage blocks
+          if (!isRequestingPassageTopic && sec.difficulty && sec.difficulty !== 'ALL') {
             mcqQuery = mcqQuery.eq('difficulty', sec.difficulty);
           }
 
@@ -4570,7 +4656,7 @@ export const tpoService = {
           if (data && data.length > 0) {
             // Check if section contains passage-based questions
             const hasPassageTopic =
-              (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t)) ||
+              isRequestingPassageTopic ||
               data.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
 
             if (hasPassageTopic) {
@@ -4598,9 +4684,8 @@ export const tpoService = {
               });
 
               // F10 Fix: Passage blocks MUST be included as atomic units.
-              // Only include a block if the entire block fits within the remaining capacity.
-              // This means we may end up with fewer questions than requested — that's correct
-              // and preferable to showing a half-passage with missing context.
+              // Only include a block if the entire block fits within the remaining capacity,
+              // unless questionIds is currently empty (better to include 1 complete passage block than produce an empty section).
               const shuffledBlockKeys = Object.keys(passageBlocks).sort(() => Math.random() - 0.5);
               const usedPassageQIds = new Set<string>();
               for (const key of shuffledBlockKeys) {
@@ -4609,8 +4694,8 @@ export const tpoService = {
                 block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
                 const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
                 if (unusedInBlock.length === 0) continue;
-                // Skip this block if it would overshoot — never show a partial passage
-                if (questionIds.length + unusedInBlock.length > neededCount) continue;
+                // Skip this block if it would overshoot, unless we have no questions in this section yet
+                if (questionIds.length > 0 && questionIds.length + unusedInBlock.length > neededCount) continue;
                 for (const q of unusedInBlock) {
                   questionIds.push(q.id);
                   usedQuestionIds.add(q.id);
@@ -4698,8 +4783,8 @@ export const tpoService = {
                   block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
                   const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
                   if (unusedInBlock.length === 0) continue;
-                  // Skip if adding this block would exceed remaining needed capacity
-                  if (questionIds.length + unusedInBlock.length > neededCount) continue;
+                  // Skip if adding this block would exceed remaining needed capacity (unless section is empty)
+                  if (questionIds.length > 0 && questionIds.length + unusedInBlock.length > neededCount) continue;
                   for (const q of unusedInBlock) {
                     questionIds.push(q.id);
                     usedQuestionIds.add(q.id);
@@ -5220,6 +5305,8 @@ export const tpoService = {
             difficulty: q.difficulty,
             topic_id: q.topic_id,
             question_number: q.question_number,
+            passage: sanitizedExplanation?.passage || null,
+            passageTitle: sanitizedExplanation?.passageTitle || null,
             structured_explanation: sanitizedExplanation,
           };
         });
