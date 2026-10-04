@@ -15,6 +15,7 @@ import type { MockExam, CollegeBatch } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
 import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
 import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
+import TpoQuestionPaperModal from '@/components/tpo/TpoQuestionPaperModal';
 import LogoLoader from '@/components/LogoLoader';
 
 function formatExamDateTime(isoString?: string): string {
@@ -80,6 +81,7 @@ export default function TpoExamsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
   const [selectedScheduleExam, setSelectedScheduleExam] = useState<MockExam | null>(null);
+  const [selectedPreviewPaperExam, setSelectedPreviewPaperExam] = useState<MockExam | null>(null);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE'>('ALL');
   const [selectedBatchFilter, setSelectedBatchFilter] = useState<string>('ALL');
 
@@ -344,6 +346,14 @@ export default function TpoExamsPage() {
                   Leaderboard &amp; Analytics
                 </Link>
                 <button
+                  onClick={() => setSelectedPreviewPaperExam(exam)}
+                  title="Preview Question Paper, Solutions & Accreditation Print"
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold transition-colors shrink-0 cursor-pointer"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Paper</span>
+                </button>
+                <button
                   onClick={() => setSelectedScheduleExam(exam)}
                   title="Extend test window or conclude assessment immediately"
                   className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition-colors shrink-0 cursor-pointer"
@@ -397,6 +407,14 @@ export default function TpoExamsPage() {
           queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
         }}
+      />
+
+      {/* TPO Question Paper Inspection & Accreditation Print Modal */}
+      <TpoQuestionPaperModal
+        isOpen={!!selectedPreviewPaperExam}
+        onClose={() => setSelectedPreviewPaperExam(null)}
+        examId={selectedPreviewPaperExam?.id || null}
+        collegeName={currentCollege?.name}
       />
 
     </div>

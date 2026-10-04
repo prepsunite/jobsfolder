@@ -6576,22 +6576,29 @@ export const tpoService = {
 
     if (!attempt) return null;
 
-    // Check if exam permits immediate solution review
+    // Check if exam permits immediate solution review or if the testing window is concluded
     let showResultsImmediately = true;
+    let isWindowLive = false;
+    let examEndTime: string | undefined = undefined;
     try {
       const { data: examData } = await supabase
         .from('mock_exams')
-        .select('show_results_immediately')
+        .select('show_results_immediately, end_time, start_time')
         .eq('id', attempt.mock_exam_id)
         .maybeSingle();
-      if (examData && examData.show_results_immediately === false) {
-        showResultsImmediately = false;
+      if (examData) {
+        examEndTime = examData.end_time;
+        const isConcluded = examData.end_time ? new Date(examData.end_time).getTime() <= Date.now() : false;
+        if (examData.show_results_immediately === false && !isConcluded) {
+          showResultsImmediately = false;
+          isWindowLive = true;
+        }
       }
     } catch {}
 
     if (!showResultsImmediately) {
-      // If immediate review is disabled by institutional policy, do not return question solutions/keys
-      return { attempt, questions: [] };
+      // If immediate review is disabled by institutional policy and exam is still LIVE, do not return question solutions/keys
+      return { attempt, questions: [], isWindowLive: true, examEndTime } as any;
     }
 
     // Check local attempts to merge any responses if DB had empty responses
@@ -6614,10 +6621,27 @@ export const tpoService = {
         .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
         .in('id', questionIds);
       if (data) {
-        questions = data.map((q: any) => ({
-          ...q,
-          options: normalizeQuestionOptions(q.options),
-        }));
+        questions = data.map((q: any) => {
+          let numAnswer = q.correct_answer;
+          if (q.correct_answer !== undefined && q.correct_answer !== null) {
+            const raw = String(q.correct_answer).trim().toUpperCase();
+            if (/^[A-Z]$/.test(raw)) {
+              numAnswer = raw.charCodeAt(0) - 65;
+            } else if (/^\d+$/.test(raw)) {
+              numAnswer = parseInt(raw, 10);
+            }
+          }
+          let se = q.structured_explanation;
+          if (typeof se === 'string') {
+            try { se = JSON.parse(se); } catch {}
+          }
+          return {
+            ...q,
+            options: normalizeQuestionOptions(q.options),
+            correct_answer: numAnswer,
+            structured_explanation: se,
+          };
+        });
       }
     } catch {}
 
@@ -6697,6 +6721,150 @@ export const tpoService = {
     return {
       attempt,
       questions,
+    };
+  },
+
+  async getMockExamPaperWithSolutions(examId: string): Promise<{
+    exam: MockExam;
+    sections: Array<MockExamSection & { questions: any[] }>;
+  } | null> {
+    if (!examId) return null;
+    const exam = await this.getMockExamById(examId);
+    if (!exam) return null;
+
+    const hydrated = await this.hydrateExamSections(exam);
+    const sections: MockExamSection[] = (hydrated?.sections && hydrated.sections.length > 0)
+      ? hydrated.sections
+      : (exam.sections || []);
+
+    const allQIds: string[] = [];
+    sections.forEach(s => {
+      (s.question_ids || []).forEach(id => {
+        if (id && !allQIds.includes(id)) allQIds.push(id);
+      });
+    });
+
+    const questions: any[] = [];
+
+    // 1. Topic MCQs
+    try {
+      const { data } = await supabase
+        .from('topic_questions')
+        .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
+        .in('id', allQIds);
+
+      if (data) {
+        data.forEach((q: any) => {
+          let numAnswer = q.correct_answer;
+          if (q.correct_answer !== undefined && q.correct_answer !== null) {
+            const raw = String(q.correct_answer).trim().toUpperCase();
+            if (/^[A-Z]$/.test(raw)) {
+              numAnswer = raw.charCodeAt(0) - 65;
+            } else if (/^\d+$/.test(raw)) {
+              numAnswer = parseInt(raw, 10);
+            }
+          }
+          let se = q.structured_explanation;
+          if (typeof se === 'string') {
+            try { se = JSON.parse(se); } catch {}
+          }
+          questions.push({
+            ...q,
+            options: normalizeQuestionOptions(q.options),
+            correct_answer: numAnswer,
+            structured_explanation: se,
+          });
+        });
+      }
+    } catch {}
+
+    // 2. Coding problems
+    const foundIds = new Set(questions.map(q => q.id));
+    const missingCoding = allQIds.filter(id => !foundIds.has(id));
+    if (missingCoding.length > 0) {
+      try {
+        const { data: codingData } = await supabase
+          .from('technical_problems')
+          .select('id, title, description, constraints, sample_input, sample_output, explanation, test_cases, solutions, level, category')
+          .in('id', missingCoding);
+
+        if (codingData && codingData.length > 0) {
+          codingData.forEach(p => {
+            questions.push({
+              id: p.id,
+              title: p.title,
+              statement: p.description,
+              description: p.description,
+              options: [],
+              difficulty: p.level || 'MEDIUM',
+              topic_id: p.category,
+              structured_explanation: p.explanation,
+              constraints: p.constraints,
+              sample_input: p.sample_input,
+              sample_output: p.sample_output,
+              test_cases: p.test_cases,
+              solutions: p.solutions,
+              isCodingProblem: true,
+            });
+          });
+        }
+      } catch {}
+    }
+
+    // 3. Technical MCQs
+    const stillFound = new Set(questions.map(q => q.id));
+    const missingTech = allQIds.filter(id => !stillFound.has(id));
+    if (missingTech.length > 0) {
+      try {
+        const { data: techMcqs } = await supabase
+          .from('technical_mcqs')
+          .select('id, question, code_snippet, options, correct_option_index, explanation, difficulty, topic_id')
+          .in('id', missingTech);
+
+        if (techMcqs && techMcqs.length > 0) {
+          const detectLang = (topicId?: string): string => {
+            const t = (topicId || '').toLowerCase();
+            if (t.includes('python')) return 'python';
+            if (t.includes('cpp') || t.includes('c++')) return 'cpp';
+            if (t.includes('java')) return 'java';
+            if (t.includes('sql') || t.includes('database')) return 'sql';
+            if (t.includes('pseudo')) return 'pseudocode';
+            if (t.includes('javascript') || t.includes('js')) return 'javascript';
+            return 'c';
+          };
+          techMcqs.forEach(m => {
+            const lang = detectLang(m.topic_id);
+            const hasCode = m.question && (m.question.includes('```') || (m.code_snippet && m.question.includes(m.code_snippet.trim())));
+            const codeBlock = (!hasCode && m.code_snippet && m.code_snippet.trim()) ? `\n\n\`\`\`${lang}\n${m.code_snippet.trim()}\n\`\`\`` : '';
+            questions.push({
+              id: m.id,
+              statement: `${m.question}${codeBlock}`,
+              options: normalizeQuestionOptions(m.options || []),
+              difficulty: m.difficulty || 'MEDIUM',
+              topic_id: m.topic_id,
+              explanation: m.explanation || '',
+              correct_answer: m.correct_option_index,
+              isTechnicalMcq: true,
+            });
+          });
+        }
+      } catch {}
+    }
+
+    // Map questions back to each section in order
+    const qMap = new Map<string, any>();
+    questions.forEach(q => qMap.set(q.id, q));
+
+    const sectionsWithQuestions = sections.map(sec => ({
+      ...sec,
+      questions: (sec.question_ids || [])
+        .map(id => qMap.get(id))
+        .filter(Boolean),
+    }));
+
+    return {
+      exam,
+      sections: sectionsWithQuestions,
     };
   },
 

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
+import StudentExamReviewModal from '@/components/mock-exams/StudentExamReviewModal';
 import AdminBlueprintManager from '@/components/admin/AdminBlueprintManager';
 import AdminQuestionBankPage from '@/pages/AdminQuestionBankPage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -109,6 +110,8 @@ export default function StudentExamsPage() {
   const [selectedScorecardExam, setSelectedScorecardExam] = useState<
     (MockExam & { attempt?: StudentExamAttempt | null }) | null
   >(null);
+  const [reviewAttemptId, setReviewAttemptId] = useState<string | null>(null);
+  const [reviewExamTitle, setReviewExamTitle] = useState<string>('');
 
   // User Mock Exam Subscription & Usage Quota
   const { data: usageInfo, refetch: refetchUsage } = useQuery({
@@ -1416,15 +1419,45 @@ export default function StudentExamsPage() {
               )}
 
             {/* Bottom Actions */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#27292e]">
-              <div className="text-[11px] text-gray-400 font-medium">
-                Submission finalized. Retest is permanently disabled for completed drives.
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#27292e]">
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const timingStatus = getExamTimingStatus(selectedScorecardExam);
+                  const isConcluded = timingStatus === 'CONCLUDED';
+                  const canReview = isConcluded || selectedScorecardExam.show_results_immediately;
+
+                  if (canReview) {
+                    return (
+                      <button
+                        onClick={() => {
+                          setReviewAttemptId(selectedScorecardExam.attempt!.id);
+                          setReviewExamTitle(selectedScorecardExam.title);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        <span>Review Solutions &amp; Explanations</span>
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <div
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold border border-slate-200 dark:border-slate-700"
+                      title="Solutions unlock once the drive testing window concludes"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Solutions unlock once exam concludes</span>
+                    </div>
+                  );
+                })()}
               </div>
+
               <button
                 onClick={() => setSelectedScorecardExam(null)}
-                className="px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-colors cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-colors cursor-pointer text-center"
               >
-                Close
+                Close Scorecard
               </button>
             </div>
           </div>
@@ -1439,6 +1472,14 @@ export default function StudentExamsPage() {
           refetchExams();
           refetchUsage();
         }}
+      />
+
+      {/* Student Post-Assessment Editorial & Solution Review Modal */}
+      <StudentExamReviewModal
+        isOpen={!!reviewAttemptId}
+        onClose={() => setReviewAttemptId(null)}
+        attemptId={reviewAttemptId}
+        examTitle={reviewExamTitle}
       />
     </div>
   );

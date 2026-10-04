@@ -18,12 +18,14 @@ import {
   AlertCircle,
   Unlock,
   Radio,
+  FileText,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { useToast } from '@/contexts/ToastContext';
 import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
+import TpoQuestionPaperModal from '@/components/tpo/TpoQuestionPaperModal';
 
 export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
@@ -37,6 +39,7 @@ export default function TpoExamDetailPage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE'>('ALL');
   const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isPreviewPaperOpen, setIsPreviewPaperOpen] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
   // Fetch Exam Metadata
@@ -312,6 +315,14 @@ export default function TpoExamDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsPreviewPaperOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/30 text-xs font-bold text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors shadow-2xs cursor-pointer"
+            title="Inspect Question Paper, Statements, Answer Keys & Explanations"
+          >
+            <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            Preview Paper &amp; Solutions
+          </button>
           <button
             onClick={() => setIsScheduleModalOpen(true)}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-2xs cursor-pointer"
@@ -891,6 +902,14 @@ export default function TpoExamDetailPage() {
           queryClient.invalidateQueries({ queryKey: ['tpo-exam-attempts', examId, collegeId] });
           queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
         }}
+      />
+
+      {/* TPO Question Paper Inspection & Accreditation Print Modal */}
+      <TpoQuestionPaperModal
+        isOpen={isPreviewPaperOpen}
+        onClose={() => setIsPreviewPaperOpen(false)}
+        examId={examId || null}
+        collegeName={currentCollege?.name}
       />
 
     </div>
