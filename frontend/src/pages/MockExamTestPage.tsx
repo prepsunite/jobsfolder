@@ -44,21 +44,29 @@ import type {
 import { useToast } from '@/contexts/ToastContext';
 
 /**
- * 🛡️ FIX Issue 6: Deterministic Pseudo-Random Seeded Shuffle (LCG)
+ * 🛡️ High-Entropy Deterministic Pseudo-Random Seeded Shuffle (Mulberry32 + FNV-1a Avalanche Mixer)
  * Shuffles items reproducibly for a candidate based on (examId + studentIdentifier + context).
  * Ensures refreshing or navigating between questions does NOT change question or option positions,
- * but each candidate receives a uniquely randomized layout to prevent screen-copying in physical labs.
+ * while ensuring maximum dispersion across students (even with similar emails/IDs like student1 vs student2).
  */
 function seededShuffle<T>(items: T[], seedStr: string): T[] {
   if (!items || items.length <= 1) return items;
-  let seed = 0;
+
+  // 1. 32-bit FNV-1a Hash with bitwise avalanche mixing
+  let h = 2166136261 >>> 0;
   for (let i = 0; i < seedStr.length; i++) {
-    seed = (seed * 31 + seedStr.charCodeAt(i)) & 0xffffffff;
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 16777619);
   }
+
+  // 2. Mulberry32 PRNG Generator with state step
   const random = () => {
-    seed = (seed * 1664525 + 1013904223) & 0xffffffff;
-    return (seed >>> 0) / 4294967296;
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
   };
+
+  // 3. Fisher-Yates Shuffle
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
@@ -473,16 +481,32 @@ export default function MockExamTestPage() {
   // Current Section & its Questions
   const currentSection: MockExamSection | undefined = sections[currentSectionIndex];
 
-  // 🛡️ FIX Issue 6: Candidate-specific deterministic seed for question & option shuffling
+  // 🛡️ Candidate-specific deterministic seed for question & option shuffling
+  // Ensures maximum entropy so no two candidates get identical question order, while remaining 100% reproducible per candidate
   const studentShuffleSeed = useMemo(() => {
-    return `${exam?.id || 'exam'}_${user?.email || user?.id || 'candidate'}`;
-  }, [exam?.id, user?.email, user?.id]);
+    const userIdentifier = user?.email?.trim().toLowerCase() || user?.id;
+    if (userIdentifier) {
+      return `${exam?.id || examId || 'exam'}_usr_${userIdentifier}`;
+    }
+    if (attemptId) {
+      return `${exam?.id || examId || 'exam'}_att_${attemptId}`;
+    }
+    const sessionKey = `prepunite_exam_seed_${exam?.id || examId || 'default'}`;
+    let sessionSeed = sessionStorage.getItem(sessionKey);
+    if (!sessionSeed) {
+      sessionSeed = `cand_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
+      sessionStorage.setItem(sessionKey, sessionSeed);
+    }
+    return `${exam?.id || examId || 'exam'}_${sessionSeed}`;
+  }, [exam?.id, examId, user?.email, user?.id, attemptId]);
 
-  // Deterministically shuffle questions within the current section if shuffle_questions is enabled,
+  // Deterministically shuffle questions within the current section (enabled by default unless explicitly false),
   // respecting atomic passage blocks so reading comprehension, cloze tests & DI sets stay 100% consecutive in order.
   const currentSectionQIds = useMemo(() => {
     const rawIds = currentSection?.question_ids || [];
-    if (!exam?.shuffle_questions || rawIds.length <= 1) return rawIds;
+    // Default to true: questions are shuffled by default for anti-cheating security
+    const shouldShuffle = exam?.shuffle_questions !== false;
+    if (!shouldShuffle || rawIds.length <= 1) return rawIds;
 
     // 1. Group questions into cohesive blocks
     const blocks: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
@@ -570,14 +594,15 @@ export default function MockExamTestPage() {
     };
   }, [currentQuestion, currentSectionQIds, questionsMap, currentQuestionId]);
 
-  // Deterministically shuffle MCQ options for the current question if shuffle_options is enabled
+  // Deterministically shuffle MCQ options for the current question (default: enabled)
   const displayOptions = useMemo(() => {
     const normOpts = normalizeQuestionOptions(currentQuestion?.options);
     const withOriginalIndex = normOpts.map((opt, origIdx) => ({
       ...opt,
       originalIndex: origIdx,
     }));
-    if (!exam?.shuffle_options || !currentQuestionId || withOriginalIndex.length <= 1) {
+    const shouldShuffleOpts = exam?.shuffle_options !== false;
+    if (!shouldShuffleOpts || !currentQuestionId || withOriginalIndex.length <= 1) {
       return withOriginalIndex;
     }
     return seededShuffle(withOriginalIndex, `${studentShuffleSeed}_opt_${currentQuestionId}`);
