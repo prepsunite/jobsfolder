@@ -5906,8 +5906,9 @@ export const tpoService = {
         const resp = responses[qId];
         const isCodingSection = section.section_type === 'CODING' || section.category === 'coding';
         const hasCodeSubmitted = Boolean(
-          resp?.code_solution &&
-          !isTemplateOrEmptyCode(resp.code_solution, resp.code_language)
+          (resp?.code_solution &&
+          !isTemplateOrEmptyCode(resp.code_solution, resp.code_language)) ||
+          Number(resp?.test_cases_passed) > 0
         );
         const hasSelected = resp && resp.selected_option !== null && resp.selected_option !== undefined && (resp.selected_option as unknown) !== '';
 
