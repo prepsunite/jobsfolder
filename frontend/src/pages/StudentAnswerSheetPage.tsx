@@ -32,6 +32,17 @@ import type { StudentExamAttempt, MockExam, MockExamSection } from '@/types/tpo'
 import QuestionRichContent from '@/components/QuestionRichContent';
 import LogoLoader from '@/components/LogoLoader';
 
+function parseCorrectAnswerIndex(raw: any): number {
+  if (raw === undefined || raw === null) return -1;
+  if (typeof raw === 'number') return raw;
+  const str = String(raw).trim().toUpperCase();
+  if (/^[A-Z]$/.test(str)) {
+    return str.charCodeAt(0) - 65;
+  }
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? -1 : parsed;
+}
+
 export default function StudentAnswerSheetPage() {
   const { attemptId } = useParams<{ attemptId: string }>();
   const navigate = useNavigate();
@@ -47,7 +58,7 @@ export default function StudentAnswerSheetPage() {
 
   // Filters & State
   const [selectedSectionId, setSelectedSectionId] = useState<string>('ALL');
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'INCORRECT' | 'SKIPPED' | 'CORRECT'>('ALL');
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'ATTEMPTED' | 'INCORRECT' | 'SKIPPED' | 'CORRECT'>('ALL');
   const [expandedExplanations, setExpandedExplanations] = useState<Record<string, boolean>>({});
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
@@ -125,6 +136,7 @@ export default function StudentAnswerSheetPage() {
 
       // 2. Status Filter
       const q = item.question;
+      if (activeFilter === 'ATTEMPTED') return q.is_answered;
       if (activeFilter === 'CORRECT') return q.is_correct;
       if (activeFilter === 'INCORRECT') return q.is_answered && !q.is_correct;
       if (activeFilter === 'SKIPPED') return !q.is_answered;
@@ -519,7 +531,19 @@ export default function StudentAnswerSheetPage() {
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
-                All Items
+                All ({totalQuestions})
+              </button>
+              <button
+                onClick={() => setActiveFilter('ATTEMPTED')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeFilter === 'ATTEMPTED'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60'
+                }`}
+                title="View only questions you actually answered/written"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Written / Attempted ({totalAttempted})</span>
               </button>
               <button
                 onClick={() => setActiveFilter('INCORRECT')}
@@ -688,6 +712,55 @@ export default function StudentAnswerSheetPage() {
                     <QuestionRichContent content={q.statement || q.description || ''} />
                   </div>
 
+                  {/* ── CANDIDATE WRITTEN RESPONSE & OFFICIAL KEY VERDICT BANNER ── */}
+                  {(() => {
+                    const correctIdx = parseCorrectAnswerIndex(q.correct_answer);
+                    return (
+                      <div className={`p-3.5 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                        q.is_correct
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+                          : q.is_answered
+                          ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200'
+                          : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold">What You Written:</span>
+                          {isCoding ? (
+                            <span className="font-mono font-bold px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                              {resp?.code_solution ? `Submitted Code (${resp.test_cases_passed || 0}/${resp.total_test_cases || 0} Test Cases Passed)` : 'No Code Written'}
+                            </span>
+                          ) : resp?.selected_option !== null && resp?.selected_option !== undefined ? (
+                            <span className={`font-mono font-black px-2.5 py-0.5 rounded-lg text-white shadow-2xs ${
+                              q.is_correct ? 'bg-emerald-600' : 'bg-rose-600'
+                            }`}>
+                              Option {String.fromCharCode(65 + Number(resp.selected_option))}
+                            </span>
+                          ) : (
+                            <span className="italic text-slate-500 font-semibold">Not Attempted (Skipped)</span>
+                          )}
+
+                          {!isCoding && correctIdx >= 0 && (
+                            <>
+                              <span className="text-slate-400">•</span>
+                              <span className="font-bold">Official Key:</span>
+                              <span className="font-mono font-black px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white shadow-2xs">
+                                Option {String.fromCharCode(65 + correctIdx)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className={`font-black uppercase tracking-wider text-[11px] ${
+                            q.is_correct ? 'text-emerald-700 dark:text-emerald-300' : q.is_answered ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500'
+                          }`}>
+                            {q.is_correct ? '✓ Verified Correct' : q.is_answered ? '✕ Incorrect Response' : '— Unattempted'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* ── MCQ OPTIONS LIST ── */}
                   {!isCoding && options.length > 0 && (
                     <div className="space-y-2.5 pt-1">
@@ -698,7 +771,8 @@ export default function StudentAnswerSheetPage() {
                         {options.map((opt: any, optIdx: number) => {
                           const optionLetter = String.fromCharCode(65 + optIdx);
                           const isStudentChoice = resp?.selected_option !== null && resp?.selected_option !== undefined && Number(resp.selected_option) === optIdx;
-                          const isCorrectOption = Number(q.correct_answer) === optIdx;
+                          const correctIdx = parseCorrectAnswerIndex(q.correct_answer);
+                          const isCorrectOption = correctIdx === optIdx;
 
                           // Determine background & borders
                           let containerStyle = 'bg-slate-50/80 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300';

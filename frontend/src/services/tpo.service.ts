@@ -7252,14 +7252,39 @@ export const tpoService = {
     const paper = await this.getMockExamPaperWithSolutions(exam.id);
     if (!paper) return null;
 
+    // Check if the attempt has persistent assigned question IDs from the student's test session
+    const assignedList: string[] | null = Array.isArray((attempt.responses as any)?.__assigned_question_ids)
+      ? (attempt.responses as any).__assigned_question_ids
+      : null;
+    const assignedSet = assignedList && assignedList.length > 0 ? new Set(assignedList) : null;
+    if (assignedSet) {
+      // Ensure any question the student actually answered/written is also present
+      Object.keys(attempt.responses || {}).forEach(k => {
+        if (!k.startsWith('__')) assignedSet.add(k);
+      });
+    }
+
     // 5. Enrich questions in each section with the candidate's responses and marks
     const sections = (paper.sections || []).map(sec => {
-      const enrichedQuestions = (sec.questions || []).map(q => {
+      // If student was assigned a specific subset from the question pool, filter to that subset
+      const questionsToEnrich = assignedSet
+        ? (sec.questions || []).filter(q => assignedSet.has(q.id))
+        : (sec.questions || []);
+
+      const enrichedQuestions = questionsToEnrich.map(q => {
         const resp = (attempt!.responses || {})[q.id];
         const isCoding = q.isCodingProblem;
 
         let isAnswered = false;
         let isCorrect = false;
+
+        // Parse correct answer safely to 0-based integer index
+        let expectedNum = q.correct_answer;
+        if (expectedNum !== undefined && expectedNum !== null) {
+          const raw = String(expectedNum).trim().toUpperCase();
+          if (/^[A-Z]$/.test(raw)) expectedNum = raw.charCodeAt(0) - 65;
+          else if (/^\d+$/.test(raw)) expectedNum = parseInt(raw, 10);
+        }
 
         if (isCoding) {
           isAnswered = Boolean(resp?.code_solution && resp.code_solution.trim());
@@ -7272,8 +7297,7 @@ export const tpoService = {
           isAnswered = resp?.selected_option !== null && resp?.selected_option !== undefined;
           if (isAnswered) {
             const chosen = Number(resp.selected_option);
-            const expected = Number(q.correct_answer);
-            isCorrect = chosen === expected;
+            isCorrect = chosen === Number(expectedNum);
           }
         }
 
@@ -7283,6 +7307,7 @@ export const tpoService = {
 
         return {
           ...q,
+          correct_answer: expectedNum,
           student_response: resp,
           is_answered: isAnswered,
           is_correct: isCorrect,
