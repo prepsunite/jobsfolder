@@ -44,6 +44,7 @@ export default function TpoExamDetailPage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'SUBMITTED' | 'TERMINATED_MALPRACTICE'>('ALL');
   const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleModalTab, setScheduleModalTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>('EXTEND');
   const [isPreviewPaperOpen, setIsPreviewPaperOpen] = useState(false);
   const [isShortlistModalOpen, setIsShortlistModalOpen] = useState(false);
   const [isDiagnosticModalOpen, setIsDiagnosticModalOpen] = useState(false);
@@ -272,24 +273,25 @@ export default function TpoExamDetailPage() {
   return (
     <div className="space-y-6 animate-fadeIn">
       
-      {/* Top Breadcrumb & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Top Breadcrumb, Title & Grouped Actions */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-1 border-b border-slate-100 dark:border-slate-800/80">
+        <div className="space-y-2 min-w-0">
           <Link
             to="/tpo/exams"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Back to All Mock Exams
           </Link>
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32]">
+
+          <div className="flex items-center gap-2 flex-wrap pt-0.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
               {exam.target_company}
             </span>
             {(() => {
               const timing = getExamTimingStatus(exam);
               if (timing === 'LIVE') {
                 return (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                     Live Assessment {exam.end_time ? `(Closes ${new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })})` : ''}
                   </span>
@@ -297,83 +299,108 @@ export default function TpoExamDetailPage() {
               }
               if (timing === 'UPCOMING') {
                 return (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
                     Scheduled (Starts {exam.start_time ? new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Soon'})
                   </span>
                 );
               }
               if (timing === 'CONCLUDED') {
                 return (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                     Concluded ({exam.end_time ? new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Closed'})
                   </span>
                 );
               }
               return (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   Draft
                 </span>
               );
             })()}
+
             {exam.enable_passcode_lock && exam.access_passcode && (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 font-mono">
-                <KeyRound className="w-3 h-3 text-indigo-500" />
-                Lab PIN: {exam.access_passcode}
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setScheduleModalTab('PASSCODE');
+                  setIsScheduleModalOpen(true);
+                }}
+                className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 font-mono transition-colors cursor-pointer group"
+                title="Click to view, rotate or disable Lab PIN"
+              >
+                <KeyRound className="w-3 h-3 text-indigo-500 group-hover:scale-110 transition-transform" />
+                <span>Lab PIN: {exam.access_passcode}</span>
+              </button>
             )}
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {exam.title}
-            </h1>
           </div>
+
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            {exam.title}
+          </h1>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => setIsShortlistModalOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-purple-300 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 text-xs font-bold text-purple-800 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors shadow-2xs cursor-pointer"
-            title="Generate Dual/Multi-Threshold Recruiter Shortlist & Export CSV"
-          >
-            <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            Recruiter Shortlist
-          </button>
-          <button
-            onClick={() => setIsDiagnosticModalOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shadow-2xs cursor-pointer"
-            title="Cohort Skill Gap Matrix & Placement Remedial Analysis"
-          >
-            <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            Skill Diagnostics
-          </button>
-          <button
-            onClick={() => setIsPreviewPaperOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/30 text-xs font-bold text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors shadow-2xs cursor-pointer"
-            title="Inspect Question Paper, Statements, Answer Keys & Explanations"
-          >
-            <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            Preview Paper &amp; Solutions
-          </button>
-          <button
-            onClick={() => setIsScheduleModalOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-2xs cursor-pointer"
-          >
-            <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            Manage Window &amp; Conclude
-          </button>
-          <button
-            onClick={copyExamLink}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs"
-          >
-            <Share2 className="w-4 h-4 text-[#FD4A32]" />
-            Copy Test Link
-          </button>
-          <button
-            onClick={handleExportCSV}
-            disabled={attempts.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20 cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
+        {/* Action Controls Grouped by Workflow */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 flex-wrap">
+          {/* Group 1: Recruiter Intelligence & Pedagogical Quality */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setIsShortlistModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-purple-300 dark:border-purple-800/60 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-900/40 text-xs font-bold text-purple-800 dark:text-purple-300 transition-colors shadow-2xs cursor-pointer"
+              title="Generate Dual/Multi-Threshold Recruiter Shortlist & Export CSV"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span>Recruiter Shortlist</span>
+            </button>
+            <button
+              onClick={() => setIsDiagnosticModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 text-xs font-bold text-emerald-800 dark:text-emerald-300 transition-colors shadow-2xs cursor-pointer"
+              title="Cohort Skill Gap Matrix & Placement Remedial Analysis"
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Diagnostics</span>
+            </button>
+            <button
+              onClick={() => setIsPreviewPaperOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 text-xs font-bold text-blue-800 dark:text-blue-300 transition-colors shadow-2xs cursor-pointer"
+              title="Inspect Question Paper, Statements, Answer Keys & Explanations"
+            >
+              <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Paper &amp; Keys</span>
+            </button>
+          </div>
+
+          <div className="hidden sm:block w-px h-6 bg-slate-200 dark:bg-slate-800" />
+
+          {/* Group 2: Operational Controls & Sharing */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => {
+                setScheduleModalTab('EXTEND');
+                setIsScheduleModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-300 dark:border-amber-800/60 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-xs font-bold text-amber-800 dark:text-amber-300 transition-colors shadow-2xs cursor-pointer"
+              title="Extend window, update passcode PIN, or conclude assessment"
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>Exam Controls</span>
+            </button>
+            <button
+              onClick={copyExamLink}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer"
+              title="Copy shareable link for student candidate entrance"
+            >
+              <Share2 className="w-3.5 h-3.5 text-[#FD4A32]" />
+              <span>Share</span>
+            </button>
+            <button
+              onClick={handleExportCSV}
+              disabled={attempts.length === 0}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/20 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>CSV</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -925,6 +952,7 @@ export default function TpoExamDetailPage() {
         onClose={() => setIsScheduleModalOpen(false)}
         exam={exam}
         collegeId={collegeId}
+        initialTab={scheduleModalTab}
         onSuccess={() => {
           setIsScheduleModalOpen(false);
           queryClient.invalidateQueries({ queryKey: ['tpo-exam-detail', examId] });

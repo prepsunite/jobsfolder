@@ -11,6 +11,7 @@ import {
   Layers,
   Calendar,
   KeyRound,
+  Sliders,
 } from 'lucide-react';
 import type { MockExam, CollegeBatch } from '@/types/tpo';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
@@ -82,6 +83,7 @@ export default function TpoExamsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
   const [selectedScheduleExam, setSelectedScheduleExam] = useState<MockExam | null>(null);
+  const [scheduleModalTab, setScheduleModalTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>('EXTEND');
   const [selectedPreviewPaperExam, setSelectedPreviewPaperExam] = useState<MockExam | null>(null);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE'>('ALL');
   const [selectedBatchFilter, setSelectedBatchFilter] = useState<string>('ALL');
@@ -226,10 +228,18 @@ export default function TpoExamsPage() {
                       {exam.target_company}
                     </span>
                     {exam.enable_passcode_lock && exam.access_passcode && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 font-mono" title={`Lab Passcode: ${exam.access_passcode}`}>
-                        <KeyRound className="w-3 h-3 text-indigo-500" />
-                        PIN: {exam.access_passcode}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScheduleModalTab('PASSCODE');
+                          setSelectedScheduleExam(exam);
+                        }}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 font-mono transition-colors cursor-pointer group"
+                        title={`Lab Passcode: ${exam.access_passcode} (Click to manage passcode)`}
+                      >
+                        <KeyRound className="w-3 h-3 text-indigo-500 group-hover:scale-110 transition-transform" />
+                        <span>PIN: {exam.access_passcode}</span>
+                      </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -363,12 +373,15 @@ export default function TpoExamsPage() {
                   <span>Paper</span>
                 </button>
                 <button
-                  onClick={() => setSelectedScheduleExam(exam)}
-                  title="Extend test window or conclude assessment immediately"
+                  onClick={() => {
+                    setScheduleModalTab('EXTEND');
+                    setSelectedScheduleExam(exam);
+                  }}
+                  title="Extend test window, manage lab passcode PIN, or conclude assessment"
                   className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition-colors shrink-0 cursor-pointer"
                 >
-                  <Clock className="w-4 h-4" />
-                  <span>Window</span>
+                  <Sliders className="w-4 h-4" />
+                  <span>Controls</span>
                 </button>
                 <button
                   onClick={() => setSelectedShareExam(exam)}
@@ -411,6 +424,7 @@ export default function TpoExamsPage() {
         onClose={() => setSelectedScheduleExam(null)}
         exam={selectedScheduleExam}
         collegeId={collegeId}
+        initialTab={scheduleModalTab}
         onSuccess={() => {
           setSelectedScheduleExam(null);
           queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });

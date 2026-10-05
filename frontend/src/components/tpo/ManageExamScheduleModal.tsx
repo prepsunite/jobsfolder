@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Clock,
@@ -22,6 +22,7 @@ interface ManageExamScheduleModalProps {
   onClose: () => void;
   exam: MockExam | null;
   collegeId?: string;
+  initialTab?: 'EXTEND' | 'CONCLUDE' | 'PASSCODE';
   onSuccess?: () => void;
 }
 
@@ -55,11 +56,21 @@ export default function ManageExamScheduleModal({
   onClose,
   exam,
   collegeId,
+  initialTab = 'EXTEND',
   onSuccess,
 }: ManageExamScheduleModalProps) {
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>('EXTEND');
+  const [activeTab, setActiveTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>(initialTab);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setPasscodeEnabled(Boolean(exam?.enable_passcode_lock));
+      setPasscodeVal(exam?.access_passcode || '');
+      setConfirmConcludeStep(false);
+    }
+  }, [isOpen, initialTab, exam]);
   const [selectedExtensionMinutes, setSelectedExtensionMinutes] = useState<number | null>(30);
   const [customEndTime, setCustomEndTime] = useState<string>(() => {
     if (exam?.end_time) {
