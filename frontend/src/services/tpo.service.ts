@@ -7191,6 +7191,169 @@ export const tpoService = {
     };
   },
 
+  async getStudentAttemptAnswerSheet(attemptId: string): Promise<{
+    attempt: StudentExamAttempt;
+    exam: MockExam;
+    sections: Array<MockExamSection & { questions: any[] }>;
+    isWindowLive?: boolean;
+    examEndTime?: string;
+  } | null> {
+    if (!attemptId) return null;
+
+    // 1. Fetch the attempt
+    let attempt: StudentExamAttempt | null = null;
+    try {
+      const { data, error } = await supabase
+        .from('student_exam_attempts')
+        .select('*')
+        .eq('id', attemptId)
+        .maybeSingle();
+      if (!error && data) attempt = data;
+    } catch {}
+
+    if (!attempt) {
+      const all = getLocalAttempts();
+      attempt = all.find(a => a.id === attemptId) || null;
+    }
+
+    if (!attempt) return null;
+
+    // Check if local attempt has more complete responses
+    const localFallback = getLocalAttempts().find(a => a.id === attemptId);
+    if (localFallback && localFallback.responses && Object.keys(localFallback.responses).length > Object.keys(attempt.responses || {}).length) {
+      attempt.responses = { ...localFallback.responses, ...attempt.responses };
+      if (!attempt.total_score && localFallback.total_score) attempt.total_score = localFallback.total_score;
+      if (!attempt.percentage && localFallback.percentage) attempt.percentage = localFallback.percentage;
+      if (!attempt.result_summary && localFallback.result_summary) attempt.result_summary = localFallback.result_summary;
+    }
+    if (!attempt.result_summary && (attempt.responses as any)?.__result_summary) {
+      attempt.result_summary = (attempt.responses as any).__result_summary;
+    }
+
+    // 2. Fetch the exam
+    const exam = await this.getMockExamById(attempt.mock_exam_id);
+    if (!exam) return null;
+
+    // 3. Check live drive lock
+    let isWindowLive = false;
+    const isConcluded = exam.end_time ? new Date(exam.end_time).getTime() <= Date.now() : false;
+    if (exam.show_results_immediately === false && !isConcluded) {
+      isWindowLive = true;
+      return {
+        attempt,
+        exam,
+        sections: [],
+        isWindowLive: true,
+        examEndTime: exam.end_time,
+      };
+    }
+
+    // 4. Fetch the full paper with all sections & questions
+    const paper = await this.getMockExamPaperWithSolutions(exam.id);
+    if (!paper) return null;
+
+    // 5. Enrich questions in each section with the candidate's responses and marks
+    const sections = (paper.sections || []).map(sec => {
+      const enrichedQuestions = (sec.questions || []).map(q => {
+        const resp = (attempt!.responses || {})[q.id];
+        const isCoding = q.isCodingProblem;
+
+        let isAnswered = false;
+        let isCorrect = false;
+
+        if (isCoding) {
+          isAnswered = Boolean(resp?.code_solution && resp.code_solution.trim());
+          isCorrect = Boolean(
+            resp?.test_cases_passed &&
+            resp.total_test_cases &&
+            resp.test_cases_passed === resp.total_test_cases
+          );
+        } else {
+          isAnswered = resp?.selected_option !== null && resp?.selected_option !== undefined;
+          if (isAnswered) {
+            const chosen = Number(resp.selected_option);
+            const expected = Number(q.correct_answer);
+            isCorrect = chosen === expected;
+          }
+        }
+
+        const positiveMarks = q.marks ?? sec.marks_per_correct ?? 1;
+        const negativeMarks = q.negative_marks ? -Math.abs(q.negative_marks) : (sec.negative_marking ? -Math.abs(sec.negative_marking) : 0);
+        const marksObtained = isCorrect ? positiveMarks : isAnswered ? negativeMarks : 0;
+
+        return {
+          ...q,
+          student_response: resp,
+          is_answered: isAnswered,
+          is_correct: isCorrect,
+          marks_obtained: marksObtained,
+        };
+      });
+
+      return {
+        ...sec,
+        questions: enrichedQuestions,
+      };
+    });
+
+    // 6. If any questions were answered in attempt.responses that are somehow not in paper.sections,
+    // fetch them to guarantee no candidate response is missing.
+    const coveredIds = new Set(sections.flatMap(s => s.questions.map(q => q.id)));
+    const missingQIds = Object.keys(attempt.responses || {}).filter(k => !k.startsWith('__') && !coveredIds.has(k));
+    if (missingQIds.length > 0) {
+      const extraQuestions: any[] = [];
+      try {
+        const { data: topicData } = await supabase
+          .from('topic_questions')
+          .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
+          .in('id', missingQIds);
+        if (topicData) {
+          topicData.forEach((q: any) => {
+            let numAnswer = q.correct_answer;
+            if (q.correct_answer !== undefined && q.correct_answer !== null) {
+              const raw = String(q.correct_answer).trim().toUpperCase();
+              if (/^[A-Z]$/.test(raw)) numAnswer = raw.charCodeAt(0) - 65;
+              else if (/^\d+$/.test(raw)) numAnswer = parseInt(raw, 10);
+            }
+            const resp = (attempt!.responses || {})[q.id];
+            const isAnswered = resp?.selected_option !== null && resp?.selected_option !== undefined;
+            const isCorrect = isAnswered && Number(resp.selected_option) === numAnswer;
+            const positiveMarks = q.marks ?? 1;
+            const negativeMarks = q.negative_marks ? -Math.abs(q.negative_marks) : 0;
+            extraQuestions.push({
+              ...q,
+              options: normalizeQuestionOptions(q.options),
+              correct_answer: numAnswer,
+              student_response: resp,
+              is_answered: isAnswered,
+              is_correct: isCorrect,
+              marks_obtained: isCorrect ? positiveMarks : isAnswered ? negativeMarks : 0,
+            });
+          });
+        }
+      } catch {}
+
+      if (extraQuestions.length > 0) {
+        sections.push({
+          id: 'extra-section',
+          name: 'Additional Assessment Items',
+          duration_minutes: 0,
+          total_questions: extraQuestions.length,
+          question_ids: extraQuestions.map(q => q.id),
+          questions: extraQuestions,
+        } as any);
+      }
+    }
+
+    return {
+      attempt,
+      exam,
+      sections,
+      isWindowLive: false,
+      examEndTime: exam.end_time,
+    };
+  },
+
   isAttemptCompleted,
   getExamTimingStatus,
 };

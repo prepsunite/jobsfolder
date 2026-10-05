@@ -30,6 +30,7 @@ import {
   Database,
   SlidersHorizontal,
   Lock,
+  ExternalLink,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
@@ -934,17 +935,27 @@ export default function StudentExamsPage() {
                 {/* Bottom Action Footer */}
                 <div className="pt-4 border-t border-gray-100 dark:border-[#27292e] mt-4 space-y-2">
                   {isFinished && attempt ? (
-                    <button
-                      onClick={() => setSelectedScorecardExam(exam)}
-                      className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-blue-500" />
-                      <span>
-                        {isMalpractice
-                          ? 'View Disqualification & Scorecard'
-                          : `View Marks & Scorecard (${attempt.total_score}/${attempt.max_possible_score || exam.total_marks})`}
-                      </span>
-                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setSelectedScorecardExam(exam)}
+                        className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        title="View Summary Scorecard"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-blue-500" />
+                        <span>Scorecard</span>
+                      </button>
+                      <a
+                        href={`/student/exams/attempt/${attempt.id}/answersheet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        title="Open complete question-by-question answer sheet & solutions in a new tab"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Answer Sheet</span>
+                        <ExternalLink className="w-3 h-3 opacity-70" />
+                      </a>
+                    </div>
                   ) : isInProgress ? (
                     <Link
                       to={`/exam/${exam.id}`}
@@ -1428,16 +1439,29 @@ export default function StudentExamsPage() {
 
                   if (canReview) {
                     return (
-                      <button
-                        onClick={() => {
-                          setReviewAttemptId(selectedScorecardExam.attempt!.id);
-                          setReviewExamTitle(selectedScorecardExam.title);
-                        }}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                      >
-                        <BookOpen className="w-4 h-4" />
-                        <span>Review Solutions &amp; Explanations</span>
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => {
+                            setReviewAttemptId(selectedScorecardExam.attempt!.id);
+                            setReviewExamTitle(selectedScorecardExam.title);
+                          }}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          <span>Review Solutions</span>
+                        </button>
+                        <a
+                          href={`/student/exams/attempt/${selectedScorecardExam.attempt!.id}/answersheet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                          title="Open complete question-by-question answer sheet in a new tab"
+                        >
+                          <FileText className="w-4 h-4 text-emerald-600" />
+                          <span>Answer Sheet (New Tab)</span>
+                          <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                        </a>
+                      </div>
                     );
                   }
 

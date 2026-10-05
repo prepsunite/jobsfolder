@@ -14,6 +14,7 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import type { StudentExamAttempt } from '@/types/tpo';
 import { tpoService } from '@/services/tpo.service';
@@ -140,12 +141,26 @@ export default function StudentExamReviewModal({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {attemptId && !isWindowLive && (
+              <a
+                href={`/student/exams/attempt/${attemptId}/answersheet`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                title="Open complete answer sheet in a dedicated full new tab"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Full Tab</span>
+              </a>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Body */}

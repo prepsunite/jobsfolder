@@ -37,6 +37,7 @@ const TpoAnalyticsPage = lazy(() => import('@/pages/tpo/TpoAnalyticsPage'));
 const TpoSettingsPage = lazy(() => import('@/pages/tpo/TpoSettingsPage'));
 
 const MockExamTestPage = lazy(() => import('@/pages/MockExamTestPage'));
+const StudentAnswerSheetPage = lazy(() => import('@/pages/StudentAnswerSheetPage'));
 const TechnicalCodingWorkspacePage = lazy(() => import('@/pages/TechnicalCodingWorkspacePage'));
 
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
@@ -277,6 +278,25 @@ export const router = createBrowserRouter([
   {
     path: '/technical/solve/:problemId',
     element: withSuspense(TechnicalCodingWorkspacePage),
+    errorElement: <ErrorBoundary />,
+  },
+  // 5. Candidate Examination Answer Sheet & Solutions Studio (Full-screen, Tabbed, Printable)
+  {
+    path: '/student/exams/attempt/:attemptId/answersheet',
+    element: (
+      <ProtectedRoute>
+        {withSuspense(StudentAnswerSheetPage)}
+      </ProtectedRoute>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/exam/attempt/:attemptId/answersheet',
+    element: (
+      <ProtectedRoute>
+        {withSuspense(StudentAnswerSheetPage)}
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorBoundary />,
   },
 ]);

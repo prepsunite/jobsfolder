@@ -28,6 +28,8 @@ import {
   WifiOff,
   KeyRound,
   ShieldCheck,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -2756,21 +2758,38 @@ export default function MockExamTestPage() {
             </p>
           </div>
 
-          {/* Navigation Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-1">
-            <button
-              onClick={() => navigate('/student/exams')}
-              className="flex-1 py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/25 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Back to Mock Exams Portal</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="py-3.5 px-6 rounded-2xl bg-gray-100 dark:bg-[#202226] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider hover:bg-gray-200 dark:hover:bg-[#282a30] transition-all cursor-pointer"
-            >
-              Dashboard
-            </button>
+          {/* Navigation & Answer Sheet Action Buttons */}
+          <div className="space-y-3 pt-1">
+            {(attemptId || finalGradedAttempt?.id) && (
+              <button
+                onClick={() => {
+                  const targetAttemptId = finalGradedAttempt?.id || attemptId;
+                  window.open(`/student/exams/attempt/${targetAttemptId}/answersheet`, '_blank');
+                }}
+                className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer group"
+                title="Open detailed question-by-question answer sheet & solutions in a new tab"
+              >
+                <FileText className="w-4 h-4 text-emerald-100 group-hover:scale-110 transition-transform" />
+                <span>View Detailed Answer Sheet &amp; Solutions</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+              </button>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => navigate('/student/exams')}
+                className="flex-1 py-3.5 rounded-2xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-[#FD4A32]/25 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Back to Mock Exams Portal</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="py-3.5 px-6 rounded-2xl bg-gray-100 dark:bg-[#202226] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider hover:bg-gray-200 dark:hover:bg-[#282a30] transition-all cursor-pointer"
+              >
+                Dashboard
+              </button>
+            </div>
           </div>
 
         </div>
