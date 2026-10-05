@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Link, useLocation } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Layers,
@@ -18,6 +19,7 @@ import {
   Check,
   ShieldAlert,
   ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
 import {
   mockExamBlueprintService,
@@ -29,6 +31,8 @@ import { useToast } from '@/contexts/ToastContext';
 export default function AdminBlueprintManager() {
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
+  const location = useLocation();
+  const isStandaloneRoute = location.pathname.startsWith('/admin/blueprints');
 
   const [searchFilter, setSearchFilter] = useState('');
   const [inspectingBlueprint, setInspectingBlueprint] = useState<MockExamTemplate | null>(null);
@@ -118,6 +122,20 @@ export default function AdminBlueprintManager() {
 
   return (
     <div className="space-y-6">
+      {isStandaloneRoute && (
+        <div className="flex items-center gap-2 text-xs text-[#747878] dark:text-[#a6adbb] pt-2">
+          <Link
+            to="/admin"
+            className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors font-semibold flex items-center gap-1"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            <span>Admin Console</span>
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+          <span className="text-[#1f1b17] dark:text-[#e3e3e3] font-bold">Mock Exam Blueprints</span>
+        </div>
+      )}
+
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#27292e]">
         <div>
