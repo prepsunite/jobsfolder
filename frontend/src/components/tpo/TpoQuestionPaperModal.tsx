@@ -26,6 +26,17 @@ interface TpoQuestionPaperModalProps {
   collegeName?: string;
 }
 
+function parseCorrectAnswerIndex(raw: any): number {
+  if (raw === undefined || raw === null) return -1;
+  if (typeof raw === 'number') return raw;
+  const str = String(raw).trim().toUpperCase();
+  if (/^[A-Z]$/.test(str)) {
+    return str.charCodeAt(0) - 65;
+  }
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? -1 : parsed;
+}
+
 export default function TpoQuestionPaperModal({
   isOpen,
   onClose,
@@ -313,7 +324,7 @@ export default function TpoQuestionPaperModal({
                           {!isCoding && q.options && q.options.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                               {q.options.map((opt: string, optIdx: number) => {
-                                const isCorrect = q.correct_answer === optIdx;
+                                const isCorrect = parseCorrectAnswerIndex(q.correct_answer) === optIdx;
                                 const isHighlightedCorrect = showSolutions && isCorrect;
 
                                 return (

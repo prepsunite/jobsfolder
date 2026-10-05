@@ -677,12 +677,12 @@ export default function StudentAnswerSheetPage() {
                         {q.is_correct ? (
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                            <span>Correct (+{q.marks_obtained || 1} {q.marks_obtained === 1 ? 'Mark' : 'Marks'})</span>
+                            <span>Correct (+{q.marks_obtained ?? 1} {(q.marks_obtained ?? 1) === 1 ? 'Mark' : 'Marks'})</span>
                           </>
                         ) : q.is_answered ? (
                           <>
                             <XCircle className="w-3.5 h-3.5 text-rose-500" />
-                            <span>Incorrect ({q.marks_obtained} Marks)</span>
+                            <span>Incorrect ({q.marks_obtained ?? 0} Marks)</span>
                           </>
                         ) : (
                           <>
@@ -701,7 +701,7 @@ export default function StudentAnswerSheetPage() {
                         <BookOpen className="w-4 h-4" />
                         <span>{q.passageTitle || 'Reading Comprehension & Passage Context'}</span>
                       </div>
-                      <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 max-h-60 overflow-y-auto pr-2 leading-relaxed">
+                      <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 max-h-60 print:max-h-none overflow-y-auto print:overflow-visible pr-2 leading-relaxed">
                         <QuestionRichContent content={q.passage || q.contextData} />
                       </div>
                     </div>
@@ -877,7 +877,7 @@ export default function StudentAnswerSheetPage() {
                         </div>
 
                         {resp?.code_solution ? (
-                          <pre className="p-4 rounded-2xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto border border-slate-800">
+                          <pre className="p-4 rounded-2xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto print:overflow-visible print:whitespace-pre-wrap border border-slate-800">
                             <code>{resp.code_solution}</code>
                           </pre>
                         ) : (
@@ -906,16 +906,51 @@ export default function StudentAnswerSheetPage() {
 
                       {/* Model Reference Solution (If Available) */}
                       {q.solutions && (
-                        <div className="p-4 rounded-2xl bg-purple-500/5 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-900/40 space-y-2">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-purple-500/5 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-900/40 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
                               <Sparkles className="w-3.5 h-3.5" />
                               <span>Model Reference Solution:</span>
                             </span>
                           </div>
-                          <pre className="p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto border border-slate-800">
-                            <code>{typeof q.solutions === 'string' ? q.solutions : JSON.stringify(q.solutions, null, 2)}</code>
-                          </pre>
+                          {typeof q.solutions === 'string' ? (
+                            <pre className="p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto print:overflow-visible print:whitespace-pre-wrap border border-slate-800">
+                              <code>{q.solutions}</code>
+                            </pre>
+                          ) : typeof q.solutions === 'object' ? (
+                            <div className="space-y-3">
+                              {Object.entries(q.solutions)
+                                .filter(([k, v]) => Boolean(v && typeof v === 'string' && !['leetcodeUrl', 'leetcodeNumber', 'pattern', 'keyIntuition'].includes(k)))
+                                .map(([lang, code]) => (
+                                  <div key={lang} className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-black uppercase font-mono px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300">
+                                        {lang}
+                                      </span>
+                                      <button
+                                        onClick={() => handleCopyCode(code as string, `ref-${q.id}-${lang}`)}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors print:hidden cursor-pointer"
+                                      >
+                                        {copiedCodeId === `ref-${q.id}-${lang}` ? (
+                                          <>
+                                            <Check className="w-3 h-3 text-emerald-500" />
+                                            <span className="text-emerald-500">Copied</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Copy className="w-3 h-3" />
+                                            <span>Copy {lang}</span>
+                                          </>
+                                        )}
+                                      </button>
+                                    </div>
+                                    <pre className="p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto print:overflow-visible print:whitespace-pre-wrap border border-slate-800">
+                                      <code>{code as string}</code>
+                                    </pre>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : null}
                         </div>
                       )}
                     </div>

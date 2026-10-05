@@ -27,6 +27,17 @@ interface StudentExamReviewModalProps {
   examTitle?: string;
 }
 
+function parseCorrectAnswerIndex(raw: any): number {
+  if (raw === undefined || raw === null) return -1;
+  if (typeof raw === 'number') return raw;
+  const str = String(raw).trim().toUpperCase();
+  if (/^[A-Z]$/.test(str)) {
+    return str.charCodeAt(0) - 65;
+  }
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? -1 : parsed;
+}
+
 export default function StudentExamReviewModal({
   isOpen,
   onClose,
@@ -92,7 +103,8 @@ export default function StudentExamReviewModal({
         isCorrect = Boolean(resp?.test_cases_passed && resp.total_test_cases && resp.test_cases_passed === resp.total_test_cases);
       } else {
         isAnswered = resp?.selected_option !== null && resp?.selected_option !== undefined;
-        isCorrect = isAnswered && resp.selected_option === q.correct_answer;
+        const correctIdx = parseCorrectAnswerIndex(q.correct_answer);
+        isCorrect = isAnswered && Number(resp.selected_option) === correctIdx;
       }
 
       return {
@@ -373,8 +385,9 @@ export default function StudentExamReviewModal({
                   {!currentItem.isCoding && currentItem.question.options && (
                     <div className="space-y-2.5 pt-1">
                       {currentItem.question.options.map((opt: string, optIdx: number) => {
-                        const isStudentPick = currentItem.response?.selected_option === optIdx;
-                        const isVerifiedCorrect = currentItem.question.correct_answer === optIdx;
+                        const isStudentPick = currentItem.response?.selected_option !== null && currentItem.response?.selected_option !== undefined && Number(currentItem.response.selected_option) === optIdx;
+                        const correctIdx = parseCorrectAnswerIndex(currentItem.question.correct_answer);
+                        const isVerifiedCorrect = correctIdx === optIdx;
 
                         let style = 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300';
                         if (isVerifiedCorrect) {
