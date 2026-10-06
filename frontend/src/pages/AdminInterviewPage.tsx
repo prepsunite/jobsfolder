@@ -41,7 +41,7 @@ export default function AdminInterviewPage() {
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
 
-  if (!isSuperAdminEmail(user?.email)) return <NotFoundPage />;
+  const isSuperAdmin = isSuperAdminEmail(user?.email);
 
   const [activeTab, setActiveTab] = useState<TabType>('topics');
   const [filterCat, setFilterCat] = useState<FilterCat>('ALL');
@@ -80,12 +80,14 @@ export default function AdminInterviewPage() {
   const { data: allTopics = [], refetch: refetchTopics } = useQuery({
     queryKey: ['admin-interview-topics'],
     queryFn: () => interviewService.getAllTopics(),
+    enabled: isSuperAdmin,
     staleTime: 0,
   });
 
   const { data: allQuestions = [], refetch: refetchQuestions } = useQuery({
     queryKey: ['admin-interview-questions'],
     queryFn: () => interviewService.getAllQuestions(),
+    enabled: isSuperAdmin,
     staleTime: 0,
   });
 
@@ -451,6 +453,8 @@ export default function AdminInterviewPage() {
       </div>
     </div>
   );
+
+  if (!isSuperAdmin) return <NotFoundPage />;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">

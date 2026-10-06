@@ -39,15 +39,15 @@ function parseTestCasesFromText(rawText: string) {
     .replace(/&amp;/g, '&')
     .trim();
 
-  const regex = /(?:^|\n)\s*(?:#{1,4}\s*|\*\*\s*)?(?:Test\s*Case|Example|Sample)\s*(\d+)?[:\s\*\#]*\n*([\s\S]*?)(?=(?:\n\s*(?:#{1,4}\s*|\*\*\s*)?(?:Test\s*Case|Example|Sample)\s*(?:\d+|[:\s\*\#])|$))/gi;
+  const regex = /(?:^|\n)\s*(?:#{1,4}\s*|\*\*\s*)?(?:Test\s*Case|Example|Sample)\s*(\d+)?[:\s*#]*\n*([\s\S]*?)(?=(?:\n\s*(?:#{1,4}\s*|\*\*\s*)?(?:Test\s*Case|Example|Sample)\s*(?:\d+|[:\s*#])|$))/gi;
   const matches = [...clean.matchAll(regex)];
 
   if (matches.length === 0) {
     const inputMatch = clean.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
     const outputMatch = clean.match(/Output:?\s*([\s\S]*?)$/i);
     if (inputMatch || outputMatch) {
-      const cleanIn = (inputMatch ? inputMatch[1] : '').replace(/[\s\n#=\-]+$/, '').trim();
-      const cleanOut = (outputMatch ? outputMatch[1] : '').replace(/[\s\n#=\-]+$/, '').trim();
+      const cleanIn = (inputMatch ? inputMatch[1] : '').replace(/[\s\n#=-]+$/, '').trim();
+      const cleanOut = (outputMatch ? outputMatch[1] : '').replace(/[\s\n#=-]+$/, '').trim();
       return [{
         title: 'Test Case 1',
         input: cleanIn,
@@ -60,13 +60,13 @@ function parseTestCasesFromText(rawText: string) {
   return matches.map((m, idx) => {
     const caseNum = m[1] || `${idx + 1}`;
     let content = m[2].trim();
-    content = content.replace(/[\s\n#=\-]+$/, '').trim();
+    content = content.replace(/[\s\n#=-]+$/, '').trim();
 
     const inputMatch = content.match(/Input:?\s*([\s\S]*?)(?=Output:|$)/i);
     const outputMatch = content.match(/Output:?\s*([\s\S]*?)$/i);
 
-    const cleanIn = inputMatch ? inputMatch[1].replace(/[\s\n#=\-]+$/, '').trim() : '';
-    const cleanOut = outputMatch ? outputMatch[1].replace(/[\s\n#=\-]+$/, '').trim() : '';
+    const cleanIn = inputMatch ? inputMatch[1].replace(/[\s\n#=-]+$/, '').trim() : '';
+    const cleanOut = outputMatch ? outputMatch[1].replace(/[\s\n#=-]+$/, '').trim() : '';
 
     return {
       title: `Test Case ${caseNum}`,

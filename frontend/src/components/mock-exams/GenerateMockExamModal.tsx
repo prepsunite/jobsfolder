@@ -118,8 +118,8 @@ export default function GenerateMockExamModal({
     if (!usageInfo?.canGenerate) {
       toast.error(
         usageInfo?.limit === 0
-          ? 'Free tier does not include mock exams. Please upgrade to Plus (₹139) or Pro (₹199).'
-          : `Monthly generation limit reached (${usageInfo?.used}/${usageInfo?.limit}). Upgrade to Pro for 20 exams/month.`
+          ? 'Free tier does not include mock exams. Please upgrade to Pro (₹129) or Ultra (₹169).'
+          : `Monthly generation limit reached (${usageInfo?.used}/${usageInfo?.limit}). Upgrade to Ultra for unlimited exams.`
       );
       return;
     }
@@ -216,7 +216,7 @@ export default function GenerateMockExamModal({
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#FD4A32] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#e03f29] transition-all shadow-md shadow-[#FD4A32]/20 shrink-0"
               >
                 <Zap className="w-3.5 h-3.5" />
-                <span>Upgrade to Plus (₹139)</span>
+                <span>Upgrade to Pro (₹129)</span>
               </Link>
             ) : (
               <div className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -232,12 +232,12 @@ export default function GenerateMockExamModal({
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
               <div className="space-y-1">
                 <div className="font-bold">
-                  {usageInfo?.limit === 0 ? 'Mock Exams Require Plus or Pro Plan' : 'Monthly Generation Quota Reached'}
+                  {usageInfo?.limit === 0 ? 'Mock Exams Require Pro or Ultra Plan' : 'Monthly Generation Quota Reached'}
                 </div>
                 <p className="opacity-90 leading-relaxed">
                   {usageInfo?.limit === 0
-                    ? 'Free users can browse syllabus and archives. To generate full 90-minute timed mock exams with proctored countdowns, upgrade to Plus (₹139/mo for 5 exams) or Pro (₹199/mo for 20 exams).'
-                    : `You have generated all ${usageInfo?.limit} mock exams included in your monthly plan. Upgrade to Pro for 20 exams/month or wait until ${usageInfo?.resetDate} for your reset.`}
+                    ? 'Free users can browse syllabus and archives. To generate full 90-minute timed mock exams with proctored countdowns, upgrade to Pro (₹129/mo for 5 exams) or Ultra (₹169/mo for unlimited exams).'
+                    : `You have generated all ${usageInfo?.limit} mock exams included in your monthly plan. Upgrade to Ultra for unlimited exams or wait until ${usageInfo?.resetDate} for your reset.`}
                 </p>
               </div>
             </div>
@@ -414,7 +414,7 @@ export default function GenerateMockExamModal({
               onClick={onClose}
               className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#FD4A32] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#e03f29] transition-all shadow-md shadow-[#FD4A32]/25 flex items-center justify-center gap-2"
             >
-              <span>Unlock Plus Plan (₹139)</span>
+              <span>Unlock Pro Plan (₹129)</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : (

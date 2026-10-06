@@ -2,16 +2,33 @@ import Razorpay from 'razorpay';
 
 // Server-side authoritative pricing catalog (INR)
 const PRICING_CATALOG = {
-  PLUS: 139,
-  PLUS_MONTHLY: 139,
-  PRO: 199,
-  PRO_MONTHLY: 199,
-  SINGLE_PAPER: 99,
-  SINGLE: 99,
-  MONTHLY: 199,
-  MONTHLY_PASS: 199,
+  // Pro Tier (5 Mock Exams / cycle)
+  PRO: 129,
+  PRO_1M: 129,
+  PRO_MONTHLY: 129,
+  PRO_6M: 649,
+  PRO_1Y: 1299,
+  PRO_YEARLY: 1299,
+
+  // Ultra Tier (Unlimited Mock Exams)
+  ULTRA: 169,
+  ULTRA_1M: 169,
+  ULTRA_MONTHLY: 169,
+  ULTRA_6M: 899,
+  ULTRA_1Y: 1799,
+  ULTRA_YEARLY: 1799,
+
+  // Single Company Exam Pass (1-Month / 30 Days Access)
+  SINGLE_PAPER: 59,
+  SINGLE: 59,
+
+  // Legacy mappings for backward compatibility
+  PLUS: 129,
+  PLUS_MONTHLY: 129,
+  MONTHLY: 169,
+  MONTHLY_PASS: 169,
   QUARTERLY: 699,
-  YEARLY: 1999,
+  YEARLY: 1799,
 };
 
 export default async function handler(req, res) {
@@ -24,7 +41,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { itemType = 'SINGLE_PAPER', examId, currency = 'INR', amount } = req.body || {};
+    const { itemType = 'SINGLE_PAPER', examId, currency = 'INR', amount, userEmail } = req.body || {};
 
     // 1. Authoritative price resolution
     const normalizedItemType = itemType.toUpperCase();
@@ -63,6 +80,7 @@ export default async function handler(req, res) {
       notes: {
         itemType: normalizedItemType,
         examId: examId || null,
+        userEmail: userEmail ? String(userEmail).toLowerCase().trim() : null,
         expectedAmountINR: String(finalAmountINR),
       },
     });

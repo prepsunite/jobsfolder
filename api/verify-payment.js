@@ -2,16 +2,33 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
 const PRICING_CATALOG = {
-  PLUS: 139,
-  PLUS_MONTHLY: 139,
-  PRO: 199,
-  PRO_MONTHLY: 199,
-  SINGLE_PAPER: 99,
-  SINGLE: 99,
-  MONTHLY: 199,
-  MONTHLY_PASS: 199,
+  // Pro Tier (5 Mock Exams / cycle)
+  PRO: 129,
+  PRO_1M: 129,
+  PRO_MONTHLY: 129,
+  PRO_6M: 649,
+  PRO_1Y: 1299,
+  PRO_YEARLY: 1299,
+
+  // Ultra Tier (Unlimited Mock Exams)
+  ULTRA: 169,
+  ULTRA_1M: 169,
+  ULTRA_MONTHLY: 169,
+  ULTRA_6M: 899,
+  ULTRA_1Y: 1799,
+  ULTRA_YEARLY: 1799,
+
+  // Single Company Exam Pass (1-Month / 30 Days Access)
+  SINGLE_PAPER: 59,
+  SINGLE: 59,
+
+  // Legacy mappings for backward compatibility
+  PLUS: 129,
+  PLUS_MONTHLY: 129,
+  MONTHLY: 169,
+  MONTHLY_PASS: 169,
   QUARTERLY: 699,
-  YEARLY: 1999,
+  YEARLY: 1799,
 };
 
 function safeTimingEqual(a, b) {
@@ -100,7 +117,7 @@ export default async function handler(req, res) {
     }
 
     const normalizedItemType = itemType.toUpperCase();
-    const verifiedAmount = PRICING_CATALOG[normalizedItemType] || (typeof amount === 'number' && amount > 0 ? amount : 99);
+    const verifiedAmount = PRICING_CATALOG[normalizedItemType] || (typeof amount === 'number' && amount > 0 ? amount : 59);
 
     // 4. Log Transaction (Idempotent by payment_id)
     await supabaseAdmin.from('transactions').upsert(
@@ -121,7 +138,7 @@ export default async function handler(req, res) {
 
     // 5. Grant Entitlement based on purchase type
     if ((normalizedItemType === 'SINGLE_PAPER' || normalizedItemType === 'SINGLE') && examId) {
-      const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 Year Access
+      const paperExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 Days (1 Month) Access
       await supabaseAdmin.from('user_paper_purchases').upsert(
         [
           {
@@ -136,19 +153,39 @@ export default async function handler(req, res) {
       );
     } else {
       let days = 30;
-      let planName = 'PrepUnite Pro (20 Mock Exams/mo)';
-      if (normalizedItemType === 'PLUS' || normalizedItemType === 'PLUS_MONTHLY') {
+      let planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+
+      if (normalizedItemType.startsWith('ULTRA')) {
+        if (normalizedItemType.includes('6M')) {
+          days = 180;
+          planName = 'PrepUnite Ultra 6-Month Pass (Unlimited)';
+        } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
+          days = 365;
+          planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
+        } else {
+          days = 30;
+          planName = 'PrepUnite Ultra (Unlimited)';
+        }
+      } else if (normalizedItemType.startsWith('PRO')) {
+        if (normalizedItemType.includes('6M')) {
+          days = 180;
+          planName = 'PrepUnite Pro 6-Month Pass (5 Mock Exams/mo)';
+        } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
+          days = 365;
+          planName = 'PrepUnite Pro 1-Year Pass (5 Mock Exams/mo)';
+        } else {
+          days = 30;
+          planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+        }
+      } else if (normalizedItemType === 'PLUS' || normalizedItemType === 'PLUS_MONTHLY') {
         days = 30;
-        planName = 'PrepUnite Plus (5 Mock Exams/mo)';
-      } else if (normalizedItemType === 'PRO' || normalizedItemType === 'PRO_MONTHLY' || normalizedItemType === 'MONTHLY' || normalizedItemType === 'MONTHLY_PASS') {
-        days = 30;
-        planName = 'PrepUnite Pro (20 Mock Exams/mo)';
+        planName = 'PrepUnite Pro (5 Mock Exams/mo)';
       } else if (normalizedItemType === 'QUARTERLY') {
         days = 90;
         planName = 'PrepUnite Pro Quarterly Pass';
       } else if (normalizedItemType === 'YEARLY') {
         days = 365;
-        planName = 'PrepUnite Master Yearly Pass';
+        planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
       }
 
       const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();

@@ -429,6 +429,17 @@ export default function BulkImportPapersModal({
     return parseBatchQuestions(inputText, accessMode);
   }, [inputText, accessMode]);
 
+  const previewSingleFileHtml = useMemo(() => {
+    return formatBatchToSingleFileHtml(parsedQuestions);
+  }, [parsedQuestions]);
+
+  const targetFileName = useMemo(() => {
+    if (destMode === 'append') {
+      return targetNode?.title || 'Selected File';
+    }
+    return newFileTitle || 'New File';
+  }, [destMode, targetNode, newFileTitle]);
+
   // Auto-generate title for new file mode
   useEffect(() => {
     if (parsedQuestions.length > 0) {
@@ -551,17 +562,6 @@ export default function BulkImportPapersModal({
       setIsSubmitting(false);
     }
   };
-
-  const previewSingleFileHtml = useMemo(() => {
-    return formatBatchToSingleFileHtml(parsedQuestions);
-  }, [parsedQuestions]);
-
-  const targetFileName = useMemo(() => {
-    if (destMode === 'append') {
-      return targetNode?.title || 'Selected File';
-    }
-    return newFileTitle || 'New File';
-  }, [destMode, targetNode, newFileTitle]);
 
   return (
     <div

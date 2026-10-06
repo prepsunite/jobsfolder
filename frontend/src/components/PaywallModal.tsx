@@ -54,7 +54,7 @@ export default function PaywallModal({
     const itemType = tier.itemType;
     const description =
       option === 'SINGLE'
-        ? `1-Year Paper Access: ${examName}`
+        ? `1-Month Paper Access: ${examName}`
         : tier.defaultDescription;
 
     try {
@@ -66,6 +66,7 @@ export default function PaywallModal({
           amount: amountINR,
           itemType,
           examId: itemType === 'SINGLE_PAPER' ? examId : undefined,
+          userEmail: email,
         }),
       });
 

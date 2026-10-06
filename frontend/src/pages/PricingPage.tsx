@@ -1,19 +1,35 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Zap, BookOpen, Sparkles, ShieldCheck } from 'lucide-react';
+import {
+  Check,
+  Zap,
+  BookOpen,
+  Sparkles,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  Layers,
+  HelpCircle,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { examService, formatExamDisplayName, isExamPaywalled, type ExamWithCompany } from '@/services/exam.service';
+
+type BillingDuration = '1M' | '6M' | '1Y';
 
 export default function PricingPage() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const urlExamId = searchParams.get('examId');
 
+  const [billingDuration, setBillingDuration] = useState<BillingDuration>('1M');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [selectedExamId, setSelectedExamId] = useState<string>('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // Fetch all available company placement papers live from database
   const { data: exams = [] } = useQuery<ExamWithCompany[]>({
@@ -36,6 +52,76 @@ export default function PricingPage() {
       }
     }
   }, [paywalledExams, urlExamId, selectedExamId]);
+
+  // Pricing matrix based on billingDuration
+  const pricing = useMemo(() => {
+    switch (billingDuration) {
+      case '6M':
+        return {
+          pro: {
+            amount: 649,
+            itemType: 'PRO_6M',
+            displayPrice: '₹649',
+            perMonth: '₹108/mo',
+            durationLabel: 'for 6 months',
+            savingsBadge: 'Save 16%',
+            buttonLabel: 'Get Pro 6-Mo Pass (₹649)',
+          },
+          ultra: {
+            amount: 899,
+            itemType: 'ULTRA_6M',
+            displayPrice: '₹899',
+            perMonth: '₹150/mo',
+            durationLabel: 'for 6 months',
+            savingsBadge: 'Save 11%',
+            buttonLabel: 'Get Ultra 6-Mo Pass (₹899)',
+          },
+        };
+      case '1Y':
+        return {
+          pro: {
+            amount: 1299,
+            itemType: 'PRO_1Y',
+            displayPrice: '₹1,299',
+            perMonth: '₹108/mo',
+            durationLabel: 'for 1 year',
+            savingsBadge: 'Save 16% • Best Value',
+            buttonLabel: 'Get Pro 1-Yr Pass (₹1,299)',
+          },
+          ultra: {
+            amount: 1799,
+            itemType: 'ULTRA_1Y',
+            displayPrice: '₹1,799',
+            perMonth: '₹150/mo',
+            durationLabel: 'for 1 year',
+            savingsBadge: 'Save 11% • Best Value',
+            buttonLabel: 'Get Ultra 1-Yr Pass (₹1,799)',
+          },
+        };
+      case '1M':
+      default:
+        return {
+          pro: {
+            amount: 129,
+            itemType: 'PRO_1M',
+            displayPrice: '₹129',
+            perMonth: null,
+            durationLabel: '/ month',
+            savingsBadge: null,
+            buttonLabel: 'Get Pro Pass (₹129/mo)',
+          },
+          ultra: {
+            amount: 169,
+            itemType: 'ULTRA_1M',
+            displayPrice: '₹169',
+            perMonth: null,
+            durationLabel: '/ month',
+            savingsBadge: null,
+            buttonLabel: 'Get Ultra Pass (₹169/mo)',
+          },
+        };
+    }
+  }, [billingDuration]);
 
   const handleBuy = async (planType: string, amount: number, examId?: string) => {
     try {
@@ -68,31 +154,33 @@ export default function PricingPage() {
           amount,
           itemType: planType,
           examId: targetExamId,
+          userEmail,
         }),
       });
 
       const orderData = await res.json();
       if (!res.ok) throw new Error(orderData.error || 'Failed to create order');
 
-      // 2. Open Razorpay Checkout Modal if key exists
+      // 2. Open Razorpay Checkout Modal
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
       if (razorpayKey && (window as any).Razorpay) {
         const selectedExamName = exams.find((e) => e.id === targetExamId)?.name || 'Selected Paper';
 
         const planDescriptions: Record<string, string> = {
-          SINGLE_PAPER: `1-Year Pass: ${selectedExamName}`,
-          PLUS: 'PrepUnite Plus Plan (5 Mock Exams/Month)',
-          PRO: 'PrepUnite Pro Plan (20 Mock Exams/Month)',
-          MONTHLY: 'PrepUnite Pro Monthly Pass (30 Days)',
-          QUARTERLY: 'PrepUnite Pro Quarterly Pass (90 Days)',
-          YEARLY: 'PrepUnite Master Yearly Pass (365 Days)',
+          SINGLE_PAPER: `1-Month Paper Access: ${selectedExamName}`,
+          PRO_1M: 'Jobsfolder Pro (5 Mock Exams / 1 Month)',
+          PRO_6M: 'Jobsfolder Pro 6-Month Pass (5 Mock Exams/cycle)',
+          PRO_1Y: 'Jobsfolder Pro 1-Year Pass (5 Mock Exams/cycle - ₹1,299)',
+          ULTRA_1M: 'Jobsfolder Ultra (Unlimited Mock Exams / 1 Month)',
+          ULTRA_6M: 'Jobsfolder Ultra 6-Month Pass (Unlimited Mocks)',
+          ULTRA_1Y: 'Jobsfolder Ultra 1-Year Pass (Unlimited Mocks - ₹1,799)',
         };
 
         const options = {
           key: razorpayKey,
           amount: orderData.amount,
           currency: orderData.currency || 'INR',
-          name: 'PrepUnite',
+          name: 'PrepUnite / Jobsfolder',
           description: planDescriptions[planType] || `PrepUnite Pass`,
           order_id: orderData.orderId,
           prefill: { email: userEmail },
@@ -121,17 +209,17 @@ export default function PricingPage() {
               const verifyData = await verifyRes.json().catch(() => ({}));
               setNotification({
                 type: 'error',
-                message: `Payment verification failed: ${verifyData.error || 'Please contact support with your Payment ID: ' + response.razorpay_payment_id}`,
+                message: `Payment verification failed: ${verifyData.error || 'Please contact support with Payment ID: ' + response.razorpay_payment_id}`,
               });
               return;
             }
 
             setNotification({
               type: 'success',
-              message: 'Payment Verified! Access unlocked on your account. Redirecting...',
+              message: 'Payment Verified! Your pass has been securely activated. Redirecting...',
             });
             setTimeout(() => {
-              if (planType === 'PLUS' || planType === 'PRO') {
+              if (planType.startsWith('PRO') || planType.startsWith('ULTRA')) {
                 window.location.href = '/student/exams';
               } else {
                 window.location.href = targetExamId ? `/companies?examId=${targetExamId}` : '/companies';
@@ -145,7 +233,7 @@ export default function PricingPage() {
       } else {
         setNotification({
           type: 'info',
-          message: `Order Created: ${orderData.orderId}. Razorpay payment gateway is running in test mode.`,
+          message: `Order Created: ${orderData.orderId}. Razorpay payment gateway is running in preview mode.`,
         });
       }
     } catch (err: any) {
@@ -158,29 +246,99 @@ export default function PricingPage() {
     }
   };
 
-  const currentSelectedExam = paywalledExams.find((e) => e.id === selectedExamId);
+  const faqs = [
+    {
+      q: 'Can I choose which companies I take mock exams for in Pro?',
+      a: 'Yes, completely! With the Pro plan, you receive 5 blueprint mock exams per cycle and can generate exams for any company pattern of your choice (TCS NQT, Accenture ASE, Infosys, Cognizant, Wipro, and more).',
+    },
+    {
+      q: 'What is the main difference between Pro and Ultra?',
+      a: 'Pro gives you 5 blueprint mock exams per cycle for focused company preparation. Ultra gives you 100% UNLIMITED mock exams across any test pattern, plus full 365-day access to all 50+ company past OA archives and coding solutions.',
+    },
+    {
+      q: 'How do the 6-Month and 1-Year passes work?',
+      a: 'Passes are one-time payments for extended access (180 days or 365 days) with massive savings (up to 36% off). There are no unexpected auto-debits or hidden subscriptions.',
+    },
+    {
+      q: 'Can I unlock just a single company past paper archive?',
+      a: 'Yes! If you are sitting for only one specific campus drive, you can purchase the Single Exam Pass for ₹59, granting 30 days of unlimited access to all tabs and coding solutions for that specific drive.',
+    },
+    {
+      q: 'How do the timed mock tests work?',
+      a: 'Our mock test engine runs in a strict proctored environment matching the real test with 90/120 min countdown timers, section-wise navigation, tab-switch monitoring, and auto-submit. After submission, you receive an immediate detailed scorecard and step-by-step solutions.',
+    },
+    {
+      q: 'Is payment secure and when does my pass activate?',
+      a: 'All transactions are encrypted with 256-bit SSL via Razorpay. Your pass is activated instantly on your account as soon as the transaction completes.',
+    },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 py-6 px-4 animate-fadeIn">
-      {/* Header */}
-      <div className="text-center space-y-3 max-w-2xl mx-auto">
+    <div className="max-w-6xl mx-auto space-y-12 py-8 px-4 animate-fadeIn">
+      {/* 1. Hero Header */}
+      <div className="text-center space-y-3.5 max-w-3xl mx-auto">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider">
           <Zap className="w-3.5 h-3.5" />
-          <span>Transparent Pricing</span>
+          <span>Transparent Student Pricing</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-display font-extrabold tracking-tight">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold tracking-tight text-[#121417] dark:text-white">
           Invest in Your <span className="bg-gradient-to-r from-[#FD4A32] via-[#FD4A32] to-[#FF8066] bg-clip-text text-transparent">Dream Career</span>
         </h1>
-        <p className="text-base text-gray-700 dark:text-gray-300">
-          Unlock exclusive company placement papers, complete syllabus breakdowns, and original previous questions with full step-by-step solutions.
+        <p className="text-sm text-[#495057] dark:text-[#999999] max-w-xl mx-auto leading-relaxed">
+          Master placement season with authentic company blueprints, timed proctored mocks, and step-by-step OA solutions.
         </p>
+
+        {/* 2. HCI Segmented Duration Pill Switcher */}
+        <div className="pt-4 flex justify-center">
+          <div className="inline-flex items-center p-1 rounded-full bg-[#F1F3F5] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] shadow-xs">
+            <button
+              type="button"
+              onClick={() => setBillingDuration('1M')}
+              className={`px-4 py-1.5 rounded-full text-xs font-display font-bold transition-all cursor-pointer ${
+                billingDuration === '1M'
+                  ? 'bg-white dark:bg-[#121417] text-[#121417] dark:text-white shadow-xs'
+                  : 'text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+              }`}
+            >
+              1 Month
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingDuration('6M')}
+              className={`px-4 py-1.5 rounded-full text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                billingDuration === '6M'
+                  ? 'bg-white dark:bg-[#121417] text-[#121417] dark:text-white shadow-xs'
+                  : 'text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+              }`}
+            >
+              <span>6-Month Pass</span>
+              <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-[#FD4A32]/10 text-[#FD4A32]">
+                Save up to 16%
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingDuration('1Y')}
+              className={`px-4 py-1.5 rounded-full text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                billingDuration === '1Y'
+                  ? 'bg-white dark:bg-[#121417] text-[#121417] dark:text-white shadow-xs'
+                  : 'text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+              }`}
+            >
+              <span>1-Year Pass</span>
+              <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                Best Value
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Notification Toast */}
       {notification && (
         <div
           role="alert"
-          className={`max-w-2xl mx-auto p-4 rounded-xl text-sm font-medium flex items-center justify-between border transition-all ${
+          className={`max-w-2xl mx-auto p-4 rounded-xl text-xs font-medium flex items-center justify-between border transition-all ${
             notification.type === 'error'
               ? 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
               : notification.type === 'success'
@@ -199,194 +357,231 @@ export default function PricingPage() {
         </div>
       )}
 
-      {/* 3 Core Tiers: Free (₹0), Plus (₹139 - 5 Mock Exams), Pro (₹199 - 20 Mock Exams) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {/* Tier 1: Free Preview */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-6 shadow-xs">
+      {/* 3 Core Tiers Grid: Basic, Pro, Ultra */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
+        {/* Tier 1: Basic (Free) */}
+        <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-6 shadow-xs hover:border-gray-300 dark:hover:border-[#333333] transition-all">
           <div className="space-y-4">
-            <div>
-              <span className="text-[10px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider font-display">Starter</span>
-              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white">Free Tier</h3>
-              <p className="text-xs text-[#868E96] dark:text-[#666666] mt-0.5">Explore hiring patterns, test syllabi & interview reports</p>
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase tracking-wider font-display">
+                Starter
+              </span>
+              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white">Basic</h3>
+              <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
+                Explore recruitment patterns, test syllabi & candidate interview debriefs.
+              </p>
             </div>
 
-            <div className="flex items-baseline gap-1">
-              <span className="font-display font-black text-4xl text-[#121417] dark:text-white">₹0</span>
-              <span className="text-xs text-[#868E96] dark:text-[#555555]">/ forever</span>
+            <div className="flex items-baseline gap-1.5 pt-1">
+              <span className="font-display font-black text-3xl sm:text-4xl text-[#121417] dark:text-white">₹0</span>
+              <span className="text-xs text-[#868E96] dark:text-[#666666]">/ forever</span>
             </div>
 
-            <div className="py-2 px-3 rounded-lg bg-gray-50 dark:bg-[#1c1c1c] text-[11px] font-medium text-gray-500 dark:text-gray-400">
+            <div className="py-2 px-3 rounded-lg bg-[#F8F9FA] dark:bg-[#1C1C1C] text-[11px] font-medium text-[#495057] dark:text-[#888888] border border-[#E9ECEF] dark:border-[#282828]">
               ⚡ <strong>0 Mock Exams</strong> included (upgrade to generate timed blueprints)
             </div>
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
-                <span>Access all 50+ company recruitment overviews</span>
+                <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
+                <span>50+ company recruitment overviews & test patterns</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
-                <span>Round-wise test pattern & syllabus weightages</span>
+                <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
+                <span>Round-wise test syllabus & sectional weightages</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Sample memory-based preview questions</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#121417] dark:text-[#FD4A32] shrink-0" />
-                <span>Browse candidate interview experiences</span>
+                <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
+                <span>Candidate interview experiences & rounds debrief</span>
               </li>
             </ul>
           </div>
 
           <Link
             to="/companies"
-            className="w-full py-3 rounded-xl bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-white text-[#121417] dark:text-white text-xs font-display font-bold uppercase tracking-wider text-center transition-colors block"
+            className="w-full py-2.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-white text-[#121417] dark:text-white text-xs font-display font-bold uppercase tracking-wider text-center transition-colors block cursor-pointer"
           >
             Browse Free Syllabus
           </Link>
         </div>
 
-        {/* Tier 2: Plus Plan (₹139 / month - 5 Mock Exams) */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-[#141414] border-2 border-[#FD4A32] flex flex-col justify-between space-y-6 relative shadow-lg">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#FD4A32] text-white text-[9px] font-display font-black uppercase tracking-wider shadow-xs">
-            Popular for Drive Practice
-          </div>
-
+        {/* Tier 2: Pro (5 Mock Exams / cycle) */}
+        <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] flex flex-col justify-between space-y-6 relative shadow-xs hover:border-[#FD4A32]/60 transition-all">
           <div className="space-y-4">
-            <div>
-              <span className="text-[10px] font-bold text-[#FD4A32] uppercase tracking-wider font-display">Targeted Practice</span>
-              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white">PrepUnite Plus</h3>
-              <p className="text-xs text-[#868E96] dark:text-[#666666] mt-0.5">Generate blueprint mock exams with customizable schedules</p>
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-[#FD4A32] uppercase tracking-wider font-display">
+                Targeted Practice
+              </span>
+              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white">Pro</h3>
+              <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
+                Take official blueprint mock tests for target companies on your schedule.
+              </p>
             </div>
 
-            <div className="flex items-baseline gap-1">
-              <span className="font-display font-black text-4xl text-[#121417] dark:text-white">₹139</span>
-              <span className="text-xs text-[#868E96] dark:text-[#555555]">/ month</span>
+            <div className="space-y-0.5 pt-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-display font-black text-3xl sm:text-4xl text-[#121417] dark:text-white">
+                  {pricing.pro.displayPrice}
+                </span>
+                <span className="text-xs text-[#868E96] dark:text-[#666666]">
+                  {pricing.pro.durationLabel}
+                </span>
+              </div>
+              {pricing.pro.perMonth && (
+                <div className="flex items-center gap-2 text-[11px] text-[#495057] dark:text-[#888888]">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{pricing.pro.perMonth}</span>
+                  {pricing.pro.savingsBadge && (
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+                      {pricing.pro.savingsBadge}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="py-2 px-3 rounded-lg bg-[#FD4A32]/10 text-[11px] font-bold text-[#FD4A32]">
-              🎯 <strong>5 Mock Exams / Month</strong> generated from blueprints
+            <div className="py-2 px-3 rounded-lg bg-[#FD4A32]/10 text-[11px] font-bold text-[#FD4A32] border border-[#FD4A32]/20">
+              🎯 <strong>5 Mock Exams / cycle</strong> (pick any target company)
             </div>
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
-                <span><strong>5 Blueprint Mock Exams / month</strong> (TCS NQT, Accenture ASE, etc.)</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span><strong>5 Blueprint Mock Exams / cycle</strong> (TCS, Accenture, etc.)</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
-                <span>Choose when exam is live (from day X to day Y)</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Choose which target company test you need</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
-                <span><strong>Strict 90/120 min countdown timer</strong> with auto-submit</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Strict 90/120 min countdown timer & auto-submit</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
-                <span>Proctored anti-cheat & tab switch detection</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Proctored anti-cheat & tab-switch tracking</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#FD4A32] shrink-0" />
-                <span>Complete question solutions & section scorecards</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Full step-by-step code solutions & scorecard</span>
               </li>
             </ul>
           </div>
 
           <button
             type="button"
-            onClick={() => handleBuy('PLUS', 139)}
-            disabled={loadingPlan === 'PLUS'}
-            className="w-full py-3 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[#FD4A32]/25"
+            onClick={() => handleBuy(pricing.pro.itemType, pricing.pro.amount)}
+            disabled={loadingPlan === pricing.pro.itemType}
+            className="w-full py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm shadow-[#FD4A32]/25"
           >
-            {loadingPlan === 'PLUS' ? 'Connecting...' : 'Get Plus Pass (₹139/mo)'}
+            {loadingPlan === pricing.pro.itemType ? 'Connecting...' : pricing.pro.buttonLabel}
           </button>
         </div>
 
-        {/* Tier 3: Pro Plan (₹199 / month - 20 Mock Exams) */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-[#18191c] to-[#121417] text-white border-2 border-amber-500/80 flex flex-col justify-between space-y-6 relative shadow-xl">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-linear-to-r from-amber-500 to-orange-500 text-black text-[9px] font-display font-black uppercase tracking-wider shadow-md">
-            Best Value • 20 Mock Exams
+        {/* Tier 3: Ultra (Unlimited Mock Exams) - Featured */}
+        <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border-2 border-[#FD4A32] dark:border-[#FD4A32] flex flex-col justify-between space-y-6 relative shadow-lg shadow-[#FD4A32]/10">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#FD4A32] text-white text-[9px] font-display font-black uppercase tracking-wider shadow-xs">
+            Most Popular • Unlimited
           </div>
 
           <div className="space-y-4">
-            <div>
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider font-display">Ultimate Prep</span>
-              <h3 className="font-display font-bold text-xl text-white">PrepUnite Pro</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Maximum mock drives + full 50+ company archives</p>
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-[#FD4A32] uppercase tracking-wider font-display">
+                Ultimate All-Access
+              </span>
+              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white flex items-center gap-2">
+                <span>Ultra</span>
+                <Sparkles className="w-4 h-4 text-[#FD4A32]" />
+              </h3>
+              <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
+                Unrestricted practice across all companies + complete 50+ past archives.
+              </p>
             </div>
 
-            <div className="flex items-baseline gap-1">
-              <span className="font-display font-black text-4xl text-white">₹199</span>
-              <span className="text-xs text-gray-400">/ month</span>
+            <div className="space-y-0.5 pt-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-display font-black text-3xl sm:text-4xl text-[#121417] dark:text-white">
+                  {pricing.ultra.displayPrice}
+                </span>
+                <span className="text-xs text-[#868E96] dark:text-[#666666]">
+                  {pricing.ultra.durationLabel}
+                </span>
+              </div>
+              {pricing.ultra.perMonth && (
+                <div className="flex items-center gap-2 text-[11px] text-[#495057] dark:text-[#888888]">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{pricing.ultra.perMonth}</span>
+                  {pricing.ultra.savingsBadge && (
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+                      {pricing.ultra.savingsBadge}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="py-2 px-3 rounded-lg bg-amber-500/10 text-[11px] font-bold text-amber-400 border border-amber-500/20">
-              🚀 <strong>20 Mock Exams / Month</strong> + Full Company Archives
+            <div className="py-2 px-3 rounded-lg bg-[#FD4A32]/10 text-[11px] font-bold text-[#FD4A32] border border-[#FD4A32]/25">
+              🚀 <strong>Unlimited Mock Exams</strong> + Full 50+ Company Archives
             </div>
 
-            <ul className="space-y-2.5 text-xs text-gray-300 pt-2 border-t border-[#2e3138]">
+            <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-white"><strong>20 Blueprint Mock Exams / month</strong></span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>Unlimited Blueprint Mock Exams</strong> (all test patterns)</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>TCS NQT, Accenture ASE, Infosys, and all patterns</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Practice tests across any company whenever you want</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Custom live schedule window + strict 90/120 min timer</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>Unlimited access to all 50+ company archives</strong></span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-white"><strong>Unlimited access to all 50+ company archives</strong></span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Full step-by-step code solutions & test case breakdowns</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Full step-by-step code solutions & Day-1 readiness metrics</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Priority question explanation updates</span>
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span>Sectional readiness scorecards & percentile rank</span>
               </li>
             </ul>
           </div>
 
           <button
             type="button"
-            onClick={() => handleBuy('PRO', 199)}
-            disabled={loadingPlan === 'PRO'}
-            className="w-full py-3 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+            onClick={() => handleBuy(pricing.ultra.itemType, pricing.ultra.amount)}
+            disabled={loadingPlan === pricing.ultra.itemType}
+            className="w-full py-2.5 rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-black dark:hover:bg-gray-100 text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            {loadingPlan === 'PRO' ? 'Connecting...' : 'Get Pro Pass (₹199/mo)'}
+            {loadingPlan === pricing.ultra.itemType ? 'Connecting...' : pricing.ultra.buttonLabel}
           </button>
         </div>
       </div>
 
-      {/* Targeted Single Company Archive Pass with Selector */}
-      <div className="max-w-4xl mx-auto pt-6">
-        <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#27292e] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
-          <div className="space-y-3 flex-1">
+      {/* 4. Single Company Archive Pass (Architectural Companion Banner) */}
+      <div className="max-w-6xl mx-auto">
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xs">
+          <div className="space-y-1.5 flex-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
               <BookOpen className="w-3 h-3" />
-              <span>Targeted 1-Year Pass</span>
+              <span>Targeted 1-Month Pass</span>
             </div>
-            <div>
-              <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white">
-                Single Company Archive (1-Year Access)
-              </h3>
-              <p className="text-xs text-[#868E96] dark:text-[#666666] mt-0.5">
-                Targeting one specific company drive? Unlock complete past OA papers with code implementations for 365 days.
-              </p>
-            </div>
+            <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
+              Targeting only one specific company drive?
+            </h3>
+            <p className="text-xs text-[#868E96] dark:text-[#777777] max-w-xl">
+              Unlock 30 days of complete past OA papers, full syllabus breakdowns, and code solutions for that single drive.
+            </p>
 
-            <div className="space-y-1.5 max-w-md pt-1">
+            <div className="pt-1 max-w-sm">
               <select
                 value={selectedExamId}
                 onChange={(e) => setSelectedExamId(e.target.value)}
                 disabled={paywalledExams.length === 0}
-                className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs font-semibold text-[#121417] dark:text-white focus:outline-hidden focus:border-[#FD4A32] disabled:opacity-60"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-[#1c1c1c] border border-[#E9ECEF] dark:border-[#2E2E2E] text-xs font-semibold text-[#121417] dark:text-white focus:outline-hidden focus:border-[#FD4A32] disabled:opacity-60 cursor-pointer"
               >
                 {paywalledExams.length > 0 ? (
                   paywalledExams.map((exam) => (
@@ -401,25 +596,139 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center sm:items-end justify-center gap-3 shrink-0">
-            <div className="flex items-baseline gap-1 text-right">
-              <span className="font-display font-black text-3xl text-[#121417] dark:text-white">₹99</span>
-              <span className="text-xs text-[#868E96] dark:text-[#555555]">/ 1 Year</span>
+          <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-between md:justify-end pt-2 md:pt-0 border-t md:border-t-0 border-[#E9ECEF] dark:border-[#242424]">
+            <div className="text-left md:text-right">
+              <div className="font-display font-black text-2xl text-[#121417] dark:text-white">₹59</div>
+              <div className="text-[10px] text-[#868E96] dark:text-[#666666]">/ 30 Days Access</div>
             </div>
             <button
               type="button"
-              onClick={() => handleBuy('SINGLE_PAPER', 99, selectedExamId)}
+              onClick={() => handleBuy('SINGLE_PAPER', 59, selectedExamId)}
               disabled={loadingPlan === 'SINGLE_PAPER' || !selectedExamId}
-              className="px-6 py-3 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-md shadow-[#FD4A32]/20 shrink-0"
+              className="px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs shadow-[#FD4A32]/20 shrink-0"
             >
-              {loadingPlan === 'SINGLE_PAPER' ? 'Connecting...' : `Unlock Paper (₹99)`}
+              {loadingPlan === 'SINGLE_PAPER' ? 'Connecting...' : 'Unlock Paper (₹59)'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Security Note */}
-      <div className="flex items-center justify-center gap-2 text-xs text-[#868E96] dark:text-[#555555] pt-4">
+      {/* 5. Collapsible Feature Comparison Matrix */}
+      <div className="max-w-6xl mx-auto space-y-4">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setShowComparison(!showComparison)}
+            className="inline-flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-white hover:text-[#FD4A32] transition-colors cursor-pointer"
+          >
+            <Layers className="w-4 h-4 text-[#FD4A32]" />
+            <span>{showComparison ? 'Hide' : 'View'} Detailed Feature Comparison Matrix</span>
+            {showComparison ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {showComparison && (
+          <div className="overflow-x-auto rounded-2xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-4 animate-fadeIn">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[#E9ECEF] dark:border-[#242424]">
+                  <th className="py-3 px-4 font-display font-bold text-[#121417] dark:text-white">Feature</th>
+                  <th className="py-3 px-4 font-display font-bold text-[#868E96] dark:text-[#777777] text-center">Basic (₹0)</th>
+                  <th className="py-3 px-4 font-display font-bold text-[#FD4A32] text-center">Pro (₹129)</th>
+                  <th className="py-3 px-4 font-display font-bold text-[#121417] dark:text-white text-center">Ultra (₹169)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424] text-[#495057] dark:text-[#999999]">
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Blueprint Mock Exams Quota</td>
+                  <td className="py-3 px-4 text-center">0 Mocks</td>
+                  <td className="py-3 px-4 text-center font-bold text-[#FD4A32]">5 Mocks / cycle</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Company Selection for Mocks</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">—</td>
+                  <td className="py-3 px-4 text-center">Choose any company pattern</td>
+                  <td className="py-3 px-4 text-center">All company patterns</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Strict Timed Countdown Proctoring</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">—</td>
+                  <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ Included</td>
+                  <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ Included</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Anti-Cheat & Tab Switch Tracking</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">—</td>
+                  <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ Included</td>
+                  <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ Included</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Complete Question Solutions & Code</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">Preview only</td>
+                  <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ In Mock Scorecard</td>
+                  <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ In Scorecard & Archives</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Access to 50+ Past OA Archives</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">Overview only</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">Single via ₹59/mo pass</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ Full 50+ Archives Unlocked</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Day-1 Readiness Scorecards</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">—</td>
+                  <td className="py-3 px-4 text-center">Standard Sectional</td>
+                  <td className="py-3 px-4 text-center font-bold text-[#121417] dark:text-white">Advanced + Percentile Rank</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* 6. Frequently Asked Questions Accordion */}
+      <div className="max-w-4xl mx-auto space-y-4 pt-4">
+        <div className="text-center space-y-1.5 pb-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#666666]">
+            <HelpCircle className="w-3.5 h-3.5 text-[#FD4A32]" />
+            <span>Got Questions?</span>
+          </div>
+          <h2 className="font-display font-bold text-2xl text-[#121417] dark:text-white">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {faqs.map((faq, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] overflow-hidden transition-all"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
+                className="w-full p-4 text-left flex items-center justify-between gap-4 text-xs font-display font-bold text-[#121417] dark:text-white hover:text-[#FD4A32] transition-colors cursor-pointer"
+              >
+                <span>{faq.q}</span>
+                {openFaqIndex === idx ? (
+                  <ChevronUp className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[#868E96] shrink-0" />
+                )}
+              </button>
+              {openFaqIndex === idx && (
+                <div className="px-4 pb-4 pt-1 text-xs text-[#495057] dark:text-[#999999] leading-relaxed border-t border-[#E9ECEF]/60 dark:border-[#242424]/60">
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 7. Security & Compliance Footer */}
+      <div className="flex items-center justify-center gap-2 text-xs text-[#868E96] dark:text-[#666666] pt-6 border-t border-[#E9ECEF] dark:border-[#242424]">
         <ShieldCheck className="w-4 h-4 text-[#FD4A32]" />
         <span>Secure 256-bit Razorpay Checkout • Instant Access Activation • DPDP Act 2023 Compliant</span>
       </div>

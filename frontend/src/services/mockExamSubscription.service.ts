@@ -1,13 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { GUEST_EMAIL } from '@/contexts/AuthContext';
 
-export type UserMockPlanTier = 'FREE' | 'PLUS' | 'PRO' | 'COLLEGE';
+export type UserMockPlanTier = 'FREE' | 'PLUS' | 'PRO' | 'ULTRA' | 'COLLEGE';
 
 export interface UserMockPlanInfo {
   plan: UserMockPlanTier;
   planName: string;
   isPaid: boolean;
-  mockExamLimit: number; // 0 for FREE, 5 for PLUS, 20 for PRO, 999 for COLLEGE
+  mockExamLimit: number; // 0 for FREE, 5 for PRO/PLUS, 999 for ULTRA/COLLEGE
   expiresAt?: string;
 }
 
@@ -112,21 +112,21 @@ export const mockExamSubscriptionService = {
 
       if (data) {
         const pName = (data.plan_name || '').toLowerCase();
-        if (pName.includes('plus')) {
+        if (pName.includes('ultra')) {
           return {
-            plan: 'PLUS',
-            planName: 'PrepUnite Plus (₹139/mo)',
+            plan: 'ULTRA',
+            planName: data.plan_name || 'PrepUnite Ultra (Unlimited Mocks)',
             isPaid: true,
-            mockExamLimit: 5,
+            mockExamLimit: 999,
             expiresAt: data.expires_at,
           };
         }
-        // Default paid tier is PRO (20 mock exams / mo)
+        // PRO or legacy PLUS (5 mock exams / mo)
         return {
           plan: 'PRO',
-          planName: 'PrepUnite Pro (₹199/mo)',
+          planName: data.plan_name || 'PrepUnite Pro (5 Mocks/mo)',
           isPaid: true,
-          mockExamLimit: 20,
+          mockExamLimit: 5,
           expiresAt: data.expires_at,
         };
       }
@@ -195,7 +195,7 @@ export const mockExamSubscriptionService = {
     const used = Math.max(localGens.length, practiceExamsCount);
     const limit = planInfo.mockExamLimit;
     const remaining = Math.max(0, limit - used);
-    const canGenerate = planInfo.plan === 'COLLEGE' || remaining > 0;
+    const canGenerate = planInfo.plan === 'COLLEGE' || planInfo.plan === 'ULTRA' || remaining > 0;
 
     return {
       plan: planInfo.plan,

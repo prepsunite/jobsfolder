@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       if (payment) {
         const { itemType = 'SINGLE_PAPER', examId } = payment.notes || {};
         const userEmail = payment.email || payment.notes?.userEmail;
-        const amount = payment.amount ? payment.amount / 100 : 99;
+        const amount = payment.amount ? payment.amount / 100 : 59;
         const paymentId = payment.id;
         const orderId = payment.order_id;
 
@@ -108,7 +108,7 @@ export default async function handler(req, res) {
             );
 
             if ((normalizedItemType === 'SINGLE_PAPER' || normalizedItemType === 'SINGLE') && examId) {
-              const paperExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+              const paperExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 Days Access
               await supabaseAdmin.from('user_paper_purchases').upsert(
                 [
                   {
@@ -123,13 +123,36 @@ export default async function handler(req, res) {
               );
             } else {
               let days = 30;
-              let planName = 'PrepUnite Pro Monthly Pass';
-              if (normalizedItemType === 'QUARTERLY') {
+              let planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+
+              if (normalizedItemType.startsWith('ULTRA')) {
+                if (normalizedItemType.includes('6M')) {
+                  days = 180;
+                  planName = 'PrepUnite Ultra 6-Month Pass (Unlimited)';
+                } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
+                  days = 365;
+                  planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
+                } else {
+                  days = 30;
+                  planName = 'PrepUnite Ultra (Unlimited)';
+                }
+              } else if (normalizedItemType.startsWith('PRO')) {
+                if (normalizedItemType.includes('6M')) {
+                  days = 180;
+                  planName = 'PrepUnite Pro 6-Month Pass (5 Mock Exams/mo)';
+                } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
+                  days = 365;
+                  planName = 'PrepUnite Pro 1-Year Pass (5 Mock Exams/mo)';
+                } else {
+                  days = 30;
+                  planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+                }
+              } else if (normalizedItemType === 'QUARTERLY') {
                 days = 90;
                 planName = 'PrepUnite Pro Quarterly Pass';
               } else if (normalizedItemType === 'YEARLY') {
                 days = 365;
-                planName = 'PrepUnite Master Yearly Pass';
+                planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
               }
 
               const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
