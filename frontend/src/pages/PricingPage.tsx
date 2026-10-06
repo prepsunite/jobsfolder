@@ -253,7 +253,7 @@ export default function PricingPage() {
     },
     {
       q: 'What is the main difference between Pro and Ultra?',
-      a: 'Pro gives you 5 blueprint mock exams per cycle for focused company preparation. Ultra gives you 100% UNLIMITED mock exams across any test pattern, plus full 365-day access to all 50+ company past OA archives and coding solutions.',
+      a: 'Both Pro and Ultra unlock complete access to all 50+ company past papers, OA question banks, and code solutions. The difference is the mock test quota: Pro includes 5 blueprint mock exams per cycle for targeted practice, while Ultra gives you 100% UNLIMITED blueprint mock exams across every company test pattern.',
     },
     {
       q: 'How do the 6-Month and 1-Year passes work?',
@@ -418,7 +418,7 @@ export default function PricingPage() {
               </span>
               <h3 className="font-display font-bold text-xl text-[#121417] dark:text-white">Pro</h3>
               <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
-                Take official blueprint mock tests for target companies on your schedule.
+                Full company question papers + 5 blueprint mock exams per cycle.
               </p>
             </div>
 
@@ -444,17 +444,17 @@ export default function PricingPage() {
             </div>
 
             <div className="py-2 px-3 rounded-lg bg-[#FD4A32]/10 text-[11px] font-bold text-[#FD4A32] border border-[#FD4A32]/20">
-              🎯 <strong>5 Mock Exams / cycle</strong> (pick any target company)
+              🎯 <strong>5 Mock Exams / cycle</strong> + All Company Question Papers
             </div>
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
-                <span><strong>5 Blueprint Mock Exams / cycle</strong> (TCS, Accenture, etc.)</span>
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>All 50+ company exam question papers & archives</strong></span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
-                <span>Choose which target company test you need</span>
+                <span><strong>5 Blueprint Mock Exams / cycle</strong> (pick any target company)</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
@@ -466,7 +466,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
-                <span>Full step-by-step code solutions & scorecard</span>
+                <span>Full step-by-step code solutions & scorecards</span>
               </li>
             </ul>
           </div>
@@ -670,9 +670,9 @@ export default function PricingPage() {
                   <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ In Scorecard & Archives</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">Access to 50+ Past OA Archives</td>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">All 50+ Company Question Papers & Archives</td>
                   <td className="py-3 px-4 text-center text-[#868E96]">Overview only</td>
-                  <td className="py-3 px-4 text-center text-[#868E96]">Single via ₹59/mo pass</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ Full 50+ Archives Unlocked</td>
                   <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ Full 50+ Archives Unlocked</td>
                 </tr>
                 <tr>
