@@ -2310,7 +2310,7 @@ export default function AdminDashboardPage() {
             {/* Breakdown Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
-                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Single Paper Passes (₹99)</span>
+                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Single Paper Passes (₹59)</span>
                 <div className="font-display text-2xl font-black text-[#1f1b17] dark:text-[#e3e3e3]">
                   ₹{singlePaperRevenue.toLocaleString('en-IN')}
                 </div>
@@ -2320,7 +2320,7 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#141517] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-1">
-                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Pro Memberships (₹299+)</span>
+                <span className="text-[11px] font-bold text-[#747878] dark:text-[#a6adbb] uppercase">Pro / Ultra Passes (₹129+)</span>
                 <div className="font-display text-2xl font-black text-purple-600 dark:text-purple-400">
                   ₹{proPassRevenue.toLocaleString('en-IN')}
                 </div>

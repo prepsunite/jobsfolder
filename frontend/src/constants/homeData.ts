@@ -132,8 +132,8 @@ export const FAQS: HomeFaq[] = [
     a: "Yes. Every paper in our archive is sourced from students who sat the actual drive and submitted their questions through PrepUnite's contributor program. Papers are memory-reconstructed, cross-verified by multiple contributors, and categorized by recruitment drive and batch.",
   },
   {
-    q: 'What exactly do I get when I pay ₹99?',
-    a: "You get full access to all past OA papers for a single company — every available paper set, all questions, and full solutions with explanations. It is a one-time payment, no subscription.",
+    q: 'What exactly do I get when I pay ₹59?',
+    a: "You get 30 days of full access to all past OA papers for a single company — every available paper set, all questions, and full solutions with explanations. No recurring subscription.",
   },
   {
     q: 'How many past papers are available per company?',
@@ -175,10 +175,10 @@ export const DELIVER: HomeDeliverItem[] = [
     cta: 'Read Reports',
   },
   {
-    num: '₹99',
+    num: '₹59',
     numClass: 'g',
     title: 'Per Company Archive',
-    body: 'One-time payment. Full access to all past papers for that company. No subscription, no recurring charges.',
+    body: '30-day access to all past papers and code solutions for that company. No surprise recurring charges.',
     href: '/pricing',
     cta: 'See Pricing',
   },

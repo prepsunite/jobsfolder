@@ -552,7 +552,7 @@ export default function StudentExamsPage() {
                 to="/pricing"
                 className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-[#33363f] text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-[#202226] transition-all"
               >
-                Upgrade to Plus (₹139) →
+                Upgrade to Pro (₹129) →
               </Link>
             )}
           </div>

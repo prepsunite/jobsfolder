@@ -539,12 +539,12 @@ export default function DocumentExplorer({
                 className="w-full py-2.5 px-4 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Unlock All {examName} Tabs (from ₹99)</span>
+                <span>Unlock All {examName} Tabs (from ₹59)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[#868E96] dark:text-[#555555]">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
-                <span>1-Year Access (₹99) · All-Company Pass (₹299/mo)</span>
+                <span>30-Day Single Pass (₹59) · All-Company Pro Pass (₹129/mo)</span>
               </div>
             </div>
           </div>

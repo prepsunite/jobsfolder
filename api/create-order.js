@@ -25,9 +25,9 @@ const PRICING_CATALOG = {
   // Legacy mappings for backward compatibility
   PLUS: 129,
   PLUS_MONTHLY: 129,
-  MONTHLY: 169,
-  MONTHLY_PASS: 169,
-  QUARTERLY: 699,
+  MONTHLY: 129,
+  MONTHLY_PASS: 129,
+  QUARTERLY: 649,
   YEARLY: 1799,
 };
 

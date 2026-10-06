@@ -4208,8 +4208,8 @@ export const tpoService = {
     if (!usage.canGenerate) {
       throw new Error(
         usage.limit === 0
-          ? 'Your Free tier does not include blueprint mock exams. Please upgrade to Plus (₹139/mo, 5 exams) or Pro (₹199/mo, 20 exams) to generate assessments.'
-          : `You have exhausted your monthly limit of ${usage.limit} mock exams (${usage.plan} Plan). Your quota resets on ${usage.resetDate}. Upgrade to Pro for 20 exams/month.`
+          ? 'Your Free tier does not include blueprint mock exams. Please upgrade to Pro (₹129/mo, 5 exams) or Ultra (₹169/mo, unlimited exams) to generate assessments.'
+          : `You have exhausted your monthly limit of ${usage.limit} mock exams (${usage.plan} Plan). Your quota resets on ${usage.resetDate}. Upgrade to Ultra for unlimited exams.`
       );
     }
 

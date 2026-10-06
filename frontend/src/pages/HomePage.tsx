@@ -92,7 +92,7 @@ export default function HomePage() {
               <p className="hp-hero-sub">
                 We archive the exact OA questions asked in TCS, Accenture, Cognizant, Amazon
                 and 15+ major campus drives — sourced directly from students who sat the exam,
-                cross-verified, and solved. Access any company's full paper archive for ₹99.
+                cross-verified, and solved. Access any company's full paper archive from ₹59.
               </p>
               <div className="hp-hero-actions">
                 <Link to="/companies" className="hp-btn-solid">
@@ -130,7 +130,7 @@ export default function HomePage() {
                 </div>
                 <div className="hp-mock-card-sub">Memory-verified · 847 contributors · Full solution</div>
                 <div className="hp-mock-card-footer">
-                  <span className="hp-mock-price">Part of TCS Archive · ₹99</span>
+                  <span className="hp-mock-price">Part of TCS Archive · ₹59</span>
                   <span className="hp-mock-badge">100% Solved</span>
                 </div>
               </div>
@@ -145,7 +145,7 @@ export default function HomePage() {
                 </div>
                 <div className="hp-mock-card-sub">12 similar questions from this section · Solved</div>
                 <div className="hp-mock-card-footer">
-                  <span className="hp-mock-price">Part of ACN Archive · ₹99</span>
+                  <span className="hp-mock-price">Part of ACN Archive · ₹59</span>
                   <span className="hp-mock-badge">Full Access</span>
                 </div>
               </div>
@@ -347,7 +347,7 @@ export default function HomePage() {
         <p className="hp-cta-sub">
           Every question in our archive came from a real campus placement drive.
           Pick your company, get all previous drive papers, and walk into your OA prepared.
-          Starts at ₹99.
+          Starts at ₹59.
         </p>
         <div className="hp-cta-btns">
           <Link to="/companies" className="hp-btn-solid">
@@ -368,7 +368,7 @@ export default function HomePage() {
           </span>
           <span className="hp-cta-trust-item">
             <Shield size={13} style={{ color: 'var(--e-green)' }} />
-            ₹99 One-Time · Full Archive Access
+            ₹59 · 30-Day Archive Access
           </span>
         </div>
       </div>

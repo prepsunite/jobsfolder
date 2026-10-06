@@ -18,7 +18,7 @@ export default function AboutPage() {
     { num: '1,200+', label: 'Verified OA Questions', sub: 'From actual student test drives' },
     { num: '50+', label: 'Recruitment Hubs', sub: 'TCS, Amazon, Accenture, Infosys & more' },
     { num: '94%', label: 'Pattern Match Rate', sub: 'Identical questions reported in real drives' },
-    { num: '₹99', label: 'One-Time Access', sub: 'No subscription traps or auto-renewals' },
+    { num: '₹59', label: 'Single Paper Pass', sub: '30-day full access per recruiter archive' },
   ];
 
   const pillars = [
@@ -40,8 +40,8 @@ export default function AboutPage() {
       index: '03',
       tag: 'TRANSPARENT',
       icon: <Coins className="w-5 h-5 text-[#FD4A32]" />,
-      title: 'Fair ₹99 Pricing',
-      desc: 'Placement preparation should not be a luxury. We offer ₹99 one-time archive unlocks per recruiter with zero recurring charges or hidden paywalls.',
+      title: 'Fair ₹59 Pricing',
+      desc: 'Placement preparation should not be a luxury. We offer ₹59 30-day archive unlocks per recruiter with zero recurring charges or hidden paywalls.',
     },
     {
       index: '04',
