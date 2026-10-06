@@ -1425,25 +1425,51 @@ function synthesizeFromRoadmapProblem(p: any): CampusDsaExamProblem {
     `Algorithm Pattern: ${pattern}`,
   ];
 
-  const sampleInput = p.sample_input || p.sampleInput || '5\n1 2 3 4 5';
-  const sampleOutput = p.sample_output || p.sampleOutput || '1';
+  const sampleInput = p.sample_input || p.sampleInput || '';
+  const sampleOutput = p.sample_output || p.sampleOutput || '';
   const explanation = intuition;
 
-  const testCases: CampusDsaTestCase[] = [
-    {
+  // Resolve authentic test cases from the question metadata or database
+  let resolvedTestCases: CampusDsaTestCase[] = [];
+  const rawTc = p.test_cases || p.testCases;
+  if (Array.isArray(rawTc) && rawTc.length > 0) {
+    resolvedTestCases = rawTc
+      .filter((tc: any) => tc && (tc.input !== undefined || tc.output !== undefined || tc.expected_output !== undefined))
+      .map((tc: any, idx: number) => ({
+        input: String(tc.input ?? ''),
+        output: String(tc.output ?? tc.expected_output ?? ''),
+        expected_output: String(tc.expected_output ?? tc.output ?? ''),
+        is_hidden: Boolean(tc.is_hidden),
+        explanation: tc.explanation || (tc.is_hidden ? `Hidden evaluation test case ${idx + 1}.` : `Sample evaluation case ${idx + 1} for ${title}.`),
+      }));
+  } else if (typeof rawTc === 'string' && rawTc.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(rawTc);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        resolvedTestCases = parsed
+          .filter((tc: any) => tc && (tc.input !== undefined || tc.output !== undefined || tc.expected_output !== undefined))
+          .map((tc: any, idx: number) => ({
+            input: String(tc.input ?? ''),
+            output: String(tc.output ?? tc.expected_output ?? ''),
+            expected_output: String(tc.expected_output ?? tc.output ?? ''),
+            is_hidden: Boolean(tc.is_hidden),
+            explanation: tc.explanation || (tc.is_hidden ? `Hidden evaluation test case ${idx + 1}.` : `Sample evaluation case ${idx + 1} for ${title}.`),
+          }));
+      }
+    } catch {}
+  }
+
+  // If no explicit test cases array was found, build from sample input & output
+  if (resolvedTestCases.length === 0 && (sampleInput || sampleOutput)) {
+    resolvedTestCases.push({
       input: sampleInput,
       output: sampleOutput,
       expected_output: sampleOutput,
       explanation: `Sample evaluation case for ${title}.`,
-    },
-    {
-      input: '3\n3 2 1',
-      output: sampleOutput,
-      expected_output: sampleOutput,
-      is_hidden: true,
-      explanation: 'Hidden evaluation test case.',
-    }
-  ];
+    });
+  }
+
+  const testCases = resolvedTestCases;
 
   return {
     id: cleanId,
@@ -1512,6 +1538,8 @@ export function isProblemTestable(problem: any): boolean {
   if (!problem) return false;
   if (Array.isArray(problem.test_cases) && problem.test_cases.length > 0) return true;
   if (Array.isArray(problem.testCases) && problem.testCases.length > 0) return true;
+  if (typeof problem.test_cases === 'string' && problem.test_cases.trim().startsWith('[') && problem.test_cases.length > 5) return true;
+  if (problem.sample_input && problem.sample_output) return true;
   if (problem.id && (CAMPUS_DSA_EXAM_PROBLEMS[problem.id] || problem.id.startsWith('lc-'))) return true;
   if (problem.track === 'PROGRAMMING_150') return true;
   return false;
@@ -1524,11 +1552,24 @@ export function isProblemTestable(problem: any): boolean {
 export function enrichCodingProblemForExam(rawProblem: any): any {
   if (!rawProblem) return rawProblem;
 
+  // Extract authentic existing test cases (from either array or JSON string)
+  let rawExistingCases: any[] | null = null;
+  const rawTc = rawProblem.test_cases || rawProblem.testCases;
+  if (Array.isArray(rawTc) && rawTc.length > 0) {
+    rawExistingCases = rawTc;
+  } else if (typeof rawTc === 'string' && rawTc.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(rawTc);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        rawExistingCases = parsed;
+      }
+    } catch {}
+  }
+
+  const hasExistingTestCases = rawExistingCases !== null && rawExistingCases.length > 0;
   const examCurated = getCampusDsaExamProblem(rawProblem.id, rawProblem);
   
-  // If the problem has no test cases or has a 1-line key intuition description, enrich from dataset!
-  const hasExistingTestCases = (Array.isArray(rawProblem.test_cases) && rawProblem.test_cases.length > 0) ||
-                               (Array.isArray(rawProblem.testCases) && rawProblem.testCases.length > 0);
+  // If the problem has no test cases or has a 1-line key intuition description, enrich description!
   const descriptionIsTooShort = !rawProblem.description || 
                                 rawProblem.description.length < 60 || 
                                 rawProblem.description.startsWith('Store each') || 
@@ -1547,6 +1588,13 @@ export function enrichCodingProblemForExam(rawProblem: any): any {
           ? rawProblem.constraints.filter((c: any) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:'))
           : ['1 <= N <= 10^5', 'Time Limit: 2.0s', 'Memory Limit: 256MB']);
 
+    // NEVER overwrite authentic existing test cases with generic synthesizers!
+    const finalTestCases = hasExistingTestCases
+      ? rawExistingCases
+      : (examCurated.testCases && examCurated.testCases.length > 0)
+        ? examCurated.testCases
+        : [];
+
     return {
       ...rawProblem,
       title: examCurated.title || rawProblem.title,
@@ -1555,11 +1603,11 @@ export function enrichCodingProblemForExam(rawProblem: any): any {
       input_format: examCurated.inputFormat,
       output_format: examCurated.outputFormat,
       constraints: cleanConstraints,
-      sample_input: examCurated.sampleInput || rawProblem.sample_input || '',
-      sample_output: examCurated.sampleOutput || rawProblem.sample_output || '',
-      explanation: examCurated.explanation || rawProblem.explanation || '',
-      test_cases: examCurated.testCases,
-      testCases: examCurated.testCases,
+      sample_input: rawProblem.sample_input || examCurated.sampleInput || '',
+      sample_output: rawProblem.sample_output || examCurated.sampleOutput || '',
+      explanation: rawProblem.explanation || examCurated.explanation || '',
+      test_cases: finalTestCases,
+      testCases: finalTestCases,
       isCodingProblem: true,
       difficulty: examCurated.difficulty || rawProblem.difficulty || rawProblem.level || 'MEDIUM',
     };
@@ -1570,9 +1618,15 @@ export function enrichCodingProblemForExam(rawProblem: any): any {
     ? rawProblem.constraints.filter((c: any) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:'))
     : rawProblem.constraints;
 
+  const finalTestCases = hasExistingTestCases
+    ? rawExistingCases
+    : (rawProblem.test_cases || rawProblem.testCases || []);
+
   return {
     ...rawProblem,
     constraints: cleanConstraints,
+    test_cases: finalTestCases,
+    testCases: finalTestCases,
     isCodingProblem: true,
   };
 }

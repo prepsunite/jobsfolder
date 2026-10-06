@@ -34,7 +34,7 @@ import {
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import LoadingScreen from '@/components/LoadingScreen';
-import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus, isAttemptCompleted, canReviewSolutions } from '@/services/tpo.service';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import MockExamCodingWorkspace from '@/components/mock-exams/MockExamCodingWorkspace';
@@ -482,13 +482,11 @@ export default function MockExamTestPage() {
       });
   }, [exam, sections, examId, queryClient]);
 
-  // 1b. Fetch Full Solutions & Explanations post-submission
-  // F20: Only fetch/reveal answer keys when show_results_immediately is enabled.
-  // If false, students see their score but NOT explanations or correct answers.
+  // 1b. Fetch Graded Results & (if window concluded) Full Solutions post-submission
+  // Anti-Cheat: If the exam is still LIVE across campus, solutions are locked by the backend,
+  // returning only the student's graded score without leaking question keys/explanations.
   useEffect(() => {
     if (testPhase !== 'SUBMITTED' || !attemptId) return;
-    // Respect the TPO's result-release policy
-    if (!exam?.show_results_immediately) return;
 
     tpoService.getAttemptResultWithReview(attemptId).then(res => {
       if (res && res.questions && res.questions.length > 0) {
@@ -503,27 +501,27 @@ export default function MockExamTestPage() {
           });
           return updated;
         });
-        if (res.attempt) {
-          setFinalGradedAttempt(prev => {
-            if (!prev) return res.attempt;
-            const merged = {
-              ...(responses || {}),
-              ...(prev.responses || {}),
-              ...(res.attempt.responses || {}),
-            };
-            return {
-              ...prev,
-              ...res.attempt,
-              responses: Object.keys(merged).length > 0 ? merged : (prev.responses || responses),
-              total_score: res.attempt.total_score || prev.total_score,
-              percentage: res.attempt.percentage || prev.percentage,
-              result_summary: res.attempt.result_summary || prev.result_summary,
-            };
-          });
-        }
+      }
+      if (res && res.attempt) {
+        setFinalGradedAttempt(prev => {
+          if (!prev) return res.attempt;
+          const merged = {
+            ...(responses || {}),
+            ...(prev.responses || {}),
+            ...(res.attempt.responses || {}),
+          };
+          return {
+            ...prev,
+            ...res.attempt,
+            responses: Object.keys(merged).length > 0 ? merged : (prev.responses || responses),
+            total_score: res.attempt.total_score || prev.total_score,
+            percentage: res.attempt.percentage || prev.percentage,
+            result_summary: res.attempt.result_summary || prev.result_summary,
+          };
+        });
       }
     });
-  }, [testPhase, attemptId, exam?.show_results_immediately]);
+  }, [testPhase, attemptId, exam]);
 
   // Current Section & its Questions
   const currentSection: MockExamSection | undefined = sections[currentSectionIndex];
@@ -1977,7 +1975,7 @@ export default function MockExamTestPage() {
           </div>
 
           {/* Timer & Finish Button */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Live Autosave Indicator / Offline Shield Badge */}
             {!isOnline ? (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[10px] font-bold animate-pulse">
@@ -2249,15 +2247,23 @@ export default function MockExamTestPage() {
           )}
 
           {/* 2. Right Area: Main Question Examination Area */}
-          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 min-w-0">
+          <div
+            className={`flex-1 min-w-0 min-h-0 ${
+              isCodingProblem
+                ? 'h-full flex flex-col overflow-hidden p-2 sm:p-3'
+                : 'p-4 sm:p-6 overflow-y-auto space-y-6'
+            }`}
+          >
             
-            {/* Section Banner on Mobile */}
-            <div className="md:hidden flex items-center justify-between bg-white dark:bg-[#151618] p-3 rounded-xl border border-gray-200 dark:border-[#25262a] text-xs">
-              <span className="font-bold text-[#FD4A32]">{getSanitizedSectionName(currentSection)}</span>
-              <span className="text-gray-400">
-                Q {currentQuestionIndex + 1} of {currentSectionQIds.length}
-              </span>
-            </div>
+            {/* Section Banner on Mobile (only for non-coding questions to conserve vertical space) */}
+            {!isCodingProblem && (
+              <div className="md:hidden flex items-center justify-between bg-white dark:bg-[#151618] p-3 rounded-xl border border-gray-200 dark:border-[#25262a] text-xs">
+                <span className="font-bold text-[#FD4A32]">{getSanitizedSectionName(currentSection)}</span>
+                <span className="text-gray-400">
+                  Q {currentQuestionIndex + 1} of {currentSectionQIds.length}
+                </span>
+              </div>
+            )}
 
             {currentQuestion ? (
               isCodingProblem ? (
@@ -2294,6 +2300,8 @@ export default function MockExamTestPage() {
                       setShowSubmitConfirm(true);
                     }
                   }}
+                  onSubmitExam={() => setShowSubmitConfirm(true)}
+                  isPaletteOpen={isPaletteOpen}
                   isFirstQuestion={isSectionalLockActive ? currentQuestionIndex === 0 : (currentSectionIndex === 0 && currentQuestionIndex === 0)}
                   isLastQuestion={isLastQuestionInSection}
                   isLastSection={isLastSection}
@@ -2760,19 +2768,32 @@ export default function MockExamTestPage() {
 
           {/* Navigation & Answer Sheet Action Buttons */}
           <div className="space-y-3 pt-1">
-            {(attemptId || finalGradedAttempt?.id) && (
-              <button
-                onClick={() => {
-                  const targetAttemptId = finalGradedAttempt?.id || attemptId;
-                  window.open(`/student/exams/attempt/${targetAttemptId}/answersheet`, '_blank');
-                }}
-                className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer group"
-                title="Open detailed question-by-question answer sheet & solutions in a new tab"
-              >
-                <FileText className="w-4 h-4 text-emerald-100 group-hover:scale-110 transition-transform" />
-                <span>View Detailed Answer Sheet &amp; Solutions</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-              </button>
+            {canReviewSolutions(exam) ? (
+              (attemptId || finalGradedAttempt?.id) && (
+                <button
+                  onClick={() => {
+                    const targetAttemptId = finalGradedAttempt?.id || attemptId;
+                    window.open(`/student/exams/attempt/${targetAttemptId}/answersheet`, '_blank');
+                  }}
+                  className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer group"
+                  title="Open detailed question-by-question answer sheet & solutions in a new tab"
+                >
+                  <FileText className="w-4 h-4 text-emerald-100 group-hover:scale-110 transition-transform" />
+                  <span>View Detailed Answer Sheet &amp; Solutions</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                </button>
+              )
+            ) : (
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 text-center space-y-1.5">
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span>Answer Key &amp; Solutions Locked During Live Exam</span>
+                </div>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
+                  To protect recruitment drive integrity and prevent answers from being copied while fellow candidates are still testing, verified question solutions will unlock in your Mock Exams portal once the entire exam window concludes
+                  {exam?.end_time ? ` on ${new Date(exam.end_time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}.
+                </p>
+              </div>
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">

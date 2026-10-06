@@ -20,12 +20,16 @@ import {
   Filter,
   ShieldCheck,
   ChevronRight,
+  Edit2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   questionBankService,
   type TopicInventoryItem,
   type BankMcqInput,
   type BankCodingProblemInput,
+  type BankCodingTestCase,
 } from '@/services/questionBank.service';
 import { CODING_CATEGORIES } from '@/services/mockExamBlueprint.service';
 import { useToast } from '@/contexts/ToastContext';
@@ -65,6 +69,23 @@ export default function AdminQuestionBankPage() {
   const [codingStarterCpp, setCodingStarterCpp] = useState('#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}');
   const [codingStarterPython, setCodingStarterPython] = useState('# Write your code here\n');
   const [codingStarterJava, setCodingStarterJava] = useState('import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}');
+  const [codingTestCases, setCodingTestCases] = useState<BankCodingTestCase[]>([
+    { input: '', output: '', is_hidden: false, explanation: 'Sample evaluation test case 1' },
+    { input: '', output: '', is_hidden: true, explanation: 'Hidden evaluation test case 2' },
+  ]);
+
+  // Edit Coding Problem State
+  const [editingCodingProblem, setEditingCodingProblem] = useState<any | null>(null);
+  const [showEditCodingModal, setShowEditCodingModal] = useState(false);
+  const [editCodingTitle, setEditCodingTitle] = useState('');
+  const [editCodingLevel, setEditCodingLevel] = useState<'BASIC' | 'MEDIUM' | 'HARD'>('BASIC');
+  const [editCodingDescription, setEditCodingDescription] = useState('');
+  const [editCodingConstraints, setEditCodingConstraints] = useState('');
+  const [editCodingSampleInput, setEditCodingSampleInput] = useState('');
+  const [editCodingSampleOutput, setEditCodingSampleOutput] = useState('');
+  const [editCodingExplanation, setEditCodingExplanation] = useState('');
+  const [editCodingTestCases, setEditCodingTestCases] = useState<BankCodingTestCase[]>([]);
+  const [isEditingCoding, setIsEditingCoding] = useState(false);
 
   // Bulk Import Form State
   const [bulkText, setBulkText] = useState('');
@@ -275,25 +296,43 @@ export default function AdminQuestionBankPage() {
 
     try {
       setIsImporting(true);
-      const constraintsArr = codingConstraints.split('\n').filter(Boolean);
-      const testCases = [];
-      if (codingSampleInput || codingSampleOutput) {
+      const constraintsArr = codingConstraints.split('\n').map(c => c.trim()).filter(Boolean);
+      let testCases = codingTestCases
+        .filter(tc => tc.input.trim() || tc.output.trim())
+        .map(tc => ({
+          input: tc.input.trim(),
+          output: tc.output.trim(),
+          expected_output: tc.output.trim(),
+          is_hidden: Boolean(tc.is_hidden),
+          explanation: tc.explanation?.trim(),
+        }));
+
+      // If no custom test cases were added, fallback to sample input/output
+      if (testCases.length === 0 && (codingSampleInput.trim() || codingSampleOutput.trim())) {
         testCases.push({
-          input: codingSampleInput,
-          output: codingSampleOutput,
-          explanation: codingExplanation,
+          input: codingSampleInput.trim(),
+          output: codingSampleOutput.trim(),
+          expected_output: codingSampleOutput.trim(),
+          is_hidden: false,
+          explanation: 'Sample evaluation test case',
         });
       }
 
+      if (testCases.length === 0) {
+        toast.error('Please add at least one test case or sample input/output for code evaluation.');
+        setIsImporting(false);
+        return;
+      }
+
       const input: BankCodingProblemInput = {
-        title: codingTitle,
+        title: codingTitle.trim(),
         category: selectedTopic.id,
         level: codingLevel,
-        description: codingDescription,
+        description: codingDescription.trim(),
         constraints: constraintsArr,
-        sample_input: codingSampleInput,
-        sample_output: codingSampleOutput,
-        explanation: codingExplanation,
+        sample_input: codingSampleInput.trim(),
+        sample_output: codingSampleOutput.trim(),
+        explanation: codingExplanation.trim(),
         test_cases: testCases,
         solutions: {
           cpp: codingStarterCpp,
@@ -305,16 +344,147 @@ export default function AdminQuestionBankPage() {
       await questionBankService.addSingleCodingProblem(input);
       invalidateAllBankCaches();
       refetchQuestions();
-      toast.success('Coding problem added to bank successfully.');
+      toast.success('Coding problem added to bank successfully with evaluation test cases.');
       setCodingTitle('');
       setCodingDescription('');
       setCodingSampleInput('');
       setCodingSampleOutput('');
+      setCodingExplanation('');
+      setCodingTestCases([
+        { input: '', output: '', is_hidden: false, explanation: 'Sample evaluation test case 1' },
+        { input: '', output: '', is_hidden: true, explanation: 'Hidden evaluation test case 2' },
+      ]);
       setShowAddModal(false);
     } catch (e: any) {
       toast.error(e.message || 'Failed to add coding problem.');
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleOpenEditCodingModal = (problem: any) => {
+    setEditingCodingProblem(problem);
+    setEditCodingTitle(problem.title || '');
+    setEditCodingLevel(problem.level || 'BASIC');
+    setEditCodingDescription(problem.description || '');
+    const constraintsStr = Array.isArray(problem.constraints)
+      ? problem.constraints.filter((c: any) => typeof c === 'string' && !c.startsWith('LC_URL:') && !c.startsWith('LC_NUM:')).join('\n')
+      : (typeof problem.constraints === 'string' ? problem.constraints : '');
+    setEditCodingConstraints(constraintsStr);
+    setEditCodingSampleInput(problem.sample_input || '');
+    setEditCodingSampleOutput(problem.sample_output || '');
+    setEditCodingExplanation(problem.explanation || '');
+
+    // Parse existing test cases safely
+    let parsedCases: BankCodingTestCase[] = [];
+    const rawTc = problem.test_cases || problem.testCases;
+    if (Array.isArray(rawTc) && rawTc.length > 0) {
+      parsedCases = rawTc.map((tc: any) => ({
+        input: String(tc.input ?? ''),
+        output: String(tc.output ?? tc.expected_output ?? ''),
+        expected_output: String(tc.expected_output ?? tc.output ?? ''),
+        is_hidden: Boolean(tc.is_hidden),
+        explanation: tc.explanation || '',
+      }));
+    } else if (typeof rawTc === 'string' && rawTc.trim().startsWith('[')) {
+      try {
+        const arr = JSON.parse(rawTc);
+        if (Array.isArray(arr)) {
+          parsedCases = arr.map((tc: any) => ({
+            input: String(tc.input ?? ''),
+            output: String(tc.output ?? tc.expected_output ?? ''),
+            expected_output: String(tc.expected_output ?? tc.output ?? ''),
+            is_hidden: Boolean(tc.is_hidden),
+            explanation: tc.explanation || '',
+          }));
+        }
+      } catch {}
+    }
+
+    if (parsedCases.length === 0 && (problem.sample_input || problem.sample_output)) {
+      parsedCases.push({
+        input: problem.sample_input || '',
+        output: problem.sample_output || '',
+        expected_output: problem.sample_output || '',
+        is_hidden: false,
+        explanation: 'Sample evaluation test case',
+      });
+    }
+
+    if (parsedCases.length === 0) {
+      parsedCases.push({
+        input: '',
+        output: '',
+        is_hidden: false,
+        explanation: 'Sample evaluation test case 1',
+      });
+    }
+
+    setEditCodingTestCases(parsedCases);
+    setShowEditCodingModal(true);
+  };
+
+  const handleSaveEditCodingProblem = async () => {
+    if (!editingCodingProblem) return;
+    if (!editCodingTitle.trim()) {
+      toast.error('Please enter the problem title.');
+      return;
+    }
+    if (!editCodingDescription.trim()) {
+      toast.error('Please enter the problem description.');
+      return;
+    }
+
+    try {
+      setIsEditingCoding(true);
+      const constraintsArr = editCodingConstraints.split('\n').map(c => c.trim()).filter(Boolean);
+      let testCases = editCodingTestCases
+        .filter(tc => tc.input.trim() || tc.output.trim())
+        .map(tc => ({
+          input: tc.input.trim(),
+          output: tc.output.trim(),
+          expected_output: tc.output.trim(),
+          is_hidden: Boolean(tc.is_hidden),
+          explanation: tc.explanation?.trim(),
+        }));
+
+      if (testCases.length === 0 && (editCodingSampleInput.trim() || editCodingSampleOutput.trim())) {
+        testCases.push({
+          input: editCodingSampleInput.trim(),
+          output: editCodingSampleOutput.trim(),
+          expected_output: editCodingSampleOutput.trim(),
+          is_hidden: false,
+          explanation: 'Sample evaluation test case',
+        });
+      }
+
+      if (testCases.length === 0) {
+        toast.error('Please provide at least one test case or sample input/output.');
+        setIsEditingCoding(false);
+        return;
+      }
+
+      const updates: Partial<BankCodingProblemInput> = {
+        title: editCodingTitle.trim(),
+        level: editCodingLevel,
+        description: editCodingDescription.trim(),
+        constraints: constraintsArr,
+        sample_input: editCodingSampleInput.trim(),
+        sample_output: editCodingSampleOutput.trim(),
+        explanation: editCodingExplanation.trim(),
+        test_cases: testCases,
+      };
+
+      await questionBankService.updateCodingProblem(editingCodingProblem.id, updates);
+      invalidateAllBankCaches();
+      refetchQuestions();
+      toast.success('Coding problem and evaluation test cases updated successfully.');
+      setShowEditCodingModal(false);
+      setEditingCodingProblem(null);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update coding problem.');
+    } finally {
+      setIsEditingCoding(false);
     }
   };
 
@@ -707,15 +877,46 @@ export default function AdminQuestionBankPage() {
                                   Practice Pool
                                 </span>
                               )}
+                              {Boolean(q.title || selectedTopic?.type === 'CODING') && (() => {
+                                const rawTc = q.test_cases || q.testCases;
+                                let cnt = 0;
+                                if (Array.isArray(rawTc)) cnt = rawTc.length;
+                                else if (typeof rawTc === 'string' && rawTc.trim().startsWith('[')) {
+                                  try { cnt = JSON.parse(rawTc).length; } catch {}
+                                }
+                                if (cnt === 0 && (q.sample_input || q.sample_output)) cnt = 1;
+                                return (
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 border ${
+                                    cnt > 0
+                                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                  }`}>
+                                    <Code2 className="w-2.5 h-2.5" />
+                                    {cnt > 0 ? `${cnt} Test Case${cnt > 1 ? 's' : ''}` : '⚠️ No Test Cases'}
+                                  </span>
+                                );
+                              })()}
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteQuestion(q.id)}
-                              className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                              title="Delete Question"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              {Boolean(q.title || selectedTopic?.type === 'CODING') && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditCodingModal(q)}
+                                  className="text-gray-400 hover:text-blue-500 transition-colors p-1 cursor-pointer"
+                                  title="Edit Problem & Test Cases"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuestion(q.id)}
+                                className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
+                                title="Delete Question"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
 
                           <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-relaxed">
@@ -765,6 +966,70 @@ export default function AdminQuestionBankPage() {
                               Constraints: {q.constraints.join(' | ')}
                             </div>
                           )}
+
+                          {/* Coding Problem Test Cases Preview */}
+                          {Boolean(q.title || selectedTopic?.type === 'CODING') && (() => {
+                            let parsedCases: any[] = [];
+                            const rawTc = q.test_cases || q.testCases;
+                            if (Array.isArray(rawTc)) {
+                              parsedCases = rawTc;
+                            } else if (typeof rawTc === 'string' && rawTc.trim().startsWith('[')) {
+                              try { parsedCases = JSON.parse(rawTc); } catch {}
+                            }
+                            if (parsedCases.length === 0 && (q.sample_input || q.sample_output)) {
+                              parsedCases = [{ input: q.sample_input, output: q.sample_output, is_hidden: false }];
+                            }
+
+                            return (
+                              <div className="space-y-1.5 pt-0.5">
+                                {parsedCases.length > 0 ? (
+                                  <div className="p-2 rounded-xl bg-gray-100/70 dark:bg-[#1a1c20] border border-gray-200/50 dark:border-[#2b2d33] space-y-1.5">
+                                    <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                                      <span className="flex items-center gap-1">
+                                        <Code2 className="w-3 h-3 text-blue-500" />
+                                        Evaluation Test Cases ({parsedCases.length})
+                                      </span>
+                                      <span>
+                                        {parsedCases.filter(t => t.is_hidden).length} hidden · {parsedCases.filter(t => !t.is_hidden).length} sample
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
+                                      {parsedCases.slice(0, 2).map((tc, tcIdx) => (
+                                        <div key={tcIdx} className="p-2 rounded-lg bg-white dark:bg-[#151619] border border-gray-200 dark:border-[#27292e] text-[10px] font-mono text-gray-700 dark:text-gray-300">
+                                          <div className="text-[9px] font-bold text-gray-400 flex items-center justify-between pb-0.5">
+                                            <span>Case #{tcIdx + 1}</span>
+                                            {tc.is_hidden ? (
+                                              <span className="text-amber-500 text-[8px] font-bold px-1 py-0.2 rounded bg-amber-500/10">HIDDEN</span>
+                                            ) : (
+                                              <span className="text-emerald-500 text-[8px] font-bold px-1 py-0.2 rounded bg-emerald-500/10">SAMPLE</span>
+                                            )}
+                                          </div>
+                                          <div className="truncate text-gray-500">In: <span className="text-gray-900 dark:text-white">{tc.input || '∅'}</span></div>
+                                          <div className="truncate text-emerald-600 dark:text-emerald-400">Expected: {tc.output || tc.expected_output || '∅'}</div>
+                                        </div>
+                                      ))}
+                                      {parsedCases.length > 2 && (
+                                        <div className="p-2 rounded-lg bg-white/50 dark:bg-[#151619]/50 border border-dashed border-gray-200 dark:border-[#27292e] text-[9px] text-gray-400 flex items-center justify-center font-medium">
+                                          +{parsedCases.length - 2} more evaluation cases
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-700 dark:text-amber-300 flex items-center justify-between">
+                                    <span>⚠️ No evaluation test cases. Click Edit to add test cases so mock exams evaluate code correctly!</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenEditCodingModal(q)}
+                                      className="px-2.5 py-1 rounded-lg bg-amber-600 text-white text-[10px] font-bold hover:bg-amber-700 cursor-pointer shadow-xs transition-colors shrink-0"
+                                    >
+                                      Add Test Cases
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Explanation / Solution Note */}
                           {q.explanation && (
@@ -1097,10 +1362,23 @@ export default function AdminQuestionBankPage() {
                   />
                 </div>
 
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                    Constraints (one per line)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={codingConstraints}
+                    onChange={e => setCodingConstraints(e.target.value)}
+                    placeholder="1 <= N <= 10^5\nTime Limit: 2.0s\nMemory Limit: 256MB"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
-                      Sample Input
+                      Sample Input (stdin)
                     </label>
                     <textarea
                       rows={2}
@@ -1113,7 +1391,7 @@ export default function AdminQuestionBankPage() {
 
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
-                      Sample Expected Output
+                      Sample Expected Output (stdout)
                     </label>
                     <textarea
                       rows={2}
@@ -1122,6 +1400,131 @@ export default function AdminQuestionBankPage() {
                       placeholder="e.g. 15"
                       className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs font-mono text-gray-900 dark:text-white focus:outline-hidden"
                     />
+                  </div>
+                </div>
+
+                {/* Evaluation Test Cases Builder */}
+                <div className="pt-2 border-t border-gray-100 dark:border-[#252830] space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase flex items-center gap-1.5">
+                        <Code2 className="w-3.5 h-3.5 text-blue-500" />
+                        Evaluation Test Cases ({codingTestCases.length}) *
+                      </label>
+                      <p className="text-[11px] text-gray-500">
+                        These test cases run in the Mock Exam. Add sample visible cases and hidden grading cases.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (codingSampleInput || codingSampleOutput) {
+                            setCodingTestCases(prev => {
+                              const updated = [...prev];
+                              if (updated.length > 0) {
+                                updated[0] = { ...updated[0], input: codingSampleInput, output: codingSampleOutput, is_hidden: false };
+                              } else {
+                                updated.push({ input: codingSampleInput, output: codingSampleOutput, is_hidden: false, explanation: 'Sample case 1' });
+                              }
+                              return updated;
+                            });
+                            toast.success('Synced Case 1 with Sample Input & Output');
+                          } else {
+                            toast.error('Fill in Sample Input and Output first.');
+                          }
+                        }}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-gray-200 dark:border-[#2b2d33] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#202228] cursor-pointer transition-colors"
+                      >
+                        ⚡ Sync Sample Case 1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCodingTestCases(prev => [
+                            ...prev,
+                            { input: '', output: '', is_hidden: true, explanation: `Hidden evaluation case ${prev.length + 1}` }
+                          ]);
+                        }}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 cursor-pointer flex items-center gap-1 transition-colors"
+                      >
+                        <Plus className="w-3 h-3" /> Add Test Case
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {codingTestCases.map((tc, tcIdx) => (
+                      <div
+                        key={tcIdx}
+                        className="p-3 rounded-xl bg-gray-50 dark:bg-[#1a1c21] border border-gray-200 dark:border-[#2b2f38] space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300">
+                              Case #{tcIdx + 1}
+                            </span>
+                            <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={tc.is_hidden}
+                                onChange={e => {
+                                  const checked = e.target.checked;
+                                  setCodingTestCases(prev => prev.map((item, i) => i === tcIdx ? { ...item, is_hidden: checked } : item));
+                                }}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className={tc.is_hidden ? 'text-amber-500 font-semibold' : 'text-gray-500'}>
+                                {tc.is_hidden ? '🔒 Hidden Case (Exam Grading Only)' : '👁️ Public Sample (Visible to Student)'}
+                              </span>
+                            </label>
+                          </div>
+                          {codingTestCases.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setCodingTestCases(prev => prev.filter((_, i) => i !== tcIdx))}
+                              className="text-gray-400 hover:text-red-500 p-1 cursor-pointer transition-colors"
+                              title="Remove Test Case"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase pb-0.5">
+                              Input (stdin)
+                            </div>
+                            <textarea
+                              rows={2}
+                              value={tc.input}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setCodingTestCases(prev => prev.map((item, i) => i === tcIdx ? { ...item, input: val } : item));
+                              }}
+                              placeholder="e.g. 5\n1 2 3 4 5"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#121316] border border-gray-200 dark:border-[#27292e] text-[11px] font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                            />
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase pb-0.5">
+                              Expected Output (stdout)
+                            </div>
+                            <textarea
+                              rows={2}
+                              value={tc.output}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setCodingTestCases(prev => prev.map((item, i) => i === tcIdx ? { ...item, output: val, expected_output: val } : item));
+                              }}
+                              placeholder="e.g. 15"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#121316] border border-gray-200 dark:border-[#27292e] text-[11px] font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -1144,6 +1547,286 @@ export default function AdminQuestionBankPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Coding Problem & Test Cases Modal */}
+      {showEditCodingModal && editingCodingProblem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-3xl my-8 p-6 rounded-2xl bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#27292e] shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#252830]">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500">
+                  Editing Coding Challenge
+                </span>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white font-display">
+                  Edit Problem & Evaluation Test Cases
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditCodingModal(false);
+                  setEditingCodingProblem(null);
+                }}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#202228] text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Difficulty */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                  Difficulty Level *
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'BASIC', label: 'Basic / Easy', level: 'Level 1' },
+                    { id: 'MEDIUM', label: 'Medium', level: 'Level 2' },
+                    { id: 'HARD', label: 'Hard', level: 'Level 3' },
+                  ].map(d => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setEditCodingLevel(d.id as any)}
+                      className={`p-2 rounded-xl text-center border transition-all cursor-pointer ${
+                        editCodingLevel === d.id
+                          ? d.id === 'BASIC'
+                            ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs'
+                            : d.id === 'MEDIUM'
+                            ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 font-bold shadow-xs'
+                            : 'bg-rose-500/15 border-rose-500 text-rose-600 dark:text-rose-400 font-bold shadow-xs'
+                          : 'border-gray-200 dark:border-[#27292e] text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1a1b1e]'
+                      }`}
+                    >
+                      <div className="text-xs">{d.label}</div>
+                      <div className="text-[10px] opacity-70 font-mono">{d.level}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                  Problem Title *
+                </label>
+                <input
+                  type="text"
+                  value={editCodingTitle}
+                  onChange={e => setEditCodingTitle(e.target.value)}
+                  placeholder="e.g. Invert a Binary Tree"
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                  Problem Statement & Specifications *
+                </label>
+                <textarea
+                  rows={3}
+                  value={editCodingDescription}
+                  onChange={e => setEditCodingDescription(e.target.value)}
+                  placeholder="Explain the problem, inputs, and outputs..."
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs text-gray-900 dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              {/* Constraints */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                  Constraints (one per line)
+                </label>
+                <textarea
+                  rows={2}
+                  value={editCodingConstraints}
+                  onChange={e => setEditCodingConstraints(e.target.value)}
+                  placeholder="1 <= N <= 10^5\nTime Limit: 2.0s\nMemory Limit: 256MB"
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              {/* Sample Input & Output */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                    Sample Input (stdin)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editCodingSampleInput}
+                    onChange={e => setEditCodingSampleInput(e.target.value)}
+                    placeholder="e.g. 5\n1 2 3 4 5"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase">
+                    Sample Expected Output (stdout)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editCodingSampleOutput}
+                    onChange={e => setEditCodingSampleOutput(e.target.value)}
+                    placeholder="e.g. 15"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1c1d22] border border-gray-200 dark:border-[#2c2f38] text-xs font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Evaluation Test Cases Builder */}
+              <div className="pt-2 border-t border-gray-100 dark:border-[#252830] space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase flex items-center gap-1.5">
+                      <Code2 className="w-3.5 h-3.5 text-blue-500" />
+                      Evaluation Test Cases ({editCodingTestCases.length}) *
+                    </label>
+                    <p className="text-[11px] text-gray-500">
+                      These test cases are executed by the mock exam runner. Must match input format and expected output.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editCodingSampleInput || editCodingSampleOutput) {
+                          setEditCodingTestCases(prev => {
+                            const updated = [...prev];
+                            if (updated.length > 0) {
+                              updated[0] = { ...updated[0], input: editCodingSampleInput, output: editCodingSampleOutput, is_hidden: false };
+                            } else {
+                              updated.push({ input: editCodingSampleInput, output: editCodingSampleOutput, is_hidden: false, explanation: 'Sample case 1' });
+                            }
+                            return updated;
+                          });
+                          toast.success('Synced Case 1 with Sample Input & Output');
+                        } else {
+                          toast.error('Fill in Sample Input and Output first.');
+                        }
+                      }}
+                      className="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-gray-200 dark:border-[#2b2d33] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#202228] cursor-pointer transition-colors"
+                    >
+                      ⚡ Sync Sample Case 1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditCodingTestCases(prev => [
+                          ...prev,
+                          { input: '', output: '', is_hidden: true, explanation: `Hidden evaluation case ${prev.length + 1}` }
+                        ]);
+                      }}
+                      className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 cursor-pointer flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" /> Add Test Case
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {editCodingTestCases.map((tc, tcIdx) => (
+                    <div
+                      key={tcIdx}
+                      className="p-3 rounded-xl bg-gray-50 dark:bg-[#1a1c21] border border-gray-200 dark:border-[#2b2f38] space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300">
+                            Case #{tcIdx + 1}
+                          </span>
+                          <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={tc.is_hidden}
+                              onChange={e => {
+                                const checked = e.target.checked;
+                                setEditCodingTestCases(prev => prev.map((item, i) => i === tcIdx ? { ...item, is_hidden: checked } : item));
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className={tc.is_hidden ? 'text-amber-500 font-semibold' : 'text-gray-500'}>
+                              {tc.is_hidden ? '🔒 Hidden Case (Exam Grading Only)' : '👁️ Public Sample (Visible to Student)'}
+                            </span>
+                          </label>
+                        </div>
+                        {editCodingTestCases.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setEditCodingTestCases(prev => prev.filter((_, i) => i !== tcIdx))}
+                            className="text-gray-400 hover:text-red-500 p-1 cursor-pointer transition-colors"
+                            title="Remove Test Case"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase pb-0.5">
+                            Input (stdin)
+                          </div>
+                          <textarea
+                            rows={2}
+                            value={tc.input}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setEditCodingTestCases(prev => prev.map((item, i) => i === tcIdx ? { ...item, input: val } : item));
+                            }}
+                            placeholder="e.g. 5\n1 2 3 4 5"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#121316] border border-gray-200 dark:border-[#27292e] text-[11px] font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase pb-0.5">
+                            Expected Output (stdout)
+                          </div>
+                          <textarea
+                            rows={2}
+                            value={tc.output}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setEditCodingTestCases(prev => prev.map((item, i) => i === tcIdx ? { ...item, output: val, expected_output: val } : item));
+                            }}
+                            placeholder="e.g. 15"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#121316] border border-gray-200 dark:border-[#27292e] text-[11px] font-mono text-gray-900 dark:text-white focus:outline-hidden"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-[#252830]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditCodingModal(false);
+                    setEditingCodingProblem(null);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-[#2c2f38] text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditCodingProblem}
+                  disabled={isEditingCoding}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                >
+                  {isEditingCoding ? 'Saving Changes...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

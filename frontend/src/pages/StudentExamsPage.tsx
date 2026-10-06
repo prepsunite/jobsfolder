@@ -39,7 +39,7 @@ import AdminBlueprintManager from '@/components/admin/AdminBlueprintManager';
 import AdminQuestionBankPage from '@/pages/AdminQuestionBankPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/tpo.service';
+import { tpoService, isAttemptCompleted, getExamTimingStatus, canReviewSolutions } from '@/services/tpo.service';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
 import { questionBankService, type TopicInventoryItem } from '@/services/questionBank.service';
@@ -944,17 +944,28 @@ export default function StudentExamsPage() {
                         <Eye className="w-3.5 h-3.5 text-blue-500" />
                         <span>Scorecard</span>
                       </button>
-                      <a
-                        href={`/student/exams/attempt/${attempt.id}/answersheet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        title="Open complete question-by-question answer sheet & solutions in a new tab"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Answer Sheet</span>
-                        <ExternalLink className="w-3 h-3 opacity-70" />
-                      </a>
+                      {canReviewSolutions(exam) ? (
+                        <a
+                          href={`/student/exams/attempt/${attempt.id}/answersheet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          title="Open complete question-by-question answer sheet & solutions in a new tab"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Answer Sheet</span>
+                          <ExternalLink className="w-3 h-3 opacity-70" />
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedScorecardExam(exam)}
+                          className="w-full py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          title="Verified answer key and solutions unlock once the entire exam window concludes for all candidates"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Key Locked</span>
+                        </button>
+                      )}
                     </div>
                   ) : isInProgress ? (
                     <Link
@@ -1433,9 +1444,7 @@ export default function StudentExamsPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#27292e]">
               <div className="flex items-center gap-2">
                 {(() => {
-                  const timingStatus = getExamTimingStatus(selectedScorecardExam);
-                  const isConcluded = timingStatus === 'CONCLUDED';
-                  const canReview = isConcluded || selectedScorecardExam.show_results_immediately;
+                  const canReview = canReviewSolutions(selectedScorecardExam);
 
                   if (canReview) {
                     return (
@@ -1467,11 +1476,11 @@ export default function StudentExamsPage() {
 
                   return (
                     <div
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold border border-slate-200 dark:border-slate-700"
-                      title="Solutions unlock once the drive testing window concludes"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-200 dark:border-amber-800/40"
+                      title="Verified answer key and solutions unlock once the entire exam window concludes for all candidates"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Solutions unlock once exam concludes</span>
+                      <span>Solutions unlock once entire exam concludes</span>
                     </div>
                   );
                 })()}

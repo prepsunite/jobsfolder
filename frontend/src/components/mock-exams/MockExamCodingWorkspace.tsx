@@ -85,6 +85,8 @@ interface MockExamCodingWorkspaceProps {
   isLastSection: boolean;
   nextSectionName?: string;
   onRunningStateChange?: (isRunning: boolean) => void;
+  onSubmitExam?: () => void;
+  isPaletteOpen?: boolean;
 }
 
 export default function MockExamCodingWorkspace({
@@ -106,6 +108,8 @@ export default function MockExamCodingWorkspace({
   isLastSection,
   nextSectionName,
   onRunningStateChange,
+  onSubmitExam,
+  isPaletteOpen,
 }: MockExamCodingWorkspaceProps) {
   const initialLang = savedResponse?.code_language || 'python';
   const [selectedLanguage, setSelectedLanguage] = useState<string>(initialLang);
@@ -114,6 +118,7 @@ export default function MockExamCodingWorkspace({
   );
 
   const [isRunningTests, setIsRunningTests] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'problem' | 'code'>('problem');
 
   useEffect(() => {
     onRunningStateChange?.(isRunningTests);
@@ -124,11 +129,41 @@ export default function MockExamCodingWorkspace({
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
 
   const editorRef = useRef<any>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   // Run revision tracker to invalidate in-flight async results if candidate edits code or changes language
   const runRevisionRef = useRef(0);
   const isProgrammaticUpdateRef = useRef(false);
   const selectedLanguageRef = useRef(selectedLanguage);
   selectedLanguageRef.current = selectedLanguage;
+
+  // Re-layout Monaco Editor smoothly whenever question palette collapses/expands or container resizes
+  useEffect(() => {
+    if (!editorRef.current) return;
+    const relayout = () => {
+      try {
+        editorRef.current?.layout();
+      } catch (e) {
+        // ignore
+      }
+    };
+    relayout();
+    const t1 = setTimeout(relayout, 60);
+    const t2 = setTimeout(relayout, 200);
+
+    let ro: ResizeObserver | null = null;
+    if (editorContainerRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        relayout();
+      });
+      ro.observe(editorContainerRef.current);
+    }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      ro?.disconnect();
+    };
+  }, [isPaletteOpen, mobileTab]);
 
   // Sync state if savedResponse changes (e.g. Navigating between questions)
   useEffect(() => {
@@ -362,10 +397,10 @@ export default function MockExamCodingWorkspace({
   }, [sectionName]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-[#151618] rounded-2xl border border-gray-200 dark:border-[#25262a] shadow-sm overflow-hidden animate-fadeIn">
+    <div className="h-full flex-1 flex flex-col min-h-0 bg-white dark:bg-[#151618] rounded-xl sm:rounded-2xl border border-gray-200 dark:border-[#25262a] shadow-sm overflow-hidden animate-fadeIn">
       {/* Question Header */}
-      <div className="px-5 py-3.5 border-b border-gray-200 dark:border-[#25262a] flex items-center justify-between bg-gray-50/70 dark:bg-[#18191c]">
-        <div className="flex items-center gap-3">
+      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-b border-gray-200 dark:border-[#25262a] flex items-center justify-between bg-gray-50/70 dark:bg-[#18191c] shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             <Code2 className="w-3.5 h-3.5" />
             Coding Challenge {questionIndex + 1}
@@ -374,6 +409,33 @@ export default function MockExamCodingWorkspace({
             {displaySectionName}
           </span>
         </div>
+
+        {/* Mobile View Switcher Tab (Problem vs Code) */}
+        <div className="flex md:hidden items-center bg-gray-200 dark:bg-[#202225] p-0.5 rounded-lg text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setMobileTab('problem')}
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              mobileTab === 'problem'
+                ? 'bg-white dark:bg-[#121417] text-gray-900 dark:text-white shadow-xs'
+                : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Problem
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('code')}
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              mobileTab === 'code'
+                ? 'bg-white dark:bg-[#121417] text-[#FD4A32] shadow-xs'
+                : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            Code &amp; Run
+          </button>
+        </div>
+
         <div className="flex items-center gap-2 text-xs">
           <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-black">
             +{marksPerCorrect || 10} Marks
@@ -386,13 +448,15 @@ export default function MockExamCodingWorkspace({
         </div>
       </div>
 
-      {/* Main Workspace Body: Two-Pane Split Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-[#25262a]">
+      {/* Main Workspace Body: Two-Pane Split Layout (or Tab on Mobile) */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-12 min-h-0 overflow-hidden divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-[#25262a]">
         
         {/* ============================================================ */}
         {/* LEFT COLUMN: Problem Statement, Constraints, Sample I/O     */}
         {/* ============================================================ */}
-        <div className="lg:col-span-5 p-5 overflow-y-auto space-y-5 custom-scrollbar bg-white dark:bg-[#151618]">
+        <div className={`md:col-span-5 h-full overflow-y-auto space-y-5 p-4 sm:p-5 custom-scrollbar bg-white dark:bg-[#151618] ${
+          mobileTab === 'problem' ? 'flex flex-col' : 'hidden md:flex md:flex-col'
+        }`}>
           {/* Title */}
           {question.title && (
             <h3 className="font-display text-lg font-black text-gray-900 dark:text-white">
@@ -489,10 +553,12 @@ export default function MockExamCodingWorkspace({
         {/* ============================================================ */}
         {/* RIGHT COLUMN: Code Editor & Execution Test Runner Console     */}
         {/* ============================================================ */}
-        <div className="lg:col-span-7 flex flex-col min-h-0 bg-[#0d1117] text-[#e6edf3]">
+        <div className={`md:col-span-7 h-full flex flex-col min-h-0 overflow-hidden bg-[#0d1117] text-[#e6edf3] ${
+          mobileTab === 'code' ? 'flex' : 'hidden md:flex'
+        }`}>
           
           {/* Editor Header Bar */}
-          <div className="px-4 py-2.5 bg-[#161b22] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="px-3.5 sm:px-4 py-2 bg-[#161b22] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold text-[#8b949e] uppercase">Language:</span>
               <select
@@ -508,7 +574,7 @@ export default function MockExamCodingWorkspace({
               </select>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleResetTemplate}
@@ -527,7 +593,7 @@ export default function MockExamCodingWorkspace({
           </div>
 
           {/* Monaco Professional Code Editor */}
-          <div className="flex-1 relative flex flex-col overflow-hidden min-h-[340px] bg-[#1e1e1e]">
+          <div ref={editorContainerRef} className="flex-1 relative flex flex-col overflow-hidden min-h-[140px] sm:min-h-[180px] bg-[#1e1e1e]">
             <Editor
               height="100%"
               language={MONACO_LANGUAGE_MAP[selectedLanguage] || 'python'}
@@ -579,13 +645,13 @@ export default function MockExamCodingWorkspace({
           <div className="border-t border-[#30363d] bg-[#161b22] shrink-0 flex flex-col">
             
             {/* Runner Action Toolbar */}
-            <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#21262d]">
-              <div className="flex items-center gap-2">
+            <div className="px-3.5 sm:px-4 py-2 flex items-center justify-between border-b border-[#21262d] bg-[#161b22] shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={handleRunTests}
                   disabled={isRunningTests}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50 shrink-0"
                 >
                   {isRunningTests ? (
                     <>
@@ -620,7 +686,7 @@ export default function MockExamCodingWorkspace({
 
             {/* Test Results Output Tabs & Viewer */}
             {testResults && (
-              <div className="p-3.5 bg-[#0d1117] space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+              <div className="p-3 bg-[#0d1117] space-y-2.5 max-h-40 sm:max-h-52 overflow-y-auto custom-scrollbar shrink-0">
                 
                 {/* 1. Empty Code / Unmodified Boilerplate Warning */}
                 {testResults.isTemplateOrEmpty && (
@@ -748,28 +814,28 @@ export default function MockExamCodingWorkspace({
       {/* ============================================================ */}
       {/* BOTTOM CONTROL TOOLBAR (Sync with Examination Navigation)    */}
       {/* ============================================================ */}
-      <div className="px-5 py-3 border-t border-gray-200 dark:border-[#25262a] bg-white dark:bg-[#151618] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-gray-200 dark:border-[#25262a] bg-white dark:bg-[#151618] flex items-center justify-between gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={onToggleReview}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               isMarkedReview
                 ? 'bg-purple-600 text-white'
                 : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
             }`}
           >
             <Flag className="w-3.5 h-3.5" />
-            {isMarkedReview ? 'Marked for Review' : 'Mark for Review'}
+            <span className="hidden xs:inline">{isMarkedReview ? 'Marked' : 'Mark for Review'}</span>
           </button>
 
           <button
             type="button"
             onClick={handleClearCode}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors flex items-center gap-1 cursor-pointer"
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors flex items-center gap-1 cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
-            Clear Code
+            <span className="hidden xs:inline">Clear</span>
           </button>
         </div>
 
@@ -778,16 +844,29 @@ export default function MockExamCodingWorkspace({
             type="button"
             onClick={onPrev}
             disabled={isFirstQuestion}
-            className="px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-[#383a40] disabled:opacity-40 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202225] transition-all cursor-pointer disabled:cursor-not-allowed"
+            className="px-3 sm:px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-[#383a40] disabled:opacity-40 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202225] transition-all cursor-pointer disabled:cursor-not-allowed"
           >
             <ArrowLeft className="w-3.5 h-3.5 inline mr-1" />
             Prev
           </button>
 
+          {/* Quick Submit Exam button available on every question */}
+          {onSubmitExam && (!isLastQuestion || !isLastSection) && (
+            <button
+              type="button"
+              onClick={onSubmitExam}
+              className="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-black hover:opacity-90 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+              title="Submit entire examination"
+            >
+              <Send className="w-3 h-3" />
+              <span>Submit</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onNext}
-            className="px-4 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+            className="px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-sm"
           >
             {isLastQuestion && !isLastSection ? (
               <>

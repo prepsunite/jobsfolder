@@ -86,7 +86,7 @@ export const PASSAGE_BASED_TOPICS = new Set([
  * Helper to get the real-time scheduling lifecycle of an exam
  */
 export function getExamTimingStatus(
-  exam: { is_active?: boolean; is_deleted?: boolean; start_time?: string; end_time?: string },
+  exam: { is_active?: boolean; is_deleted?: boolean; start_time?: string; end_time?: string; duration_minutes?: number },
   referenceDate = new Date()
 ): 'DRAFT' | 'UPCOMING' | 'LIVE' | 'CONCLUDED' {
   if (exam.is_deleted || exam.is_active === false) {
@@ -104,8 +104,52 @@ export function getExamTimingStatus(
     if (Number.isFinite(endMs) && endMs <= nowMs) {
       return 'CONCLUDED';
     }
+  } else if (exam.start_time && exam.duration_minutes) {
+    const startMs = new Date(exam.start_time).getTime();
+    const endMs = startMs + exam.duration_minutes * 60 * 1000;
+    if (Number.isFinite(endMs) && endMs <= nowMs) {
+      return 'CONCLUDED';
+    }
   }
   return 'LIVE';
+}
+
+/**
+ * 🔒 Anti-Leak & Institutional Drive Exam Integrity Gate:
+ * Determines if verified answer keys, question explanations, and full solutions can be reviewed by a candidate.
+ * 
+ * Rules:
+ * 1. If an exam is scheduled (has start_time or end_time), solutions MUST remain strictly locked
+ *    while the exam is LIVE or UPCOMING to prevent early submitters from leaking the key to peers
+ *    who are still writing in campus labs.
+ * 2. Only after the entire exam window officially CONCLUDES across all candidates are solutions unlocked.
+ * 3. If an exam is an unscheduled/self-directed practice test without a fixed drive window,
+ *    respect show_results_immediately.
+ */
+export function canReviewSolutions(
+  exam?: {
+    is_active?: boolean;
+    is_deleted?: boolean;
+    start_time?: string;
+    end_time?: string;
+    duration_minutes?: number;
+    show_results_immediately?: boolean;
+  } | null,
+  referenceDate = new Date()
+): boolean {
+  if (!exam) return false;
+
+  const timingStatus = getExamTimingStatus(exam, referenceDate);
+
+  // If exam has a scheduled window, solutions can ONLY be viewed after the entire drive concludes
+  if (exam.start_time || exam.end_time) {
+    if (timingStatus !== 'CONCLUDED') {
+      return false;
+    }
+    return exam.show_results_immediately !== false;
+  }
+
+  return exam.show_results_immediately !== false;
 }
 
 export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
@@ -4408,7 +4452,7 @@ export const tpoService = {
 
           let codingQuery = supabase
             .from('technical_problems')
-            .select('id, title, category, level')
+            .select('id, title, category, level, test_cases, sample_input, sample_output')
             .eq('is_deleted', false);
 
           if (sec.difficulty && sec.difficulty !== 'ALL') {
@@ -4498,7 +4542,7 @@ export const tpoService = {
           if (questionIds.length < neededCount) {
             let fallbackCodingQuery = supabase
               .from('technical_problems')
-              .select('id, title, category, level')
+              .select('id, title, category, level, test_cases, sample_input, sample_output')
               .eq('is_deleted', false);
 
             if (hasTopicIds && targetCategories.size > 0) {
@@ -5556,8 +5600,16 @@ export const tpoService = {
 
         if (codingData && codingData.length > 0) {
           codingData.forEach(p => {
+            // Safely parse test_cases if it arrives as a stringified JSON array
+            let parsedTc = p.test_cases;
+            if (typeof parsedTc === 'string' && parsedTc.trim().startsWith('[')) {
+              try { parsedTc = JSON.parse(parsedTc); } catch {}
+            }
             // 🛡️ Security Sanitization & Full Placement Exam Spec Enrichment
-            const enriched = enrichCodingProblemForExam(p);
+            const enriched = enrichCodingProblemForExam({
+              ...p,
+              test_cases: parsedTc,
+            });
             rawQuestions.push({
               id: enriched.id,
               title: enriched.title,
@@ -5570,6 +5622,7 @@ export const tpoService = {
               sample_input: enriched.sample_input,
               sample_output: enriched.sample_output,
               test_cases: enriched.test_cases || enriched.testCases || [],
+              testCases: enriched.test_cases || enriched.testCases || [],
               isCodingProblem: true,
             });
           });
@@ -6621,77 +6674,22 @@ export const tpoService = {
     return finalizedAttempt;
   },
 
-  async getAttemptResultWithReview(attemptId: string): Promise<{
+  async getAttemptResultWithReview(attemptId: string, bypassLiveLock = false): Promise<{
     attempt: StudentExamAttempt;
     questions: any[];
+    isWindowLive?: boolean;
+    examEndTime?: string;
   } | null> {
     if (!attemptId) return null;
 
-    // 🛡️ 1. Secure RPC: Only releases full solution key & explanations if attempt is SUBMITTED/GRADED
-    try {
-      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_mock_exam_attempt_solutions', {
-        p_attempt_id: attemptId,
-      });
-
-      const questionsList: any[] = rpcData?.questions
-        ? Array.isArray(rpcData.questions)
-          ? rpcData.questions
-          : Object.values(rpcData.questions)
-        : [];
-
-      if (!rpcErr && rpcData && questionsList.length > 0) {
-        const attempt: StudentExamAttempt = {
-          id: rpcData.attempt_id,
-          mock_exam_id: rpcData.mock_exam_id,
-          student_id: rpcData.student_id,
-          college_id: rpcData.college_id,
-          status: rpcData.status,
-          started_at: rpcData.started_at,
-          submitted_at: rpcData.submitted_at,
-          time_spent_seconds: rpcData.time_spent_seconds,
-          total_score: Number(rpcData.total_score || 0),
-          max_possible_score: Number(rpcData.max_possible_score || 100),
-          percentage: Number(rpcData.percentage || 0),
-          passed: Boolean(rpcData.passed),
-          tab_switch_count: Number(rpcData.tab_switch_count || 0),
-          proctor_events: rpcData.proctor_events || [],
-          responses: rpcData.responses || rpcData.student_responses || {},
-        };
-
-        // Check local attempt to avoid losing rich student responses if RPC returned {}
-        const localAtt = getLocalAttempts().find(a => a.id === attemptId);
-        if (localAtt && localAtt.responses && Object.keys(localAtt.responses).length > Object.keys(attempt.responses || {}).length) {
-          attempt.responses = { ...localAtt.responses, ...attempt.responses };
-          if (!attempt.total_score && localAtt.total_score) attempt.total_score = localAtt.total_score;
-          if (!attempt.percentage && localAtt.percentage) attempt.percentage = localAtt.percentage;
-          if (!attempt.result_summary && localAtt.result_summary) attempt.result_summary = localAtt.result_summary;
-        }
-        if (!attempt.result_summary && (attempt.responses as any)?.__result_summary) {
-          attempt.result_summary = (attempt.responses as any).__result_summary;
-        }
-
-        saveLocalAttempt(attempt);
-        return {
-          attempt,
-          questions: questionsList.map((q: any) => ({
-            ...q,
-            options: normalizeQuestionOptions(q.options),
-          })),
-        };
-      }
-    } catch (rpcError) {
-      console.warn('RPC get_mock_exam_attempt_solutions notice, falling back to direct query:', rpcError);
-    }
-
-    // 2. Direct query fallback
+    // 1. Fetch attempt record to identify the exam & student score
     let attempt: StudentExamAttempt | null = null;
-
     try {
       const { data, error: aErr } = await supabase
         .from('student_exam_attempts')
         .select('*')
         .eq('id', attemptId)
-        .single();
+        .maybeSingle();
       if (!aErr && data) attempt = data;
     } catch {}
 
@@ -6701,31 +6699,6 @@ export const tpoService = {
     }
 
     if (!attempt) return null;
-
-    // Check if exam permits immediate solution review or if the testing window is concluded
-    let showResultsImmediately = true;
-    let isWindowLive = false;
-    let examEndTime: string | undefined = undefined;
-    try {
-      const { data: examData } = await supabase
-        .from('mock_exams')
-        .select('show_results_immediately, end_time, start_time')
-        .eq('id', attempt.mock_exam_id)
-        .maybeSingle();
-      if (examData) {
-        examEndTime = examData.end_time;
-        const isConcluded = examData.end_time ? new Date(examData.end_time).getTime() <= Date.now() : false;
-        if (examData.show_results_immediately === false && !isConcluded) {
-          showResultsImmediately = false;
-          isWindowLive = true;
-        }
-      }
-    } catch {}
-
-    if (!showResultsImmediately) {
-      // If immediate review is disabled by institutional policy and exam is still LIVE, do not return question solutions/keys
-      return { attempt, questions: [], isWindowLive: true, examEndTime } as any;
-    }
 
     // Check local attempts to merge any responses if DB had empty responses
     const localFallback = getLocalAttempts().find(a => a.id === attemptId);
@@ -6739,6 +6712,58 @@ export const tpoService = {
       attempt.result_summary = (attempt.responses as any).__result_summary;
     }
 
+    // 🔒 2. Anti-Leak Gate: Check if exam is still LIVE across campus
+    // Answers & solutions are strictly locked while peers are taking the exam to prevent copying.
+    let examEndTime: string | undefined = undefined;
+    try {
+      const { data: examData } = await supabase
+        .from('mock_exams')
+        .select('show_results_immediately, end_time, start_time, duration_minutes, is_active, is_deleted')
+        .eq('id', attempt.mock_exam_id)
+        .maybeSingle();
+      if (examData) {
+        examEndTime = examData.end_time;
+        if (!bypassLiveLock && !canReviewSolutions(examData)) {
+          // Exam is actively underway - lock answer keys and solutions
+          return { attempt, questions: [], isWindowLive: true, examEndTime };
+        }
+      }
+    } catch {}
+
+    // 🛡️ 3. Exam has concluded or practice mode: release solutions
+    // 3a. Secure RPC: Only releases full solution key & explanations if attempt is SUBMITTED/GRADED
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_mock_exam_attempt_solutions', {
+        p_attempt_id: attemptId,
+      });
+
+      const questionsList: any[] = rpcData?.questions
+        ? Array.isArray(rpcData.questions)
+          ? rpcData.questions
+          : Object.values(rpcData.questions)
+        : [];
+
+      if (!rpcErr && rpcData && questionsList.length > 0) {
+        if (rpcData.total_score) attempt.total_score = Number(rpcData.total_score);
+        if (rpcData.percentage) attempt.percentage = Number(rpcData.percentage);
+        if (rpcData.responses) attempt.responses = { ...attempt.responses, ...rpcData.responses };
+
+        saveLocalAttempt(attempt);
+        return {
+          attempt,
+          questions: questionsList.map((q: any) => ({
+            ...q,
+            options: normalizeQuestionOptions(q.options),
+          })),
+          isWindowLive: false,
+          examEndTime,
+        };
+      }
+    } catch (rpcError) {
+      console.warn('RPC get_mock_exam_attempt_solutions notice, falling back to direct query:', rpcError);
+    }
+
+    // 3b. Direct query fallback for questions
     const questionIds = Object.keys(attempt.responses || {}).filter(k => !k.startsWith('__'));
     let questions: any[] = [];
     try {
@@ -6847,6 +6872,8 @@ export const tpoService = {
     return {
       attempt,
       questions,
+      isWindowLive: false,
+      examEndTime,
     };
   },
 
@@ -7191,7 +7218,7 @@ export const tpoService = {
     };
   },
 
-  async getStudentAttemptAnswerSheet(attemptId: string): Promise<{
+  async getStudentAttemptAnswerSheet(attemptId: string, bypassLiveLock = false): Promise<{
     attempt: StudentExamAttempt;
     exam: MockExam;
     sections: Array<MockExamSection & { questions: any[] }>;
@@ -7234,11 +7261,9 @@ export const tpoService = {
     const exam = await this.getMockExamById(attempt.mock_exam_id);
     if (!exam) return null;
 
-    // 3. Check live drive lock
-    let isWindowLive = false;
-    const isConcluded = exam.end_time ? new Date(exam.end_time).getTime() <= Date.now() : false;
-    if (exam.show_results_immediately === false && !isConcluded) {
-      isWindowLive = true;
+    // 🔒 3. Anti-Leak Gate: Check live drive lock
+    // Verified answer keys and solutions are strictly locked while peers are taking the exam.
+    if (!bypassLiveLock && !canReviewSolutions(exam)) {
       return {
         attempt,
         exam,
@@ -7381,4 +7406,5 @@ export const tpoService = {
 
   isAttemptCompleted,
   getExamTimingStatus,
+  canReviewSolutions,
 };

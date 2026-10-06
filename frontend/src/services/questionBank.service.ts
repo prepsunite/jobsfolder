@@ -27,6 +27,14 @@ export interface BankMcqInput {
   company_slug?: string;
 }
 
+export interface BankCodingTestCase {
+  input: string;
+  output: string;
+  expected_output?: string;
+  is_hidden?: boolean;
+  explanation?: string;
+}
+
 export interface BankCodingProblemInput {
   title: string;
   category: string; // e.g. 'ARRAYS', 'STRINGS', 'NUMBER_LOGIC'
@@ -36,7 +44,7 @@ export interface BankCodingProblemInput {
   sample_input?: string;
   sample_output?: string;
   explanation?: string;
-  test_cases?: { input: string; output: string; explanation?: string }[];
+  test_cases?: BankCodingTestCase[];
   solutions?: {
     cpp?: string;
     java?: string;
@@ -54,26 +62,36 @@ export const questionBankService = {
 
   /**
    * F18: Safely parse and validate a test_cases value.
-   * Accepts an array or a JSON string; skips rows missing input/expected_output.
+   * Accepts an array or a JSON string; preserves input, output, is_hidden, and explanation.
    * Never throws — returns an empty array for completely invalid input.
    */
-  _parseTestCases(raw: unknown): { input: string; expected_output: string; explanation?: string }[] {
+  _parseTestCases(raw: unknown): { input: string; output: string; expected_output: string; is_hidden: boolean; explanation?: string }[] {
     try {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (!Array.isArray(parsed)) {
         console.warn('[questionBankService._parseTestCases] test_cases is not an array, skipping:', typeof parsed);
         return [];
       }
-      const valid: { input: string; expected_output: string; explanation?: string }[] = [];
+      const valid: { input: string; output: string; expected_output: string; is_hidden: boolean; explanation?: string }[] = [];
       for (const tc of parsed) {
         if (!tc || typeof tc !== 'object') continue;
-        const inp = tc.input;
-        const out = tc.expected_output ?? tc.output;
-        if (typeof inp !== 'string' || typeof out !== 'string') {
-          console.warn('[questionBankService._parseTestCases] Skipping malformed test case (missing string input/output):', tc);
+        const inp = tc.input !== undefined && tc.input !== null ? String(tc.input) : '';
+        const out = tc.expected_output !== undefined && tc.expected_output !== null
+          ? String(tc.expected_output)
+          : tc.output !== undefined && tc.output !== null
+            ? String(tc.output)
+            : '';
+        if (!inp && !out) {
+          console.warn('[questionBankService._parseTestCases] Skipping empty test case:', tc);
           continue;
         }
-        valid.push({ input: inp, expected_output: out, explanation: tc.explanation });
+        valid.push({
+          input: inp,
+          output: out,
+          expected_output: out,
+          is_hidden: Boolean(tc.is_hidden),
+          explanation: tc.explanation ? String(tc.explanation) : undefined,
+        });
       }
       return valid;
     } catch (e) {
@@ -508,6 +526,43 @@ export const questionBankService = {
 
     if (error) {
       throw new Error(error.message || 'Failed to insert coding problem.');
+    }
+    return data;
+  },
+
+  /**
+   * Updates an existing coding problem in technical_problems
+   */
+  async updateCodingProblem(id: string, updates: Partial<BankCodingProblemInput>): Promise<any> {
+    const payload: any = {
+      updated_at: new Date().toISOString(),
+    };
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.level !== undefined) payload.level = updates.level;
+    if (updates.category !== undefined) {
+      payload.category = updates.category;
+      payload.category_label = updates.category.replace(/_/g, ' ');
+    }
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.constraints !== undefined) payload.constraints = updates.constraints;
+    if (updates.sample_input !== undefined) payload.sample_input = updates.sample_input;
+    if (updates.sample_output !== undefined) payload.sample_output = updates.sample_output;
+    if (updates.explanation !== undefined) payload.explanation = updates.explanation;
+    if (updates.test_cases !== undefined) {
+      payload.test_cases = this._parseTestCases(updates.test_cases);
+    }
+    if (updates.solutions !== undefined) payload.solutions = updates.solutions;
+    if (updates.company_tags !== undefined) payload.company_tags = updates.company_tags;
+
+    const { data, error } = await supabase
+      .from('technical_problems')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message || 'Failed to update coding problem.');
     }
     return data;
   },

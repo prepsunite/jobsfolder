@@ -2664,11 +2664,12 @@ export default function CreateMockExamModal({
 
                     <div className="flex items-center justify-between border-t border-gray-200 dark:border-[#2e3035] pt-3">
                       <div>
-                        <div className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                          Immediate Scorecard Post-Submit
+                        <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                          <span>Release Solutions After Exam Window Ends</span>
+                          <span className="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Anti-Leak</span>
                         </div>
                         <div className="text-[11px] text-gray-500">
-                          Allow student to view their score and solutions immediately upon submission.
+                          Students see their score post-submission. Verified answer keys and solutions unlock once the entire exam window concludes to prevent copying during active drives.
                         </div>
                       </div>
                       <input
