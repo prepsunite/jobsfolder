@@ -7,6 +7,7 @@ import { computeSha256Hex } from '@/utils/questionParser';
 import { enrichCodingProblemForExam } from './campusDsaExamDataset';
 
 import type { TechnicalProblemRow, TechnicalMcqRow } from '@/lib/database.types';
+import { auditService } from './audit.service';
 
 export interface TechnicalImportReport {
   success: number;
@@ -830,15 +831,37 @@ export const technicalService = {
 
   async deleteProgrammingProblem(problemId: string): Promise<boolean> {
     try {
+      // 1. Guard against referential invalidation: check if question is in active exams
+      const { data: activeSecs } = await supabase
+        .from('mock_exam_sections')
+        .select('id, mock_exam_id, name')
+        .contains('question_ids', [problemId]);
+
+      if (activeSecs && activeSecs.length > 0) {
+        throw new Error(
+          `Cannot delete coding problem "${problemId}": It is currently assigned to ${activeSecs.length} mock exam section(s). Remove it from exams first.`
+        );
+      }
+
       const { error } = await supabase
         .from('technical_problems')
         .update({ is_deleted: true })
         .eq('id', problemId);
 
       if (error) throw error;
+
+      await auditService.logAction({
+        action: 'DELETE_PROGRAMMING_PROBLEM',
+        targetEntity: 'technical_problems',
+        targetId: problemId,
+      });
+
       return true;
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to delete problem from Supabase:', e);
+      if (e.message?.includes('Cannot delete coding problem')) {
+        throw e;
+      }
       return false;
     }
   },
@@ -852,6 +875,13 @@ export const technicalService = {
         .in('id', problemIds);
 
       if (error) throw error;
+
+      await auditService.logAction({
+        action: 'BULK_DELETE_PROGRAMMING_PROBLEMS',
+        targetEntity: 'technical_problems',
+        afterData: { count: problemIds.length, ids: problemIds },
+      });
+
       return true;
     } catch (e) {
       console.error('Failed to bulk delete problems from Supabase:', e);
@@ -1163,15 +1193,37 @@ export const technicalService = {
 
   async deleteTechnicalMcq(mcqId: string): Promise<boolean> {
     try {
+      // 1. Guard against referential invalidation: check if MCQ is in active exams
+      const { data: activeSecs } = await supabase
+        .from('mock_exam_sections')
+        .select('id, mock_exam_id, name')
+        .contains('question_ids', [mcqId]);
+
+      if (activeSecs && activeSecs.length > 0) {
+        throw new Error(
+          `Cannot delete technical MCQ "${mcqId}": It is currently assigned to ${activeSecs.length} mock exam section(s). Remove it from exams first.`
+        );
+      }
+
       const { error } = await supabase
         .from('technical_mcqs')
         .update({ is_deleted: true })
         .eq('id', mcqId);
 
       if (error) throw error;
+
+      await auditService.logAction({
+        action: 'DELETE_TECHNICAL_MCQ',
+        targetEntity: 'technical_mcqs',
+        targetId: mcqId,
+      });
+
       return true;
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to delete technical MCQ from Supabase:', e);
+      if (e.message?.includes('Cannot delete technical MCQ')) {
+        throw e;
+      }
       return false;
     }
   },
@@ -1185,6 +1237,13 @@ export const technicalService = {
         .in('id', mcqIds);
 
       if (error) throw error;
+
+      await auditService.logAction({
+        action: 'BULK_DELETE_TECHNICAL_MCQS',
+        targetEntity: 'technical_mcqs',
+        afterData: { count: mcqIds.length, ids: mcqIds },
+      });
+
       return true;
     } catch (e) {
       console.error('Failed to bulk delete MCQs from Supabase:', e);

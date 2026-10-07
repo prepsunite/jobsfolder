@@ -408,7 +408,10 @@ export default function TpoQuestionPaperModal({
 
                               {!isCoding && q.correct_answer !== undefined && (
                                 <div className="text-emerald-900 dark:text-emerald-200 font-bold">
-                                  Correct Choice: Option {String.fromCharCode(65 + Number(q.correct_answer))}
+                                  Correct Choice: Option {(() => {
+                                    const idx = parseCorrectAnswerIndex(q.correct_answer);
+                                    return idx >= 0 ? String.fromCharCode(65 + idx) : String(q.correct_answer);
+                                  })()}
                                 </div>
                               )}
 

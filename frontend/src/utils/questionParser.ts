@@ -125,15 +125,25 @@ export function sanitizeJsonInput(rawJson: string): string {
 }
 
 /**
- * Safe JSON parser with auto-recovery for LaTeX backslash escapes.
+ * Safe JSON reviver guarding against prototype pollution vectors.
+ */
+const preventPrototypePollutionReviver = (key: string, value: any) => {
+  if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+    return undefined;
+  }
+  return value;
+};
+
+/**
+ * Safe JSON parser with auto-recovery for LaTeX backslash escapes and prototype pollution defense.
  */
 export function safeJsonParse<T = any>(input: string): T {
   try {
-    return JSON.parse(input);
+    return JSON.parse(input, preventPrototypePollutionReviver);
   } catch {
     try {
       const sanitized = sanitizeJsonInput(input);
-      return JSON.parse(sanitized);
+      return JSON.parse(sanitized, preventPrototypePollutionReviver);
     } catch {
       return null as unknown as T;
     }

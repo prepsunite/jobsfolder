@@ -5,6 +5,7 @@ import {
   TECHNICAL_MCQ_SUBJECTS,
   CODING_CATEGORIES,
 } from './mockExamBlueprint.service';
+import { auditService } from './audit.service';
 
 export interface TopicInventoryItem {
   id: string;
@@ -825,6 +826,24 @@ export const questionBankService = {
    * Returns true only when the update succeeds.
    */
   async deleteQuestion(id: string, isCoding?: boolean): Promise<boolean> {
+    // 1. Guard against referential invalidation: check if question is referenced in active mock exams
+    try {
+      const { data: activeSections } = await supabase
+        .from('mock_exam_sections')
+        .select('id, mock_exam_id, name')
+        .contains('question_ids', [id]);
+
+      if (activeSections && activeSections.length > 0) {
+        throw new Error(
+          `Cannot delete question "${id}": It is currently assigned to ${activeSections.length} mock exam section(s). Please remove it from active exams first to prevent test runner corruption.`
+        );
+      }
+    } catch (checkErr: any) {
+      if (checkErr.message?.includes('Cannot delete question')) {
+        throw checkErr;
+      }
+    }
+
     const table = isCoding || id.startsWith('custom-p150-')
       ? 'technical_problems'
       : (id.startsWith('tech-') || id.startsWith('mcq-'))
@@ -845,6 +864,14 @@ export const questionBankService = {
     if (!data || data.length === 0) {
       console.warn('[questionBankService.deleteQuestion] Question not found or already deleted:', id);
     }
+
+    // 2. Audit Trail
+    await auditService.logAction({
+      action: 'DELETE_QUESTION',
+      targetEntity: table,
+      targetId: id,
+      beforeData: { id, table },
+    });
 
     return true;
   },

@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase';
 import type { MockExamTemplate } from '@/types/tpo';
 
 const BLUEPRINTS_STORAGE_KEY = 'prepunite_mock_exam_blueprints';
-const CLOUD_SUBJECT_PREFIX = 'MOCK_EXAM_BLUEPRINT:';
 
 export const BUILTIN_BLUEPRINTS: MockExamTemplate[] = [
   {
@@ -678,17 +677,21 @@ export const FALLBACK_APTITUDE_TOPICS = [
   { id: 'automata-theory-basics', name: 'Automata Theory Basics', category_slug: 'technical-aptitude' },
 ];
 
+export const BUILTIN_BLUEPRINT_IDS = new Set(BUILTIN_BLUEPRINTS.map(b => b.id));
+
 export const mockExamBlueprintService = {
   /**
-   * Returns all active blueprints, merging built-in patterns with cloud admin blueprints.
+   * Returns all active blueprints, merging immutable built-in patterns with saved custom blueprints.
    */
   async getAllBlueprints(): Promise<MockExamTemplate[]> {
     const map = new Map<string, MockExamTemplate>();
 
-    // 1. Built-in defaults
-    BUILTIN_BLUEPRINTS.forEach(b => map.set(b.id, b));
+    // 1. Built-in defaults (always active and protected)
+    BUILTIN_BLUEPRINTS.forEach(b => {
+      map.set(b.id, { ...b, sections: b.sections.map(s => ({ ...s })) });
+    });
 
-    // 2. Local storage cache
+    // 2. Custom blueprints from local storage cache
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem(BLUEPRINTS_STORAGE_KEY);
@@ -696,63 +699,19 @@ export const mockExamBlueprintService = {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed)) {
             parsed.forEach((b: MockExamTemplate) => {
-              if (b && b.id) map.set(b.id, b);
+              // Only load valid custom templates (built-ins cannot be overwritten from local cache)
+              if (b && b.id && !BUILTIN_BLUEPRINT_IDS.has(b.id)) {
+                map.set(b.id, b);
+              }
             });
           }
         }
-      } catch {}
-    }
-
-    // 3. Supabase Cloud Sync
-    try {
-      // Query active blueprint records from cloud (newest first)
-      const { data: cloudMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .like('subject', `${CLOUD_SUBJECT_PREFIX}%`)
-        .eq('status', 'ACTIVE')
-        .order('created_at', { ascending: false });
-
-      const seenIds = new Set<string>();
-      if (cloudMsgs && cloudMsgs.length > 0) {
-        cloudMsgs.forEach(m => {
-          try {
-            const parsed = JSON.parse(m.message) as MockExamTemplate;
-            if (parsed && parsed.id && !seenIds.has(parsed.id)) {
-              seenIds.add(parsed.id);
-              map.set(parsed.id, parsed);
-            }
-          } catch {}
-        });
+      } catch (e) {
+        console.warn('[mockExamBlueprintService.getAllBlueprints] Cache read error:', e);
       }
-
-      // Query deleted blueprint records to ensure deleted built-ins/custom are purged
-      const { data: deletedMsgs } = await supabase
-        .from('contact_messages')
-        .select('subject')
-        .like('subject', `${CLOUD_SUBJECT_PREFIX}%`)
-        .eq('status', 'DELETED');
-
-      if (deletedMsgs && deletedMsgs.length > 0) {
-        deletedMsgs.forEach(d => {
-          const bpId = d.subject.replace(CLOUD_SUBJECT_PREFIX, '');
-          map.delete(bpId);
-        });
-      }
-    } catch (e) {
-      console.warn('[mockExamBlueprintService.getAllBlueprints] Cloud sync note:', e);
     }
 
-    const all = Array.from(map.values());
-
-    // Update local storage cache
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(BLUEPRINTS_STORAGE_KEY, JSON.stringify(all));
-      } catch {}
-    }
-
-    return all;
+    return Array.from(map.values());
   },
 
   async getBlueprintById(id: string): Promise<MockExamTemplate | null> {
@@ -761,71 +720,59 @@ export const mockExamBlueprintService = {
   },
 
   async saveBlueprint(blueprint: MockExamTemplate): Promise<MockExamTemplate> {
+    // Prevent overriding built-in official blueprints
+    if (blueprint.id && BUILTIN_BLUEPRINT_IDS.has(blueprint.id)) {
+      throw new Error(
+        'Built-in enterprise blueprints are official standards and cannot be modified. Please duplicate the blueprint to create a custom variation.'
+      );
+    }
+
     const toSave: MockExamTemplate = {
       ...blueprint,
       id: blueprint.id || `bp-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      is_default: false,
       updated_at: new Date().toISOString(),
     };
 
-    // 1. Update local cache
+    // Update local cache
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem(BLUEPRINTS_STORAGE_KEY);
-        const current: MockExamTemplate[] = cached ? JSON.parse(cached) : [...BUILTIN_BLUEPRINTS];
-        const idx = current.findIndex(b => b.id === toSave.id);
+        const currentCustom: MockExamTemplate[] = cached ? JSON.parse(cached) : [];
+        const idx = currentCustom.findIndex(b => b.id === toSave.id);
         if (idx >= 0) {
-          current[idx] = toSave;
+          currentCustom[idx] = toSave;
         } else {
-          current.unshift(toSave);
+          currentCustom.unshift(toSave);
         }
-        localStorage.setItem(BLUEPRINTS_STORAGE_KEY, JSON.stringify(current));
+        localStorage.setItem(BLUEPRINTS_STORAGE_KEY, JSON.stringify(currentCustom));
         window.dispatchEvent(new CustomEvent('prepunite_blueprints_updated', { detail: toSave }));
-      } catch {}
-    }
-
-    // 2. Persist to Supabase Cloud via contact_messages with revision superseding
-    try {
-      await supabase
-        .from('contact_messages')
-        .update({ status: 'SUPERSEDED' })
-        .eq('subject', `${CLOUD_SUBJECT_PREFIX}${toSave.id}`);
-
-      await supabase.from('contact_messages').insert({
-        name: `Blueprint: ${toSave.name}`,
-        email: 'admin@prepunite.com',
-        subject: `${CLOUD_SUBJECT_PREFIX}${toSave.id}`,
-        message: JSON.stringify(toSave),
-        status: 'ACTIVE',
-      });
-    } catch (e) {
-      console.warn('[mockExamBlueprintService.saveBlueprint] Cloud save note:', e);
+      } catch (e) {
+        console.warn('[mockExamBlueprintService.saveBlueprint] Cache save error:', e);
+      }
     }
 
     return toSave;
   },
 
   async deleteBlueprint(id: string): Promise<boolean> {
-    // 1. Update local cache
+    if (BUILTIN_BLUEPRINT_IDS.has(id)) {
+      throw new Error('Built-in enterprise blueprint cannot be deleted.');
+    }
+
+    // Update local cache
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem(BLUEPRINTS_STORAGE_KEY);
         if (cached) {
-          const current: MockExamTemplate[] = JSON.parse(cached);
-          const filtered = current.filter(b => b.id !== id);
+          const currentCustom: MockExamTemplate[] = JSON.parse(cached);
+          const filtered = currentCustom.filter(b => b.id !== id);
           localStorage.setItem(BLUEPRINTS_STORAGE_KEY, JSON.stringify(filtered));
         }
         window.dispatchEvent(new CustomEvent('prepunite_blueprints_updated', { detail: { id, deleted: true } }));
-      } catch {}
-    }
-
-    // 2. Mark deleted in Supabase Cloud
-    try {
-      await supabase
-        .from('contact_messages')
-        .update({ status: 'DELETED' })
-        .eq('subject', `${CLOUD_SUBJECT_PREFIX}${id}`);
-    } catch (e) {
-      console.warn('[mockExamBlueprintService.deleteBlueprint] Cloud delete note:', e);
+      } catch (e) {
+        console.warn('[mockExamBlueprintService.deleteBlueprint] Cache delete error:', e);
+      }
     }
 
     return true;
@@ -834,7 +781,7 @@ export const mockExamBlueprintService = {
   async resetToDefaults(): Promise<MockExamTemplate[]> {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(BLUEPRINTS_STORAGE_KEY, JSON.stringify(BUILTIN_BLUEPRINTS));
+        localStorage.removeItem(BLUEPRINTS_STORAGE_KEY);
         window.dispatchEvent(new CustomEvent('prepunite_blueprints_updated', { detail: BUILTIN_BLUEPRINTS }));
       } catch {}
     }

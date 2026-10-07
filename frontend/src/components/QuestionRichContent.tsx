@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import DOMPurify from 'dompurify';
 import { Terminal, Copy, Check } from 'lucide-react';
 
 export interface QuestionRichContentProps {
@@ -10,50 +11,35 @@ export interface QuestionRichContentProps {
   isOption?: boolean;
 }
 
+const DOMPURIFY_CONFIG = {
+  USE_PROFILES: { html: true, svg: true, mathMl: true },
+  ALLOWED_TAGS: [
+    'p', 'span', 'b', 'strong', 'i', 'em', 'u', 's', 'sub', 'sup',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'hr',
+    'pre', 'code', 'blockquote',
+    'ul', 'ol', 'li',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'img', 'svg', 'g', 'path', 'circle', 'rect', 'line', 'polygon', 'polyline', 'text', 'defs', 'marker',
+    'math', 'mrow', 'mi', 'mn', 'mo', 'msup', 'msub', 'mfrac', 'mroot', 'msqrt', 'mtable', 'mtr', 'mtd', 'div'
+  ],
+  ALLOWED_ATTR: [
+    'class', 'className', 'id', 'style', 'src', 'alt', 'title', 'width', 'height',
+    'viewBox', 'xmlns', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+    'd', 'r', 'cx', 'cy', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'transform',
+    'colspan', 'rowspan', 'border', 'align'
+  ],
+  ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|data:image\/):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+  FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'link', 'style', 'base', 'meta', 'applet'],
+  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onmouseenter', 'onchange', 'action', 'formaction', 'xlink:href'],
+};
+
 function sanitizeRichHtml(html: string): string {
   if (!html) return '';
-
-  let sanitized = html
-    // Strip script blocks and contents
-    .replace(/<script\b[\s\S]*?(?:<\/script>|$)/gi, '')
-    // Strip iframe, embed, object, form blocks and contents
-    .replace(/<(iframe|embed|object|form|applet|meta|link|style|base)\b[\s\S]*?(?:<\/\1>|$)/gi, '')
-    .replace(/<(iframe|embed|object|form|applet|meta|link|style|base)[^>]*\/?>/gi, '');
-
-  // Strip event handlers with any leading delimiter (whitespace, slash, quotes, or tag start)
-  sanitized = sanitized.replace(/[\s\/>]on[a-zA-Z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, ' ');
-
-  // Decode common HTML entities in URI attributes (href, src, xlink:href) to prevent obfuscated javascript: attacks
-  for (let i = 0; i < 3; i++) {
-    sanitized = sanitized.replace(
-      /(href|src|xlink:href|action)\s*=\s*(['"]?)([\s\S]*?)\2(?=[\s\/>])/gi,
-      (match, attr, quote, val) => {
-        const decoded = val
-          .replace(/&#(\d+);?/g, (_: string, num: string) => String.fromCharCode(parseInt(num, 10)))
-          .replace(/&#x([0-9a-f]+);?/gi, (_: string, hex: string) => String.fromCharCode(parseInt(hex, 16)))
-          .replace(/&tab;/gi, '')
-          .replace(/&newline;/gi, '')
-          .replace(/[\u0000-\u001F\s]/g, '');
-
-        const lowerDecoded = decoded.toLowerCase();
-        if (
-          lowerDecoded.startsWith('javascript:') ||
-          lowerDecoded.startsWith('vbscript:') ||
-          (lowerDecoded.startsWith('data:') && !lowerDecoded.startsWith('data:image/'))
-        ) {
-          return `${attr}="#"`;
-        }
-        return match;
-      }
-    );
+  if (typeof window === 'undefined') {
+    // Basic fallback for server environments
+    return html.replace(/<script\b[\s\S]*?(?:<\/script>|$)/gi, '').replace(/[\s\/>]on[a-zA-Z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, ' ');
   }
-
-  // Final sweep for unquoted or remaining javascript/data URIs
-  sanitized = sanitized
-    .replace(/(href|src|xlink:href)\s*=\s*['"]?\s*javascript:[^'"]*['"]?/gi, '$1="#"')
-    .replace(/(href|src|xlink:href)\s*=\s*['"]?\s*data:(?!image\/)[^'"]*['"]?/gi, '$1="#"');
-
-  return sanitized;
+  return String(DOMPurify.sanitize(html, DOMPURIFY_CONFIG as any));
 }
 
 function formatLanguageBadge(rawLang?: string): string {
@@ -168,7 +154,10 @@ function MarkdownBody({
   isOption: boolean;
   className?: string;
 }) {
-  const preprocessed = preprocessMarkdown(content);
+  const preprocessed = useMemo(() => {
+    const raw = preprocessMarkdown(content);
+    return sanitizeRichHtml(raw);
+  }, [content]);
 
   return (
     <div className={`question-rich-content text-inherit leading-relaxed ${isOption ? 'inline-block w-full' : ''} ${className}`}>

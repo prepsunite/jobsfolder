@@ -21,6 +21,7 @@ import { dataStore, type ImportReport, type TopicQuestionItem } from '@/services
 import { useQuery } from '@tanstack/react-query';
 import { safeJsonParse, normalizeMathText } from '@/utils/questionParser';
 import QuestionRichContent from '@/components/QuestionRichContent';
+import { auditService } from '@/services/audit.service';
 
 export default function AdminBulkImportPage() {
   const { user } = useAuth();
@@ -93,7 +94,14 @@ export default function AdminBulkImportPage() {
       const summary: Record<string, number> = {};
       const parseErrors: string[] = [];
 
-      itemsArray.forEach((raw, idx) => {
+      const MAX_ITEMS = 500;
+      let itemsToProcess = itemsArray;
+      if (itemsArray.length > MAX_ITEMS) {
+        parseErrors.push(`Safety Limit: Payload contains ${itemsArray.length} items. Only the first ${MAX_ITEMS} questions will be ingested per batch.`);
+        itemsToProcess = itemsArray.slice(0, MAX_ITEMS);
+      }
+
+      itemsToProcess.forEach((raw, idx) => {
         try {
           const defaultTopic = overrideTopic !== 'AUTO' ? overrideTopic : undefined;
           const parsed = dataStore.parseTopicQuestionJsonItem(raw, defaultTopic);
@@ -130,6 +138,16 @@ export default function AdminBulkImportPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_FILE_SIZE) {
+      setParsedPreview({
+        items: [],
+        topicSummary: {},
+        parseErrors: [`File exceeds maximum allowed size of 5 MB (${(file.size / (1024 * 1024)).toFixed(2)} MB). Please upload smaller batches.`],
+      });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
@@ -142,97 +160,119 @@ export default function AdminBulkImportPage() {
 
   // Execute Bulk Import
   const handleExecuteImport = async () => {
-    if (!jsonText.trim()) return;
+    if (!jsonText.trim() || !parsedPreview?.items?.length) return;
 
     setIsImporting(true);
     const defaultTopic = targetTopicOverride !== 'AUTO' ? targetTopicOverride : undefined;
-    const report = dataStore.importBulkTopicQuestionsJson(jsonText, defaultTopic);
 
-    // Also persist directly to Supabase topic_questions table for universal live sync
     try {
-      if (parsedPreview?.items && parsedPreview.items.length > 0) {
-        // Fetch current max question numbers from Supabase for all affected topics
-        const topics = Array.from(new Set(parsedPreview.items.map(item => item.topicId || 'numbers')));
-        
-        let allExistingQ: any[] = [];
-        let page = 0;
-        const PAGE_SIZE = 1000;
-        let hasMore = true;
+      // 1. Fetch current max question numbers from Supabase for all affected topics
+      const topics = Array.from(new Set(parsedPreview.items.map(item => item.topicId || 'numbers')));
+      
+      let allExistingQ: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
 
-        while (hasMore) {
-          const { data: existingQ, error } = await supabase
-            .from('topic_questions')
-            .select('topic_id, question_number')
-            .in('topic_id', topics)
-            .eq('is_deleted', false)
-            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-            
-          if (error) {
-            console.error('[AdminBulkImport] Error fetching max question numbers:', error);
-            break;
-          }
+      while (hasMore) {
+        const { data: existingQ, error } = await supabase
+          .from('topic_questions')
+          .select('topic_id, question_number')
+          .in('topic_id', topics)
+          .eq('is_deleted', false)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
           
-          if (existingQ && existingQ.length > 0) {
-            allExistingQ = allExistingQ.concat(existingQ);
-            if (existingQ.length < PAGE_SIZE) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          } else {
-            hasMore = false;
-          }
-        }
-
-        const topicMaxMap: Record<string, number> = {};
-        allExistingQ.forEach(q => {
-          topicMaxMap[q.topic_id] = Math.max(topicMaxMap[q.topic_id] || 0, q.question_number || 0);
-        });
-
-        const topicCounter: Record<string, number> = {};
-
-        const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
-        const rowsToInsert = parsedPreview.items.map((item, idx) => {
-          const tId = item.topicId || 'numbers';
-          const baseMax = topicMaxMap[tId] || 0;
-          topicCounter[tId] = (topicCounter[tId] || 0) + 1;
-          const assignedNum = baseMax + topicCounter[tId];
-
-          // Convert letter-based correctAnswer (A/B/C/D) to 0-based INT index for the DB
-          const ca = String(item.correctAnswer || 'A').trim().toUpperCase();
-          const correctAnswerInt = isNaN(Number(ca)) ? (letterToIdx[ca] ?? 0) : Number(ca);
-          return {
-            id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
-            topic_id: tId,
-            company_slug: (item as any).companySlug || (item as any).company || 'general',
-            statement: normalizeMathText(item.statement || ''),
-            options: JSON.stringify((item.options || []).map((o: any) => ({
-              ...o,
-              text: normalizeMathText(o.text || '')
-            }))),
-            correct_answer: correctAnswerInt,
-            explanation: normalizeMathText(item.explanation || ''),
-            structured_explanation: JSON.stringify(item.structuredExplanation || { formulaUsed: item.formulasUsed || [] }),
-            difficulty: item.difficulty || 'MEDIUM',
-            difficulty_level: item.difficultyLevel || 2,
-            is_hidden: item.isHidden ?? false,
-            question_number: assignedNum,
-          };
-        });
-
-        const { error } = await supabase.from('topic_questions').upsert(rowsToInsert, { onConflict: 'id' });
         if (error) {
-          console.error('[AdminBulkImport] Supabase bulk upsert error:', error);
-          report.errors.push({ itemIndex: 0, reason: `Supabase database sync note: ${error.message}` });
+          console.error('[AdminBulkImport] Error fetching max question numbers:', error);
+          break;
+        }
+        
+        if (existingQ && existingQ.length > 0) {
+          allExistingQ = allExistingQ.concat(existingQ);
+          if (existingQ.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
         }
       }
+
+      const topicMaxMap: Record<string, number> = {};
+      allExistingQ.forEach(q => {
+        topicMaxMap[q.topic_id] = Math.max(topicMaxMap[q.topic_id] || 0, q.question_number || 0);
+      });
+
+      const topicCounter: Record<string, number> = {};
+      const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+
+      const rowsToInsert = parsedPreview.items.map((item, idx) => {
+        const tId = item.topicId || 'numbers';
+        const baseMax = topicMaxMap[tId] || 0;
+        topicCounter[tId] = (topicCounter[tId] || 0) + 1;
+        const assignedNum = baseMax + topicCounter[tId];
+
+        // Convert letter-based correctAnswer (A/B/C/D) to 0-based INT index for the DB
+        const ca = String(item.correctAnswer || 'A').trim().toUpperCase();
+        const correctAnswerInt = isNaN(Number(ca)) ? (letterToIdx[ca] ?? 0) : Number(ca);
+        return {
+          id: item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `q-${Date.now()}-${idx}`),
+          topic_id: tId,
+          company_slug: (item as any).companySlug || (item as any).company || 'general',
+          statement: normalizeMathText(item.statement || ''),
+          options: JSON.stringify((item.options || []).map((o: any) => ({
+            ...o,
+            text: normalizeMathText(o.text || '')
+          }))),
+          correct_answer: correctAnswerInt,
+          explanation: normalizeMathText(item.explanation || ''),
+          structured_explanation: JSON.stringify(item.structuredExplanation || { formulaUsed: item.formulasUsed || [] }),
+          difficulty: item.difficulty || 'MEDIUM',
+          difficulty_level: item.difficultyLevel || 2,
+          is_hidden: item.isHidden ?? false,
+          question_number: assignedNum,
+        };
+      });
+
+      // 2. Perform Supabase database upsert FIRST (Database-of-truth)
+      const { error: upsertErr } = await supabase.from('topic_questions').upsert(rowsToInsert, { onConflict: 'id' });
+      if (upsertErr) {
+        console.error('[AdminBulkImport] Supabase bulk upsert error:', upsertErr);
+        setImportReport({
+          success: 0,
+          duplicates: 0,
+          invalid: rowsToInsert.length,
+          errors: [{ itemIndex: 0, reason: `Database synchronization error: ${upsertErr.message}. Client store rollback preserved.` }],
+        });
+        return;
+      }
+
+      // 3. Database write succeeded — now safely synchronize local client store
+      const report = dataStore.importBulkTopicQuestionsJson(jsonText, defaultTopic);
+
+      // 4. Log Admin Audit Trail
+      await auditService.logAction({
+        action: 'BULK_IMPORT_TOPIC_QUESTIONS',
+        targetEntity: 'topic_questions',
+        afterData: {
+          insertedCount: rowsToInsert.length,
+          topics,
+        },
+      });
+
+      setImportReport(report);
     } catch (err: any) {
-      console.error('[AdminBulkImport] Supabase sync exception:', err);
+      console.error('[AdminBulkImport] Bulk import exception:', err);
+      setImportReport({
+        success: 0,
+        duplicates: 0,
+        invalid: parsedPreview?.items?.length || 0,
+        errors: [{ itemIndex: 0, reason: `Import aborted: ${err.message || 'Unexpected failure'}` }],
+      });
     } finally {
       setIsImporting(false);
     }
-
-    setImportReport(report);
 
     // Collect affected topic IDs for quick navigation links
     if (parsedPreview) {

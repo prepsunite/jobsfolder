@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
+import { auditService } from '@/services/audit.service';
 import type { AdminDashboardStats } from '@/types/admin';
 
 export const adminService = {
@@ -71,5 +72,39 @@ export const adminService = {
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data || [];
+  },
+
+  updateCollegeLicenses: async (collegeId: string, newMaxLicenses: number): Promise<boolean> => {
+    // Guard against license downsizing below active enrolled students
+    const { count, error: countErr } = await supabase
+      .from('college_students')
+      .select('id', { count: 'exact', head: true })
+      .eq('college_id', collegeId)
+      .eq('is_deleted', false);
+
+    if (countErr) throw countErr;
+    const currentEnrolled = count || 0;
+
+    if (newMaxLicenses < currentEnrolled) {
+      throw new Error(
+        `Cannot reduce license limit to ${newMaxLicenses}. The college currently has ${currentEnrolled} active enrolled students.`
+      );
+    }
+
+    const { error } = await supabase
+      .from('colleges')
+      .update({ max_licenses: newMaxLicenses, updated_at: new Date().toISOString() })
+      .eq('id', collegeId);
+
+    if (error) throw error;
+
+    await auditService.logAction({
+      action: 'UPDATE_COLLEGE_LICENSES',
+      targetEntity: 'colleges',
+      targetId: collegeId,
+      afterData: { max_licenses: newMaxLicenses, enrolledStudents: currentEnrolled },
+    });
+
+    return true;
   },
 };

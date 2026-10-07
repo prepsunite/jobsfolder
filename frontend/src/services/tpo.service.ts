@@ -3,6 +3,7 @@ import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { sha256Text } from '@/utils/cryptoUtils';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { dataStore } from '@/services/dataStore';
+import { auditService } from '@/services/audit.service';
 import { expandTopicAliases, resolveTopicSlug } from '@/services/topicMap';
 import {
   mockExamBlueprintService,
@@ -1279,27 +1280,44 @@ export const tpoService = {
   },
 
   async updateCollege(id: string, updates: Partial<College>): Promise<boolean> {
+    // 1. Guard against downsizing licenses below actively enrolled students
+    if (updates.max_licenses !== undefined) {
+      const { count } = await supabase
+        .from('college_students')
+        .select('id', { count: 'exact', head: true })
+        .eq('college_id', id)
+        .eq('is_deleted', false);
+
+      const enrolledCount = count || 0;
+      if (updates.max_licenses < enrolledCount) {
+        throw new Error(
+          `Cannot reduce license limit to ${updates.max_licenses}. The college currently has ${enrolledCount} active enrolled students.`
+        );
+      }
+    }
+
     const local = getLocalColleges();
     const idx = local.findIndex(c => c.id === id);
-    let updatedObj: College | null = null;
     if (idx !== -1) {
       local[idx] = { ...local[idx], ...updates, updated_at: new Date().toISOString() };
-      updatedObj = local[idx];
       saveLocalColleges(local);
     }
 
-    if (updatedObj) {
-      try {
-        await supabase
-          .from('contact_messages')
-          .update({ message: JSON.stringify(updatedObj) })
-          .eq('subject', `B2B_COLLEGE:${id}`);
-      } catch {}
+    try {
+      const { error } = await supabase.from('colleges').update(updates).eq('id', id);
+      if (error) throw error;
+    } catch (e: any) {
+      console.warn('Notice updating college in Supabase:', e);
+      throw e;
     }
 
-    try {
-      await supabase.from('colleges').update(updates).eq('id', id);
-    } catch {}
+    // 2. Audit Trail
+    await auditService.logAction({
+      action: 'UPDATE_COLLEGE',
+      targetEntity: 'colleges',
+      targetId: id,
+      afterData: updates,
+    });
 
     return true;
   },
@@ -4983,6 +5001,15 @@ export const tpoService = {
     }
 
 
+    // Dynamically calculate exact total marks from materialized questions across all sections
+    // Prevents mark invariant collapse / impossible passing thresholds if topics were underfilled
+    const actualTotalMarks = sections.reduce((sum, s) => {
+      const count = s.question_ids?.length || 0;
+      const marks = Number(s.marks_per_correct) || 1;
+      return sum + (count * marks);
+    }, 0);
+    const finalTotalMarks = actualTotalMarks > 0 ? actualTotalMarks : examData.total_marks;
+
     const newLocalExam: MockExam = {
       id: examId,
       college_id: examData.college_id,
@@ -4991,7 +5018,7 @@ export const tpoService = {
       description: examData.description,
       instructions: examData.instructions,
       duration_minutes: examData.duration_minutes,
-      total_marks: examData.total_marks,
+      total_marks: finalTotalMarks,
       passing_percentage: examData.passing_percentage,
       start_time: examData.start_time,
       end_time: examData.end_time,
@@ -5018,7 +5045,7 @@ export const tpoService = {
     currentLocal.unshift(newLocalExam);
     saveLocalExams(examData.college_id, currentLocal);
 
-    // 2. Cloud multi-device backup to contact_messages and serverless API
+    // 2. Serverless API sync
     try {
       const authHeaders = await getAuthHeaders();
       await fetch('/api/campus-exams', {
@@ -5030,18 +5057,6 @@ export const tpoService = {
         body: JSON.stringify({ exam: newLocalExam }),
       });
     } catch {}
-
-    try {
-      await supabase.from('contact_messages').insert({
-        name: `Exam: ${newLocalExam.title}`,
-        email: 'tpo@prepunite.com',
-        subject: `B2B_EXAM:${examData.college_id}:${examId}`,
-        message: JSON.stringify(newLocalExam),
-        status: 'ACTIVE',
-      });
-    } catch (syncErr) {
-      console.warn('Notice backing up exam to cloud message:', syncErr);
-    }
 
     // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
     // Pack target_batches, sectional lock, and lab passcode into instructions metadata for universal multi-device persistence
@@ -5065,7 +5080,7 @@ export const tpoService = {
           description: examData.description,
           instructions: instructionsToSave,
           duration_minutes: examData.duration_minutes,
-          total_marks: examData.total_marks,
+          total_marks: finalTotalMarks,
           passing_percentage: examData.passing_percentage,
           start_time: examData.start_time,
           end_time: examData.end_time,

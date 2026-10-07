@@ -72,6 +72,10 @@ export default function AdminBlueprintManager() {
   };
 
   const handleDelete = async (bp: MockExamTemplate) => {
+    if (bp.is_default) {
+      toast.error('Official enterprise blueprints are protected and cannot be deleted.');
+      return;
+    }
     const confirmed = await confirmModal({
       title: 'Delete Blueprint Pattern',
       message: `Are you sure you want to delete "${bp.name}"? Students will no longer see this blueprint when generating mock exams.`,
@@ -311,14 +315,16 @@ export default function AdminBlueprintManager() {
                     >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(bp)}
-                      title="Delete Blueprint"
-                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {!bp.is_default && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(bp)}
+                        title="Delete Custom Blueprint"
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

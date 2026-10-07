@@ -26,7 +26,9 @@ BEGIN
       AND id <> NEW.id
       AND COALESCE(is_deleted, false) = false
   ) THEN
-    -- Lock topic rows for this topic to prevent race conditions during high concurrency
+    -- Acquire transaction advisory lock scoped to this topic to serialize concurrent inserts without blocking other topics
+    PERFORM pg_advisory_xact_lock(hashtext('topic_questions_' || COALESCE(NEW.topic_id::text, 'default')));
+
     SELECT COALESCE(MAX(question_number), 0)
     INTO v_max_num
     FROM public.topic_questions
