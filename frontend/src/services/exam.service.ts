@@ -213,11 +213,21 @@ export const examService = {
 
   getAllExams: async (includeHidden = false): Promise<ExamWithCompany[]> => {
     try {
-      const { data: examsData, error: examsErr } = await supabase
+      let query = supabase
         .from('exams')
         .select('id, company_slug, company_id, name, badge, content, old_papers, price, paper_tabs, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
-        .eq('is_deleted', false)
-        .order('name', { ascending: true });
+        .eq('is_deleted', false);
+
+      // 🛡️ SECURITY: Filter hidden/draft exams at the PostgreSQL engine level so drafts are not transmitted over the wire
+      if (!includeHidden) {
+        query = query
+          .not('content', 'ilike', '%<!-- prepunite_hidden:true -->%')
+          .not('badge', 'ilike', '%<!-- prepunite_hidden:true -->%')
+          .not('badge', 'ilike', '%[draft]%')
+          .not('badge', 'ilike', '%[hidden]%');
+      }
+
+      const { data: examsData, error: examsErr } = await query.order('name', { ascending: true });
 
       if (examsErr) {
         console.warn('[examService.getAllExams] Supabase relational query notice, falling back to dataStore:', examsErr.message || examsErr);

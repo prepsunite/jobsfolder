@@ -48,6 +48,7 @@ import type {
   ProctorEvent,
 } from '@/types/tpo';
 import { useToast } from '@/contexts/ToastContext';
+import { sha256Text } from '@/utils/cryptoUtils';
 
 /**
  * 🛡️ High-Entropy Deterministic Pseudo-Random Seeded Shuffle (Mulberry32 + FNV-1a Avalanche Mixer)
@@ -711,19 +712,27 @@ export default function MockExamTestPage() {
     // 🛡️ Pillar 4: Verify Physical Lab Invigilator Passcode if enabled
     const requiresPasscode = Boolean(
       exam.enable_passcode_lock &&
-      exam.access_passcode &&
+      (exam.access_passcode || exam.access_passcode_hash) &&
       existingAttempt?.status !== 'IN_PROGRESS'
     );
 
     if (requiresPasscode && !isPasscodeUnlocked) {
       const cleanEntered = enteredPasscode.trim().toUpperCase();
-      const cleanExpected = (exam.access_passcode || '').trim().toUpperCase();
       if (!cleanEntered) {
         setPasscodeError('Please enter the lab access PIN provided by your invigilator.');
         toast.error('Passcode required. Please enter the lab access PIN to begin.');
         return;
       }
-      if (cleanEntered !== cleanExpected) {
+
+      let matches = false;
+      if (exam.access_passcode_hash) {
+        const enteredHash = await sha256Text(cleanEntered);
+        matches = enteredHash === exam.access_passcode_hash;
+      } else if (exam.access_passcode) {
+        matches = cleanEntered === (exam.access_passcode || '').trim().toUpperCase();
+      }
+
+      if (!matches) {
         setPasscodeError('Invalid passcode PIN. Please check with your lab faculty or invigilator.');
         toast.error('Incorrect lab access PIN. Please verify with your invigilator.');
         return;

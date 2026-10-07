@@ -1,5 +1,5 @@
 -- ====================================================================
--- PrepUnite: Database Schema & Migration Health Diagnostic Inspector
+-- PrepUnite: Master Migration & Database Health Diagnostic Inspector
 -- Target: Supabase SQL Editor
 --
 -- PURPOSE:

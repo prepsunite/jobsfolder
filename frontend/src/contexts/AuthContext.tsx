@@ -78,10 +78,15 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   const clean = email.trim().toLowerCase();
   if (SUPER_ADMIN_EMAILS.includes(clean)) return true;
 
-  // Gmail dot & plus alias normalization (normalizes googlemail.com -> gmail.com as well)
+  // Gmail dot normalization (normalizes googlemail.com -> gmail.com as well)
+  // 🛡️ SECURITY HARDENING: NEVER strip plus-aliases (+tag) for admin authorization!
+  // Any email containing a plus alias (+) is strictly rejected from Super Admin privileges.
   if (clean.endsWith('@gmail.com') || clean.endsWith('@googlemail.com')) {
     const [userPart, domain] = clean.split('@');
-    const normalizedUser = userPart.replace(/\./g, '').split('+')[0];
+    if (userPart.includes('+')) {
+      return false;
+    }
+    const normalizedUser = userPart.replace(/\./g, '');
     const actualDomain = domain === 'googlemail.com' ? 'gmail.com' : domain;
     const normalizedEmail = `${normalizedUser}@${actualDomain}`;
 
@@ -99,7 +104,7 @@ export function isSuperAdminEmail(email?: string | null): boolean {
       if (a.endsWith('@gmail.com') || a.endsWith('@googlemail.com')) {
         const [aUser, aDomain] = a.split('@');
         const adminDomain = aDomain === 'googlemail.com' ? 'gmail.com' : aDomain;
-        return `${aUser.replace(/\./g, '').split('+')[0]}@${adminDomain}` === normalizedEmail;
+        return `${aUser.replace(/\./g, '')}@${adminDomain}` === normalizedEmail;
       }
       return a === normalizedEmail;
     });

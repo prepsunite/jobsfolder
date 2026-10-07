@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
+import { sha256Text } from '@/utils/cryptoUtils';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { dataStore } from '@/services/dataStore';
 import { expandTopicAliases, resolveTopicSlug } from '@/services/topicMap';
@@ -706,6 +707,19 @@ export const tpoService = {
     });
   },
 
+  isTpoForCollege(collegeId?: string | null, email?: string | null): boolean {
+    if (!collegeId) return false;
+    let targetEmail = email;
+    if (!targetEmail && typeof window !== 'undefined') {
+      try {
+        const cachedUser = JSON.parse(localStorage.getItem('prepunite_user') || '{}');
+        targetEmail = cachedUser?.email;
+      } catch {}
+    }
+    const auth = this.findTpoAuthByEmail(targetEmail);
+    return Boolean(auth && auth.college_id === collegeId && auth.status === 'ACTIVE');
+  },
+
   // Asynchronously query Supabase cloud records (with local cache fallback)
   async findTpoAuthByEmailAsync(email?: string | null): Promise<TpoAuthorizationRecord | undefined> {
     if (!email) return undefined;
@@ -764,30 +778,6 @@ export const tpoService = {
     const local = this.findTpoAuthByEmail(clean);
     if (local && local.status === 'ACTIVE') return local;
 
-    try {
-      // 2. Resilient cloud sync fallback: contact_messages with subject B2B_TPO_AUTH:cleanEmail
-      const { data: cloudMsg } = await supabase
-        .from('contact_messages')
-        .select('id, message, status')
-        .eq('subject', `B2B_TPO_AUTH:${clean}`)
-        .eq('status', 'ACTIVE')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (cloudMsg && cloudMsg.message) {
-        const record = JSON.parse(cloudMsg.message) as TpoAuthorizationRecord;
-        if (record && record.email) {
-          const auths = getLocalTpoAuths().filter(a => a.email.toLowerCase() !== clean);
-          auths.push(record);
-          saveLocalTpoAuths(auths);
-          return record;
-        }
-      }
-    } catch (e) {
-      console.warn('Notice querying cloud TPO authorizations:', e);
-    }
-
     return undefined;
   },
 
@@ -823,65 +813,7 @@ export const tpoService = {
       console.warn('Could not fetch colleges from Supabase, using cloud sync fallback:', e);
     }
 
-    // 2. Cloud resilience: Fetch colleges stored as B2B_COLLEGE in contact_messages
-    try {
-      const { data: colMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .like('subject', 'B2B_COLLEGE:%')
-        .neq('status', 'DELETED');
-
-      if (colMsgs && colMsgs.length > 0) {
-        colMsgs.forEach(m => {
-          try {
-            const parsed = JSON.parse(m.message) as College;
-            if (parsed && parsed.id) {
-              const existing = map.get(parsed.id);
-              if (!existing) {
-                map.set(parsed.id, parsed);
-              } else {
-                const parsedTime = parsed.updated_at ? new Date(parsed.updated_at).getTime() : 0;
-                const existTime = existing.updated_at ? new Date(existing.updated_at).getTime() : 0;
-                if (parsedTime > existTime) {
-                  map.set(parsed.id, { ...existing, ...parsed });
-                }
-              }
-            }
-          } catch {}
-        });
-      }
-    } catch {}
-
-    // 3. Cloud resilience: Extract any authorized colleges from B2B_TPO_AUTH contact_messages
-    try {
-      const { data: tpoMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .like('subject', 'B2B_TPO_AUTH:%')
-        .eq('status', 'ACTIVE');
-
-      if (tpoMsgs && tpoMsgs.length > 0) {
-        tpoMsgs.forEach(m => {
-          try {
-            const parsed = JSON.parse(m.message) as TpoAuthorizationRecord;
-            if (parsed && parsed.college_id && !map.has(parsed.college_id)) {
-              map.set(parsed.college_id, {
-                id: parsed.college_id,
-                name: parsed.college_name || 'Campus Institution',
-                code: parsed.college_code || 'CRT',
-                slug: parsed.college_id.replace(/^col-/, ''),
-                contract_status: 'ACTIVE',
-                max_licenses: parsed.max_licenses || 1500,
-                valid_until: (parsed as any).valid_until || new Date(0).toISOString(),
-                created_at: parsed.assigned_at || new Date().toISOString(),
-              });
-            }
-          } catch {}
-        });
-      }
-    } catch {}
-
-    // 4. Merge local storage: If local storage has newer updated_at timestamp, preserve local edits!
+    // 2. Merge local storage: If local storage has newer updated_at timestamp, preserve local edits!
     const local = getLocalColleges();
     local.forEach(loc => {
       const existing = map.get(loc.id);
@@ -1973,6 +1905,98 @@ export const tpoService = {
     return newBatch;
   },
 
+  async updateCollegeBatch(
+    collegeId: string,
+    batchId: string,
+    updates: {
+      name?: string;
+      passout_year?: number;
+      departments?: string[];
+    }
+  ): Promise<CollegeBatch | null> {
+    let effectiveCollegeId = collegeId?.trim();
+    if (!effectiveCollegeId && typeof window !== 'undefined') {
+      effectiveCollegeId = localStorage.getItem('prepunite_college_id') || '';
+    }
+    if (!effectiveCollegeId || !batchId) return null;
+
+    const batches = await this.getCollegeBatches(effectiveCollegeId);
+    const existingIdx = batches.findIndex(b => b.id === batchId);
+    if (existingIdx === -1) return null;
+
+    const oldName = batches[existingIdx].name;
+    const newName = updates.name?.trim() || oldName;
+
+    const updatedBatch: CollegeBatch = {
+      ...batches[existingIdx],
+      name: newName,
+      passout_year: updates.passout_year !== undefined ? updates.passout_year : batches[existingIdx].passout_year,
+      departments: updates.departments !== undefined ? updates.departments : batches[existingIdx].departments,
+    };
+
+    // 1. Update in local storage batches
+    batches[existingIdx] = updatedBatch;
+    saveLocalBatches(effectiveCollegeId, batches);
+
+    // 2. Cascade rename to local students if name changed
+    if (newName !== oldName) {
+      const localStudents = getLocalStudents(effectiveCollegeId);
+      let changed = false;
+      localStudents.forEach(s => {
+        if (s.batch_id === batchId || (s.batch_name && s.batch_name.toLowerCase() === oldName.toLowerCase())) {
+          s.batch_name = newName;
+          s.batch_id = batchId;
+          changed = true;
+        }
+      });
+      if (changed) {
+        saveLocalStudents(effectiveCollegeId, localStudents);
+      }
+    }
+
+    // 3. Update Supabase college_batches
+    try {
+      await supabase
+        .from('college_batches')
+        .update({
+          name: updatedBatch.name,
+          passout_year: updatedBatch.passout_year,
+          departments: updatedBatch.departments,
+        })
+        .eq('id', batchId)
+        .eq('college_id', effectiveCollegeId);
+    } catch (err) {
+      console.warn('Notice updating college_batch in Supabase:', err);
+    }
+
+    // 4. Cascade rename in Supabase college_students if name changed
+    if (newName !== oldName) {
+      try {
+        await supabase
+          .from('college_students')
+          .update({
+            batch_name: newName,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('college_id', effectiveCollegeId)
+          .eq('batch_id', batchId);
+      } catch {}
+    }
+
+    // 5. Cloud resilience backup
+    try {
+      await supabase.from('contact_messages').insert({
+        name: `Batch Update: ${updatedBatch.name}`,
+        email: 'tpo@prepunite.com',
+        subject: `B2B_BATCH:${effectiveCollegeId}:${updatedBatch.id}`,
+        message: JSON.stringify(updatedBatch),
+        status: 'ACTIVE',
+      });
+    } catch {}
+
+    return updatedBatch;
+  },
+
   async deleteCollegeBatch(collegeId: string, batchId: string): Promise<boolean> {
     let effectiveCollegeId = collegeId?.trim();
     if (!effectiveCollegeId && typeof window !== 'undefined') {
@@ -1980,13 +2004,67 @@ export const tpoService = {
     }
     if (!effectiveCollegeId) return false;
 
-    const currentLocal = getLocalBatches(effectiveCollegeId).filter(b => b.id !== batchId);
+    // Capture old batch name before removing from cache
+    const existingBatches = getLocalBatches(effectiveCollegeId);
+    const targetBatch = existingBatches.find(b => b.id === batchId);
+    const targetBatchName = targetBatch?.name?.toLowerCase();
+
+    // 1. Remove from local batches cache
+    const currentLocal = existingBatches.filter(b => b.id !== batchId);
     saveLocalBatches(effectiveCollegeId, currentLocal);
 
+    // 2. Clear orphaned batch references from local students cache
+    const localStudents = getLocalStudents(effectiveCollegeId);
+    let studentsUpdated = false;
+    localStudents.forEach(s => {
+      const matchesId = s.batch_id === batchId;
+      const matchesName = targetBatchName && s.batch_name?.toLowerCase() === targetBatchName;
+      if (matchesId || matchesName) {
+        s.batch_id = undefined;
+        s.batch_name = undefined;
+        studentsUpdated = true;
+      }
+    });
+    if (studentsUpdated) {
+      saveLocalStudents(effectiveCollegeId, localStudents);
+    }
+
+    // 3. Delete from Supabase and clear both batch_id and batch_name in college_students
     try {
       await supabase.from('college_batches').delete().eq('id', batchId).eq('college_id', effectiveCollegeId);
       // Clean up orphaned cohort references in college_students table
-      await supabase.from('college_students').update({ batch_id: null }).eq('batch_id', batchId).eq('college_id', effectiveCollegeId);
+      await supabase
+        .from('college_students')
+        .update({ batch_id: null, batch_name: null })
+        .eq('batch_id', batchId)
+        .eq('college_id', effectiveCollegeId);
+
+      if (targetBatch?.name) {
+        await supabase
+          .from('college_students')
+          .update({ batch_id: null, batch_name: null })
+          .eq('batch_name', targetBatch.name)
+          .eq('college_id', effectiveCollegeId);
+      }
+
+      // 🛡️ CASCADE CLEANUP [CASCADE-01]: Prune deleted batchId from target_batches in mock_exams
+      try {
+        const { data: examsWithBatch } = await supabase
+          .from('mock_exams')
+          .select('id, target_batches')
+          .eq('college_id', effectiveCollegeId)
+          .contains('target_batches', [batchId]);
+
+        if (examsWithBatch && examsWithBatch.length > 0) {
+          for (const ex of examsWithBatch) {
+            const updatedBatches = (ex.target_batches || []).filter((b: string) => b !== batchId);
+            await supabase
+              .from('mock_exams')
+              .update({ target_batches: updatedBatches })
+              .eq('id', ex.id);
+          }
+        }
+      } catch {}
     } catch {}
 
     return true;
@@ -2085,33 +2163,7 @@ export const tpoService = {
 
     // Only if DB query failed (e.g. table not available or network error), use resilience backups:
     if (!hasAuthoritativeDb) {
-      // 2. Cloud resilience: Fetch students stored as B2B_STUDENT in contact_messages
-      try {
-        const { data: studentMsgs } = await supabase
-          .from('contact_messages')
-          .select('subject, message')
-          .like('subject', 'B2B_STUDENT:%')
-          .neq('status', 'DELETED');
-
-        if (studentMsgs && studentMsgs.length > 0) {
-          studentMsgs.forEach(m => {
-            const parts = (m.subject || '').split(':');
-            if (parts.length >= 2) {
-              const msgCid = parts[1];
-              if (targetCollegeIds.includes(msgCid)) {
-                try {
-                  const parsed = JSON.parse(m.message) as CollegeStudent;
-                  if (parsed && parsed.email && !list.some(s => s.email.toLowerCase() === parsed.email.toLowerCase())) {
-                    list.push(parsed);
-                  }
-                } catch {}
-              }
-            }
-          });
-        }
-      } catch {}
-
-      // 3. Fallback to profiles table if list is still empty
+      // 2. Fallback to profiles table if list is still empty
       if (list.length === 0) {
         try {
           const { data, error } = await supabase
@@ -2274,6 +2326,9 @@ export const tpoService = {
     const localMap = new Map<string, CollegeStudent>();
     localStudents.forEach(s => localMap.set(s.email.toLowerCase(), s));
 
+    const recordsToUpsert: any[] = [];
+    const studentsToProvision: Array<{ email: string; name: string }> = [];
+
     for (const student of students) {
       if (!student.isValid) continue;
       const cleanEmail = student.email.trim().toLowerCase();
@@ -2323,54 +2378,44 @@ export const tpoService = {
         importedCount++;
       }
 
-      // Safe background sync to Supabase college_students & profiles
-      try {
-        await supabase.from('college_students').upsert({
-          id: studentRecord.id,
-          email: cleanEmail,
-          name: student.name.trim(),
-          college_id: effectiveCollegeId,
-          college_name: college.name,
-          roll_number: student.roll_number?.trim() || null,
-          department: student.department?.trim().toUpperCase() || 'CSE',
-          batch_year: Number(student.batch_year) || 2026,
-          batch_id: studentRecord.batch_id || null,
-          is_tpo_admin: false,
-          role: 'USER',
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'college_id,email' });
-      } catch {}
+      recordsToUpsert.push({
+        id: studentRecord.id,
+        email: cleanEmail,
+        name: student.name.trim(),
+        college_id: effectiveCollegeId,
+        college_name: college.name,
+        roll_number: student.roll_number?.trim() || null,
+        department: student.department?.trim().toUpperCase() || 'CSE',
+        batch_year: Number(student.batch_year) || 2026,
+        batch_id: studentRecord.batch_id || null,
+        is_tpo_admin: false,
+        role: 'USER',
+        updated_at: new Date().toISOString(),
+      });
 
-      try {
-        const { data: existingProf } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .eq('email', cleanEmail)
-          .maybeSingle();
+      studentsToProvision.push({ email: cleanEmail, name: student.name.trim() });
+    }
 
-        if (existingProf) {
-          await supabase
-            .from('profiles')
-            .update({
-              role: 'user',
-              college_id: effectiveCollegeId,
-              roll_number: student.roll_number?.trim() || null,
-              department: student.department?.trim().toUpperCase() || null,
-              batch_year: Number(student.batch_year) || null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingProf.id);
-        }
-      } catch {
-        // Safe notice: column might not exist yet before migration
+    // 🛡️ PERFORMANCE & RELIABILITY FIX [CASCADE-02]: Batch upsert chunks of 100
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < recordsToUpsert.length; i += CHUNK_SIZE) {
+      const chunk = recordsToUpsert.slice(i, i + CHUNK_SIZE);
+      try {
+        await supabase
+          .from('college_students')
+          .upsert(chunk, { onConflict: 'college_id,email' });
+      } catch (chunkErr) {
+        console.warn('Notice batch upserting student chunk to Supabase:', chunkErr);
       }
+    }
 
-      // Provision full student Pro entitlement
-      try {
-        await this.provisionStudentEntitlement(college, cleanEmail, student.name.trim());
-      } catch (e) {
-        console.warn('Notice provisioning pro pass for imported student:', e);
-      }
+    // Provision entitlements in controlled concurrency batches of 10
+    const PROVISION_BATCH = 10;
+    for (let i = 0; i < studentsToProvision.length; i += PROVISION_BATCH) {
+      const pChunk = studentsToProvision.slice(i, i + PROVISION_BATCH);
+      await Promise.all(
+        pChunk.map(p => this.provisionStudentEntitlement(college, p.email, p.name).catch(() => false))
+      );
     }
 
     saveLocalStudents(effectiveCollegeId, Array.from(localMap.values()));
@@ -3019,32 +3064,7 @@ export const tpoService = {
       } catch {}
     }
 
-    // 3. Cloud resilience: Fetch attempts logged via contact_messages
-    try {
-      const { data: cloudMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .like('subject', 'B2B_ATTEMPT:%')
-        .order('created_at', { ascending: false });
 
-      if (cloudMsgs && cloudMsgs.length > 0) {
-        cloudMsgs.forEach(m => {
-          try {
-            const parsed = JSON.parse(m.message) as StudentExamAttempt;
-            if (parsed && parsed.id) {
-              const belongsToCollege =
-                parsed.college_id === collegeId ||
-                examMap.has(parsed.mock_exam_id) ||
-                (parsed.college_id && parsed.college_id.includes(collegeId));
-
-              if (belongsToCollege && !attemptsMap.has(parsed.id)) {
-                attemptsMap.set(parsed.id, parsed);
-              }
-            }
-          } catch {}
-        });
-      }
-    } catch {}
 
     // 4. Merge with local storage attempts
     const localAttempts = getLocalAttempts().filter(
@@ -3532,7 +3552,16 @@ export const tpoService = {
       });
     });
 
-    return summaries.sort((a, b) => b.overallAverageScore - a.overallAverageScore);
+    // 🛡️ ACCURACY & INTEGRITY FIX [MATH-01]: Deterministic multi-tiered tie-breaking
+    return summaries.sort((a, b) => {
+      if (b.overallAverageScore !== a.overallAverageScore) return b.overallAverageScore - a.overallAverageScore;
+      if (b.highestScore !== a.highestScore) return b.highestScore - a.highestScore;
+      if (b.attemptsCount !== a.attemptsCount) return b.attemptsCount - a.attemptsCount;
+      const timeA = a.latestSubmissionDate ? new Date(a.latestSubmissionDate).getTime() : 0;
+      const timeB = b.latestSubmissionDate ? new Date(b.latestSubmissionDate).getTime() : 0;
+      if (timeA !== timeB) return timeA - timeB;
+      return (a.rollNumber || a.email || '').localeCompare(b.rollNumber || b.email || '');
+    });
   },
 
   // ==========================================
@@ -5095,17 +5124,11 @@ export const tpoService = {
     }
 
     try {
-      await supabase
-        .from('contact_messages')
-        .update({ status: 'DELETED' })
-        .like('subject', `B2B_EXAM:%:${examId}`);
-    } catch {}
-
-    try {
-      await supabase
-        .from('mock_exams')
-        .update({ is_deleted: true })
-        .eq('id', examId);
+      let q = supabase.from('mock_exams').update({ is_deleted: true }).eq('id', examId);
+      if (collegeId) {
+        q = q.eq('college_id', collegeId);
+      }
+      await q;
     } catch {}
 
     return true;
@@ -5120,20 +5143,14 @@ export const tpoService = {
     }
 
     try {
-      await supabase
-        .from('mock_exams')
-        .update({ end_time: nowIso })
-        .eq('id', examId);
+      let q = supabase.from('mock_exams').update({ end_time: nowIso }).eq('id', examId);
+      if (collegeId) {
+        q = q.eq('college_id', collegeId);
+      }
+      await q;
     } catch (err) {
       console.warn('Notice concluding mock exam in Supabase:', err);
     }
-
-    try {
-      await supabase
-        .from('contact_messages')
-        .update({ status: 'CONCLUDED' })
-        .like('subject', `B2B_EXAM:%:${examId}`);
-    } catch {}
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('prepunite-storage-update'));
@@ -5149,10 +5166,11 @@ export const tpoService = {
     }
 
     try {
-      await supabase
-        .from('mock_exams')
-        .update({ end_time: newEndTimeIso })
-        .eq('id', examId);
+      let q = supabase.from('mock_exams').update({ end_time: newEndTimeIso }).eq('id', examId);
+      if (collegeId) {
+        q = q.eq('college_id', collegeId);
+      }
+      await q;
     } catch (err) {
       console.warn('Notice extending mock exam window in Supabase:', err);
     }
@@ -5336,25 +5354,7 @@ export const tpoService = {
       }
     });
 
-    // Cloud resilience: Fetch attempts logged via contact_messages
-    try {
-      const { data: cloudMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .like('subject', `B2B_ATTEMPT:${examId}:%`)
-        .order('created_at', { ascending: false });
 
-      if (cloudMsgs && cloudMsgs.length > 0) {
-        cloudMsgs.forEach(m => {
-          try {
-            const parsed = JSON.parse(m.message) as StudentExamAttempt;
-            if (parsed && parsed.id && !map.has(parsed.id)) {
-              map.set(parsed.id, parsed);
-            }
-          } catch {}
-        });
-      }
-    } catch {}
 
     const allAttempts = Array.from(map.values());
 
@@ -6221,20 +6221,13 @@ export const tpoService = {
           totalAttempted++;
           const correctAns = solutionMap[qId];
 
-          // 🛡️ FIX Issue 7: If no answer key exists for this question ID at all, it's a
-          // system-generated placeholder (injected when getQuestionsForExam() couldn't resolve
-          // the ID from any source). Penalizing students for selecting an option on a question
-          // that never existed in the bank is unfair. Award full marks as a system compensation.
-          const isPlaceholderQuestion = correctAns === undefined && !resp?.is_correct;
-          if (isPlaceholderQuestion) {
-            // Void this question entirely — award full credit, no penalty
-            secScore += marksPerQ;
-            secCorrect++;
-            totalCorrect++;
+          // 🛡️ SECURITY FIX [SCORE-03]: If no answer key exists for this question ID, it cannot be validated.
+          // Never award free unearned marks for unverified/synthetic question IDs.
+          if (correctAns === undefined) {
             gradedResponses[qId] = {
               ...resp,
               selected_option: Number(resp.selected_option),
-              is_correct: true,
+              is_correct: false,
             };
             continue;
           }
@@ -6308,11 +6301,13 @@ export const tpoService = {
     totalScore = Math.round(totalScore * 100) / 100;
     const finalMaxScore = maxPossibleScore > 0 ? maxPossibleScore : (exam.total_marks || 100);
     const percentage = finalMaxScore > 0 ? Math.round((totalScore / finalMaxScore) * 1000) / 10 : 0;
-    const passed = percentage >= (exam.passing_percentage || 40);
 
     const maxAllowedSwitches = exam.max_tab_switches_allowed ?? 3;
     const isMalpractice = statusOverride === 'TERMINATED_MALPRACTICE' ||
       (exam.enable_tab_switch_detection && tabSwitchCount >= maxAllowedSwitches);
+
+    // If disqualified for malpractice, candidate CANNOT pass regardless of percentage score
+    const passed = !isMalpractice && percentage >= (exam.passing_percentage || 40);
 
     let tier: 'TIER_1' | 'TIER_2' | 'TIER_3' | 'MALPRACTICE';
     let tier_label: string;
@@ -7052,31 +7047,7 @@ export const tpoService = {
       }
     } catch {}
 
-    // 3. Check cloud messages
-    try {
-      const { data: cloudMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .or(`subject.eq.B2B_ATTEMPT:${mockExamId}:${cleanId},subject.like.B2B_ATTEMPT:${mockExamId}:%,email.eq.${cleanId}`)
-        .order('created_at', { ascending: false })
-        .limit(5);
 
-      if (cloudMsgs && cloudMsgs.length > 0) {
-        for (const m of cloudMsgs) {
-          try {
-            const parsed = JSON.parse(m.message) as StudentExamAttempt;
-            if (
-              parsed &&
-              parsed.mock_exam_id === mockExamId &&
-              (parsed.student_id === cleanId || parsed.student_email?.toLowerCase() === cleanId || parsed.student_id === studentIdOrEmail)
-            ) {
-              saveLocalAttempt(parsed);
-              return parsed;
-            }
-          } catch {}
-        }
-      }
-    } catch {}
 
     return null;
   },
@@ -7162,28 +7133,7 @@ export const tpoService = {
       }
     } catch {}
 
-    // Cloud resilience: Fetch attempts logged via contact_messages
-    try {
-      const { data: cloudMsgs } = await supabase
-        .from('contact_messages')
-        .select('message')
-        .or(`subject.like.B2B_ATTEMPT:%:${cleanEmail},subject.like.B2B_ATTEMPT:%:${studentEmail},email.eq.${cleanEmail}`)
-        .order('created_at', { ascending: false });
 
-      if (cloudMsgs && cloudMsgs.length > 0) {
-        const map = new Map<string, StudentExamAttempt>();
-        studentAttempts.forEach(a => map.set(a.id, a));
-        cloudMsgs.forEach(m => {
-          try {
-            const parsed = JSON.parse(m.message) as StudentExamAttempt;
-            if (parsed && parsed.id && !map.has(parsed.id)) {
-              map.set(parsed.id, parsed);
-            }
-          } catch {}
-        });
-        studentAttempts = Array.from(map.values());
-      }
-    } catch {}
 
     // Map attempts to exams: for each exam, pick the completed attempt if any, or latest in-progress
     const annotatedExams = allExams.map(exam => {
@@ -7244,6 +7194,30 @@ export const tpoService = {
     }
 
     if (!attempt) return null;
+
+    // 🛡️ SECURITY FIX [IDOR-05]: Gated attempt verification
+    // Verify that the caller is the student who took the attempt, a verified TPO for that college, or a Super Admin.
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const callerEmail = (user.email || '').toLowerCase().trim();
+        const callerId = user.id.toLowerCase().trim();
+        const attemptStudentEmail = (attempt.student_email || (attempt.student?.email || '')).toLowerCase().trim();
+        const attemptStudentId = (attempt.student_id || '').toLowerCase().trim();
+
+        const isOwner = Boolean(
+          (attemptStudentEmail && attemptStudentEmail === callerEmail) ||
+          (attemptStudentId && (attemptStudentId === callerId || attemptStudentId === callerEmail))
+        );
+        const isTpo = this.isTpoForCollege(attempt.college_id, callerEmail);
+        const isAdmin = user.user_metadata?.role === 'super_admin' || (typeof window !== 'undefined' && localStorage.getItem('prepunite_role') === 'SUPER_ADMIN');
+
+        if (!isOwner && !isTpo && !isAdmin) {
+          console.warn('[getStudentAttemptAnswerSheet] Access denied: Caller is neither attempt owner nor authorized TPO.');
+          return null;
+        }
+      }
+    } catch {}
 
     // Check if local attempt has more complete responses
     const localFallback = getLocalAttempts().find(a => a.id === attemptId);

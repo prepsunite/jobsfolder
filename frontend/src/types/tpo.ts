@@ -75,6 +75,7 @@ export interface MockExam {
   enable_sectional_lock?: boolean;
   enable_passcode_lock?: boolean;
   access_passcode?: string;
+  access_passcode_hash?: string;
   target_departments: string[];
   target_batches?: string[];
   target_batch_year?: number;

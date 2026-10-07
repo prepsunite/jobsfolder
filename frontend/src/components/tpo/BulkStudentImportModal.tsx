@@ -16,6 +16,7 @@ import {
 import { tpoService } from '@/services/tpo.service';
 import type { BulkStudentRow } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
+import { parseCsv } from '@/utils/csvUtils';
 
 interface BulkStudentImportModalProps {
   isOpen: boolean;
@@ -106,13 +107,18 @@ export default function BulkStudentImportModal({
       const text = event.target?.result as string;
       if (!text) return;
 
-      const lines = text.split(/\r\n|\n/).filter(line => line.trim().length > 0);
-      if (lines.length < 2) {
-        setImportError('CSV file must have a header row and at least one student row.');
+      const parsedGrid = parseCsv(text).filter(row => row.some(cell => cell.trim().length > 0));
+      if (parsedGrid.length < 2) {
+        setImportError('CSV file must have a header row and at least one student data row.');
         return;
       }
 
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      if (parsedGrid.length > 2501) {
+        setImportError('CSV file exceeds the maximum limit of 2,500 students per batch. Please upload in smaller batches.');
+        return;
+      }
+
+      const headers = parsedGrid[0].map(h => h.trim().toLowerCase());
       const rollIdx = headers.findIndex(h => h.includes('roll'));
       const nameIdx = headers.findIndex(h => h.includes('name'));
       const emailIdx = headers.findIndex(h => h.includes('email'));
@@ -128,8 +134,8 @@ export default function BulkStudentImportModal({
       const rows: BulkStudentRow[] = [];
       const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+      for (let i = 1; i < parsedGrid.length; i++) {
+        const cols = parsedGrid[i].map(c => c.trim());
         if (cols.length === 0 || !cols[emailIdx]) continue;
 
         const email = cols[emailIdx].trim().toLowerCase();

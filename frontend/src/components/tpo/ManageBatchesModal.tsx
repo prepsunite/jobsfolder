@@ -14,6 +14,8 @@ import {
   Sparkles,
   Loader2,
   Filter,
+  Pencil,
+  Check,
 } from 'lucide-react';
 
 interface ManageBatchesModalProps {
@@ -47,7 +49,8 @@ export default function ManageBatchesModal({
   const [batchName, setBatchName] = useState('');
   const [passoutYear, setPassoutYear] = useState<number>(new Date().getFullYear());
   const [selectedDepts, setSelectedDepts] = useState<string[]>(['ALL']);
-  const [isCreating, setIsCreating] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<CollegeBatch | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -96,32 +99,61 @@ export default function ManageBatchesModal({
     });
   };
 
-  // Create Batch Handler
-  const handleCreateBatch = async (e?: React.FormEvent) => {
+  const handleStartEdit = (batch: CollegeBatch) => {
+    setEditingBatch(batch);
+    setBatchName(batch.name);
+    setPassoutYear(batch.passout_year || new Date().getFullYear());
+    setSelectedDepts(batch.departments && batch.departments.length > 0 ? batch.departments : ['ALL']);
+    setErrorMsg(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBatch(null);
+    setBatchName('');
+    setPassoutYear(new Date().getFullYear());
+    setSelectedDepts(['ALL']);
+    setErrorMsg(null);
+  };
+
+  // Create or Update Batch Handler
+  const handleSaveBatch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!batchName.trim()) {
       setErrorMsg('Please enter a batch or cohort name.');
       return;
     }
 
-    setIsCreating(true);
+    setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await tpoService.createCollegeBatch(collegeId, {
-        name: batchName.trim(),
-        passout_year: passoutYear,
-        departments: selectedDepts.includes('ALL') ? [] : selectedDepts,
-      });
+      if (editingBatch) {
+        await tpoService.updateCollegeBatch(collegeId, editingBatch.id, {
+          name: batchName.trim(),
+          passout_year: passoutYear,
+          departments: selectedDepts.includes('ALL') ? [] : selectedDepts,
+        });
+        setSuccessMsg(`Cohort "${batchName.trim()}" updated successfully!`);
+        toast.success(`Updated cohort "${batchName.trim()}".`);
+        handleCancelEdit();
+      } else {
+        await tpoService.createCollegeBatch(collegeId, {
+          name: batchName.trim(),
+          passout_year: passoutYear,
+          departments: selectedDepts.includes('ALL') ? [] : selectedDepts,
+        });
+        setSuccessMsg(`Cohort "${batchName.trim()}" created successfully!`);
+        toast.success(`Created cohort "${batchName.trim()}".`);
+        setBatchName('');
+      }
 
-      setSuccessMsg(`Cohort "${batchName.trim()}" created successfully!`);
       setTimeout(() => setSuccessMsg(null), 4000);
-      setBatchName('');
       queryClient.invalidateQueries({ queryKey: ['tpo-batches', collegeId] });
       queryClient.invalidateQueries({ queryKey: ['tpo-students', collegeId] });
+      queryClient.invalidateQueries({ queryKey: ['tpo-students-for-batch-counts', collegeId] });
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to create batch');
+      setErrorMsg(err.message || 'Failed to save batch');
     } finally {
-      setIsCreating(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -223,40 +255,56 @@ export default function ManageBatchesModal({
             </div>
           </div>
 
-          {/* 1. Create New Batch Section */}
+          {/* 1. Create or Edit Batch Section */}
           <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#202225] border border-slate-200/80 dark:border-[#2e3035] space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                {editingBatch ? (
+                  <Pencil className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                )}
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                  Create New Cohort Batch
+                  {editingBatch ? `Edit Cohort: ${editingBatch.name}` : 'Create New Cohort Batch'}
                 </h3>
               </div>
-              <span className="text-[10px] font-bold text-slate-400">
-                Instant setup for placement drives
-              </span>
+              {editingBatch ? (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                >
+                  Cancel Edit
+                </button>
+              ) : (
+                <span className="text-[10px] font-bold text-slate-400">
+                  Instant setup for placement drives
+                </span>
+              )}
             </div>
 
-            {/* Quick Presets */}
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase">
-                Quick Suggestions:
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESET_BATCHES.map(p => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    onClick={() => setBatchName(p.name)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${p.color} hover:scale-105 active:scale-95`}
-                  >
-                    + {p.name}
-                  </button>
-                ))}
+            {/* Quick Presets (Only when creating) */}
+            {!editingBatch && (
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase">
+                  Quick Suggestions:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_BATCHES.map(p => (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() => setBatchName(p.name)}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${p.color} hover:scale-105 active:scale-95`}
+                    >
+                      + {p.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <form onSubmit={handleCreateBatch} className="space-y-3 pt-1">
+            <form onSubmit={handleSaveBatch} className="space-y-3 pt-1">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Batch / Cohort Name *
@@ -330,16 +378,31 @@ export default function ManageBatchesModal({
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex items-center justify-end gap-2">
+                {editingBatch && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    disabled={isSubmitting}
+                    className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
                   type="submit"
-                  disabled={isCreating || !batchName.trim()}
+                  disabled={isSubmitting || !batchName.trim()}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20 cursor-pointer"
                 >
-                  {isCreating ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Creating...
+                      {editingBatch ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : editingBatch ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Update Cohort Batch
                     </>
                   ) : (
                     <>
@@ -389,11 +452,16 @@ export default function ManageBatchesModal({
                       (s.batch_name && s.batch_name.toLowerCase() === batch.name.toLowerCase())
                   ).length;
                   const isDeleting = deletingBatchId === batch.id;
+                  const isCurrentlyEditing = editingBatch?.id === batch.id;
 
                   return (
                     <div
                       key={batch.id}
-                      className="p-4 rounded-2xl border border-slate-200 dark:border-[#2e3035] bg-white dark:bg-[#1e2024] hover:border-purple-300 dark:hover:border-purple-800 transition-all flex flex-col justify-between shadow-xs space-y-3 group"
+                      className={`p-4 rounded-2xl border transition-all flex flex-col justify-between shadow-xs space-y-3 group ${
+                        isCurrentlyEditing
+                          ? 'border-purple-500 bg-purple-50/20 dark:bg-purple-950/20 ring-2 ring-purple-500/30'
+                          : 'border-slate-200 dark:border-[#2e3035] bg-white dark:bg-[#1e2024] hover:border-purple-300 dark:hover:border-purple-800'
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -414,19 +482,33 @@ export default function ManageBatchesModal({
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteBatch(batch)}
-                          disabled={isDeleting}
-                          title="Delete Batch"
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
-                        >
-                          {isDeleting ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(batch)}
+                            title="Edit Batch"
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                              isCurrentlyEditing
+                                ? 'text-purple-600 bg-purple-100 dark:bg-purple-950/60'
+                                : 'text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+                            }`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBatch(batch)}
+                            disabled={isDeleting}
+                            title="Delete Batch"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
 
                       {/* Streams & Action footer */}

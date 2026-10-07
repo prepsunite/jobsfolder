@@ -23,6 +23,7 @@ import AddStudentModal from '@/components/tpo/AddStudentModal';
 import ManageBatchesModal from '@/components/tpo/ManageBatchesModal';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { sanitizeCsvCell, downloadCsv } from '@/utils/csvUtils';
 
 export default function TpoStudentsPage() {
   const { user } = useAuth();
@@ -94,20 +95,19 @@ export default function TpoStudentsPage() {
     const headers = 'Roll Number,Name,Email,Department,Passout Year,Cohort Batch,Status\n';
     const rows = visibleStudents
       .map(
-        s =>
-          `"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || 'GENERAL'}",${s.batch_year || 2026},"${s.batch_name || 'Normal Batch'}",Active`
+        s => [
+          sanitizeCsvCell(s.roll_number || ''),
+          sanitizeCsvCell(s.name),
+          sanitizeCsvCell(s.email),
+          sanitizeCsvCell(s.department || 'GENERAL'),
+          s.batch_year || 2026,
+          sanitizeCsvCell(s.batch_name || 'Normal Batch'),
+          sanitizeCsvCell('Active'),
+        ].join(',')
       )
       .join('\n');
 
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${currentCollege.code}_Student_Roster_${batchFilter}_${deptFilter}_${batchYearFilter || 'All'}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCsv(`${currentCollege.code}_Student_Roster_${batchFilter}_${deptFilter}_${batchYearFilter || 'All'}.csv`, headers + rows);
   };
 
   // Remove Single Student

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import type { MockExam, StudentExamAttempt, CollegeStudent, EvaluatedStudentSummary } from '@/types/tpo';
+import { sanitizeCsvCell, downloadCsv } from '@/utils/csvUtils';
 import {
   TrendingUp,
   Award,
@@ -181,31 +182,23 @@ export default function TpoAnalyticsPage() {
   const handleDownloadReport = () => {
     const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const headers = 'Institution Placement Intelligence Report (NIRF / NAAC Criterion 5.2)\n';
-    const metadata = `College Name,"${currentCollege.name}"\nCollege Code,${currentCollege.code}\nGenerated On,"${reportDate}"\nTotal Student Licenses,${currentCollege.max_licenses}\nTotal Enrolled Candidates,${total}\nUnique Evaluated Candidates,${uniqueEvaluated}\nCampus Placement Readiness Average,${avg}%\nTotal Assessment Submissions Logged,${allAttempts.length}\n\n`;
+    const metadata = `College Name,${sanitizeCsvCell(currentCollege.name)}\nCollege Code,${sanitizeCsvCell(currentCollege.code)}\nGenerated On,${sanitizeCsvCell(reportDate)}\nTotal Student Licenses,${currentCollege.max_licenses}\nTotal Enrolled Candidates,${total}\nUnique Evaluated Candidates,${uniqueEvaluated}\nCampus Placement Readiness Average,${avg}%\nTotal Assessment Submissions Logged,${allAttempts.length}\n\n`;
 
     const tierHeader = 'Placement Readiness Tier,Unique Student Count,Benchmark Requirement\n';
     const tierRows = [
-      `Tier 1 (Day-1 Placement Ready),${tier1Count},"Consistent 70%+ clearance across company mocks (${tier1Attempts} submissions logged)"`,
-      `Tier 2 (Near Ready),${tier2Count},"50%–69% score, targeted aptitude practice needed (${tier2Attempts} submissions logged)"`,
-      `Tier 3 (Remedial Prep Needed),${tier3Count},"Below 50%, foundational remediation recommended (${tier3Attempts} submissions logged)"`,
-      ...(untestedCount > 0 ? [`Untested / Enrolled Pending Drive,${untestedCount},"Enrolled in college roster but not yet assessed"`] : []),
+      `${sanitizeCsvCell('Tier 1 (Day-1 Placement Ready)')},${tier1Count},${sanitizeCsvCell(`Consistent 70%+ clearance across company mocks (${tier1Attempts} submissions logged)`)}`,
+      `${sanitizeCsvCell('Tier 2 (Near Ready)')},${tier2Count},${sanitizeCsvCell(`50%–69% score, targeted aptitude practice needed (${tier2Attempts} submissions logged)`)}`,
+      `${sanitizeCsvCell('Tier 3 (Remedial Prep Needed)')},${tier3Count},${sanitizeCsvCell(`Below 50%, foundational remediation recommended (${tier3Attempts} submissions logged)`)}`,
+      ...(untestedCount > 0 ? [`${sanitizeCsvCell('Untested / Enrolled Pending Drive')},${untestedCount},${sanitizeCsvCell('Enrolled in college roster but not yet assessed')}`] : []),
     ].join('\n') + '\n\n';
 
     const deptHeader = 'Department,Enrolled Candidates,Evaluated Candidates,Average Score (%),Readiness Status\n';
     const deptRows = departments.length > 0
-      ? departments.map(d => `"${d.department} Branch",${d.studentCount},${d.evaluatedCount ?? '—'},${d.avgScore}%,${d.avgScore >= 60 ? 'Above Benchmark' : 'Review Needed'}`).join('\n')
-      : '"General Engineering",0,0,0%,Pending Roster Upload';
+      ? departments.map(d => `${sanitizeCsvCell(`${d.department} Branch`)},${d.studentCount},${d.evaluatedCount ?? '—'},${d.avgScore}%,${sanitizeCsvCell(d.avgScore >= 60 ? 'Above Benchmark' : 'Review Needed')}`).join('\n')
+      : `${sanitizeCsvCell('General Engineering')},0,0,0%,${sanitizeCsvCell('Pending Roster Upload')}`;
 
     const fullContent = headers + metadata + tierHeader + tierRows + deptHeader + deptRows;
-    const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${currentCollege.code}_Placement_Intelligence_NIRF_Report.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCsv(`${currentCollege.code}_Placement_Intelligence_NIRF_Report.csv`, fullContent);
   };
 
   // Export Candidate Placement Readiness Roster CSV
@@ -215,19 +208,23 @@ export default function TpoAnalyticsPage() {
     const headers = 'Rank,Roll Number,Student Name,Email,Department,Drives Evaluated,Highest Score (%),Placement Average (%),Placement Readiness Tier,Status,Latest Submission\n';
     const rows = studentSummaries.map((s, idx) => {
       const latestDate = s.latestSubmissionDate ? new Date(s.latestSubmissionDate).toLocaleDateString() : '—';
-      return `${idx + 1},"${s.rollNumber || '—'}","${s.name}","${s.email}","${s.department || 'General'}",${s.attemptsCount},${s.highestScore}%,${s.overallAverageScore}%,"${s.tierLabel}","${s.hasMalpractice ? 'FLAGGED_MALPRACTICE' : 'CLEAN'}","${latestDate}"`;
+      return [
+        idx + 1,
+        sanitizeCsvCell(s.rollNumber || '—'),
+        sanitizeCsvCell(s.name),
+        sanitizeCsvCell(s.email),
+        sanitizeCsvCell(s.department || 'General'),
+        s.attemptsCount,
+        `${s.highestScore}%`,
+        `${s.overallAverageScore}%`,
+        sanitizeCsvCell(s.tierLabel),
+        sanitizeCsvCell(s.hasMalpractice ? 'FLAGGED_MALPRACTICE' : 'CLEAN'),
+        sanitizeCsvCell(latestDate),
+      ].join(',');
     }).join('\n');
 
-    const fullContent = `College,"${currentCollege.name}" (${currentCollege.code})\nCandidate Placement Readiness Roster (NIRF Criterion 5.2)\nExported On,"${reportDate}"\nTotal Evaluated Candidates,${uniqueEvaluated}\nCampus Placement Readiness Average,${avg}%\n\n` + headers + rows;
-    const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${currentCollege.code}_Placement_Readiness_Roster.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const fullContent = `College,${sanitizeCsvCell(currentCollege.name)} (${sanitizeCsvCell(currentCollege.code)})\nCandidate Placement Readiness Roster (NIRF Criterion 5.2)\nExported On,${sanitizeCsvCell(reportDate)}\nTotal Evaluated Candidates,${uniqueEvaluated}\nCampus Placement Readiness Average,${avg}%\n\n` + headers + rows;
+    downloadCsv(`${currentCollege.code}_Placement_Readiness_Roster.csv`, fullContent);
   };
 
   // Export Individual Attempt Submissions CSV
@@ -247,19 +244,29 @@ export default function TpoAnalyticsPage() {
       const attempted = res?.total_attempted ?? '—';
       const totalQ = res?.total_questions ?? '—';
       const acc = res?.overall_accuracy !== undefined ? `${res.overall_accuracy}%` : `${pct}%`;
-      return `${idx + 1},"${s.roll_number || '—'}","${s.name}","${s.email}","${s.department || 'General'}","${examTitle}","${company}",${a.total_score},${a.max_possible_score || 100},${pct}%,${qualification},"${tier}",${attempted},${totalQ},${acc},${a.tab_switch_count || 0},"${subDate}"`;
+      return [
+        idx + 1,
+        sanitizeCsvCell(s.roll_number || '—'),
+        sanitizeCsvCell(s.name),
+        sanitizeCsvCell(s.email),
+        sanitizeCsvCell(s.department || 'General'),
+        sanitizeCsvCell(examTitle),
+        sanitizeCsvCell(company),
+        a.total_score,
+        a.max_possible_score || 100,
+        `${pct}%`,
+        sanitizeCsvCell(qualification),
+        sanitizeCsvCell(tier),
+        attempted,
+        totalQ,
+        sanitizeCsvCell(acc),
+        a.tab_switch_count || 0,
+        sanitizeCsvCell(subDate),
+      ].join(',');
     }).join('\n');
 
-    const fullContent = `College,"${currentCollege.name}" (${currentCollege.code})\nAll Assessment Submissions Log\nExported On,"${reportDate}"\n\n` + headers + rows;
-    const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${currentCollege.code}_All_Assessment_Submissions.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const fullContent = `College,${sanitizeCsvCell(currentCollege.name)} (${sanitizeCsvCell(currentCollege.code)})\nAll Assessment Submissions Log\nExported On,${sanitizeCsvCell(reportDate)}\n\n` + headers + rows;
+    downloadCsv(`${currentCollege.code}_All_Assessment_Submissions.csv`, fullContent);
   };
 
   // Find corresponding exam for currently inspected attempt
@@ -324,7 +331,7 @@ export default function TpoAnalyticsPage() {
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
               <span>{uniqueEvaluated} of {total} Enrolled Candidates Evaluated</span>
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                {total > 0 ? Math.round((uniqueEvaluated / total) * 100) : 0}% Evaluated
+                {total > 0 ? Math.min(100, Math.round((uniqueEvaluated / total) * 100)) : 0}% Evaluated
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
@@ -1055,19 +1062,26 @@ export default function TpoAnalyticsPage() {
 
       {/* 🔍 Candidate Placement Performance Scorecard Modal */}
       {selectedAttempt && (() => {
-        const inspectedSummary = selectedAttempt.result_summary || {
+        const rawSummary = selectedAttempt.result_summary;
+        const validResponseKeys = Object.keys(selectedAttempt.responses || {}).filter(k => !k.startsWith('__'));
+        const totalAttempted = rawSummary?.total_attempted ?? validResponseKeys.length;
+        const totalCorrect = rawSummary?.total_correct ?? Math.round(selectedAttempt.total_score || 0);
+        const totalIncorrect = rawSummary?.total_incorrect ?? Math.max(0, totalAttempted - totalCorrect);
+        const overallAccuracy = rawSummary?.overall_accuracy ?? (totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : (selectedAttempt.percentage || 0));
+
+        const inspectedSummary = rawSummary || {
           total_score: selectedAttempt.total_score || 0,
           max_score: selectedAttempt.max_possible_score || (activeExam?.total_marks || 100),
           percentage: selectedAttempt.percentage || 0,
           passed: Boolean(selectedAttempt.passed),
           tier: (selectedAttempt.percentage || 0) >= 70 ? 'TIER_1' : (selectedAttempt.percentage || 0) >= 50 ? 'TIER_2' : 'TIER_3',
           tier_label: (selectedAttempt.percentage || 0) >= 70 ? 'Tier 1: Day-1 Ready' : (selectedAttempt.percentage || 0) >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed',
-          total_questions: activeExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || 0,
-          total_attempted: Object.keys(selectedAttempt.responses || {}).length,
-          total_correct: Math.round(selectedAttempt.total_score || 0),
-          total_incorrect: Math.max(0, Object.keys(selectedAttempt.responses || {}).length - Math.round(selectedAttempt.total_score || 0)),
-          total_unattempted: 0,
-          overall_accuracy: Object.keys(selectedAttempt.responses || {}).length > 0 ? Math.round(((selectedAttempt.total_score || 0) / Object.keys(selectedAttempt.responses || {}).length) * 100) : (selectedAttempt.percentage || 0),
+          total_questions: activeExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || totalAttempted,
+          total_attempted: totalAttempted,
+          total_correct: totalCorrect,
+          total_incorrect: totalIncorrect,
+          total_unattempted: Math.max(0, (activeExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || totalAttempted) - totalAttempted),
+          overall_accuracy: overallAccuracy,
           time_spent_seconds: selectedAttempt.time_spent_seconds || 0,
           tab_switch_count: selectedAttempt.tab_switch_count || 0,
           proctor_status:

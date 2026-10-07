@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export interface ContentRendererProps {
   content: string;
@@ -151,18 +152,25 @@ function renderContentToHTML(content: string): string {
   if (!content?.trim()) return '';
   const preprocessed = transformRawMarkdownToBeautifulHtml(content.trim());
 
+  let rawHtml: string;
   // If it's already pure HTML and has no top-level markdown headers
   if (preprocessed.startsWith('<') && !/^#{1,6}\s/m.test(preprocessed)) {
-    return sanitizeSpacing(preprocessed);
+    rawHtml = sanitizeSpacing(preprocessed);
+  } else {
+    // If it contains markdown headers, formatting, or mixed HTML
+    try {
+      const parsed = String(marked.parse(preprocessed));
+      rawHtml = sanitizeSpacing(parsed);
+    } catch {
+      rawHtml = sanitizeSpacing(preprocessed);
+    }
   }
 
-  // If it contains markdown headers, formatting, or mixed HTML
-  try {
-    const parsed = String(marked.parse(preprocessed));
-    return sanitizeSpacing(parsed);
-  } catch {
-    return sanitizeSpacing(preprocessed);
-  }
+  // 🛡️ SECURITY HARDENING: Sanitize all rendered HTML with DOMPurify to eliminate Stored XSS vectors
+  return DOMPurify.sanitize(rawHtml, {
+    ADD_ATTR: ['target', 'data-type', 'data-cases'],
+    ADD_TAGS: ['iframe'],
+  });
 }
 
 export default function ContentRenderer({

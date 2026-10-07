@@ -1,7 +1,11 @@
-﻿-- ====================================================================
+-- ====================================================================
 -- PrepUnite: Database-Side Rate Limiting Triggers
 -- Enforces sliding 24-hour quota directly inside PostgreSQL engine
 -- Prevents abuse even if client-side localStorage is cleared or bypassed
+--
+-- Security Hardened:
+-- 1. SET search_path = public, pg_temp prevents path injection
+-- 2. Exempts system backups (MOCK_EXAM_BLUEPRINT:%, B2B_%) and Super Admins
 -- ====================================================================
 
 -- 1. Function to enforce Question Reports rate limit (max 5 per 24 hours)
@@ -9,10 +13,16 @@ CREATE OR REPLACE FUNCTION public.enforce_question_reports_rate_limit()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     recent_count INTEGER;
 BEGIN
+    -- Super admins bypass question reporting rate limits
+    IF public.is_admin() THEN
+        RETURN NEW;
+    END IF;
+
     IF NEW.reporter_email IS NOT NULL AND TRIM(NEW.reporter_email) <> '' THEN
         SELECT COUNT(*)
         INTO recent_count
@@ -42,16 +52,25 @@ CREATE OR REPLACE FUNCTION public.enforce_contact_messages_rate_limit()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     recent_count INTEGER;
 BEGIN
+    -- 🛡️ Bypass rate limits for system key-value backups (blueprints, practice exams) and Super Admins
+    IF NEW.subject LIKE 'MOCK_EXAM_BLUEPRINT:%' 
+       OR NEW.subject LIKE 'B2B_%' 
+       OR public.is_admin() THEN
+        RETURN NEW;
+    END IF;
+
     IF NEW.email IS NOT NULL AND TRIM(NEW.email) <> '' THEN
         SELECT COUNT(*)
         INTO recent_count
         FROM public.contact_messages
         WHERE LOWER(TRIM(email)) = LOWER(TRIM(NEW.email))
-          AND created_at >= NOW() - INTERVAL '24 hours';
+          AND created_at >= NOW() - INTERVAL '24 hours'
+          AND NOT (subject LIKE 'MOCK_EXAM_BLUEPRINT:%' OR subject LIKE 'B2B_%');
 
         IF recent_count >= 3 THEN
             RAISE EXCEPTION 'Daily inquiry limit reached (3/3) for this email. Please try again tomorrow.';

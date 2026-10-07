@@ -114,6 +114,29 @@ BEGIN
   SET user_email = 'deleted_' || target_user_id || '@deleted.invalid'
   WHERE user_email = LOWER(target_email);
 
+  -- Scrub student enrollment records in college_students
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'college_students') THEN
+    UPDATE public.college_students
+    SET
+      email = 'deleted_' || target_user_id || '@deleted.invalid',
+      name = 'Deleted Candidate',
+      roll_number = NULL,
+      updated_at = NOW()
+    WHERE LOWER(email) = LOWER(target_email) OR user_id = target_user_id;
+  END IF;
+
+  -- Scrub student exam attempts (wipe candidate answers, code submissions & proctor telemetry to protect privacy)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'student_exam_attempts') THEN
+    UPDATE public.student_exam_attempts
+    SET
+      responses = '{}'::jsonb,
+      proctor_events = '[]'::jsonb,
+      updated_at = NOW()
+    WHERE student_id IN (
+      SELECT id FROM public.college_students WHERE LOWER(email) = LOWER(target_email) OR user_id = target_user_id
+    ) OR student_id = target_user_id::TEXT;
+  END IF;
+
   -- Log the deletion in audit logs
   INSERT INTO public.admin_audit_logs (
     admin_email, action, target_entity, target_id, after_data

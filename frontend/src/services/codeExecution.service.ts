@@ -511,16 +511,20 @@ export const codeExecutionService = {
       tc: TestCaseInput,
       execResult: ExecutionResult
     ): EvaluatedTestCase => {
-      const stdin = tc.input || '';
-      const expected = normalizeOutput(tc.expected_output || tc.output || '');
+      const isHidden = Boolean(tc.is_hidden);
+      const rawStdin = tc.input || '';
+      const realExpected = normalizeOutput(tc.expected_output || tc.output || '');
+
+      const displayInput = isHidden ? '[Hidden Evaluation Case]' : rawStdin;
+      const displayExpected = isHidden ? '[Hidden Expected Output]' : realExpected;
 
       if (execResult.isCompileError) {
         const err = execResult.compileOutput || execResult.stderr || 'Compilation error occurred.';
         if (!compileErrorEncountered) compileErrorEncountered = err;
         return {
-          input: stdin,
-          expected,
-          actual: err,
+          input: displayInput,
+          expected: displayExpected,
+          actual: isHidden ? '[Compilation Error on Hidden Case]' : err,
           passed: false,
           status: 'COMPILATION_ERROR',
           timeMs: execResult.timeMs,
@@ -533,9 +537,9 @@ export const codeExecutionService = {
         const rErr = execResult.stderr || execResult.errorMessage || 'Runtime exception thrown.';
         if (!firstRuntimeError) firstRuntimeError = rErr;
         return {
-          input: stdin,
-          expected,
-          actual: rErr,
+          input: displayInput,
+          expected: displayExpected,
+          actual: isHidden ? '[Runtime Error on Hidden Case]' : rErr,
           passed: false,
           status: 'RUNTIME_ERROR',
           timeMs: execResult.timeMs,
@@ -546,8 +550,8 @@ export const codeExecutionService = {
 
       if (execResult.isTimeLimitExceeded) {
         return {
-          input: stdin,
-          expected,
+          input: displayInput,
+          expected: displayExpected,
           actual: 'Time Limit Exceeded (> 2.0s). Check for infinite loops or inefficient algorithms.',
           passed: false,
           status: 'TIME_LIMIT_EXCEEDED',
@@ -558,11 +562,13 @@ export const codeExecutionService = {
       }
 
       const actual = normalizeOutput(execResult.stdout);
-      const isMatch = execResult.isSuccess && actual === expected;
+      const isMatch = execResult.isSuccess && actual === realExpected;
       return {
-        input: stdin,
-        expected,
-        actual: execResult.stdout.trim().length > 0 ? execResult.stdout.trim() : '[No output printed to stdout]',
+        input: displayInput,
+        expected: displayExpected,
+        actual: isHidden
+          ? (isMatch ? '[Hidden Test Passed]' : '[Hidden Output Mismatch]')
+          : (execResult.stdout.trim().length > 0 ? execResult.stdout.trim() : '[No output printed to stdout]'),
         passed: isMatch,
         status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
         timeMs: execResult.timeMs,
@@ -579,9 +585,10 @@ export const codeExecutionService = {
     if (evaluated0.status === 'COMPILATION_ERROR') {
       // Abort and skip remaining cases
       for (let j = 1; j < casesToRun.length; j++) {
+        const isHidden = Boolean(casesToRun[j].is_hidden);
         evaluatedCases.push({
-          input: casesToRun[j].input || '',
-          expected: normalizeOutput(casesToRun[j].expected_output || casesToRun[j].output || ''),
+          input: isHidden ? '[Hidden Evaluation Case]' : (casesToRun[j].input || ''),
+          expected: isHidden ? '[Hidden Expected Output]' : normalizeOutput(casesToRun[j].expected_output || casesToRun[j].output || ''),
           actual: 'Skipped due to compilation error.',
           passed: false,
           status: 'SKIPPED',

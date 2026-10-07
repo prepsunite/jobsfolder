@@ -22,9 +22,13 @@ import {
   Sparkles,
   BarChart3,
   KeyRound,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-import type { MockExam, StudentExamAttempt, CollegeStudent } from '@/types/tpo';
+import type { MockExam, StudentExamAttempt, CollegeStudent, ProctorEvent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
+import { sanitizeCsvCell, downloadCsv } from '@/utils/csvUtils';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
 import { useToast } from '@/contexts/ToastContext';
 import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
@@ -49,6 +53,7 @@ export default function TpoExamDetailPage() {
   const [isShortlistModalOpen, setIsShortlistModalOpen] = useState(false);
   const [isDiagnosticModalOpen, setIsDiagnosticModalOpen] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isProctorTrailExpanded, setIsProctorTrailExpanded] = useState(true);
 
   // Fetch Exam Metadata
   const { data: exam, isLoading: examLoading } = useQuery<MockExam | null>({
@@ -208,19 +213,27 @@ export default function TpoExamDetailPage() {
         const attempted = res?.total_attempted ?? '—';
         const totalQ = res?.total_questions ?? '—';
         const acc = res?.overall_accuracy !== undefined ? `${res.overall_accuracy}%` : `${pct}%`;
-        return `${idx + 1},"${s.roll_number || ''}","${s.name}","${s.email}","${s.department || ''}",${a.total_score},${a.max_possible_score},${pct}%,${qualification},"${tier}",${attempted},${totalQ},${acc},${a.tab_switch_count},${a.status}`;
+        return [
+          idx + 1,
+          sanitizeCsvCell(s.roll_number || ''),
+          sanitizeCsvCell(s.name),
+          sanitizeCsvCell(s.email),
+          sanitizeCsvCell(s.department || ''),
+          a.total_score,
+          a.max_possible_score,
+          `${pct}%`,
+          sanitizeCsvCell(qualification),
+          sanitizeCsvCell(tier),
+          attempted,
+          totalQ,
+          sanitizeCsvCell(acc),
+          a.tab_switch_count || 0,
+          sanitizeCsvCell(a.status),
+        ].join(',');
       })
       .join('\n');
 
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${exam.title.toLowerCase().replace(/\s+/g, '_')}_placement_leaderboard.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCsv(`${exam.title.toLowerCase().replace(/\s+/g, '_')}_placement_leaderboard.csv`, headers + rows);
   };
 
   const copyExamLink = () => {
@@ -928,6 +941,128 @@ export default function TpoExamDetailPage() {
                     </div>
                   )}
                 </div>
+
+                {/* 4. Proctoring & Anti-Cheat Audit Trail */}
+                {(() => {
+                  const rawEvents =
+                    selectedAttempt.proctor_events ||
+                    (selectedAttempt as any).responses?.__result_summary?.proctor_events ||
+                    (selectedAttempt.result_summary as any)?.proctor_events ||
+                    [];
+                  const proctorEvents: ProctorEvent[] = Array.isArray(rawEvents) ? rawEvents : [];
+                  const violationCount = selectedAttempt.tab_switch_count || 0;
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                            Proctoring &amp; Anti-Cheat Audit Trail
+                          </h4>
+                        </div>
+                        {proctorEvents.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setIsProctorTrailExpanded(prev => !prev)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                          >
+                            <span>{isProctorTrailExpanded ? 'Collapse' : 'Expand'}</span>
+                            {isProctorTrailExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
+                      </div>
+
+                      {proctorEvents.length === 0 && violationCount === 0 ? (
+                        <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <ShieldCheck className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-emerald-900 dark:text-emerald-200 uppercase tracking-wider">
+                              Clean Session — 0 Proctoring Infractions
+                            </div>
+                            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                              Candidate maintained continuous window focus, strict fullscreen lock, and zero tab switches throughout this examination drive.
+                            </div>
+                          </div>
+                        </div>
+                      ) : proctorEvents.length === 0 && violationCount > 0 ? (
+                        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-center gap-3">
+                          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <div className="text-xs">
+                            <span className="font-bold text-amber-900 dark:text-amber-200">
+                              {violationCount} Window Tab Violation{violationCount === 1 ? '' : 's'} Recorded
+                            </span>
+                            <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                              Telemetry snapshot captured {violationCount} window switch(es) or focus losses during the session. Detailed individual event payloads were not captured.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        isProctorTrailExpanded && (
+                          <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-[#111827] divide-y divide-slate-100 dark:divide-slate-800/80 max-h-60 overflow-y-auto">
+                            {proctorEvents.map((ev, evIdx) => {
+                              const isHighSeverity = ev.type === 'DEVTOOLS_OPEN' || ev.type === 'TAB_SWITCH';
+                              const isMediumSeverity = ev.type === 'FULLSCREEN_EXIT' || ev.type === 'BLUR';
+
+                              const formattedTime = ev.timestamp
+                                ? new Date(ev.timestamp).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                  })
+                                : `Event #${evIdx + 1}`;
+
+                              return (
+                                <div
+                                  key={evIdx}
+                                  className="p-3 flex items-start justify-between gap-3 text-xs hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                                >
+                                  <div className="flex items-start gap-2.5">
+                                    <span
+                                      className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider shrink-0 mt-0.5 ${
+                                        isHighSeverity
+                                          ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                          : isMediumSeverity
+                                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                          : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                                      }`}
+                                    >
+                                      {ev.type.replace('_', ' ')}
+                                    </span>
+                                    <div>
+                                      <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                                        {ev.details ||
+                                          (ev.type === 'TAB_SWITCH'
+                                            ? 'Switched browser tab or minimized window'
+                                            : ev.type === 'FULLSCREEN_EXIT'
+                                            ? 'Exited fullscreen examination screen'
+                                            : ev.type === 'DEVTOOLS_OPEN'
+                                            ? 'Developer tools or inspect element attempt detected'
+                                            : 'Focus lost from browser window')}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                                        Incident #{evIdx + 1}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right shrink-0">
+                                    <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                      <Clock className="w-3 h-3 text-slate-400" />
+                                      {formattedTime}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  );
+                })()}
 
               </div>
 

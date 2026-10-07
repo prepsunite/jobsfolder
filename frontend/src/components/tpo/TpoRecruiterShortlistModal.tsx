@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt } from '@/types/tpo';
+import { sanitizeCsvCell, downloadCsv } from '@/utils/csvUtils';
 
 interface TpoRecruiterShortlistModalProps {
   isOpen: boolean;
@@ -152,7 +153,7 @@ export default function TpoRecruiterShortlistModal({
   const handleExportShortlistCSV = () => {
     if (shortlistedAttempts.length === 0) return;
 
-    const sectionHeaders = sectionsList.map(s => `"${s} (%)"`).join(',');
+    const sectionHeaders = sectionsList.map(s => sanitizeCsvCell(`${s} (%)`)).join(',');
     const headers = `Shortlist Rank,Roll Number,Student Name,Email,Department,Overall Score,Max Score,Overall Percentage,${sectionHeaders ? sectionHeaders + ',' : ''}Tab Switches,Proctor Status\n`;
 
     const rows = shortlistedAttempts
@@ -167,20 +168,24 @@ export default function TpoRecruiterShortlistModal({
 
         const statusLabel = (att.tab_switch_count || 0) === 0 ? 'CLEAN' : `${att.tab_switch_count} violations`;
 
-        return `${idx + 1},"${s.roll_number || '—'}","${s.name}","${s.email}","${s.department || 'General'}",${att.total_score},${att.max_possible_score || 100},${att.percentage}%,${secScores ? secScores + ',' : ''}${att.tab_switch_count || 0},"${statusLabel}"`;
+        return [
+          idx + 1,
+          sanitizeCsvCell(s.roll_number || '—'),
+          sanitizeCsvCell(s.name),
+          sanitizeCsvCell(s.email),
+          sanitizeCsvCell(s.department || 'General'),
+          att.total_score,
+          att.max_possible_score || 100,
+          `${att.percentage}%`,
+          ...(secScores ? [secScores] : []),
+          att.tab_switch_count || 0,
+          sanitizeCsvCell(statusLabel),
+        ].join(',');
       })
       .join('\n');
 
     const companyTag = exam.target_company.toLowerCase().replace(/\s+/g, '_');
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${companyTag}_recruiter_shortlist_${shortlistedAttempts.length}_candidates.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCsv(`${companyTag}_recruiter_shortlist_${shortlistedAttempts.length}_candidates.csv`, headers + rows);
   };
 
   const qualifiedPercentage = evaluatedAttempts.length > 0
