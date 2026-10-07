@@ -38,11 +38,13 @@ import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import audioEffects from '@/utils/audioEffects';
 import { useToast } from '@/contexts/ToastContext';
 import AdSpaceSlot from '@/components/AdSpaceSlot';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function TopicQuestionsPage() {
   const { categorySlug = 'arithmetic-aptitude', topicId = 'height-and-distance' } = useParams<{ categorySlug: string; topicId: string }>();
   const { role, user } = useAuth();
   const isAdmin = role === 'ADMIN';
+  const { isAdFree } = useSubscription();
   const { toast, confirmModal } = useToast();
 
   // Topic display name
@@ -778,7 +780,7 @@ export default function TopicQuestionsPage() {
     <div className="space-y-6 animate-fadeIn pb-16 font-sans w-full">
       <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
         {/* Main Topic Questions Matter (Aligned left right beside sidebar) */}
-        <div className="flex-1 min-w-0 max-w-3xl 2xl:max-w-4xl space-y-6 w-full">
+        <div className={`flex-1 min-w-0 ${isAdFree ? 'max-w-5xl' : 'max-w-3xl 2xl:max-w-4xl'} space-y-6 w-full`}>
           {/* Breadcrumb & Navigation */}
           <div className="flex items-center justify-between">
         <Link
@@ -1433,9 +1435,11 @@ export default function TopicQuestionsPage() {
         </div>
 
         {/* Dedicated Right-hand Ad Space Slot (Sticky on wide screens) */}
-        <div className="hidden xl:block w-[300px] shrink-0 sticky top-6 space-y-4">
-          <AdSpaceSlot slot="aptitude-topic-rail" />
-        </div>
+        {!isAdFree && (
+          <div className="hidden xl:block w-[300px] shrink-0 sticky top-6 space-y-4">
+            <AdSpaceSlot slot="aptitude-topic-rail" />
+          </div>
+        )}
       </div>
 
       {/* 📥 ADMIN BULK JSON IMPORT MODAL */}

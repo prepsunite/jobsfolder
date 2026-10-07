@@ -44,6 +44,7 @@ import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/types/interview';
 import { useToast } from '@/contexts/ToastContext';
 import AdSpaceSlot from '@/components/AdSpaceSlot';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
   Database,
@@ -66,6 +67,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
 
 export default function InterviewPrepPage() {
   const { isAdmin, user } = useAuth();
+  const { isAdFree } = useSubscription();
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -538,7 +540,7 @@ export default function InterviewPrepPage() {
       {activeTopic ? (
         <div className="flex flex-col xl:flex-row items-start gap-8 w-full">
           {/* Main Interview Topic Matter (Aligned left right beside sidebar) */}
-          <div className="flex-1 min-w-0 max-w-3xl 2xl:max-w-4xl space-y-6 w-full">
+          <div className={`flex-1 min-w-0 ${isAdFree ? 'max-w-5xl' : 'max-w-3xl 2xl:max-w-4xl'} space-y-6 w-full`}>
           {/* Breadcrumb + Back Button */}
           <div className="flex items-center justify-between">
             <button
@@ -1088,9 +1090,11 @@ export default function InterviewPrepPage() {
           </div>
 
           {/* Dedicated Right-hand Ad Space Slot (Sticky on wide screens) */}
-          <div className="hidden xl:block w-[300px] shrink-0 sticky top-6 space-y-4">
-            <AdSpaceSlot slot="interview-topic-rail" />
-          </div>
+          {!isAdFree && (
+            <div className="hidden xl:block w-[300px] shrink-0 sticky top-6 space-y-4">
+              <AdSpaceSlot slot="interview-topic-rail" />
+            </div>
+          )}
         </div>
       ) : (
         /* ────────────────────────────────────────────────────────────────────────

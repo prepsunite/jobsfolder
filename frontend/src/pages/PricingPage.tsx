@@ -256,6 +256,10 @@ export default function PricingPage() {
       a: 'Both Pro and Ultra unlock complete access to all 50+ company past papers, OA question banks, and code solutions. The difference is the mock test quota: Pro includes 5 blueprint mock exams per cycle for targeted practice, while Ultra gives you 100% UNLIMITED blueprint mock exams across every company test pattern.',
     },
     {
+      q: 'Are Pro and Ultra plans ad-free?',
+      a: 'Yes, 100%! While our Basic tier is ad-supported to keep syllabus and interview debriefs accessible to all students, subscribing to Pro or Ultra completely removes all advertisements and sponsored banners across the entire platform.',
+    },
+    {
       q: 'How do the 6-Month and 1-Year passes work?',
       a: 'Passes are one-time payments for extended access (180 days or 365 days) with massive savings (up to 36% off). There are no unexpected auto-debits or hidden subscriptions.',
     },
@@ -398,6 +402,10 @@ export default function PricingPage() {
                 <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
                 <span>Candidate interview experiences & rounds debrief</span>
               </li>
+              <li className="flex items-center gap-2">
+                <span className="text-amber-500 font-bold text-xs shrink-0">•</span>
+                <span className="text-[#868E96] dark:text-[#777777]">Standard Ad-Supported Experience</span>
+              </li>
             </ul>
           </div>
 
@@ -467,6 +475,10 @@ export default function PricingPage() {
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                 <span>Full step-by-step code solutions & scorecards</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>100% Ad-Free Experience</strong> (Zero distractions)</span>
               </li>
             </ul>
           </div>
@@ -546,6 +558,10 @@ export default function PricingPage() {
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
                 <span>Sectional readiness scorecards & percentile rank</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>100% Ad-Free Experience</strong> (Zero distractions)</span>
               </li>
             </ul>
           </div>
@@ -680,6 +696,12 @@ export default function PricingPage() {
                   <td className="py-3 px-4 text-center text-[#868E96]">—</td>
                   <td className="py-3 px-4 text-center">Standard Sectional</td>
                   <td className="py-3 px-4 text-center font-bold text-[#121417] dark:text-white">Advanced + Percentile Rank</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">100% Ad-Free Experience</td>
+                  <td className="py-3 px-4 text-center text-[#868E96]">Ad-supported</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ 100% Ad-Free</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ 100% Ad-Free</td>
                 </tr>
               </tbody>
             </table>

@@ -30,7 +30,7 @@ export const PAYWALL_PRICING_TIERS: PaywallPricingTier[] = [
   {
     id: 'MONTHLY',
     title: 'Pro Monthly All-Access Pass',
-    subtitle: '30 Days full access to ALL 50+ company papers & 5 mock exams',
+    subtitle: '30 Days 100% Ad-Free access to ALL 50+ company papers & 5 mock exams',
     priceDisplay: '₹129',
     amountINR: 129,
     durationLabel: '/ 30 Days',
@@ -41,7 +41,7 @@ export const PAYWALL_PRICING_TIERS: PaywallPricingTier[] = [
   {
     id: 'QUARTERLY',
     title: 'Pro 6-Month Pass',
-    subtitle: '180 Days access to ALL company archives + 5 mocks/cycle',
+    subtitle: '180 Days 100% Ad-Free access to ALL company archives + 5 mocks/cycle',
     priceDisplay: '₹649',
     amountINR: 649,
     durationLabel: '/ 6 Months',
@@ -53,7 +53,7 @@ export const PAYWALL_PRICING_TIERS: PaywallPricingTier[] = [
   {
     id: 'YEARLY',
     title: 'Ultra 1-Year Pass',
-    subtitle: '365 Days complete access to all archives + UNLIMITED mocks',
+    subtitle: '365 Days 100% Ad-Free complete access to all archives + UNLIMITED mocks',
     priceDisplay: '₹1,799',
     amountINR: 1799,
     durationLabel: '/ 1 Year',

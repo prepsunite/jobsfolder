@@ -15,7 +15,9 @@ import { useToast } from '@/contexts/ToastContext';
 import PaywallModal from '@/components/PaywallModal';
 import DocumentExplorer from '@/components/DocumentExplorer';
 import ShareModal from '@/components/ShareModal';
+import AdSpaceSlot from '@/components/AdSpaceSlot';
 import { useSeo } from '@/hooks/useSeo';
+import { useSubscription } from '@/hooks/useSubscription';
 import {
   Building2,
   Globe,
@@ -50,6 +52,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = isSuperAdminEmail(user?.email);
+  const { isAdFree } = useSubscription();
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
 
@@ -716,7 +719,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
       {/* Main Single Page View for Exam */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-        <main className="lg:col-span-9 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 shadow-xs min-h-[500px] transition-colors">
+        <main className={`${isAdFree ? 'lg:col-span-12' : 'lg:col-span-9'} bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg p-5 sm:p-6 shadow-xs min-h-[500px] transition-colors`}>
           
           {currentExam ? (
             <div className="space-y-6">
@@ -1062,10 +1065,14 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
           )}
         </main>
 
-        {/* RIGHT SIDEBAR (Blank space reserved for Google Ads) */}
-        <aside className="lg:col-span-3 space-y-4">
-          {/* Reserved for Google Ads */}
-        </aside>
+        {/* RIGHT SIDEBAR (Ad slot for Basic free candidates; completely removed for Pro & Ultra) */}
+        {!isAdFree && (
+          <aside className="lg:col-span-3 space-y-4">
+            <div className="sticky top-6">
+              <AdSpaceSlot slot="company-detail-rail" />
+            </div>
+          </aside>
+        )}
 
       </div>
 
