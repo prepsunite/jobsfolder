@@ -307,7 +307,11 @@ function_checks AS (
         ('get_secure_exams_by_company', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
         ('get_secure_exam_by_id', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
         ('save_exam_paper_tabs', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
-        ('erase_user_paper_purchases', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql')
+        ('erase_user_paper_purchases', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
+        -- Target I: Auth, Session RBAC & DPDP
+        ('is_super_admin_email', 'database/TARGET_I_AUTH_SESSION_AND_DPDP_HARDENING.sql'),
+        ('update_user_dpdp_consent', 'database/TARGET_I_AUTH_SESSION_AND_DPDP_HARDENING.sql'),
+        ('request_dpdp_user_deletion', 'database/TARGET_I_AUTH_SESSION_AND_DPDP_HARDENING.sql')
     ) AS f(func_name, migration_file)
 ),
 
@@ -343,6 +347,7 @@ index_checks AS (
         ('technical_mcqs', 'idx_technical_mcqs_perf', 'database/DEPLOY_SUPER_ADMIN_SECURITY_PATCHES.sql'),
         ('companies', 'idx_companies_is_hidden', 'database/ADD_COMPANY_IS_HIDDEN.sql'),
         ('profiles', 'idx_profiles_consent', 'database/dpdp_consent_proof.sql'),
+        ('profiles', 'idx_profiles_consent_status', 'database/TARGET_I_AUTH_SESSION_AND_DPDP_HARDENING.sql'),
         ('question_reports', 'idx_question_reports_status', 'database/create_feedback_reports_and_contact.sql'),
         ('contact_messages', 'idx_contact_messages_status', 'database/create_feedback_reports_and_contact.sql')
     ) AS idx(tbl, index_name, migration_file)
