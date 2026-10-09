@@ -113,6 +113,38 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   return false;
 }
 
+export function sanitizeRedirectPath(path: string | null | undefined): string {
+  if (!path) return '/dashboard';
+  const trimmed = path.trim();
+  // Disallow external URLs, protocol-relative URLs (//), backslash tricks (/\ or \\), or script schemes
+  if (
+    !trimmed.startsWith('/') ||
+    trimmed.startsWith('//') ||
+    trimmed.startsWith('/\\') ||
+    trimmed.includes('\\') ||
+    /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)
+  ) {
+    return '/dashboard';
+  }
+  return trimmed;
+}
+
+export const clearLocalUserSessionState = () => {
+  try {
+    localStorage.removeItem('prepunite_role');
+    localStorage.removeItem('prepunite_user_email');
+    localStorage.removeItem('prepunite_user_name');
+    localStorage.removeItem('prepunite_user_avatar');
+    localStorage.removeItem('prepunite_college_id');
+    localStorage.removeItem('prepunite_college_name');
+    localStorage.removeItem('jobsfolder_purchased_exam_ids');
+    localStorage.removeItem('jobsfolder_purchased_exam_records');
+    localStorage.removeItem('jobsfolder_user_subscription');
+  } catch (e) {
+    console.warn('[clearLocalUserSessionState] error:', e);
+  }
+};
+
 export const GUEST_EMAIL = 'guest@prepunite.com';
 
 const GUEST_USER: UserProfile = {
@@ -146,11 +178,12 @@ const getInitialUser = (): UserProfile | null => {
           localStorage.setItem('prepunite_role', 'USER');
         }
 
-        // 2. TPO Coordinator Check: Preserve TPO_ADMIN if verified or already cached
+        // 2. TPO Coordinator Check: STRICT fail-closed validation against verified registry
+        // 🔒 SECURITY HARDENING: Never grant TPO_ADMIN solely on unverified localStorage string!
         const tpoAuth = tpoService.findTpoAuthByEmail(email);
-        if (tpoAuth || role === 'TPO_ADMIN') {
-          const collegeId = tpoAuth?.college_id || localStorage.getItem('prepunite_college_id') || undefined;
-          const collegeName = tpoAuth?.college_name || localStorage.getItem('prepunite_college_name') || undefined;
+        if (tpoAuth) {
+          const collegeId = tpoAuth.college_id || localStorage.getItem('prepunite_college_id') || undefined;
+          const collegeName = tpoAuth.college_name || localStorage.getItem('prepunite_college_name') || undefined;
           role = 'TPO_ADMIN';
           localStorage.setItem('prepunite_role', 'TPO_ADMIN');
           return {
@@ -163,6 +196,12 @@ const getInitialUser = (): UserProfile | null => {
             collegeName,
             avatarUrl,
           };
+        } else {
+          // If cached role was fraudulently set to TPO_ADMIN without tpoAuth proof, demote to USER
+          if (role === 'TPO_ADMIN') {
+            role = 'USER';
+            localStorage.setItem('prepunite_role', 'USER');
+          }
         }
       }
 
@@ -187,17 +226,15 @@ const getInitialUser = (): UserProfile | null => {
 const getInitialRole = (): UserRole => {
   try {
     const email = localStorage.getItem('prepunite_user_email');
-    const cachedRole = localStorage.getItem('prepunite_role') as UserRole;
-    if (email) {
+    if (email && email !== GUEST_EMAIL) {
       if (isSuperAdminEmail(email)) {
         return 'ADMIN';
       }
-      if (tpoService.findTpoAuthByEmail(email) || cachedRole === 'TPO_ADMIN') {
+      if (tpoService.findTpoAuthByEmail(email)) {
         return 'TPO_ADMIN';
       }
       return 'USER';
     }
-    if (cachedRole && cachedRole !== 'ADMIN') return cachedRole;
   } catch {}
   return 'GUEST';
 };
@@ -612,6 +649,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkInitialSession();
 
+    // Multi-tab session synchronization listener
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'prepunite_user_email' && !e.newValue) {
+        setUser(GUEST_USER);
+        setRole('GUEST');
+        setIsLoading(false);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+    }
+
     // Listen to live Auth State Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
@@ -621,16 +670,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastSyncedUserId = null;
         setUser(GUEST_USER);
         setRole('GUEST');
-        localStorage.removeItem('prepunite_role');
-        localStorage.removeItem('prepunite_user_email');
-        localStorage.removeItem('prepunite_user_name');
-        localStorage.removeItem('prepunite_user_avatar');
+        clearLocalUserSessionState();
       }
       if (mounted) setIsLoading(false);
     });
 
     return () => {
       mounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageChange);
+      }
       subscription?.unsubscribe();
     };
   }, []);
@@ -651,9 +700,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const params = new URLSearchParams(window.location.search);
         targetPath = params.get('redirectTo') || undefined;
       }
-      const redirectUrl = targetPath && targetPath.startsWith('/')
-        ? `${origin}${targetPath}`
-        : `${origin}/dashboard`;
+      const safePath = sanitizeRedirectPath(targetPath);
+      const redirectUrl = `${origin}${safePath}`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -686,9 +734,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const params = new URLSearchParams(window.location.search);
         targetPath = params.get('redirectTo') || undefined;
       }
-      const redirectUrl = targetPath && targetPath.startsWith('/')
-        ? `${origin}${targetPath}`
-        : `${origin}/dashboard`;
+      const safePath = sanitizeRedirectPath(targetPath);
+      const redirectUrl = `${origin}${safePath}`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
@@ -774,12 +821,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setUser(GUEST_USER);
       setRole('GUEST');
-      localStorage.removeItem('prepunite_role');
-      localStorage.removeItem('prepunite_user_email');
-      localStorage.removeItem('prepunite_user_name');
-      localStorage.removeItem('prepunite_user_avatar');
-      localStorage.removeItem('prepunite_college_id');
-      localStorage.removeItem('prepunite_college_name');
+      clearLocalUserSessionState();
     }
   };
 

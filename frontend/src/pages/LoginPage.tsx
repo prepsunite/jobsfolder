@@ -30,7 +30,29 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo');
+  const rawRedirectTo = searchParams.get('redirectTo');
+
+  /**
+   * 🛡️ Open Redirect Protection:
+   * Confines destination URLs strictly to internal application routes.
+   * Rejects protocol-relative URLs (//), backslashes (\), and external URI schemes.
+   */
+  const sanitizeRedirectPath = (path: string | null | undefined, fallback: string = '/dashboard'): string => {
+    if (!path) return fallback;
+    const trimmed = path.trim();
+    if (
+      !trimmed.startsWith('/') ||
+      trimmed.startsWith('//') ||
+      trimmed.startsWith('/\\') ||
+      trimmed.includes('\\') ||
+      /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)
+    ) {
+      return fallback;
+    }
+    return trimmed;
+  };
+
+  const safeRedirectTo = sanitizeRedirectPath(rawRedirectTo, '/dashboard');
 
   // Status & loading states
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -42,23 +64,23 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && user && !authLoading) {
       if (role === 'ADMIN') {
-        const targetPath = redirectTo && redirectTo.startsWith('/admin') ? redirectTo : '/admin';
+        const targetPath = rawRedirectTo && rawRedirectTo.startsWith('/admin')
+          ? sanitizeRedirectPath(rawRedirectTo, '/admin')
+          : '/admin';
         navigate(targetPath, { replace: true });
         return;
       }
       if (role === 'TPO_ADMIN' || user.isTpoAdmin) {
-        const targetPath = redirectTo && redirectTo.startsWith('/tpo') ? redirectTo : '/tpo';
+        const targetPath = rawRedirectTo && rawRedirectTo.startsWith('/tpo')
+          ? sanitizeRedirectPath(rawRedirectTo, '/tpo')
+          : '/tpo';
         navigate(targetPath, { replace: true });
         return;
       }
 
-      const defaultPath = '/dashboard';
-      const targetPath = redirectTo && redirectTo.startsWith('/')
-        ? redirectTo
-        : defaultPath;
-      navigate(targetPath, { replace: true });
+      navigate(safeRedirectTo, { replace: true });
     }
-  }, [isAuthenticated, user, role, authLoading, navigate, redirectTo]);
+  }, [isAuthenticated, user, role, authLoading, navigate, rawRedirectTo, safeRedirectTo]);
 
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
@@ -67,7 +89,7 @@ export default function LoginPage() {
       // User has ticked the checkbox — record explicit consent in ConsentContext
       // This syncs the status across the app (Profile page, banner, etc.)
       acceptConsent();
-      const res = await signInWithGoogle(redirectTo || undefined);
+      const res = await signInWithGoogle(safeRedirectTo);
       if (res?.error) {
         setErrorMessage(res.error);
       }

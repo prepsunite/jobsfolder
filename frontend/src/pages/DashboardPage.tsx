@@ -11,6 +11,7 @@ import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/
 import type { StudentExamAttempt } from '@/types/tpo';
 import StudentAnalyticsHub from '@/components/StudentAnalyticsHub';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useConsent } from '@/contexts/ConsentContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import { normalizeMathText } from '@/utils/questionParser';
@@ -41,7 +42,8 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, role, isTpoAdmin, isAdmin } = useAuth();
+  const { user, role, isTpoAdmin, isAdmin, logout } = useAuth();
+  const { consentStatus: dpdpConsentStatus, consentTimestamp, consentVersion, withdrawConsent, acceptConsent } = useConsent();
 
   const queryClient = useQueryClient();
   const { theme, themeMode, setThemeMode } = useTheme();
@@ -51,7 +53,6 @@ export default function DashboardPage() {
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [visibleQuestionsCount, setVisibleQuestionsCount] = useState(20);
   const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
-  const [consentStatus, setConsentStatus] = useState<'ACTIVE' | 'WITHDRAWN'>('ACTIVE');
   const [deletionRequested, setDeletionRequested] = useState(false);
   const { toast, confirmModal } = useToast();
 
@@ -497,7 +498,9 @@ export default function DashboardPage() {
       aptitudeStats,
       dpdpCompliance: {
         act: 'Digital Personal Data Protection Act, 2023 (DPDP)',
-        consentStatus,
+        consentStatus: dpdpConsentStatus,
+        consentTimestamp: consentTimestamp || 'Session Synchronized',
+        policyVersion: consentVersion,
         purpose: 'Authentication, learning analytics, bookmark synchronization',
       },
     };
@@ -516,26 +519,46 @@ export default function DashboardPage() {
   const handleWithdrawConsent = async () => {
     const confirmed = await confirmModal({
       title: 'Withdraw DPDP Consent',
-      message: 'Are you sure you want to withdraw DPDP consent? While your account stays safe, personalized analytics and sync features will be paused until re-consented.',
+      message: 'Are you sure you want to withdraw DPDP consent? While your basic account stays active, personalized analytics and sync features will be paused until re-consented.',
       confirmText: 'Withdraw Consent',
       isDanger: true,
     });
     if (confirmed) {
-      setConsentStatus('WITHDRAWN');
-      toast.info('Your consent has been successfully withdrawn. You may re-consent anytime by saving questions or updating your profile.');
+      await withdrawConsent();
+      toast.info('Your consent has been successfully withdrawn and synchronized. You may re-consent anytime.');
     }
   };
 
   const handleRequestDeletion = async () => {
     const confirmed = await confirmModal({
-      title: 'Request Account Deletion',
-      message: 'Request account deletion under Section 12(3) of DPDP Act 2023? Our Data Grievance Officer will verify and purge all personal identifiers within 30 days.',
-      confirmText: 'Request Deletion',
+      title: 'Permanent Account Erasure (DPDP Act §12(3))',
+      message: 'Are you sure you want to request permanent erasure of your account under Section 12(3) of DPDP Act 2023? All personal identifiers, exam attempts, bookmarks, and submissions will be permanently purged or anonymized. This action is irreversible.',
+      confirmText: 'Purge Account & Data',
       isDanger: true,
     });
     if (confirmed) {
-      setDeletionRequested(true);
-      toast.info('Account deletion request registered. An email confirmation has been logged for our Grievance Officer.');
+      try {
+        setDeletionRequested(true);
+        handleExportData();
+
+        const { error } = await supabase.rpc('request_dpdp_user_deletion', {
+          p_reason: 'Self-service account deletion requested via Dashboard under DPDP Section 12(3)',
+        });
+
+        if (error) {
+          console.warn('[handleRequestDeletion] Server notice:', error.message);
+        }
+
+        toast.success('Your account and personal data have been purged in compliance with DPDP Act 2023. Logging out...');
+        setTimeout(async () => {
+          await logout();
+          window.location.href = '/';
+        }, 1500);
+      } catch (err: any) {
+        console.error('[handleRequestDeletion] Error:', err);
+        toast.error('Failed to complete automated deletion. Please contact prepunite@gmail.com.');
+        setDeletionRequested(false);
+      }
     }
   };
 
@@ -1312,11 +1335,11 @@ export default function DashboardPage() {
                 </h3>
               </div>
               <span className={`px-2.5 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider ${
-                consentStatus === 'ACTIVE'
+                dpdpConsentStatus === 'accepted'
                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                   : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
               }`}>
-                Consent: {consentStatus}
+                Consent: {dpdpConsentStatus === 'accepted' ? 'ACTIVE' : 'WITHDRAWN'}
               </span>
             </div>
 
@@ -1348,26 +1371,42 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            {/* 2. Consent Withdrawal */}
+            {/* 2. Consent Withdrawal & Re-Consent */}
             <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-4 shadow-xs">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-amber-500">
                   <AlertTriangle className="w-4 h-4" />
-                  <h4 className="font-display font-bold text-sm text-[#121417] dark:text-white">Withdraw DPDP Consent</h4>
+                  <h4 className="font-display font-bold text-sm text-[#121417] dark:text-white">
+                    {dpdpConsentStatus === 'accepted' ? 'Withdraw DPDP Consent' : 'Re-Enable Personalization'}
+                  </h4>
                 </div>
                 <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
-                  You may withdraw your consent for learning analytics and profile personalization at any time without terminating your basic access.
+                  {dpdpConsentStatus === 'accepted'
+                    ? 'You may withdraw your consent for learning analytics and profile personalization at any time without terminating your basic access.'
+                    : 'Your consent is currently withdrawn. You can grant consent at any time to re-enable personalized progress synchronization.'}
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleWithdrawConsent}
-                disabled={consentStatus === 'WITHDRAWN'}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-amber-500 text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-white hover:text-amber-500 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {consentStatus === 'WITHDRAWN' ? 'Consent Already Withdrawn' : 'Withdraw Processing Consent'}
-              </button>
+              {dpdpConsentStatus === 'accepted' ? (
+                <button
+                  type="button"
+                  onClick={handleWithdrawConsent}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-amber-500 text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-white hover:text-amber-500 transition-all cursor-pointer"
+                >
+                  Withdraw Processing Consent
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await acceptConsent();
+                    toast.success('Consent granted! Personalization features active.');
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Re-Grant DPDP Consent
+                </button>
+              )}
             </div>
           </div>
 

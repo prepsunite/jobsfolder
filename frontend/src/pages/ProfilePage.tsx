@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useConsent } from '@/contexts/ConsentContext';
 import { supabase } from '@/lib/supabase';
 import { tpoService } from '@/services/tpo.service';
 import {
@@ -25,6 +26,7 @@ import {
 export default function ProfilePage() {
   const { user, role, isAdmin, isTpoAdmin, logout } = useAuth();
   const { themeMode, setThemeMode } = useTheme();
+  const { consentStatus, consentTimestamp, consentVersion, withdrawConsent, acceptConsent } = useConsent();
   const { data: subData } = useQuery({
     queryKey: ['profile-user-subscription', user?.email, user?.collegeId],
     queryFn: async () => {
@@ -375,6 +377,96 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* DPDP Act 2023 Consent & Data Rights Section */}
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="font-display font-bold text-sm text-[#121417] dark:text-white">
+                DPDP Act 2023 Consent &amp; Privacy Rights
+              </span>
+            </div>
+            <p className="text-xs text-[#868E96] dark:text-[#777777]">
+              PrepUnite processes your personal data under your explicit, informed consent (DPDP Act 2023 §6).
+            </p>
+          </div>
+
+          <span
+            className={`px-3 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider ${
+              consentStatus === 'accepted'
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+            }`}
+          >
+            Status: {consentStatus.toUpperCase()}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs">
+          <div>
+            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase block">
+              Policy Version
+            </span>
+            <span className="font-semibold text-[#121417] dark:text-gray-200">
+              v{consentVersion}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase block">
+              Recorded Proof
+            </span>
+            <span className="font-semibold text-[#121417] dark:text-gray-200">
+              {consentTimestamp ? new Date(consentTimestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Session Synchronized'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase block">
+              Data Fiduciary
+            </span>
+            <span className="font-semibold text-[#121417] dark:text-gray-200">
+              PrepUnite / Jobsfolder
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+          <Link
+            to="/privacy-policy"
+            className="text-xs text-[#FD4A32] hover:underline font-bold inline-flex items-center gap-1"
+          >
+            <span>Review Full Privacy Notice</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {consentStatus === 'accepted' ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (window.confirm('Withdraw consent for non-essential processing? Analytics and progress synchronization will be paused until re-consented.')) {
+                    await withdrawConsent();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-amber-500 text-xs font-display font-bold text-[#868E96] dark:text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
+              >
+                Withdraw Consent
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={async () => {
+                  await acceptConsent();
+                }}
+                className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-display font-bold transition-colors cursor-pointer"
+              >
+                Grant Consent
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Account Security & Sign Out Section */}
