@@ -53,14 +53,13 @@ export default async function handler(req, res) {
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
-      userEmail: bodyEmail,
-      itemType = 'SINGLE_PAPER',
-      examId,
-      amount,
     } = req.body || {};
 
     if (!razorpay_signature || !razorpay_order_id || !razorpay_payment_id) {
-      return res.status(400).json({ success: false, error: 'Missing payment signature, payment ID, or order metadata.' });
+      return res.status(400).json({
+        success: false,
+        error: 'Missing payment signature, payment ID, or order metadata.',
+      });
     }
 
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
@@ -69,7 +68,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ success: false, error: 'Payment gateway configuration missing on server.' });
     }
 
-    // 1. Mandatory HMAC SHA-256 Verification
+    // 1. Mandatory HMAC SHA-256 Verification with constant-time equality
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expectedSignature = crypto
       .createHmac('sha256', key_secret)
@@ -100,8 +99,8 @@ export default async function handler(req, res) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-        if (user?.email) {
+        const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+        if (user?.email && !authErr) {
           verifiedEmail = user.email.toLowerCase().trim();
         }
       } catch (authErr) {
@@ -116,36 +115,93 @@ export default async function handler(req, res) {
       });
     }
 
-    const normalizedItemType = itemType.toUpperCase();
-    const verifiedAmount = PRICING_CATALOG[normalizedItemType] || (typeof amount === 'number' && amount > 0 ? amount : 59);
+    // 4. Authoritative entitlement fulfillment via RPC [P0-01]
+    // The RPC locks the pre-order ledger row and grants access strictly from payment_orders.item_type
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('fulfill_payment_order', {
+      p_order_id: razorpay_order_id,
+      p_payment_id: razorpay_payment_id,
+      p_user_email: verifiedEmail,
+    });
 
-    // 4. Log Transaction (Idempotent by payment_id)
+    if (!rpcError && rpcResult?.success) {
+      return res.status(200).json({
+        success: true,
+        isUnlocked: true,
+        message: 'Payment verified and access securely granted.',
+        details: rpcResult,
+      });
+    }
+
+    // If RPC failed for a business/security reason (e.g. order not found, ownership mismatch)
+    if (rpcError && !rpcError.message.includes('function public.fulfill_payment_order') && !rpcError.message.includes('does not exist')) {
+      console.warn('[api/verify-payment] fulfill_payment_order RPC rejected:', rpcError.message);
+      return res.status(400).json({
+        success: false,
+        error: rpcError.message || 'Payment fulfillment failed verification rules.',
+      });
+    }
+
+    // Fallback: in case RPC is not yet deployed, query payment_orders directly
+    // CRITICAL: NEVER trust req.body.itemType! Only trust server payment_orders ledger!
+    const { data: orderRecord, error: orderFetchError } = await supabaseAdmin
+      .from('payment_orders')
+      .select('*')
+      .eq('order_id', razorpay_order_id)
+      .maybeSingle();
+
+    if (orderFetchError || !orderRecord) {
+      console.error('[api/verify-payment] Pre-order record not found in ledger:', razorpay_order_id);
+      return res.status(400).json({
+        success: false,
+        error: 'Payment order record not found in authoritative ledger.',
+      });
+    }
+
+    if (orderRecord.user_email.toLowerCase().trim() !== verifiedEmail) {
+      console.error('[api/verify-payment] Order user mismatch:', orderRecord.user_email, verifiedEmail);
+      return res.status(403).json({
+        success: false,
+        error: 'Order ownership verification failed.',
+      });
+    }
+
+    const authoritativeItemType = orderRecord.item_type.toUpperCase().trim();
+    const authoritativeAmount = orderRecord.amount_inr;
+    const authoritativeExamId = orderRecord.exam_id;
+
+    // Log Transaction (Idempotent by payment_id)
     await supabaseAdmin.from('transactions').upsert(
       [
         {
           user_email: verifiedEmail,
           payment_id: razorpay_payment_id,
           order_id: razorpay_order_id,
-          amount: verifiedAmount,
+          amount: authoritativeAmount,
           currency: 'INR',
           status: 'SUCCESS',
-          item_type: normalizedItemType,
-          exam_id: examId || null,
+          item_type: authoritativeItemType,
+          exam_id: authoritativeExamId || null,
         },
       ],
       { onConflict: 'payment_id' }
     );
 
-    // 5. Grant Entitlement based on purchase type
-    if ((normalizedItemType === 'SINGLE_PAPER' || normalizedItemType === 'SINGLE') && examId) {
-      const paperExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 Days (1 Month) Access
+    // Update payment_orders status
+    await supabaseAdmin
+      .from('payment_orders')
+      .update({ status: 'PAID', payment_id: razorpay_payment_id, updated_at: new Date().toISOString() })
+      .eq('order_id', razorpay_order_id);
+
+    // Grant Entitlement based strictly on ledger's authoritativeItemType
+    if (authoritativeItemType === 'SINGLE_PAPER' || authoritativeItemType === 'SINGLE') {
+      const paperExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       await supabaseAdmin.from('user_paper_purchases').upsert(
         [
           {
             user_email: verifiedEmail,
-            exam_id: examId,
+            exam_id: authoritativeExamId,
             payment_id: razorpay_payment_id,
-            amount_paid: verifiedAmount,
+            amount_paid: authoritativeAmount,
             expires_at: paperExpiresAt,
           },
         ],
@@ -155,40 +211,56 @@ export default async function handler(req, res) {
       let days = 30;
       let planName = 'PrepUnite Pro (5 Mock Exams/mo)';
 
-      if (normalizedItemType.startsWith('ULTRA')) {
-        if (normalizedItemType.includes('6M')) {
+      if (authoritativeItemType.startsWith('ULTRA')) {
+        if (authoritativeItemType.includes('6M')) {
           days = 180;
           planName = 'PrepUnite Ultra 6-Month Pass (Unlimited)';
-        } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
+        } else if (authoritativeItemType.includes('1Y') || authoritativeItemType.includes('YEARLY')) {
           days = 365;
           planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
         } else {
           days = 30;
           planName = 'PrepUnite Ultra (Unlimited)';
         }
-      } else if (normalizedItemType.startsWith('PRO')) {
-        if (normalizedItemType.includes('6M')) {
+      } else if (authoritativeItemType.startsWith('PRO')) {
+        if (authoritativeItemType.includes('6M')) {
           days = 180;
           planName = 'PrepUnite Pro 6-Month Pass (5 Mock Exams/mo)';
-        } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
+        } else if (authoritativeItemType.includes('1Y') || authoritativeItemType.includes('YEARLY')) {
           days = 365;
           planName = 'PrepUnite Pro 1-Year Pass (5 Mock Exams/mo)';
         } else {
           days = 30;
           planName = 'PrepUnite Pro (5 Mock Exams/mo)';
         }
-      } else if (normalizedItemType === 'PLUS' || normalizedItemType === 'PLUS_MONTHLY') {
-        days = 30;
-        planName = 'PrepUnite Pro (5 Mock Exams/mo)';
-      } else if (normalizedItemType === 'QUARTERLY') {
+      } else if (authoritativeItemType === 'QUARTERLY') {
         days = 90;
         planName = 'PrepUnite Pro Quarterly Pass';
-      } else if (normalizedItemType === 'YEARLY') {
+      } else if (authoritativeItemType === 'YEARLY') {
         days = 365;
         planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
       }
 
-      const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      // Atomic extension [P1-02]: Check existing active subscription to prevent truncation
+      let baseTime = Date.now();
+      const { data: existingSub } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('expires_at')
+        .eq('user_email', verifiedEmail)
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', new Date().toISOString())
+        .order('expires_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingSub?.expires_at) {
+        const existingExpMs = new Date(existingSub.expires_at).getTime();
+        if (existingExpMs > baseTime) {
+          baseTime = existingExpMs;
+        }
+      }
+
+      const expiresAt = new Date(baseTime + days * 24 * 60 * 60 * 1000).toISOString();
       await supabaseAdmin.from('user_subscriptions').upsert(
         [
           {

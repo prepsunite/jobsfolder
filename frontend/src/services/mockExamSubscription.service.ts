@@ -21,8 +21,6 @@ export interface MonthlyExamUsageInfo {
   resetDate: string;
 }
 
-const STORAGE_KEY_USAGE_PREFIX = 'prepunite_mock_exams_generated_';
-
 export const mockExamSubscriptionService = {
   /**
    * Resolves the current user's plan tier and monthly mock exam limit
@@ -39,8 +37,26 @@ export const mockExamSubscriptionService = {
 
     const cleanEmail = userEmail.trim().toLowerCase();
 
-    // 1. Institutional / Campus pass check
-    // Verify live with Supabase user_subscriptions to ensure access hasn't been revoked by TPO
+    // 1. Primary: Server-authoritative RPC get_mock_exam_quota_status
+    try {
+      const { data, error } = await supabase.rpc('get_mock_exam_quota_status', {
+        p_user_email: cleanEmail,
+      });
+
+      if (!error && data) {
+        return {
+          plan: (data.plan as UserMockPlanTier) || 'FREE',
+          planName: data.planName || 'Free Tier',
+          isPaid: data.plan !== 'FREE',
+          mockExamLimit: data.limit ?? 0,
+          expiresAt: data.expiresAt,
+        };
+      }
+    } catch (rpcErr) {
+      console.warn('[mockExamSubscriptionService] get_mock_exam_quota_status RPC warning:', rpcErr);
+    }
+
+    // 2. Fallback: Direct Database Check (Institutional Campus Pass)
     try {
       const { data: campusSub } = await supabase
         .from('user_subscriptions')
@@ -60,44 +76,10 @@ export const mockExamSubscriptionService = {
           mockExamLimit: 999,
           expiresAt: campusSub.expires_at,
         };
-      } else {
-        // If Supabase confirms no active campus pass, purge stale local entitlements
-        try {
-          const raw = localStorage.getItem('prepunite_student_entitlements');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed[cleanEmail]) {
-              delete parsed[cleanEmail];
-              localStorage.setItem('prepunite_student_entitlements', JSON.stringify(parsed));
-            }
-          }
-          localStorage.removeItem('prepunite_college_id');
-          localStorage.removeItem('prepunite_college_name');
-        } catch {}
       }
-    } catch (e) {
-      // If network fails / offline, fallback to cached entitlement only if not expired
-      let entitlement: { isEntitled?: boolean; collegeName?: string; expiresAt?: string } | null = null;
-      try {
-        const raw = localStorage.getItem('prepunite_student_entitlements');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          entitlement = parsed[cleanEmail] || null;
-        }
-      } catch {}
+    } catch {}
 
-      if (entitlement && entitlement.isEntitled && entitlement.expiresAt && new Date(entitlement.expiresAt) > new Date()) {
-        return {
-          plan: 'COLLEGE',
-          planName: entitlement.collegeName ? `Campus Partner Pass (${entitlement.collegeName})` : 'Campus Pro Pass',
-          isPaid: true,
-          mockExamLimit: 999,
-          expiresAt: entitlement.expiresAt,
-        };
-      }
-    }
-
-    // 2. Personal retail B2C plan check from user_subscriptions
+    // 3. Fallback: Direct Database Check (Personal B2C plan)
     try {
       const { data } = await supabase
         .from('user_subscriptions')
@@ -121,7 +103,6 @@ export const mockExamSubscriptionService = {
             expiresAt: data.expires_at,
           };
         }
-        // PRO or legacy PLUS (5 mock exams / mo)
         return {
           plan: 'PRO',
           planName: data.plan_name || 'PrepUnite Pro (5 Mocks/mo)',
@@ -143,14 +124,11 @@ export const mockExamSubscriptionService = {
   },
 
   /**
-   * Computes monthly usage and remaining generation quota for the candidate
+   * Computes monthly usage and remaining generation quota for the candidate.
+   * Strictly reads server database records [P0-03], eliminating localStorage tampering.
    */
   async getMonthlyUsage(userEmail?: string): Promise<MonthlyExamUsageInfo> {
-    const planInfo = await this.getUserPlan(userEmail);
     const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    // First day of next month is the reset date
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     const resetDate = nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -167,41 +145,55 @@ export const mockExamSubscriptionService = {
     }
 
     const cleanEmail = userEmail.trim().toLowerCase();
-    const storageKey = `${STORAGE_KEY_USAGE_PREFIX}${cleanEmail}_${currentMonthKey}`;
-    
-    let localGens: string[] = [];
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) localGens = JSON.parse(stored);
-    } catch {}
 
-    // Also count exams from self-practice exams storage
-    const practiceExamsKey = `prepunite_practice_exams_${cleanEmail}`;
-    let practiceExamsCount = 0;
+    // 1. Primary: Server-authoritative RPC
     try {
-      const pStored = localStorage.getItem(practiceExamsKey);
-      if (pStored) {
-        const pExams = JSON.parse(pStored);
-        if (Array.isArray(pExams)) {
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-          practiceExamsCount = pExams.filter(e => {
-            const createdMs = e.created_at ? new Date(e.created_at).getTime() : 0;
-            return createdMs >= startOfMonth;
-          }).length;
-        }
+      const { data, error } = await supabase.rpc('get_mock_exam_quota_status', {
+        p_user_email: cleanEmail,
+      });
+
+      if (!error && data) {
+        return {
+          plan: (data.plan as UserMockPlanTier) || 'FREE',
+          planName: data.planName || 'Free Tier',
+          limit: data.limit ?? 0,
+          used: data.used ?? 0,
+          remaining: data.remaining ?? 0,
+          canGenerate: Boolean(data.canGenerate),
+          resetDate,
+        };
+      }
+    } catch (rpcErr) {
+      console.warn('[mockExamSubscriptionService] get_mock_exam_quota_status RPC fallback:', rpcErr);
+    }
+
+    // 2. Fallback: Direct Database Check
+    const planInfo = await this.getUserPlan(userEmail);
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    let usedCount = 0;
+    try {
+      const { data: quotaRow } = await supabase
+        .from('user_mock_exam_quotas')
+        .select('used_count')
+        .eq('user_email', cleanEmail)
+        .eq('month_key', currentMonthKey)
+        .maybeSingle();
+
+      if (quotaRow) {
+        usedCount = quotaRow.used_count || 0;
       }
     } catch {}
 
-    const used = Math.max(localGens.length, practiceExamsCount);
     const limit = planInfo.mockExamLimit;
-    const remaining = Math.max(0, limit - used);
-    const canGenerate = planInfo.plan === 'COLLEGE' || planInfo.plan === 'ULTRA' || remaining > 0;
+    const remaining = Math.max(0, limit - usedCount);
+    const canGenerate = planInfo.plan === 'COLLEGE' || planInfo.plan === 'ULTRA' || (limit > 0 && remaining > 0);
 
     return {
       plan: planInfo.plan,
       planName: planInfo.planName,
       limit,
-      used,
+      used: usedCount,
       remaining,
       canGenerate,
       resetDate,
@@ -209,24 +201,41 @@ export const mockExamSubscriptionService = {
   },
 
   /**
-   * Records a newly generated exam in user's monthly generation audit
+   * Atomically consumes 1 mock exam quota slot on the database server before generation [P0-03].
+   * Rejects client generation if monthly quota is exhausted or plan is free.
    */
-  recordExamGenerated(userEmail: string, examId: string): void {
+  async consumeQuotaBeforeExamGeneration(userEmail: string, examId?: string): Promise<{ success: boolean; remaining: number }> {
+    if (!userEmail || userEmail === GUEST_EMAIL) {
+      throw new Error('Please sign in with a paid account to generate blueprint mock exams.');
+    }
+
+    const cleanEmail = userEmail.trim().toLowerCase();
+    const { data, error } = await supabase.rpc('consume_mock_exam_quota', {
+      p_user_email: cleanEmail,
+      p_exam_id: examId || null,
+    });
+
+    if (error) {
+      console.error('[mockExamSubscriptionService] consume_mock_exam_quota error:', error.message);
+      throw new Error(error.message || 'Quota deduction failed. Please check your subscription.');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite-quota-updated', { detail: { email: cleanEmail } }));
+    }
+
+    return {
+      success: data?.success ?? true,
+      remaining: data?.remaining ?? 0,
+    };
+  },
+
+  /**
+   * Dispatches quota update event across browser tabs/components.
+   */
+  recordExamGenerated(userEmail: string, _examId: string): void {
     if (!userEmail || typeof window === 'undefined') return;
     const cleanEmail = userEmail.trim().toLowerCase();
-    const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const storageKey = `${STORAGE_KEY_USAGE_PREFIX}${cleanEmail}_${currentMonthKey}`;
-
-    try {
-      const existing: string[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      if (!existing.includes(examId)) {
-        existing.push(examId);
-        localStorage.setItem(storageKey, JSON.stringify(existing));
-      }
-      window.dispatchEvent(new CustomEvent('prepunite-quota-updated', { detail: { email: cleanEmail } }));
-    } catch (e) {
-      console.warn('Failed to record exam generation quota:', e);
-    }
+    window.dispatchEvent(new CustomEvent('prepunite-quota-updated', { detail: { email: cleanEmail } }));
   },
 };

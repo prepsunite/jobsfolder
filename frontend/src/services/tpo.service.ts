@@ -4321,15 +4321,8 @@ export const tpoService = {
     const endTime = overrides?.end_time || new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const title = overrides?.title || `${template.name} - Blueprint Practice`;
 
-    // 1. Quota Verification
-    const usage = await mockExamSubscriptionService.getMonthlyUsage(cleanEmail);
-    if (!usage.canGenerate) {
-      throw new Error(
-        usage.limit === 0
-          ? 'Your Free tier does not include blueprint mock exams. Please upgrade to Pro (₹129/mo, 5 exams) or Ultra (₹169/mo, unlimited exams) to generate assessments.'
-          : `You have exhausted your monthly limit of ${usage.limit} mock exams (${usage.plan} Plan). Your quota resets on ${usage.resetDate}. Upgrade to Ultra for unlimited exams.`
-      );
-    }
+    // 1. Server-side Quota Verification & Atomic Consumption [P0-03]
+    await mockExamSubscriptionService.consumeQuotaBeforeExamGeneration(cleanEmail);
 
     const totalQuestions = template.sections.reduce((acc, s) => acc + (Number(s.question_count) || 0), 0);
     const totalMarks = template.sections.reduce(

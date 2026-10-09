@@ -58,10 +58,16 @@ export default function PaywallModal({
         : tier.defaultDescription;
 
     try {
+      // Get session token for secure server order creation [P1-04]
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const orderHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) orderHeaders['Authorization'] = `Bearer ${token}`;
+
       // 1. Create order on backend
       const res = await fetch('/api/create-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: orderHeaders,
         body: JSON.stringify({
           amount: amountINR,
           itemType,
