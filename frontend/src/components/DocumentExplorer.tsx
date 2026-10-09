@@ -70,6 +70,34 @@ export default function DocumentExplorer({
   const readerPanelRef = useRef<HTMLDivElement>(null);
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const adminPanelRef = useRef<HTMLDivElement>(null);
+  const watermarkContainerRef = useRef<HTMLDivElement>(null);
+  const [isWatermarkTampered, setIsWatermarkTampered] = useState(false);
+
+  // 🛡️ DRM Anti-Tamper: Detect deletion or style-stripping of watermark overlay via MutationObserver
+  useEffect(() => {
+    if (!watermarkText || !readerPanelRef.current) return;
+
+    const observer = new MutationObserver(() => {
+      const wm = watermarkContainerRef.current;
+      if (!wm || !document.body.contains(wm)) {
+        setIsWatermarkTampered(true);
+        return;
+      }
+      const style = window.getComputedStyle(wm);
+      if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') < 0.01) {
+        setIsWatermarkTampered(true);
+      }
+    });
+
+    observer.observe(readerPanelRef.current, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+    });
+
+    return () => observer.disconnect();
+  }, [watermarkText]);
 
   const scrollToTop = useCallback(() => {
     const reset = () => {
@@ -654,9 +682,12 @@ export default function DocumentExplorer({
             {/* Top Anchor for instant scroll reset */}
             <div ref={topAnchorRef} className="h-0 w-0 pointer-events-none" />
 
-            {/* Watermark */}
+            {/* Watermark & Print DRM Overlay */}
             {watermarkText && (
-              <div className="absolute inset-0 z-20 pointer-events-none select-none overflow-hidden flex flex-wrap content-around justify-around p-8 gap-20 font-mono text-xs font-black text-emerald-800 dark:text-emerald-300 opacity-10">
+              <div 
+                ref={watermarkContainerRef}
+                className="absolute inset-0 z-20 pointer-events-none select-none overflow-hidden flex flex-wrap content-around justify-around p-8 gap-20 font-mono text-xs font-black text-emerald-800 dark:text-emerald-300 opacity-10 print:opacity-20"
+              >
                 {Array.from({ length: 24 }).map((_, i) => (
                   <div key={i} style={{ transform: `rotate(${-38 - (i % 5) * 3}deg)`, opacity: 0.08 + (i % 4) * 0.02 }} className="whitespace-nowrap tracking-widest uppercase">
                     {watermarkText}
@@ -699,7 +730,12 @@ export default function DocumentExplorer({
             )}
 
             {/* Document content */}
-            {activeNode ? (
+            {isWatermarkTampered ? (
+              <div className="p-8 my-auto rounded-xl border border-rose-500/20 bg-rose-500/5 text-center text-rose-700 dark:text-rose-400 text-xs font-bold space-y-2">
+                <p>Security and DRM verification failed.</p>
+                <p className="font-normal text-rose-600/80">Tampering with anti-piracy watermarks is prohibited. Please reload the page.</p>
+              </div>
+            ) : activeNode ? (
               <ContentRenderer
                 content={activeNode.content}
                 emptyText="No content added yet."

@@ -68,7 +68,9 @@ table_checks AS (
         ('question_reports', 'database/create_feedback_reports_and_contact.sql'),
         ('contact_messages', 'database/create_feedback_reports_and_contact.sql'),
         -- Target F: Community & Upvotes Ledger
-        ('user_experience_upvotes', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql')
+        ('user_experience_upvotes', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql'),
+        -- Target G: Learning Progress & Mastery
+        ('user_question_progress', 'database/TARGET_G_APTITUDE_LEARNING_AND_BOOKMARKS_HARDENING.sql')
     ) AS t(table_name, migration_file)
 ),
 
@@ -299,7 +301,13 @@ function_checks AS (
         ('check_student_college_entitlement', 'database/MIGRATE_ALL_FIXES.sql'),
         ('get_colleges_usage_summary', 'database/MIGRATE_ALL_FIXES.sql'),
         ('toggle_experience_upvote', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql'),
-        ('check_feedback_rate_limit', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql')
+        ('check_feedback_rate_limit', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql'),
+        ('get_aptitude_category_stats', 'database/TARGET_G_APTITUDE_LEARNING_AND_BOOKMARKS_HARDENING.sql'),
+        ('erase_user_learning_and_bookmark_data', 'database/TARGET_G_APTITUDE_LEARNING_AND_BOOKMARKS_HARDENING.sql'),
+        ('get_secure_exams_by_company', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
+        ('get_secure_exam_by_id', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
+        ('save_exam_paper_tabs', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql'),
+        ('erase_user_paper_purchases', 'database/TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql')
     ) AS f(func_name, migration_file)
 ),
 

@@ -63,14 +63,24 @@ function saveLocalRecords(records: Record<string, QuestionProgressRecord>, userE
   }
 }
 
-function computeStreak(records: QuestionProgressRecord[]): number {
+/**
+ * Format date to YYYY-MM-DD in local system time to prevent UTC midnight skew
+ */
+export function formatLocalDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function computeStreak(records: QuestionProgressRecord[]): number {
   if (records.length === 0) return 0;
 
   // Extract unique active calendar days (YYYY-MM-DD in local time)
   const activeDays = new Set<string>();
   records.forEach((r) => {
     if (r.isSolved && r.completedAt) {
-      const dateStr = new Date(r.completedAt).toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const dateStr = formatLocalDate(new Date(r.completedAt));
       activeDays.add(dateStr);
     }
   });
@@ -78,9 +88,10 @@ function computeStreak(records: QuestionProgressRecord[]): number {
   if (activeDays.size === 0) return 0;
 
   const sortedDays = Array.from(activeDays).sort().reverse();
-  const today = new Date().toLocaleDateString('en-CA');
-  const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const yesterday = yesterdayDate.toLocaleDateString('en-CA');
+  const today = formatLocalDate(new Date());
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = formatLocalDate(yesterdayDate);
 
   // If user hasn't practiced today or yesterday, streak is broken
   const mostRecentDay = sortedDays[0];
@@ -89,10 +100,11 @@ function computeStreak(records: QuestionProgressRecord[]): number {
   }
 
   let streak = 0;
-  let checkDate = new Date(mostRecentDay);
+  const [y, m, d] = mostRecentDay.split('-').map(Number);
+  const checkDate = new Date(y, m - 1, d);
 
   for (let i = 0; i < sortedDays.length; i++) {
-    const currentExpectedStr = checkDate.toLocaleDateString('en-CA');
+    const currentExpectedStr = formatLocalDate(checkDate);
     if (activeDays.has(currentExpectedStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
@@ -245,6 +257,107 @@ export const progressService = {
    */
   getRecord: (questionId: string, userEmail?: string): QuestionProgressRecord | undefined => {
     return getLocalRecords(userEmail)[questionId];
+  },
+
+  /**
+   * High-speed category mastery calculation without fetching question rows.
+   * Joins client-side user records with server-aggregated category totals.
+   */
+  computeCategoryStats: (
+    categoryTotals: {
+      total_questions?: number;
+      easy_total?: number;
+      medium_total?: number;
+      hard_total?: number;
+      topic_counts?: Record<string, number>;
+    } | null | undefined,
+    recordsMap: Record<string, QuestionProgressRecord>,
+    categorySlug?: string
+  ): ProgressSummaryStats => {
+    const recordsList = Object.values(recordsMap || {});
+    const topicCounts = categoryTotals?.topic_counts || {};
+    const topicIdSet = new Set(Object.keys(topicCounts));
+
+    // Filter records belonging to this category either by explicit categorySlug or topicId membership
+    const catRecords = recordsList.filter((r) => {
+      if (categorySlug && r.categorySlug === categorySlug) return true;
+      if (r.topicId && topicIdSet.has(r.topicId)) return true;
+      return false;
+    });
+
+    let totalAttempted = 0;
+    let totalWrongAttempts = 0;
+    let totalSolved = 0;
+    let easySolved = 0;
+    let mediumSolved = 0;
+    let hardSolved = 0;
+    let firstTryCount = 0;
+
+    const topicMastery: Record<string, { solved: number; total: number; percentage: number }> = {};
+    Object.entries(topicCounts).forEach(([tId, count]) => {
+      topicMastery[tId] = { solved: 0, total: count, percentage: 0 };
+    });
+
+    catRecords.forEach((r) => {
+      const hasAttempt = r.isSolved || (r.wrongAttempts || 0) > 0 || Boolean(r.selectedOption);
+      if (hasAttempt) {
+        totalAttempted++;
+      }
+
+      totalWrongAttempts += (r.wrongAttempts || 0);
+
+      if (r.isSolved) {
+        totalSolved++;
+        if (r.firstTryCorrect && (r.wrongAttempts || 0) === 0 && !r.isRevealed) {
+          firstTryCount++;
+        }
+
+        const diff = (r.difficulty || 'MEDIUM').toUpperCase();
+        if (diff === 'EASY') easySolved++;
+        else if (diff === 'HARD') hardSolved++;
+        else mediumSolved++;
+
+        const tId = r.topicId;
+        if (tId) {
+          if (!topicMastery[tId]) {
+            topicMastery[tId] = { solved: 0, total: 0, percentage: 0 };
+          }
+          topicMastery[tId].solved++;
+        }
+      }
+    });
+
+    Object.keys(topicMastery).forEach((tId) => {
+      const entry = topicMastery[tId];
+      entry.percentage = entry.total > 0 ? Math.round((entry.solved / entry.total) * 100) : 0;
+    });
+
+    const totalSubmissions = totalSolved + totalWrongAttempts;
+    const accuracyRate = totalSubmissions > 0
+      ? Math.round((totalSolved / totalSubmissions) * 1000) / 10
+      : 0;
+
+    const firstTryAccuracyRate = totalAttempted > 0
+      ? Math.round((firstTryCount / totalAttempted) * 1000) / 10
+      : 0;
+
+    const streakDays = computeStreak(catRecords.filter((r) => r.isSolved));
+
+    return {
+      totalQuestions: categoryTotals?.total_questions || 0,
+      totalSolved,
+      totalAttempted,
+      easySolved,
+      easyTotal: categoryTotals?.easy_total || 0,
+      mediumSolved,
+      mediumTotal: categoryTotals?.medium_total || 0,
+      hardSolved,
+      hardTotal: categoryTotals?.hard_total || 0,
+      accuracyRate,
+      firstTryAccuracyRate,
+      streakDays,
+      topicMastery,
+    };
   },
 
   /**
@@ -443,7 +556,8 @@ export const progressService = {
   },
 
   /**
-   * Automatically migrate any practice questions solved as guest to the user's permanent Supabase account
+   * Automatically migrate any practice questions solved as guest to the user's permanent Supabase account.
+   * Executes in a single batched atomic upsert rather than N serial network roundtrips.
    */
   migrateGuestProgress: async (userEmail: string): Promise<void> => {
     if (!userEmail || userEmail === GUEST_EMAIL) return;
@@ -455,36 +569,41 @@ export const progressService = {
 
       const normalized = userEmail.trim().toLowerCase();
       const userRecords = getLocalRecords(normalized);
+      const batchToUpsert: any[] = [];
 
       for (const qId of guestKeys) {
         const gRec = guestRecords[qId];
         if (!userRecords[qId]) {
           userRecords[qId] = gRec;
-          try {
-            const { error: migErr } = await supabase.from('user_question_progress').upsert(
-              {
-                user_email: normalized,
-                question_id: gRec.questionId,
-                topic_id: gRec.topicId,
-                category_slug: gRec.categorySlug || null,
-                difficulty: gRec.difficulty,
-                selected_option: gRec.selectedOption,
-                correct_option: gRec.correctOption,
-                wrong_attempts: gRec.wrongAttempts,
-                is_solved: gRec.isSolved,
-                is_revealed: gRec.isRevealed,
-                first_try_correct: gRec.firstTryCorrect,
-                completed_at: gRec.completedAt || null,
-                last_attempted_at: gRec.lastAttemptedAt || new Date().toISOString(),
-              },
-              { onConflict: 'user_email,question_id' }
-            );
-            if (migErr) {
-              console.warn('[progressService] Guest migration upsert notice:', migErr.message);
-            }
-          } catch (e) {
-            console.warn('[progressService] Guest migration upsert notice:', e);
+          batchToUpsert.push({
+            user_email: normalized,
+            question_id: gRec.questionId,
+            topic_id: gRec.topicId,
+            category_slug: gRec.categorySlug || null,
+            difficulty: gRec.difficulty,
+            selected_option: gRec.selectedOption,
+            correct_option: gRec.correctOption,
+            wrong_attempts: gRec.wrongAttempts,
+            is_solved: gRec.isSolved,
+            is_revealed: gRec.isRevealed,
+            first_try_correct: gRec.firstTryCorrect,
+            completed_at: gRec.completedAt || null,
+            last_attempted_at: gRec.lastAttemptedAt || new Date().toISOString(),
+          });
+        }
+      }
+
+      if (batchToUpsert.length > 0) {
+        try {
+          const { error: migErr } = await supabase.from('user_question_progress').upsert(
+            batchToUpsert,
+            { onConflict: 'user_email,question_id' }
+          );
+          if (migErr) {
+            console.warn('[progressService] Guest migration batch upsert notice:', migErr.message);
           }
+        } catch (e) {
+          console.warn('[progressService] Guest migration batch upsert notice:', e);
         }
       }
 

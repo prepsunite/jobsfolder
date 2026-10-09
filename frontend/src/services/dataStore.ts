@@ -138,6 +138,7 @@ export interface TopicQuestionItem {
   version?: number; // 1
   topicId: string;
   questionNumber: number;
+  permanentNumber?: number;
   statement: string;
   options: QuestionOption[];
   correctAnswer: string; // "A", "B", "C", "D"

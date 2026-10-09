@@ -211,11 +211,45 @@ export const examService = {
     }
   },
 
+  getExamById: async (examId: string, userEmail?: string): Promise<ExamItem | null> => {
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_secure_exam_by_id', {
+        p_exam_id: examId,
+        p_user_email: userEmail || null,
+      });
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        const e = rpcData[0] as RpcExamRow;
+        return {
+          id: e.id,
+          companySlug: e.company_slug,
+          name: e.name,
+          badge: cleanExamBadge(e.badge) || 'Campus Recruitment Drive',
+          content: cleanExamContent(e.content),
+          oldPapers: e.old_papers || '',
+          price: e.price ? Number(e.price) : 99,
+          paperTabs: parsePaperTabs(e.paper_tabs),
+          googleDocEmbedUrl: e.google_doc_embed_url,
+          googleDocEditUrl: e.google_doc_edit_url,
+          isPublicExam: e.is_public_exam ?? false,
+          upvotes: e.upvotes || 0,
+          isHidden: parseExamHidden(e),
+        };
+      }
+    } catch (err) {
+      console.warn('[examService.getExamById] Secure RPC notice:', err);
+    }
+    return null;
+  },
+
   getAllExams: async (includeHidden = false): Promise<ExamWithCompany[]> => {
     try {
+      // 🛡️ SECURITY & PERFORMANCE: Exclude paper_tabs from global catalog query.
+      // Paper contents are paywalled proprietary assets and must only be fetched
+      // on demand per company via get_secure_exams_by_company or get_secure_exam_by_id RPCs.
       let query = supabase
         .from('exams')
-        .select('id, company_slug, company_id, name, badge, content, old_papers, price, paper_tabs, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
+        .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
         .eq('is_deleted', false);
 
       // 🛡️ SECURITY: Filter hidden/draft exams at the PostgreSQL engine level so drafts are not transmitted over the wire
@@ -258,7 +292,7 @@ export const examService = {
             content: cleanExamContent(e.content),
             oldPapers: e.old_papers || '',
             price: e.price ? Number(e.price) : 99,
-            paperTabs: parsePaperTabs(e.paper_tabs),
+            paperTabs: parsePaperTabs(e.paper_tabs || []),
             googleDocEmbedUrl: e.google_doc_embed_url,
             googleDocEditUrl: e.google_doc_edit_url,
             isPublicExam: e.is_public_exam ?? false,

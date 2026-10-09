@@ -281,75 +281,47 @@ export default function AptitudePage() {
   // Filter topics (Admins see all, Users see only visible)
   const currentCategoryTopics = rawTopics.filter(t => isAdmin || !t.is_hidden);
 
-  // Fetch questions for this category to compute live progress stats and topic counts
-  const { data: categoryQuestions = [], isLoading: isCatLoading } = useQuery({
-    queryKey: ['category-questions-stats', categorySlug, currentCategoryTopics.length],
+  // Fetch high-speed category stats directly via atomic Supabase RPC
+  const { data: categoryStatsData, isLoading: isCatLoading } = useQuery({
+    queryKey: ['category-questions-stats', categorySlug],
     queryFn: async () => {
-      if (!currentCategoryTopics.length) return [];
-      const topicIds = currentCategoryTopics.map((t) => t.id);
-      
-      let allFetchedData: any[] = [];
-      let page = 0;
-      const PAGE_SIZE = 1000;
-      let hasMore = true;
+      const { data, error } = await supabase.rpc('get_aptitude_category_stats', {
+        p_category_slug: categorySlug,
+      });
 
-      while (hasMore && page < 10) {
-        const { data, error } = await supabase
-          .from('topic_questions')
-          .select('id, difficulty, topic_id')
-          .in('topic_id', topicIds)
-          .eq('is_deleted', false)
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-        if (error) {
-          console.warn('Failed to fetch category questions for stats:', error);
-          break;
-        }
-
-        if (data && data.length > 0) {
-          allFetchedData = allFetchedData.concat(data);
-          if (data.length < PAGE_SIZE) {
-            hasMore = false;
-          } else {
-            page++;
-          }
-        } else {
-          hasMore = false;
-        }
+      if (error) {
+        console.warn('Failed to fetch category stats via RPC:', error);
+        return {
+          category_slug: categorySlug,
+          total_questions: 0,
+          easy_total: 0,
+          medium_total: 0,
+          hard_total: 0,
+          topic_counts: {} as Record<string, number>,
+        };
       }
 
-      if (allFetchedData.length > 0 && allFetchedData.length <= 5000) {
-        try {
-          localStorage.setItem(`prepunite_cat_q_cache_${categorySlug}`, JSON.stringify(allFetchedData));
-        } catch {}
-      }
-
-      return allFetchedData;
+      return data as {
+        category_slug: string;
+        total_questions: number;
+        easy_total: number;
+        medium_total: number;
+        hard_total: number;
+        topic_counts: Record<string, number>;
+      };
     },
-    initialData: () => {
-      try {
-        const cached = localStorage.getItem(`prepunite_cat_q_cache_${categorySlug}`);
-        if (!cached) return undefined;
-        const parsed = JSON.parse(cached);
-        return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined;
-      } catch { return undefined; }
-    },
-    enabled: currentCategoryTopics.length > 0,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
   });
 
-  // Derive per-topic question counts directly from categoryQuestions
+  // Derive per-topic question counts directly from RPC aggregation
   const liveCountMap = useMemo(() => {
     const countMap: Record<string, number> = {};
-    currentCategoryTopics.forEach(t => { countMap[t.id] = 0; });
-    categoryQuestions.forEach((q: any) => {
-      if (q.topic_id) {
-        countMap[q.topic_id] = (countMap[q.topic_id] || 0) + 1;
-      }
+    currentCategoryTopics.forEach(t => {
+      countMap[t.id] = categoryStatsData?.topic_counts?.[t.id] || 0;
     });
     return countMap;
-  }, [currentCategoryTopics, categoryQuestions]);
+  }, [currentCategoryTopics, categoryStatsData]);
 
   const queryClient = useQueryClient();
 
@@ -374,8 +346,8 @@ export default function AptitudePage() {
   });
 
   const categoryStats = useMemo(() => {
-    return progressService.computeStatsFromRecords(categoryQuestions, progressRecords);
-  }, [categoryQuestions, progressRecords]);
+    return progressService.computeCategoryStats(categoryStatsData, progressRecords, categorySlug);
+  }, [categoryStatsData, progressRecords, categorySlug]);
 
   const categoryTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
     'arithmetic-aptitude': { title: 'Arithmetic Aptitude', subtitle: 'Practice basic arithmetic problems.', icon: Calculator },
@@ -517,7 +489,7 @@ export default function AptitudePage() {
           <div className="flex-1 lg:max-w-2xl">
             <AptitudeStatsWidget
               stats={categoryStats}
-              isLoading={(isCatLoading && categoryQuestions.length === 0) || isProgressLoading}
+              isLoading={(isCatLoading && !categoryStatsData) || isProgressLoading}
               title={`${currentCategoryInfo.title} Progress`}
               variant="embedded"
               showBadges={false}

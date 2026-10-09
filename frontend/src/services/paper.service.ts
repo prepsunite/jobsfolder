@@ -1,15 +1,76 @@
 import { supabase } from '@/lib/supabase';
-import { dataStore, type AuthorizedPaperResponse, type DocTabNode } from '@/services/dataStore';
+import { type DocTabNode, type AuthorizedPaperResponse, dataStore } from '@/services/dataStore';
+import { supabasePaymentService } from '@/services/supabasePaymentService';
+import { flattenNodes } from '@/utils/treeUtils';
 
 export class PaperService {
+  /**
+   * Secure backend authorization gateway for old papers.
+   * Verifies live entitlement against PostgreSQL user_subscriptions and user_paper_purchases.
+   * Eliminates client-spoofable localStorage bypasses and hardcoded mock identifiers.
+   */
   static async requestAuthorizedDocument(
     examId: string,
     userRole?: string,
-    userEmail: string = 'student@jobsfolder.com'
+    userEmail?: string
   ): Promise<AuthorizedPaperResponse> {
-    return dataStore.requestAuthorizedDocument(examId, userRole, userEmail);
+    if (userRole === 'ADMIN') {
+      return {
+        status: 'AUTHORIZED',
+        documentUrl: null,
+        isAuthorized: true,
+        userEmail: userEmail || 'admin@prepunite.com',
+        timestamp: new Date().toLocaleString(),
+        watermarkText: `${userEmail || 'Admin'} • PrepUnite Administrator • ${new Date().toLocaleDateString()}`,
+        reasonCode: 'ADMIN_ONLY',
+      };
+    }
+
+    if (!userEmail) {
+      return {
+        status: 'PAYMENT_REQUIRED',
+        documentUrl: null,
+        isAuthorized: false,
+        reasonCode: 'PAYMENT_REQUIRED',
+      };
+    }
+
+    try {
+      // 1. Live server verification via Supabase entitlement validator
+      const isEntitled = await supabasePaymentService.verifyEntitlementOnSupabase(userEmail, examId);
+
+      if (!isEntitled) {
+        return {
+          status: 'PAYMENT_REQUIRED',
+          documentUrl: null,
+          isAuthorized: false,
+          reasonCode: 'PAYMENT_REQUIRED',
+        };
+      }
+
+      return {
+        status: 'AUTHORIZED',
+        documentUrl: null,
+        isAuthorized: true,
+        userEmail,
+        timestamp: new Date().toLocaleString(),
+        watermarkText: `${userEmail} • PrepUnite Verified Pass • ${new Date().toLocaleDateString()}`,
+        reasonCode: 'AUTHORIZED',
+      };
+    } catch (err) {
+      console.error('[PaperService.requestAuthorizedDocument] Authorization check error:', err);
+      return {
+        status: 'PAYMENT_REQUIRED',
+        documentUrl: null,
+        isAuthorized: false,
+        reasonCode: 'PAYMENT_REQUIRED',
+      };
+    }
   }
 
+  /**
+   * Fetches tab nodes for an exam from public.paper_tab_nodes.
+   */
   static async getPaperTabNodes(examId: string): Promise<DocTabNode[]> {
     try {
       const { data, error } = await supabase
@@ -31,6 +92,7 @@ export class PaperService {
           emoji: n.emoji || '📄',
           content: n.content || '',
           parentId: n.parent_id,
+          isFree: n.is_free,
         }));
       }
     } catch (err) {
@@ -39,7 +101,28 @@ export class PaperService {
     return [];
   }
 
+  /**
+   * Atomically synchronizes exam paper tabs into both public.exams (JSONB)
+   * and public.paper_tab_nodes (relational tree) via the atomic RPC.
+   */
   static async savePaperTabNodes(examId: string, tabs: DocTabNode[]): Promise<void> {
+    // 1. Primary path: Atomic PostgreSQL RPC that updates exams.paper_tabs AND synchronizes paper_tab_nodes
+    try {
+      const { error: rpcErr } = await supabase.rpc('save_exam_paper_tabs', {
+        p_exam_id: examId,
+        p_tabs: tabs,
+      });
+
+      if (!rpcErr) {
+        dataStore.updateExam(examId, { paperTabs: tabs });
+        return;
+      }
+      console.warn('[PaperService.savePaperTabNodes] RPC notice, using multi-step fallback:', rpcErr.message);
+    } catch (rpcEx) {
+      console.warn('[PaperService.savePaperTabNodes] RPC exception, using fallback:', rpcEx);
+    }
+
+    // 2. Resilient fallback: Direct Supabase updates
     try {
       const { error } = await supabase
         .from('exams')
@@ -55,10 +138,11 @@ export class PaperService {
       throw err;
     }
 
-    // 🛡️ Storage Sync: Also synchronize rows into paper_tab_nodes relational table
+    // Synchronize full flattened tree (including nested child nodes) into paper_tab_nodes
     try {
       if (tabs.length > 0) {
-        const rows = tabs.map((t, idx) => ({
+        const flat = flattenNodes(tabs);
+        const rows = flat.map((t, idx) => ({
           id: t.id,
           exam_id: examId,
           title: t.title,
@@ -66,6 +150,7 @@ export class PaperService {
           content: t.content || '',
           parent_id: (t as any).parentId || null,
           sort_order: idx,
+          is_free: t.isFree === true,
           is_deleted: false,
           updated_at: new Date().toISOString(),
         }));

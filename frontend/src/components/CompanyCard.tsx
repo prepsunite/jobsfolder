@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import type { Company } from '@/types/company';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Building2, ArrowRight, Edit3, Trash2, Eye, EyeOff } from 'lucide-react';
 
@@ -12,9 +12,9 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibility }: CompanyCardProps) {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const { confirmModal } = useToast();
-  const isAdmin = role === 'ADMIN';
+  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
 
   return (
     <div className={`group relative bg-white dark:bg-[#141414] border rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between ${

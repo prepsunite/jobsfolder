@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CompanyCard from '@/components/CompanyCard';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { Search, Building2, SlidersHorizontal, Plus, XCircle, EyeOff } from 'lucide-react';
 import type { Company } from '@/types/company';
 import LogoLoader from '@/components/LogoLoader';
@@ -10,8 +10,8 @@ import { companyService } from '@/services/company.service';
 import { useToast } from '@/contexts/ToastContext';
 
 export default function CompaniesPage() {
-  const { role } = useAuth();
-  const isAdmin = role === 'ADMIN';
+  const { role, user } = useAuth();
+  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
 

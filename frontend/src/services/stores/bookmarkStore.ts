@@ -7,8 +7,6 @@ const STORAGE_KEYS = {
 } as const;
 
 class BookmarkStore {
-  private syncBookmarksTimeout: ReturnType<typeof setTimeout> | null = null;
-
   private getStorage<T>(key: string, fallback: T): T {
     try {
       const data = localStorage.getItem(key);
@@ -25,6 +23,50 @@ class BookmarkStore {
       if (e?.name === 'QuotaExceededError' || e?.code === 22 || e?.code === 1014) {
         console.warn(`[bookmarkStore] LocalStorage quota exceeded while caching key "${key}".`);
       }
+    }
+  }
+
+  /**
+   * Persist single bookmark mutation directly to public.user_bookmarks relational table.
+   * Completely avoids storing bookmark IDs in JWT user_metadata, eliminating HTTP 431 header explosion risks.
+   */
+  private async persistBookmarkItem(
+    itemType: 'question' | 'exam' | 'experience',
+    itemId: string,
+    isBookmarked: boolean
+  ): Promise<void> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userEmail = session?.user?.email;
+      if (!userEmail) return;
+
+      const normalizedEmail = userEmail.trim().toLowerCase();
+
+      if (isBookmarked) {
+        const { error } = await supabase.from('user_bookmarks').upsert(
+          {
+            user_email: normalizedEmail,
+            user_id: session.user.id,
+            item_type: itemType,
+            item_id: itemId,
+          },
+          { onConflict: 'user_email,item_type,item_id' }
+        );
+        if (error) {
+          console.warn(`[bookmarkStore] Supabase insert bookmark error:`, error.message);
+        }
+      } else {
+        const { error } = await supabase.from('user_bookmarks').delete().match({
+          user_email: normalizedEmail,
+          item_type: itemType,
+          item_id: itemId,
+        });
+        if (error) {
+          console.warn(`[bookmarkStore] Supabase delete bookmark error:`, error.message);
+        }
+      }
+    } catch (err) {
+      console.warn(`[bookmarkStore] Failed to persist ${itemType} bookmark to Supabase:`, err);
     }
   }
 
@@ -51,7 +93,8 @@ class BookmarkStore {
     }
 
     this.setStorage(STORAGE_KEYS.BOOKMARKED_EXAMS, updated);
-    this.syncBookmarksWithSupabase();
+    this.persistBookmarkItem('exam', examId, isBookmarked);
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
     }
@@ -81,7 +124,8 @@ class BookmarkStore {
     }
 
     this.setStorage(STORAGE_KEYS.BOOKMARKED_QUESTIONS, updated);
-    this.syncBookmarksWithSupabase();
+    this.persistBookmarkItem('question', questionId, isBookmarked);
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
     }
@@ -111,7 +155,8 @@ class BookmarkStore {
     }
 
     this.setStorage(STORAGE_KEYS.BOOKMARKED_EXPERIENCES, updated);
-    this.syncBookmarksWithSupabase();
+    this.persistBookmarkItem('experience', expId, isBookmarked);
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
     }
@@ -122,84 +167,136 @@ class BookmarkStore {
   async syncBookmarksWithSupabase(): Promise<void> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      const userEmail = session?.user?.email;
+      if (!userEmail) return;
 
+      const normalizedEmail = userEmail.trim().toLowerCase();
       const questions = this.getBookmarkedQuestionIds();
       const exams = this.getBookmarkedExamIds();
       const experiences = this.getBookmarkedExperienceIds();
 
-      if (this.syncBookmarksTimeout) clearTimeout(this.syncBookmarksTimeout);
-      this.syncBookmarksTimeout = setTimeout(async () => {
-        try {
-          // Cap recent bookmarks in user_metadata to prevent HTTP 431 Request Header Too Large
-          const safeQuestions = questions.slice(-100);
-          const safeExams = exams.slice(-100);
-          const safeExperiences = experiences.slice(-100);
+      const rowsToUpsert = [
+        ...questions.map((id) => ({
+          user_email: normalizedEmail,
+          user_id: session.user.id,
+          item_type: 'question',
+          item_id: id,
+        })),
+        ...exams.map((id) => ({
+          user_email: normalizedEmail,
+          user_id: session.user.id,
+          item_type: 'exam',
+          item_id: id,
+        })),
+        ...experiences.map((id) => ({
+          user_email: normalizedEmail,
+          user_id: session.user.id,
+          item_type: 'experience',
+          item_id: id,
+        })),
+      ];
 
-          await supabase.auth.updateUser({
-            data: {
-              bookmarked_questions: safeQuestions,
-              bookmarked_exams: safeExams,
-              bookmarked_experiences: safeExperiences,
-            },
-          });
-        } catch (e) {
-          console.warn('[bookmarkStore] Supabase bookmarks sync notice:', e);
+      if (rowsToUpsert.length > 0) {
+        const { error } = await supabase.from('user_bookmarks').upsert(rowsToUpsert, {
+          onConflict: 'user_email,item_type,item_id',
+        });
+        if (error) {
+          console.warn('[bookmarkStore] syncBookmarksWithSupabase notice:', error.message);
         }
-      }, 1500);
+      }
     } catch (err) {
-      console.warn('[bookmarkStore] Failed to check auth session for bookmark sync:', err);
+      console.warn('[bookmarkStore] syncBookmarksWithSupabase notice:', err);
     }
   }
 
-  async hydrateBookmarksFromSupabase(userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
+  /**
+   * Hydrates bookmarks from public.user_bookmarks in Supabase.
+   * Merges with any guest/offline bookmarks stored locally and pushes delta to database.
+   */
+  async hydrateBookmarksFromSupabase(_userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
     try {
-      let meta = userMetadata;
-      if (!meta) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          return {
-            questions: this.getBookmarkedQuestionIds(),
-            exams: this.getBookmarkedExamIds(),
-            experiences: this.getBookmarkedExperienceIds(),
-          };
-        }
-        meta = session.user.user_metadata || {};
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.email) {
+        return {
+          questions: this.getBookmarkedQuestionIds(),
+          exams: this.getBookmarkedExamIds(),
+          experiences: this.getBookmarkedExperienceIds(),
+        };
       }
 
-      const remoteQuestions: string[] = Array.isArray(meta.bookmarked_questions) ? meta.bookmarked_questions : [];
-      const remoteExams: string[] = Array.isArray(meta.bookmarked_exams) ? meta.bookmarked_exams : [];
-      const remoteExps: string[] = Array.isArray(meta.bookmarked_experiences) ? meta.bookmarked_experiences : [];
+      const userEmail = session.user.email.trim().toLowerCase();
+
+      // Query relational user_bookmarks table
+      const { data, error } = await supabase
+        .from('user_bookmarks')
+        .select('item_type, item_id')
+        .eq('user_email', userEmail);
+
+      if (error) {
+        console.warn('[bookmarkStore] Supabase fetch bookmarks notice:', error.message);
+        return {
+          questions: this.getBookmarkedQuestionIds(),
+          exams: this.getBookmarkedExamIds(),
+          experiences: this.getBookmarkedExperienceIds(),
+        };
+      }
+
+      const remoteQuestions: string[] = [];
+      const remoteExams: string[] = [];
+      const remoteExperiences: string[] = [];
+
+      (data || []).forEach((row: { item_type: string; item_id: string }) => {
+        if (row.item_type === 'question') remoteQuestions.push(row.item_id);
+        else if (row.item_type === 'exam') remoteExams.push(row.item_id);
+        else if (row.item_type === 'experience') remoteExperiences.push(row.item_id);
+      });
 
       const localQuestions = this.getBookmarkedQuestionIds();
       const localExams = this.getBookmarkedExamIds();
-      const localExps = this.getBookmarkedExperienceIds();
+      const localExperiences = this.getBookmarkedExperienceIds();
+
+      // Migrate any locally saved guest bookmarks to remote database
+      const missingQuestions = localQuestions.filter((id) => !remoteQuestions.includes(id));
+      const missingExams = localExams.filter((id) => !remoteExams.includes(id));
+      const missingExps = localExperiences.filter((id) => !remoteExperiences.includes(id));
+
+      const missingItems = [
+        ...missingQuestions.map((id) => ({
+          user_email: userEmail,
+          user_id: session.user.id,
+          item_type: 'question',
+          item_id: id,
+        })),
+        ...missingExams.map((id) => ({
+          user_email: userEmail,
+          user_id: session.user.id,
+          item_type: 'exam',
+          item_id: id,
+        })),
+        ...missingExps.map((id) => ({
+          user_email: userEmail,
+          user_id: session.user.id,
+          item_type: 'experience',
+          item_id: id,
+        })),
+      ];
+
+      if (missingItems.length > 0) {
+        await supabase.from('user_bookmarks').upsert(missingItems, {
+          onConflict: 'user_email,item_type,item_id',
+        });
+      }
 
       const mergedQuestions = Array.from(new Set([...localQuestions, ...remoteQuestions]));
       const mergedExams = Array.from(new Set([...localExams, ...remoteExams]));
-      const mergedExps = Array.from(new Set([...localExps, ...remoteExps]));
+      const mergedExps = Array.from(new Set([...localExperiences, ...remoteExperiences]));
 
-      const changed =
-        mergedQuestions.length !== localQuestions.length ||
-        mergedExams.length !== localExams.length ||
-        mergedExps.length !== localExps.length;
+      this.setStorage(STORAGE_KEYS.BOOKMARKED_QUESTIONS, mergedQuestions);
+      this.setStorage(STORAGE_KEYS.BOOKMARKED_EXAMS, mergedExams);
+      this.setStorage(STORAGE_KEYS.BOOKMARKED_EXPERIENCES, mergedExps);
 
-      if (changed) {
-        this.setStorage(STORAGE_KEYS.BOOKMARKED_QUESTIONS, mergedQuestions);
-        this.setStorage(STORAGE_KEYS.BOOKMARKED_EXAMS, mergedExams);
-        this.setStorage(STORAGE_KEYS.BOOKMARKED_EXPERIENCES, mergedExps);
-
-        if (
-          mergedQuestions.length > remoteQuestions.length ||
-          mergedExams.length > remoteExams.length ||
-          mergedExps.length > remoteExps.length
-        ) {
-          this.syncBookmarksWithSupabase();
-        }
-
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
-        }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
       }
 
       return {

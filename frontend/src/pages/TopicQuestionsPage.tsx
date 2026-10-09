@@ -161,7 +161,7 @@ export default function TopicQuestionsPage() {
       if (error) throw error;
 
       if (data) {
-        const mapped: TopicQuestionItem[] = data.map((q: any) => {
+        const mapped: TopicQuestionItem[] = data.map((q: any, idx: number) => {
           const parsedStructured = typeof q.structured_explanation === 'string'
             ? (() => { try { return JSON.parse(q.structured_explanation); } catch { return undefined; } })()
             : (q.structured_explanation || undefined);
@@ -180,17 +180,31 @@ export default function TopicQuestionsPage() {
             catch { return []; }
           })();
 
-          const normOpts = Array.isArray(rawOpts) ? rawOpts.map((opt: any) => ({
-            ...opt,
-            text: normalizeMathText(opt.text || String(opt))
-          })) : [];
+          const normOpts = Array.isArray(rawOpts) ? rawOpts.map((opt: any, optIdx: number) => {
+            const fallbackKey = ['A', 'B', 'C', 'D', 'E'][optIdx] || String.fromCharCode(65 + optIdx);
+            if (typeof opt === 'string') {
+              return {
+                id: fallbackKey,
+                key: fallbackKey,
+                text: normalizeMathText(opt),
+              };
+            }
+            return {
+              ...opt,
+              id: opt?.id || opt?.key || fallbackKey,
+              key: opt?.key || opt?.id || fallbackKey,
+              text: normalizeMathText(opt?.text || String(opt || '')),
+            };
+          }) : [];
 
           const formulas = parsedStructured?.formulaUsed || q.structured_explanation?.formulaUsed || [];
+          const qNum = q.question_number || (idx + 1);
 
           return {
             id: q.id,
             topicId: q.topic_id,
-            questionNumber: q.question_number || 1,
+            questionNumber: qNum,
+            permanentNumber: qNum,
             statement: normalizeMathText(q.statement || ''),
             options: normOpts,
             correctAnswer: resolvedLetter,
@@ -1100,7 +1114,7 @@ export default function TopicQuestionsPage() {
 
                     {/* Question Number Badge (Permanent ID) */}
                     <span className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-[#1C1C1C] text-neutral-700 dark:text-neutral-300 font-display font-bold text-[10px] tracking-tight border border-neutral-200 dark:border-neutral-700/60">
-                      Question #{q.permanentNumber}
+                      Question #{q.permanentNumber ?? q.questionNumber}
                     </span>
 
                     {/* Color-coded Difficulty Badge */}
@@ -1188,8 +1202,9 @@ export default function TopicQuestionsPage() {
 
                   return (
                     <div className={gridClass}>
-                      {q.options.map((opt) => {
-                        const optId = opt.id || opt.key || 'A';
+                      {q.options.map((opt, optIdx) => {
+                        const fallbackKey = ['A', 'B', 'C', 'D', 'E'][optIdx] || String.fromCharCode(65 + optIdx);
+                        const optId = opt.id || opt.key || fallbackKey;
                         const isCorrect = optId.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
                         const wasWrong = wrongOptions.includes(optId) || (!isSolved && prog?.selectedOption === optId && !isCorrect);
 

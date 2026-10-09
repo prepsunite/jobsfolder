@@ -50,8 +50,8 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const [searchParams, setSearchParams] = useSearchParams();
   const urlExamId = searchParams.get('examId');
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isAdmin = isSuperAdminEmail(user?.email);
+  const { user, role } = useAuth();
+  const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
   const { isAdFree } = useSubscription();
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
@@ -246,18 +246,19 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     // If current user is Admin, never block copy/paste/cut anywhere
     if (isAdmin) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const isEditable = target && (
+    const isTargetEditable = (target: HTMLElement | null) => {
+      return !!(target && (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable ||
-        !!target.closest('[contenteditable="true"]') ||
-        !!target.closest('.tiptap-wrapper')
-      );
+        target.closest('[contenteditable="true"]') ||
+        target.closest('.tiptap-wrapper')
+      ));
+    };
 
-      // Only block if target is NOT an editable element
-      if (!isEditable) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!isTargetEditable(target)) {
         const isCtrl = e.ctrlKey || e.metaKey;
         const key = e.key.toLowerCase();
 
@@ -268,9 +269,29 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
       }
     };
 
+    const handleCopy = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!isTargetEditable(target)) {
+        e.preventDefault();
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (activeTab === 'oldPapers' && !isTargetEditable(target)) {
+        e.preventDefault();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isAdmin]);
+    window.addEventListener('copy', handleCopy, true);
+    window.addEventListener('contextmenu', handleContextMenu, true);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('copy', handleCopy, true);
+      window.removeEventListener('contextmenu', handleContextMenu, true);
+    };
+  }, [isAdmin, activeTab]);
 
 
   const forceRefreshData = () => {
