@@ -288,29 +288,7 @@ export default async function handler(req, res) {
         const allAttempts = attempts || [];
         const seenAttemptIds = new Set(allAttempts.map(a => a.id));
 
-        // Cloud sync fallback: check contact_messages for any attempts not yet in relational table
-        try {
-          const { data: cloudMsgs } = await supabaseAdmin
-            .from('contact_messages')
-            .select('message')
-            .like('subject', `B2B_ATTEMPT:${examId}:%`)
-            .neq('status', 'DELETED')
-            .order('created_at', { ascending: false });
-
-          if (cloudMsgs && cloudMsgs.length > 0) {
-            for (const m of cloudMsgs) {
-              try {
-                const parsed = JSON.parse(m.message);
-                if (parsed && parsed.id && !seenAttemptIds.has(parsed.id)) {
-                  seenAttemptIds.add(parsed.id);
-                  allAttempts.push(parsed);
-                  // Backfill into student_exam_attempts
-                  supabaseAdmin.from('student_exam_attempts').upsert(parsed, { onConflict: 'id' }).catch(() => {});
-                }
-              } catch {}
-            }
-          }
-        } catch {}
+        // Authoritative attempts from student_exam_attempts
         if (allAttempts.length > 0) {
           const studentEmails = Array.from(new Set(allAttempts.map(a => a.student_email || a.student_id).filter(Boolean)));
           const studentIds = Array.from(new Set(allAttempts.map(a => a.student_id).filter(Boolean)));
@@ -562,16 +540,6 @@ export default async function handler(req, res) {
           .select()
           .single();
 
-        try {
-          await supabaseAdmin.from('contact_messages').insert({
-            name: `Candidate Start: ${cleanEmail}`,
-            email: cleanEmail.includes('@') ? cleanEmail : 'student@prepunite.com',
-            subject: `B2B_ATTEMPT:${startRow.mock_exam_id}:${cleanEmail || startRow.id}`,
-            message: JSON.stringify(startRow),
-            status: 'IN_PROGRESS',
-          });
-        } catch {}
-
         return res.status(200).json({ success: true, attempt: saved || startRow });
       }
 
@@ -595,6 +563,40 @@ export default async function handler(req, res) {
           return res.status(403).json({ error: 'Forbidden: You cannot submit an attempt on behalf of another candidate.' });
         }
 
+        const isFinalSubmission = ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE'].includes(attempt.status);
+
+        // 🛡️ SECURITY ENFORCEMENT: Delegate grading to authoritative database RPC
+        if (isFinalSubmission) {
+          try {
+            const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('submit_exam_attempt_v2', {
+              p_attempt_id: attempt.id,
+              p_responses: attempt.responses || {},
+              p_time_spent_seconds: Math.max(0, Number(attempt.time_spent_seconds || 0)),
+              p_proctor_events: attempt.proctor_events || [],
+              p_tab_switch_count: Math.max(0, Number(attempt.tab_switch_count || 0)),
+              p_status_override: attempt.status || null,
+            });
+
+            if (!rpcErr && rpcData) {
+              const { data: authoritativeRow } = await supabaseAdmin
+                .from('student_exam_attempts')
+                .select('*')
+                .eq('id', attempt.id)
+                .maybeSingle();
+
+              return res.status(200).json({
+                success: true,
+                attempt: authoritativeRow || { ...attempt, ...rpcData },
+              });
+            } else if (rpcErr) {
+              console.warn('[api/campus-exams] submit_exam_attempt_v2 RPC notice:', rpcErr);
+            }
+          } catch (rpcEx) {
+            console.warn('[api/campus-exams] submit_exam_attempt_v2 exception:', rpcEx);
+          }
+        }
+
+        // Fallback / Draft update: Prevent client-side score forgery
         const attemptRow = {
           id: attempt.id,
           mock_exam_id: attempt.mock_exam_id,
@@ -604,36 +606,26 @@ export default async function handler(req, res) {
           status: attempt.status || 'SUBMITTED',
           started_at: attempt.started_at || new Date().toISOString(),
           submitted_at: attempt.submitted_at || new Date().toISOString(),
-          time_spent_seconds: attempt.time_spent_seconds || 0,
-          total_score: Number(attempt.total_score || 0),
-          max_possible_score: Number(attempt.max_possible_score || 100),
-          percentage: Number(attempt.percentage || 0),
-          passed: Boolean(attempt.passed),
-          tab_switch_count: attempt.tab_switch_count || 0,
+          time_spent_seconds: Math.max(0, Number(attempt.time_spent_seconds || 0)),
+          tab_switch_count: Math.max(0, Number(attempt.tab_switch_count || 0)),
           proctor_events: attempt.proctor_events || [],
           responses: attempt.responses || {},
           updated_at: new Date().toISOString(),
         };
+
+        // Score attributes strictly permitted ONLY for verified super admins
+        if (isSuperAdmin) {
+          attemptRow.total_score = Number(attempt.total_score || 0);
+          attemptRow.max_possible_score = Number(attempt.max_possible_score || 100);
+          attemptRow.percentage = Number(attempt.percentage || 0);
+          attemptRow.passed = Boolean(attempt.passed);
+        }
 
         const { data: savedAttempt, error: saveErr } = await supabaseAdmin
           .from('student_exam_attempts')
           .upsert(attemptRow, { onConflict: 'id' })
           .select()
           .single();
-
-        // Immutable cloud backup to contact_messages
-        try {
-          const studentIdentifier = (attemptRow.student_email || attemptRow.student_id || attemptRow.id).toLowerCase();
-          await supabaseAdmin.from('contact_messages').insert({
-            name: `Candidate Submit: ${attemptRow.student_email}`,
-            email: attemptRow.student_email.includes('@') ? attemptRow.student_email : 'student@prepunite.com',
-            subject: `B2B_ATTEMPT:${attemptRow.mock_exam_id}:${studentIdentifier}`,
-            message: JSON.stringify(attemptRow),
-            status: attemptRow.status,
-          });
-        } catch (msgErr) {
-          console.warn('[api/campus-exams] Backup notice:', msgErr);
-        }
 
         if (saveErr) {
           console.error('[api/campus-exams] Notice upserting student_exam_attempts:', saveErr);

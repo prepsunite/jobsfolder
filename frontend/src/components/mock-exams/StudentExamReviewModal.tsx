@@ -421,7 +421,7 @@ export default function StudentExamReviewModal({
                             <div className="shrink-0 flex items-center gap-1.5 text-[10px] font-bold">
                               {isStudentPick && (
                                 <span className={`px-2 py-0.5 rounded ${isVerifiedCorrect ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}`}>
-                                  Your Choice
+                                  Your Choice {currentItem.response?.selected_label && currentItem.response?.selected_label !== String.fromCharCode(65 + optIdx) ? `(Seen as ${currentItem.response.selected_label})` : ''}
                                 </span>
                               )}
                               {isVerifiedCorrect && (

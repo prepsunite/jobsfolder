@@ -730,11 +730,23 @@ export default function StudentAnswerSheetPage() {
                               {resp?.code_solution ? `Submitted Code (${resp.test_cases_passed || 0}/${resp.total_test_cases || 0} Test Cases Passed)` : 'No Code Written'}
                             </span>
                           ) : resp?.selected_option !== null && resp?.selected_option !== undefined ? (
-                            <span className={`font-mono font-black px-2.5 py-0.5 rounded-lg text-white shadow-2xs ${
-                              q.is_correct ? 'bg-emerald-600' : 'bg-rose-600'
-                            }`}>
-                              Option {String.fromCharCode(65 + Number(resp.selected_option))}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`font-mono font-black px-2.5 py-0.5 rounded-lg text-white shadow-2xs ${
+                                q.is_correct ? 'bg-emerald-600' : 'bg-rose-600'
+                              }`}>
+                                Option {String.fromCharCode(65 + Number(resp.selected_option))}
+                              </span>
+                              {resp.selected_label && resp.selected_label !== String.fromCharCode(65 + Number(resp.selected_option)) && (
+                                <span className="text-[10px] text-slate-500 font-medium bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                  Seen as Option {resp.selected_label}
+                                </span>
+                              )}
+                              {resp.selected_text && (
+                                <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate max-w-xs">
+                                  (&ldquo;{resp.selected_text}&rdquo;)
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <span className="italic text-slate-500 font-semibold">Not Attempted (Skipped)</span>
                           )}
@@ -784,7 +796,7 @@ export default function StudentAnswerSheetPage() {
                             badgeContent = (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shrink-0">
                                 <Check className="w-3 h-3 stroke-[3]" />
-                                <span>Your Correct Choice</span>
+                                <span>Your Correct Choice {resp?.selected_label && resp?.selected_label !== optionLetter ? `(Seen as ${resp.selected_label})` : ''}</span>
                               </span>
                             );
                           } else if (isStudentChoice && !isCorrectOption) {
@@ -793,7 +805,7 @@ export default function StudentAnswerSheetPage() {
                             badgeContent = (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shrink-0">
                                 <X className="w-3 h-3 stroke-[3]" />
-                                <span>Your Choice (Incorrect)</span>
+                                <span>Your Choice (Incorrect) {resp?.selected_label && resp?.selected_label !== optionLetter ? `(Seen as ${resp.selected_label})` : ''}</span>
                               </span>
                             );
                           } else if (isCorrectOption) {

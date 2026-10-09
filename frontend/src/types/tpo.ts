@@ -105,12 +105,14 @@ export interface MockExamSection {
 
 export interface ProctorEvent {
   timestamp: string;
-  type: 'BLUR' | 'FOCUS' | 'FULLSCREEN_EXIT' | 'FULLSCREEN_ENTER' | 'TAB_SWITCH' | 'DEVTOOLS_OPEN';
+  type: 'BLUR' | 'FOCUS' | 'FULLSCREEN_EXIT' | 'FULLSCREEN_ENTER' | 'TAB_SWITCH' | 'DEVTOOLS_OPEN' | 'WINDOW_BLUR';
   details?: string;
 }
 
 export interface StudentExamResponse {
   selected_option: number | null;
+  selected_label?: string;
+  selected_text?: string;
   code_solution?: string;
   code_language?: string;
   test_cases_passed?: number;

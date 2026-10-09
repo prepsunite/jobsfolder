@@ -4173,10 +4173,37 @@ export const tpoService = {
     );
 
     if (totalQCount === 0 || (resolvedExam.sections || []).some(s => !s.question_ids || s.question_ids.length === 0)) {
-      return await this.hydrateExamSections(resolvedExam);
+      const hydrated = await this.hydrateExamSections(resolvedExam);
+      return await this.sanitizeExamPasscode(hydrated);
     }
 
-    return resolvedExam;
+    return await this.sanitizeExamPasscode(resolvedExam);
+  },
+
+  async sanitizeExamPasscode(exam: MockExam): Promise<MockExam> {
+    if (!exam) return exam;
+    let isTpoOrAdmin = this.isTpoForCollege(exam.college_id);
+    if (!isTpoOrAdmin && typeof window !== 'undefined') {
+      try {
+        const cachedUser = JSON.parse(localStorage.getItem('prepunite_user') || '{}');
+        if (['admin', 'super_admin'].includes(cachedUser?.role) || cachedUser?.email?.includes('admin')) {
+          isTpoOrAdmin = true;
+        }
+      } catch {}
+    }
+
+    let passcodeHash = exam.access_passcode_hash;
+    if (exam.access_passcode && !passcodeHash) {
+      try {
+        passcodeHash = await sha256Text(exam.access_passcode.trim().toUpperCase());
+      } catch {}
+    }
+
+    return {
+      ...exam,
+      access_passcode: isTpoOrAdmin ? exam.access_passcode : undefined,
+      access_passcode_hash: passcodeHash || exam.access_passcode_hash,
+    };
   },
 
   // ==========================================
@@ -6082,18 +6109,6 @@ export const tpoService = {
       console.warn('Notice creating attempt in Supabase:', insertErr);
     }
 
-    // 3. Resilient cloud backup to contact_messages
-    try {
-      const studentIdentifier = (cleanStudentId || studentId || 'anon').toLowerCase();
-      await supabase.from('contact_messages').insert({
-        name: `Candidate Start: ${studentIdentifier}`,
-        email: studentEmail || (studentIdentifier.includes('@') ? studentIdentifier : 'student@prepunite.com'),
-        subject: `B2B_ATTEMPT:${mockExamId}:${studentIdentifier}`,
-        message: JSON.stringify(newAttempt),
-        status: 'IN_PROGRESS',
-      });
-    } catch {}
-
     return newAttempt;
   },
 
@@ -6491,8 +6506,13 @@ export const tpoService = {
     let gradedResponses = calculated.gradedResponses;
     let resultSummary = calculated.resultSummary;
 
+    let serverGradedSuccessful = false;
     try {
-      const { data: serverGraded, error: rpcError } = await supabase.rpc('submit_and_grade_mock_attempt', {
+      let serverGraded: any = null;
+      let rpcError: any = null;
+
+      // 1. Try Authoritative Unified submit_exam_attempt_v2 RPC
+      const { data: v2Data, error: v2Err } = await supabase.rpc('submit_exam_attempt_v2', {
         p_attempt_id: attemptId,
         p_responses: responses,
         p_time_spent_seconds: effectiveTimeSpent,
@@ -6501,17 +6521,30 @@ export const tpoService = {
         p_status_override: effectiveStatusOverride || null,
       });
 
+      if (!v2Err && v2Data) {
+        serverGraded = v2Data;
+      } else {
+        // Fallback to submit_and_grade_mock_attempt
+        const { data: v1Data, error: v1Err } = await supabase.rpc('submit_and_grade_mock_attempt', {
+          p_attempt_id: attemptId,
+          p_responses: responses,
+          p_time_spent_seconds: effectiveTimeSpent,
+          p_proctor_events: proctorEvents,
+          p_tab_switch_count: tabSwitchCount,
+          p_status_override: effectiveStatusOverride || null,
+        });
+        serverGraded = v1Data;
+        rpcError = v1Err;
+      }
+
       // 🛡️ CRITICAL INTEGRITY GUARD:
-      // Only accept server grading if it actually graded the attempt (i.e. found the exam sections in PostgreSQL and returned at least 1 graded question)
+      // Only accept server grading if it actually graded the attempt
       const serverGradedCount = Object.keys(serverGraded?.responses || {}).filter(k => k !== '__result_summary').length;
-      if (!rpcError && serverGraded && serverGradedCount > 0 && Number(serverGraded.max_possible_score || 0) > 0) {
-        if (Number(serverGraded.total_score || 0) > 0 || calculated.totalScore === 0) {
-          totalScore = Number(serverGraded.total_score ?? totalScore);
-        } else {
-          console.warn('[tpoService.submitAttempt] Server returned 0 score while client verified score of', calculated.totalScore, '- preserving verified score.');
-        }
+      if (!rpcError && serverGraded && (serverGradedCount > 0 || serverGraded.result_summary) && Number(serverGraded.max_possible_score || 0) > 0) {
+        serverGradedSuccessful = true;
+        totalScore = Number(serverGraded.total_score ?? totalScore);
         maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
-        percentage = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 1000) / 10 : Number(serverGraded.percentage ?? percentage);
+        percentage = Number(serverGraded.percentage ?? percentage);
         passed = Boolean(serverGraded.passed ?? passed);
         if (serverGraded.status) finalStatus = serverGraded.status;
         if (serverGraded.responses) {
@@ -6522,10 +6555,12 @@ export const tpoService = {
         }
         if (serverGraded.result_summary) {
           resultSummary = {
+            ...calculated.resultSummary,
             ...serverGraded.result_summary,
             total_score: totalScore,
             max_score: maxPossibleScore,
             percentage,
+            passed,
           };
         } else {
           resultSummary.total_score = totalScore;
@@ -6537,7 +6572,7 @@ export const tpoService = {
         console.log('[tpoService.submitAttempt] Server RPC returned 0 graded responses or failed, using accurate client calculated grade.');
       }
     } catch (rpcErr) {
-      console.warn('[tpoService.submitAttempt] Server RPC grading notice (falling back to local calculation):', rpcErr);
+      console.warn('[tpoService.submitAttempt] Server RPC grading notice:', rpcErr);
     }
 
     // 3. Create finalized attempt with full result_summary & student profile
@@ -6602,59 +6637,43 @@ export const tpoService = {
 
     saveLocalAttempt(finalizedAttempt);
 
-    // Resilient cloud backup to contact_messages (ensures TPO sees attempt)
-    try {
-      const cleanSid = (studentId || 'anon').toLowerCase();
-      await supabase.from('contact_messages').insert({
-        name: `Candidate Attempt: ${cleanSid}`,
-        email: cleanSid.includes('@') ? cleanSid : 'student@prepunite.com',
-        subject: `B2B_ATTEMPT:${exam.id}:${cleanSid}`,
-        message: JSON.stringify(finalizedAttempt),
-        status: finalStatus,
-      });
-    } catch (cloudErr) {
-      console.warn('Notice saving attempt to cloud messages:', cloudErr);
+    // 4. Upsert to student_exam_attempts table only if server RPC did not already commit
+    if (!serverGradedSuccessful) {
+      try {
+        const cleanSid = (studentId || 'anon').toLowerCase();
+        const attemptRow = {
+          id: attemptId,
+          mock_exam_id: exam.id,
+          student_id: studentId || (cleanSid.includes('@') ? cleanSid : 'candidate'),
+          student_email: cleanSid.includes('@') ? cleanSid : null,
+          college_id: exam.college_id || 'unknown_college',
+          status: finalStatus,
+          started_at: startedAt,
+          submitted_at: new Date().toISOString(),
+          time_spent_seconds: effectiveTimeSpent,
+          tab_switch_count: tabSwitchCount,
+          proctor_events: proctorEvents,
+          responses: {
+            ...gradedResponses,
+            __result_summary: resultSummary,
+          },
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: gradedAttempt } = await supabase
+          .from('student_exam_attempts')
+          .upsert(attemptRow, { onConflict: 'id' })
+          .select()
+          .single();
+
+        if (gradedAttempt) {
+          saveLocalAttempt({
+            ...gradedAttempt,
+            result_summary: resultSummary,
+          });
+        }
+      } catch {}
     }
-
-    // 4. Upsert to student_exam_attempts table (includes result_summary inside responses payload)
-    try {
-      const cleanSid = (studentId || 'anon').toLowerCase();
-      const attemptRow = {
-        id: attemptId,
-        mock_exam_id: exam.id,
-        student_id: studentId || (cleanSid.includes('@') ? cleanSid : 'candidate'),
-        student_email: cleanSid.includes('@') ? cleanSid : null,
-        college_id: exam.college_id || 'unknown_college',
-        status: finalStatus,
-        started_at: startedAt,
-        submitted_at: new Date().toISOString(),
-        time_spent_seconds: effectiveTimeSpent,
-        tab_switch_count: tabSwitchCount,
-        proctor_events: proctorEvents,
-        responses: {
-          ...gradedResponses,
-          __result_summary: resultSummary,
-        },
-        total_score: totalScore,
-        max_possible_score: maxPossibleScore,
-        percentage,
-        passed,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data: gradedAttempt } = await supabase
-        .from('student_exam_attempts')
-        .upsert(attemptRow, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (gradedAttempt) {
-        saveLocalAttempt({
-          ...gradedAttempt,
-          result_summary: resultSummary,
-        });
-      }
-    } catch {}
 
     // 5. Serverless API persistence guarantee (/api/campus-exams with service-role upsert)
     try {
