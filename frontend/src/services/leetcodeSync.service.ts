@@ -184,9 +184,17 @@ export const leetcodeSyncService = {
       return { success: false, error: 'Please enter a valid LeetCode username or profile link.' };
     }
 
+    // 1. Get session JWT token for secure API call [P1-01]
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     // Attempt 1: Call Vercel serverless function /api/leetcode-sync
     try {
-      const res = await fetch(`/api/leetcode-sync?username=${encodeURIComponent(cleanUsername)}`);
+      const res = await fetch(`/api/leetcode-sync?username=${encodeURIComponent(cleanUsername)}`, {
+        headers,
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success) {

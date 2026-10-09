@@ -39,10 +39,12 @@ interface ExperienceDbRow {
   overall_experience?: string | null;
   description?: string | null;
   status?: string | null;
+  user_id?: string | null;
+  user_email?: string | null;
 }
 
 export default function ExperiencesPage() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === 'ADMIN';
   const { toast, confirmModal } = useToast();
   const queryClient = useQueryClient();
@@ -67,20 +69,23 @@ export default function ExperiencesPage() {
   const [localUpvotes, setLocalUpvotes] = useState<Record<string, number>>({});
 
   const handleToggleUpvote = async (expId: string) => {
-    if (upvotedIds.includes(expId)) return;
-    const nextUpvoted = [...upvotedIds, expId];
-    setUpvotedIds(nextUpvoted);
     try {
-      localStorage.setItem('prepunite_upvoted_experiences', JSON.stringify(nextUpvoted));
-    } catch {}
+      const res = await experienceService.toggleUpvote(expId);
+      if (res.upvoted) {
+        setUpvotedIds((prev) => Array.from(new Set([...prev, expId])));
+      } else {
+        setUpvotedIds((prev) => prev.filter((id) => id !== expId));
+      }
 
-    setLocalUpvotes((prev) => ({
-      ...prev,
-      [expId]: (prev[expId] ?? 0) + 1,
-    }));
+      setLocalUpvotes((prev) => ({
+        ...prev,
+        [expId]: res.upvotes,
+      }));
 
-    await experienceService.upvoteExperience(expId);
-    queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+    } catch (err: any) {
+      toast.error('Failed to update vote.');
+    }
   };
 
   // Bookmark State
@@ -102,18 +107,25 @@ export default function ExperiencesPage() {
   };
 
   const { data: rawExperiences = [], isLoading } = useQuery({
-    queryKey: ['live-experiences', searchTerm, isAdmin],
+    queryKey: ['live-experiences', searchTerm, isAdmin, user?.id, user?.email],
     queryFn: async () => {
       let query = supabase
         .from('experiences')
         .select(
-          'id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, upvotes, drive_type, rounds, overall_experience, description, status'
+          'id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, upvotes, drive_type, rounds, overall_experience, description, status, user_id, user_email'
         )
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
       if (!isAdmin) {
-        query = query.eq('status', 'APPROVED');
+        if (user?.id || user?.email) {
+          const conditions: string[] = ['status.eq.APPROVED'];
+          if (user.id) conditions.push(`user_id.eq.${user.id}`);
+          if (user.email) conditions.push(`user_email.ilike.${user.email.toLowerCase()}`);
+          query = query.or(conditions.join(','));
+        } else {
+          query = query.eq('status', 'APPROVED');
+        }
       }
 
       if (searchTerm) {
@@ -137,6 +149,8 @@ export default function ExperiencesPage() {
           verdict: e.verdict || 'SELECTED',
           upvotes: e.upvotes || 0,
           driveType: e.drive_type || 'ON_CAMPUS',
+          userId: e.user_id || undefined,
+          userEmail: e.user_email || undefined,
           rounds: (() => {
             try {
               return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : (e.rounds as any) || [];
@@ -177,6 +191,24 @@ export default function ExperiencesPage() {
       toast.success('Experience deleted successfully.');
     } catch (err: any) {
       toast.error(`Failed to delete experience: ${err.message || err}`);
+    }
+  };
+
+  const handleRetract = async (id: string) => {
+    const confirmed = await confirmModal({
+      title: 'Retract Pending Submission',
+      message: 'Are you sure you want to retract your interview experience? It will be permanently removed.',
+      confirmText: 'Retract Submission',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await experienceService.retractExperience(id);
+      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
+      toast.success('Interview experience retracted successfully.');
+    } catch (err: any) {
+      toast.error(`Failed to retract experience: ${err.message || err}`);
     }
   };
 
@@ -340,6 +372,13 @@ export default function ExperiencesPage() {
             const isBookmarked = bookmarkedExpIds.includes(exp.id);
             const isUpvoted = upvotedIds.includes(exp.id);
             const displayUpvotes = (exp.upvotes ?? 0) + (localUpvotes[exp.id] ?? 0);
+            const isAuthor = Boolean(
+              user && (
+                (exp.userId && exp.userId === user.id) ||
+                (exp.userEmail && user.email && exp.userEmail.toLowerCase() === user.email.toLowerCase())
+              )
+            );
+            const isPendingAuthor = isAuthor && exp.status === 'PENDING';
 
             return (
               <div
@@ -357,9 +396,9 @@ export default function ExperiencesPage() {
                       <span className="text-xs font-semibold text-[#121417] dark:text-[#FFFFFF]">
                         {exp.role}
                       </span>
-                      {isAdmin && exp.status === 'PENDING' && (
+                      {exp.status === 'PENDING' && (
                         <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
-                          Pending Moderation
+                          {isAdmin ? 'Pending Moderation' : 'Pending Review (Only visible to you)'}
                         </span>
                       )}
                     </div>
@@ -410,8 +449,8 @@ export default function ExperiencesPage() {
                       )}
                     </button>
 
-                    {/* Admin Actions */}
-                    {isAdmin && (
+                    {/* Management Actions: Admin can manage all; Authors can edit/retract their pending submission ([P2-01]) */}
+                    {(isAdmin || isPendingAuthor) && (
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setEditingExp(exp)}
@@ -421,9 +460,9 @@ export default function ExperiencesPage() {
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(exp.id)}
+                          onClick={() => (isPendingAuthor && !isAdmin ? handleRetract(exp.id) : handleDelete(exp.id))}
                           className="p-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 cursor-pointer"
-                          title="Delete experience"
+                          title={isPendingAuthor && !isAdmin ? 'Retract submission' : 'Delete experience'}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

@@ -166,10 +166,23 @@ function renderContentToHTML(content: string): string {
     }
   }
 
-  // 🛡️ SECURITY HARDENING: Sanitize all rendered HTML with DOMPurify to eliminate Stored XSS vectors
+  // 🛡️ SECURITY HARDENING ([P1-03]): Sanitize all rendered HTML with DOMPurify.
+  // Explicitly disallow iframes, embedded scripts, and arbitrary forms to eliminate phishing and Stored XSS vectors.
   return DOMPurify.sanitize(rawHtml, {
-    ADD_ATTR: ['target', 'data-type', 'data-cases'],
-    ADD_TAGS: ['iframe'],
+    ALLOWED_TAGS: [
+      'p', 'br', 'b', 'i', 'strong', 'em', 'u', 's', 'strike',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li',
+      'blockquote', 'code', 'pre',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'a', 'img', 'span', 'div', 'hr', 'sub', 'sup',
+    ],
+    ALLOWED_ATTR: [
+      'href', 'src', 'alt', 'title', 'class', 'target', 'rel',
+      'data-type', 'data-cases', 'width', 'height',
+    ],
+    FORBID_TAGS: ['iframe', 'script', 'object', 'embed', 'form', 'input', 'button', 'svg', 'math'],
+    FORBID_ATTR: ['style', 'onerror', 'onload', 'onclick', 'onmouseover', 'action'],
   });
 }
 

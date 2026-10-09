@@ -56,6 +56,8 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
         ]),
         status,
         is_deleted: false,
+        user_id: user?.id || null,
+        user_email: user?.email || null,
       });
 
       if (error) throw error;

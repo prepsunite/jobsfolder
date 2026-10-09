@@ -75,6 +75,8 @@ export default function SubmitExperiencePage() {
       tips: tips.trim(),
       resourcesUsed: resourcesUsed.trim(),
       isAnonymous,
+      userId: user?.id,
+      userEmail: user?.email,
     });
   };
 

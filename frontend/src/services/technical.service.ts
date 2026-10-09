@@ -53,7 +53,10 @@ const normalizeDbProblem = (rawD: RawDbProblem, solvedSet: Set<string>): Program
   const keyIntuition = d.keyIntuition || solutionsObj.keyIntuition || d.explanation || d.description || '';
   const resolvedCategoryLabel = pattern || d.category_label || d.categoryLabel;
   const resolvedTopicId = d.topic_id || d.topicId;
-  const resolvedTestCases = Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []);
+  const rawTestCases = Array.isArray((d as any).sample_cases) && (d as any).sample_cases.length > 0
+    ? (d as any).sample_cases
+    : (Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []));
+  const resolvedTestCases = rawTestCases.filter((tc: any) => !tc.is_hidden);
   const resolvedSampleInput = d.sample_input || d.sampleInput || '';
   const resolvedSampleOutput = d.sample_output || d.sampleOutput || '';
   const resolvedTimeComplexity = d.time_complexity || d.timeComplexity || 'O(N)';

@@ -31,6 +31,8 @@ export interface ExperienceItem {
   resourcesUsed?: string;
   isAnonymous?: boolean;
   viewCount?: number;
+  userId?: string;
+  userEmail?: string;
   createdAt?: string;
 }
 
@@ -56,18 +58,26 @@ export interface InterviewExperience {
   verdict?: ExperienceVerdict;
   driveType?: ExperienceDriveType;
   rounds?: ExperienceRound[];
+  userId?: string;
+  userEmail?: string;
   createdAt: string;
 }
 
 export interface SubmitExperienceRequest {
   companyId: string;
+  companyName?: string;
   role: string;
   studentName?: string;
   college?: string;
   year?: number;
   difficulty?: QuestionDifficulty;
+  verdict?: ExperienceVerdict;
+  driveType?: ExperienceDriveType;
+  rounds?: ExperienceRound[];
   content: string;
   tips?: string;
   resourcesUsed?: string;
   isAnonymous?: boolean;
+  userId?: string;
+  userEmail?: string;
 }

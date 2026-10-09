@@ -56,21 +56,19 @@ export const feedbackService = {
       throw new Error(rateCheck.reason);
     }
 
-    // 2. Database Pre-flight Check (Server-side 24h limit)
+    // 2. Authoritative Database Pre-flight Rate Check ([P1-02])
     if (payload.reporterEmail && payload.reporterEmail.trim()) {
       try {
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { count, error } = await supabase
-          .from('question_reports')
-          .select('id', { count: 'exact', head: true })
-          .eq('reporter_email', payload.reporterEmail.trim().toLowerCase())
-          .gte('created_at', oneDayAgo);
+        const { data: quota, error: rpcErr } = await supabase.rpc('check_feedback_rate_limit', {
+          p_email: payload.reporterEmail.trim(),
+          p_type: 'question_report',
+        });
 
-        if (!error && count !== null && count >= 5) {
-          throw new Error('Daily report limit reached (5/5) for this email. Thank you for your feedback!');
+        if (!rpcErr && quota && typeof quota === 'object' && quota.allowed === false) {
+          throw new Error('Daily question report limit reached (5/5) for this email. Thank you for your feedback!');
         }
       } catch (checkErr: any) {
-        if (checkErr.message?.includes('Daily report limit reached')) {
+        if (checkErr.message?.includes('Daily question report limit reached')) {
           throw checkErr;
         }
         console.warn('[feedbackService.submitQuestionReport] DB rate limit check notice:', checkErr);
@@ -93,28 +91,23 @@ export const feedbackService = {
       created_at: nowIso,
     };
 
-    try {
-      const { error } = await supabase
-        .from('question_reports')
-        .insert({
-          id: reportId,
-          question_id: String(payload.questionId),
-          question_statement: payload.questionStatement,
-          company_slug: payload.companySlug || null,
-          topic_id: payload.topicId || null,
-          issue_type: payload.issueType,
-          details: payload.details || null,
-          reporter_email: payload.reporterEmail || null,
-          status: 'OPEN',
-        });
+    const { error } = await supabase
+      .from('question_reports')
+      .insert({
+        id: reportId,
+        question_id: String(payload.questionId),
+        question_statement: payload.questionStatement,
+        company_slug: payload.companySlug || null,
+        topic_id: payload.topicId || null,
+        issue_type: payload.issueType,
+        details: payload.details || null,
+        reporter_email: payload.reporterEmail || null,
+        status: 'OPEN',
+      });
 
-      if (error) {
-        console.warn('[feedbackService.submitQuestionReport] Supabase insert warning:', error.message || error);
-      } else {
-        console.info('[feedbackService.submitQuestionReport] Report saved successfully to Supabase:', reportId);
-      }
-    } catch (err) {
-      console.warn('[feedbackService.submitQuestionReport] Network error submitting to Supabase:', err);
+    if (error) {
+      console.error('[feedbackService.submitQuestionReport] Supabase error:', error.message || error);
+      throw new Error(error.message || 'Failed to submit report. Please try again later.');
     }
 
     // Record submission to update cooldown and quota counters
@@ -260,17 +253,15 @@ export const feedbackService = {
       throw new Error(rateCheck.reason);
     }
 
-    // 2. Database Pre-flight Check (Server-side 24h limit)
+    // 2. Authoritative Database Pre-flight Rate Check ([P1-02])
     const normalizedEmail = payload.email.trim().toLowerCase();
     try {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count, error } = await supabase
-        .from('contact_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('email', normalizedEmail)
-        .gte('created_at', oneDayAgo);
+      const { data: quota, error: rpcErr } = await supabase.rpc('check_feedback_rate_limit', {
+        p_email: normalizedEmail,
+        p_type: 'contact_message',
+      });
 
-      if (!error && count !== null && count >= 3) {
+      if (!rpcErr && quota && typeof quota === 'object' && quota.allowed === false) {
         throw new Error('Daily inquiry limit reached (3/3) for this email. For urgent assistance, please contact prepsunite@gmail.com directly.');
       }
     } catch (checkErr: any) {
@@ -293,25 +284,20 @@ export const feedbackService = {
       created_at: nowIso,
     };
 
-    try {
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert({
-          id: contactId,
-          name: payload.name.trim(),
-          email: normalizedEmail,
-          subject: payload.subject.trim(),
-          message: payload.message.trim(),
-          status: 'NEW',
-        });
+    const { error } = await supabase
+      .from('contact_messages')
+      .insert({
+        id: contactId,
+        name: payload.name.trim(),
+        email: normalizedEmail,
+        subject: payload.subject.trim(),
+        message: payload.message.trim(),
+        status: 'NEW',
+      });
 
-      if (error) {
-        console.warn('[feedbackService.submitContactMessage] Supabase insert warning:', error.message || error);
-      } else {
-        console.info('[feedbackService.submitContactMessage] Message saved successfully to Supabase:', contactId);
-      }
-    } catch (err) {
-      console.warn('[feedbackService.submitContactMessage] Network error submitting to Supabase:', err);
+    if (error) {
+      console.error('[feedbackService.submitContactMessage] Supabase error:', error.message || error);
+      throw new Error(error.message || 'Failed to send message. Please try again or email us directly.');
     }
 
     // Record submission to update cooldown and quota counters

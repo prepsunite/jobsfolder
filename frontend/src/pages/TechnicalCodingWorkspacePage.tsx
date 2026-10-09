@@ -322,7 +322,11 @@ export default function TechnicalCodingWorkspacePage() {
       const result = await codeExecutionService.runTestCases(
         capturedLang,
         capturedCode,
-        testCases
+        {
+          problemId: problem.id,
+          testCases,
+          isSubmit,
+        }
       );
 
       // Verify revision hasn't changed
@@ -339,16 +343,14 @@ export default function TechnicalCodingWorkspacePage() {
 
       if (allPassed) {
         audioEffects.playSuccessChime();
-        technicalService.markProblemSolved(problem.id, user?.email, problem.track);
-        setIsSolved(true);
-        queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
-        queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
-
         if (isSubmit) {
+          setIsSolved(true);
+          queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
+          queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
           setShowCelebration(true);
-          toast.success('🎉 All Test Cases Passed! Solution accepted.');
+          toast.success('🎉 All Test Cases Passed! Solution accepted and recorded.');
         } else {
-          toast.success('Sample tests passed! Ready to submit.');
+          toast.success('Sample tests passed! Ready to submit solution.');
         }
       } else if (result.compileError) {
         audioEffects.playErrorBuzz();

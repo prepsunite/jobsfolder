@@ -66,7 +66,9 @@ table_checks AS (
         ('paper_tab_nodes', 'database/FIX_PAPER_TAB_NODES.sql'),
         -- Feedback & Communication
         ('question_reports', 'database/create_feedback_reports_and_contact.sql'),
-        ('contact_messages', 'database/create_feedback_reports_and_contact.sql')
+        ('contact_messages', 'database/create_feedback_reports_and_contact.sql'),
+        -- Target F: Community & Upvotes Ledger
+        ('user_experience_upvotes', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql')
     ) AS t(table_name, migration_file)
 ),
 
@@ -130,7 +132,10 @@ column_checks AS (
         ('paper_tab_nodes', 'is_free', 'database/FIX_PAPER_TAB_NODES.sql'),
         -- Feedback & Rate Limiting Fields
         ('question_reports', 'reporter_email', 'database/create_feedback_reports_and_contact.sql'),
-        ('contact_messages', 'subject', 'database/create_feedback_reports_and_contact.sql')
+        ('contact_messages', 'subject', 'database/create_feedback_reports_and_contact.sql'),
+        -- Target F: Experiences Attribution & Ownership
+        ('experiences', 'user_id', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql'),
+        ('experiences', 'user_email', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql')
     ) AS c(tbl, col, migration_file)
 ),
 
@@ -251,7 +256,8 @@ trigger_checks AS (
     FROM (VALUES 
         ('question_reports', 'trg_question_reports_rate_limit', 'database/DEPLOY_SUPER_ADMIN_SECURITY_PATCHES.sql'),
         ('contact_messages', 'trg_contact_messages_rate_limit', 'database/DEPLOY_SUPER_ADMIN_SECURITY_PATCHES.sql'),
-        ('topic_questions', 'trg_assign_topic_question_number', 'database/DEPLOY_SUPER_ADMIN_SECURITY_PATCHES.sql')
+        ('topic_questions', 'trg_assign_topic_question_number', 'database/DEPLOY_SUPER_ADMIN_SECURITY_PATCHES.sql'),
+        ('experiences', 'trg_enforce_experience_invariants', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql')
     ) AS trg(tbl, trigger_name, migration_file)
 ),
 
@@ -291,7 +297,9 @@ function_checks AS (
         ('assign_college_tpo', 'database/FIX_TPO_STUDENT_DELETION_AND_ROLES.sql'),
         ('revoke_college_tpo', 'database/FIX_TPO_STUDENT_DELETION_AND_ROLES.sql'),
         ('check_student_college_entitlement', 'database/MIGRATE_ALL_FIXES.sql'),
-        ('get_colleges_usage_summary', 'database/MIGRATE_ALL_FIXES.sql')
+        ('get_colleges_usage_summary', 'database/MIGRATE_ALL_FIXES.sql'),
+        ('toggle_experience_upvote', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql'),
+        ('check_feedback_rate_limit', 'database/TARGET_F_COMMUNITY_EXPERIENCES_AND_FEEDBACK_HARDENING.sql')
     ) AS f(func_name, migration_file)
 ),
 

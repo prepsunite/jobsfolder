@@ -3,6 +3,7 @@ import { XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { ExperienceItem } from '@/services/dataStore';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EditExperienceModalProps {
   experience: ExperienceItem | null;
@@ -17,6 +18,8 @@ export const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { role } = useAuth();
+  const isAdmin = role === 'ADMIN';
   const [formData, setFormData] = useState<ExperienceItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -32,19 +35,24 @@ export const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
     setIsSaving(true);
 
     try {
+      const updatePayload: any = {
+        company_name: formData.companyName,
+        role_title: formData.role,
+        student_name: formData.studentName,
+        college: formData.college,
+        year: formData.year,
+        difficulty: formData.difficulty,
+        verdict: formData.verdict,
+        rounds: JSON.stringify(formData.rounds),
+      };
+
+      if (isAdmin) {
+        updatePayload.status = formData.status;
+      }
+
       const { error } = await supabase
         .from('experiences')
-        .update({
-          company_name: formData.companyName,
-          role_title: formData.role,
-          student_name: formData.studentName,
-          college: formData.college,
-          year: formData.year,
-          difficulty: formData.difficulty,
-          verdict: formData.verdict,
-          rounds: JSON.stringify(formData.rounds),
-          status: formData.status,
-        })
+        .update(updatePayload)
         .eq('id', formData.id);
 
       if (error) throw error;

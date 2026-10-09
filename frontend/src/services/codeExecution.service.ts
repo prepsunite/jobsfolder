@@ -1,8 +1,10 @@
 /**
  * Sandboxed Code Execution Service for Prepunite Mock Examination & Practice
- * Connects to sandboxed execution API (Judge0 Community Edition / configurable private endpoint)
- * with client-side boilerplate checking, base64 encoding/decoding, and test case evaluation.
+ * Routes all compiler requests through secure serverless proxy (/api/execute-code).
+ * Eliminates client-side Judge0 API key exposure [P0-01] and masks hidden test cases [P0-02].
  */
+
+import { supabase } from '@/lib/supabase';
 
 export interface TestCaseInput {
   input: string;
@@ -145,7 +147,7 @@ export function decodeBase64(b64: string): string {
     try {
       return atob(b64);
     } catch {
-      return b64;
+      return btoa(b64);
     }
   }
 }
@@ -251,7 +253,6 @@ function checkIsTemplateForSingleLang(code: string, lang: string): boolean {
 
 /**
  * Detects whether the provided code is empty, whitespace only, or untouched starter boilerplate.
- * Prevents false positives where candidates run tests without writing any logic or when switching languages.
  */
 export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): boolean {
   if (!code) return true;
@@ -261,8 +262,7 @@ export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): b
   const targetLang = normalizeLanguageKey(lang);
   if (checkIsTemplateForSingleLang(code, targetLang)) return true;
 
-  // Universal Fail-Safe: Check against ALL known starter templates!
-  // If the candidate's code matches ANY starter boilerplate, it is untouched template code.
+  // Universal Fail-Safe: Check against ALL known starter templates
   for (const k of ['python', 'cpp', 'java', 'c']) {
     if (k !== targetLang && checkIsTemplateForSingleLang(code, k)) {
       return true;
@@ -273,29 +273,23 @@ export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): b
 }
 
 /**
- * Normalizes standard input by converting any variable-assignment formatted inputs
- * (e.g., "Y = 2000", "A = 4, B = 6", "A = 15, B = 4, op = '*'", "ch = 'A'")
- * into pure competitive programming stdin tokens ("2000", "4 6", "15 4 *", "A").
- * Preserves normal unformatted stdin (arrays, raw lines, numbers) untouched.
+ * Normalizes standard input by converting variable-assignment formatted inputs into competitive programming stdin.
  */
 export function normalizeStdin(rawStdin?: string): string {
   if (!rawStdin) return '';
   const trimmed = rawStdin.trim();
   if (!trimmed) return '';
 
-  // Check if the input contains variable assignments like 'X = 5' or 'A = 1, B = 2' or 'op = "*"'
   const hasVariableAssignment = /(?:^|[\n,;])\s*[A-Za-z_]\w*\s*=\s*[^=]/m.test(trimmed);
-
   if (!hasVariableAssignment) {
     return rawStdin;
   }
 
-  // Handle line by line or comma-separated pairs
   const lines = trimmed.split(/\r?\n/);
-  const normalizedLines = lines.map(line => {
+  const normalizedLines = lines.map((line) => {
     if (/(?:^|[,;])\s*[A-Za-z_]\w*\s*=\s*/.test(line)) {
       const parts = line.split(/[,;]\s*(?=[A-Za-z_]\w*\s*=)/);
-      const extracted = parts.map(part => {
+      const extracted = parts.map((part) => {
         const val = part.replace(/^\s*[A-Za-z_]\w*\s*=\s*/, '').trim();
         return val.replace(/^['"](.*)['"]$/, '$1');
       });
@@ -316,153 +310,111 @@ export function normalizeOutput(str?: string): string {
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .split('\n')
-    .map(line => line.trimEnd())
+    .map((line) => line.trimEnd())
     .join('\n')
     .trim();
 }
 
 /**
  * Core Sandboxed Code Execution Service
+ * Proxying all execution through /api/execute-code [P0-01]
  */
 export const codeExecutionService = {
   /**
-   * Base API endpoint (supports configurable environment variable or defaults to Judge0 CE)
-   */
-  getApiUrl(): string {
-    const envUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CODE_EXECUTION_URL) as string | undefined;
-    return envUrl && envUrl.trim().length > 0
-      ? envUrl.trim()
-      : 'https://ce.judge0.com/submissions/?base64_encoded=true&wait=true';
-  },
-
-  /**
-   * Execute code with given standard input via Sandboxed API
+   * Execute code with given standard input via authenticated Sandboxed API proxy
    */
   async execute(
     language: string,
     sourceCode: string,
     stdin: string = ''
   ): Promise<ExecutionResult> {
-    const langId = JUDGE0_LANGUAGE_IDS[language] || JUDGE0_LANGUAGE_IDS.python;
-    const url = this.getApiUrl();
-    const sanitizedStdin = normalizeStdin(stdin);
-
-    const payload = {
-      source_code: encodeBase64(sourceCode),
-      language_id: langId,
-      stdin: encodeBase64(sanitizedStdin),
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s network timeout
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-    const apiKey = typeof import.meta !== 'undefined' &&
-      (import.meta.env?.VITE_CODE_EXECUTION_API_KEY || import.meta.env?.VITE_JUDGE0_API_KEY || import.meta.env?.VITE_RAPIDAPI_KEY);
-    if (apiKey) {
-      headers['X-RapidAPI-Key'] = apiKey;
-      headers['X-Auth-Token'] = apiKey;
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const sanitizedStdin = normalizeStdin(stdin);
+
+    const response = await fetch('/api/execute-code', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        language: normalizeLanguageKey(language),
+        sourceCode,
+        customStdin: sanitizedStdin,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Compiler server error (${response.status})`);
     }
-    const apiHost = typeof import.meta !== 'undefined' && import.meta.env?.VITE_RAPIDAPI_HOST;
-    if (apiHost) {
-      headers['X-RapidAPI-Host'] = apiHost;
-    }
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
+    const data = await response.json();
+    const isErr = Boolean(data.stderr && data.stderr.trim().length > 0);
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Compiler service returned HTTP ${response.status}: ${errText.slice(0, 200)}`);
-      }
-
-      const data = await response.json();
-
-      const stdout = decodeBase64(data.stdout || '');
-      const stderr = decodeBase64(data.stderr || '');
-      const compileOutput = decodeBase64(data.compile_output || '');
-      const message = decodeBase64(data.message || '');
-
-      const statusId = data.status?.id || 0;
-      const statusDescription = data.status?.description || 'Unknown';
-      const timeMs = data.time ? Math.round(parseFloat(data.time) * 1000) : 0;
-      const memoryKb = data.memory || 0;
-
-      // Judge0 Status IDs:
-      // 3: Accepted
-      // 4: Wrong Answer (when compared in judge0)
-      // 5: Time Limit Exceeded
-      // 6: Compilation Error
-      // 7: Runtime Error (SIGSEGV)
-      // 8: Runtime Error (SIGXFSZ)
-      // 9: Runtime Error (SIGFPE)
-      // 10: Runtime Error (SIGABRT)
-      // 11: Runtime Error (NZEC)
-      // 12: Runtime Error (Other)
-      // 13: Internal Error
-      // 14: Exec Format Error
-      const isCompileError = statusId === 6 || compileOutput.trim().length > 0;
-      const isTimeLimitExceeded = statusId === 5;
-      const isRuntimeError = (statusId >= 7 && statusId <= 12) || (statusId === 11 && stderr.trim().length > 0);
-      const isSuccess = statusId === 3 && !isCompileError && !isRuntimeError;
-
-      return {
-        statusId,
-        statusDescription,
-        stdout,
-        stderr,
-        compileOutput,
-        timeMs,
-        memoryKb,
-        isSuccess,
-        isCompileError,
-        isRuntimeError,
-        isTimeLimitExceeded,
-        errorMessage: compileOutput || stderr || message || undefined,
-      };
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      const isAbort = err.name === 'AbortError';
-      const errMsg = isAbort
-        ? 'Execution timed out. Program took more than 15 seconds to respond.'
-        : (err.message || 'Unable to connect to code execution engine.');
-
-      return {
-        statusId: 0,
-        statusDescription: isAbort ? 'Time Limit Exceeded' : 'Network/Compiler Error',
-        stdout: '',
-        stderr: errMsg,
-        compileOutput: '',
-        timeMs: 0,
-        memoryKb: 0,
-        isSuccess: false,
-        isCompileError: false,
-        isRuntimeError: !isAbort,
-        isTimeLimitExceeded: isAbort,
-        errorMessage: errMsg,
-      };
-    }
+    return {
+      statusId: isErr ? 11 : 3,
+      statusDescription: data.status || (isErr ? 'Runtime Error' : 'Accepted'),
+      stdout: data.stdout || '',
+      stderr: data.stderr || '',
+      compileOutput: '',
+      timeMs: data.timeMs || 0,
+      memoryKb: data.memoryKb || 0,
+      isSuccess: !isErr,
+      isCompileError: false,
+      isRuntimeError: isErr,
+      isTimeLimitExceeded: false,
+      errorMessage: data.stderr || undefined,
+    };
   },
 
   /**
-   * Evaluates all provided test cases against the source code.
-   * Intercepts empty templates, halts early on compile errors, and compares outputs.
+   * Evaluates test cases against the source code via authenticated serverless proxy.
+   * Supports:
+   * 1. (language, sourceCode, testCases, isSubmit) - Direct test case array execution
+   * 2. (language, sourceCode, { problemId, isSubmit, testCases }) - Problem-backed execution
+   * 3. (problemId, language, sourceCode, isSubmit) - Problem ID first signature
    */
   async runTestCases(
-    language: string,
-    sourceCode: string,
-    testCases: TestCaseInput[]
+    arg1: string,
+    arg2: string,
+    arg3?: TestCaseInput[] | { problemId?: string; isSubmit?: boolean; testCases?: TestCaseInput[] } | string,
+    arg4?: boolean
   ): Promise<TestCaseRunResult> {
+    let language = 'python';
+    let sourceCode = '';
+    let problemId: string | undefined;
+    let testCases: TestCaseInput[] | undefined;
+    let isSubmit = false;
+
+    // Detect parameter calling pattern
+    if (Array.isArray(arg3)) {
+      language = normalizeLanguageKey(arg1);
+      sourceCode = arg2;
+      testCases = arg3;
+      isSubmit = Boolean(arg4);
+    } else if (typeof arg3 === 'object' && arg3 !== null) {
+      language = normalizeLanguageKey(arg1);
+      sourceCode = arg2;
+      problemId = arg3.problemId;
+      testCases = arg3.testCases;
+      isSubmit = Boolean(arg3.isSubmit);
+    } else if (typeof arg3 === 'string') {
+      problemId = arg1;
+      language = normalizeLanguageKey(arg2);
+      sourceCode = arg3;
+      isSubmit = Boolean(arg4);
+    } else {
+      language = normalizeLanguageKey(arg1);
+      sourceCode = arg2;
+      isSubmit = Boolean(arg4);
+    }
+
     // 1. Guard against empty code or unmodified starter template
     if (isTemplateOrEmptyCode(sourceCode, language)) {
       const emptyCases: EvaluatedTestCase[] = (testCases || []).map((tc) => ({
@@ -486,143 +438,88 @@ export const codeExecutionService = {
       };
     }
 
-    if (!testCases || testCases.length === 0) {
-      return {
-        cases: [],
-        passedCount: 0,
-        totalCount: 0,
-        isTemplateOrEmpty: false,
-        compileError: null,
-        runtimeError: null,
-        summaryMessage: 'No test cases defined for this problem.',
-      };
-    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
 
-    // 🛡️ Optimize execution:
-    // 1. Run test case 0 first to verify compilation.
-    //    If there is a compile error, abort immediately and skip the rest.
-    // 2. If test case 0 compiles, run test cases 1..N-1 in parallel to slash latency.
-    const casesToRun = testCases;
-    const evaluatedCases: EvaluatedTestCase[] = [];
-    let compileErrorEncountered: string | null = null;
-    let firstRuntimeError: string | null = null;
-
-    const processExecResult = (
-      tc: TestCaseInput,
-      execResult: ExecutionResult
-    ): EvaluatedTestCase => {
-      const isHidden = Boolean(tc.is_hidden);
-      const rawStdin = tc.input || '';
-      const realExpected = normalizeOutput(tc.expected_output || tc.output || '');
-
-      const displayInput = isHidden ? '[Hidden Evaluation Case]' : rawStdin;
-      const displayExpected = isHidden ? '[Hidden Expected Output]' : realExpected;
-
-      if (execResult.isCompileError) {
-        const err = execResult.compileOutput || execResult.stderr || 'Compilation error occurred.';
-        if (!compileErrorEncountered) compileErrorEncountered = err;
-        return {
-          input: displayInput,
-          expected: displayExpected,
-          actual: isHidden ? '[Compilation Error on Hidden Case]' : err,
-          passed: false,
-          status: 'COMPILATION_ERROR',
-          timeMs: execResult.timeMs,
-          memoryKb: execResult.memoryKb,
-          error: err,
-        };
-      }
-
-      if (execResult.isRuntimeError) {
-        const rErr = execResult.stderr || execResult.errorMessage || 'Runtime exception thrown.';
-        if (!firstRuntimeError) firstRuntimeError = rErr;
-        return {
-          input: displayInput,
-          expected: displayExpected,
-          actual: isHidden ? '[Runtime Error on Hidden Case]' : rErr,
-          passed: false,
-          status: 'RUNTIME_ERROR',
-          timeMs: execResult.timeMs,
-          memoryKb: execResult.memoryKb,
-          error: rErr,
-        };
-      }
-
-      if (execResult.isTimeLimitExceeded) {
-        return {
-          input: displayInput,
-          expected: displayExpected,
-          actual: 'Time Limit Exceeded (> 2.0s). Check for infinite loops or inefficient algorithms.',
-          passed: false,
-          status: 'TIME_LIMIT_EXCEEDED',
-          timeMs: execResult.timeMs || 2000,
-          memoryKb: execResult.memoryKb,
-          error: 'Time Limit Exceeded',
-        };
-      }
-
-      const actual = normalizeOutput(execResult.stdout);
-      const isMatch = execResult.isSuccess && actual === realExpected;
-      return {
-        input: displayInput,
-        expected: displayExpected,
-        actual: isHidden
-          ? (isMatch ? '[Hidden Test Passed]' : '[Hidden Output Mismatch]')
-          : (execResult.stdout.trim().length > 0 ? execResult.stdout.trim() : '[No output printed to stdout]'),
-        passed: isMatch,
-        status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
-        timeMs: execResult.timeMs,
-        memoryKb: execResult.memoryKb,
-      };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    // Run first case to verify compilation
-    const firstTc = casesToRun[0];
-    const execResult0 = await this.execute(language, sourceCode, firstTc.input || '');
-    const evaluated0 = processExecResult(firstTc, execResult0);
-    evaluatedCases.push(evaluated0);
+    const payload: any = {
+      language,
+      sourceCode,
+      isSubmit,
+    };
+    if (problemId) payload.problemId = problemId;
+    if (testCases && testCases.length > 0) payload.testCases = testCases;
 
-    if (evaluated0.status === 'COMPILATION_ERROR') {
-      // Abort and skip remaining cases
-      for (let j = 1; j < casesToRun.length; j++) {
-        const isHidden = Boolean(casesToRun[j].is_hidden);
-        evaluatedCases.push({
-          input: isHidden ? '[Hidden Evaluation Case]' : (casesToRun[j].input || ''),
-          expected: isHidden ? '[Hidden Expected Output]' : normalizeOutput(casesToRun[j].expected_output || casesToRun[j].output || ''),
-          actual: 'Skipped due to compilation error.',
-          passed: false,
-          status: 'SKIPPED',
-          timeMs: 0,
-        });
-      }
-    } else if (casesToRun.length > 1) {
-      // Run remaining cases concurrently to slash execution latency from ~12s to ~3s
-      const remainingPromises = casesToRun.slice(1).map(async (tc) => {
-        const res = await this.execute(language, sourceCode, tc.input || '');
-        return processExecResult(tc, res);
-      });
-      const remainingEvaluated = await Promise.all(remainingPromises);
-      evaluatedCases.push(...remainingEvaluated);
+    const response = await fetch('/api/execute-code', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `Compiler server error (${response.status})`);
     }
 
-    const passedCount = evaluatedCases.filter(c => c.passed).length;
-    const totalCount = evaluatedCases.length;
-
-    let summaryMessage = `${passedCount}/${totalCount} Test Cases Passed`;
-    if (compileErrorEncountered) {
-      summaryMessage = 'Compilation Failed: Please inspect compiler diagnostics.';
-    } else if (passedCount === totalCount && totalCount > 0) {
-      summaryMessage = 'All Sample Test Cases Passed!';
-    }
+    const data = await response.json();
+    const cases: EvaluatedTestCase[] = (data.cases || []).map((c: any) => ({
+      input: c.input || `[Test Case ${c.caseIndex}]`,
+      expected: c.expected || '',
+      actual: c.actual || '',
+      passed: Boolean(c.passed),
+      status: c.status || (c.passed ? 'PASSED' : 'WRONG_ANSWER'),
+      timeMs: c.timeMs || 0,
+      memoryKb: c.memoryKb,
+      error: c.error,
+    }));
 
     return {
-      cases: evaluatedCases,
-      passedCount,
-      totalCount,
+      cases,
+      passedCount: data.passedCount || 0,
+      totalCount: data.totalCount || 0,
       isTemplateOrEmpty: false,
-      compileError: compileErrorEncountered,
-      runtimeError: firstRuntimeError,
-      summaryMessage,
+      compileError: data.compileError || null,
+      runtimeError: data.status === 'RUNTIME_ERROR' ? 'Runtime error occurred.' : null,
+      summaryMessage: data.compileError
+        ? 'Compilation Error: Inspect compiler diagnostic output.'
+        : `${data.passedCount}/${data.totalCount} Test Cases Passed`,
     };
+  },
+
+  /**
+   * Runs custom input via authenticated serverless proxy
+   */
+  async executeCustom(
+    language: string,
+    sourceCode: string,
+    customStdin: string
+  ): Promise<{ stdout: string; stderr: string; status: string; timeMs: number }> {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+
+    const response = await fetch('/api/execute-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        language: normalizeLanguageKey(language),
+        sourceCode,
+        customStdin: normalizeStdin(customStdin),
+      }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Custom execution failed.');
+    }
+
+    return await response.json();
   },
 };
