@@ -31,6 +31,10 @@ import {
   SlidersHorizontal,
   Lock,
   ExternalLink,
+  User,
+  Users,
+  Hash,
+  Briefcase,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
@@ -39,6 +43,7 @@ import AdminBlueprintManager from '@/components/admin/AdminBlueprintManager';
 import AdminQuestionBankPage from '@/pages/AdminQuestionBankPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { dataStore } from '@/services/dataStore';
 import { tpoService, isAttemptCompleted, getExamTimingStatus, canReviewSolutions } from '@/services/tpo.service';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
@@ -387,62 +392,82 @@ export default function StudentExamsPage() {
 
       {/* ── INSTITUTIONAL ENROLLMENT & KPI INTELLIGENCE CARD ── */}
       {enrolledCollege ? (
-        <div className="rounded-2xl p-6 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/40 via-white to-orange-50/10 dark:from-[#1a1311] dark:via-[#141414] dark:to-[#121417] shadow-sm relative overflow-hidden space-y-6">
-          {/* Header row with college info */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-orange-100 dark:border-[#2a2220] pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0">
-                <Building2 className="w-6 h-6" />
+        <div className="rounded-3xl p-6 sm:p-7 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/50 via-white to-orange-50/15 dark:from-[#1a1311] dark:via-[#141517] dark:to-[#121316] shadow-sm relative overflow-hidden space-y-6">
+          {/* Ambient decorative glow */}
+          <div className="absolute top-0 right-1/4 w-80 h-40 bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 blur-3xl pointer-events-none rounded-full" />
+
+          {/* Header row with college info and candidate identity */}
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-orange-100 dark:border-[#282525] pb-5">
+            {/* College info */}
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FD4A32] to-[#FF6B4A] text-white flex items-center justify-center font-black shadow-md shadow-[#FD4A32]/20 shrink-0">
+                <Building2 className="w-7 h-7" />
               </div>
-              <div>
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FD4A32] text-white">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FD4A32] text-white shadow-2xs">
+                    <ShieldCheck className="w-3 h-3" />
                     Authorized Institutional Portal
                   </span>
                   {enrolledCollege.code && (
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202226] text-gray-700 dark:text-gray-300">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202226] text-gray-800 dark:text-gray-200 border border-gray-200/50 dark:border-white/10">
                       {enrolledCollege.code}
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mt-0.5">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight font-display mt-0.5">
                   {enrolledCollege.name}
                 </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Standardized Campus Placement Testing System &bull; Real-time Proctored Evaluations
+                </p>
               </div>
             </div>
 
-            {/* Student Department & Cohort */}
-            <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 flex-wrap bg-white/60 dark:bg-[#1c1d22] py-2 px-3.5 rounded-xl border border-orange-100 dark:border-[#2a2220]">
-              <div>
-                <span className="text-gray-400 block text-[10px] uppercase font-bold">Candidate</span>
-                <span className="font-bold text-gray-900 dark:text-white">{user?.name || user?.email}</span>
+            {/* Candidate identity capsule */}
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/80 dark:bg-[#1a1b20]/90 border border-orange-100 dark:border-[#2a292d] shadow-2xs self-start lg:self-auto">
+              <div className="w-11 h-11 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-black text-base shrink-0">
+                {(user?.name || user?.email || 'S').charAt(0).toUpperCase()}
               </div>
-              {studentRecord?.roll_number && (
-                <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
-                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Roll No</span>
-                  <span className="font-bold text-gray-900 dark:text-white font-mono">{studentRecord.roll_number}</span>
+
+              <div className="min-w-0 pr-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-gray-900 dark:text-white truncate">
+                    {user?.name || user?.email?.split('@')[0]}
+                  </span>
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
+                    Enrolled
+                  </span>
                 </div>
-              )}
-              {studentRecord?.department && (
-                <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
-                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Branch</span>
-                  <span className="font-bold text-gray-900 dark:text-white">{studentRecord.department}</span>
+
+                <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex-wrap">
+                  {studentRecord?.roll_number && (
+                    <span className="font-mono font-bold text-gray-700 dark:text-gray-300 flex items-center gap-0.5">
+                      <Hash className="w-2.5 h-2.5 opacity-60" />
+                      {studentRecord.roll_number}
+                    </span>
+                  )}
+                  {studentRecord?.roll_number && <span>&bull;</span>}
+                  <span>{studentRecord?.department || 'Engineering'}</span>
+                  <span>&bull;</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {studentRecord?.batch_name || 'Class'} {studentRecord?.batch_year ? `'${String(studentRecord.batch_year).slice(-2)}` : ''}
+                  </span>
                 </div>
-              )}
-              <div className="border-l border-gray-200 dark:border-[#2e3036] pl-3">
-                <span className="text-gray-400 block text-[10px] uppercase font-bold">Cohort Batch</span>
-                <span className="font-bold text-gray-900 dark:text-white">
-                  {studentRecord?.batch_name || 'Standard Batch'} {studentRecord?.batch_year ? `(${studentRecord.batch_year})` : ''}
-                </span>
               </div>
             </div>
           </div>
 
           {/* 4 Performance KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div className="p-4 rounded-xl bg-white/80 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] shadow-2xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Assigned Drives
+          <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Assigned Drives
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-[#FD4A32] flex items-center justify-center">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                </div>
               </div>
               <div className="text-2xl font-black text-gray-900 dark:text-white mt-1">
                 {campusExams.length}
@@ -452,14 +477,19 @@ export default function StudentExamsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white/80 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] shadow-2xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Active & Ongoing
+            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Active &amp; Ongoing
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5" />
+                </div>
               </div>
               <div className="text-2xl font-black text-[#FD4A32] mt-1 flex items-center gap-2">
                 <span>{activeExams.length}</span>
                 {inProgressExams.length > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                     {inProgressExams.length} In Progress
                   </span>
                 )}
@@ -469,9 +499,14 @@ export default function StudentExamsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white/80 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] shadow-2xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Completed Drives
+            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Completed Drives
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
               </div>
               <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
                 {completedExams.length}
@@ -482,9 +517,14 @@ export default function StudentExamsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white/80 dark:bg-[#18191c]/80 border border-orange-100 dark:border-[#2a2220] shadow-2xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Placement Readiness
+            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Placement Readiness
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Award className="w-3.5 h-3.5" />
+                </div>
               </div>
               <div className="mt-1 flex items-center gap-2">
                 {avgCampusScore !== null ? (
@@ -784,152 +824,225 @@ export default function StudentExamsPage() {
 
             const isRestrictedForStudent = !isAdmin && !isTpoAdmin && (isTargetBatchRestricted || isTargetDeptRestricted);
 
+            const isDeptsAll = !exam.target_departments || exam.target_departments.length === 0 || exam.target_departments.some(d => d.toUpperCase() === 'ALL');
+            const isBatchesAll = !exam.target_batches || exam.target_batches.length === 0 || exam.target_batches.some(b => b.toUpperCase() === 'ALL');
+            const isOpenToAll = isDeptsAll && isBatchesAll;
+
+            // Resolve company branding from dataStore
+            const cleanComp = (exam.target_company || '').trim().toLowerCase();
+            const matchedComp = dataStore.getCompanies().find(
+              c =>
+                (c.slug && c.slug.toLowerCase() === cleanComp) ||
+                (c.name && c.name.toLowerCase() === cleanComp) ||
+                (c.name && cleanComp.includes(c.name.toLowerCase())) ||
+                (c.slug && cleanComp.includes(c.slug.toLowerCase()))
+            );
+            const companyLogo = matchedComp?.logoUrl;
+            const companyIndustry = matchedComp?.industry || 'Campus Recruitment Drive';
+
             return (
               <div
                 key={exam.id}
-                className="bg-white dark:bg-[#141517] rounded-2xl border border-gray-200/80 dark:border-[#27292e] p-5 shadow-xs flex flex-col justify-between hover:border-[#FD4A32]/40 transition-all group relative overflow-hidden"
+                className="bg-white dark:bg-[#141517] rounded-3xl border border-gray-200/80 dark:border-[#27292e] p-5 sm:p-6 shadow-xs hover:shadow-xl hover:border-[#FD4A32]/45 hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between group relative overflow-hidden"
               >
-                <div className="space-y-3.5">
-                  {/* Company & Status Badges */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
-                      {exam.target_company}
-                    </span>
+                {/* Subtle top-right ambient glow on hover */}
+                <div className="absolute top-0 right-0 w-36 h-36 bg-[#FD4A32]/5 group-hover:bg-[#FD4A32]/10 blur-2xl rounded-full pointer-events-none transition-all duration-300" />
 
-                    {isMalpractice ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1">
-                        <ShieldAlert className="w-3 h-3 text-rose-500" />
-                        <span>Terminated ({attempt?.tab_switch_count || 3} Switches)</span>
-                      </span>
-                    ) : isFinished ? (
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                          isPassed
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                            : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800'
-                        }`}
-                      >
-                        {isPassed ? (
-                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        ) : (
-                          <XCircle className="w-3 h-3 text-rose-500" />
-                        )}
-                        <span>
-                          {isPassed ? 'Passed' : 'Completed'} ({attempt?.percentage || 0}%)
+                <div className="space-y-4 relative z-10">
+                  {/* Company Hero Header & Status Badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {companyLogo ? (
+                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#1a1b1f] border border-gray-200/80 dark:border-[#2a2c33] p-1.5 shadow-2xs flex items-center justify-center shrink-0">
+                          <img
+                            src={companyLogo}
+                            alt={exam.target_company}
+                            className="w-full h-full object-contain rounded-xl"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FD4A32] to-[#FF7A59] text-white flex items-center justify-center font-black text-sm tracking-wider shadow-md shadow-[#FD4A32]/20 shrink-0">
+                          {(exam.target_company || 'EX').slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-black text-xs uppercase tracking-wider text-[#FD4A32] truncate">
+                            {exam.target_company}
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 border border-gray-200/50 dark:border-white/5">
+                            Drive
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          {companyIndustry}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Status Pill */}
+                    <div className="shrink-0">
+                      {isMalpractice ? (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1 shadow-2xs">
+                          <ShieldAlert className="w-3 h-3 text-rose-500" />
+                          <span>Terminated ({attempt?.tab_switch_count || 3} Violations)</span>
                         </span>
-                      </span>
-                    ) : isInProgress ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1 animate-pulse">
-                        <Clock className="w-3 h-3 text-amber-500" />
-                        <span>In Progress</span>
-                      </span>
-                    ) : isUpcoming ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-blue-500" />
-                        <span>Scheduled</span>
-                      </span>
-                    ) : isConcluded ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-500" />
-                        <span>Concluded</span>
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                        <span>Active Drive</span>
-                      </span>
-                    )}
+                      ) : isFinished ? (
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 shadow-2xs ${
+                            isPassed
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                              : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                          }`}
+                        >
+                          {isPassed ? (
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <XCircle className="w-3 h-3 text-rose-500" />
+                          )}
+                          <span>
+                            {isPassed ? 'Passed' : 'Completed'} ({attempt?.percentage || 0}%)
+                          </span>
+                        </span>
+                      ) : isInProgress ? (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5 animate-pulse shadow-2xs">
+                          <Clock className="w-3 h-3 text-amber-500" />
+                          <span>In Progress</span>
+                        </span>
+                      ) : isUpcoming ? (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 shadow-2xs">
+                          <Calendar className="w-3 h-3 text-blue-500" />
+                          <span>Scheduled</span>
+                        </span>
+                      ) : isConcluded ? (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 shadow-2xs">
+                          <Clock className="w-3 h-3 text-slate-500" />
+                          <span>Concluded</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                          <span>Active Drive</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Title & Description */}
-                  <div>
-                    <h3 className="font-bold text-base text-gray-900 dark:text-white leading-snug group-hover:text-[#FD4A32] transition-colors">
+                  <div className="pt-1">
+                    <h3 className="font-black text-base text-gray-900 dark:text-white leading-snug group-hover:text-[#FD4A32] transition-colors">
                       {exam.title}
                     </h3>
                     {exam.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1.5 leading-relaxed">
                         {exam.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Exam Specs Grid */}
-                  <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#1a1b1f] text-center border border-gray-100 dark:border-[#26282e]">
-                    <div>
-                      <div className="text-[9px] font-bold text-gray-400 uppercase">Duration</div>
-                      <div className="text-xs font-black text-gray-800 dark:text-gray-200 mt-0.5">
+                  {/* Key Metrics / Specs Bar */}
+                  <div className="grid grid-cols-3 gap-2.5 py-3 px-3.5 rounded-2xl bg-gray-50/90 dark:bg-[#191a1e] border border-gray-100 dark:border-[#26282e] text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <Clock className="w-3 h-3" />
+                        <span>Duration</span>
+                      </div>
+                      <div className="text-sm font-black text-gray-800 dark:text-gray-200 mt-0.5">
                         {exam.duration_minutes}m
                       </div>
                     </div>
-                    <div>
-                      <div className="text-[9px] font-bold text-gray-400 uppercase">
-                        {isFinished ? 'Your Score' : 'Total Marks'}
+                    <div className="flex flex-col items-center justify-center border-x border-gray-200/60 dark:border-[#27292f] px-2">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <Award className="w-3 h-3" />
+                        <span>{isFinished ? 'Your Score' : 'Total Marks'}</span>
                       </div>
-                      <div className="text-xs font-black text-gray-800 dark:text-gray-200 mt-0.5">
+                      <div className="text-sm font-black text-gray-800 dark:text-gray-200 mt-0.5">
                         {isFinished && attempt ? (
                           <span className={isMalpractice ? 'text-rose-600' : isPassed ? 'text-emerald-600' : 'text-rose-600'}>
                             {attempt.total_score} / {attempt.max_possible_score || exam.total_marks}
                           </span>
                         ) : (
-                          exam.total_marks
+                          `${exam.total_marks} pts`
                         )}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-[9px] font-bold text-gray-400 uppercase">Cutoff</div>
-                      <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <TrendingUp className="w-3 h-3" />
+                        <span>Cutoff</span>
+                      </div>
+                      <div className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                         {exam.passing_percentage}%
                       </div>
                     </div>
                   </div>
 
-                  {/* Metadata line */}
-                  <div className="space-y-1 text-[11px] text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center justify-between">
-                      <span>
-                        Sections: <strong>{exam.sections?.length || 1}</strong>
-                        {totalQuestions > 0 && ` (${totalQuestions} Qs)`}
-                      </span>
-                      <span>
-                        Branches: <strong>{targetDepts}</strong>
-                      </span>
-                    </div>
+                  {/* Smart Pill Badges (Non-Repetitive, Watchable Tags) */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {/* Structure badge */}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-[#1d1f24] text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-white/5">
+                      <BookOpen className="w-3 h-3 text-gray-400" />
+                      <span>{exam.sections?.length || 1} Section{exam.sections?.length !== 1 ? 's' : ''}</span>
+                      {totalQuestions > 0 && <span className="opacity-70">&bull; {totalQuestions} Qs</span>}
+                    </span>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <span>
-                        Cohort: <strong className="text-gray-700 dark:text-gray-300">{exam.target_batches?.length ? exam.target_batches.join(', ') : 'All Batches'}</strong>
+                    {/* Eligibility Badge - Clean & Non-Repetitive */}
+                    {isOpenToAll ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                        <Users className="w-3 h-3" />
+                        <span>Open to All Students</span>
                       </span>
-                      {exam.enable_tab_switch_detection ? (
-                        <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500">
-                          <ShieldCheck className="w-3 h-3 text-[#FD4A32]" />
-                          Anti-Cheat (Max {exam.max_tab_switches_allowed || 3})
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-gray-400">Standard Test</span>
-                      )}
-                    </div>
+                    ) : isRestrictedForStudent ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                        <Lock className="w-3 h-3" />
+                        <span>Cohort: {isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Batch') : targetDepts}</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Target: {targetDepts}</span>
+                      </span>
+                    )}
 
-                    {(isUpcoming || isConcluded || isLive) && (
-                      <div className="flex items-center justify-between pt-0.5">
-                        {isLive && exam.end_time && (
-                          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-amber-500" />
-                            Live Window Closes: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        )}
-                        {isUpcoming && exam.start_time && (
-                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                            Starts: {new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        )}
-                        {isConcluded && exam.end_time && (
-                          <span className="text-[10px] font-bold text-slate-500">
-                            Ended: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        )}
-                      </div>
+                    {/* Anti-Cheat Proctoring Badge */}
+                    {exam.enable_tab_switch_detection ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-orange-500/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>Anti-Cheat (Max {exam.max_tab_switches_allowed || 3})</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-normal px-2.5 py-1 rounded-xl bg-gray-100/70 dark:bg-[#1a1b1f] text-gray-500 dark:text-gray-400 border border-gray-200/50 dark:border-white/5">
+                        Standard Proctored
+                      </span>
                     )}
                   </div>
+
+                  {/* Timing Banner strip (if scheduled or active closing window) */}
+                  {(isUpcoming || isConcluded || (isLive && exam.end_time)) && (
+                    <div className="pt-1">
+                      {isLive && exam.end_time && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3 py-1.5 rounded-xl border border-amber-200/80 dark:border-amber-800/40">
+                          <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <span>Live Window Closes: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      )}
+                      {isUpcoming && exam.start_time && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-3 py-1.5 rounded-xl border border-blue-200/80 dark:border-blue-800/40">
+                          <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          <span>Scheduled Window Opens: {new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      )}
+                      {isConcluded && exam.end_time && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span>Assessment Window Concluded: {new Date(exam.end_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Bottom Action Footer */}
