@@ -6,7 +6,7 @@ import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import ConsentBanner from '@/components/ConsentBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, LayoutDashboard, Building2 } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, X, LayoutDashboard, Building2 } from 'lucide-react';
 
 import LoadingScreen from '@/components/LoadingScreen';
 import { dataStore } from '@/services/dataStore';
@@ -22,12 +22,26 @@ const PUBLIC_ROUTES = [
   '/refund-policy',
 ];
 
+const PUBLIC_NAV_ITEMS = [
+  { label: 'Home', path: '/', exact: true },
+  { label: 'About', path: '/about' },
+  { label: 'Companies', path: '/companies' },
+  { label: 'OA Papers', path: '/questions' },
+  { label: 'Pricing', path: '/pricing' },
+  { label: 'Contact', path: '/contact' },
+];
+
 export default function RootLayout() {
   const location = useLocation();
   const { user, role, isAdmin, isTpoAdmin, isAuthenticated, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   // Instant Real-Time Data Synchronization Engine across all Tabs, Pages, and Roles
   useEffect(() => {
@@ -87,12 +101,23 @@ export default function RootLayout() {
 
             {/* Nav Links */}
             <nav className="pub-nav-links">
-              <Link to="/" className="pub-nav-link">Home</Link>
-              <Link to="/about" className="pub-nav-link">About</Link>
-              <Link to="/companies" className="pub-nav-link">Companies</Link>
-              <Link to="/questions" className="pub-nav-link">OA Papers</Link>
-              <Link to="/pricing" className="pub-nav-link">Pricing</Link>
-              <Link to="/contact" className="pub-nav-link">Contact</Link>
+              {PUBLIC_NAV_ITEMS.map((item) => {
+                const isActive = item.exact
+                  ? currentPath === item.path
+                  : currentPath === item.path || currentPath.startsWith(item.path + '/');
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.path}
+                    className={`pub-nav-link ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="pub-nav-link-content">
+                      <span className="pub-nav-link-label">{item.label}</span>
+                      {isActive && <span className="pub-nav-active-bar" />}
+                    </span>
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Right actions */}
@@ -121,8 +146,42 @@ export default function RootLayout() {
                   <span>Sign In</span>
                 </Link>
               )}
+
+              {/* Mobile Menu Toggle (< md) */}
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(prev => !prev)}
+                className="md:hidden pub-nav-theme-btn"
+                title={mobileNavOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
+              >
+                {mobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Navigation Dropdown (< md) */}
+          {mobileNavOpen && (
+            <div className="md:hidden pub-mobile-nav">
+              {PUBLIC_NAV_ITEMS.map((item) => {
+                const isActive = item.exact
+                  ? currentPath === item.path
+                  : currentPath === item.path || currentPath.startsWith(item.path + '/');
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.path}
+                    onClick={() => setMobileNavOpen(false)}
+                    className={`pub-nav-link ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="pub-nav-link-content">
+                      <span className="pub-nav-link-label">{item.label}</span>
+                      {isActive && <span className="pub-nav-active-bar" />}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </header>
 
         {/* PUBLIC CONTENT AREA — no padding for home page full bleed */}

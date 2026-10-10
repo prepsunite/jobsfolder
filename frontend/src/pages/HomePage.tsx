@@ -225,15 +225,23 @@ export default function HomePage() {
               </h2>
             </div>
             <div className="hp-filter-strip">
-              {filters.map(f => (
-                <button
-                  key={f}
-                  className={`hp-filter-btn${activeFilter === f ? ' active' : ''}`}
-                  onClick={() => setActiveFilter(f)}
-                >
-                  {f}
-                </button>
-              ))}
+              {filters.map(f => {
+                const isActive = activeFilter === f;
+                return (
+                  <button
+                    key={f}
+                    className={`hp-filter-btn${isActive ? ' active' : ''}`}
+                    onClick={() => setActiveFilter(f)}
+                  >
+                    <span className="relative inline-flex flex-col items-center">
+                      <span>{f}</span>
+                      {isActive && (
+                        <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-white rounded-full shadow-[0_0_4px_rgba(255,255,255,0.7)]" />
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
