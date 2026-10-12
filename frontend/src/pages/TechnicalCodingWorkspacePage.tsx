@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import QuestionRichContent from '@/components/QuestionRichContent';
+import HackerRankProblemView from '@/components/HackerRankProblemView';
 import {
   codeExecutionService,
   STARTER_TEMPLATES,
@@ -116,17 +117,6 @@ export default function TechnicalCodingWorkspacePage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('python');
   const [code, setCode] = useState<string>(STARTER_TEMPLATES.python);
   const [fontSize, setFontSize] = useState<number>(14);
-
-  // Accordion drawer states
-  const [isIntuitionOpen, setIsIntuitionOpen] = useState(false);
-  const [isHintsOpen, setIsHintsOpen] = useState(false);
-  const [isSolutionOpen, setIsSolutionOpen] = useState(false);
-  const [solutionViewLang, setSolutionViewLang] = useState<'python' | 'java' | 'cpp' | 'c'>('python');
-
-  // Copy states
-  const [copiedInput, setCopiedInput] = useState(false);
-  const [copiedOutput, setCopiedOutput] = useState(false);
-  const [copiedSolutionCode, setCopiedSolutionCode] = useState(false);
 
   // Execution & Testing State
   const [isRunningTests, setIsRunningTests] = useState(false);
@@ -468,38 +458,6 @@ export default function TechnicalCodingWorkspacePage() {
     }
     return [];
   }, [testResults, isSubmitting, submitCases]);
-
-  const displaySampleInput = useMemo(() => {
-    if (!problem) return '';
-    if (sampleCases.length > 0) {
-      return normalizeStdin(sampleCases[0].input || '');
-    }
-    return normalizeStdin(problem.sampleInput || (problem as any).sample_input || '');
-  }, [problem, sampleCases]);
-
-  const displaySampleOutput = useMemo(() => {
-    if (!problem) return '';
-    if (sampleCases.length > 0) {
-      return sampleCases[0].output || '';
-    }
-    return problem.sampleOutput || (problem as any).sample_output || '';
-  }, [problem, sampleCases]);
-
-  // Copy helper
-  const copyToClipboard = (text: string, type: 'input' | 'output' | 'solution') => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    if (type === 'input') {
-      setCopiedInput(true);
-      setTimeout(() => setCopiedInput(false), 2000);
-    } else if (type === 'output') {
-      setCopiedOutput(true);
-      setTimeout(() => setCopiedOutput(false), 2000);
-    } else {
-      setCopiedSolutionCode(true);
-      setTimeout(() => setCopiedSolutionCode(false), 2000);
-    }
-  };
 
   // Run Test Cases against Sandboxed Judge Engine
   const handleRunTests = async (isSubmit: boolean = false) => {
@@ -916,205 +874,11 @@ export default function TechnicalCodingWorkspacePage() {
             </div>
           </div>
 
-          {/* Problem Statement */}
-          <div className="space-y-2">
-            <h4 className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 font-display">
-              Problem Description
-            </h4>
-            <div className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed font-sans whitespace-pre-line">
-              <QuestionRichContent content={problem.description} />
-            </div>
-          </div>
-
-          {/* Constraints */}
-          {problem.constraints && problem.constraints.length > 0 && (
-            <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                <AlertCircle className="w-3.5 h-3.5" />
-                <span>Constraints</span>
-              </div>
-              <ul className="list-disc pl-4 space-y-1 text-xs font-mono text-gray-700 dark:text-gray-300 leading-relaxed">
-                {problem.constraints.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Sample Test Case */}
-          {(displaySampleInput || displaySampleOutput) && (
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 font-display">
-                Sample Test Case
-              </h4>
-
-              {displaySampleInput && (
-                <div className="rounded-xl border border-gray-200 dark:border-[#2d3036] overflow-hidden">
-                  <div className="px-3 py-1.5 bg-gray-100 dark:bg-[#1f2125] flex items-center justify-between text-[11px] font-bold text-gray-600 dark:text-gray-300">
-                    <span>Sample Input</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(displaySampleInput, 'input')}
-                      className="inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-900 dark:hover:text-white cursor-pointer"
-                    >
-                      {copiedInput ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedInput ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                  <pre className="p-3 bg-gray-50 dark:bg-[#121315] font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap">
-                    {displaySampleInput}
-                  </pre>
-                </div>
-              )}
-
-              {displaySampleOutput && (
-                <div className="rounded-xl border border-gray-200 dark:border-[#2d3036] overflow-hidden">
-                  <div className="px-3 py-1.5 bg-gray-100 dark:bg-[#1f2125] flex items-center justify-between text-[11px] font-bold text-gray-600 dark:text-gray-300">
-                    <span>Sample Output</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(displaySampleOutput, 'output')}
-                      className="inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-900 dark:hover:text-white cursor-pointer"
-                    >
-                      {copiedOutput ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedOutput ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                  <pre className="p-3 bg-gray-50 dark:bg-[#121315] font-mono text-xs text-emerald-600 dark:text-emerald-400 overflow-x-auto whitespace-pre-wrap">
-                    {displaySampleOutput}
-                  </pre>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Key Placement Intuition & Approach Accordion */}
-          {problem.keyIntuition && problem.keyIntuition !== problem.description && (
-            <div className="rounded-xl border border-gray-200 dark:border-[#25262a] overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setIsIntuitionOpen(!isIntuitionOpen)}
-                className="w-full px-4 py-2.5 bg-[#FD4A32]/5 hover:bg-[#FD4A32]/10 transition-colors flex items-center justify-between text-xs font-bold text-[#FD4A32] cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4" />
-                  <span>Key Placement Intuition</span>
-                </div>
-                {isIntuitionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {isIntuitionOpen && (
-                <div className="p-3.5 bg-white dark:bg-[#121315] text-xs text-gray-700 dark:text-gray-300 font-sans leading-relaxed border-t border-[#FD4A32]/15">
-                  {problem.keyIntuition}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Hints & Edge Cases Accordion */}
-          {problem.hints && problem.hints.length > 0 && (
-            <div className="rounded-xl border border-gray-200 dark:border-[#25262a] overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setIsHintsOpen(!isHintsOpen)}
-                className="w-full px-4 py-2.5 bg-amber-500/5 hover:bg-amber-500/10 transition-colors flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400 cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Hints &amp; Edge Cases</span>
-                </div>
-                {isHintsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {isHintsOpen && (
-                <div className="p-3.5 bg-white dark:bg-[#121315] text-xs text-gray-700 dark:text-gray-300 font-sans space-y-1.5 border-t border-amber-500/15">
-                  <ul className="list-disc pl-4 space-y-1">
-                    {problem.hints.map((hint, hIdx) => (
-                      <li key={hIdx}>{hint}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Verified Official Solutions Accordion */}
-          {problem.solutions && (
-            <div className="rounded-xl border border-gray-200 dark:border-[#25262a] overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setIsSolutionOpen(!isSolutionOpen)}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-[#1a1c20] hover:bg-gray-200 dark:hover:bg-[#22242a] transition-colors flex items-center justify-between text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-[#FD4A32]" />
-                  <span>View Verified Solution Code</span>
-                </div>
-                {isSolutionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-
-              {isSolutionOpen && (
-                <div className="p-3.5 bg-[#0d1117] text-white space-y-3 border-t border-[#30363d]">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-1">
-                      {(['python', 'java', 'cpp', 'c'] as const).map(lang => (
-                        <button
-                          key={lang}
-                          type="button"
-                          onClick={() => setSolutionViewLang(lang)}
-                          className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-colors cursor-pointer ${
-                            solutionViewLang === lang
-                              ? 'bg-[#FD4A32] text-white'
-                              : 'bg-[#21262d] text-[#8b949e] hover:text-white'
-                          }`}
-                        >
-                          {lang === 'cpp' ? 'C++' : lang.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(problem.solutions[solutionViewLang] || '', 'solution')}
-                      className="inline-flex items-center gap-1 text-[11px] text-[#8b949e] hover:text-white px-2 py-0.5 rounded bg-[#21262d] transition-colors cursor-pointer"
-                    >
-                      {copiedSolutionCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedSolutionCode ? 'Copied' : 'Copy Code'}</span>
-                    </button>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-[#080b0f] border border-[#21262d] text-xs font-mono text-emerald-400 overflow-x-auto max-h-60 custom-scrollbar whitespace-pre">
-                    {problem.solutions[solutionViewLang] || '// Solution not available in this language'}
-                  </div>
-
-                  {(problem.timeComplexity || problem.spaceComplexity) && (
-                    <div className="flex items-center gap-3 text-[11px] font-mono text-[#8b949e]">
-                      {problem.timeComplexity && <span>Time: {problem.timeComplexity}</span>}
-                      {problem.spaceComplexity && <span>• Space: {problem.spaceComplexity}</span>}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Company Tags */}
-          {problem.companyTags && problem.companyTags.length > 0 && (
-            <div className="space-y-1.5 pt-2 border-t border-gray-200 dark:border-[#25262a]">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider font-display">
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Companies Asking This:</span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {problem.companyTags.map(tag => (
-                  <span
-                    key={tag}
-                    className="text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 dark:bg-[#1f2125] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#2d3036]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Standardized HackerRank / LeetCode Structured Problem Presentation */}
+          <HackerRankProblemView
+            problem={problem}
+            sampleCases={sampleCases}
+          />
 
           {/* Test Cases Count Preview */}
           <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#18191c] border border-gray-200 dark:border-[#25262a] flex items-center justify-between text-xs">
