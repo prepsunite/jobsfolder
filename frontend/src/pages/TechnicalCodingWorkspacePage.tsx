@@ -31,6 +31,10 @@ import {
   Sparkles,
   BookOpen,
   FileCode,
+  Lock,
+  LayoutGrid,
+  List,
+  GripHorizontal,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -129,6 +133,23 @@ export default function TechnicalCodingWorkspacePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
   const [activeTestTab, setActiveTestTab] = useState<number>(0);
+  const [lastRunIsSubmit, setLastRunIsSubmit] = useState(false);
+  const [resultsViewMode, setResultsViewMode] = useState<'grid' | 'tabs'>('grid');
+
+  // Adjustable Console Splitter State
+  const [consoleHeight, setConsoleHeight] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('prepunite_console_height');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 160 && parsed <= 900) return parsed;
+      }
+    }
+    return 340;
+  });
+  const [isDraggingConsole, setIsDraggingConsole] = useState(false);
+  const [isConsoleMaximized, setIsConsoleMaximized] = useState(false);
+  const consoleContainerRef = useRef<HTMLDivElement>(null);
 
   // Custom Input State
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -143,6 +164,95 @@ export default function TechnicalCodingWorkspacePage() {
   const editorRef = useRef<any>(null);
   const runRevisionRef = useRef(0);
   const isProgrammaticUpdateRef = useRef(false);
+
+  // Console Splitter drag handlers
+  const handleSplitterMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingConsole(true);
+    const startY = e.clientY;
+    const startHeight = consoleHeight;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = startY - moveEvent.clientY;
+      const minH = 160;
+      const maxH = Math.max(300, window.innerHeight - 200);
+      const newHeight = Math.max(minH, Math.min(maxH, startHeight + deltaY));
+      setConsoleHeight(newHeight);
+      setIsConsoleMaximized(false);
+      if (editorRef.current) {
+        editorRef.current.layout();
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingConsole(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      setConsoleHeight((prev) => {
+        try {
+          localStorage.setItem('prepunite_console_height', prev.toString());
+        } catch {}
+        return prev;
+      });
+      if (editorRef.current) {
+        setTimeout(() => editorRef.current?.layout(), 50);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleSplitterTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    setIsDraggingConsole(true);
+    const startY = e.touches[0].clientY;
+    const startHeight = consoleHeight;
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      const deltaY = startY - moveEvent.touches[0].clientY;
+      const minH = 160;
+      const maxH = Math.max(300, window.innerHeight - 200);
+      const newHeight = Math.max(minH, Math.min(maxH, startHeight + deltaY));
+      setConsoleHeight(newHeight);
+      setIsConsoleMaximized(false);
+    };
+
+    const handleTouchEnd = () => {
+      setIsDraggingConsole(false);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      setConsoleHeight((prev) => {
+        try {
+          localStorage.setItem('prepunite_console_height', prev.toString());
+        } catch {}
+        return prev;
+      });
+      if (editorRef.current) {
+        setTimeout(() => editorRef.current?.layout(), 50);
+      }
+    };
+
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleTouchEnd);
+  };
+
+  const toggleConsoleMaximize = () => {
+    if (isConsoleMaximized) {
+      setIsConsoleMaximized(false);
+      const restored = 340;
+      setConsoleHeight(restored);
+      try {
+        localStorage.setItem('prepunite_console_height', restored.toString());
+      } catch {}
+    } else {
+      setIsConsoleMaximized(true);
+      const maxH = Math.max(450, window.innerHeight - 240);
+      setConsoleHeight(maxH);
+    }
+    setTimeout(() => editorRef.current?.layout(), 100);
+  };
 
   // Autosave Draft Key helper
   const getDraftKey = useCallback((pId: string, lang: string) => {
@@ -340,6 +450,25 @@ export default function TechnicalCodingWorkspacePage() {
     return cases;
   }, [problem, sampleCases]);
 
+  // Test cases for Submission Grid View (during submission evaluation or displaying results)
+  const displayGridCases = useMemo(() => {
+    if (testResults && testResults.cases && testResults.cases.length > 0) {
+      return testResults.cases;
+    }
+    if (isSubmitting) {
+      return submitCases.map((tc) => ({
+        input: tc.input,
+        expected: tc.expected_output || tc.output || '',
+        actual: '',
+        passed: false,
+        status: 'EVALUATING' as any,
+        timeMs: 0,
+        is_hidden: tc.is_hidden !== false,
+      }));
+    }
+    return [];
+  }, [testResults, isSubmitting, submitCases]);
+
   const displaySampleInput = useMemo(() => {
     if (!problem) return '';
     if (sampleCases.length > 0) {
@@ -397,8 +526,13 @@ export default function TechnicalCodingWorkspacePage() {
 
     if (isSubmit) {
       setIsSubmitting(true);
+      setLastRunIsSubmit(true);
+      setResultsViewMode('grid');
+      // Auto-expand console if too small to comfortably display submission grid
+      setConsoleHeight((prev) => (prev < 360 ? 380 : prev));
     } else {
       setIsRunningTests(true);
+      setLastRunIsSubmit(false);
     }
     setShowCustomInput(false);
     setShowCelebration(false);
@@ -539,7 +673,11 @@ export default function TechnicalCodingWorkspacePage() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#0d1117] text-[#e6edf3] overflow-hidden select-text">
+    <div className="h-screen w-screen flex flex-col bg-[#0d1117] text-[#e6edf3] overflow-hidden select-text relative">
+      {/* Full-window Drag Capture Overlay when dragging Splitter */}
+      {isDraggingConsole && (
+        <div className="fixed inset-0 z-50 cursor-row-resize select-none bg-transparent" />
+      )}
       
       {/* ============================================================ */}
       {/* 1. TOP NAVIGATION / WORKSPACE APP BAR                        */}
@@ -1044,7 +1182,10 @@ export default function TechnicalCodingWorkspacePage() {
           </div>
 
           {/* Monaco Professional Code Editor */}
-          <div className="flex-1 relative flex flex-col overflow-hidden min-h-[300px] bg-[#1e1e1e]">
+          <div className="flex-1 relative flex flex-col overflow-hidden min-h-[140px] bg-[#1e1e1e]">
+            {isDraggingConsole && (
+              <div className="absolute inset-0 z-50 cursor-row-resize select-none bg-transparent" />
+            )}
             <Editor
               height="100%"
               language={MONACO_LANGUAGE_MAP[selectedLanguage] || 'python'}
@@ -1093,19 +1234,41 @@ export default function TechnicalCodingWorkspacePage() {
           </div>
 
           {/* ============================================================ */}
-          {/* CONSOLE & EXECUTION RESULTS DRAWER                           */}
+          {/* DRAGGABLE SPLITTER DIVIDER (Between Editor & Test Drawer)    */}
           {/* ============================================================ */}
-          <div className="border-t border-[#30363d] bg-[#161b22] shrink-0 flex flex-col">
-            
+          <div
+            onMouseDown={handleSplitterMouseDown}
+            onTouchStart={handleSplitterTouchStart}
+            onDoubleClick={toggleConsoleMaximize}
+            className={`h-2.5 bg-[#161b22] hover:bg-[#21262d] cursor-row-resize flex items-center justify-center transition-colors select-none group shrink-0 border-y border-[#30363d] relative z-20 ${
+              isDraggingConsole ? 'bg-[#21262d] ring-1 ring-[#FD4A32]' : ''
+            }`}
+            title="Drag up/down to adjust editor and test cases space (Double-click to expand/restore)"
+          >
+            <div
+              className={`h-1 rounded-full transition-all flex items-center justify-center ${
+                isDraggingConsole ? 'bg-[#FD4A32] w-20' : 'bg-[#484f58] group-hover:bg-[#FD4A32] w-14'
+              }`}
+            />
+          </div>
+
+          {/* ============================================================ */}
+          {/* CONSOLE & EXECUTION RESULTS DRAWER (Adjustable Height)       */}
+          {/* ============================================================ */}
+          <div
+            ref={consoleContainerRef}
+            style={{ height: `${consoleHeight}px` }}
+            className="bg-[#161b22] shrink-0 flex flex-col min-h-0 overflow-hidden select-text"
+          >
             {/* Runner Action Toolbar */}
-            <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#21262d] flex-wrap gap-2">
-              <div className="flex items-center gap-2">
+            <div className="px-4 py-2 bg-[#161b22] flex items-center justify-between border-b border-[#21262d] flex-wrap gap-2 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Run Tests (Sample) */}
                 <button
                   type="button"
                   onClick={() => handleRunTests(false)}
                   disabled={isRunningTests || isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
                   title="Run against visible sample test cases"
                 >
                   {isRunningTests ? (
@@ -1127,7 +1290,7 @@ export default function TechnicalCodingWorkspacePage() {
                   onClick={() => handleRunTests(true)}
                   disabled={isRunningTests || isSubmitting}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
-                  title="Submit solution to verify all hidden edge cases"
+                  title="Submit solution to verify all hidden edge cases & mark as solved"
                 >
                   {isSubmitting ? (
                     <>
@@ -1154,6 +1317,38 @@ export default function TechnicalCodingWorkspacePage() {
                 >
                   Custom Test
                 </button>
+
+                {/* View Mode Switcher (Grid vs Tabs) */}
+                {(testResults || isSubmitting) && (
+                  <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setResultsViewMode('grid')}
+                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                        resultsViewMode === 'grid'
+                          ? 'bg-[#21262d] text-white shadow-xs'
+                          : 'text-[#8b949e] hover:text-white'
+                      }`}
+                      title="Grid View (Matching submission results)"
+                    >
+                      <LayoutGrid className="w-3 h-3" />
+                      <span className="hidden sm:inline">Grid</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResultsViewMode('tabs')}
+                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                        resultsViewMode === 'tabs'
+                          ? 'bg-[#21262d] text-white shadow-xs'
+                          : 'text-[#8b949e] hover:text-white'
+                      }`}
+                      title="Tabs View"
+                    >
+                      <List className="w-3 h-3" />
+                      <span className="hidden sm:inline">Tabs</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1169,231 +1364,380 @@ export default function TechnicalCodingWorkspacePage() {
                   </span>
                 )}
 
-                <span className="text-[11px] text-[#8b949e] font-mono hidden sm:inline">
+                {/* Maximize / Restore Console Button */}
+                <button
+                  type="button"
+                  onClick={toggleConsoleMaximize}
+                  className="p-1.5 rounded-lg text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors cursor-pointer"
+                  title={isConsoleMaximized ? 'Restore console height' : 'Expand test cases space (or drag splitter)'}
+                >
+                  {isConsoleMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                </button>
+
+                <span className="text-[11px] text-[#8b949e] font-mono hidden md:inline">
                   Ctrl/Cmd + Enter
                 </span>
               </div>
             </div>
 
-            {/* Custom Input Panel */}
-            {showCustomInput && (
-              <div className="p-3.5 bg-[#0d1117] border-b border-[#30363d] space-y-2.5 animate-fadeIn">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#8b949e] uppercase text-[10px]">Custom Stdin Input:</span>
-                  <button
-                    type="button"
-                    onClick={handleRunCustomInput}
-                    disabled={isRunningCustom}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {isRunningCustom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
-                    <span>Run Custom</span>
-                  </button>
+            {/* Console Content Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-[#0d1117] space-y-4 custom-scrollbar">
+
+              {/* Custom Input Panel */}
+              {showCustomInput && (
+                <div className="p-3.5 bg-[#161b22] rounded-xl border border-[#30363d] space-y-2.5 animate-fadeIn">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#8b949e] uppercase text-[10px]">Custom Stdin Input:</span>
+                    <button
+                      type="button"
+                      onClick={handleRunCustomInput}
+                      disabled={isRunningCustom}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {isRunningCustom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
+                      <span>Run Custom</span>
+                    </button>
+                  </div>
+                  <textarea
+                    value={customStdin}
+                    onChange={(e) => setCustomStdin(e.target.value)}
+                    placeholder="Enter inputs here (e.g. 5, 2 7 11 15, etc.)..."
+                    rows={2}
+                    className="w-full p-2.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#FD4A32]"
+                  />
+
+                  {customResult && (
+                    <div className="p-3 rounded-lg bg-[#0d1117] border border-[#30363d] space-y-2 text-xs font-mono">
+                      <div className="flex items-center justify-between text-[11px] text-[#8b949e]">
+                        <span>Status: {customResult.statusDescription}</span>
+                        <span>Time: {customResult.timeMs} ms</span>
+                      </div>
+                      {customResult.compileOutput && (
+                        <pre className="p-2 rounded bg-rose-950/60 text-rose-300 text-[11px] overflow-x-auto whitespace-pre-wrap">
+                          {customResult.compileOutput}
+                        </pre>
+                      )}
+                      {customResult.stderr && (
+                        <pre className="p-2 rounded bg-amber-950/60 text-amber-300 text-[11px] overflow-x-auto whitespace-pre-wrap">
+                          {customResult.stderr}
+                        </pre>
+                      )}
+                      <div>
+                        <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Output:</span>
+                        <pre className="p-2 rounded bg-[#161b22] text-emerald-400 text-xs overflow-x-auto whitespace-pre-wrap border border-[#21262d] mt-1">
+                          {customResult.stdout || '<No output returned>'}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <textarea
-                  value={customStdin}
-                  onChange={(e) => setCustomStdin(e.target.value)}
-                  placeholder="Enter inputs here (e.g. 5, 2 7 11 15, etc.)..."
-                  rows={2}
-                  className="w-full p-2.5 rounded-lg bg-[#161b22] border border-[#30363d] text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#FD4A32]"
-                />
+              )}
 
-                {customResult && (
-                  <div className="p-3 rounded-lg bg-[#161b22] border border-[#30363d] space-y-2 text-xs font-mono">
-                    <div className="flex items-center justify-between text-[11px] text-[#8b949e]">
-                      <span>Status: {customResult.statusDescription}</span>
-                      <span>Time: {customResult.timeMs} ms</span>
-                    </div>
-                    {customResult.compileOutput && (
-                      <pre className="p-2 rounded bg-rose-950/60 text-rose-300 text-[11px] overflow-x-auto whitespace-pre-wrap">
-                        {customResult.compileOutput}
-                      </pre>
-                    )}
-                    {customResult.stderr && (
-                      <pre className="p-2 rounded bg-amber-950/60 text-amber-300 text-[11px] overflow-x-auto whitespace-pre-wrap">
-                        {customResult.stderr}
-                      </pre>
-                    )}
-                    <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Output:</span>
-                      <pre className="p-2 rounded bg-[#0d1117] text-emerald-400 text-xs overflow-x-auto whitespace-pre-wrap border border-[#21262d] mt-1">
-                        {customResult.stdout || '<No output returned>'}
-                      </pre>
-                    </div>
+              {/* Boilerplate Unmodified Warning */}
+              {testResults?.isTemplateOrEmpty && (
+                <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/80 text-amber-200 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-400 uppercase tracking-wider text-[11px]">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>No Solution Code Implemented</span>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Test Results Output Tabs & Viewer */}
-            {testResults && (
-              <div className="p-3.5 bg-[#0d1117] space-y-3 max-h-64 overflow-y-auto custom-scrollbar animate-fadeIn">
-                
-                {/* 1. Empty Code / Unmodified Boilerplate Warning */}
-                {testResults.isTemplateOrEmpty && (
-                  <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/80 text-amber-200 text-xs space-y-1">
-                    <div className="flex items-center gap-1.5 font-bold text-amber-400 uppercase tracking-wider text-[11px]">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>No Solution Code Implemented</span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed text-amber-200/90 font-sans">
-                      You ran tests on unmodified template code. Please write your algorithm logic inside{' '}
-                      <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono">solve()</code> or{' '}
-                      <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono">main()</code> before checking test cases.
-                    </p>
-                  </div>
-                )}
-
-                {/* 2. Real Compilation Error Diagnostic Console */}
-                {testResults.compileError && (
-                  <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-800/80 text-rose-200 font-mono text-xs space-y-1.5">
-                    <div className="flex items-center gap-1.5 font-bold text-rose-400 uppercase tracking-wider text-[11px]">
-                      <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                      <span>Compilation Error Diagnostics</span>
-                    </div>
-                    <pre className="whitespace-pre-wrap overflow-x-auto text-[11px] leading-relaxed p-2.5 bg-[#080b0f] rounded-lg border border-rose-900/60 text-rose-300 custom-scrollbar max-h-36 font-mono">
-                      {testResults.compileError}
-                    </pre>
-                  </div>
-                )}
-
-                {/* Mode Status Indicator Banner */}
-                <div className={`px-3 py-2 rounded-lg text-xs font-mono flex items-center justify-between border ${
-                  testResults.totalCount <= sampleCases.length
-                    ? 'bg-blue-950/40 border-blue-800 text-blue-300'
-                    : testResults.passedCount === testResults.totalCount
-                    ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
-                    : 'bg-amber-950/40 border-amber-800 text-amber-300'
-                }`}>
-                  <span className="font-bold">
-                    {testResults.totalCount <= sampleCases.length
-                      ? '⚡ Sample Test Run (Debugging Mode)'
-                      : testResults.passedCount === testResults.totalCount
-                      ? '🎉 Submission Verified: ALL 8+ CASES PASSED!'
-                      : '⚠️ Submission Evaluation: Edge Case Failed'}
-                  </span>
-                  <span className="text-[11px] opacity-80 hidden sm:inline">
-                    {testResults.totalCount <= sampleCases.length
-                      ? 'Click "Submit Solution" to test against 8+ edge cases & mark as solved'
-                      : `${testResults.passedCount}/${testResults.totalCount} Test Cases Passed`}
-                  </span>
+                  <p className="text-[11px] leading-relaxed text-amber-200/90 font-sans">
+                    You ran tests on unmodified template code. Please write your algorithm logic inside{' '}
+                    <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono">solve()</code> or{' '}
+                    <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono">main()</code> before checking test cases.
+                  </p>
                 </div>
+              )}
 
-                {/* 3. Test Case Selectors */}
-                {testResults.cases.length > 0 && (
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                    {testResults.cases.map((c, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setActiveTestTab(idx)}
-                        className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                          activeTestTab === idx
-                            ? 'bg-[#21262d] text-white border border-[#388bfd]'
-                            : 'bg-[#161b22] text-[#8b949e] hover:text-white'
-                        }`}
-                      >
-                        {c.passed ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        ) : (
-                          <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                        )}
-                        <span>{idx < sampleCases.length ? `Sample ${idx + 1}` : `Edge ${idx + 1}`}</span>
-                      </button>
-                    ))}
+              {/* Compilation Error Diagnostics */}
+              {testResults?.compileError && (
+                <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-800/80 text-rose-200 font-mono text-xs space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-rose-400 uppercase tracking-wider text-[11px]">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span>Compilation Error Diagnostics</span>
                   </div>
-                )}
+                  <pre className="whitespace-pre-wrap overflow-x-auto text-[11px] leading-relaxed p-2.5 bg-[#080b0f] rounded-lg border border-rose-900/60 text-rose-300 custom-scrollbar max-h-36 font-mono">
+                    {testResults.compileError}
+                  </pre>
+                </div>
+              )}
 
-                {/* 4. Active Case Details */}
-                {testResults.cases[activeTestTab] && (
-                  <div className="p-3 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2.5 text-xs font-mono">
-                    <div className="flex items-center justify-between text-[11px] flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#8b949e]">Status:</span>
-                        <span
-                          className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
-                            testResults.cases[activeTestTab].passed
-                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
-                              : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
-                              ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
-                              : testResults.cases[activeTestTab].status === 'RUNTIME_ERROR'
-                              ? 'bg-amber-950/80 text-amber-400 border border-amber-800'
-                              : testResults.cases[activeTestTab].status === 'TIME_LIMIT_EXCEEDED'
-                              ? 'bg-purple-950/80 text-purple-400 border border-purple-800'
-                              : testResults.cases[activeTestTab].status === 'EMPTY_CODE'
-                              ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-800'
-                              : 'bg-rose-950/80 text-rose-400 border border-rose-800'
-                          }`}
-                        >
-                          {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
+              {/* Evaluation / Submission View (Screenshot-Matching Multi-Column Grid) */}
+              {(isSubmitting || testResults) && resultsViewMode === 'grid' && (
+                <div className="p-4 rounded-xl bg-[#161b22] border border-[#30363d] space-y-4 animate-fadeIn">
+                  
+                  {/* "Fetching Results" Header */}
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-display">
+                        Fetching Results
+                      </h3>
+                      {isSubmitting && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Evaluating Suite...</span>
                         </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-[#8b949e] text-[10px]">
-                        <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
-                        {testResults.cases[activeTestTab].memoryKb ? (
-                          <span>• Mem: {Math.round(testResults.cases[activeTestTab].memoryKb! / 1024 * 10) / 10} MB</span>
-                        ) : null}
-                      </div>
+                      )}
                     </div>
 
-                    <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Input (stdin):</span>
-                      <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5 border border-[#21262d]">
-                        {testResults.cases[activeTestTab].input || '<No input provided>'}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Expected Output:</span>
-                      <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5 border border-[#21262d]">
-                        {testResults.cases[activeTestTab].expected || '<Empty>'}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Your Program Output:</span>
-                      <div
-                        className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 border ${
-                          testResults.cases[activeTestTab].passed
-                            ? 'text-emerald-400 border-emerald-950'
-                            : 'text-rose-400 border-rose-950'
+                    {testResults && !isSubmitting && (
+                      <span
+                        className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${
+                          testResults.passedCount === testResults.totalCount
+                            ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                            : 'bg-rose-950/80 text-rose-400 border-rose-800'
                         }`}
                       >
-                        {testResults.cases[activeTestTab].actual}
-                      </div>
+                        {testResults.passedCount}/{testResults.totalCount} Test Cases Passed
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Green Progress Bar Underneath Header */}
+                  <div className="w-full h-1.5 bg-[#21262d] rounded-full overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        isSubmitting
+                          ? 'w-4/5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 animate-pulse'
+                          : testResults?.passedCount === testResults?.totalCount
+                          ? 'w-full bg-emerald-500'
+                          : 'w-full bg-amber-500'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Multi-Column 4-Row Test Cases Grid (Matches Screenshot) */}
+                  <div className="py-2 overflow-x-auto custom-scrollbar">
+                    <div className="grid grid-flow-col grid-rows-4 auto-cols-max gap-x-12 sm:gap-x-16 gap-y-3.5 min-w-[500px]">
+                      {displayGridCases.map((c, idx) => {
+                        const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
+                        const isPassed = !isEvaluating && c.passed;
+                        const isFailed = !isEvaluating && !c.passed;
+                        const isSelected = activeTestTab === idx;
+
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveTestTab(idx)}
+                            className={`inline-flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-left cursor-pointer select-none group ${
+                              isSelected
+                                ? 'bg-[#21262d] ring-1 ring-emerald-500/60 shadow-sm'
+                                : 'hover:bg-[#1f242c]'
+                            }`}
+                            title={`Click to inspect Test case ${idx} diagnostics`}
+                          >
+                            {/* Status Icon */}
+                            {isEvaluating ? (
+                              <Loader2 className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
+                            ) : isPassed ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            ) : isFailed ? (
+                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                            ) : (
+                              <Circle className="w-4 h-4 text-gray-500 shrink-0" />
+                            )}
+
+                            {/* Test Case Label */}
+                            <span
+                              className={`text-sm font-medium transition-colors ${
+                                isEvaluating
+                                  ? 'text-gray-300'
+                                  : isPassed
+                                  ? 'text-emerald-400 font-semibold'
+                                  : isFailed
+                                  ? 'text-rose-400 font-semibold'
+                                  : 'text-gray-400'
+                              }`}
+                            >
+                              Test case {idx}
+                            </span>
+
+                            {/* Padlock Icon for Hidden/Edge Test Cases */}
+                            <Lock
+                              className={`w-3.5 h-3.5 ml-0.5 shrink-0 ${
+                                isEvaluating
+                                  ? 'text-gray-400'
+                                  : isPassed
+                                  ? 'text-emerald-400'
+                                  : isFailed
+                                  ? 'text-rose-400'
+                                  : 'text-gray-500'
+                              }`}
+                            />
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* 5. Celebration Banner when 100% Passed */}
-            {showCelebration && (
-              <div className="p-4 bg-emerald-950/70 border-t border-emerald-800/80 flex items-center justify-between gap-3 animate-fadeIn">
-                <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-5 h-5 text-emerald-400 shrink-0 animate-pulse" />
+                </div>
+              )}
+
+              {/* Classic Horizontal Tabs View (when user selects tabs mode) */}
+              {(isSubmitting || testResults) && resultsViewMode === 'tabs' && (
+                <div className="space-y-3">
+                  {/* Mode Status Indicator Banner */}
+                  {testResults && (
+                    <div className={`px-3 py-2 rounded-lg text-xs font-mono flex items-center justify-between border ${
+                      testResults.totalCount <= sampleCases.length
+                        ? 'bg-blue-950/40 border-blue-800 text-blue-300'
+                        : testResults.passedCount === testResults.totalCount
+                        ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
+                        : 'bg-amber-950/40 border-amber-800 text-amber-300'
+                    }`}>
+                      <span className="font-bold">
+                        {testResults.totalCount <= sampleCases.length
+                          ? '⚡ Sample Test Run (Debugging Mode)'
+                          : testResults.passedCount === testResults.totalCount
+                          ? '🎉 Submission Verified: ALL 8+ CASES PASSED!'
+                          : '⚠️ Submission Evaluation: Edge Case Failed'}
+                      </span>
+                      <span className="text-[11px] opacity-80 hidden sm:inline">
+                        {testResults.totalCount <= sampleCases.length
+                          ? 'Click "Submit Solution" to test against 8+ edge cases & mark as solved'
+                          : `${testResults.passedCount}/${testResults.totalCount} Test Cases Passed`}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Test Case Tab Selector Buttons */}
+                  {displayGridCases.length > 0 && (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                      {displayGridCases.map((c, idx) => {
+                        const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
+                        const isPassed = !isEvaluating && c.passed;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveTestTab(idx)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                              activeTestTab === idx
+                                ? 'bg-[#21262d] text-white border border-[#388bfd]'
+                                : 'bg-[#161b22] text-[#8b949e] hover:text-white'
+                            }`}
+                          >
+                            {isEvaluating ? (
+                              <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin shrink-0" />
+                            ) : isPassed ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            ) : (
+                              <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            )}
+                            <span>{idx < sampleCases.length ? `Sample ${idx + 1}` : `Edge ${idx + 1}`}</span>
+                            <Lock className="w-3 h-3 text-emerald-400/70 shrink-0" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Active Case Diagnostics Card */}
+              {testResults && testResults.cases[activeTestTab] && (
+                <div className="p-3.5 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2.5 text-xs font-mono animate-fadeIn">
+                  <div className="flex items-center justify-between text-[11px] flex-wrap gap-2 pb-2 border-b border-[#21262d]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#8b949e]">Case #{activeTestTab} Status:</span>
+                      <span
+                        className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
+                          testResults.cases[activeTestTab].passed
+                            ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                            : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
+                            ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                            : testResults.cases[activeTestTab].status === 'RUNTIME_ERROR'
+                            ? 'bg-amber-950/80 text-amber-400 border border-amber-800'
+                            : testResults.cases[activeTestTab].status === 'TIME_LIMIT_EXCEEDED'
+                            ? 'bg-purple-950/80 text-purple-400 border border-purple-800'
+                            : testResults.cases[activeTestTab].status === 'EMPTY_CODE'
+                            ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-800'
+                            : 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                        }`}
+                      >
+                        {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[#8b949e] text-[10px]">
+                      <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
+                      {testResults.cases[activeTestTab].memoryKb ? (
+                        <span>• Mem: {Math.round((testResults.cases[activeTestTab].memoryKb! / 1024) * 10) / 10} MB</span>
+                      ) : null}
+                    </div>
+                  </div>
+
                   <div>
-                    <h5 className="font-bold text-xs text-white">Solution Accepted!</h5>
-                    <p className="text-[11px] text-emerald-300">
-                      All test cases passed. Problem marked as solved.
-                    </p>
+                    <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Input (stdin):</span>
+                    <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
+                      {testResults.cases[activeTestTab].input || '<No input provided>'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Expected Output:</span>
+                    <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
+                      {testResults.cases[activeTestTab].expected || '<Empty>'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Your Program Output:</span>
+                    <div
+                      className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 border max-h-24 overflow-y-auto custom-scrollbar ${
+                        testResults.cases[activeTestTab].passed
+                          ? 'text-emerald-400 border-emerald-950'
+                          : 'text-rose-400 border-rose-950'
+                      }`}
+                    >
+                      {testResults.cases[activeTestTab].actual}
+                    </div>
                   </div>
                 </div>
+              )}
 
-                {nextProblem && (
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/technical/solve/${nextProblem.id}`)}
-                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-                  >
-                    <span>Next Problem</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            )}
+              {/* Ready State (When no test run has occurred yet) */}
+              {!testResults && !isSubmitting && !showCustomInput && (
+                <div className="h-40 flex flex-col items-center justify-center text-center text-[#8b949e] space-y-2 p-4">
+                  <Terminal className="w-8 h-8 text-[#484f58]" />
+                  <p className="text-xs font-mono font-medium text-gray-400 max-w-md">
+                    Click <span className="text-emerald-400 font-bold">Run Tests</span> to run visible sample test cases, or{' '}
+                    <span className="text-[#FD4A32] font-bold">Submit Solution</span> to evaluate all 8+ test cases and mark as solved.
+                  </p>
+                  <p className="text-[11px] text-[#484f58] flex items-center gap-1.5">
+                    <GripHorizontal className="w-3.5 h-3.5" />
+                    <span>Tip: Drag the splitter bar above to expand the test cases area.</span>
+                  </p>
+                </div>
+              )}
 
+              {/* Celebration Banner when 100% Passed */}
+              {showCelebration && (
+                <div className="p-4 bg-emerald-950/70 border border-emerald-800/80 rounded-xl flex items-center justify-between gap-3 animate-fadeIn">
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-5 h-5 text-emerald-400 shrink-0 animate-pulse" />
+                    <div>
+                      <h5 className="font-bold text-xs text-white">Solution Accepted!</h5>
+                      <p className="text-[11px] text-emerald-300">
+                        All test cases passed. Problem marked as solved.
+                      </p>
+                    </div>
+                  </div>
+
+                  {nextProblem && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/technical/solve/${nextProblem.id}`)}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <span>Next Problem</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+            </div>
           </div>
 
         </section>
