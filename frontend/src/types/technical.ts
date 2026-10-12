@@ -60,6 +60,7 @@ export interface TestCase {
   input: string;
   output: string;
   explanation?: string;
+  is_hidden?: boolean;
 }
 
 export interface ProgrammingProblem {
@@ -78,6 +79,7 @@ export interface ProgrammingProblem {
   testCases?: TestCase[];
   test_cases?: TestCase[];
   sampleCases?: TestCase[];
+  hiddenTestCases?: TestCase[];
   sampleInput?: string;
   sample_input?: string;
   sampleOutput?: string;

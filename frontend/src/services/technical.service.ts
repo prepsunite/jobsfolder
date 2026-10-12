@@ -5,6 +5,7 @@ import { PROGRAMMING_TOPICS, PROGRAMMING_150_STAGES, CAMPUS_DSA_TOPICS, TECHNICA
 import { CAMPUS_DSA_ROADMAP_STAGES } from './campusDsaRoadmapData';
 import { computeSha256Hex } from '@/utils/questionParser';
 import { enrichCodingProblemForExam } from './campusDsaExamDataset';
+import { getProgramming150TestCases } from './programming150TestCases';
 
 import type { TechnicalProblemRow, TechnicalMcqRow } from '@/lib/database.types';
 import { auditService } from './audit.service';
@@ -56,9 +57,26 @@ const normalizeDbProblem = (rawD: RawDbProblem, solvedSet: Set<string>): Program
   const rawTestCases = Array.isArray((d as any).sample_cases) && (d as any).sample_cases.length > 0
     ? (d as any).sample_cases
     : (Array.isArray(d.test_cases) ? d.test_cases : (Array.isArray(d.testCases) ? d.testCases : []));
-  const resolvedTestCases = rawTestCases.filter((tc: any) => !tc.is_hidden);
-  const resolvedSampleInput = d.sample_input || d.sampleInput || '';
-  const resolvedSampleOutput = d.sample_output || d.sampleOutput || '';
+
+  const p150Bundle = (d.track === 'PROGRAMMING_150' || !d.track)
+    ? getProgramming150TestCases(d.id, rawTestCases)
+    : null;
+
+  const resolvedSampleCases = p150Bundle
+    ? p150Bundle.sampleCases
+    : (Array.isArray((d as any).sample_cases) && (d as any).sample_cases.length > 0
+        ? (d as any).sample_cases
+        : rawTestCases.filter((tc: any) => !tc.is_hidden));
+
+  const resolvedHiddenCases = p150Bundle
+    ? p150Bundle.hiddenCases
+    : (Array.isArray((d as any).hidden_test_cases) && (d as any).hidden_test_cases.length > 0
+        ? (d as any).hidden_test_cases
+        : rawTestCases.filter((tc: any) => tc.is_hidden));
+
+  const resolvedTestCases = resolvedSampleCases.length > 0 ? resolvedSampleCases : rawTestCases;
+  const resolvedSampleInput = d.sample_input || d.sampleInput || (resolvedSampleCases[0]?.input || '');
+  const resolvedSampleOutput = d.sample_output || d.sampleOutput || (resolvedSampleCases[0]?.output || '');
   const resolvedTimeComplexity = d.time_complexity || d.timeComplexity || 'O(N)';
   const resolvedSpaceComplexity = d.space_complexity || d.spaceComplexity || 'O(1)';
   const resolvedCompanyTags = Array.isArray(d.company_tags) ? (d.company_tags as string[]) : (Array.isArray(d.companyTags) ? d.companyTags : []);
@@ -80,6 +98,8 @@ const normalizeDbProblem = (rawD: RawDbProblem, solvedSet: Set<string>): Program
       : [],
     testCases: resolvedTestCases,
     test_cases: resolvedTestCases,
+    sampleCases: resolvedSampleCases,
+    hiddenTestCases: resolvedHiddenCases,
     sampleInput: resolvedSampleInput,
     sample_input: resolvedSampleInput,
     sampleOutput: resolvedSampleOutput,

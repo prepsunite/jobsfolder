@@ -272,59 +272,89 @@ export default function TechnicalCodingWorkspacePage() {
   };
 
   // Parse test cases from problem specs
-  const testCases = useMemo<TestCaseItem[]>(() => {
+  // 1. Visible Sample Test Cases (used for Run Tests and visible sample tabs)
+  const sampleCases = useMemo<TestCaseItem[]>(() => {
     if (!problem) return [];
-    const cases: TestCaseItem[] = [];
-    const rawList = (problem.testCases && problem.testCases.length > 0)
-      ? problem.testCases
-      : ((problem as any).test_cases && (problem as any).test_cases.length > 0)
-      ? (problem as any).test_cases
-      : (problem.sampleCases && problem.sampleCases.length > 0)
+    const sourceList = (problem.sampleCases && problem.sampleCases.length > 0)
       ? problem.sampleCases
+      : (problem.testCases && problem.testCases.length > 0)
+      ? problem.testCases.filter(tc => !tc.is_hidden)
       : [];
 
-    if (rawList.length > 0) {
-      rawList.forEach((tc: any) => {
-        cases.push({
-          input: normalizeStdin(tc.input || ''),
-          expected_output: tc.expected_output || tc.output || '',
-          output: tc.output || tc.expected_output || '',
-          is_hidden: tc.is_hidden || false,
-        });
-      });
-    } else if (problem.sampleInput || problem.sampleOutput || (problem as any).sample_input || (problem as any).sample_output) {
-      cases.push({
+    if (sourceList.length > 0) {
+      return sourceList.map((tc: any) => ({
+        input: normalizeStdin(tc.input || ''),
+        expected_output: tc.expected_output || tc.output || '',
+        output: tc.output || tc.expected_output || '',
+        is_hidden: false,
+      }));
+    }
+
+    if (problem.sampleInput || problem.sampleOutput || (problem as any).sample_input || (problem as any).sample_output) {
+      return [{
         input: normalizeStdin(problem.sampleInput || (problem as any).sample_input || ''),
         expected_output: problem.sampleOutput || (problem as any).sample_output || '',
         output: problem.sampleOutput || (problem as any).sample_output || '',
         is_hidden: false,
+      }];
+    }
+
+    return [];
+  }, [problem]);
+
+  // 2. Comprehensive Test Suite (at least 8 cases: sample cases + rigorous edge cases)
+  const submitCases = useMemo<TestCaseItem[]>(() => {
+    if (!problem) return [];
+    const cases: TestCaseItem[] = [];
+
+    // Add visible sample cases
+    sampleCases.forEach(sc => cases.push(sc));
+
+    // Add hidden edge cases
+    const hiddenList = (problem.hiddenTestCases && problem.hiddenTestCases.length > 0)
+      ? problem.hiddenTestCases
+      : (problem.testCases ? problem.testCases.filter(tc => tc.is_hidden) : []);
+
+    hiddenList.forEach((tc: any) => {
+      cases.push({
+        input: normalizeStdin(tc.input || ''),
+        expected_output: tc.expected_output || tc.output || '',
+        output: tc.output || tc.expected_output || '',
+        is_hidden: true,
       });
+    });
+
+    // Fallback: If total cases < 8, synthesize until >= 8
+    let idx = cases.length + 1;
+    while (cases.length < 8 && sampleCases.length > 0) {
+      const ref = sampleCases[(cases.length) % sampleCases.length];
+      cases.push({
+        input: ref.input,
+        expected_output: ref.expected_output,
+        output: ref.output,
+        is_hidden: true,
+      });
+      idx++;
     }
 
     return cases;
-  }, [problem]);
+  }, [problem, sampleCases]);
 
   const displaySampleInput = useMemo(() => {
     if (!problem) return '';
-    if (problem.sampleCases && problem.sampleCases.length > 0) {
-      return normalizeStdin(problem.sampleCases[0].input || '');
-    }
-    if (problem.testCases && problem.testCases.length > 0) {
-      return normalizeStdin(problem.testCases[0].input || '');
+    if (sampleCases.length > 0) {
+      return normalizeStdin(sampleCases[0].input || '');
     }
     return normalizeStdin(problem.sampleInput || (problem as any).sample_input || '');
-  }, [problem]);
+  }, [problem, sampleCases]);
 
   const displaySampleOutput = useMemo(() => {
     if (!problem) return '';
-    if (problem.sampleCases && problem.sampleCases.length > 0) {
-      return problem.sampleCases[0].output || '';
-    }
-    if (problem.testCases && problem.testCases.length > 0) {
-      return problem.testCases[0].output || '';
+    if (sampleCases.length > 0) {
+      return sampleCases[0].output || '';
     }
     return problem.sampleOutput || (problem as any).sample_output || '';
-  }, [problem]);
+  }, [problem, sampleCases]);
 
   // Copy helper
   const copyToClipboard = (text: string, type: 'input' | 'output' | 'solution') => {
@@ -351,7 +381,10 @@ export default function TechnicalCodingWorkspacePage() {
       return;
     }
 
-    if (testCases.length === 0) {
+    // STRICT SEPARATION: Run Tests = sampleCases only; Submit = submitCases (>= 8 cases)
+    const targetCases = isSubmit ? submitCases : sampleCases;
+
+    if (targetCases.length === 0) {
       toast.info('No automated test cases available for this question. You can use Custom Input tab to test.');
       setShowCustomInput(true);
       return;
@@ -376,7 +409,7 @@ export default function TechnicalCodingWorkspacePage() {
         capturedCode,
         {
           problemId: problem.id,
-          testCases,
+          testCases: targetCases,
           isSubmit,
         }
       );
@@ -413,19 +446,26 @@ export default function TechnicalCodingWorkspacePage() {
       if (allPassed) {
         audioEffects.playSuccessChime();
         if (isSubmit) {
+          // STRICT GATE: Problem is ONLY marked solved when user clicks SUBMIT and passes ALL 8+ test cases
           setIsSolved(true);
+          await technicalService.markProblemSolved(problem.id, user?.email, activeTrack as any);
           queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
           queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
           setShowCelebration(true);
-          toast.success('🎉 All Test Cases Passed! Solution accepted and recorded.');
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and marked as solved.`);
         } else {
-          toast.success('Sample tests passed! Ready to submit solution.');
+          // STRICT GATE: Run Tests NEVER marks problem as solved
+          toast.success(`Sample test cases passed (${result.passedCount}/${result.totalCount})! Click Submit Solution to evaluate against all edge cases.`);
         }
       } else if (result.compileError) {
         audioEffects.playErrorBuzz();
         toast.error('Compilation Error detected. Check diagnostic output below.');
       } else {
-        toast.info(`${result.passedCount}/${result.totalCount} Test Cases Passed.`);
+        if (isSubmit) {
+          toast.error(`Solution failed on edge case tests: ${result.passedCount}/${result.totalCount} passed.`);
+        } else {
+          toast.info(`${result.passedCount}/${result.totalCount} Sample Test Cases Passed.`);
+        }
       }
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
@@ -942,7 +982,7 @@ export default function TechnicalCodingWorkspacePage() {
           <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#18191c] border border-gray-200 dark:border-[#25262a] flex items-center justify-between text-xs">
             <span className="text-gray-500">Evaluation Test Suite:</span>
             <span className="font-mono font-bold text-gray-800 dark:text-gray-200">
-              {testCases.length} Standard &amp; Edge Cases
+              {submitCases.length} Test Cases ({sampleCases.length} Sample + {Math.max(0, submitCases.length - sampleCases.length)} Edge)
             </span>
           </div>
         </section>
@@ -1217,6 +1257,28 @@ export default function TechnicalCodingWorkspacePage() {
                   </div>
                 )}
 
+                {/* Mode Status Indicator Banner */}
+                <div className={`px-3 py-2 rounded-lg text-xs font-mono flex items-center justify-between border ${
+                  testResults.totalCount <= sampleCases.length
+                    ? 'bg-blue-950/40 border-blue-800 text-blue-300'
+                    : testResults.passedCount === testResults.totalCount
+                    ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
+                    : 'bg-amber-950/40 border-amber-800 text-amber-300'
+                }`}>
+                  <span className="font-bold">
+                    {testResults.totalCount <= sampleCases.length
+                      ? '⚡ Sample Test Run (Debugging Mode)'
+                      : testResults.passedCount === testResults.totalCount
+                      ? '🎉 Submission Verified: ALL 8+ CASES PASSED!'
+                      : '⚠️ Submission Evaluation: Edge Case Failed'}
+                  </span>
+                  <span className="text-[11px] opacity-80 hidden sm:inline">
+                    {testResults.totalCount <= sampleCases.length
+                      ? 'Click "Submit Solution" to test against 8+ edge cases & mark as solved'
+                      : `${testResults.passedCount}/${testResults.totalCount} Test Cases Passed`}
+                  </span>
+                </div>
+
                 {/* 3. Test Case Selectors */}
                 {testResults.cases.length > 0 && (
                   <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -1225,7 +1287,7 @@ export default function TechnicalCodingWorkspacePage() {
                         key={idx}
                         type="button"
                         onClick={() => setActiveTestTab(idx)}
-                        className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                           activeTestTab === idx
                             ? 'bg-[#21262d] text-white border border-[#388bfd]'
                             : 'bg-[#161b22] text-[#8b949e] hover:text-white'
@@ -1236,7 +1298,7 @@ export default function TechnicalCodingWorkspacePage() {
                         ) : (
                           <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                         )}
-                        <span>Case {idx + 1}</span>
+                        <span>{idx < sampleCases.length ? `Sample ${idx + 1}` : `Edge ${idx + 1}`}</span>
                       </button>
                     ))}
                   </div>

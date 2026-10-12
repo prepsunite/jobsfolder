@@ -150,10 +150,17 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Resolve Test Cases (From DB by problemId, or fallback to clientTestCases)
+    // 3. Resolve Test Cases (From DB by problemId, local dataset, or clientTestCases)
     let testCases = [];
 
-    if (problemId && supabaseAdmin) {
+    // Fallback to client-provided test cases if provided
+    if (Array.isArray(clientTestCases) && clientTestCases.length > 0) {
+      testCases = isSubmit
+        ? clientTestCases
+        : clientTestCases.filter(tc => !tc.is_hidden);
+    }
+
+    if (testCases.length === 0 && problemId && supabaseAdmin) {
       try {
         const { data: problem, error: probError } = await supabaseAdmin
           .from('technical_problems')
@@ -162,23 +169,18 @@ export default async function handler(req, res) {
           .maybeSingle();
 
         if (problem && !probError) {
-          if (Array.isArray(problem.sample_cases) && problem.sample_cases.length > 0) {
-            testCases = [
-              ...problem.sample_cases,
-              ...(Array.isArray(problem.hidden_test_cases) ? problem.hidden_test_cases : []),
-            ];
-          } else if (Array.isArray(problem.test_cases) && problem.test_cases.length > 0) {
-            testCases = problem.test_cases;
-          }
+          const sampleList = Array.isArray(problem.sample_cases) && problem.sample_cases.length > 0
+            ? problem.sample_cases
+            : (Array.isArray(problem.test_cases) ? problem.test_cases.filter(tc => !tc.is_hidden) : []);
+          const hiddenList = Array.isArray(problem.hidden_test_cases) && problem.hidden_test_cases.length > 0
+            ? problem.hidden_test_cases
+            : (Array.isArray(problem.test_cases) ? problem.test_cases.filter(tc => tc.is_hidden) : []);
+
+          testCases = isSubmit ? [...sampleList, ...hiddenList] : sampleList;
         }
       } catch (dbErr) {
         console.warn('[api/execute-code] DB problem lookup error:', dbErr?.message);
       }
-    }
-
-    // Fallback to client-provided test cases if not found in database or if database is unconfigured
-    if (testCases.length === 0 && Array.isArray(clientTestCases) && clientTestCases.length > 0) {
-      testCases = clientTestCases;
     }
 
     if (testCases.length === 0) {
