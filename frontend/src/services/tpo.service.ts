@@ -3721,6 +3721,96 @@ export const tpoService = {
   },
 
   /**
+   * Retrieves all Open National Mock Assessments commissioned by Super Admins.
+   * Accessible by ANY candidate nationwide without college enrollment restrictions.
+   */
+  async getPublicMockExams(): Promise<MockExam[]> {
+    const local = getLocalExams('PUBLIC');
+    const map = new Map<string, MockExam>();
+    local.forEach(e => map.set(e.id, e));
+
+    try {
+      const { data: dbExams, error: examErr } = await supabase
+        .from('mock_exams')
+        .select('*')
+        .in('college_id', ['PUBLIC', 'OPEN'])
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (!examErr && dbExams && dbExams.length > 0) {
+        const examIds = dbExams.map(e => e.id);
+        const { data: dbSections } = await supabase
+          .from('mock_exam_sections')
+          .select('*')
+          .in('mock_exam_id', examIds)
+          .order('section_order', { ascending: true });
+
+        const secMap = new Map<string, MockExamSection[]>();
+        (dbSections || []).forEach(s => {
+          if (!secMap.has(s.mock_exam_id)) secMap.set(s.mock_exam_id, []);
+          secMap.get(s.mock_exam_id)!.push(s);
+        });
+
+        dbExams.forEach(e => {
+          const eSections = secMap.get(e.id) || e.sections || [];
+          eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
+
+          let instructions = e.instructions || '';
+          const isSectionalLock = Boolean(e.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
+          instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
+          let isPasscodeLock = Boolean(e.enable_passcode_lock || instructions.includes('<!--PASSCODE:'));
+          let accessPasscode = e.access_passcode || '';
+          if (instructions.includes('<!--PASSCODE:')) {
+            const match = instructions.match(/<!--PASSCODE:(.*?)-->/);
+            if (match && match[1]) {
+              accessPasscode = match[1].trim().toUpperCase();
+              isPasscodeLock = true;
+            }
+          }
+          instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
+
+          map.set(e.id, {
+            ...e,
+            instructions,
+            enable_sectional_lock: isSectionalLock,
+            enable_passcode_lock: isPasscodeLock,
+            access_passcode: accessPasscode,
+            sections: eSections,
+          });
+        });
+      }
+    } catch (error: any) {
+      console.warn('Notice fetching public mock exams from Supabase:', error?.message);
+    }
+
+    // Cloud resilience fallback: Fetch public exams stored in contact_messages
+    try {
+      const { data: cloudExams } = await supabase
+        .from('contact_messages')
+        .select('message, status')
+        .like('subject', 'B2B_EXAM:PUBLIC:%')
+        .neq('status', 'DELETED')
+        .order('created_at', { ascending: false });
+
+      if (cloudExams && cloudExams.length > 0) {
+        cloudExams.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message) as MockExam;
+            if (parsed && parsed.id && !map.has(parsed.id) && !parsed.is_deleted) {
+              map.set(parsed.id, parsed);
+            }
+          } catch {}
+        });
+      }
+    } catch {}
+
+    const merged = Array.from(map.values()).filter(e => !e.is_deleted && e.is_active);
+    saveLocalExams('PUBLIC', merged);
+    return merged;
+  },
+
+  /**
    * Automatically guarantees every section in the exam has populated question IDs.
    * If any section has 0 questions, it dynamically pools questions from Supabase,
    * ALL_TECHNICAL_MCQ_SEEDS, and dataStore.
@@ -4038,6 +4128,7 @@ export const tpoService = {
             const allLocal = [
               ...getLocalExams(examData.college_id),
               ...getLocalExams('SELF'),
+              ...getLocalExams('PUBLIC'),
             ];
             const localFound = allLocal.find(e => e.id === examId);
             if (localFound?.sections && localFound.sections.length > 0) {
@@ -4114,6 +4205,13 @@ export const tpoService = {
           break;
         }
       }
+    }
+
+    if (!resolvedExam) {
+      // Try finding in local public / open exams
+      const localPublic = getLocalExams('PUBLIC');
+      const foundPublic = localPublic.find(e => e.id === examId);
+      if (foundPublic) resolvedExam = foundPublic;
     }
 
     if (!resolvedExam) {
@@ -7108,7 +7206,10 @@ export const tpoService = {
     // 2. Fetch candidate's self-practice mock exams
     const selfExams = await this.getStudentSelfPracticeExams(cleanEmail);
 
-    if (!resolvedCollegeId && selfExams.length === 0) {
+    // 2b. Fetch open national public mock exams (commissioned by Super Admins)
+    const publicExams = await this.getPublicMockExams();
+
+    if (!resolvedCollegeId && selfExams.length === 0 && publicExams.length === 0) {
       return { college: null, exams: [] };
     }
 
@@ -7129,8 +7230,9 @@ export const tpoService = {
       collegeExams = await this.getMockExamsForCollege(resolvedCollegeId);
     }
 
-    // Merge self-practice exams and college exams (deduplicating by id)
+    // Merge public open exams, self-practice exams, and college exams (deduplicating by id)
     const combinedMap = new Map<string, MockExam>();
+    publicExams.forEach(e => combinedMap.set(e.id, e));
     selfExams.forEach(e => combinedMap.set(e.id, e));
     collegeExams.forEach(e => combinedMap.set(e.id, e));
     const allExams = Array.from(combinedMap.values());

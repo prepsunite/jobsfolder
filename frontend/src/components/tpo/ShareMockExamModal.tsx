@@ -32,11 +32,32 @@ export default function ShareMockExamModal({
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prepunite.com';
   const candidateUrl = `${origin}/exam/${exam.id}`;
-  const resolvedCollege = collegeName || 'Campus Placement Cell';
-  const targetDepts = exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches';
+  const isPublic = exam.college_id === 'PUBLIC' || exam.college_id === 'OPEN';
+  const resolvedCollege = isPublic ? 'PrepUnite National Challenge' : (collegeName || 'Campus Placement Cell');
+  const targetDepts = isPublic
+    ? 'All Candidates Nationwide'
+    : exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches';
 
   // 1. WhatsApp Broadcast Text
-  const whatsappBroadcastText = `📢 *CAMPUS PLACEMENT ASSESSMENT: ${resolvedCollege}*
+  const whatsappBroadcastText = isPublic
+    ? `📢 *NATIONAL PLACEMENT MOCK CHALLENGE: ${exam.title}*
+━━━━━━━━━━━━━━━━━━━━
+🎯 *Assessment:* ${exam.title}
+🏢 *Company Blueprint:* ${exam.target_company}
+⏱ *Duration:* ${exam.duration_minutes} Minutes | *Total Marks:* ${exam.total_marks}
+📊 *Passing Cutoff:* ${exam.passing_percentage}%
+🌐 *Eligibility:* Open to All Candidates Nationwide (Free)
+
+🔗 *Direct Candidate Assessment Link:*
+${candidateUrl}
+
+⚡ *Challenge Highlights:*
+1. Sign in to PrepUnite and test your placement readiness.
+2. Real-time proctored test environment with live anti-cheat.
+3. In-depth scorecard, ranking, and solutions.
+━━━━━━━━━━━━━━━━━━━━
+_Powered by PrepUnite National Mock Engine_`
+    : `📢 *CAMPUS PLACEMENT ASSESSMENT: ${resolvedCollege}*
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *Assessment:* ${exam.title}
 🏢 *Company Pattern:* ${exam.target_company}
@@ -57,8 +78,36 @@ _Powered by PrepUnite Placement Assessment Suite_`;
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappBroadcastText)}`;
 
   // 2. Official Circular Email Template
-  const emailSubject = `[URGENT] Campus Placement Mock Drive: ${exam.title} (${exam.target_company} Pattern)`;
-  const emailBodyText = `Dear Students,
+  const emailSubject = isPublic
+    ? `[OPEN ACCESS] National Placement Mock Challenge: ${exam.title} (${exam.target_company} Pattern)`
+    : `[URGENT] Campus Placement Mock Drive: ${exam.title} (${exam.target_company} Pattern)`;
+
+  const emailBodyText = isPublic
+    ? `Hello Candidates,
+
+PrepUnite has published an open national placement mock challenge: ${exam.title} modeled after the official ${exam.target_company} pattern.
+
+Assessment Details:
+• Title: ${exam.title}
+• Company Blueprint: ${exam.target_company}
+• Duration: ${exam.duration_minutes} Minutes
+• Total Marks: ${exam.total_marks}
+• Passing Cutoff: ${exam.passing_percentage}%
+• Eligibility: Open to all registered candidates nationwide
+
+Direct Test Link:
+${candidateUrl}
+
+Guidelines:
+1. Log in to PrepUnite with your email to launch the examination.
+2. Ensure you have an uninterrupted internet connection.
+3. Fullscreen proctored environment with automated malpractice detection.
+
+Sharable with friends, campus batches, and peer study groups.
+
+Regards,
+PrepUnite Engineering & Placement Team`
+    : `Dear Students,
 
 As part of our upcoming campus placement readiness drive, the Placement Cell has scheduled an official proctored mock assessment for ${exam.target_company}.
 

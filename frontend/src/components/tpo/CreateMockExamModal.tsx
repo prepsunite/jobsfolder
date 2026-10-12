@@ -24,6 +24,8 @@ import {
   Clock,
   Sliders,
   Filter,
+  Globe,
+  Building2,
 } from 'lucide-react';
 import { tpoService } from '@/services/tpo.service';
 import { useQuery } from '@tanstack/react-query';
@@ -99,6 +101,12 @@ export default function CreateMockExamModal({
   const [modalMode, setModalMode] = useState<'TEMPLATES' | 'CUSTOM' | 'ADMIN_EDIT_TEMPLATE'>('TEMPLATES');
   const [templateSearch, setTemplateSearch] = useState('');
   const [launchingTemplateId, setLaunchingTemplateId] = useState<string | null>(null);
+
+  // Super Admin Audience Scope: 'PUBLIC' (All Candidates Nationwide) vs 'COLLEGE' (Specific Campus)
+  const [targetAudienceScope, setTargetAudienceScope] = useState<'PUBLIC' | 'COLLEGE'>(() => {
+    if (collegeId === 'PUBLIC') return 'PUBLIC';
+    return 'COLLEGE';
+  });
 
   // College Batches Query
   const { data: collegeBatches = [] } = useQuery<CollegeBatch[]>({
@@ -296,21 +304,27 @@ export default function CreateMockExamModal({
   };
 
   const handleDeployTargetedExam = async () => {
-    if (!collegeId || !targetingTemplate) return;
+    if (!targetingTemplate) return;
+    const effectiveCollegeId = (isAdmin && targetAudienceScope === 'PUBLIC') || collegeId === 'PUBLIC'
+      ? 'PUBLIC'
+      : collegeId;
+    if (!effectiveCollegeId) return;
+
     setIsSubmitting(true);
     try {
-      await tpoService.createExamFromTemplate(collegeId, targetingTemplate, {
+      const isPublic = effectiveCollegeId === 'PUBLIC';
+      await tpoService.createExamFromTemplate(effectiveCollegeId, targetingTemplate, {
         title: targetDriveTitle.trim() || targetingTemplate.name,
-        target_batches: targetBatches.includes('ALL') ? [] : targetBatches,
-        target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
-        target_batch_year: targetGradYear,
+        target_batches: isPublic ? [] : (targetBatches.includes('ALL') ? [] : targetBatches),
+        target_departments: isPublic ? [] : (targetDepartments.includes('ALL') ? [] : targetDepartments),
+        target_batch_year: isPublic ? undefined : targetGradYear,
         start_time: new Date(targetStartTime).toISOString(),
         end_time: new Date(targetEndTime).toISOString(),
         enable_passcode_lock: targetEnablePasscode,
         access_passcode: targetEnablePasscode ? (targetPasscode.trim().toUpperCase() || undefined) : undefined,
       });
       setTargetingTemplate(null);
-      toast.success('Assessment launched successfully.');
+      toast.success(isPublic ? '🌐 Open National Challenge launched successfully! Accessible to any candidate via link.' : 'Assessment launched successfully.');
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -604,11 +618,16 @@ export default function CreateMockExamModal({
     const sumSectionDurations = sections.reduce((acc, s) => acc + (Number(s.duration_minutes) || 0), 0);
     const finalDuration = sumSectionDurations > 0 ? sumSectionDurations : durationMinutes;
 
+    const effectiveCollegeId = (isAdmin && targetAudienceScope === 'PUBLIC') || collegeId === 'PUBLIC'
+      ? 'PUBLIC'
+      : collegeId;
+    const isPublic = effectiveCollegeId === 'PUBLIC';
+
     setIsSubmitting(true);
     try {
       await tpoService.createMockExam(
         {
-          college_id: collegeId,
+          college_id: effectiveCollegeId,
           title,
           target_company: targetCompany,
           description,
@@ -628,9 +647,9 @@ export default function CreateMockExamModal({
           show_results_immediately: showResultsImmediately,
           enable_passcode_lock: enablePasscodeLock,
           access_passcode: enablePasscodeLock ? (accessPasscode.trim().toUpperCase() || undefined) : undefined,
-          target_batches: targetBatches.includes('ALL') ? [] : targetBatches,
-          target_departments: targetDepartments.includes('ALL') ? [] : targetDepartments,
-          target_batch_year: targetBatchYear,
+          target_batches: isPublic ? [] : (targetBatches.includes('ALL') ? [] : targetBatches),
+          target_departments: isPublic ? [] : (targetDepartments.includes('ALL') ? [] : targetDepartments),
+          target_batch_year: isPublic ? undefined : targetBatchYear,
         },
         sections.map(s => ({
           name: s.name,
@@ -647,7 +666,7 @@ export default function CreateMockExamModal({
         }))
       );
 
-      toast.success('Mock exam published successfully.');
+      toast.success(isPublic ? '🌐 Open National Challenge published successfully! Any candidate can access it via link.' : 'Mock exam published successfully.');
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -782,12 +801,59 @@ export default function CreateMockExamModal({
                   <div className="p-4 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/30 flex items-start gap-3">
                     <Zap className="w-5 h-5 text-[#FD4A32] shrink-0 mt-0.5" />
                     <div className="text-xs">
-                      <h4 className="font-bold text-gray-900 dark:text-white">Target Audience & Schedule Configuration</h4>
+                      <h4 className="font-bold text-gray-900 dark:text-white">Target Audience &amp; Schedule Configuration</h4>
                       <p className="text-gray-500 dark:text-gray-400 mt-0.5">
-                        Choose which student cohorts (e.g. Top Batch, Normal Batch) and academic streams are eligible to take this <strong>{targetingTemplate.name}</strong> assessment.
+                        Configure examination reach, scheduling window, and eligibility parameters for <strong>{targetingTemplate.name}</strong>.
                       </p>
                     </div>
                   </div>
+
+                  {/* Super Admin Audience Scope Selector */}
+                  {isAdmin && (
+                    <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/30 space-y-2">
+                      <label className="block text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Examination Audience &amp; Access Scope (Admin Control)</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setTargetAudienceScope('PUBLIC')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            targetAudienceScope === 'PUBLIC'
+                              ? 'border-indigo-500 bg-white dark:bg-[#1f2127] shadow-xs ring-2 ring-indigo-500/20'
+                              : 'border-gray-200 dark:border-[#2f323a] bg-gray-50/50 dark:bg-[#181a1f] opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                            <span className="font-bold text-xs text-gray-900 dark:text-white">Open National Challenge</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                            Open to ANY registered candidate nationwide. Direct link can be shared publicly.
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setTargetAudienceScope('COLLEGE')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            targetAudienceScope === 'COLLEGE'
+                              ? 'border-[#FD4A32] bg-white dark:bg-[#1f2127] shadow-xs ring-2 ring-[#FD4A32]/20'
+                              : 'border-gray-200 dark:border-[#2f323a] bg-gray-50/50 dark:bg-[#181a1f] opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                            <span className="font-bold text-xs text-gray-900 dark:text-white">Campus Placement Drive</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                            Restricted strictly to enrolled students of this institutional campus roster.
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Drive Title */}
                   <div>
@@ -1595,6 +1661,53 @@ export default function CreateMockExamModal({
               {/* Step 1: Details */}
               {step === 1 && (
                 <div className="space-y-4">
+                  {/* Super Admin Audience Scope Selector */}
+                  {isAdmin && (
+                    <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/30 space-y-2">
+                      <label className="block text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Examination Reach &amp; Access Policy (Super Admin Mode)</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setTargetAudienceScope('PUBLIC')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            targetAudienceScope === 'PUBLIC'
+                              ? 'border-indigo-500 bg-white dark:bg-[#1f2127] shadow-xs ring-2 ring-indigo-500/20'
+                              : 'border-gray-200 dark:border-[#2f323a] bg-gray-50/50 dark:bg-[#181a1f] opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                            <span className="font-bold text-xs text-gray-900 dark:text-white">Open National Challenge</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                            Open to ANY registered candidate nationwide. Direct link can be shared publicly.
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setTargetAudienceScope('COLLEGE')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            targetAudienceScope === 'COLLEGE'
+                              ? 'border-[#FD4A32] bg-white dark:bg-[#1f2127] shadow-xs ring-2 ring-[#FD4A32]/20'
+                              : 'border-gray-200 dark:border-[#2f323a] bg-gray-50/50 dark:bg-[#181a1f] opacity-75 hover:opacity-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                            <span className="font-bold text-xs text-gray-900 dark:text-white">Campus Placement Drive</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                            Restricted strictly to enrolled students of this institutional campus roster.
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                       Exam Title *

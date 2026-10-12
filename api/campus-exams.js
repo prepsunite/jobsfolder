@@ -356,9 +356,17 @@ export default async function handler(req, res) {
     try {
       // If querying by collegeId, verify caller has institutional authorization
       if (collegeId) {
-        const canAccessCollege = isSuperAdmin || (await isTpoForCollege(collegeId)) || (await isStudentForCollege(collegeId));
-        if (!canAccessCollege) {
-          return res.status(403).json({ error: 'Forbidden: You do not have institutional authorization for this college.' });
+        const cidUpper = String(collegeId).trim().toUpperCase();
+        if (cidUpper === 'PUBLIC' || cidUpper === 'OPEN') {
+          // Tier 1: Public national exams open to any authenticated user
+        } else if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+          // Tier 3: Self-practice exams open to creator
+        } else {
+          // Tier 2: College TPO exams require institutional authorization
+          const canAccessCollege = isSuperAdmin || (await isTpoForCollege(collegeId)) || (await isStudentForCollege(collegeId));
+          if (!canAccessCollege) {
+            return res.status(403).json({ error: 'Forbidden: You do not have institutional authorization for this college.' });
+          }
         }
       }
 
@@ -373,7 +381,19 @@ export default async function handler(req, res) {
           .eq('is_deleted', false);
 
         if (examId) query = query.eq('id', examId);
-        if (collegeId) query = query.eq('college_id', collegeId);
+        if (collegeId) {
+          const cidUpper = String(collegeId).trim().toUpperCase();
+          if (cidUpper === 'PUBLIC' || cidUpper === 'OPEN') {
+            query = query.in('college_id', ['PUBLIC', 'OPEN']);
+          } else if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+            query = query.in('college_id', ['SELF', 'INDIVIDUAL']);
+            if (!isSuperAdmin) {
+              query = query.or(`created_by.eq.${user.id},target_departments.cs.{"${userEmail}"}`);
+            }
+          } else {
+            query = query.eq('college_id', collegeId);
+          }
+        }
 
         const { data: dbExams, error: dbErr } = await query;
         if (!dbErr && dbExams && dbExams.length > 0) {
@@ -415,7 +435,12 @@ export default async function handler(req, res) {
           .order('created_at', { ascending: false });
 
         if (collegeId) {
-          msgQuery = msgQuery.like('subject', `B2B_EXAM:${collegeId}:%`);
+          const cidUpper = String(collegeId).trim().toUpperCase();
+          if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+            msgQuery = msgQuery.or(`subject.like.B2B_EXAM:SELF:${userEmail}:%,subject.like.B2B_EXAM:SELF:%`);
+          } else {
+            msgQuery = msgQuery.like('subject', `B2B_EXAM:${collegeId}:%`);
+          }
         } else if (examId) {
           msgQuery = msgQuery.like('subject', `B2B_EXAM:%:${examId}`);
         }
@@ -434,10 +459,28 @@ export default async function handler(req, res) {
         }
       } catch {}
 
-      // If querying by examId only, verify college authorization on the found exam
+      // If querying by examId only, verify 3-tier authorization on the found exam
       if (examId && exams.length > 0) {
         const foundExam = exams[0];
-        if (foundExam.college_id) {
+        const cidUpper = String(foundExam.college_id || '').trim().toUpperCase();
+
+        if (cidUpper === 'PUBLIC' || cidUpper === 'OPEN') {
+          // Tier 1: Public Admin Mock Exam - Accessible by all authenticated candidates
+        } else if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+          // Tier 3: Student Self-Practice Exam - STRICTLY ACCESSIBLE ONLY BY THE CREATOR
+          const isCreator = (
+            foundExam.created_by === user.id ||
+            foundExam.created_by === userEmail ||
+            (Array.isArray(foundExam.target_departments) && foundExam.target_departments.some(d => String(d).trim().toLowerCase() === userEmail)) ||
+            (typeof foundExam.instructions === 'string' && foundExam.instructions.toLowerCase().includes(`student:${userEmail}`))
+          );
+          if (!isSuperAdmin && !isCreator) {
+            return res.status(403).json({
+              error: 'Forbidden: This is a private student practice exam. Only the creator can access or attempt it.'
+            });
+          }
+        } else if (foundExam.college_id) {
+          // Tier 2: College TPO Mock Exam - Accessible only by verified college TPO or enrolled student
           const canAccess = isSuperAdmin || (await isTpoForCollege(foundExam.college_id)) || (await isStudentForCollege(foundExam.college_id));
           if (!canAccess) {
             return res.status(403).json({ error: 'Forbidden: You do not have institutional authorization for this exam.' });
@@ -515,6 +558,36 @@ export default async function handler(req, res) {
         }
 
         const cleanEmail = (attempt.student_email || userEmail || '').toLowerCase();
+
+        // 🛡️ Candidate Access Guard: Enforce 3-tier rules on attempt initialization
+        try {
+          const { data: targetExam } = await supabaseAdmin
+            .from('mock_exams')
+            .select('college_id, created_by, target_departments, instructions')
+            .eq('id', attempt.mock_exam_id)
+            .maybeSingle();
+
+          if (targetExam) {
+            const cidUpper = String(targetExam.college_id || '').trim().toUpperCase();
+            if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+              const isCreator = (
+                targetExam.created_by === user.id ||
+                targetExam.created_by === cleanEmail ||
+                (Array.isArray(targetExam.target_departments) && targetExam.target_departments.some(d => String(d).trim().toLowerCase() === cleanEmail)) ||
+                (typeof targetExam.instructions === 'string' && targetExam.instructions.toLowerCase().includes(`student:${cleanEmail}`))
+              );
+              if (!isSuperAdmin && !isCreator) {
+                return res.status(403).json({ error: 'Forbidden: You cannot attempt another student\'s private practice exam.' });
+              }
+            } else if (cidUpper !== 'PUBLIC' && cidUpper !== 'OPEN') {
+              const canAccess = isSuperAdmin || (await isTpoForCollege(targetExam.college_id)) || (await isStudentForCollege(targetExam.college_id));
+              if (!canAccess) {
+                return res.status(403).json({ error: 'Forbidden: You do not have institutional authorization for this exam.' });
+              }
+            }
+          }
+        } catch {}
+
         const startRow = {
           id: attempt.id,
           mock_exam_id: attempt.mock_exam_id,
@@ -640,18 +713,39 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing valid exam payload with id and college_id' });
       }
 
-      // Verify caller is active TPO or Super Admin for this specific college
-      const isAuthorizedTpo = await isTpoForCollege(exam.college_id);
-      if (!isAuthorizedTpo) {
-        return res.status(403).json({ error: 'Forbidden: Caller is not an authorized TPO coordinator for this college.' });
+      const collegeIdUpper = String(exam.college_id).trim().toUpperCase();
+
+      if (collegeIdUpper === 'PUBLIC' || collegeIdUpper === 'OPEN') {
+        // Tier 1: Public Admin Mock Exam - ONLY Super Admin can create or publish
+        if (!isSuperAdmin) {
+          return res.status(403).json({ error: 'Forbidden: Only PrepUnite Super Admins can publish Open National Mock Exams.' });
+        }
+      } else if (collegeIdUpper === 'SELF' || collegeIdUpper === 'INDIVIDUAL') {
+        // Tier 3: Student Self-Practice Exam - Student creates their own private practice exam
+        if (!exam.created_by) {
+          exam.created_by = user.id;
+        }
+        if (!exam.target_departments || exam.target_departments.length === 0) {
+          exam.target_departments = [userEmail];
+        }
+      } else {
+        // Tier 2: College TPO Mock Exam - Verify caller is active TPO or Super Admin for this specific college
+        const isAuthorizedTpo = await isTpoForCollege(exam.college_id);
+        if (!isAuthorizedTpo) {
+          return res.status(403).json({ error: 'Forbidden: Caller is not an authorized TPO coordinator for this college.' });
+        }
       }
 
       // 1. Cloud multi-device persistence via contact_messages
       try {
+        const contactSubject = collegeIdUpper === 'SELF' || collegeIdUpper === 'INDIVIDUAL'
+          ? `B2B_EXAM:SELF:${userEmail}:${exam.id}`
+          : `B2B_EXAM:${exam.college_id}:${exam.id}`;
+
         await supabaseAdmin.from('contact_messages').insert({
           name: `Exam: ${exam.title || 'Campus Placement Drive'}`,
           email: userEmail || 'tpo@prepunite.com',
-          subject: `B2B_EXAM:${exam.college_id}:${exam.id}`,
+          subject: contactSubject,
           message: JSON.stringify(exam),
           status: 'ACTIVE',
         });

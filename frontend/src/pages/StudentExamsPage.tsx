@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   GraduationCap,
   Building2,
@@ -35,12 +35,16 @@ import {
   Users,
   Hash,
   Briefcase,
+  Share2,
+  Globe,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
 import StudentExamReviewModal from '@/components/mock-exams/StudentExamReviewModal';
 import AdminBlueprintManager from '@/components/admin/AdminBlueprintManager';
 import AdminQuestionBankPage from '@/pages/AdminQuestionBankPage';
+import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
+import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
@@ -55,6 +59,7 @@ type ExamFilterTab = 'ACTIVE' | 'COMPLETED' | 'UPCOMING' | 'ALL';
 export default function StudentExamsPage() {
   const { user, isAdmin, isTpoAdmin } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Admin Tab State (URL synced)
@@ -111,6 +116,8 @@ export default function StudentExamsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState<string>('ALL');
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isCreatePublicModalOpen, setIsCreatePublicModalOpen] = useState(false);
+  const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
 
   // Scorecard Modal State
   const [selectedScorecardExam, setSelectedScorecardExam] = useState<
@@ -370,6 +377,17 @@ export default function StudentExamsPage() {
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span>Upgrade Pass for Unlimited Drives</span>
             </Link>
+          )}
+
+          {isAdmin && (
+            <button
+              onClick={() => setIsCreatePublicModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-display font-bold uppercase tracking-wider shadow-md shadow-blue-500/25 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+              title="Commission an open national mock assessment accessible to any candidate nationwide"
+            >
+              <Globe className="w-3.5 h-3.5 text-blue-200" />
+              <span>Create Open Mock Exam</span>
+            </button>
           )}
 
           <button
@@ -808,14 +826,18 @@ export default function StudentExamsPage() {
               !!attempt &&
               (attempt.passed ?? (attempt.percentage >= (exam.passing_percentage || 50)));
 
-            const isTargetBatchRestricted = Boolean(
+            const isPublicAdminExam = exam.college_id === 'PUBLIC' || exam.college_id === 'OPEN';
+            const isStudentPracticeExam = exam.college_id === 'SELF' || exam.college_id === 'INDIVIDUAL';
+            const isCollegeTpoExam = !isPublicAdminExam && !isStudentPracticeExam;
+
+            const isTargetBatchRestricted = !isPublicAdminExam && !isStudentPracticeExam && Boolean(
               exam.target_batches &&
               exam.target_batches.length > 0 &&
               !exam.target_batches.some(b => b.toUpperCase() === 'ALL') &&
               (!studentRecord?.batch_name || !exam.target_batches.some(b => b.trim().toLowerCase() === studentRecord.batch_name.trim().toLowerCase()))
             );
 
-            const isTargetDeptRestricted = Boolean(
+            const isTargetDeptRestricted = !isPublicAdminExam && !isStudentPracticeExam && Boolean(
               exam.target_departments &&
               exam.target_departments.length > 0 &&
               !exam.target_departments.some(d => d.toUpperCase() === 'ALL') &&
@@ -873,12 +895,25 @@ export default function StudentExamsPage() {
                           <span className="font-black text-xs uppercase tracking-wider text-[#FD4A32] truncate">
                             {exam.target_company}
                           </span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 border border-gray-200/50 dark:border-white/5">
-                            Drive
-                          </span>
+                          {isPublicAdminExam ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                              <Globe className="w-2.5 h-2.5" />
+                              Open National
+                            </span>
+                          ) : isStudentPracticeExam ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5" />
+                              Private Practice
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 border border-gray-200/50 dark:border-white/5 flex items-center gap-1">
+                              <Building2 className="w-2.5 h-2.5" />
+                              Campus Drive
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                          {companyIndustry}
+                          {isPublicAdminExam ? 'Open National Mock Challenge' : isStudentPracticeExam ? 'Private Student Blueprint Practice' : companyIndustry}
                         </p>
                       </div>
                     </div>
@@ -990,7 +1025,17 @@ export default function StudentExamsPage() {
                     </span>
 
                     {/* Eligibility Badge - Clean & Non-Repetitive */}
-                    {isOpenToAll ? (
+                    {isPublicAdminExam ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                        <Globe className="w-3 h-3 text-blue-500" />
+                        <span>Open to Any Student Nationwide</span>
+                      </span>
+                    ) : isStudentPracticeExam ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20">
+                        <Lock className="w-3 h-3 text-purple-500" />
+                        <span>Strictly Personal Practice (Locked)</span>
+                      </span>
+                    ) : isOpenToAll ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                         <Users className="w-3 h-3" />
                         <span>Open to All Students</span>
@@ -1048,46 +1093,70 @@ export default function StudentExamsPage() {
                 {/* Bottom Action Footer */}
                 <div className="pt-4 border-t border-gray-100 dark:border-[#27292e] mt-4 space-y-2">
                   {isFinished && attempt ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setSelectedScorecardExam(exam)}
-                        className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        title="View Summary Scorecard"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-blue-500" />
-                        <span>Scorecard</span>
-                      </button>
-                      {canReviewSolutions(exam) ? (
-                        <a
-                          href={`/student/exams/attempt/${attempt.id}/answersheet`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                          title="Open complete question-by-question answer sheet & solutions in a new tab"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          <span>Answer Sheet</span>
-                          <ExternalLink className="w-3 h-3 opacity-70" />
-                        </a>
-                      ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
                         <button
                           onClick={() => setSelectedScorecardExam(exam)}
-                          className="w-full py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                          title="Verified answer key and solutions unlock once the entire exam window concludes for all candidates"
+                          className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#202226] hover:bg-gray-200 dark:hover:bg-[#282a30] text-gray-800 dark:text-gray-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          title="View Summary Scorecard"
                         >
-                          <Lock className="w-3.5 h-3.5 text-amber-500" />
-                          <span>Key Locked</span>
+                          <Eye className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Scorecard</span>
+                        </button>
+                        {canReviewSolutions(exam) ? (
+                          <a
+                            href={`/student/exams/attempt/${attempt.id}/answersheet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            title="Open complete question-by-question answer sheet & solutions in a new tab"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Answer Sheet</span>
+                            <ExternalLink className="w-3 h-3 opacity-70" />
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedScorecardExam(exam)}
+                            className="w-full py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            title="Verified answer key and solutions unlock once the entire exam window concludes for all candidates"
+                          >
+                            <Lock className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Key Locked</span>
+                          </button>
+                        )}
+                      </div>
+                      {!isStudentPracticeExam && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedShareExam(exam)}
+                          className="p-2.5 rounded-xl border border-gray-200 dark:border-[#27292e] bg-gray-50 dark:bg-[#191a1e] text-gray-600 dark:text-gray-300 hover:text-[#FD4A32] hover:border-[#FD4A32]/40 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                          title={isPublicAdminExam ? "Share Open National Exam link" : "Share Campus Mock Exam link"}
+                        >
+                          <Share2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
                   ) : isInProgress ? (
-                    <Link
-                      to={`/exam/${exam.id}`}
-                      className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
-                    >
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Resume In-Progress →</span>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/exam/${exam.id}`}
+                        className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Resume In-Progress →</span>
+                      </Link>
+                      {!isStudentPracticeExam && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedShareExam(exam)}
+                          className="p-2.5 rounded-xl border border-gray-200 dark:border-[#27292e] bg-gray-50 dark:bg-[#191a1e] text-gray-600 dark:text-gray-300 hover:text-[#FD4A32] hover:border-[#FD4A32]/40 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                          title={isPublicAdminExam ? "Share Open National Exam link" : "Share Campus Mock Exam link"}
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   ) : isRestrictedForStudent ? (
                     <button
                       disabled
@@ -1098,29 +1167,65 @@ export default function StudentExamsPage() {
                       <span>Cohort Restricted — {isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Batch Only') : targetDepts}</span>
                     </button>
                   ) : isUpcoming ? (
-                    <button
-                      disabled
-                      className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-600 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed"
-                    >
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Scheduled — Opens {exam.start_time ? new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Soon'}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled
+                        className="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-600 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Scheduled — Opens {exam.start_time ? new Date(exam.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Soon'}</span>
+                      </button>
+                      {!isStudentPracticeExam && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedShareExam(exam)}
+                          className="p-2.5 rounded-xl border border-gray-200 dark:border-[#27292e] bg-gray-50 dark:bg-[#191a1e] text-gray-600 dark:text-gray-300 hover:text-[#FD4A32] hover:border-[#FD4A32]/40 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                          title={isPublicAdminExam ? "Share Open National Exam link" : "Share Campus Mock Exam link"}
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   ) : isConcluded ? (
-                    <button
-                      disabled
-                      className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-600 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed"
-                    >
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Window Closed — Concluded</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled
+                        className="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-600 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Window Closed — Concluded</span>
+                      </button>
+                      {!isStudentPracticeExam && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedShareExam(exam)}
+                          className="p-2.5 rounded-xl border border-gray-200 dark:border-[#27292e] bg-gray-50 dark:bg-[#191a1e] text-gray-600 dark:text-gray-300 hover:text-[#FD4A32] hover:border-[#FD4A32]/40 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                          title={isPublicAdminExam ? "Share Open National Exam link" : "Share Campus Mock Exam link"}
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   ) : (
-                    <Link
-                      to={`/exam/${exam.id}`}
-                      className="w-full py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#FD4A32]/25 group-hover:scale-[1.01]"
-                    >
-                      <span>Take Mock Exam →</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/exam/${exam.id}`}
+                        className="flex-1 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#FD4A32]/25 group-hover:scale-[1.01]"
+                      >
+                        <span>{isPublicAdminExam ? 'Take National Challenge →' : isStudentPracticeExam ? 'Take Practice Test →' : 'Take Mock Exam →'}</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+                      {!isStudentPracticeExam && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedShareExam(exam)}
+                          className="p-2.5 rounded-xl border border-gray-200 dark:border-[#27292e] bg-gray-50 dark:bg-[#191a1e] text-gray-600 dark:text-gray-300 hover:text-[#FD4A32] hover:border-[#FD4A32]/40 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                          title={isPublicAdminExam ? "Share Open National Exam link with anyone" : "Share Campus Mock Exam link"}
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1627,6 +1732,28 @@ export default function StudentExamsPage() {
         attemptId={reviewAttemptId}
         examTitle={reviewExamTitle}
       />
+
+      {/* ── CREATE OPEN NATIONAL MOCK EXAM MODAL (SUPER ADMIN) ── */}
+      {isAdmin && (
+        <CreateMockExamModal
+          isOpen={isCreatePublicModalOpen}
+          onClose={() => setIsCreatePublicModalOpen(false)}
+          collegeId="PUBLIC"
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['student-mock-exams'] });
+            refetchExams();
+          }}
+        />
+      )}
+
+      {/* ── SHARE MOCK EXAM MODAL ── */}
+      {selectedShareExam && (
+        <ShareMockExamModal
+          isOpen={!!selectedShareExam}
+          onClose={() => setSelectedShareExam(null)}
+          exam={selectedShareExam}
+        />
+      )}
     </div>
   );
 }
