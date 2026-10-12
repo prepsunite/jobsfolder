@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
+import { dataStore } from '@/services/dataStore';
+import { resolveTopicSlug } from '@/services/topicMap';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import { useToast } from '@/contexts/ToastContext';
 import {
@@ -281,44 +283,120 @@ export default function AptitudePage() {
   // Filter topics (Admins see all, Users see only visible)
   const currentCategoryTopics = rawTopics.filter(t => isAdmin || !t.is_hidden);
 
-  // Fetch high-speed category stats directly via atomic Supabase RPC
+  // Fetch category question stats via atomic RPC with resilient direct-table aggregation fallback
   const { data: categoryStatsData, isLoading: isCatLoading } = useQuery({
-    queryKey: ['category-questions-stats', categorySlug],
+    queryKey: ['category-questions-stats', categorySlug, currentCategoryTopics.map(t => t.id).join(',')],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_aptitude_category_stats', {
-        p_category_slug: categorySlug,
-      });
+      // Stage 1: Attempt high-performance atomic Supabase RPC
+      try {
+        const { data, error } = await supabase.rpc('get_aptitude_category_stats', {
+          p_category_slug: categorySlug,
+        });
 
-      if (error) {
-        console.warn('Failed to fetch category stats via RPC:', error);
-        return {
-          category_slug: categorySlug,
-          total_questions: 0,
-          easy_total: 0,
-          medium_total: 0,
-          hard_total: 0,
-          topic_counts: {} as Record<string, number>,
-        };
+        if (!error && data && (data.total_questions > 0 || (data.topic_counts && Object.keys(data.topic_counts).length > 0))) {
+          return data as {
+            category_slug: string;
+            total_questions: number;
+            easy_total: number;
+            medium_total: number;
+            hard_total: number;
+            topic_counts: Record<string, number>;
+          };
+        }
+        if (error) {
+          console.warn('[AptitudePage] Supabase RPC get_aptitude_category_stats notice:', error.message);
+        }
+      } catch (rpcErr) {
+        console.warn('[AptitudePage] RPC execution notice:', rpcErr);
       }
 
-      return data as {
-        category_slug: string;
-        total_questions: number;
-        easy_total: number;
-        medium_total: number;
-        hard_total: number;
-        topic_counts: Record<string, number>;
+      // Stage 2: Direct Supabase table aggregation fallback
+      // Queries lightweight columns (topic_id, difficulty) directly from topic_questions
+      const topicIds = currentCategoryTopics.map(t => t.id);
+      if (topicIds.length > 0) {
+        try {
+          const { data: qRows, error: qErr } = await supabase
+            .from('topic_questions')
+            .select('topic_id, difficulty')
+            .in('topic_id', topicIds)
+            .or('is_deleted.is.null,is_deleted.eq.false');
+
+          if (!qErr && qRows && qRows.length > 0) {
+            const countMap: Record<string, number> = {};
+            let easyTotal = 0;
+            let medTotal = 0;
+            let hardTotal = 0;
+
+            qRows.forEach((row: any) => {
+              const rawTid = (row.topic_id || '').trim();
+              if (rawTid) {
+                const resolved = resolveTopicSlug(rawTid, rawTid);
+                countMap[rawTid] = (countMap[rawTid] || 0) + 1;
+                if (resolved && resolved !== rawTid) {
+                  countMap[resolved] = (countMap[resolved] || 0) + 1;
+                }
+              }
+              const diff = (row.difficulty || 'MEDIUM').toUpperCase();
+              if (diff === 'EASY') easyTotal++;
+              else if (diff === 'HARD') hardTotal++;
+              else medTotal++;
+            });
+
+            return {
+              category_slug: categorySlug,
+              total_questions: qRows.length,
+              easy_total: easyTotal,
+              medium_total: medTotal,
+              hard_total: hardTotal,
+              topic_counts: countMap,
+            };
+          }
+        } catch (tableErr) {
+          console.warn('[AptitudePage] Direct table fallback notice:', tableErr);
+        }
+      }
+
+      // Stage 3: Local dataStore fallback (offline safety)
+      const fallbackCounts: Record<string, number> = {};
+      let totalFallback = 0;
+      currentCategoryTopics.forEach(t => {
+        const localList = dataStore.getTopicQuestions(t.id);
+        if (localList && localList.length > 0) {
+          fallbackCounts[t.id] = localList.length;
+          totalFallback += localList.length;
+        }
+      });
+
+      return {
+        category_slug: categorySlug,
+        total_questions: totalFallback,
+        easy_total: 0,
+        medium_total: totalFallback,
+        hard_total: 0,
+        topic_counts: fallbackCounts,
       };
     },
+    enabled: currentCategoryTopics.length > 0,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
   });
 
-  // Derive per-topic question counts directly from RPC aggregation
+  // Derive per-topic question counts directly with alias resolution
   const liveCountMap = useMemo(() => {
     const countMap: Record<string, number> = {};
+    const rpcCounts = categoryStatsData?.topic_counts || {};
+
     currentCategoryTopics.forEach(t => {
-      countMap[t.id] = categoryStatsData?.topic_counts?.[t.id] || 0;
+      const rawId = t.id;
+      const resolvedId = resolveTopicSlug(rawId, rawId);
+
+      const count = rpcCounts[rawId] ??
+                    rpcCounts[rawId.toLowerCase()] ??
+                    rpcCounts[resolvedId] ??
+                    rpcCounts[resolvedId.toLowerCase()] ??
+                    0;
+
+      countMap[rawId] = count;
     });
     return countMap;
   }, [currentCategoryTopics, categoryStatsData]);

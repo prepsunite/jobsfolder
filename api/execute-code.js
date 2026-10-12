@@ -42,19 +42,21 @@ export default async function handler(req, res) {
     const judge0ApiKey = process.env.JUDGE0_API_KEY || process.env.RAPIDAPI_KEY || process.env.VITE_JUDGE0_API_KEY;
     const judge0BaseUrl = process.env.JUDGE0_URL || 'https://ce.judge0.com';
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('[api/execute-code] Database credentials missing.');
-      return res.status(500).json({ error: 'Server database credentials not configured.' });
+    let supabaseAdmin = null;
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+      } catch (clientErr) {
+        console.warn('[api/execute-code] Supabase admin client initialization warning:', clientErr?.message);
+      }
     }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
 
     // 1. Session Authentication
     let userEmail = null;
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ') && supabaseAdmin) {
       const token = authHeader.substring(7);
       try {
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
@@ -148,29 +150,34 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Resolve Test Cases (From DB by problemId, or from request for mock exam)
+    // 3. Resolve Test Cases (From DB by problemId, or fallback to clientTestCases)
     let testCases = [];
 
-    if (problemId) {
-      const { data: problem, error: probError } = await supabaseAdmin
-        .from('technical_problems')
-        .select('id, test_cases, sample_cases, hidden_test_cases')
-        .eq('id', problemId)
-        .maybeSingle();
+    if (problemId && supabaseAdmin) {
+      try {
+        const { data: problem, error: probError } = await supabaseAdmin
+          .from('technical_problems')
+          .select('id, test_cases, sample_cases, hidden_test_cases')
+          .eq('id', problemId)
+          .maybeSingle();
 
-      if (probError || !problem) {
-        return res.status(404).json({ error: 'Problem not found.' });
+        if (problem && !probError) {
+          if (Array.isArray(problem.sample_cases) && problem.sample_cases.length > 0) {
+            testCases = [
+              ...problem.sample_cases,
+              ...(Array.isArray(problem.hidden_test_cases) ? problem.hidden_test_cases : []),
+            ];
+          } else if (Array.isArray(problem.test_cases) && problem.test_cases.length > 0) {
+            testCases = problem.test_cases;
+          }
+        }
+      } catch (dbErr) {
+        console.warn('[api/execute-code] DB problem lookup error:', dbErr?.message);
       }
+    }
 
-      if (Array.isArray(problem.sample_cases) && problem.sample_cases.length > 0) {
-        testCases = [
-          ...problem.sample_cases,
-          ...(Array.isArray(problem.hidden_test_cases) ? problem.hidden_test_cases : []),
-        ];
-      } else if (Array.isArray(problem.test_cases) && problem.test_cases.length > 0) {
-        testCases = problem.test_cases;
-      }
-    } else if (Array.isArray(clientTestCases) && clientTestCases.length > 0) {
+    // Fallback to client-provided test cases if not found in database or if database is unconfigured
+    if (testCases.length === 0 && Array.isArray(clientTestCases) && clientTestCases.length > 0) {
       testCases = clientTestCases;
     }
 
@@ -281,24 +288,28 @@ export default async function handler(req, res) {
 
     // 5. If this was a formal Submission, record in database ledger via Atomic RPC [P0-03, P1-02]
     let submissionRecord = null;
-    if (isSubmit && problemId && userEmail) {
-      const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc('record_verified_coding_submission', {
-        p_user_email: userEmail,
-        p_problem_id: problemId,
-        p_language: langKey,
-        p_source_code: sourceCode,
-        p_status: overallStatus,
-        p_runtime_ms: maxRuntimeMs,
-        p_memory_kb: maxMemoryKb,
-        p_passed_cases: passedCount,
-        p_total_cases: testCases.length,
-        p_error_output: compileError,
-      });
+    if (isSubmit && problemId && userEmail && supabaseAdmin) {
+      try {
+        const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc('record_verified_coding_submission', {
+          p_user_email: userEmail,
+          p_problem_id: problemId,
+          p_language: langKey,
+          p_source_code: sourceCode,
+          p_status: overallStatus,
+          p_runtime_ms: maxRuntimeMs,
+          p_memory_kb: maxMemoryKb,
+          p_passed_cases: passedCount,
+          p_total_cases: testCases.length,
+          p_error_output: compileError,
+        });
 
-      if (rpcErr) {
-        console.error('[api/execute-code] RPC submission record failed:', rpcErr.message);
-      } else {
-        submissionRecord = rpcRes;
+        if (rpcErr) {
+          console.error('[api/execute-code] RPC submission record failed:', rpcErr.message);
+        } else {
+          submissionRecord = rpcRes;
+        }
+      } catch (rpcEx) {
+        console.warn('[api/execute-code] RPC execution error:', rpcEx?.message);
       }
     }
 

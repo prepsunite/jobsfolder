@@ -286,6 +286,126 @@ export const technicalService = {
     }
   },
 
+  /**
+   * Fetches the user's latest code submission for a given problem
+   * Checks local storage cache first, then Supabase user_technical_submissions ledger
+   */
+  async getUserLatestSubmission(problemId: string, userEmail?: string): Promise<{
+    language: string;
+    sourceCode: string;
+    status: string;
+    passedCases: number;
+    totalCases: number;
+    createdAt?: string;
+  } | null> {
+    // 1. Fast local cache check
+    if (typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem(`prepunite_submission_${problemId}`);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed && typeof parsed.sourceCode === 'string' && parsed.sourceCode.trim().length > 0) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+
+    // 2. Fetch from cloud ledger if user is signed in
+    if (userEmail && userEmail !== GUEST_EMAIL) {
+      try {
+        const cleanEmail = userEmail.toLowerCase().trim();
+        const { data, error } = await supabase
+          .from('user_technical_submissions')
+          .select('language, source_code, status, passed_cases, total_cases, created_at')
+          .eq('problem_id', problemId)
+          .eq('user_email', cleanEmail)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data && data.source_code) {
+          const res = {
+            language: data.language || 'python',
+            sourceCode: data.source_code,
+            status: data.status || 'ACCEPTED',
+            passedCases: data.passed_cases || 0,
+            totalCases: data.total_cases || 0,
+            createdAt: data.created_at,
+          };
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(`prepunite_submission_${problemId}`, JSON.stringify(res));
+            } catch {}
+          }
+          return res;
+        }
+      } catch (e) {
+        console.warn('Failed to load user submission from Supabase:', e);
+      }
+    }
+
+    return null;
+  },
+
+  /**
+   * Persists a completed or submitted code solution both locally and to Supabase
+   */
+  async saveUserSubmission(
+    problemId: string,
+    language: string,
+    sourceCode: string,
+    status: string,
+    passedCases: number,
+    totalCases: number,
+    userEmail?: string,
+    track: TechnicalTrack = 'PROGRAMMING_150'
+  ): Promise<void> {
+    const payload = {
+      language,
+      sourceCode,
+      status,
+      passedCases,
+      totalCases,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 1. Persist locally for instant hydration across tabs & reloads
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`prepunite_submission_${problemId}`, JSON.stringify(payload));
+        localStorage.setItem(`prepunite_ide_draft_${problemId}_${language}`, sourceCode);
+      } catch {}
+    }
+
+    // 2. If all test cases passed, mark solved in local and DB state
+    const isAccepted = status === 'ACCEPTED' && passedCases === totalCases && totalCases > 0;
+    if (isAccepted) {
+      this.markProblemSolved(problemId, userEmail, track);
+    }
+
+    // 3. Persist to Supabase ledger if authenticated
+    if (userEmail && userEmail !== GUEST_EMAIL) {
+      const cleanEmail = userEmail.toLowerCase().trim();
+      try {
+        await supabase.rpc('record_verified_coding_submission', {
+          p_user_email: cleanEmail,
+          p_problem_id: problemId,
+          p_language: language,
+          p_source_code: sourceCode,
+          p_status: status,
+          p_runtime_ms: 0,
+          p_memory_kb: 0,
+          p_passed_cases: passedCases,
+          p_total_cases: totalCases,
+          p_error_output: null,
+        });
+      } catch (err) {
+        console.warn('Direct Supabase submission record fallback:', err);
+      }
+    }
+  },
+
   async fetchAndSyncFromSupabase(userEmail?: string): Promise<void> {
     if (!userEmail || userEmail === GUEST_EMAIL || typeof window === 'undefined') return;
 

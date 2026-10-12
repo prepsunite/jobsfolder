@@ -223,26 +223,34 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+    v_clean_slug TEXT;
     v_total INT := 0;
     v_easy INT := 0;
     v_medium INT := 0;
     v_hard INT := 0;
     v_topic_counts JSONB := '{}'::JSONB;
 BEGIN
+    v_clean_slug := LOWER(TRIM(COALESCE(p_category_slug, '')));
+
     WITH cat_topics AS (
-        SELECT id
+        SELECT id, LOWER(TRIM(id)) AS norm_id
         FROM public.aptitude_topics
-        WHERE category_slug = p_category_slug
+        WHERE LOWER(TRIM(category_slug)) = v_clean_slug
     ),
     q_stats AS (
         SELECT 
-            tq.topic_id,
+            ct.id AS topic_id,
             UPPER(COALESCE(tq.difficulty, 'MEDIUM')) AS diff,
             COUNT(*)::INT as cnt
-        FROM public.topic_questions tq
-        JOIN cat_topics ct ON ct.id = tq.topic_id
-        WHERE tq.is_deleted = FALSE
-        GROUP BY tq.topic_id, UPPER(COALESCE(tq.difficulty, 'MEDIUM'))
+        FROM cat_topics ct
+        JOIN public.topic_questions tq 
+          ON (
+            LOWER(TRIM(tq.topic_id)) = ct.norm_id
+            OR (ct.norm_id = 'reading-comprehension' AND LOWER(TRIM(tq.topic_id)) = 'comprehension')
+            OR (ct.norm_id = 'comprehension' AND LOWER(TRIM(tq.topic_id)) = 'reading-comprehension')
+          )
+        WHERE COALESCE(tq.is_deleted, false) = false
+        GROUP BY ct.id, UPPER(COALESCE(tq.difficulty, 'MEDIUM'))
     ),
     topic_agg AS (
         SELECT topic_id, SUM(cnt)::INT as total_in_topic
@@ -267,7 +275,7 @@ BEGIN
     FROM q_stats;
 
     RETURN jsonb_build_object(
-        'category_slug', p_category_slug,
+        'category_slug', v_clean_slug,
         'total_questions', COALESCE(v_total, 0),
         'easy_total', COALESCE(v_easy, 0),
         'medium_total', COALESCE(v_medium, 0),
@@ -277,7 +285,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.get_aptitude_category_stats(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_aptitude_category_stats(TEXT) TO anon, authenticated, service_role;
 
 
 -- --------------------------------------------------------------------

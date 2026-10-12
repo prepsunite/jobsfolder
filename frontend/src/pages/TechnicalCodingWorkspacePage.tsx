@@ -30,6 +30,7 @@ import {
   Zap,
   Sparkles,
   BookOpen,
+  FileCode,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -137,34 +138,79 @@ export default function TechnicalCodingWorkspacePage() {
 
   // Show acceptance celebration banner
   const [showCelebration, setShowCelebration] = useState(false);
+  const [restoredSource, setRestoredSource] = useState<'submission' | 'draft' | null>(null);
 
   const editorRef = useRef<any>(null);
   const runRevisionRef = useRef(0);
+  const isProgrammaticUpdateRef = useRef(false);
 
   // Autosave Draft Key helper
   const getDraftKey = useCallback((pId: string, lang: string) => {
     return `prepunite_ide_draft_${pId}_${lang}`;
   }, []);
 
-  // Hydrate code from draft or starter template when problem or language changes
+  // Hydrate code from past submission, draft or starter template when problem changes
   useEffect(() => {
     if (!problem) return;
+    let isMounted = true;
     runRevisionRef.current += 1;
-    const draftKey = getDraftKey(problem.id, selectedLanguage);
-    const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
-    const initialCode = savedDraft && savedDraft.trim().length > 0 ? savedDraft : (STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python);
 
-    setCode(initialCode);
-    if (editorRef.current && editorRef.current.getValue() !== initialCode) {
-      editorRef.current.setValue(initialCode);
-    }
+    const hydrateProblemCode = async () => {
+      // 1. Check for past saved submission (from Supabase or local cache)
+      const pastSubmission = await technicalService.getUserLatestSubmission(problem.id, user?.email);
+      if (!isMounted) return;
+
+      if (pastSubmission && pastSubmission.sourceCode && pastSubmission.sourceCode.trim().length > 0) {
+        const subLang = pastSubmission.language || 'python';
+        setSelectedLanguage(subLang);
+        isProgrammaticUpdateRef.current = true;
+        setCode(pastSubmission.sourceCode);
+        if (editorRef.current) {
+          editorRef.current.setValue(pastSubmission.sourceCode);
+        }
+        setRestoredSource('submission');
+        isProgrammaticUpdateRef.current = false;
+        return;
+      }
+
+      // 2. Check for local draft for current or default language
+      const draftKey = getDraftKey(problem.id, selectedLanguage);
+      const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
+      if (savedDraft && savedDraft.trim().length > 0) {
+        isProgrammaticUpdateRef.current = true;
+        setCode(savedDraft);
+        if (editorRef.current && editorRef.current.getValue() !== savedDraft) {
+          editorRef.current.setValue(savedDraft);
+        }
+        setRestoredSource('draft');
+        isProgrammaticUpdateRef.current = false;
+        return;
+      }
+
+      // 3. Fallback to starter boilerplate template
+      const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
+      isProgrammaticUpdateRef.current = true;
+      setCode(template);
+      if (editorRef.current && editorRef.current.getValue() !== template) {
+        editorRef.current.setValue(template);
+      }
+      setRestoredSource(null);
+      isProgrammaticUpdateRef.current = false;
+    };
+
+    hydrateProblemCode();
     setTestResults(null);
     setCustomResult(null);
     setShowCelebration(false);
-  }, [problem?.id, selectedLanguage, getDraftKey]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [problem?.id, user?.email, getDraftKey]);
 
   // Handle source changes from Monaco editor with autosave
   const handleCodeChange = (newCode: string) => {
+    if (isProgrammaticUpdateRef.current) return;
     runRevisionRef.current += 1;
     setCode(newCode);
     setTestResults(null); // Clear previous verdicts
@@ -184,15 +230,18 @@ export default function TechnicalCodingWorkspacePage() {
     setSelectedLanguage(newLang);
     setTestResults(null);
     setCustomResult(null);
+    setRestoredSource(null);
 
     if (problem) {
       const draftKey = getDraftKey(problem.id, newLang);
       const savedDraft = localStorage.getItem(draftKey);
       const newCode = savedDraft && savedDraft.trim().length > 0 ? savedDraft : (STARTER_TEMPLATES[newLang] || '');
+      isProgrammaticUpdateRef.current = true;
       setCode(newCode);
       if (editorRef.current) {
         editorRef.current.setValue(newCode);
       }
+      isProgrammaticUpdateRef.current = false;
     }
   };
 
@@ -203,10 +252,13 @@ export default function TechnicalCodingWorkspacePage() {
     }
     runRevisionRef.current += 1;
     const template = STARTER_TEMPLATES[selectedLanguage] || '';
+    isProgrammaticUpdateRef.current = true;
     setCode(template);
     if (editorRef.current) {
       editorRef.current.setValue(template);
     }
+    isProgrammaticUpdateRef.current = false;
+    setRestoredSource(null);
     if (problem) {
       const draftKey = getDraftKey(problem.id, selectedLanguage);
       try {
@@ -341,6 +393,23 @@ export default function TechnicalCodingWorkspacePage() {
       // Check if all test cases passed
       const allPassed = result.passedCount === result.totalCount && result.totalCount > 0 && !result.compileError;
 
+      // Always persist submission to local cache and Supabase ledger when user formally submits
+      if (isSubmit && problem) {
+        const subVerdict = allPassed
+          ? 'ACCEPTED'
+          : (result.compileError ? 'COMPILATION_ERROR' : (result.runtimeError ? 'RUNTIME_ERROR' : 'WRONG_ANSWER'));
+        await technicalService.saveUserSubmission(
+          problem.id,
+          capturedLang,
+          capturedCode,
+          subVerdict,
+          result.passedCount,
+          result.totalCount,
+          user?.email,
+          activeTrack as any
+        );
+      }
+
       if (allPassed) {
         audioEffects.playSuccessChime();
         if (isSubmit) {
@@ -360,7 +429,7 @@ export default function TechnicalCodingWorkspacePage() {
       }
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
-      toast.error('Failed to communicate with compiler engine.');
+      toast.error(err?.message || 'Failed to communicate with compiler engine.');
     } finally {
       if (runRevisionRef.current === currentRevision) {
         setIsRunningTests(false);
@@ -904,6 +973,19 @@ export default function TechnicalCodingWorkspacePage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              {restoredSource === 'submission' && (
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded border border-sky-800" title="Restored from your past submitted solution">
+                  <CheckCircle2 className="w-3 h-3 text-sky-400" />
+                  <span>Previous Solution</span>
+                </div>
+              )}
+              {restoredSource === 'draft' && (
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800" title="Restored from your local draft">
+                  <FileCode className="w-3 h-3 text-amber-400" />
+                  <span>Draft Restored</span>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleResetTemplate}

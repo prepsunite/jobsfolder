@@ -373,6 +373,24 @@ export default function MockExamCodingWorkspace({
       onUpdateCode(capturedCode, capturedLang, result.passedCount, result.totalCount);
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
+      setTestResults({
+        cases: (testCases || []).map((tc, idx) => ({
+          input: tc.is_hidden ? `[Hidden Test Case ${idx + 1}]` : (tc.input || ''),
+          expected: tc.is_hidden ? '[Hidden Expected Output]' : (tc.expected_output || tc.output || ''),
+          actual: 'Execution failed: Unable to reach compiler engine.',
+          passed: false,
+          status: 'RUNTIME_ERROR',
+          timeMs: 0,
+          error: err?.message || 'Compiler gateway error',
+        })),
+        passedCount: 0,
+        totalCount: testCases.length,
+        isTemplateOrEmpty: false,
+        compileError: null,
+        runtimeError: err?.message || 'Compiler gateway error',
+        summaryMessage: 'Execution failed: Compiler engine unreachable. Please retry.',
+      });
+      setActiveTestTab(0);
     } finally {
       if (runRevisionRef.current === currentRevision) {
         setIsRunningTests(false);

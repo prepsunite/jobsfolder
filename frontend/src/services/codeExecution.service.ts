@@ -321,7 +321,250 @@ export function normalizeOutput(str?: string): string {
  */
 export const codeExecutionService = {
   /**
-   * Execute code with given standard input via authenticated Sandboxed API proxy
+   * Base API endpoint for direct Judge0 CE access (fallback when /api/execute-code proxy is unavailable)
+   */
+  getDirectJudge0Url(): string {
+    const envUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CODE_EXECUTION_URL) as string | undefined;
+    return envUrl && envUrl.trim().length > 0
+      ? envUrl.trim()
+      : 'https://ce.judge0.com/submissions/?base64_encoded=true&wait=true';
+  },
+
+  /**
+   * Direct sandboxed execution against Judge0 CE
+   */
+  async executeDirectJudge0(
+    language: string,
+    sourceCode: string,
+    stdinText: string = ''
+  ): Promise<ExecutionResult> {
+    const langKey = normalizeLanguageKey(language);
+    const langId = JUDGE0_LANGUAGE_IDS[langKey] || JUDGE0_LANGUAGE_IDS.python;
+    const sanitizedStdin = normalizeStdin(stdinText);
+
+    const payload = {
+      source_code: encodeBase64(sourceCode),
+      language_id: langId,
+      stdin: encodeBase64(sanitizedStdin),
+      cpu_time_limit: 2.0,
+      memory_limit: 256000,
+      wall_time_limit: 5.0,
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    const apiKey = typeof import.meta !== 'undefined' &&
+      (import.meta.env?.VITE_CODE_EXECUTION_API_KEY || import.meta.env?.VITE_JUDGE0_API_KEY || import.meta.env?.VITE_RAPIDAPI_KEY);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if (apiKey) {
+      headers['X-Auth-Token'] = apiKey;
+      headers['X-RapidAPI-Key'] = apiKey;
+    }
+
+    try {
+      const res = await fetch(this.getDirectJudge0Url(), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Compiler gateway error (${res.status}): ${text.slice(0, 100)}`);
+      }
+
+      const data = await res.json();
+      const stdout = decodeBase64(data.stdout || '');
+      const stderr = decodeBase64(data.stderr || '');
+      const compileOutput = decodeBase64(data.compile_output || '');
+      const statusId = data.status?.id || 0;
+      const statusDescription = data.status?.description || 'Unknown';
+      const timeMs = data.time ? Math.round(parseFloat(data.time) * 1000) : 0;
+      const memoryKb = data.memory || 0;
+
+      const isCompileError = statusId === 6 || compileOutput.trim().length > 0;
+      const isTimeLimitExceeded = statusId === 5;
+      const isRuntimeError = (statusId >= 7 && statusId <= 12) || (statusId === 11 && stderr.trim().length > 0);
+      const isSuccess = statusId === 3 && !isCompileError && !isRuntimeError;
+
+      return {
+        statusId,
+        statusDescription,
+        stdout,
+        stderr,
+        compileOutput,
+        timeMs,
+        memoryKb,
+        isSuccess,
+        isCompileError,
+        isRuntimeError,
+        isTimeLimitExceeded,
+        errorMessage: compileOutput || stderr || undefined,
+      };
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      const isAbort = err.name === 'AbortError';
+      const errMsg = isAbort ? 'Execution timed out (> 12s).' : (err.message || 'Execution error.');
+      return {
+        statusId: 0,
+        statusDescription: isAbort ? 'Time Limit Exceeded' : 'Execution Error',
+        stdout: '',
+        stderr: errMsg,
+        compileOutput: '',
+        timeMs: 0,
+        memoryKb: 0,
+        isSuccess: false,
+        isCompileError: false,
+        isRuntimeError: true,
+        isTimeLimitExceeded: isAbort,
+        errorMessage: errMsg,
+      };
+    }
+  },
+
+  /**
+   * Directly evaluates test cases against Judge0 CE (used in local dev or when proxy is down)
+   */
+  async runTestCasesDirect(
+    language: string,
+    sourceCode: string,
+    testCases: TestCaseInput[]
+  ): Promise<TestCaseRunResult> {
+    if (!testCases || testCases.length === 0) {
+      return {
+        cases: [],
+        passedCount: 0,
+        totalCount: 0,
+        isTemplateOrEmpty: false,
+        compileError: null,
+        runtimeError: null,
+        summaryMessage: 'No test cases configured.',
+      };
+    }
+
+    const evaluatedCases: EvaluatedTestCase[] = [];
+    let compileErrorEncountered: string | null = null;
+    let firstRuntimeError: string | null = null;
+
+    const evaluateSingle = async (tc: TestCaseInput, index: number): Promise<EvaluatedTestCase> => {
+      const isHidden = Boolean(tc.is_hidden);
+      const rawStdin = tc.input || '';
+      const realExpected = normalizeOutput(tc.expected_output || tc.output || '');
+
+      const displayInput = isHidden ? `[Hidden Test Case ${index + 1}]` : rawStdin;
+      const displayExpected = isHidden ? '[Hidden Expected Output]' : realExpected;
+
+      const execResult = await this.executeDirectJudge0(language, sourceCode, rawStdin);
+
+      if (execResult.isCompileError) {
+        const err = execResult.compileOutput || execResult.stderr || 'Compilation error.';
+        if (!compileErrorEncountered) compileErrorEncountered = err;
+        return {
+          input: displayInput,
+          expected: displayExpected,
+          actual: isHidden ? '[Compilation Error on Hidden Case]' : err,
+          passed: false,
+          status: 'COMPILATION_ERROR',
+          timeMs: execResult.timeMs,
+          memoryKb: execResult.memoryKb,
+          error: err,
+        };
+      }
+
+      if (execResult.isRuntimeError) {
+        const rErr = execResult.stderr || execResult.errorMessage || 'Runtime error.';
+        if (!firstRuntimeError) firstRuntimeError = rErr;
+        return {
+          input: displayInput,
+          expected: displayExpected,
+          actual: isHidden ? '[Runtime Error on Hidden Case]' : rErr,
+          passed: false,
+          status: 'RUNTIME_ERROR',
+          timeMs: execResult.timeMs,
+          memoryKb: execResult.memoryKb,
+          error: rErr,
+        };
+      }
+
+      if (execResult.isTimeLimitExceeded) {
+        return {
+          input: displayInput,
+          expected: displayExpected,
+          actual: 'Time Limit Exceeded (> 2.0s).',
+          passed: false,
+          status: 'TIME_LIMIT_EXCEEDED',
+          timeMs: execResult.timeMs || 2000,
+          memoryKb: execResult.memoryKb,
+          error: 'Time Limit Exceeded',
+        };
+      }
+
+      const actual = normalizeOutput(execResult.stdout);
+      const isMatch = execResult.isSuccess && actual === realExpected;
+
+      return {
+        input: displayInput,
+        expected: displayExpected,
+        actual: isHidden ? (isMatch ? '[Output Matched]' : '[Hidden Output Mismatch]') : (actual || '[No output]'),
+        passed: isMatch,
+        status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
+        timeMs: execResult.timeMs,
+        memoryKb: execResult.memoryKb,
+      };
+    };
+
+    // Run first case to check compilation
+    const firstEvaluated = await evaluateSingle(testCases[0], 0);
+    evaluatedCases.push(firstEvaluated);
+
+    if (firstEvaluated.status === 'COMPILATION_ERROR') {
+      for (let j = 1; j < testCases.length; j++) {
+        evaluatedCases.push({
+          input: testCases[j].is_hidden ? `[Hidden Test Case ${j + 1}]` : (testCases[j].input || ''),
+          expected: testCases[j].is_hidden ? '[Hidden Expected Output]' : normalizeOutput(testCases[j].expected_output || testCases[j].output || ''),
+          actual: 'Skipped due to compilation error.',
+          passed: false,
+          status: 'SKIPPED',
+          timeMs: 0,
+        });
+      }
+    } else if (testCases.length > 1) {
+      // Run remaining test cases concurrently
+      const remainingPromises = testCases.slice(1).map((tc, idx) => evaluateSingle(tc, idx + 1));
+      const remainingEvaluated = await Promise.all(remainingPromises);
+      evaluatedCases.push(...remainingEvaluated);
+    }
+
+    const passedCount = evaluatedCases.filter(c => c.passed).length;
+    const totalCount = evaluatedCases.length;
+
+    let summaryMessage = `${passedCount}/${totalCount} Test Cases Passed`;
+    if (compileErrorEncountered) {
+      summaryMessage = 'Compilation Failed: Please inspect compiler diagnostics.';
+    } else if (passedCount === totalCount && totalCount > 0) {
+      summaryMessage = 'All Test Cases Passed!';
+    }
+
+    return {
+      cases: evaluatedCases,
+      passedCount,
+      totalCount,
+      isTemplateOrEmpty: false,
+      compileError: compileErrorEncountered,
+      runtimeError: firstRuntimeError,
+      summaryMessage,
+    };
+  },
+
+  /**
+   * Execute code with given standard input via authenticated Sandboxed API proxy with direct Judge0 fallback
    */
   async execute(
     language: string,
@@ -339,46 +582,48 @@ export const codeExecutionService = {
 
     const sanitizedStdin = normalizeStdin(stdin);
 
-    const response = await fetch('/api/execute-code', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        language: normalizeLanguageKey(language),
-        sourceCode,
-        customStdin: sanitizedStdin,
-      }),
-    });
+    try {
+      const response = await fetch('/api/execute-code', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          language: normalizeLanguageKey(language),
+          sourceCode,
+          customStdin: sanitizedStdin,
+        }),
+      });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || `Compiler server error (${response.status})`);
+      if (response.ok) {
+        const data = await response.json();
+        const isErr = Boolean(data.stderr && data.stderr.trim().length > 0);
+
+        return {
+          statusId: isErr ? 11 : 3,
+          statusDescription: data.status || (isErr ? 'Runtime Error' : 'Accepted'),
+          stdout: data.stdout || '',
+          stderr: data.stderr || '',
+          compileOutput: '',
+          timeMs: data.timeMs || 0,
+          memoryKb: data.memoryKb || 0,
+          isSuccess: !isErr,
+          isCompileError: false,
+          isRuntimeError: isErr,
+          isTimeLimitExceeded: false,
+          errorMessage: data.stderr || undefined,
+        };
+      }
+      console.warn(`[codeExecutionService.execute] Proxy returned status ${response.status}. Using direct fallback.`);
+    } catch (proxyErr) {
+      console.warn('[codeExecutionService.execute] Proxy unreachable. Using direct fallback:', proxyErr);
     }
 
-    const data = await response.json();
-    const isErr = Boolean(data.stderr && data.stderr.trim().length > 0);
-
-    return {
-      statusId: isErr ? 11 : 3,
-      statusDescription: data.status || (isErr ? 'Runtime Error' : 'Accepted'),
-      stdout: data.stdout || '',
-      stderr: data.stderr || '',
-      compileOutput: '',
-      timeMs: data.timeMs || 0,
-      memoryKb: data.memoryKb || 0,
-      isSuccess: !isErr,
-      isCompileError: false,
-      isRuntimeError: isErr,
-      isTimeLimitExceeded: false,
-      errorMessage: data.stderr || undefined,
-    };
+    // Direct fallback
+    return await this.executeDirectJudge0(language, sourceCode, sanitizedStdin);
   },
 
   /**
-   * Evaluates test cases against the source code via authenticated serverless proxy.
-   * Supports:
-   * 1. (language, sourceCode, testCases, isSubmit) - Direct test case array execution
-   * 2. (language, sourceCode, { problemId, isSubmit, testCases }) - Problem-backed execution
-   * 3. (problemId, language, sourceCode, isSubmit) - Problem ID first signature
+   * Evaluates test cases against the source code via authenticated serverless proxy,
+   * with automatic, seamless failover to direct Judge0 CE execution.
    */
   async runTestCases(
     arg1: string,
@@ -455,44 +700,54 @@ export const codeExecutionService = {
     if (problemId) payload.problemId = problemId;
     if (testCases && testCases.length > 0) payload.testCases = testCases;
 
-    const response = await fetch('/api/execute-code', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
+    // Try serverless proxy first
+    try {
+      const response = await fetch('/api/execute-code', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || `Compiler server error (${response.status})`);
+      if (response.ok) {
+        const data = await response.json();
+        const cases: EvaluatedTestCase[] = (data.cases || []).map((c: any) => ({
+          input: c.input || `[Test Case ${c.caseIndex}]`,
+          expected: c.expected || '',
+          actual: c.actual || '',
+          passed: Boolean(c.passed),
+          status: c.status || (c.passed ? 'PASSED' : 'WRONG_ANSWER'),
+          timeMs: c.timeMs || 0,
+          memoryKb: c.memoryKb,
+          error: c.error,
+        }));
+
+        return {
+          cases,
+          passedCount: data.passedCount || 0,
+          totalCount: data.totalCount || 0,
+          isTemplateOrEmpty: false,
+          compileError: data.compileError || null,
+          runtimeError: data.status === 'RUNTIME_ERROR' ? 'Runtime error occurred.' : null,
+          summaryMessage: data.compileError
+            ? 'Compilation Error: Inspect compiler diagnostic output.'
+            : `${data.passedCount}/${data.totalCount} Test Cases Passed`,
+        };
+      }
+      console.warn(`[codeExecutionService] /api/execute-code proxy returned ${response.status}. Using direct Judge0 fallback.`);
+    } catch (proxyErr) {
+      console.warn('[codeExecutionService] /api/execute-code proxy unreachable. Using direct Judge0 fallback:', proxyErr);
     }
 
-    const data = await response.json();
-    const cases: EvaluatedTestCase[] = (data.cases || []).map((c: any) => ({
-      input: c.input || `[Test Case ${c.caseIndex}]`,
-      expected: c.expected || '',
-      actual: c.actual || '',
-      passed: Boolean(c.passed),
-      status: c.status || (c.passed ? 'PASSED' : 'WRONG_ANSWER'),
-      timeMs: c.timeMs || 0,
-      memoryKb: c.memoryKb,
-      error: c.error,
-    }));
+    // Direct fallback execution
+    if (testCases && testCases.length > 0) {
+      return await this.runTestCasesDirect(language, sourceCode, testCases);
+    }
 
-    return {
-      cases,
-      passedCount: data.passedCount || 0,
-      totalCount: data.totalCount || 0,
-      isTemplateOrEmpty: false,
-      compileError: data.compileError || null,
-      runtimeError: data.status === 'RUNTIME_ERROR' ? 'Runtime error occurred.' : null,
-      summaryMessage: data.compileError
-        ? 'Compilation Error: Inspect compiler diagnostic output.'
-        : `${data.passedCount}/${data.totalCount} Test Cases Passed`,
-    };
+    throw new Error('Compiler engine unreachable and no test cases available for fallback.');
   },
 
   /**
-   * Runs custom input via authenticated serverless proxy
+   * Runs custom input via authenticated serverless proxy with direct Judge0 fallback
    */
   async executeCustom(
     language: string,
@@ -502,24 +757,33 @@ export const codeExecutionService = {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
-    const response = await fetch('/api/execute-code', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        language: normalizeLanguageKey(language),
-        sourceCode,
-        customStdin: normalizeStdin(customStdin),
-      }),
-    });
+    try {
+      const response = await fetch('/api/execute-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          language: normalizeLanguageKey(language),
+          sourceCode,
+          customStdin: normalizeStdin(customStdin),
+        }),
+      });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || 'Custom execution failed.');
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (proxyErr) {
+      console.warn('[codeExecutionService.executeCustom] Proxy unreachable, using direct fallback:', proxyErr);
     }
 
-    return await response.json();
+    const directRes = await this.executeDirectJudge0(language, sourceCode, customStdin);
+    return {
+      stdout: directRes.stdout,
+      stderr: directRes.stderr || directRes.compileOutput,
+      status: directRes.statusDescription,
+      timeMs: directRes.timeMs,
+    };
   },
 };
