@@ -8,6 +8,56 @@ const JUDGE0_LANGUAGE_IDS = {
   c: 50,      // C (GCC 9.2.0)
 };
 
+// ─── Phase 1B: Per-User Rate Limit Store ─────────────────────────────────────
+// In-memory map: userEmail (or IP) → last request timestamp.
+// Works per Vercel function instance. For cross-instance limits, swap this for
+// Upstash Redis when scaling to 10k+ students.
+const recentRequests = new Map();
+const USER_COOLDOWN_MS = 3000; // 3 seconds between runs per user
+
+// ─── Phase 1C: Judge0 Host Fallback Chain ────────────────────────────────────
+// Primary: your own private Judge0 server (set JUDGE0_URL in Vercel env vars).
+// Secondary: RapidAPI hosted Judge0 (set RAPIDAPI_JUDGE0_URL + RAPIDAPI_KEY).
+// Tertiary: Public community edition (free, rate-limited, last resort).
+function buildJudge0HostChain() {
+  const hosts = [];
+
+  // 1. Private dedicated server (Phase 2 upgrade: compiler.prepunite.com)
+  if (process.env.JUDGE0_URL && !process.env.JUDGE0_URL.includes('ce.judge0.com')) {
+    hosts.push({
+      url: process.env.JUDGE0_URL,
+      authToken: process.env.JUDGE0_API_KEY || null,
+      rapidApiKey: null,
+      rapidApiHost: null,
+      label: 'private',
+    });
+  }
+
+  // 2. RapidAPI Judge0 CE (paid, no rate limit — backup)
+  if (process.env.RAPIDAPI_JUDGE0_URL && process.env.RAPIDAPI_KEY) {
+    hosts.push({
+      url: process.env.RAPIDAPI_JUDGE0_URL,
+      authToken: null,
+      rapidApiKey: process.env.RAPIDAPI_KEY,
+      rapidApiHost: process.env.RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
+      label: 'rapidapi',
+    });
+  }
+
+  // 3. Public CE fallback (always last — always available but rate-limited)
+  hosts.push({
+    url: 'https://ce.judge0.com',
+    authToken: process.env.JUDGE0_API_KEY || null,
+    rapidApiKey: null,
+    rapidApiHost: null,
+    label: 'public-ce',
+  });
+
+  return hosts;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function encodeBase64(str) {
   if (!str) return '';
   return Buffer.from(str, 'utf-8').toString('base64');
@@ -29,6 +79,105 @@ function normalizeOutput(str) {
     .trim();
 }
 
+// ─── Single Judge0 Host Executor ─────────────────────────────────────────────
+async function executeOnHost(host, stdinText, sourceCode, langId) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  if (host.authToken) {
+    headers['X-Auth-Token'] = host.authToken;
+  }
+  if (host.rapidApiKey) {
+    headers['X-RapidAPI-Key'] = host.rapidApiKey;
+    headers['X-RapidAPI-Host'] = host.rapidApiHost;
+  }
+
+  const payload = {
+    source_code: encodeBase64(sourceCode),
+    language_id: langId,
+    stdin: encodeBase64(stdinText || ''),
+    cpu_time_limit: 2.0,    // 2.0s CPU limit
+    memory_limit: 256000,   // 256MB memory limit
+    wall_time_limit: 5.0,   // 5.0s wall limit
+  };
+
+  const judgeRes = await fetch(`${host.url}/submissions/?base64_encoded=true&wait=true`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(12000), // 12s — covers 5s wall limit + network overhead
+  });
+
+  if (!judgeRes.ok) {
+    const text = await judgeRes.text();
+    const err = new Error(`[${host.label}] Compiler gateway error (${judgeRes.status}): ${text.slice(0, 150)}`);
+    err.statusCode = judgeRes.status;
+    throw err;
+  }
+
+  const data = await judgeRes.json();
+  return {
+    stdout: decodeBase64(data.stdout || ''),
+    stderr: decodeBase64(data.stderr || ''),
+    compileOutput: decodeBase64(data.compile_output || ''),
+    statusId: data.status?.id || 0,
+    statusDesc: data.status?.description || 'Unknown',
+    timeMs: data.time ? Math.round(parseFloat(data.time) * 1000) : 0,
+    memoryKb: data.memory || 0,
+  };
+}
+
+// ─── Phase 1C: Fallback Chain Executor ───────────────────────────────────────
+// Tries each Judge0 host in order. Falls through on 429 (rate-limit) or 503.
+// Throws on the last host or on unrecoverable errors (4xx other than 429).
+async function executeJudge0WithFallback(stdinText, sourceCode, langId, hosts) {
+  let lastErr = null;
+
+  for (const host of hosts) {
+    try {
+      return await executeOnHost(host, stdinText, sourceCode, langId);
+    } catch (err) {
+      lastErr = err;
+      const isRetryable =
+        err.statusCode === 429 ||   // Rate limited
+        err.statusCode === 503 ||   // Service unavailable
+        err.message?.includes('fetch failed') ||
+        err.message?.includes('ECONNREFUSED') ||
+        err.message?.includes('ETIMEDOUT');
+
+      if (isRetryable) {
+        console.warn(`[api/execute-code] Host "${host.label}" failed (${err.statusCode || 'network'}), trying next...`);
+        continue;
+      }
+      // Non-retryable error (compile error, bad request, etc.) — throw immediately
+      throw err;
+    }
+  }
+
+  throw new Error(`All compiler endpoints are currently busy. Please try again in a moment. (${lastErr?.message})`);
+}
+
+// ─── Phase 1A: Result Assembler for Parallel Execution ───────────────────────
+// Converts a settled Promise result into a standard runRes shape (never throws).
+function settledToRunRes(settled, stdinText) {
+  if (settled.status === 'fulfilled') {
+    return settled.value;
+  }
+  const err = settled.reason;
+  return {
+    stdout: '',
+    stderr: err?.message || 'Execution error',
+    compileOutput: '',
+    statusId: 11, // Runtime Error (matches Judge0 status schema)
+    statusDesc: 'Runtime Error',
+    timeMs: 0,
+    memoryKb: 0,
+  };
+}
+
+// ─── Main Handler ─────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
@@ -39,8 +188,6 @@ export default async function handler(req, res) {
   try {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-    const judge0ApiKey = process.env.JUDGE0_API_KEY || process.env.RAPIDAPI_KEY || process.env.VITE_JUDGE0_API_KEY;
-    const judge0BaseUrl = process.env.JUDGE0_URL || 'https://ce.judge0.com';
 
     let supabaseAdmin = null;
     if (supabaseUrl && supabaseServiceKey) {
@@ -68,6 +215,31 @@ export default async function handler(req, res) {
       }
     }
 
+    // ─── Phase 1B: Per-User Rate Limiting ────────────────────────────────────
+    // Key by authenticated email; fall back to IP for unauthenticated "Run" clicks.
+    const rateLimitKey = userEmail || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'anon';
+    const now = Date.now();
+    const lastRun = recentRequests.get(rateLimitKey) || 0;
+
+    if (now - lastRun < USER_COOLDOWN_MS) {
+      const waitMs = USER_COOLDOWN_MS - (now - lastRun);
+      res.setHeader('Retry-After', Math.ceil(waitMs / 1000));
+      return res.status(429).json({
+        error: `Please wait ${Math.ceil(waitMs / 1000)}s before running again.`,
+        retryAfterMs: waitMs,
+      });
+    }
+    recentRequests.set(rateLimitKey, now);
+
+    // Prevent memory leak: clean entries older than 1 minute
+    if (recentRequests.size > 5000) {
+      const cutoff = now - 60000;
+      for (const [key, ts] of recentRequests.entries()) {
+        if (ts < cutoff) recentRequests.delete(key);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const {
       problemId,
       language = 'python',
@@ -89,55 +261,14 @@ export default async function handler(req, res) {
     const langKey = String(language).toLowerCase().trim();
     const langId = JUDGE0_LANGUAGE_IDS[langKey] || JUDGE0_LANGUAGE_IDS.python;
 
-    // Helper: Execute single test case against Judge0 with resource constraints [P1-03]
-    const executeJudge0 = async (stdinText) => {
-      const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    // Build fallback host chain for this request
+    const hosts = buildJudge0HostChain();
 
-      if (judge0ApiKey) {
-        headers['X-Auth-Token'] = judge0ApiKey;
-        headers['X-RapidAPI-Key'] = judge0ApiKey;
-      }
-      if (process.env.RAPIDAPI_HOST) {
-        headers['X-RapidAPI-Host'] = process.env.RAPIDAPI_HOST;
-      }
+    // Convenience wrapper for a single test case execution with fallback
+    const executeJudge0 = (stdinText) =>
+      executeJudge0WithFallback(stdinText, sourceCode, langId, hosts);
 
-      const payload = {
-        source_code: encodeBase64(sourceCode),
-        language_id: langId,
-        stdin: encodeBase64(stdinText || ''),
-        cpu_time_limit: 2.0,       // 2.0s CPU limit
-        memory_limit: 256000,      // 256MB memory limit
-        wall_time_limit: 5.0,      // 5.0s wall limit
-      };
-
-      const judgeRes = await fetch(`${judge0BaseUrl}/submissions/?base64_encoded=true&wait=true`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(10000),
-      });
-
-      if (!judgeRes.ok) {
-        const text = await judgeRes.text();
-        throw new Error(`Compiler gateway error (${judgeRes.status}): ${text.slice(0, 150)}`);
-      }
-
-      const data = await judgeRes.json();
-      return {
-        stdout: decodeBase64(data.stdout || ''),
-        stderr: decodeBase64(data.stderr || ''),
-        compileOutput: decodeBase64(data.compile_output || ''),
-        statusId: data.status?.id || 0,
-        statusDesc: data.status?.description || 'Unknown',
-        timeMs: data.time ? Math.round(parseFloat(data.time) * 1000) : 0,
-        memoryKb: data.memory || 0,
-      };
-    };
-
-    // 2. Handle Custom Input Execution
+    // 2. Handle Custom Input Execution (single run, no parallelism needed)
     if (customStdin !== undefined && !problemId && (!clientTestCases || clientTestCases.length === 0)) {
       const customRes = await executeJudge0(customStdin);
       return res.status(200).json({
@@ -153,7 +284,6 @@ export default async function handler(req, res) {
     // 3. Resolve Test Cases (From DB by problemId, local dataset, or clientTestCases)
     let testCases = [];
 
-    // Fallback to client-provided test cases if provided
     if (Array.isArray(clientTestCases) && clientTestCases.length > 0) {
       testCases = isSubmit
         ? clientTestCases
@@ -187,7 +317,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No test cases configured for this problem.' });
     }
 
-    // 4. Run Test Cases with Compiler Sandboxing & Hidden Case Masking [P0-02, P1-03]
+    // ─── Phase 1A: Parallel Test Case Execution ──────────────────────────────
+    // All test cases fire simultaneously. For a student with 5 test cases:
+    //   BEFORE (sequential): 5 × ~3s = ~15s total
+    //   AFTER  (parallel):   max(3s, 3s, 3s, 3s, 3s) = ~3s total
+    //
+    // IMPORTANT: Compilation errors on test case #1 will still be detected
+    // correctly — we check all results after all have settled.
+    //
+    // Promise.allSettled never throws — individual failures are handled below.
+    const settledResults = await Promise.allSettled(
+      testCases.map((tc) => executeJudge0(tc.input || ''))
+    );
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // 4. Process Results — Compile, Runtime, TLE, Pass/Fail logic preserved exactly
     const evaluatedCases = [];
     let passedCount = 0;
     let compileError = null;
@@ -199,21 +343,7 @@ export default async function handler(req, res) {
       const tc = testCases[i];
       const isHidden = Boolean(tc.is_hidden);
       const expectedOut = normalizeOutput(tc.expected_output || tc.output || '');
-
-      let runRes;
-      try {
-        runRes = await executeJudge0(tc.input || '');
-      } catch (execErr) {
-        runRes = {
-          stdout: '',
-          stderr: execErr.message || 'Execution error',
-          compileOutput: '',
-          statusId: 11,
-          statusDesc: 'Runtime Error',
-          timeMs: 0,
-          memoryKb: 0,
-        };
-      }
+      const runRes = settledToRunRes(settledResults[i], tc.input || '');
 
       maxRuntimeMs = Math.max(maxRuntimeMs, runRes.timeMs);
       maxMemoryKb = Math.max(maxMemoryKb, runRes.memoryKb);
@@ -229,7 +359,8 @@ export default async function handler(req, res) {
           error: compileError,
           timeMs: runRes.timeMs,
         });
-        break; // Stop running further tests on compile error
+        // On compile error: record it and stop processing remaining cases
+        break;
       }
 
       // Check Time Limit Exceeded
@@ -288,7 +419,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 5. If this was a formal Submission, record in database ledger via Atomic RPC [P0-03, P1-02]
+    // 5. Record formal submission via Atomic RPC [P0-03, P1-02]
     let submissionRecord = null;
     if (isSubmit && problemId && userEmail && supabaseAdmin) {
       try {

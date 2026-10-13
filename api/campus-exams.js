@@ -437,7 +437,7 @@ export default async function handler(req, res) {
         if (collegeId) {
           const cidUpper = String(collegeId).trim().toUpperCase();
           if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
-            msgQuery = msgQuery.or(`subject.like.B2B_EXAM:SELF:${userEmail}:%,subject.like.B2B_EXAM:SELF:%`);
+            msgQuery = msgQuery.like('subject', `B2B_EXAM:SELF:${userEmail}:%`);
           } else {
             msgQuery = msgQuery.like('subject', `B2B_EXAM:${collegeId}:%`);
           }
@@ -758,6 +758,7 @@ export default async function handler(req, res) {
         await supabaseAdmin.from('mock_exams').upsert({
           id: exam.id,
           college_id: exam.college_id,
+          created_by: exam.created_by || user.id,
           title: exam.title,
           target_company: exam.target_company,
           description: exam.description,

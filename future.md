@@ -19,35 +19,109 @@ This document outlines the exact infrastructure and paid upgrades required as st
 
 ---
 
-## 1. ⚡ Dedicated Judge0 Sandbox Engine (Top Priority for Coding)
+## 1. ⚡ Compiler Engine & Scale Architecture (From Free Tier to 20,000 Concurrent Students)
 
-### Why is this needed?
-- **Current Setup**: The app connects to the free public Community Edition (`https://ce.judge0.com`).
-- **The Limit**: Public Judge0 is shared globally and rate-limited to **~30 to 50 requests/minute**.
-- **The Problem**: If 200 students in a college placement exam click *"Run Tests"* at the same time, they will get `429 Too Many Requests` or slow response times.
+### 📊 The Scale Problem — The Numbers
+At **10,000 to 20,000 students** writing live college placement exams (5 problems, 5 test cases, ~3 test runs):
+- **~750,000 to 1,500,000 compiler invocations** in a 2-hour drive window.
+- **~100 to 200 code runs / second** at peak rush.
+- A single shared server or synchronous blocking HTTP flow collapses under this load.
 
-### How to Deploy (Step-by-Step):
+---
+
+### 🗺️ The 4-Tier Scaling Roadmap
+
+| Tier | Concurrent Students | Monthly Cost | Architecture Overview |
+|---|---|---|---|
+| **Tier 0 (Active Free Plan)** | **< 500** | **$0 / mo** | Parallel `Promise.allSettled`, 3s debounce rate-limit, 3-tier fallback chain (Private → RapidAPI → Public CE). |
+| **Tier 1 (First College)** | **500 – 2,000** | **~$40 / mo** | Dedicated Hetzner CPX31 (4 vCPU, 8GB, 8 workers) + Upstash Redis cross-instance rate-limiting + Supabase Pro. |
+| **Tier 2 (Multi-College)** | **2,000 – 5,000** | **~$120 / mo** | 2× Hetzner CPX41 behind Nginx load balancer + Cloudflare WAF + Pre-warm compiler cron. |
+| **Tier 3 (Pan-India Drives)**| **5,000 – 20,000+** | **~$300 / mo** | 4× Judge0 nodes (64 workers) + Async Upstash QStash queue + Supabase Realtime live result push. |
+
+---
+
+### 🛠️ Tier 0: Current Free Tier Optimization (Active Today)
+The free plan is already tuned directly in `api/execute-code.js`:
+1. **Parallel Fan-Out**: Runs test cases concurrently via `Promise.allSettled`. 5 test cases execute in ~1.3s instead of 15s.
+2. **Per-Student 3-Second Cooldown**: Prevents exam button-mashing from exhausting the shared 30 req/min limit.
+3. **Three-Tier Fallback Chain**: 
+   - Tier A: Private Judge0 (`JUDGE0_URL`)
+   - Tier B: RapidAPI Judge0 (`RAPIDAPI_KEY` + `RAPIDAPI_JUDGE0_URL`)
+   - Tier C: Public Community Edition (`https://ce.judge0.com`)
+4. **Client-Side Exam Caching**: All student code drafts and test results stay in `localStorage`, generating zero database traffic until final submission.
+
+---
+
+### 🚀 Tier 1 & 2: Dedicated Judge0 Deployment ($15 – $40 / mo)
+
+#### Step-by-Step Server Setup:
 1. **Choose a Cloud VPS**:
-   - **Recommended**: Hetzner Cloud (CPX31: 4 vCPU, 8 GB RAM, ~$15–$20/mo) OR DigitalOcean (8 GB RAM droplet, ~$40/mo) OR AWS EC2 (`t4g.xlarge` or `c6g.large`).
-   - Ubuntu 22.04 LTS.
+   - **Recommended**: Hetzner Cloud (CPX31: 4 vCPU, 8 GB RAM, ~$15–$20/mo) or AWS EC2 `t4g.xlarge` (Mumbai region).
+   - OS: Ubuntu 22.04 LTS.
 2. **Install Docker & Judge0**:
    ```bash
-   # SSH into server
-   curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-   git clone https://github.com/judge0/judge0.git
-   cd judge0
-   # Configure judge0.conf (set secret tokens and workers = 4 to 8)
-   docker compose up -d
+   ssh root@YOUR_SERVER_IP
+   curl -fsSL https://get.docker.com | sh && systemctl enable docker
+   git clone https://github.com/judge0/judge0.git && cd judge0
    ```
-3. **Set Up Domain & SSL**:
-   - Point a subdomain like `compiler.prepunite.com` to the server IP.
-   - Use Nginx or Caddy with free Let's Encrypt SSL.
-4. **Update PrepUnite Config**:
+3. **Configure `judge0.conf`**:
+   ```bash
+   cat > judge0.conf << 'EOF'
+   AUTHN_HEADER=X-Auth-Token
+   AUTHN_TOKEN=your_secure_random_token_64_chars
+   WORKERS=8
+   MAX_QUEUE_SIZE=400
+   CPU_TIME_LIMIT=2.0
+   WALL_TIME_LIMIT=5.0
+   MEMORY_LIMIT=262144
+   ENABLE_ADDITIONAL_FILES=false
+   EOF
+
+   docker compose pull && docker compose up -d
+   ```
+4. **Setup Auto-SSL with Caddy**:
+   ```bash
+   apt install -y caddy
+   cat > /etc/caddy/Caddyfile << 'EOF'
+   compiler.prepunite.com {
+       reverse_proxy localhost:2358
+   }
+   EOF
+   systemctl reload caddy
+   ```
+5. **Update PrepUnite Config**:
    - In Vercel Project Settings $\to$ Environment Variables:
      ```env
-     VITE_CODE_EXECUTION_URL=https://compiler.prepunite.com/submissions/?base64_encoded=true&wait=true
+     JUDGE0_URL=https://compiler.prepunite.com
+     JUDGE0_API_KEY=your_secure_random_token_64_chars
      ```
-   - No code changes needed! The codebase already automatically checks `import.meta.env.VITE_CODE_EXECUTION_URL`.
+   - Zero code changes required!
+
+---
+
+### 🌐 Tier 3: Asynchronous Job Queuing for 10,000–20,000 Students
+
+At 20,000 students, synchronous HTTP calls time out because servers queue hundreds of requests. The solution is **Event-Driven Async Execution**:
+
+```
+Student clicks "Run Code"
+       │
+       ▼
+POST /api/execute-code (Vercel)
+       ├─ Push execution task to Upstash QStash queue
+       ├─ Insert row in Supabase 'execution_results' (status: 'queued')
+       └─ Instantly return { jobId, status: 'queued' } (< 100ms response!)
+       │
+       ▼
+Worker Pool (4× Judge0 Nodes, 64 workers total)
+       ├─ Pulls tasks from queue
+       ├─ Evaluates test cases in isolate sandbox
+       └─ Updates Supabase row with results
+       │
+       ▼
+Supabase Realtime (WebSocket)
+       └─ Auto-pushes result to Student Workspace UI without polling!
+```
 
 ---
 

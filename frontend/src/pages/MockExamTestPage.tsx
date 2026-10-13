@@ -263,6 +263,7 @@ export default function MockExamTestPage() {
   // 3. Student Self Practice: STRICTLY AUTHORIZED ONLY FOR THE CREATOR
   // 4. College TPO Exam: Authorized ONLY for enrolled students of that institution or authorized TPO
   const isAuthorizedCandidate = Boolean(
+    examLoading ||
     !exam?.college_id ||
     isSuperAdmin ||
     isPublicAdminExam ||
