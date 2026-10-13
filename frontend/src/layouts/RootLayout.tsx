@@ -6,7 +6,7 @@ import FloatingGlassTokens from '@/components/FloatingGlassTokens';
 import ConsentBanner from '@/components/ConsentBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, X, LayoutDashboard, Building2 } from 'lucide-react';
+import { ShieldCheck, Plus, Sun, Moon, LogIn, ArrowRight, Menu, LayoutDashboard, Building2 } from 'lucide-react';
 
 import LoadingScreen from '@/components/LoadingScreen';
 import { dataStore } from '@/services/dataStore';
@@ -37,11 +37,6 @@ export default function RootLayout() {
   const { theme, toggleTheme } = useTheme();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileNavOpen(false);
-  }, [location.pathname]);
 
   // Instant Real-Time Data Synchronization Engine across all Tabs, Pages, and Roles
   useEffect(() => {
@@ -111,10 +106,7 @@ export default function RootLayout() {
                     to={item.path}
                     className={`pub-nav-link ${isActive ? 'active' : ''}`}
                   >
-                    <span className="pub-nav-link-content">
-                      <span className="pub-nav-link-label">{item.label}</span>
-                      {isActive && <span className="pub-nav-active-bar" />}
-                    </span>
+                    {item.label}
                   </Link>
                 );
               })}
@@ -146,42 +138,8 @@ export default function RootLayout() {
                   <span>Sign In</span>
                 </Link>
               )}
-
-              {/* Mobile Menu Toggle (< md) */}
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(prev => !prev)}
-                className="md:hidden pub-nav-theme-btn"
-                title={mobileNavOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
-              >
-                {mobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              </button>
             </div>
           </div>
-
-          {/* Mobile Navigation Dropdown (< md) */}
-          {mobileNavOpen && (
-            <div className="md:hidden pub-mobile-nav">
-              {PUBLIC_NAV_ITEMS.map((item) => {
-                const isActive = item.exact
-                  ? currentPath === item.path
-                  : currentPath === item.path || currentPath.startsWith(item.path + '/');
-                return (
-                  <Link
-                    key={item.label}
-                    to={item.path}
-                    onClick={() => setMobileNavOpen(false)}
-                    className={`pub-nav-link ${isActive ? 'active' : ''}`}
-                  >
-                    <span className="pub-nav-link-content">
-                      <span className="pub-nav-link-label">{item.label}</span>
-                      {isActive && <span className="pub-nav-active-bar" />}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
         </header>
 
         {/* PUBLIC CONTENT AREA — no padding for home page full bleed */}
