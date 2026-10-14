@@ -319,19 +319,42 @@ export default function AptitudePage() {
           // Expand every canonical slug into all known alias variants
           const allVariants = expandTopicAliases(topicIds);
 
-          const { data: qRows, error: qErr } = await supabase
-            .from('topic_questions')
-            .select('topic_id, difficulty')
-            .in('topic_id', allVariants)
-            .or('is_deleted.is.null,is_deleted.eq.false');
+          let allQRows: any[] = [];
+          let page = 0;
+          const PAGE_SIZE = 1000;
+          let hasMore = true;
 
-          if (!qErr && qRows && qRows.length > 0) {
+          while (hasMore && page < 10) {
+            const { data: pageRows, error: pageErr } = await supabase
+              .from('topic_questions')
+              .select('topic_id, difficulty')
+              .in('topic_id', allVariants)
+              .or('is_deleted.is.null,is_deleted.eq.false')
+              .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+            if (pageErr) {
+              console.warn('[AptitudePage] Fallback page fetch error:', pageErr);
+              break;
+            }
+            if (pageRows && pageRows.length > 0) {
+              allQRows.push(...pageRows);
+              if (pageRows.length < PAGE_SIZE) {
+                hasMore = false;
+              } else {
+                page++;
+              }
+            } else {
+              hasMore = false;
+            }
+          }
+
+          if (allQRows.length > 0) {
             const countMap: Record<string, number> = {};
             let easyTotal = 0;
             let medTotal = 0;
             let hardTotal = 0;
 
-            qRows.forEach((row: any) => {
+            allQRows.forEach((row: any) => {
               const rawTid = (row.topic_id || '').trim();
               if (rawTid) {
                 // Resolve variant → canonical slug
@@ -348,7 +371,7 @@ export default function AptitudePage() {
 
             return {
               category_slug: categorySlug,
-              total_questions: qRows.length,
+              total_questions: allQRows.length,
               easy_total: easyTotal,
               medium_total: medTotal,
               hard_total: hardTotal,
