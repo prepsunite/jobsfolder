@@ -129,10 +129,12 @@ export default function DashboardPage() {
 
   // TanStack Query: Live Campus Placement Mock Drives for Enrolled College Students
   const { data: campusExamsData, isLoading: isCampusExamsLoading } = useQuery({
-    queryKey: ['student-campus-mock-exams', user?.email, user?.collegeId],
+    queryKey: ['student-campus-mock-exams', user?.email, user?.collegeId, isAdmin || isTpoAdmin],
     queryFn: async () => {
       if (!user?.email) return { college: null, exams: [] };
-      return await tpoService.getStudentMockExams(user.email, user?.collegeId);
+      return await tpoService.getStudentMockExams(user.email, user?.collegeId, {
+        bypassCohortFilter: isAdmin || isTpoAdmin,
+      });
     },
     enabled: !!user?.email,
     staleTime: 30 * 1000,

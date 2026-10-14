@@ -61,6 +61,148 @@ export function isAttemptCompleted(attempt?: StudentExamAttempt | null): boolean
   );
 }
 
+export interface StudentRecordProfile {
+  id?: string;
+  email: string;
+  college_id?: string;
+  department?: string;
+  batch_id?: string;
+  batch_name?: string;
+  batch_year?: number;
+  roll_number?: string;
+}
+
+/**
+ * 🛡️ Cohort Batch & Department Eligibility Validator
+ * Determines whether a student is eligible to see and attempt a given MockExam.
+ */
+export function isStudentEligibleForExam(
+  exam: MockExam,
+  student?: {
+    email?: string;
+    department?: string;
+    batch_name?: string;
+    batch_id?: string;
+    batch_year?: number;
+  } | null,
+  options?: {
+    isSuperAdmin?: boolean;
+    isCollegeTpo?: boolean;
+    hasAttempt?: boolean;
+  }
+): boolean {
+  // 1. Oversight: Super Admin, authorized College TPO, or candidate with existing attempt
+  if (options?.isSuperAdmin || options?.isCollegeTpo || options?.hasAttempt) {
+    return true;
+  }
+
+  const cidUpper = String(exam.college_id || '').trim().toUpperCase();
+
+  // 2. Public Open Exam (Tier 1): Commissioned by Super Admin nationwide
+  if (cidUpper === 'PUBLIC' || cidUpper === 'OPEN') {
+    return true;
+  }
+
+  const cleanEmail = (student?.email || '').trim().toLowerCase();
+
+  // 3. Student Self Practice Exam (Tier 3): Strictly locked to creator
+  const isPracticeExam =
+    cidUpper === 'SELF' ||
+    cidUpper === 'INDIVIDUAL' ||
+    Boolean(exam.target_departments?.some(d => d.trim().toLowerCase() === cleanEmail)) ||
+    Boolean(exam.instructions && cleanEmail && exam.instructions.toLowerCase().includes(`<!--student:${cleanEmail}-->`));
+
+  if (isPracticeExam) {
+    const isCreator =
+      (exam.created_by && (exam.created_by.toLowerCase() === cleanEmail)) ||
+      Boolean(exam.target_departments?.some(d => d.trim().toLowerCase() === cleanEmail)) ||
+      Boolean(exam.instructions && cleanEmail && exam.instructions.toLowerCase().includes(`<!--student:${cleanEmail}-->`));
+    return Boolean(isCreator);
+  }
+
+  // 4. Department Stream Check
+  const targetDepts = exam.target_departments || [];
+  const isDeptsAll = targetDepts.length === 0 || targetDepts.some(d => d.trim().toUpperCase() === 'ALL');
+
+  if (!isDeptsAll) {
+    const studentDept = (student?.department || '').trim().toUpperCase();
+    if (!studentDept) return false;
+    const deptMatch = targetDepts.some(d => d.trim().toUpperCase() === studentDept);
+    if (!deptMatch) return false;
+  }
+
+  // 5. Batch / Cohort Check
+  let targetBatches: string[] = exam.target_batches || [];
+  if (targetBatches.length === 0 && exam.instructions) {
+    try {
+      const match = exam.instructions.match(/<!--AUDIENCE:(.*?)-->/);
+      if (match && match[1]) {
+        const parsed = JSON.parse(match[1]);
+        if (Array.isArray(parsed.target_batches)) {
+          targetBatches = parsed.target_batches;
+        }
+      }
+    } catch {}
+  }
+
+  const isBatchesAll = targetBatches.length === 0 || targetBatches.some(b => b.trim().toUpperCase() === 'ALL');
+
+  if (!isBatchesAll) {
+    // Build normalized student cohort representations
+    const studentTokens: string[] = [];
+    if (student?.batch_name) {
+      studentTokens.push(student.batch_name.trim().toLowerCase());
+    }
+    if (student?.batch_id) {
+      studentTokens.push(student.batch_id.trim().toLowerCase());
+      if (student.batch_id.endsWith('-top') || student.batch_id.includes('top')) {
+        studentTokens.push('top batch', 'top');
+      }
+      if (student.batch_id.endsWith('-normal') || student.batch_id.includes('normal')) {
+        studentTokens.push('normal batch', 'normal');
+      }
+    }
+    if (student?.batch_year) {
+      studentTokens.push(String(student.batch_year));
+      studentTokens.push(`batch ${student.batch_year}`);
+    }
+
+    if (studentTokens.length === 0) {
+      // If student is not assigned to any batch, and exam is restricted to specific cohorts, deny
+      return false;
+    }
+
+    const normalizeCohort = (s: string) =>
+      s.toLowerCase().replace(/\b(batch|cohort|section|sec|group)\b/gi, '').replace(/[^a-z0-9]/g, '');
+
+    const batchMatch = targetBatches.some(target => {
+      const t = target.trim().toLowerCase();
+      if (t === 'all') return true;
+      const normTarget = normalizeCohort(t);
+
+      return studentTokens.some(tok => {
+        if (tok === t) return true;
+        const normTok = normalizeCohort(tok);
+        if (normTok && normTarget && normTok === normTarget) return true;
+        return false;
+      });
+    });
+
+    if (!batchMatch) {
+      return false;
+    }
+  }
+
+  // 6. Target Batch Year Check (if target_batch_year is explicitly defined on exam and target_batches is ALL or empty)
+  if (exam.target_batch_year && student?.batch_year && isBatchesAll) {
+    if (Number(exam.target_batch_year) !== Number(student.batch_year)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /**
  * Topics whose questions are linked to a shared reading passage, chart, table, or puzzle context.
  * These questions must always be handled as atomic, cohesive blocks and never scattered or pruned by difficulty.
@@ -2794,6 +2936,142 @@ export const tpoService = {
 
     // 3. Fallback to local synchronous cache if offline
     return this.getStudentEntitlementInfo(clean);
+  },
+
+  /**
+   * Helper: Resolve college identifier across id, code, slug, and name
+   */
+  async resolveTargetCollegeIds(collegeId?: string): Promise<string[]> {
+    if (!collegeId) return [];
+    const targetCids = [String(collegeId)];
+    try {
+      const col = await this.getCollegeDetails(collegeId);
+      if (col?.id && !targetCids.includes(String(col.id))) targetCids.push(String(col.id));
+      if (col?.code && !targetCids.includes(String(col.code))) targetCids.push(String(col.code));
+      if (col?.slug && !targetCids.includes(String(col.slug))) targetCids.push(String(col.slug));
+      if (col?.name && !targetCids.includes(String(col.name))) targetCids.push(String(col.name));
+    } catch {}
+    return targetCids;
+  },
+
+  /**
+   * Authoritative resolution of an enrolled student's department, batch, and cohort details.
+   */
+  async getStudentRecordForStudent(
+    studentEmail: string,
+    collegeId?: string
+  ): Promise<StudentRecordProfile | null> {
+    if (!studentEmail) return null;
+    const cleanEmail = studentEmail.trim().toLowerCase();
+
+    let studentRecord: StudentRecordProfile | null = null;
+
+    // 1. Query Supabase college_students
+    try {
+      const targetCids = collegeId ? await this.resolveTargetCollegeIds(collegeId) : [];
+      let query = supabase
+        .from('college_students')
+        .select('id, college_id, batch_id, department, roll_number, email, name, batch_year, status')
+        .eq('email', cleanEmail);
+
+      if (targetCids.length > 0) {
+        query = query.in('college_id', targetCids);
+      }
+
+      const { data: cs } = await query.maybeSingle();
+      if (cs) {
+        studentRecord = {
+          id: cs.id,
+          email: cleanEmail,
+          college_id: cs.college_id,
+          department: cs.department || '',
+          batch_id: cs.batch_id || '',
+          batch_year: cs.batch_year,
+          roll_number: cs.roll_number || '',
+        };
+      }
+    } catch (e) {
+      console.warn('[getStudentRecordForStudent] Supabase query notice:', e);
+    }
+
+    // 2. Check local students cache
+    const effectiveCid = studentRecord?.college_id || collegeId;
+    if (effectiveCid) {
+      const localStudents = getLocalStudents(effectiveCid);
+      const foundLocal = localStudents.find(s => s.email?.trim().toLowerCase() === cleanEmail);
+      if (foundLocal) {
+        if (!studentRecord) {
+          studentRecord = {
+            id: foundLocal.id,
+            email: cleanEmail,
+            college_id: effectiveCid,
+            department: foundLocal.department || '',
+            batch_id: foundLocal.batch_id || '',
+            batch_name: foundLocal.batch_name || '',
+            batch_year: foundLocal.batch_year,
+            roll_number: foundLocal.roll_number || '',
+          };
+        } else {
+          if (!studentRecord.batch_name && foundLocal.batch_name) {
+            studentRecord.batch_name = foundLocal.batch_name;
+          }
+          if (!studentRecord.batch_id && foundLocal.batch_id) {
+            studentRecord.batch_id = foundLocal.batch_id;
+          }
+          if (!studentRecord.department && foundLocal.department) {
+            studentRecord.department = foundLocal.department;
+          }
+          if (!studentRecord.batch_year && foundLocal.batch_year) {
+            studentRecord.batch_year = foundLocal.batch_year;
+          }
+        }
+      }
+    }
+
+    // 3. Resolve batch_name if we have batch_id but no batch_name
+    if (studentRecord && studentRecord.batch_id && !studentRecord.batch_name) {
+      const cid = studentRecord.college_id || collegeId;
+      if (cid) {
+        try {
+          const batches = await this.getCollegeBatches(cid);
+          const foundBatch = batches.find(
+            b => b.id === studentRecord!.batch_id || b.name.toLowerCase() === studentRecord!.batch_id?.toLowerCase()
+          );
+          if (foundBatch) {
+            studentRecord.batch_name = foundBatch.name;
+          }
+        } catch {}
+      }
+
+      // Suffix / default fallbacks if still unmapped
+      if (!studentRecord.batch_name && studentRecord.batch_id) {
+        const bid = studentRecord.batch_id.toLowerCase();
+        if (bid.endsWith('-top') || bid.includes('top')) {
+          studentRecord.batch_name = 'Top Batch';
+        } else if (bid.endsWith('-normal') || bid.includes('normal')) {
+          studentRecord.batch_name = 'Normal Batch';
+        } else if (!bid.startsWith('batch-')) {
+          studentRecord.batch_name = studentRecord.batch_id;
+        }
+      }
+    }
+
+    // 4. Fill from profiles table if department or batch_year is missing
+    if (studentRecord && (!studentRecord.department || !studentRecord.batch_year)) {
+      try {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('department, batch_year')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (prof) {
+          if (!studentRecord.department && prof.department) studentRecord.department = prof.department;
+          if (!studentRecord.batch_year && prof.batch_year) studentRecord.batch_year = prof.batch_year;
+        }
+      } catch {}
+    }
+
+    return studentRecord;
   },
 
   async addSingleStudent(
@@ -7313,7 +7591,8 @@ export const tpoService = {
 
   async getStudentMockExams(
     studentEmail: string,
-    studentCollegeId?: string
+    studentCollegeId?: string,
+    options?: { bypassCohortFilter?: boolean }
   ): Promise<{
     college: { id: string; name: string; code?: string } | null;
     exams: Array<MockExam & { attempt?: StudentExamAttempt | null }>;
@@ -7364,14 +7643,7 @@ export const tpoService = {
       collegeExams = await this.getMockExamsForCollege(resolvedCollegeId);
     }
 
-    // Merge public open exams, self-practice exams, and college exams (deduplicating by id)
-    const combinedMap = new Map<string, MockExam>();
-    publicExams.forEach(e => combinedMap.set(e.id, e));
-    selfExams.forEach(e => combinedMap.set(e.id, e));
-    collegeExams.forEach(e => combinedMap.set(e.id, e));
-    const allExams = Array.from(combinedMap.values());
-
-    // 4. Fetch all attempts by this student
+    // 4. Fetch all attempts by this student FIRST
     let studentAttempts: StudentExamAttempt[] = [];
     const localAll = getLocalAttempts().filter(
       a =>
@@ -7395,6 +7667,36 @@ export const tpoService = {
         studentAttempts = Array.from(attemptMap.values());
       }
     } catch {}
+
+    // 5. Cohort & Stream Filtering for College Exams:
+    // If caller is an enrolled student (not bypassed and not super admin), strictly filter
+    // collegeExams so other batches' exams are never displayed on their dashboard or exam list.
+    const isSuperAdminCaller = [
+      'venkatmukala9@gmail.com',
+      'venkat.mukala9@gmail.com',
+      'prepsunite@gmail.com',
+      'veen1kat@gmail.com',
+    ].includes(cleanEmail);
+    const shouldBypassFilter = Boolean(options?.bypassCohortFilter || isSuperAdminCaller);
+
+    let eligibleCollegeExams = collegeExams;
+
+    if (!shouldBypassFilter && resolvedCollegeId) {
+      const studentRecord = await this.getStudentRecordForStudent(cleanEmail, resolvedCollegeId);
+      const studentAttemptExamIds = new Set(studentAttempts.map(a => a.mock_exam_id));
+
+      eligibleCollegeExams = collegeExams.filter(exam => {
+        const hasAttempt = studentAttemptExamIds.has(exam.id);
+        return this.isStudentEligibleForExam(exam, studentRecord, { hasAttempt });
+      });
+    }
+
+    // Merge public open exams, self-practice exams, and ELIGIBLE college exams (deduplicating by id)
+    const combinedMap = new Map<string, MockExam>();
+    publicExams.forEach(e => combinedMap.set(e.id, e));
+    selfExams.forEach(e => combinedMap.set(e.id, e));
+    eligibleCollegeExams.forEach(e => combinedMap.set(e.id, e));
+    const allExams = Array.from(combinedMap.values());
 
 
 
@@ -7644,4 +7946,5 @@ export const tpoService = {
   isAttemptCompleted,
   getExamTimingStatus,
   canReviewSolutions,
+  isStudentEligibleForExam,
 };

@@ -191,61 +191,10 @@ export default function MockExamTestPage() {
 
   // Query candidate's student profile (department and cohort batch)
   const { data: candidateStudentRecord } = useQuery({
-    queryKey: ['candidate-student-record', user?.email, exam?.college_id, examTargetCollegeIds],
+    queryKey: ['candidate-student-record', user?.email, exam?.college_id],
     queryFn: async () => {
       if (!user?.email || !isCollegeTpoExam || !exam?.college_id) return null;
-      const cleanEmail = user.email.trim().toLowerCase();
-
-      let department = '';
-      let batchName = '';
-
-      try {
-        const targetCids = [...examTargetCollegeIds];
-        if (!targetCids.includes(exam.college_id)) targetCids.push(exam.college_id);
-        try {
-          const col = await tpoService.getCollegeDetails(exam.college_id);
-          if (col?.id && !targetCids.includes(col.id)) targetCids.push(col.id);
-          if (col?.code && !targetCids.includes(col.code)) targetCids.push(col.code);
-          if (col?.slug && !targetCids.includes(col.slug)) targetCids.push(col.slug);
-        } catch {}
-
-        const { data: cs } = await supabase
-          .from('college_students')
-          .select('id, college_id, batch_id, department, roll_number, email, name')
-          .eq('email', cleanEmail)
-          .in('college_id', targetCids)
-          .maybeSingle();
-
-        if (cs) {
-          if (cs.department) department = cs.department;
-          if (cs.batch_id) {
-            const { data: b } = await supabase
-              .from('college_batches')
-              .select('name')
-              .eq('id', cs.batch_id)
-              .maybeSingle();
-            if (b?.name) {
-              batchName = b.name;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Error fetching candidate student record from Supabase:', e);
-      }
-
-      // If not fully resolved, check college students list via service
-      if (!department || !batchName) {
-        try {
-          const students = await tpoService.getCollegeStudents(exam.college_id);
-          const found = students.find(s => s.email?.trim().toLowerCase() === cleanEmail);
-          if (found) {
-            if (!department) department = found.department || '';
-            if (!batchName) batchName = found.batch_name || '';
-          }
-        } catch {}
-      }
-
-      return { department, batch_name: batchName };
+      return await tpoService.getStudentRecordForStudent(user.email, exam.college_id);
     },
     enabled: !!user?.email && isCollegeTpoExam,
     staleTime: 60 * 1000,
@@ -279,39 +228,6 @@ export default function MockExamTestPage() {
     )
   );
 
-  // 🛡️ Comprehensive 3-Tier Access Evaluation:
-  // 1. Super Admin: Always authorized for oversight & audits
-  // 2. Public Admin Exam: Authorized for ANY authenticated user (Nationwide open challenge)
-  // 3. Student Self Practice: STRICTLY AUTHORIZED ONLY FOR THE CREATOR
-  // 4. College TPO Exam: Authorized ONLY for enrolled students of that institution or authorized TPO
-  const isAuthorizedCandidate = Boolean(
-    examLoading ||
-    !exam?.college_id ||
-    isSuperAdmin ||
-    isPublicAdminExam ||
-    (isStudentPracticeExam && isCreatorOfPracticeExam) ||
-    (isCollegeTpoExam && (isAdminOrTpo || isEnrolledStudent))
-  );
-
-  // Cohort Batch & Stream Eligibility
-  const isBatchEligible = useMemo(() => {
-    if (isAdminOrTpo || isPublicAdminExam || isStudentPracticeExam) return true;
-    if (!exam?.target_batches || exam.target_batches.length === 0) return true;
-    if (exam.target_batches.some(b => b.toUpperCase() === 'ALL')) return true;
-    const studentBatch = candidateStudentRecord?.batch_name?.trim().toLowerCase();
-    if (!studentBatch) return false;
-    return exam.target_batches.some(b => b.trim().toLowerCase() === studentBatch);
-  }, [isAdminOrTpo, isPublicAdminExam, isStudentPracticeExam, exam?.target_batches, candidateStudentRecord?.batch_name]);
-
-  const isDeptEligible = useMemo(() => {
-    if (isAdminOrTpo || isPublicAdminExam || isStudentPracticeExam) return true;
-    if (!exam?.target_departments || exam.target_departments.length === 0) return true;
-    if (exam.target_departments.some(d => d.toUpperCase() === 'ALL')) return true;
-    const studentDept = candidateStudentRecord?.department?.trim().toUpperCase();
-    if (!studentDept) return false;
-    return exam.target_departments.some(d => d.trim().toUpperCase() === studentDept);
-  }, [isAdminOrTpo, isPublicAdminExam, isStudentPracticeExam, exam?.target_departments, candidateStudentRecord?.department]);
-
   // Fetch Existing Candidate Attempt
   const { data: existingAttempt } = useQuery<StudentExamAttempt | null>({
     queryKey: ['candidate-existing-attempt', examId, user?.email || user?.id],
@@ -321,6 +237,41 @@ export default function MockExamTestPage() {
         : null,
     enabled: !!examId && !!(user?.email || user?.id),
   });
+
+  // Cohort Batch & Stream Eligibility
+  const isBatchEligible = useMemo(() => {
+    if (isAdminOrTpo || isPublicAdminExam || isStudentPracticeExam || !!existingAttempt) return true;
+    if (!exam) return true;
+    return tpoService.isStudentEligibleForExam(
+      { ...exam, target_departments: [] },
+      candidateStudentRecord,
+      { isSuperAdmin, isCollegeTpo, hasAttempt: Boolean(existingAttempt) }
+    );
+  }, [isAdminOrTpo, isPublicAdminExam, isStudentPracticeExam, exam, candidateStudentRecord, existingAttempt, isSuperAdmin, isCollegeTpo]);
+
+  const isDeptEligible = useMemo(() => {
+    if (isAdminOrTpo || isPublicAdminExam || isStudentPracticeExam || !!existingAttempt) return true;
+    if (!exam) return true;
+    return tpoService.isStudentEligibleForExam(
+      { ...exam, target_batches: [] },
+      candidateStudentRecord,
+      { isSuperAdmin, isCollegeTpo, hasAttempt: Boolean(existingAttempt) }
+    );
+  }, [isAdminOrTpo, isPublicAdminExam, isStudentPracticeExam, exam, candidateStudentRecord, existingAttempt, isSuperAdmin, isCollegeTpo]);
+
+  // 🛡️ Comprehensive 3-Tier Access Evaluation:
+  // 1. Super Admin: Always authorized for oversight & audits
+  // 2. Public Admin Exam: Authorized for ANY authenticated user (Nationwide open challenge)
+  // 3. Student Self Practice: STRICTLY AUTHORIZED ONLY FOR THE CREATOR
+  // 4. College TPO Exam: Authorized ONLY for enrolled students of that institution who meet batch & department criteria, or authorized TPO
+  const isAuthorizedCandidate = Boolean(
+    examLoading ||
+    !exam?.college_id ||
+    isSuperAdmin ||
+    isPublicAdminExam ||
+    (isStudentPracticeExam && isCreatorOfPracticeExam) ||
+    (isCollegeTpoExam && (isAdminOrTpo || (isEnrolledStudent && isBatchEligible && isDeptEligible)))
+  );
 
   // State
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);

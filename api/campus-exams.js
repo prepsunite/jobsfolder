@@ -513,11 +513,201 @@ export default async function handler(req, res) {
           }
         } else if (foundExam.college_id) {
           // Tier 2: College TPO Mock Exam - Accessible only by verified college TPO or enrolled student
-          const canAccess = isSuperAdmin || (await isTpoForCollege(foundExam.college_id)) || (await isStudentForCollege(foundExam.college_id));
+          const isTpo = await isTpoForCollege(foundExam.college_id);
+          const isStudent = await isStudentForCollege(foundExam.college_id);
+          const canAccess = isSuperAdmin || isTpo || isStudent;
           if (!canAccess) {
             return res.status(403).json({ error: 'Forbidden: You do not have institutional authorization for this exam.' });
           }
+
+          // If caller is an enrolled student (not super admin and not TPO), verify cohort eligibility
+          if (!isSuperAdmin && !isTpo) {
+            let studentRecord = null;
+            try {
+              const { data: stu } = await supabaseAdmin
+                .from('college_students')
+                .select('batch_id, department, batch_year')
+                .eq('email', userEmail)
+                .maybeSingle();
+              if (stu) {
+                let batchName = '';
+                if (stu.batch_id) {
+                  const { data: b } = await supabaseAdmin
+                    .from('college_batches')
+                    .select('name')
+                    .eq('id', stu.batch_id)
+                    .maybeSingle();
+                  if (b?.name) {
+                    batchName = b.name;
+                  } else if (stu.batch_id.endsWith('-top')) {
+                    batchName = 'Top Batch';
+                  } else if (stu.batch_id.endsWith('-normal')) {
+                    batchName = 'Normal Batch';
+                  } else if (!stu.batch_id.startsWith('batch-')) {
+                    batchName = stu.batch_id;
+                  }
+                }
+                studentRecord = { ...stu, batch_name: batchName };
+              }
+            } catch {}
+
+            // Check if student already attempted this exam
+            const { data: att } = await supabaseAdmin
+              .from('student_exam_attempts')
+              .select('id')
+              .eq('mock_exam_id', foundExam.id)
+              .or(`student_id.eq.${userEmail},student_email.eq.${userEmail}`)
+              .limit(1)
+              .maybeSingle();
+
+            if (!att) {
+              const tDepts = Array.isArray(foundExam.target_departments) ? foundExam.target_departments : [];
+              if (tDepts.length > 0 && !tDepts.some(d => String(d).toUpperCase() === 'ALL')) {
+                const sDept = String(studentRecord?.department || '').trim().toUpperCase();
+                if (!sDept || !tDepts.some(d => String(d).trim().toUpperCase() === sDept)) {
+                  return res.status(403).json({ error: 'Forbidden: This assessment is scheduled for a different department.' });
+                }
+              }
+
+              let tBatches = Array.isArray(foundExam.target_batches) ? foundExam.target_batches : [];
+              if (tBatches.length === 0 && foundExam.instructions && typeof foundExam.instructions === 'string') {
+                const m = foundExam.instructions.match(/<!--AUDIENCE:(.*?)-->/);
+                if (m && m[1]) {
+                  try {
+                    const parsed = JSON.parse(m[1]);
+                    if (Array.isArray(parsed.target_batches)) tBatches = parsed.target_batches;
+                  } catch {}
+                }
+              }
+
+              if (tBatches.length > 0 && !tBatches.some(b => String(b).toUpperCase() === 'ALL')) {
+                const sTokens = [];
+                if (studentRecord?.batch_name) sTokens.push(studentRecord.batch_name.trim().toLowerCase());
+                if (studentRecord?.batch_id) sTokens.push(studentRecord.batch_id.trim().toLowerCase());
+                if (studentRecord?.batch_year) sTokens.push(String(studentRecord.batch_year));
+
+                const normalizeCohort = (s) =>
+                  String(s || '').toLowerCase().replace(/\b(batch|cohort|section|sec|group)\b/gi, '').replace(/[^a-z0-9]/g, '');
+
+                const match = sTokens.length > 0 && tBatches.some(target => {
+                  const t = String(target).trim().toLowerCase();
+                  if (t === 'all') return true;
+                  const normTarget = normalizeCohort(t);
+                  return sTokens.some(tok => {
+                    if (tok === t) return true;
+                    const normTok = normalizeCohort(tok);
+                    return normTok && normTarget && normTok === normTarget;
+                  });
+                });
+
+                if (!match) {
+                  return res.status(403).json({ error: 'Forbidden: This assessment is scheduled exclusively for a different batch cohort.' });
+                }
+              }
+            }
+          }
         }
+      }
+
+      // If querying by collegeId and caller is a student, filter out other batches' exams from response
+      const isCallerTpo = collegeId ? await isTpoForCollege(collegeId) : false;
+      if (collegeId && !isSuperAdmin && !isCallerTpo) {
+        let studentRecord = null;
+        try {
+          const { data: stu } = await supabaseAdmin
+            .from('college_students')
+            .select('batch_id, department, batch_year')
+            .eq('email', userEmail)
+            .maybeSingle();
+          if (stu) {
+            let batchName = '';
+            if (stu.batch_id) {
+              const { data: b } = await supabaseAdmin
+                .from('college_batches')
+                .select('name')
+                .eq('id', stu.batch_id)
+                .maybeSingle();
+              if (b?.name) {
+                batchName = b.name;
+              } else if (stu.batch_id.endsWith('-top')) {
+                batchName = 'Top Batch';
+              } else if (stu.batch_id.endsWith('-normal')) {
+                batchName = 'Normal Batch';
+              } else if (!stu.batch_id.startsWith('batch-')) {
+                batchName = stu.batch_id;
+              }
+            }
+            studentRecord = { ...stu, batch_name: batchName };
+          }
+        } catch {}
+
+        // Fetch student attempts so we don't hide past attempts
+        const { data: myAttempts } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .select('mock_exam_id')
+          .or(`student_id.eq.${userEmail},student_email.eq.${userEmail}`);
+        const attemptedExamIds = new Set((myAttempts || []).map(a => a.mock_exam_id));
+
+        const normalizeCohort = (s) =>
+          String(s || '').toLowerCase().replace(/\b(batch|cohort|section|sec|group)\b/gi, '').replace(/[^a-z0-9]/g, '');
+
+        const isEligible = (e) => {
+          if (attemptedExamIds.has(e.id)) return true;
+          const cidUpper = String(e.college_id || '').trim().toUpperCase();
+          if (cidUpper === 'PUBLIC' || cidUpper === 'OPEN') return true;
+
+          // Department check
+          const tDepts = Array.isArray(e.target_departments) ? e.target_departments : [];
+          if (tDepts.length > 0 && !tDepts.some(d => String(d).toUpperCase() === 'ALL')) {
+            const studentDept = String(studentRecord?.department || '').trim().toUpperCase();
+            if (!studentDept || !tDepts.some(d => String(d).trim().toUpperCase() === studentDept)) {
+              return false;
+            }
+          }
+
+          // Batch check
+          let tBatches = Array.isArray(e.target_batches) ? e.target_batches : [];
+          if (tBatches.length === 0 && e.instructions && typeof e.instructions === 'string') {
+            const m = e.instructions.match(/<!--AUDIENCE:(.*?)-->/);
+            if (m && m[1]) {
+              try {
+                const parsed = JSON.parse(m[1]);
+                if (Array.isArray(parsed.target_batches)) tBatches = parsed.target_batches;
+              } catch {}
+            }
+          }
+
+          if (tBatches.length > 0 && !tBatches.some(b => String(b).toUpperCase() === 'ALL')) {
+            const studentTokens = [];
+            if (studentRecord?.batch_name) studentTokens.push(studentRecord.batch_name.trim().toLowerCase());
+            if (studentRecord?.batch_id) studentTokens.push(studentRecord.batch_id.trim().toLowerCase());
+            if (studentRecord?.batch_year) studentTokens.push(String(studentRecord.batch_year));
+
+            if (studentTokens.length === 0) return false;
+
+            const match = tBatches.some(target => {
+              const t = String(target).trim().toLowerCase();
+              if (t === 'all') return true;
+              const normTarget = normalizeCohort(t);
+              return studentTokens.some(tok => {
+                if (tok === t) return true;
+                const normTok = normalizeCohort(tok);
+                return normTok && normTarget && normTok === normTarget;
+              });
+            });
+
+            if (!match) return false;
+          }
+
+          return true;
+        };
+
+        const filtered = exams.filter(isEligible);
+        return res.status(200).json({
+          success: true,
+          exams: filtered,
+          exam: filtered[0] || null,
+        });
       }
 
       return res.status(200).json({

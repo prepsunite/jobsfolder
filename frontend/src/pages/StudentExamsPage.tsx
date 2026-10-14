@@ -48,7 +48,7 @@ import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { dataStore } from '@/services/dataStore';
-import { tpoService, isAttemptCompleted, getExamTimingStatus, canReviewSolutions } from '@/services/tpo.service';
+import { tpoService, isAttemptCompleted, getExamTimingStatus, canReviewSolutions, isStudentEligibleForExam } from '@/services/tpo.service';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { mockExamBlueprintService } from '@/services/mockExamBlueprint.service';
 import { questionBankService, type TopicInventoryItem } from '@/services/questionBank.service';
@@ -140,10 +140,12 @@ export default function StudentExamsPage() {
     isLoading: isExamsLoading,
     refetch: refetchExams,
   } = useQuery({
-    queryKey: ['student-campus-mock-exams', user?.email, user?.collegeId],
+    queryKey: ['student-campus-mock-exams', user?.email, user?.collegeId, isAdmin || isTpoAdmin],
     queryFn: async () => {
       if (!user?.email) return { college: null, exams: [] };
-      return await tpoService.getStudentMockExams(user.email, user?.collegeId);
+      return await tpoService.getStudentMockExams(user.email, user?.collegeId, {
+        bypassCohortFilter: isAdmin || isTpoAdmin,
+      });
     },
     enabled: !!user?.email,
     staleTime: 30 * 1000,
@@ -169,46 +171,10 @@ export default function StudentExamsPage() {
   const { data: studentRecord } = useQuery({
     queryKey: ['candidate-student-record-profile', user?.email, enrolledCollege?.id],
     queryFn: async () => {
-      if (!user?.email || !enrolledCollege?.id) return null;
-      const cleanEmail = user.email.trim().toLowerCase();
-      let department = '';
-      let batchName = '';
-      let rollNumber = '';
-      let batchYear: number | undefined = undefined;
-
-      try {
-        const targetCids = [enrolledCollege.id];
-        if (enrolledCollege.code && !targetCids.includes(enrolledCollege.code)) {
-          targetCids.push(enrolledCollege.code);
-        }
-
-        const { data: cs } = await supabase
-          .from('college_students')
-          .select('id, college_id, batch_id, department, roll_number, email, name, batch_year')
-          .eq('email', cleanEmail)
-          .in('college_id', targetCids)
-          .maybeSingle();
-
-        if (cs) {
-          if (cs.department) department = cs.department;
-          if (cs.roll_number) rollNumber = cs.roll_number;
-          if (cs.batch_year) batchYear = cs.batch_year;
-          if (cs.batch_id) {
-            const { data: b } = await supabase
-              .from('college_batches')
-              .select('name')
-              .eq('id', cs.batch_id)
-              .maybeSingle();
-            if (b?.name) batchName = b.name;
-          }
-        }
-      } catch (e) {
-        console.warn('Error fetching student record:', e);
-      }
-
-      return { department, batch_name: batchName, roll_number: rollNumber, batch_year: batchYear };
+      if (!user?.email) return null;
+      return await tpoService.getStudentRecordForStudent(user.email, enrolledCollege?.id);
     },
-    enabled: !!user?.email && !!enrolledCollege?.id,
+    enabled: !!user?.email,
     staleTime: 60 * 1000,
   });
 
@@ -333,8 +299,20 @@ export default function StudentExamsPage() {
       );
     }
 
+    // For regular students, strictly hide exams restricted to other batches/streams unless they already completed it
+    if (!isAdmin && !isTpoAdmin) {
+      list = list.filter(e => {
+        if (e.attempt && isAttemptCompleted(e.attempt)) return true;
+        return isStudentEligibleForExam(e, studentRecord, {
+          isSuperAdmin: false,
+          isCollegeTpo: false,
+          hasAttempt: Boolean(e.attempt),
+        });
+      });
+    }
+
     return list;
-  }, [activeTab, activeExams, completedExams, upcomingExams, campusExams, selectedCompanyFilter, searchQuery]);
+  }, [activeTab, activeExams, completedExams, upcomingExams, campusExams, selectedCompanyFilter, searchQuery, isAdmin, isTpoAdmin, studentRecord]);
 
   const renderStudentExamsContent = () => (
     <div className="space-y-8 animate-fadeIn">
@@ -830,21 +808,17 @@ export default function StudentExamsPage() {
             const isStudentPracticeExam = exam.college_id === 'SELF' || exam.college_id === 'INDIVIDUAL';
             const isCollegeTpoExam = !isPublicAdminExam && !isStudentPracticeExam;
 
-            const isTargetBatchRestricted = !isPublicAdminExam && !isStudentPracticeExam && Boolean(
-              exam.target_batches &&
-              exam.target_batches.length > 0 &&
-              !exam.target_batches.some(b => b.toUpperCase() === 'ALL') &&
-              (!studentRecord?.batch_name || !exam.target_batches.some(b => b.trim().toLowerCase() === studentRecord.batch_name.trim().toLowerCase()))
-            );
+            const isEligible = isStudentEligibleForExam(exam, studentRecord, {
+              isSuperAdmin: isAdmin,
+              isCollegeTpo: isTpoAdmin,
+              hasAttempt: Boolean(exam.attempt),
+            });
+            const isRestrictedForStudent = !isEligible;
 
-            const isTargetDeptRestricted = !isPublicAdminExam && !isStudentPracticeExam && Boolean(
-              exam.target_departments &&
-              exam.target_departments.length > 0 &&
-              !exam.target_departments.some(d => d.toUpperCase() === 'ALL') &&
-              (!studentRecord?.department || !exam.target_departments.some(d => d.trim().toUpperCase() === studentRecord.department.trim().toUpperCase()))
-            );
-
-            const isRestrictedForStudent = !isAdmin && !isTpoAdmin && (isTargetBatchRestricted || isTargetDeptRestricted);
+            const targetBatchLabel = exam.target_batches?.length && !exam.target_batches.some(b => b.toUpperCase() === 'ALL')
+              ? exam.target_batches.join(', ')
+              : null;
+            const cohortRestrictionLabel = targetBatchLabel || targetDepts;
 
             const isDeptsAll = !exam.target_departments || exam.target_departments.length === 0 || exam.target_departments.some(d => d.toUpperCase() === 'ALL');
             const isBatchesAll = !exam.target_batches || exam.target_batches.length === 0 || exam.target_batches.some(b => b.toUpperCase() === 'ALL');
@@ -1043,7 +1017,7 @@ export default function StudentExamsPage() {
                     ) : isRestrictedForStudent ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                         <Lock className="w-3 h-3" />
-                        <span>Cohort: {isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Batch') : targetDepts}</span>
+                        <span>Cohort: {cohortRestrictionLabel}</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
@@ -1161,10 +1135,10 @@ export default function StudentExamsPage() {
                     <button
                       disabled
                       className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1b1f] text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed border border-gray-200 dark:border-gray-800"
-                      title={`Restricted to: ${isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Target Cohort') : (exam.target_departments?.join(', ') || 'Target Branch')} (Your cohort: ${studentRecord?.batch_name || 'Standard Batch'})`}
+                      title={`Restricted to: ${cohortRestrictionLabel} (Your cohort: ${studentRecord?.batch_name || 'Standard Batch'})`}
                     >
                       <Lock className="w-3.5 h-3.5 text-gray-400" />
-                      <span>Cohort Restricted — {isTargetBatchRestricted ? (exam.target_batches?.join(', ') || 'Batch Only') : targetDepts}</span>
+                      <span>Cohort Restricted — {cohortRestrictionLabel}</span>
                     </button>
                   ) : isUpcoming ? (
                     <div className="flex items-center gap-2">
