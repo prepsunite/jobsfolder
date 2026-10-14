@@ -333,7 +333,7 @@ export const interviewService = {
         const { data, error } = await supabase
           .from('interview_questions')
           .select(INTERVIEW_QUESTION_COLUMNS)
-          .eq('is_deleted', false)
+          .or('is_deleted.is.null,is_deleted.eq.false')
           .order('sort_order', { ascending: true })
           .order('created_at', { ascending: true })
           .range(from, from + pageSize - 1);
@@ -373,7 +373,7 @@ export const interviewService = {
         .from('interview_questions')
         .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('topic_id', topicId)
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -397,7 +397,7 @@ export const interviewService = {
         .from('interview_questions')
         .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', category)
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -421,7 +421,7 @@ export const interviewService = {
         .from('interview_questions')
         .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', 'CORE_CS')
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true });
 
       if (subject) {
@@ -449,7 +449,7 @@ export const interviewService = {
         .from('interview_questions')
         .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', 'HR_BEHAVIORAL')
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true });
 
       if (!error && data && data.length > 0) {
@@ -472,7 +472,7 @@ export const interviewService = {
         .from('interview_questions')
         .select(INTERVIEW_QUESTION_COLUMNS)
         .eq('category', 'PROJECT_DEFENSE')
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true });
 
       if (!error && data && data.length > 0) {
@@ -568,7 +568,7 @@ export const interviewService = {
     const { data: titleData, error: titleErr } = await supabase
       .from('interview_questions')
       .select('title, sort_order')
-      .eq('is_deleted', false);
+      .or('is_deleted.is.null,is_deleted.eq.false');
 
     if (!titleErr && titleData) {
       titleData.forEach((r: any) => {
@@ -637,33 +637,39 @@ export const interviewService = {
   async getTopicCountsMap(category: InterviewCategory): Promise<Record<string, number>> {
     const countMap: Record<string, number> = {};
 
+    // 1. Initialize with offline seed questions baseline
+    try {
+      const seed = await getOfflineSeedQuestions();
+      seed.forEach(q => {
+        if (q.category === category && (q.topic_id || (q as any).topicId)) {
+          const tid = (q.topic_id || (q as any).topicId) as string;
+          countMap[tid] = (countMap[tid] || 0) + 1;
+        }
+      });
+    } catch {}
+
+    // 2. Fetch live counts from Supabase and merge
     try {
       const { data, error } = await supabase
         .from('interview_questions')
         .select('topic_id')
         .eq('category', category)
-        .eq('is_deleted', false);
+        .or('is_deleted.is.null,is_deleted.eq.false');
 
       if (!error && data && data.length > 0) {
+        const dbCounts: Record<string, number> = {};
         data.forEach((row: any) => {
           if (row.topic_id) {
-            countMap[row.topic_id] = (countMap[row.topic_id] || 0) + 1;
+            dbCounts[row.topic_id] = (dbCounts[row.topic_id] || 0) + 1;
           }
         });
-        return countMap;
+        Object.keys(dbCounts).forEach(tid => {
+          countMap[tid] = dbCounts[tid];
+        });
       }
     } catch (err) {
       console.warn('Failed to calculate interview topic counts map:', err);
     }
-
-    // Seed fallback count (lazy loaded)
-    const seed = await getOfflineSeedQuestions();
-    seed.forEach(q => {
-      if (q.category === category && (q.topic_id || (q as any).topicId)) {
-        const tid = (q.topic_id || (q as any).topicId) as string;
-        countMap[tid] = (countMap[tid] || 0) + 1;
-      }
-    });
 
     return countMap;
   },
@@ -679,10 +685,10 @@ export const interviewService = {
     try {
       // Execute 4 lightweight HTTP HEAD count queries in parallel (0 bytes payload over wire)
       const [totalRes, coreCsRes, hrRes, projectRes] = await Promise.all([
-        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
-        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('category', 'CORE_CS'),
-        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('category', 'HR_BEHAVIORAL'),
-        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('category', 'PROJECT_DEFENSE'),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false'),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false').eq('category', 'CORE_CS'),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false').eq('category', 'HR_BEHAVIORAL'),
+        supabase.from('interview_questions').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false').eq('category', 'PROJECT_DEFENSE'),
       ]);
 
       if (!totalRes.error && totalRes.count !== null && totalRes.count !== undefined) {
@@ -701,7 +707,7 @@ export const interviewService = {
           const { data: masteredRows } = await supabase
             .from('interview_questions')
             .select('id, category')
-            .eq('is_deleted', false)
+            .or('is_deleted.is.null,is_deleted.eq.false')
             .in('id', masteredIds);
 
           const activeMasteredRows = masteredRows || [];

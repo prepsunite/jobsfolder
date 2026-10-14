@@ -792,7 +792,7 @@ export const technicalService = {
         .from('technical_problems')
         .select(TECHNICAL_PROBLEM_COLUMNS)
         .eq('track', 'PROGRAMMING_150')
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -816,7 +816,7 @@ export const technicalService = {
         .from('technical_problems')
         .select(TECHNICAL_PROBLEM_COLUMNS)
         .eq('track', 'CAMPUS_DSA')
-        .eq('is_deleted', false);
+        .or('is_deleted.is.null,is_deleted.eq.false');
 
       if (!error && data && data.length > 0) {
         data.forEach(d => dbProblemMap.set(d.id, d));
@@ -1061,7 +1061,7 @@ export const technicalService = {
       .from('technical_problems')
       .select('title, description, constraints, sort_order')
       .eq('track', track)
-      .eq('is_deleted', false);
+      .or('is_deleted.is.null,is_deleted.eq.false');
 
     if (!fetchErr && existingRows) {
       existingRows.forEach((p: any) => {
@@ -1268,7 +1268,7 @@ export const technicalService = {
       let query = supabase
         .from('technical_mcqs')
         .select('*')
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -1591,11 +1591,11 @@ export const technicalService = {
           .from('technical_problems')
           .select('id')
           .eq('track', 'PROGRAMMING_150')
-          .eq('is_deleted', false),
+          .or('is_deleted.is.null,is_deleted.eq.false'),
         supabase
           .from('technical_mcqs')
           .select('id', { count: 'exact', head: true })
-          .eq('is_deleted', false),
+          .or('is_deleted.is.null,is_deleted.eq.false'),
       ]);
 
       let p150Total = 0;

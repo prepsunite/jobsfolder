@@ -29,6 +29,7 @@ import { dataStore, type TopicQuestionItem, type ImportReport } from '@/services
 import { progressService, type QuestionProgressRecord } from '@/services/progress.service';
 import { supabase } from '@/lib/supabase';
 import { safeJsonParse, normalizeMathText, generateQuestionFingerprint } from '@/utils/questionParser';
+import { expandTopicAliases } from '@/services/topicMap';
 
 import { useQuery } from '@tanstack/react-query';
 import QuestionRichContent from '@/components/QuestionRichContent';
@@ -143,11 +144,12 @@ export default function TopicQuestionsPage() {
   // Load questions from Supabase (live — admins and students always see the same data)
   const loadQuestions = useCallback(async () => {
     try {
+      const aliasVariants = expandTopicAliases([topicId]);
       let query = supabase
         .from('topic_questions')
         .select('*')
-        .eq('topic_id', topicId)
-        .eq('is_deleted', false);
+        .in('topic_id', aliasVariants)
+        .or('is_deleted.is.null,is_deleted.eq.false');
 
       // For regular students, practice up to 60 questions per topic
       if (!isAdmin) {

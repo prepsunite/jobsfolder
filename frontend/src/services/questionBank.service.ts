@@ -137,7 +137,7 @@ export const questionBankService = {
         const { data: batch, error } = await supabase
           .from('topic_questions')
           .select('topic_id')
-          .eq('is_deleted', false)
+          .or('is_deleted.is.null,is_deleted.eq.false')
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (error || !batch || batch.length === 0) break;
@@ -406,7 +406,7 @@ export const questionBankService = {
         count: 'exact',
       })
       .in('topic_id', expandedAptTopics)
-      .eq('is_deleted', false)
+      .or('is_deleted.is.null,is_deleted.eq.false')
       .order('question_number', { ascending: true });
 
     if (difficulty && difficulty !== 'ALL') {

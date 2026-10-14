@@ -7,13 +7,13 @@ export const adminService = {
   getDashboardStats: async (): Promise<AdminDashboardStats> => {
     try {
       const [compRes, questRes, expRes, pendRes, usersRes, colRes, examsRes] = await Promise.all([
-        supabase.from('companies').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
-        supabase.from('topic_questions').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
-        supabase.from('experiences').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
-        supabase.from('experiences').select('id', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'PENDING'),
+        supabase.from('companies').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false'),
+        supabase.from('topic_questions').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false'),
+        supabase.from('experiences').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false'),
+        supabase.from('experiences').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false').eq('status', 'PENDING'),
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('colleges').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
-        supabase.from('mock_exams').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
+        supabase.from('colleges').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false'),
+        supabase.from('mock_exams').select('id', { count: 'exact', head: true }).or('is_deleted.is.null,is_deleted.eq.false'),
       ]);
 
       return {

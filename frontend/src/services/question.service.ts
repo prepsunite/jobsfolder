@@ -17,8 +17,8 @@ export const questionService = {
       let query = supabase
         .from('topic_questions')
         .select('*', { count: 'exact' })
-        .eq('is_deleted', false)
-        .eq('is_hidden', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
+        .or('is_hidden.is.null,is_hidden.eq.false')
         .order('created_at', { ascending: false });
 
       if (companySlug) {
@@ -109,7 +109,7 @@ export const questionService = {
         .from('topic_questions')
         .select('*')
         .eq('id', id)
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .maybeSingle();
 
       if (error) {

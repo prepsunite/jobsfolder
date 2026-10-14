@@ -1626,18 +1626,20 @@ export const tpoService = {
 
   async getCollegeDetails(collegeId: string): Promise<College | null> {
     if (!collegeId) return null;
+    const clean = collegeId.trim();
 
     // 1. Primary Source of Truth: Supabase colleges table
     try {
       const { data, error } = await supabase
         .from('colleges')
         .select('*')
-        .eq('id', collegeId)
+        .or(`id.eq.${clean},code.ilike.${clean},slug.ilike.${clean},name.ilike.${clean}`)
+        .limit(1)
         .maybeSingle();
 
       if (!error && data) {
         const local = getLocalColleges();
-        const updatedLocal = local.filter(c => c.id !== collegeId).concat(data);
+        const updatedLocal = local.filter(c => c.id !== data.id).concat(data);
         saveLocalColleges(updatedLocal);
         return data;
       }
@@ -1650,7 +1652,7 @@ export const tpoService = {
       const { data: colMsg } = await supabase
         .from('contact_messages')
         .select('message')
-        .eq('subject', `B2B_COLLEGE:${collegeId}`)
+        .or(`subject.eq.B2B_COLLEGE:${clean},subject.ilike.B2B_COLLEGE:%`)
         .neq('status', 'DELETED')
         .limit(1)
         .maybeSingle();
@@ -1659,7 +1661,7 @@ export const tpoService = {
         const parsed = JSON.parse(colMsg.message) as College;
         if (parsed && parsed.id) {
           const local = getLocalColleges();
-          const updatedLocal = local.filter(c => c.id !== collegeId).concat(parsed);
+          const updatedLocal = local.filter(c => c.id !== parsed.id).concat(parsed);
           saveLocalColleges(updatedLocal);
           return parsed;
         }
@@ -1668,7 +1670,12 @@ export const tpoService = {
 
     // 3. Try local storage cache
     const local = getLocalColleges();
-    const foundLocal = local.find(c => c.id === collegeId);
+    const foundLocal = local.find(c =>
+      c.id === collegeId ||
+      c.code?.toLowerCase() === clean.toLowerCase() ||
+      c.name?.toLowerCase() === clean.toLowerCase() ||
+      c.slug?.toLowerCase() === clean.toLowerCase()
+    );
     if (foundLocal) return foundLocal;
 
     // 4. Try finding from local TPO authorizations
@@ -3594,12 +3601,15 @@ export const tpoService = {
       const col = await this.getCollegeDetails(collegeId);
       if (col?.id && !targetCollegeIds.includes(col.id)) targetCollegeIds.push(col.id);
       if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
+      if (col?.slug && !targetCollegeIds.includes(col.slug)) targetCollegeIds.push(col.slug);
+      if (col?.name && !targetCollegeIds.includes(col.name)) targetCollegeIds.push(col.name);
     } catch {}
 
-    const local = [
-      ...getLocalExams(collegeId),
-      ...(targetCollegeIds.length > 1 ? getLocalExams(targetCollegeIds[1]) : [])
-    ];
+    const localMap = new Map<string, MockExam>();
+    targetCollegeIds.forEach(cid => {
+      getLocalExams(cid).forEach(e => localMap.set(e.id, e));
+    });
+    const local = Array.from(localMap.values());
     const map = new Map<string, MockExam>();
     local.forEach(e => map.set(e.id, e));
 
@@ -3608,8 +3618,16 @@ export const tpoService = {
         .from('mock_exams')
         .select('*')
         .in('college_id', targetCollegeIds)
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('created_at', { ascending: false });
+
+      // Self-heal: If any locally saved exams have not synced to Supabase yet, push them in the background
+      const dbExamIdSet = new Set((dbExams || []).map(e => e.id));
+      local.forEach(locExam => {
+        if (locExam?.id && !dbExamIdSet.has(locExam.id)) {
+          this.syncLocalExamToSupabase(locExam);
+        }
+      });
 
       if (!examErr && dbExams && dbExams.length > 0) {
         const examIds = dbExams.map(e => e.id);
@@ -3674,10 +3692,11 @@ export const tpoService = {
 
     // Cloud resilience: Fetch exams stored in contact_messages for cross-device support
     try {
+      const cloudSubjects = targetCollegeIds.map(cid => `subject.like.B2B_EXAM:${cid}:%`).join(',');
       const { data: cloudExams } = await supabase
         .from('contact_messages')
         .select('message, status')
-        .like('subject', `B2B_EXAM:${collegeId}:%`)
+        .or(cloudSubjects)
         .neq('status', 'DELETED')
         .order('created_at', { ascending: false });
 
@@ -4087,6 +4106,7 @@ export const tpoService = {
         .from('mock_exams')
         .select('*')
         .eq('id', examId)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .maybeSingle();
 
       if (!examErr && examData) {
@@ -4263,6 +4283,11 @@ export const tpoService = {
     }
 
     if (!resolvedExam) return null;
+
+    // Self-heal: Ensure this exam is pushed to Supabase if it was recovered locally or from cloud backup
+    if (typeof window !== 'undefined' && resolvedExam.id) {
+      this.syncLocalExamToSupabase(resolvedExam);
+    }
 
     // Check if any section is missing questions; if so, dynamically hydrate them
     const totalQCount = (resolvedExam.sections || []).reduce(
@@ -5187,12 +5212,22 @@ export const tpoService = {
       : '';
     const instructionsToSave = `${sectionalLockMeta}${passcodeMeta}${audienceMeta}${examData.instructions || ''}`;
 
+    let canonicalCollegeId = examData.college_id;
+    if (examData.college_id !== 'PUBLIC' && examData.college_id !== 'SELF') {
+      try {
+        const col = await this.getCollegeDetails(examData.college_id);
+        if (col?.id) {
+          canonicalCollegeId = col.id;
+        }
+      } catch {}
+    }
+
     try {
       const { data: newExam, error: examErr } = await supabase
         .from('mock_exams')
         .upsert([{
           id: examId,
-          college_id: examData.college_id,
+          college_id: canonicalCollegeId,
           title: examData.title,
           target_company: examData.target_company,
           description: examData.description,
@@ -5202,7 +5237,8 @@ export const tpoService = {
           passing_percentage: examData.passing_percentage,
           start_time: examData.start_time,
           end_time: examData.end_time,
-          is_active: examData.is_active,
+          is_active: examData.is_active ?? true,
+          is_deleted: false,
           enable_tab_switch_detection: examData.enable_tab_switch_detection,
           max_tab_switches_allowed: examData.max_tab_switches_allowed,
           enable_fullscreen_lock: examData.enable_fullscreen_lock ?? true,
@@ -5216,6 +5252,10 @@ export const tpoService = {
         }])
         .select()
         .single();
+
+      if (examErr) {
+        console.error('[createMockExam] Supabase insert error:', examErr);
+      }
 
       if (!examErr && newExam) {
         if (sections.length > 0) {
@@ -5242,11 +5282,105 @@ export const tpoService = {
           }
         }
       }
+
+      // Cross-device cloud sync backup to contact_messages
+      try {
+        await supabase.from('contact_messages').insert({
+          name: `Campus Exam: ${examData.title}`,
+          email: 'system-exam-backup@prepunite.internal',
+          subject: `B2B_EXAM:${canonicalCollegeId}:${examId}`,
+          message: JSON.stringify(newLocalExam),
+          status: 'ACTIVE',
+        });
+      } catch {}
     } catch (err: any) {
       console.warn('Notice inserting mock exam in Supabase:', err);
     }
 
+    if (canonicalCollegeId !== examData.college_id) {
+      saveLocalExams(canonicalCollegeId, [newLocalExam, ...getLocalExams(canonicalCollegeId).filter(e => e.id !== examId)]);
+    }
+
     return newLocalExam;
+  },
+
+  async syncLocalExamToSupabase(exam: MockExam): Promise<boolean> {
+    if (!exam || !exam.id) return false;
+    try {
+      let canonicalCollegeId = exam.college_id;
+      if (canonicalCollegeId !== 'PUBLIC' && canonicalCollegeId !== 'SELF') {
+        const col = await this.getCollegeDetails(canonicalCollegeId);
+        if (col?.id) canonicalCollegeId = col.id;
+      }
+
+      const { error: examErr } = await supabase.from('mock_exams').upsert([{
+        id: exam.id,
+        college_id: canonicalCollegeId,
+        title: exam.title,
+        target_company: exam.target_company,
+        description: exam.description,
+        instructions: exam.instructions,
+        duration_minutes: exam.duration_minutes,
+        total_marks: exam.total_marks,
+        passing_percentage: exam.passing_percentage,
+        start_time: exam.start_time,
+        end_time: exam.end_time,
+        is_active: exam.is_active ?? true,
+        is_deleted: false,
+        enable_tab_switch_detection: exam.enable_tab_switch_detection,
+        max_tab_switches_allowed: exam.max_tab_switches_allowed,
+        enable_fullscreen_lock: exam.enable_fullscreen_lock ?? true,
+        shuffle_questions: exam.shuffle_questions !== false,
+        shuffle_options: exam.shuffle_options !== false,
+        show_results_immediately: exam.show_results_immediately ?? true,
+        enable_passcode_lock: Boolean(exam.enable_passcode_lock),
+        access_passcode: exam.access_passcode ? exam.access_passcode.trim().toUpperCase() : null,
+        target_departments: exam.target_departments || [],
+        target_batch_year: exam.target_batch_year || null,
+        target_batches: exam.target_batches || [],
+      }]);
+
+      if (examErr) {
+        console.warn('[syncLocalExamToSupabase] mock_exams upsert warning:', examErr.message);
+      }
+
+      if (!examErr && exam.sections && exam.sections.length > 0) {
+        const secRows = exam.sections.map((s, idx) => ({
+          id: s.id || `sec-${exam.id}-${idx}`,
+          mock_exam_id: exam.id,
+          name: s.name,
+          section_order: s.section_order ?? idx,
+          section_type: s.section_type ?? null,
+          category: s.category ?? null,
+          coding_track: s.coding_track ?? null,
+          difficulty: s.difficulty ?? null,
+          duration_minutes: s.duration_minutes || null,
+          marks_per_correct: s.marks_per_correct || 1,
+          negative_marking: s.negative_marking || 0,
+          question_ids: s.question_ids || [],
+          topic_ids: s.topic_ids || [],
+        }));
+        const { error: secErr } = await supabase.from('mock_exam_sections').upsert(secRows);
+        if (secErr) {
+          console.warn('[syncLocalExamToSupabase] mock_exam_sections upsert warning:', secErr.message);
+        }
+      }
+
+      // Also backup to contact_messages
+      try {
+        await supabase.from('contact_messages').insert({
+          name: `Campus Exam: ${exam.title}`,
+          email: 'system-exam-backup@prepunite.internal',
+          subject: `B2B_EXAM:${canonicalCollegeId}:${exam.id}`,
+          message: JSON.stringify(exam),
+          status: 'ACTIVE',
+        });
+      } catch {}
+
+      return !examErr;
+    } catch {
+      return false;
+    }
   },
 
   async deleteMockExam(examId: string, collegeId?: string): Promise<boolean> {

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { progressService } from '@/services/progress.service';
 import { dataStore } from '@/services/dataStore';
-import { resolveTopicSlug } from '@/services/topicMap';
+import { resolveTopicSlug, expandTopicAliases } from '@/services/topicMap';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import { useToast } from '@/contexts/ToastContext';
 import {
@@ -311,14 +311,18 @@ export default function AptitudePage() {
       }
 
       // Stage 2: Direct Supabase table aggregation fallback
-      // Queries lightweight columns (topic_id, difficulty) directly from topic_questions
+      // Uses full alias expansion so topic_ids like "Profit and Loss" or
+      // "profit_and_loss" map correctly to their canonical slug.
       const topicIds = currentCategoryTopics.map(t => t.id);
       if (topicIds.length > 0) {
         try {
+          // Expand every canonical slug into all known alias variants
+          const allVariants = expandTopicAliases(topicIds);
+
           const { data: qRows, error: qErr } = await supabase
             .from('topic_questions')
             .select('topic_id, difficulty')
-            .in('topic_id', topicIds)
+            .in('topic_id', allVariants)
             .or('is_deleted.is.null,is_deleted.eq.false');
 
           if (!qErr && qRows && qRows.length > 0) {
@@ -330,11 +334,11 @@ export default function AptitudePage() {
             qRows.forEach((row: any) => {
               const rawTid = (row.topic_id || '').trim();
               if (rawTid) {
+                // Resolve variant → canonical slug
                 const resolved = resolveTopicSlug(rawTid, rawTid);
-                countMap[rawTid] = (countMap[rawTid] || 0) + 1;
-                if (resolved && resolved !== rawTid) {
-                  countMap[resolved] = (countMap[resolved] || 0) + 1;
-                }
+                // Always accumulate under the canonical slug
+                const key = resolved || rawTid;
+                countMap[key] = (countMap[key] || 0) + 1;
               }
               const diff = (row.difficulty || 'MEDIUM').toUpperCase();
               if (diff === 'EASY') easyTotal++;
@@ -355,6 +359,7 @@ export default function AptitudePage() {
           console.warn('[AptitudePage] Direct table fallback notice:', tableErr);
         }
       }
+
 
       // Stage 3: Local dataStore fallback (offline safety)
       const fallbackCounts: Record<string, number> = {};
@@ -390,13 +395,24 @@ export default function AptitudePage() {
       const rawId = t.id;
       const resolvedId = resolveTopicSlug(rawId, rawId);
 
-      const count = rpcCounts[rawId] ??
-                    rpcCounts[rawId.toLowerCase()] ??
-                    rpcCounts[resolvedId] ??
-                    rpcCounts[resolvedId.toLowerCase()] ??
-                    0;
+      let count = rpcCounts[rawId] ??
+                  rpcCounts[rawId.toLowerCase()] ??
+                  rpcCounts[resolvedId] ??
+                  rpcCounts[resolvedId.toLowerCase()] ??
+                  rpcCounts[rawId.replace(/-/g, '_')] ??
+                  rpcCounts[rawId.replace(/-/g, ' ')];
 
-      countMap[rawId] = count;
+      if (count === undefined || count === 0) {
+        const aliases = expandTopicAliases([rawId]);
+        for (const a of aliases) {
+          if (rpcCounts[a] !== undefined && rpcCounts[a] > 0) {
+            count = rpcCounts[a];
+            break;
+          }
+        }
+      }
+
+      countMap[rawId] = count ?? 0;
     });
     return countMap;
   }, [currentCategoryTopics, categoryStatsData]);

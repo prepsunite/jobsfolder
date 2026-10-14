@@ -69,18 +69,40 @@ export default async function handler(req, res) {
     } catch {}
   }
 
+  // Helper: Resolve college identifier across id, code, slug, and name
+  async function resolveTargetCollegeIds(collegeId) {
+    if (!collegeId) return [];
+    const targetCids = [String(collegeId)];
+    try {
+      const { data: col } = await supabaseAdmin
+        .from('colleges')
+        .select('id, code, slug, name')
+        .or(`id.eq.${collegeId},code.ilike.${collegeId},slug.ilike.${collegeId},name.ilike.${collegeId}`)
+        .maybeSingle();
+      if (col) {
+        if (col.id && !targetCids.includes(String(col.id))) targetCids.push(String(col.id));
+        if (col.code && !targetCids.includes(String(col.code))) targetCids.push(String(col.code));
+        if (col.slug && !targetCids.includes(String(col.slug))) targetCids.push(String(col.slug));
+        if (col.name && !targetCids.includes(String(col.name))) targetCids.push(String(col.name));
+      }
+    } catch {}
+    return targetCids;
+  }
+
   // Check if caller is active TPO for a given college
   async function isTpoForCollege(collegeId) {
     if (isSuperAdmin) return true;
     if (!collegeId) return false;
     try {
+      const targetCids = await resolveTargetCollegeIds(collegeId);
       // 1. Check direct active authorization in tpo_authorizations
       const { data: authRecord } = await supabaseAdmin
         .from('tpo_authorizations')
         .select('id')
-        .eq('college_id', collegeId)
+        .in('college_id', targetCids)
         .ilike('email', userEmail)
         .eq('status', 'ACTIVE')
+        .limit(1)
         .maybeSingle();
       if (authRecord) return true;
 
@@ -88,14 +110,15 @@ export default async function handler(req, res) {
       const { data: csRecord } = await supabaseAdmin
         .from('college_students')
         .select('id, is_tpo_admin, role')
-        .eq('college_id', collegeId)
+        .in('college_id', targetCids)
         .or(`email.ilike.${userEmail},user_id.eq.${user.id}`)
+        .limit(1)
         .maybeSingle();
       if (csRecord && (csRecord.is_tpo_admin === true || csRecord.is_tpo_admin === 'true' || csRecord.role === 'TPO')) {
         // Auto-provision in tpo_authorizations for future direct RLS consistency
         try {
           await supabaseAdmin.from('tpo_authorizations').upsert({
-            college_id: collegeId,
+            college_id: targetCids[0],
             email: userEmail,
             user_id: user.id,
             status: 'ACTIVE',
@@ -111,10 +134,10 @@ export default async function handler(req, res) {
         .select('role, college_id')
         .eq('id', user.id)
         .maybeSingle();
-      if (profRecord && (profRecord.role === 'admin' || (profRecord.role === 'tpo' && profRecord.college_id === collegeId))) {
+      if (profRecord && (profRecord.role === 'admin' || (profRecord.role === 'tpo' && targetCids.includes(String(profRecord.college_id))))) {
         try {
           await supabaseAdmin.from('tpo_authorizations').upsert({
-            college_id: collegeId,
+            college_id: targetCids[0],
             email: userEmail,
             user_id: user.id,
             status: 'ACTIVE',
@@ -128,12 +151,13 @@ export default async function handler(req, res) {
       const { data: colRecord } = await supabaseAdmin
         .from('colleges')
         .select('id, contact_email')
-        .eq('id', collegeId)
+        .in('id', targetCids)
+        .limit(1)
         .maybeSingle();
       if (colRecord && colRecord.contact_email && colRecord.contact_email.toLowerCase() === userEmail) {
         try {
           await supabaseAdmin.from('tpo_authorizations').upsert({
-            college_id: collegeId,
+            college_id: targetCids[0],
             email: userEmail,
             user_id: user.id,
             status: 'ACTIVE',
@@ -144,11 +168,13 @@ export default async function handler(req, res) {
       }
 
       // 5. Check cloud contact_messages for B2B_TPO_AUTH strictly bound to collegeId
+      const tpoSubjects = targetCids.map(cid => `subject.eq.B2B_TPO_AUTH:${cid}:${userEmail}`).join(',');
       const { data: tpoMsg } = await supabaseAdmin
         .from('contact_messages')
         .select('subject, message')
-        .eq('subject', `B2B_TPO_AUTH:${collegeId}:${userEmail}`)
+        .or(tpoSubjects)
         .eq('status', 'ACTIVE')
+        .limit(1)
         .maybeSingle();
       if (tpoMsg) {
         return true;
@@ -165,23 +191,27 @@ export default async function handler(req, res) {
     if (isSuperAdmin) return true;
     if (!collegeId) return false;
     try {
+      const targetCids = await resolveTargetCollegeIds(collegeId);
       const { data: studentRecord } = await supabaseAdmin
         .from('college_students')
         .select('id')
-        .eq('college_id', collegeId)
+        .in('college_id', targetCids)
         .or(`email.ilike.${userEmail},user_id.eq.${user.id}`)
         .in('status', ['ACTIVE', 'ENROLLED'])
+        .limit(1)
         .maybeSingle();
       if (studentRecord) return true;
 
       // Check active institutional subscription
+      const subFilters = targetCids.map(cid => `payment_id.ilike.B2B_CAMPUS_${cid}%`).join(',');
       const { data: subRecord } = await supabaseAdmin
         .from('user_subscriptions')
         .select('id')
         .eq('user_email', userEmail)
-        .ilike('payment_id', `B2B_CAMPUS_${collegeId}%`)
+        .or(subFilters)
         .eq('status', 'ACTIVE')
         .gt('expires_at', new Date().toISOString())
+        .limit(1)
         .maybeSingle();
       return !!subRecord;
     } catch {
@@ -378,7 +408,7 @@ export default async function handler(req, res) {
         let query = supabaseAdmin
           .from('mock_exams')
           .select('*')
-          .eq('is_deleted', false);
+          .or('is_deleted.is.null,is_deleted.eq.false');
 
         if (examId) query = query.eq('id', examId);
         if (collegeId) {
@@ -391,7 +421,8 @@ export default async function handler(req, res) {
               query = query.or(`created_by.eq.${user.id},target_departments.cs.{"${userEmail}"}`);
             }
           } else {
-            query = query.eq('college_id', collegeId);
+            const queryCids = await resolveTargetCollegeIds(collegeId);
+            query = query.in('college_id', queryCids);
           }
         }
 
@@ -439,7 +470,8 @@ export default async function handler(req, res) {
           if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
             msgQuery = msgQuery.like('subject', `B2B_EXAM:SELF:${userEmail}:%`);
           } else {
-            msgQuery = msgQuery.like('subject', `B2B_EXAM:${collegeId}:%`);
+            const queryCids = await resolveTargetCollegeIds(collegeId);
+            msgQuery = msgQuery.or(queryCids.map(cid => `subject.like.B2B_EXAM:${cid}:%`).join(','));
           }
         } else if (examId) {
           msgQuery = msgQuery.like('subject', `B2B_EXAM:%:${examId}`);

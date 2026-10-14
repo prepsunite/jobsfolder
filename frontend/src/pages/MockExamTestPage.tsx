@@ -134,13 +134,24 @@ export default function MockExamTestPage() {
     '';
   const tpoAuth = tpoService.findTpoAuthByEmail(user?.email);
 
+  // Canonical College Identifier List across UUID, code, and slug
+  const examTargetCollegeIds = useMemo(() => {
+    if (!exam?.college_id) return [];
+    const ids = [exam.college_id];
+    if (examCollege?.id && !ids.includes(examCollege.id)) ids.push(examCollege.id);
+    if (examCollege?.code && !ids.includes(examCollege.code)) ids.push(examCollege.code);
+    if (examCollege?.slug && !ids.includes(examCollege.slug)) ids.push(examCollege.slug);
+    return ids;
+  }, [exam?.college_id, examCollege]);
+
   // Live cloud enrollment verification query if local state has not hydrated
   const { data: dbEnrollmentVerified = false } = useQuery({
-    queryKey: ['candidate-enrollment-check', user?.email, exam?.college_id],
+    queryKey: ['candidate-enrollment-check', user?.email, exam?.college_id, examTargetCollegeIds],
     queryFn: async () => {
       if (!user?.email || !exam?.college_id) return false;
       const cleanEmail = user.email.trim().toLowerCase();
-      const targetCids = [exam.college_id];
+      const targetCids = [...examTargetCollegeIds];
+      if (!targetCids.includes(exam.college_id)) targetCids.push(exam.college_id);
       try {
         const col = await tpoService.getCollegeDetails(exam.college_id);
         if (col?.id && !targetCids.includes(col.id)) targetCids.push(col.id);
@@ -180,7 +191,7 @@ export default function MockExamTestPage() {
 
   // Query candidate's student profile (department and cohort batch)
   const { data: candidateStudentRecord } = useQuery({
-    queryKey: ['candidate-student-record', user?.email, exam?.college_id],
+    queryKey: ['candidate-student-record', user?.email, exam?.college_id, examTargetCollegeIds],
     queryFn: async () => {
       if (!user?.email || !isCollegeTpoExam || !exam?.college_id) return null;
       const cleanEmail = user.email.trim().toLowerCase();
@@ -189,7 +200,8 @@ export default function MockExamTestPage() {
       let batchName = '';
 
       try {
-        const targetCids = [exam.college_id];
+        const targetCids = [...examTargetCollegeIds];
+        if (!targetCids.includes(exam.college_id)) targetCids.push(exam.college_id);
         try {
           const col = await tpoService.getCollegeDetails(exam.college_id);
           if (col?.id && !targetCids.includes(col.id)) targetCids.push(col.id);
@@ -239,7 +251,14 @@ export default function MockExamTestPage() {
     staleTime: 60 * 1000,
   });
 
-  const isCollegeTpo = isTpoAdmin && (user?.collegeId === exam?.college_id || tpoAuth?.college_id === exam?.college_id);
+  const isCollegeTpo = isTpoAdmin && (
+    examTargetCollegeIds.some(id =>
+      (user?.collegeId && id.toLowerCase() === user.collegeId.toLowerCase()) ||
+      (tpoAuth?.college_id && id.toLowerCase() === tpoAuth.college_id.toLowerCase())
+    ) ||
+    user?.collegeId === exam?.college_id ||
+    tpoAuth?.college_id === exam?.college_id
+  );
   const isAdminOrTpo = isSuperAdmin || isCollegeTpo;
 
   // 🛡️ Strict Creator Verification for Student Self-Practice Exams:
@@ -254,7 +273,10 @@ export default function MockExamTestPage() {
   );
 
   const isEnrolledStudent = Boolean(
-    exam?.college_id && dbEnrollmentVerified
+    exam?.college_id && (
+      dbEnrollmentVerified ||
+      (userCollegeId && examTargetCollegeIds.some(id => id.toLowerCase() === userCollegeId.toLowerCase()))
+    )
   );
 
   // 🛡️ Comprehensive 3-Tier Access Evaluation:
@@ -1635,6 +1657,48 @@ export default function MockExamTestPage() {
   if (testPhase === 'INSTRUCTIONS') {
     if (examLoading) {
       return <LoadingScreen fullScreen size="md" />;
+    }
+
+    if (!user) {
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : `/exam/${examId}`;
+
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0f1013] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-lg bg-white dark:bg-[#18191c] rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-xl text-center space-y-5">
+            <div className="w-16 h-16 rounded-3xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center mx-auto">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-[11px] font-bold uppercase tracking-wider">
+                <Building2 className="w-3.5 h-3.5" />
+                Assessment Authentication Required
+              </div>
+              <h2 className="font-display text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                Sign In to Access Assessment
+              </h2>
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-md mx-auto">
+                This mock examination requires authentication. Please sign in with your registered college email or create an account to start your test.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`)}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                Sign In to Continue
+              </button>
+              <button
+                onClick={() => navigate(`/register?redirect=${encodeURIComponent(redirectUrl)}`)}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Create Account
+              </button>
+            </div>
+          </div>
+        </div>
+      );
     }
 
     if (!exam) {

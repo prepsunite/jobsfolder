@@ -427,6 +427,31 @@ export const TOPIC_ALIAS_FAMILIES: Readonly<Record<string, string[]>> = Object.f
   'mcq-data-structures': ['mcq-data-structures', 'dsa', 'data-structures', 'DATA_STRUCTURES', 'dsa-logic'],
   'mcq-pseudo-code': ['mcq-pseudo-code', 'pseudo-code', 'pseudocode', 'PSEUDO_CODE', 'pseudocode-tracing'],
 
+  // Verbal Reasoning (Complete Set)
+  'classification': ['classification', 'verbal-classification', 'verbal classification', 'odd-man-out'],
+  'arithmetic-reasoning': ['arithmetic-reasoning', 'arithmetic reasoning', 'arithmetic_reasoning', 'arithmetic-reason'],
+  'assertion-and-reason': ['assertion-and-reason', 'assertion and reason', 'assertion & reason', 'assertion_and_reason', 'assertion-reason'],
+  'character-puzzles': ['character-puzzles', 'character puzzles', 'character_puzzles', 'character-puzzle', 'character puzzle'],
+  'data-sufficiency': ['data-sufficiency', 'data sufficiency', 'data_sufficiency'],
+  'venn-diagrams': ['venn-diagrams', 'venn diagrams', 'venn_diagrams', 'venn-diagram', 'venn diagram'],
+  'verification-of-truth': ['verification-of-truth', 'verification of truth', 'verification_of_truth'],
+  'statement-and-inferences': ['statement-and-inferences', 'statement and inferences', 'statement & inferences', 'statement_and_inferences', 'inferences'],
+  'series-completion': ['series-completion', 'series completion', 'series_completion'],
+
+  // Nonverbal Reasoning (Complete Set)
+  'pattern-completion': ['pattern-completion', 'pattern completion', 'pattern_completion', 'visual series', 'visual-series', 'visual series & pattern completion'],
+  'mirror-images': ['mirror-images', 'mirror images', 'mirror_images', 'water-images', 'water images', 'mirror & water images'],
+  'paper-folding': ['paper-folding', 'paper folding', 'paper_folding', 'paper-cutting', 'paper cutting', 'paper folding & cutting'],
+  'figure-matrix': ['figure-matrix', 'figure matrix', 'figure_matrix'],
+  'rule-detection': ['rule-detection', 'rule detection', 'rule_detection'],
+  'dot-situation': ['dot-situation', 'dot situation', 'dot_situation', 'dot situation test'],
+  'embedded-images': ['embedded-images', 'embedded images', 'embedded_images'],
+  'counting-of-figures': ['counting-of-figures', 'counting of figures', 'counting_of_figures', 'counting figures', 'figure-counting'],
+  'grouping-of-images': ['grouping-of-images', 'grouping of images', 'grouping_of_images', 'grouping of identical figures'],
+  'shape-construction': ['shape-construction', 'shape construction', 'shape_construction', 'shape construction & reconstruction'],
+  'nonverbal-analogy': ['nonverbal-analogy', 'nonverbal analogy', 'non-verbal analogy', 'nonverbal_analogy'],
+  'nonverbal-classification': ['nonverbal-classification', 'nonverbal classification', 'non-verbal classification', 'nonverbal_classification'],
+
   // Coding Categories
   'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS', 'arrays', 'array'],
   'STRINGS': ['STRINGS', 'strings', 'string'],
@@ -446,6 +471,13 @@ export const TOPIC_ALIAS_FAMILIES: Readonly<Record<string, string[]>> = Object.f
 });
 
 /**
+ * Helper to convert hyphenated string to Title Case
+ */
+function toTitleCase(str: string): string {
+  return str.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/**
  * Expands an array of topic slugs into the full deduplicated set of alias variations
  */
 export function expandTopicAliases(topicIds: string[]): string[] {
@@ -455,17 +487,39 @@ export function expandTopicAliases(topicIds: string[]): string[] {
   topicIds.forEach(id => {
     if (!id) return;
     const clean = id.trim();
+    const lower = clean.toLowerCase();
     result.add(clean);
-    result.add(clean.toLowerCase());
+    result.add(lower);
+
+    // Auto-generate standard naming patterns (hyphen, space, underscore, title case)
+    result.add(lower.replace(/-/g, ' '));
+    result.add(lower.replace(/-/g, '_'));
+    result.add(lower.replace(/_/g, '-'));
+    result.add(lower.replace(/_/g, ' '));
+    result.add(lower.replace(/\s+/g, '-'));
+    result.add(lower.replace(/\s+/g, '_'));
+    result.add(toTitleCase(lower));
+    result.add(clean.replace(/_/g, ' '));
 
     const slug = resolveTopicSlug(clean, clean);
     result.add(slug);
+    result.add(slug.replace(/-/g, ' '));
+    result.add(slug.replace(/-/g, '_'));
+    result.add(toTitleCase(slug));
 
     if (TOPIC_ALIAS_FAMILIES[clean]) {
-      TOPIC_ALIAS_FAMILIES[clean].forEach(a => result.add(a));
+      TOPIC_ALIAS_FAMILIES[clean].forEach(a => {
+        result.add(a);
+        result.add(a.toLowerCase());
+        result.add(toTitleCase(a));
+      });
     }
     if (TOPIC_ALIAS_FAMILIES[slug]) {
-      TOPIC_ALIAS_FAMILIES[slug].forEach(a => result.add(a));
+      TOPIC_ALIAS_FAMILIES[slug].forEach(a => {
+        result.add(a);
+        result.add(a.toLowerCase());
+        result.add(toTitleCase(a));
+      });
     }
 
     // Try uppercase for coding tracks
