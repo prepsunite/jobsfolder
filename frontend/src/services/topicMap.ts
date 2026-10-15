@@ -416,16 +416,16 @@ export const TOPIC_ALIAS_FAMILIES: Readonly<Record<string, string[]>> = Object.f
   'verbal-analogies': ['verbal-analogies'],
 
   // Technical MCQs
-  'mcq-c-programming': ['mcq-c-programming', 'c', 'c-programming', 'C_PROGRAMMING', 'c-basics'],
+  'mcq-c-programming': ['mcq-c-programming', 'c', 'c-programming', 'C_PROGRAMMING', 'c-basics', 'c programming'],
   'mcq-cpp-programming': ['mcq-cpp-programming', 'cpp', 'c++', 'cpp-programming', 'CPP_PROGRAMMING', 'cplusplus'],
   'mcq-java-programming': ['mcq-java-programming', 'java', 'java-programming', 'JAVA_PROGRAMMING', 'core-java'],
   'mcq-python-programming': ['mcq-python-programming', 'python', 'python-programming', 'PYTHON_PROGRAMMING'],
-  'mcq-oops-concepts': ['mcq-oops-concepts', 'oops', 'oop', 'object-oriented-programming', 'SYNTAX_BASICS'],
-  'mcq-database-systems': ['mcq-database-systems', 'dbms', 'sql', 'database', 'DATABASE', 'dbms-sql'],
-  'mcq-operating-systems': ['mcq-operating-systems', 'os', 'operating-systems', 'OPERATING_SYSTEMS'],
-  'mcq-computer-networks': ['mcq-computer-networks', 'networks', 'computer-networks', 'NETWORKING', 'cn'],
-  'mcq-data-structures': ['mcq-data-structures', 'dsa', 'data-structures', 'DATA_STRUCTURES', 'dsa-logic'],
-  'mcq-pseudo-code': ['mcq-pseudo-code', 'pseudo-code', 'pseudocode', 'PSEUDO_CODE', 'pseudocode-tracing'],
+  'mcq-oops-concepts': ['mcq-oops-concepts', 'oops', 'oop', 'object-oriented-programming', 'SYNTAX_BASICS', 'oops-concepts'],
+  'mcq-database-systems': ['mcq-database-systems', 'dbms', 'sql', 'database', 'DATABASE', 'dbms-sql', 'database-systems'],
+  'mcq-operating-systems': ['mcq-operating-systems', 'os', 'operating-systems', 'OPERATING_SYSTEMS', 'operating systems'],
+  'mcq-computer-networks': ['mcq-computer-networks', 'networks', 'computer-networks', 'NETWORKING', 'cn', 'cloud-networking-basics'],
+  'mcq-data-structures': ['mcq-data-structures', 'dsa', 'data-structures', 'DATA_STRUCTURES', 'dsa-logic', 'data structures'],
+  'mcq-pseudo-code': ['mcq-pseudo-code', 'pseudo-code', 'pseudocode', 'PSEUDO_CODE', 'pseudocode-tracing', 'code-debugging-logic', 'bitwise-operators'],
 
   // Verbal Reasoning (Complete Set)
   'classification': ['classification', 'verbal-classification', 'verbal classification', 'odd-man-out'],
@@ -468,6 +468,15 @@ export const TOPIC_ALIAS_FAMILIES: Readonly<Record<string, string[]>> = Object.f
   'BIT_MANIPULATION': ['BIT_MANIPULATION', 'bit-manipulation'],
   'MATRICES': ['MATRICES', 'matrices', '2d-arrays'],
   'GRAPHS': ['GRAPHS', 'NETWORK_GRAPH_ALGORITHMS', 'graphs'],
+
+  // Technical MCQs & Campus OA Legacy Aliases
+  'pseudocode-tracing': ['pseudocode-tracing', 'mcq-pseudo-code', 'pseudocode', 'pseudo-code'],
+  'code-debugging-logic': ['code-debugging-logic', 'mcq-pseudo-code', 'mcq-c-programming'],
+  'bitwise-operators': ['bitwise-operators', 'mcq-pseudo-code', 'mcq-c-programming'],
+  'recursion-functions': ['recursion-functions', 'mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming'],
+  'attention-to-detail': ['attention-to-detail', 'mcq-pseudo-code'],
+  'automata-theory-basics': ['automata-theory-basics', 'mcq-pseudo-code', 'mcq-oops-concepts'],
+  'cloud-networking-basics': ['cloud-networking-basics', 'mcq-computer-networks', 'mcq-operating-systems'],
 });
 
 /**

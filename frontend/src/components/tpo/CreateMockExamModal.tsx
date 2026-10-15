@@ -358,10 +358,19 @@ export default function CreateMockExamModal({
           s.category === 'coding' ||
           s.coding_track !== undefined;
         const isTech =
-          s.section_type === 'TECHNICAL_MCQ' ||
-          s.category === 'technical-mcqs' ||
-          s.category?.startsWith('mcq-') ||
-          (s.topic_ids && s.topic_ids.some(t => t.startsWith('mcq-')));
+          !isCoding &&
+          (s.section_type === 'TECHNICAL_MCQ' ||
+            s.category === 'technical-mcqs' ||
+            s.category === 'technical-aptitude' ||
+            s.category === 'tech-aptitude' ||
+            s.category?.startsWith('mcq-') ||
+            (s.topic_ids && s.topic_ids.some(t => t.startsWith('mcq-') || t.includes('pseudo') || t.includes('code-debug') || t.includes('bitwise'))) ||
+            s.name.toLowerCase().includes('technical mcq') ||
+            s.name.toLowerCase().includes('technical &') ||
+            s.name.toLowerCase().includes('technical pseudocode') ||
+            s.name.toLowerCase().includes('pseudocode') ||
+            s.name.toLowerCase().includes('pseudo-code') ||
+            s.name.toLowerCase().includes('data structure'));
         const type: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ' = isCoding
           ? 'CODING'
           : isTech
@@ -653,7 +662,7 @@ export default function CreateMockExamModal({
         },
         sections.map(s => ({
           name: s.name,
-          section_type: s.section_type || (s.category === 'coding' ? 'CODING' : s.category === 'technical-mcqs' || s.topic_ids?.some(t => t.startsWith('mcq-')) ? 'TECHNICAL_MCQ' : 'MCQ'),
+          section_type: s.section_type || (s.category === 'coding' ? 'CODING' : (s.category === 'technical-mcqs' || s.category === 'technical-aptitude' || s.category === 'tech-aptitude' || s.topic_ids?.some(t => t.startsWith('mcq-') || t.includes('pseudo')) || /technical|pseudocode|data structure/i.test(s.name)) ? 'TECHNICAL_MCQ' : 'MCQ'),
           topic_ids: s.topic_ids || [],
           question_count: Number(s.question_count) || 1,
           marks_per_correct: Number(s.marks_per_correct) || 1,

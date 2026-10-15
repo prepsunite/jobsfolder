@@ -12,6 +12,7 @@ import {
   KeyRound,
   ShieldCheck,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import type { MockExam } from '@/types/tpo';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
@@ -22,7 +23,7 @@ interface ManageExamScheduleModalProps {
   onClose: () => void;
   exam: MockExam | null;
   collegeId?: string;
-  initialTab?: 'EXTEND' | 'CONCLUDE' | 'PASSCODE';
+  initialTab?: 'EXTEND' | 'CONCLUDE' | 'PASSCODE' | 'TERMINATE';
   onSuccess?: () => void;
 }
 
@@ -61,7 +62,7 @@ export default function ManageExamScheduleModal({
 }: ManageExamScheduleModalProps) {
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE' | 'TERMINATE'>(initialTab);
 
   useEffect(() => {
     if (isOpen) {
@@ -69,6 +70,7 @@ export default function ManageExamScheduleModal({
       setPasscodeEnabled(Boolean(exam?.enable_passcode_lock));
       setPasscodeVal(exam?.access_passcode || '');
       setConfirmConcludeStep(false);
+      setConfirmTerminateStep(false);
     }
   }, [isOpen, initialTab, exam]);
   const [selectedExtensionMinutes, setSelectedExtensionMinutes] = useState<number | null>(30);
@@ -85,6 +87,33 @@ export default function ManageExamScheduleModal({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmConcludeStep, setConfirmConcludeStep] = useState(false);
+  const [confirmTerminateStep, setConfirmTerminateStep] = useState(false);
+
+  // 3. Handle Permanent Termination & Purge
+  const handleTerminateNow = async () => {
+    if (!exam) return;
+    if (!confirmTerminateStep) {
+      setConfirmTerminateStep(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await tpoService.terminateMockExam(exam.id, collegeId || exam.college_id);
+      if (res.success) {
+        toast.success(`Exam "${exam.title}" has been permanently terminated and purged from the database.`);
+        onSuccess?.();
+        onClose();
+      } else {
+        toast.error(res.message || 'Failed to terminate exam.');
+      }
+    } catch (err: any) {
+      toast.error('Error terminating exam: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsSubmitting(false);
+      setConfirmTerminateStep(false);
+    }
+  };
 
   // Quick PIN generator (4-digit numeric)
   const generateRandomPin = () => {
@@ -280,15 +309,32 @@ export default function ManageExamScheduleModal({
             onClick={() => {
               setActiveTab('CONCLUDE');
               setConfirmConcludeStep(false);
+              setConfirmTerminateStep(false);
             }}
-            className={`flex-1 py-3 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'CONCLUDE'
-                ? 'border-rose-500 text-rose-600 bg-rose-50/50 dark:bg-rose-950/20'
+                ? 'border-amber-500 text-amber-600 bg-amber-50/50 dark:bg-amber-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <StopCircle className="w-3.5 h-3.5" />
             <span>Conclude Now</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('TERMINATE');
+              setConfirmConcludeStep(false);
+              setConfirmTerminateStep(false);
+            }}
+            className={`flex-1 py-3 text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === 'TERMINATE'
+                ? 'border-rose-600 text-rose-600 bg-rose-50/50 dark:bg-rose-950/20'
+                : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+            }`}
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+            <span>Terminate &amp; Purge</span>
           </button>
         </div>
 
@@ -431,28 +477,57 @@ export default function ManageExamScheduleModal({
                 </div>
               )}
             </div>
-          ) : (
+          ) : activeTab === 'CONCLUDE' ? (
             <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs text-rose-900 dark:text-rose-200 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-sm text-rose-700 dark:text-rose-400">
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs text-amber-900 dark:text-amber-200 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-amber-700 dark:text-amber-400">
                   <ShieldAlert className="w-4 h-4 shrink-0" />
-                  Emergency Early Wrap-Up
+                  Early Assessment Wrap-Up
                 </div>
-                <p className="leading-relaxed text-rose-800 dark:text-rose-300">
+                <p className="leading-relaxed text-amber-800 dark:text-amber-300">
                   Concluding the assessment will immediately freeze the testing window as <strong>Concluded</strong>:
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-[11px] text-rose-700/90 dark:text-rose-300/90">
+                <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-700/90 dark:text-amber-300/90">
                   <li>In-progress candidates currently writing the test will have their responses finalized and graded automatically.</li>
                   <li>No new candidates will be allowed to start or resume the assessment.</li>
-                  <li>Final rankings and performance analytics will be locked for recruiter inspection.</li>
+                  <li>Final rankings and performance analytics will be preserved for recruiter inspection.</li>
                 </ul>
               </div>
 
               {confirmConcludeStep && (
-                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2 animate-fadeIn">
+                <div className="p-3.5 rounded-xl bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-800 text-xs text-amber-950 dark:text-amber-100 flex items-center gap-2 animate-fadeIn">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
-                    <strong>Confirmation Required:</strong> Click the red button below to execute this action.
+                    <strong>Confirmation Required:</strong> Click the button below to conclude the drive now.
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs text-rose-900 dark:text-rose-200 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-rose-700 dark:text-rose-400">
+                  <Trash2 className="w-4 h-4 shrink-0 text-rose-600" />
+                  Permanent Exam Termination &amp; Purge
+                </div>
+                <p className="leading-relaxed text-rose-800 dark:text-rose-300">
+                  Terminating this mock exam will <strong>permanently purge all related records from the database</strong> so your dashboard and exam listings are not flooded:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-[11px] text-rose-700/90 dark:text-rose-300/90">
+                  <li>The mock exam configuration and all question sections</li>
+                  <li>All student exam attempts, scores, and answer sheet submissions</li>
+                  <li>Leaderboard entries, campus rankings, and test activity logs</li>
+                </ul>
+                <p className="text-[11px] font-bold text-rose-700 dark:text-rose-400 pt-1">
+                  ⚠️ This action cannot be undone. All data will be wiped permanently.
+                </p>
+              </div>
+
+              {confirmTerminateStep && (
+                <div className="p-3.5 rounded-xl bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-800 text-xs text-red-950 dark:text-red-100 flex items-center gap-2 animate-fadeIn">
+                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>
+                    <strong>Final Warning:</strong> Click below to permanently delete and purge this assessment forever.
                   </span>
                 </div>
               )}
@@ -465,7 +540,7 @@ export default function ManageExamScheduleModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -475,7 +550,7 @@ export default function ManageExamScheduleModal({
               type="button"
               onClick={handleExtendWindow}
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-[#FD4A32]/20 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-[#FD4A32]/20 flex items-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -494,7 +569,7 @@ export default function ManageExamScheduleModal({
               type="button"
               onClick={handleSavePasscode}
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -508,15 +583,15 @@ export default function ManageExamScheduleModal({
                 </>
               )}
             </button>
-          ) : (
+          ) : activeTab === 'CONCLUDE' ? (
             <button
               type="button"
               onClick={handleConcludeNow}
               disabled={isSubmitting || isConcluded}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-white shadow-md ${
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-white shadow-md cursor-pointer ${
                 confirmConcludeStep
-                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/25 animate-pulse'
-                  : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+                  ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/25 animate-pulse'
+                  : 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
               }`}
             >
               {isSubmitting ? (
@@ -533,6 +608,34 @@ export default function ManageExamScheduleModal({
                 <>
                   <StopCircle className="w-4 h-4" />
                   <span>Conclude Assessment Now</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleTerminateNow}
+              disabled={isSubmitting}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-white shadow-md cursor-pointer ${
+                confirmTerminateStep
+                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/30 animate-pulse'
+                  : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Purging from Database...</span>
+                </>
+              ) : confirmTerminateStep ? (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  <span>Confirm: Purge &amp; Delete Forever</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  <span>Permanently Terminate Exam</span>
                 </>
               )}
             </button>

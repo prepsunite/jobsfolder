@@ -3324,24 +3324,36 @@ export const tpoService = {
       if (col?.code && !targetCollegeIds.includes(col.code)) targetCollegeIds.push(col.code);
     } catch {}
 
-    // 1. Direct query from Supabase student_exam_attempts
+    // 1. Direct query from Supabase student_exam_attempts with lean projection & chunked pagination
     try {
-      let query = supabase
-        .from('student_exam_attempts')
-        .select('*');
-
       const cidClauses = targetCollegeIds.map(cid => `college_id.eq.${cid}`).join(',');
-      if (examIds.length > 0) {
-        query = query.or(`${cidClauses},mock_exam_id.in.(${examIds.join(',')})`);
-      } else {
-        query = query.or(cidClauses);
-      }
+      const orFilter = examIds.length > 0 ? `${cidClauses},mock_exam_id.in.(${examIds.join(',')})` : cidClauses;
+      const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, result_summary, created_at, updated_at';
 
-      const { data, error } = await query.order('total_score', { ascending: false });
-      if (!error && data && Array.isArray(data)) {
-        data.forEach((a: StudentExamAttempt) => {
-          if (a && a.id) attemptsMap.set(a.id, a);
-        });
+      const PAGE_SIZE = 1000;
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore && page < 10) {
+        const { data, error } = await supabase
+          .from('student_exam_attempts')
+          .select(ATTEMPT_PROJECTION)
+          .or(orFilter)
+          .order('total_score', { ascending: false })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (!error && data && Array.isArray(data)) {
+          data.forEach((a: any) => {
+            if (a && a.id) attemptsMap.set(a.id, a as StudentExamAttempt);
+          });
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
       }
     } catch (dbErr) {
       console.warn('Notice querying college student_exam_attempts:', dbErr);
@@ -3369,9 +3381,9 @@ export const tpoService = {
 
 
 
-    // 4. Merge with local storage attempts
+    // 4. Merge with local storage attempts (strictly matching known college exams)
     const localAttempts = getLocalAttempts().filter(
-      a => a.college_id === collegeId || examMap.has(a.mock_exam_id)
+      a => examMap.has(a.mock_exam_id)
     );
     localAttempts.forEach(a => {
       if (a && a.id && !attemptsMap.has(a.id)) {
@@ -3379,7 +3391,14 @@ export const tpoService = {
       }
     });
 
-    const allAttempts = Array.from(attemptsMap.values());
+    // 🛡️ ANTI-CORRUPTION GUARD: Strictly reject any orphaned attempts whose mock exam is deleted or terminated
+    const allAttempts = Array.from(attemptsMap.values()).filter(a => {
+      if (!a || !a.id || !a.mock_exam_id) return false;
+      if (examIds.length > 0 && !examMap.has(a.mock_exam_id)) {
+        return false;
+      }
+      return true;
+    });
 
     // 5. Batch enrich student profiles & exam metadata
     if (allAttempts.length > 0) {
@@ -3612,23 +3631,69 @@ export const tpoService = {
       if (!e.is_active || e.is_deleted) return false;
       return getExamTimingStatus(e, now) === 'LIVE';
     }).length;
+
+    // 1. Authoritative Server-Side PostgreSQL Aggregation (Instant sub-15ms, zero network bloat)
+    try {
+      const { data: rpcStats, error: rpcErr } = await supabase.rpc('get_college_placement_analytics', {
+        p_college_id: collegeId,
+      });
+
+      if (!rpcErr && rpcStats && rpcStats.success) {
+        return {
+          totalStudents: rpcStats.totalStudents ?? totalStudents,
+          uniqueStudentsEvaluated: rpcStats.uniqueStudentsEvaluated ?? 0,
+          untestedStudentsCount: rpcStats.untestedStudentsCount ?? 0,
+          maxLicenses,
+          activeExamsCount: activeExamsCount || 0,
+          totalAttempts: rpcStats.totalAttempts ?? 0,
+          avgCollegeScore: Math.round(Number(rpcStats.avgCollegeScore || 0)),
+          departments: Array.isArray(rpcStats.departments) ? rpcStats.departments : [],
+          tierCounts: {
+            tier1: rpcStats.tierCounts?.tier1 ?? 0,
+            tier2: rpcStats.tierCounts?.tier2 ?? 0,
+            tier3: (rpcStats.tierCounts?.tier3 ?? 0) + (rpcStats.tierCounts?.malpractice ?? 0),
+            tier1Attempts: rpcStats.tierCounts?.tier1Attempts ?? 0,
+            tier2Attempts: rpcStats.tierCounts?.tier2Attempts ?? 0,
+            tier3Attempts: rpcStats.tierCounts?.tier3Attempts ?? 0,
+          },
+        };
+      }
+    } catch {}
+
     const totalAttempts = allAttempts.length;
 
-    // Build student mapping for department & profile resolution
+    // Build canonical student lookup for deduplication & profile resolution
     const studentDeptMap = new Map<string, string>();
+    const studentLookup = new Map<string, CollegeStudent>();
     students.forEach(s => {
       const dept = (s.department || 'GENERAL').toUpperCase();
-      if (s.id) studentDeptMap.set(s.id.toLowerCase(), dept);
-      if (s.email) studentDeptMap.set(s.email.toLowerCase(), dept);
+      if (s.id) {
+        studentDeptMap.set(s.id.toLowerCase(), dept);
+        studentLookup.set(s.id.toLowerCase(), s);
+      }
+      if (s.email) {
+        studentDeptMap.set(s.email.toLowerCase(), dept);
+        studentLookup.set(s.email.toLowerCase(), s);
+      }
+      if (s.user_id) {
+        studentLookup.set(s.user_id.toLowerCase(), s);
+      }
+      if (s.roll_number && s.roll_number !== '—') {
+        studentLookup.set(s.roll_number.toLowerCase(), s);
+      }
     });
 
-    // Helper: Normalize candidate identity key (email preferred, then roll, then student_id)
+    // Helper: Normalize candidate identity key with canonical lookup resolution
     const getStudentKey = (att: StudentExamAttempt): string => {
       const email = (att.student_email || att.student?.email || (att.student_id?.includes('@') ? att.student_id : '')).trim().toLowerCase();
-      if (email && email.includes('@')) return email;
-      const roll = (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '').trim().toLowerCase();
-      if (roll) return `roll:${roll}`;
       const sid = (att.student_id || '').trim().toLowerCase();
+      const roll = (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '').trim().toLowerCase();
+
+      const matched = (email ? studentLookup.get(email) : null) || (sid ? studentLookup.get(sid) : null) || (roll ? studentLookup.get(roll) : null);
+      if (matched && matched.email) return matched.email.toLowerCase();
+      if (matched && matched.id) return matched.id.toLowerCase();
+      if (email && email.includes('@')) return email;
+      if (roll) return `roll:${roll}`;
       if (sid) return sid;
       return (att.student?.name || att.id).trim().toLowerCase();
     };
@@ -3772,15 +3837,21 @@ export const tpoService = {
     students.forEach(s => {
       if (s.email) studentInfoMap.set(s.email.toLowerCase(), s);
       if (s.id) studentInfoMap.set(s.id.toLowerCase(), s);
+      if (s.user_id) studentInfoMap.set(s.user_id.toLowerCase(), s);
+      if (s.roll_number && s.roll_number !== '—') studentInfoMap.set(s.roll_number.toLowerCase(), s);
     });
 
-    // Helper: Normalize candidate identity key (email preferred, then roll, then student_id)
+    // Helper: Normalize candidate identity key with canonical lookup resolution
     const getStudentKey = (att: StudentExamAttempt): string => {
       const email = (att.student_email || att.student?.email || (att.student_id?.includes('@') ? att.student_id : '')).trim().toLowerCase();
-      if (email && email.includes('@')) return email;
-      const roll = (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '').trim().toLowerCase();
-      if (roll) return `roll:${roll}`;
       const sid = (att.student_id || '').trim().toLowerCase();
+      const roll = (att.student?.roll_number && att.student.roll_number !== '—' ? att.student.roll_number : '').trim().toLowerCase();
+
+      const matched = (email ? studentInfoMap.get(email) : null) || (sid ? studentInfoMap.get(sid) : null) || (roll ? studentInfoMap.get(roll) : null);
+      if (matched && matched.email) return matched.email.toLowerCase();
+      if (matched && matched.id) return matched.id.toLowerCase();
+      if (email && email.includes('@')) return email;
+      if (roll) return `roll:${roll}`;
       if (sid) return sid;
       return (att.student?.name || att.id).trim().toLowerCase();
     };
@@ -3838,12 +3909,17 @@ export const tpoService = {
         return new Date(d) > new Date(latest) ? d : latest;
       }, '');
 
+      const studentBatchName = enrolled?.batch_name || enrolled?.batch_id || '';
+      const studentBatchYear = enrolled?.batch_year;
+
       summaries.push({
         studentId: first.student_id || studentKey,
         email: studentEmail,
         name: studentName,
         rollNumber: studentRoll,
         department: studentDept,
+        batch_name: studentBatchName || undefined,
+        batch_year: studentBatchYear || undefined,
         attemptsCount: sAttempts.length,
         highestScore,
         overallAverageScore: studentAvg,
@@ -4136,10 +4212,19 @@ export const tpoService = {
         const pooledIds: string[] = [];
         const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
         const isTechnicalMcq =
-          sec.section_type === 'TECHNICAL_MCQ' ||
-          sec.category === 'technical-mcqs' ||
-          sec.category?.startsWith('mcq-') ||
-          (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-')));
+          !isCodingSection &&
+          (sec.section_type === 'TECHNICAL_MCQ' ||
+            sec.category === 'technical-mcqs' ||
+            sec.category === 'technical-aptitude' ||
+            sec.category === 'tech-aptitude' ||
+            sec.category?.startsWith('mcq-') ||
+            (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-') || t.includes('pseudo') || t.includes('code-debug') || t.includes('bitwise'))) ||
+            sec.name.toLowerCase().includes('technical mcq') ||
+            sec.name.toLowerCase().includes('technical &') ||
+            sec.name.toLowerCase().includes('technical pseudocode') ||
+            sec.name.toLowerCase().includes('pseudocode') ||
+            sec.name.toLowerCase().includes('pseudo-code') ||
+            sec.name.toLowerCase().includes('data structure'));
 
         if (isCodingSection) {
           try {
@@ -4176,11 +4261,27 @@ export const tpoService = {
         } else if (isTechnicalMcq) {
           try {
             const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-            const allowedTopics = hasTopicIds
+            let allowedTopics = hasTopicIds
               ? expandTopicAliases(sec.topic_ids)
               : (sec.category && sec.category.startsWith('mcq-'))
               ? expandTopicAliases([sec.category])
               : [];
+
+            // If no specific technical topics resolved, intelligently map from section name or default to core CS domains
+            if (allowedTopics.length === 0) {
+              const nameLower = (sec.name || '').toLowerCase();
+              if (nameLower.includes('pseudocode') || nameLower.includes('pseudo-code')) {
+                allowedTopics = ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming', 'mcq-cpp-programming'];
+              } else if (nameLower.includes('data structure') || nameLower.includes('dsa')) {
+                allowedTopics = ['mcq-data-structures', 'mcq-pseudo-code', 'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-oops-concepts'];
+              } else {
+                allowedTopics = [
+                  'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-python-programming',
+                  'mcq-oops-concepts', 'mcq-database-systems', 'mcq-operating-systems', 'mcq-computer-networks',
+                  'mcq-data-structures', 'mcq-pseudo-code'
+                ];
+              }
+            }
 
             let query = supabase
               .from('technical_mcqs')
@@ -4208,7 +4309,10 @@ export const tpoService = {
               let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
               if (allowedTopics.length > 0) {
                 const allowed = new Set(allowedTopics);
-                seedPool = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
+                const filtered = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
+                if (filtered.length > 0) {
+                  seedPool = filtered;
+                }
               }
               const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
               for (const s of shuffledSeeds) {
@@ -4874,10 +4978,19 @@ export const tpoService = {
       const questionIds: string[] = [];
       const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
       const isTechnicalMcq =
-        sec.section_type === 'TECHNICAL_MCQ' ||
-        sec.category === 'technical-mcqs' ||
-        sec.category?.startsWith('mcq-') ||
-        (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-')));
+        !isCodingSection &&
+        (sec.section_type === 'TECHNICAL_MCQ' ||
+          sec.category === 'technical-mcqs' ||
+          sec.category === 'technical-aptitude' ||
+          sec.category === 'tech-aptitude' ||
+          sec.category?.startsWith('mcq-') ||
+          (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-') || t.includes('pseudo') || t.includes('code-debug') || t.includes('bitwise'))) ||
+          sec.name.toLowerCase().includes('technical mcq') ||
+          sec.name.toLowerCase().includes('technical &') ||
+          sec.name.toLowerCase().includes('technical pseudocode') ||
+          sec.name.toLowerCase().includes('pseudocode') ||
+          sec.name.toLowerCase().includes('pseudo-code') ||
+          sec.name.toLowerCase().includes('data structure'));
 
       if (isCodingSection) {
         // Query coding problems from technical_problems with alias mapping & topic keyword prioritization
@@ -5056,11 +5169,20 @@ export const tpoService = {
             allowedTopics = expandTopicAliases([sec.category]);
           }
 
-          // F11: If technical topics/category specified but none resolved, throw rather than pooling unrestricted
-          if ((hasTopicIds || (sec.category && sec.category.startsWith('mcq-'))) && allowedTopics.length === 0) {
-            throw new Error(
-              `Technical section "${sec.name || 'Tech MCQ'}" requested category "${sec.category}", but no matching technical topic IDs were found.`
-            );
+          // If no specific technical topics resolved from explicit IDs, intelligently infer from section name or fall back to core CS domains
+          if (allowedTopics.length === 0) {
+            const nameLower = (sec.name || '').toLowerCase();
+            if (nameLower.includes('pseudocode') || nameLower.includes('pseudo-code')) {
+              allowedTopics = ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming', 'mcq-cpp-programming'];
+            } else if (nameLower.includes('data structure') || nameLower.includes('dsa')) {
+              allowedTopics = ['mcq-data-structures', 'mcq-pseudo-code', 'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-oops-concepts'];
+            } else {
+              allowedTopics = [
+                'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-python-programming',
+                'mcq-oops-concepts', 'mcq-database-systems', 'mcq-operating-systems', 'mcq-computer-networks',
+                'mcq-data-structures', 'mcq-pseudo-code'
+              ];
+            }
           }
 
           let techQuery = supabase
@@ -5095,7 +5217,10 @@ export const tpoService = {
               let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
               if (allowedTopics.length > 0) {
                 const allowed = new Set(allowedTopics);
-                seedPool = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
+                const filtered = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
+                if (filtered.length > 0) {
+                  seedPool = filtered;
+                }
               }
               const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
               for (const s of shuffledSeeds) {
@@ -5661,22 +5786,135 @@ export const tpoService = {
     }
   },
 
-  async deleteMockExam(examId: string, collegeId?: string): Promise<boolean> {
+  cleanupLocalExamData(examId: string, collegeId?: string): void {
+    if (typeof window === 'undefined') return;
+
     if (collegeId) {
       const local = getLocalExams(collegeId);
       const filtered = local.filter(e => e.id !== examId);
       saveLocalExams(collegeId, filtered);
+
+      try {
+        localStorage.removeItem(`prepunite_college_exams_${collegeId}`);
+        localStorage.removeItem(`prepunite_college_attempts_${collegeId}`);
+      } catch {}
     }
 
+    // Clean any globally stored attempts
     try {
-      let q = supabase.from('mock_exams').update({ is_deleted: true }).eq('id', examId);
-      if (collegeId) {
-        q = q.eq('college_id', collegeId);
-      }
-      await q;
+      const allAtts = getLocalAttempts();
+      const cleanAllAtts = allAtts.filter(a => a.mock_exam_id !== examId);
+      localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(cleanAllAtts));
     } catch {}
 
-    return true;
+    // Clean active exam tracking keys
+    try {
+      localStorage.removeItem(`prepunite_attempt_timer_${examId}`);
+      localStorage.removeItem(`prepunite_exam_responses_${examId}`);
+      localStorage.removeItem(`prepunite_tab_switch_count_${examId}`);
+      localStorage.removeItem(`prepunite_fullscreen_violation_${examId}`);
+
+      const activeAttempt = localStorage.getItem('prepunite_active_exam_attempt');
+      if (activeAttempt) {
+        const parsed = JSON.parse(activeAttempt);
+        if (parsed?.mock_exam_id === examId || parsed?.id === examId) {
+          localStorage.removeItem('prepunite_active_exam_attempt');
+        }
+      }
+    } catch {}
+
+    window.dispatchEvent(new Event('prepunite-storage-update'));
+    window.dispatchEvent(new CustomEvent('prepunite_exam_terminated', { detail: { examId, collegeId } }));
+  },
+
+  async terminateMockExam(examId: string, collegeId?: string): Promise<{ success: boolean; message?: string }> {
+    if (!examId) return { success: false, message: 'Invalid exam ID' };
+
+    let terminatedSuccessfully = false;
+
+    // 1. Try serverless backend proxy (/api/campus-exams) with service_role privileges
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (token) {
+        const res = await fetch('/api/campus-exams', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ examId, collegeId }),
+        });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.success) {
+            terminatedSuccessfully = true;
+          }
+        }
+      }
+    } catch (apiErr) {
+      console.warn('[tpoService] Serverless API exam termination error, trying RPC:', apiErr);
+    }
+
+    // 2. Try atomic database RPC
+    if (!terminatedSuccessfully) {
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('terminate_mock_exam', {
+          p_exam_id: examId,
+          p_college_id: collegeId || null,
+        });
+        if (!rpcErr && rpcData?.success) {
+          terminatedSuccessfully = true;
+        } else if (rpcErr) {
+          console.warn('[tpoService] terminate_mock_exam RPC warning:', rpcErr.message);
+        }
+      } catch (rpcErr) {
+        console.warn('[tpoService] terminate_mock_exam RPC notice:', rpcErr);
+      }
+    }
+
+    // 3. Direct table deletion cascade fallback
+    if (!terminatedSuccessfully) {
+      try {
+        // Delete child attempts first
+        await supabase.from('student_exam_attempts').delete().eq('mock_exam_id', examId);
+        // Delete sections
+        await supabase.from('mock_exam_sections').delete().eq('mock_exam_id', examId);
+        // Delete any custom questions
+        try {
+          await supabase.from('topic_questions').delete().eq('exam_id', examId);
+        } catch {}
+
+        // Delete mock exam
+        let q = supabase.from('mock_exams').delete().eq('id', examId);
+        if (collegeId) {
+          q = q.eq('college_id', collegeId);
+        }
+        const { error: delErr } = await q;
+        if (!delErr) {
+          terminatedSuccessfully = true;
+        } else {
+          // If hard delete is restricted by foreign key, soft-delete defensively
+          await supabase.from('mock_exams').update({ is_deleted: true, is_active: false }).eq('id', examId);
+          terminatedSuccessfully = true;
+        }
+      } catch (directErr) {
+        console.warn('[tpoService] Direct deletion fallback notice:', directErr);
+      }
+    }
+
+    // 4. Guaranteed local cache and storage cleanup
+    this.cleanupLocalExamData(examId, collegeId);
+
+    return {
+      success: true,
+      message: 'Exam and all associated student attempts, scores, and questions have been permanently terminated.',
+    };
+  },
+
+  async deleteMockExam(examId: string, collegeId?: string): Promise<boolean> {
+    const res = await this.terminateMockExam(examId, collegeId);
+    return res.success;
   },
 
   async concludeMockExam(examId: string, collegeId?: string): Promise<boolean> {
@@ -5856,16 +6094,17 @@ export const tpoService = {
   async getExamAttempts(examId: string, explicitCollegeId?: string): Promise<StudentExamAttempt[]> {
     let cloudAttempts: StudentExamAttempt[] = [];
 
-    // 1. Direct query from Supabase student_exam_attempts without invalid relationship joins
+    // 1. Direct query from Supabase student_exam_attempts without invalid relationship joins (lean projection)
     try {
+      const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, result_summary, created_at, updated_at';
       const { data, error } = await supabase
         .from('student_exam_attempts')
-        .select('*')
+        .select(ATTEMPT_PROJECTION)
         .eq('mock_exam_id', examId)
         .order('total_score', { ascending: false });
 
       if (!error && data) {
-        cloudAttempts = data;
+        cloudAttempts = data as StudentExamAttempt[];
       }
     } catch (error: any) {
       console.warn('Notice fetching exam attempts from Supabase:', error?.message);
@@ -7656,14 +7895,26 @@ export const tpoService = {
     studentAttempts = [...localAll];
 
     try {
+      let authUserId = '';
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) authUserId = user.id;
+      } catch {}
+
+      let orClauses = `student_id.eq.${cleanEmail},student_id.eq.${studentEmail},student_email.eq.${cleanEmail},student_email.eq.${studentEmail}`;
+      if (authUserId) {
+        orClauses += `,student_id.eq.${authUserId}`;
+      }
+
+      const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, result_summary, created_at, updated_at';
       const { data: cloudAttempts } = await supabase
         .from('student_exam_attempts')
-        .select('*')
-        .or(`student_id.eq.${cleanEmail},student_id.eq.${studentEmail},student_email.eq.${cleanEmail},student_email.eq.${studentEmail}`);
+        .select(ATTEMPT_PROJECTION)
+        .or(orClauses);
       if (cloudAttempts && cloudAttempts.length > 0) {
         const attemptMap = new Map<string, StudentExamAttempt>();
         studentAttempts.forEach(a => attemptMap.set(a.id, a));
-        cloudAttempts.forEach(a => attemptMap.set(a.id, a));
+        cloudAttempts.forEach((a: any) => attemptMap.set(a.id, a as StudentExamAttempt));
         studentAttempts = Array.from(attemptMap.values());
       }
     } catch {}

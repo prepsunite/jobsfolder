@@ -252,13 +252,13 @@ export const BUILTIN_BLUEPRINTS: MockExamTemplate[] = [
       },
       {
         name: 'Technical Pseudocode & Common Applications',
-        section_type: 'MCQ',
+        section_type: 'TECHNICAL_MCQ',
         question_count: 15,
         marks_per_correct: 1,
         negative_marking: 0,
         duration_minutes: 20,
-        category: 'technical-aptitude',
-        topic_ids: [],
+        category: 'technical-mcqs',
+        topic_ids: ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming', 'mcq-cpp-programming'],
         random_sampling: true,
       },
     ],
@@ -281,13 +281,13 @@ export const BUILTIN_BLUEPRINTS: MockExamTemplate[] = [
     sections: [
       {
         name: 'Pseudocode & Algorithm Analysis',
-        section_type: 'MCQ',
+        section_type: 'TECHNICAL_MCQ',
         question_count: 20,
         marks_per_correct: 1,
         negative_marking: 0,
         duration_minutes: 30,
-        category: 'technical-aptitude',
-        topic_ids: [],
+        category: 'technical-mcqs',
+        topic_ids: ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-oops-concepts'],
         random_sampling: true,
       },
       {
@@ -374,13 +374,21 @@ export const BUILTIN_BLUEPRINTS: MockExamTemplate[] = [
     sections: [
       {
         name: 'Technical & Data Structures MCQs',
-        section_type: 'MCQ',
+        section_type: 'TECHNICAL_MCQ',
         question_count: 15,
         marks_per_correct: 2,
         negative_marking: 0.5,
         duration_minutes: 30,
-        category: 'technical-aptitude',
-        topic_ids: [],
+        category: 'technical-mcqs',
+        topic_ids: [
+          'mcq-data-structures',
+          'mcq-pseudo-code',
+          'mcq-oops-concepts',
+          'mcq-c-programming',
+          'mcq-java-programming',
+          'mcq-operating-systems',
+          'mcq-database-systems',
+        ],
         random_sampling: true,
       },
       {

@@ -12,8 +12,10 @@ import {
   Calendar,
   KeyRound,
   Sliders,
+  Trash2,
 } from 'lucide-react';
 import type { MockExam, CollegeBatch } from '@/types/tpo';
+import { useToast } from '@/contexts/ToastContext';
 import CreateMockExamModal from '@/components/tpo/CreateMockExamModal';
 import ShareMockExamModal from '@/components/tpo/ShareMockExamModal';
 import ManageExamScheduleModal from '@/components/tpo/ManageExamScheduleModal';
@@ -80,6 +82,7 @@ export default function TpoExamsPage() {
   }>();
   const queryClient = useQueryClient();
 
+  const { toast, confirmModal } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
   const [selectedScheduleExam, setSelectedScheduleExam] = useState<MockExam | null>(null);
@@ -87,6 +90,36 @@ export default function TpoExamsPage() {
   const [selectedPreviewPaperExam, setSelectedPreviewPaperExam] = useState<MockExam | null>(null);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE'>('ALL');
   const [selectedBatchFilter, setSelectedBatchFilter] = useState<string>('ALL');
+  const [terminatingExamId, setTerminatingExamId] = useState<string | null>(null);
+
+  const handleTerminateExam = async (exam: MockExam) => {
+    const confirmed = await confirmModal({
+      title: 'Permanently Terminate Mock Exam?',
+      message: `Are you sure you want to permanently terminate "${exam.title}"? This will purge the mock drive, all student attempts, scores, and question sections from the database so your dashboard is not flooded. This action CANNOT be undone.`,
+      confirmText: 'Terminate & Purge Exam',
+      cancelText: 'Cancel',
+      isDanger: true,
+    });
+
+    if (!confirmed) return;
+
+    setTerminatingExamId(exam.id);
+    try {
+      const res = await tpoService.terminateMockExam(exam.id, collegeId);
+      if (res.success) {
+        toast.success(`Exam "${exam.title}" has been permanently terminated and purged from the database.`);
+        queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-college-attempts', collegeId] });
+      } else {
+        toast.error(res.message || 'Failed to terminate exam.');
+      }
+    } catch (err: any) {
+      toast.error('Error terminating exam: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setTerminatingExamId(null);
+    }
+  };
 
   const {
     data: mockExams = [],
@@ -386,10 +419,19 @@ export default function TpoExamsPage() {
                 <button
                   onClick={() => setSelectedShareExam(exam)}
                   title="Share with Students via WhatsApp, Link & Email"
-                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-bold transition-colors shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FD4A32]/10 hover:bg-[#FD4A32]/20 text-[#FD4A32] text-xs font-bold transition-colors shrink-0 cursor-pointer"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>Share</span>
+                </button>
+                <button
+                  onClick={() => handleTerminateExam(exam)}
+                  disabled={terminatingExamId === exam.id}
+                  title="Permanently Terminate & Purge Exam from Database"
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{terminatingExamId === exam.id ? 'Purging...' : 'Terminate'}</span>
                 </button>
               </div>
 

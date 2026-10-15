@@ -36,6 +36,7 @@ export default function TpoAnalyticsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedExamFilter, setSelectedExamFilter] = useState('ALL');
   const [selectedDeptFilter, setSelectedDeptFilter] = useState('ALL');
+  const [selectedBatchFilter, setSelectedBatchFilter] = useState('ALL');
   const [selectedTierFilter, setSelectedTierFilter] = useState('ALL');
   const [selectedAttempt, setSelectedAttempt] = useState<StudentExamAttempt | null>(null);
 
@@ -103,6 +104,8 @@ export default function TpoAnalyticsPage() {
       email: email || s.email,
       roll_number,
       department,
+      batch_name: matched?.batch_name || matched?.batch_id || '',
+      batch_year: matched?.batch_year,
     };
   };
 
@@ -122,6 +125,21 @@ export default function TpoAnalyticsPage() {
   const tier2Attempts = stats?.tierCounts?.tier2Attempts ?? allAttempts.filter(a => (a.percentage || 0) >= 50 && (a.percentage || 0) < 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
   const tier3Attempts = stats?.tierCounts?.tier3Attempts ?? allAttempts.filter(a => (a.percentage || 0) < 50 || a.status === 'TERMINATED_MALPRACTICE').length;
 
+  // Available unique batches from students and student summaries
+  const availableBatches = useMemo(() => {
+    const set = new Set<string>();
+    collegeStudents.forEach(s => {
+      if (s.batch_name) set.add(s.batch_name);
+      else if (s.batch_year) set.add(`Batch ${s.batch_year}`);
+      else if (s.batch_id) set.add(s.batch_id);
+    });
+    studentSummaries.forEach(s => {
+      if (s.batch_name) set.add(s.batch_name);
+      else if (s.batch_year) set.add(`Batch ${s.batch_year}`);
+    });
+    return Array.from(set).sort();
+  }, [collegeStudents, studentSummaries]);
+
   // Filter unique students for Candidate Readiness Roster
   const filteredStudents = studentSummaries.filter(s => {
     const matchesSearch =
@@ -133,13 +151,19 @@ export default function TpoAnalyticsPage() {
       selectedDeptFilter === 'ALL' ||
       (s.department || '').toUpperCase() === selectedDeptFilter.toUpperCase();
 
+    const studentBatch = s.batch_name || (s.batch_year ? `Batch ${s.batch_year}` : '');
+    const matchesBatch =
+      selectedBatchFilter === 'ALL' ||
+      studentBatch.toLowerCase() === selectedBatchFilter.toLowerCase() ||
+      String(s.batch_year) === selectedBatchFilter;
+
     let matchesTier = true;
     if (selectedTierFilter === 'TIER_1') matchesTier = s.tier === 'TIER_1';
     else if (selectedTierFilter === 'TIER_2') matchesTier = s.tier === 'TIER_2';
     else if (selectedTierFilter === 'TIER_3') matchesTier = s.tier === 'TIER_3';
     else if (selectedTierFilter === 'MALPRACTICE') matchesTier = s.hasMalpractice || s.tier === 'MALPRACTICE';
 
-    return matchesSearch && matchesDept && matchesTier;
+    return matchesSearch && matchesDept && matchesBatch && matchesTier;
   });
 
   // Filter candidate attempts for All Submissions Log
@@ -155,6 +179,12 @@ export default function TpoAnalyticsPage() {
       selectedDeptFilter === 'ALL' ||
       (student.department || '').toUpperCase() === selectedDeptFilter.toUpperCase();
 
+    const studentBatch = student.batch_name || (student.batch_year ? `Batch ${student.batch_year}` : '');
+    const matchesBatch =
+      selectedBatchFilter === 'ALL' ||
+      studentBatch.toLowerCase() === selectedBatchFilter.toLowerCase() ||
+      String(student.batch_year) === selectedBatchFilter;
+
     let matchesTier = true;
     const pct = att.percentage || 0;
     if (selectedTierFilter === 'TIER_1') matchesTier = pct >= 70 && att.status !== 'TERMINATED_MALPRACTICE';
@@ -166,7 +196,7 @@ export default function TpoAnalyticsPage() {
       student.email.toLowerCase() === selectedStudentEmail.toLowerCase() ||
       (att.student_id && att.student_id.toLowerCase() === selectedStudentEmail.toLowerCase());
 
-    return matchesSearch && matchesExam && matchesDept && matchesTier && matchesSelectedStudent;
+    return matchesSearch && matchesExam && matchesDept && matchesBatch && matchesTier && matchesSelectedStudent;
   });
 
   // Available unique departments from students and attempts
@@ -205,15 +235,17 @@ export default function TpoAnalyticsPage() {
   const handleDownloadCandidateRoster = () => {
     if (studentSummaries.length === 0) return;
     const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const headers = 'Rank,Roll Number,Student Name,Email,Department,Drives Evaluated,Highest Score (%),Placement Average (%),Placement Readiness Tier,Status,Latest Submission\n';
+    const headers = 'Rank,Roll Number,Student Name,Email,Department,Batch,Drives Evaluated,Highest Score (%),Placement Average (%),Placement Readiness Tier,Status,Latest Submission\n';
     const rows = studentSummaries.map((s, idx) => {
       const latestDate = s.latestSubmissionDate ? new Date(s.latestSubmissionDate).toLocaleDateString() : '—';
+      const batchStr = s.batch_name || (s.batch_year ? `Batch ${s.batch_year}` : '—');
       return [
         idx + 1,
         sanitizeCsvCell(s.rollNumber || '—'),
         sanitizeCsvCell(s.name),
         sanitizeCsvCell(s.email),
         sanitizeCsvCell(s.department || 'General'),
+        sanitizeCsvCell(batchStr),
         s.attemptsCount,
         `${s.highestScore}%`,
         `${s.overallAverageScore}%`,
@@ -517,6 +549,25 @@ export default function TpoAnalyticsPage() {
             </div>
           )}
 
+          {/* Batch / Graduation Cohort Filter */}
+          {availableBatches.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-medium">Batch:</span>
+              <select
+                value={selectedBatchFilter}
+                onChange={e => setSelectedBatchFilter(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-hidden"
+              >
+                <option value="ALL">All Batches</option>
+                {availableBatches.map(batch => (
+                  <option key={batch} value={batch}>
+                    {batch}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Performance Tier Filter */}
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Tier:</span>
@@ -548,12 +599,13 @@ export default function TpoAnalyticsPage() {
             </div>
           )}
 
-          {(searchTerm || selectedExamFilter !== 'ALL' || selectedDeptFilter !== 'ALL' || selectedTierFilter !== 'ALL' || selectedStudentEmail) && (
+          {(searchTerm || selectedExamFilter !== 'ALL' || selectedDeptFilter !== 'ALL' || selectedBatchFilter !== 'ALL' || selectedTierFilter !== 'ALL' || selectedStudentEmail) && (
             <button
               onClick={() => {
                 setSearchTerm('');
                 setSelectedExamFilter('ALL');
                 setSelectedDeptFilter('ALL');
+                setSelectedBatchFilter('ALL');
                 setSelectedTierFilter('ALL');
                 setSelectedStudentEmail(null);
               }}
@@ -645,6 +697,11 @@ export default function TpoAnalyticsPage() {
                           <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             {s.department || 'General'}
                           </span>
+                          {(s.batch_name || s.batch_year) && (
+                            <div className="text-[10px] text-slate-400 font-semibold mt-0.5 whitespace-nowrap">
+                              {s.batch_name || `Batch ${s.batch_year}`}
+                            </div>
+                          )}
                         </td>
                         <td className="py-4 px-3 font-bold text-slate-900 dark:text-white">
                           {s.attemptsCount} {s.attemptsCount === 1 ? 'Drive' : 'Drives'}
@@ -799,6 +856,11 @@ export default function TpoAnalyticsPage() {
                           <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             {s.department || 'General'}
                           </span>
+                          {(s.batch_name || s.batch_year) && (
+                            <div className="text-[10px] text-slate-400 font-semibold mt-0.5 whitespace-nowrap">
+                              {s.batch_name || `Batch ${s.batch_year}`}
+                            </div>
+                          )}
                         </td>
                         <td className="py-4 px-3">
                           <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">

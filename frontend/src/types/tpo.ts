@@ -170,8 +170,8 @@ export interface StudentExamAttempt {
   percentage: number;
   passed: boolean;
   tab_switch_count: number;
-  proctor_events: ProctorEvent[];
-  responses: Record<string, StudentExamResponse>;
+  proctor_events?: ProctorEvent[];
+  responses?: Record<string, StudentExamResponse>;
   result_summary?: CandidateResultSummary;
   student?: {
     name: string;
@@ -201,6 +201,8 @@ export interface EvaluatedStudentSummary {
   name: string;
   rollNumber: string;
   department: string;
+  batch_name?: string;
+  batch_year?: number;
   attemptsCount: number;
   highestScore: number;
   overallAverageScore: number;

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, Link, useOutletContext } from 'react-router';
+import { useParams, Link, useOutletContext, useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import {
@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   ChevronDown,
   ChevronUp,
+  Trash2,
 } from 'lucide-react';
 import type { MockExam, StudentExamAttempt, CollegeStudent, ProctorEvent } from '@/types/tpo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,7 +41,8 @@ export default function TpoExamDetailPage() {
   const { examId } = useParams<{ examId: string }>();
   const { collegeId, currentCollege } = useOutletContext<TpoOutletContext>();
   const { isAdmin } = useAuth();
-  const { toast } = useToast();
+  const { toast, confirmModal } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,6 +56,39 @@ export default function TpoExamDetailPage() {
   const [isDiagnosticModalOpen, setIsDiagnosticModalOpen] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isProctorTrailExpanded, setIsProctorTrailExpanded] = useState(true);
+  const [isTerminating, setIsTerminating] = useState(false);
+
+  const handleTerminateExam = async () => {
+    if (!exam || !examId) return;
+
+    const confirmed = await confirmModal({
+      title: 'Permanently Terminate Mock Drive?',
+      message: `Are you sure you want to terminate "${exam.title}"? This will permanently delete the mock drive, all ${attempts.length} student attempts, scores, answer sheets, and question sections from the database so your dashboard is not flooded. This action CANNOT be undone.`,
+      confirmText: 'Terminate & Purge Drive',
+      cancelText: 'Cancel',
+      isDanger: true,
+    });
+
+    if (!confirmed) return;
+
+    setIsTerminating(true);
+    try {
+      const res = await tpoService.terminateMockExam(examId, collegeId);
+      if (res.success) {
+        toast.success(`Exam "${exam.title}" was permanently terminated and purged from the database.`);
+        queryClient.invalidateQueries({ queryKey: ['tpo-mock-exams', collegeId] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+        queryClient.invalidateQueries({ queryKey: ['tpo-college-attempts', collegeId] });
+        navigate('/tpo/exams');
+      } else {
+        toast.error(res.message || 'Failed to terminate exam.');
+      }
+    } catch (err: any) {
+      toast.error('Error terminating exam: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsTerminating(false);
+    }
+  };
 
   // Fetch Exam Metadata
   const { data: exam, isLoading: examLoading } = useQuery<MockExam | null>({
@@ -412,6 +447,15 @@ export default function TpoExamDetailPage() {
             >
               <Download className="w-3.5 h-3.5" />
               <span>CSV</span>
+            </button>
+            <button
+              onClick={handleTerminateExam}
+              disabled={isTerminating}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-xs font-bold text-rose-700 dark:text-rose-300 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+              title="Permanently Terminate & Purge Mock Drive from Database"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+              <span>{isTerminating ? 'Purging...' : 'Terminate'}</span>
             </button>
           </div>
         </div>

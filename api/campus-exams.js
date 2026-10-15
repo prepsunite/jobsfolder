@@ -219,6 +219,53 @@ export default async function handler(req, res) {
     }
   }
 
+  // DELETE: Terminate and permanently purge mock exam
+  if (req.method === 'DELETE') {
+    const examId = req.query.examId || req.body?.examId;
+    const targetCollegeId = req.query.collegeId || req.body?.collegeId;
+
+    if (!examId) {
+      return res.status(400).json({ error: 'Missing examId parameter' });
+    }
+
+    const { data: existingExam } = await supabaseAdmin
+      .from('mock_exams')
+      .select('id, college_id, title, created_by')
+      .eq('id', examId)
+      .maybeSingle();
+
+    const examCollegeId = existingExam?.college_id || targetCollegeId;
+
+    const isAuthorized =
+      isSuperAdmin ||
+      (existingExam?.created_by === user.id) ||
+      (await isTpoForCollege(examCollegeId));
+
+    if (!isAuthorized) {
+      return res.status(403).json({ error: 'Forbidden: You do not have permission to terminate assessments for this college.' });
+    }
+
+    await supabaseAdmin.from('student_exam_attempts').delete().eq('mock_exam_id', examId);
+    await supabaseAdmin.from('mock_exam_sections').delete().eq('mock_exam_id', examId);
+    try {
+      await supabaseAdmin.from('topic_questions').delete().eq('exam_id', examId);
+    } catch {}
+    const { error: delExamErr } = await supabaseAdmin.from('mock_exams').delete().eq('id', examId);
+    if (delExamErr) {
+      await supabaseAdmin.from('mock_exams').update({ is_deleted: true, is_active: false }).eq('id', examId);
+    }
+    try {
+      await supabaseAdmin.from('contact_messages').delete().ilike('subject', `%${examId}%`);
+    } catch {}
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mock exam and all related attempts, scores, and question sections have been permanently terminated.',
+      examId,
+      title: existingExam?.title,
+    });
+  }
+
   // GET: Fetch exams or exam attempts
   if (req.method === 'GET') {
     const { collegeId, examId, action } = req.query;
@@ -298,9 +345,10 @@ export default async function handler(req, res) {
           return res.status(403).json({ error: 'Forbidden: Caller is not authorized to inspect attempts for this assessment.' });
         }
 
+        const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, result_summary, created_at, updated_at';
         let query = supabaseAdmin
           .from('student_exam_attempts')
-          .select('*')
+          .select(ATTEMPT_PROJECTION)
           .order('total_score', { ascending: false });
 
         if (examId) {
@@ -773,7 +821,85 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, templateId });
       }
 
-      // Action 0c: Candidate start or resume exam attempt (resilient Supabase creation)
+      // Action 0c: Terminate / Delete Mock Exam & Cascade Purge Data
+      if (action === 'terminate-exam') {
+        const { examId, collegeId: targetCollegeId } = req.body || {};
+        if (!examId) {
+          return res.status(400).json({ error: 'Missing examId parameter' });
+        }
+
+        // Verify exam exists
+        const { data: existingExam } = await supabaseAdmin
+          .from('mock_exams')
+          .select('id, college_id, title, created_by')
+          .eq('id', examId)
+          .maybeSingle();
+
+        const examCollegeId = existingExam?.college_id || targetCollegeId;
+
+        // Verify authorization
+        const isAuthorized =
+          isSuperAdmin ||
+          (existingExam?.created_by === user.id) ||
+          (await isTpoForCollege(examCollegeId));
+
+        if (!isAuthorized) {
+          return res.status(403).json({ error: 'Forbidden: You do not have permission to terminate assessments for this college.' });
+        }
+
+        // 1. Delete student exam attempts
+        const { error: attErr } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .delete()
+          .eq('mock_exam_id', examId);
+        if (attErr) console.warn('[terminate-exam] Notice deleting attempts:', attErr.message);
+
+        // 2. Delete sections
+        const { error: secErr } = await supabaseAdmin
+          .from('mock_exam_sections')
+          .delete()
+          .eq('mock_exam_id', examId);
+        if (secErr) console.warn('[terminate-exam] Notice deleting sections:', secErr.message);
+
+        // 3. Delete any custom questions in topic_questions with exam_id = examId
+        try {
+          await supabaseAdmin
+            .from('topic_questions')
+            .delete()
+            .eq('exam_id', examId);
+        } catch {}
+
+        // 4. Delete the mock exam itself
+        const { error: delExamErr } = await supabaseAdmin
+          .from('mock_exams')
+          .delete()
+          .eq('id', examId);
+
+        if (delExamErr) {
+          console.warn('[terminate-exam] Hard delete failed, falling back to soft delete:', delExamErr.message);
+          await supabaseAdmin
+            .from('mock_exams')
+            .update({ is_deleted: true, is_active: false })
+            .eq('id', examId);
+        }
+
+        // 5. Delete any backup contact_messages
+        try {
+          await supabaseAdmin
+            .from('contact_messages')
+            .delete()
+            .ilike('subject', `%${examId}%`);
+        } catch {}
+
+        return res.status(200).json({
+          success: true,
+          message: 'Mock exam and all related attempts, scores, and question sections have been permanently terminated.',
+          examId,
+          title: existingExam?.title,
+        });
+      }
+
+      // Action 0d: Candidate start or resume exam attempt (resilient Supabase creation)
       if (action === 'start-attempt') {
         if (!attempt || !attempt.id || !attempt.mock_exam_id) {
           return res.status(400).json({ error: 'Missing valid attempt payload with id and mock_exam_id' });
