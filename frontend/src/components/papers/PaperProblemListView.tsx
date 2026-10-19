@@ -160,14 +160,21 @@ export default function PaperProblemListView({
                 </div>
               )}
 
-              {/* Sample Test Cases (Campus Standard 2-Col Grid) */}
+              {/* Sample Test Cases (Campus Standard 2-Col Grid, max 2 shown in question view) */}
               {question.testCases && question.testCases.length > 0 && (
                 <div className="mt-3.5 space-y-2">
-                  <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
-                    Sample Test Cases (Campus Standard):
-                  </span>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider block font-display">
+                      Sample Test Cases:
+                    </span>
+                    {question.testCases.length > 2 && (
+                      <span className="text-[10px] font-medium font-sans text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        + {question.testCases.length - 2} additional test case{question.testCases.length - 2 > 1 ? 's' : ''} in Practice IDE
+                      </span>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {question.testCases.map((tc, tcIdx) => (
+                    {question.testCases.slice(0, 2).map((tc, tcIdx) => (
                       <div
                         key={tcIdx}
                         className="p-3 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5 text-xs font-mono"

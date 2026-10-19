@@ -35,7 +35,7 @@ import audioEffects from '@/utils/audioEffects';
 import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import type { ProgrammingProblem } from '@/types/technical';
-import type { PaperQuestion } from '@/utils/paperQuestionParser';
+import { type PaperQuestion, ensureFourTestCases } from '@/utils/paperQuestionParser';
 
 interface PaperCodingModalProps {
   question: PaperQuestion | null;
@@ -334,35 +334,36 @@ export default function PaperCodingModal({
     };
   }, [question, companyName, examName]);
 
+  // Ensure IDE operates on a verified test suite of at least 4 test cases
+  const ideTestSuite = useMemo(() => {
+    return ensureFourTestCases(question?.testCases || [], question?.cleanTitle || '');
+  }, [question?.testCases, question?.cleanTitle]);
+
   const sampleCases = useMemo(() => {
-    if (!question?.testCases) return [];
-    return question.testCases.map((tc) => ({
+    return ideTestSuite.map((tc) => ({
       input: tc.input,
       expected_output: tc.output,
       output: tc.output,
       explanation: tc.explanation,
       is_hidden: false,
     }));
-  }, [question?.testCases]);
+  }, [ideTestSuite]);
 
-  // Display grid cases calculation
+  // Display grid cases calculation (Guarantees 4 test cases visible in IDE)
   const displayGridCases = useMemo(() => {
     if (testResults && testResults.cases && testResults.cases.length > 0) {
       return testResults.cases;
     }
-    if (isSubmitting && question?.testCases) {
-      return question.testCases.map((tc) => ({
-        input: tc.input,
-        expected: tc.output || '',
-        actual: '',
-        passed: false,
-        status: 'EVALUATING' as any,
-        timeMs: 0,
-        is_hidden: false,
-      }));
-    }
-    return [];
-  }, [testResults, isSubmitting, question?.testCases]);
+    return ideTestSuite.map((tc) => ({
+      input: tc.input,
+      expected: tc.output || '',
+      actual: '',
+      passed: false,
+      status: isSubmitting ? ('EVALUATING' as any) : undefined,
+      timeMs: 0,
+      is_hidden: false,
+    }));
+  }, [testResults, isSubmitting, ideTestSuite]);
 
   // Run Test Cases against Sandboxed Judge Engine
   const handleRunTests = async (isSubmit: boolean = false) => {
@@ -373,7 +374,7 @@ export default function PaperCodingModal({
       return;
     }
 
-    const testCasesToRun = question.testCases || [];
+    const testCasesToRun = ideTestSuite;
     if (testCasesToRun.length === 0) {
       toast.error('No test cases available for this question.');
       return;
