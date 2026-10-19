@@ -273,6 +273,12 @@ export const CANONICAL_FALLBACK_TEST_CASES: Record<string, PaperTestCase[]> = {
     { title: 'Test Case 2', input: 'words = ["ab", "ba"]', output: '["null", "false", "true"]' },
     { title: 'Test Case 3', input: 'words = ["a"]', output: '["null", "true"]' },
     { title: 'Test Case 4', input: 'words = ["xyz"]', output: '["null", "false", "false", "true"]' }
+  ],
+  'encoded string decoding': [
+    { title: 'Test Case 1', input: '101101110', output: 'ABC' },
+    { title: 'Test Case 2', input: '11110111110', output: 'DE' },
+    { title: 'Test Case 3', input: '1111111111111111111111111011111111111111111111111111', output: 'YZ', explanation: '25 ones (Y) separated by 0 and 26 ones (Z).' },
+    { title: 'Test Case 4', input: '1', output: 'A' }
   ]
 };
 
@@ -283,8 +289,8 @@ export function ensureFourTestCases(cases: PaperTestCase[], title: string = ''):
   const normTitle = (title || '').toLowerCase().trim();
   let baseCases = cases;
 
-  if (!baseCases || baseCases.length === 0 || baseCases.length === 1) {
-    if (CANONICAL_FALLBACK_TEST_CASES[normTitle]) {
+  if (CANONICAL_FALLBACK_TEST_CASES[normTitle]) {
+    if (!baseCases || baseCases.length <= 1 || normTitle === 'encoded string decoding') {
       baseCases = CANONICAL_FALLBACK_TEST_CASES[normTitle];
     }
   }
@@ -350,8 +356,10 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
 
       let testCases = parseTestCasesFromBlock(b);
       const cleanKey = cleanTitle.toLowerCase().trim();
-      if ((testCases.length === 0 || testCases.length === 1) && CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
-        testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
+      if (CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
+        if (testCases.length <= 1 || cleanKey === 'encoded string decoding') {
+          testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
+        }
       }
       const difficulty = inferQuestionDifficulty(cleanTitle, desc, b);
 
@@ -404,8 +412,10 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
       const descText = cleanHtmlTags(blockContent).replace(rawTitle, '').split(/Constraints/i)[0].trim();
       let testCases = parseTestCasesFromBlock(blockContent);
       const cleanKey = cleanTitle.toLowerCase().trim();
-      if ((testCases.length === 0 || testCases.length === 1) && CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
-        testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
+      if (CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
+        if (testCases.length <= 1 || cleanKey === 'encoded string decoding') {
+          testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
+        }
       }
       const difficulty = inferQuestionDifficulty(cleanTitle, descText, blockContent);
 
@@ -442,8 +452,10 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
 
       let testCases = parseTestCasesFromBlock(blockContent);
       const cleanKey = cleanTitle.toLowerCase().trim();
-      if ((testCases.length === 0 || testCases.length === 1) && CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
-        testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
+      if (CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
+        if (testCases.length <= 1 || cleanKey === 'encoded string decoding') {
+          testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
+        }
       }
       const descText = cleanHtmlTags(blockContent).replace(rawTitle, '').split(/Constraints/i)[0].trim();
       const difficulty = inferQuestionDifficulty(cleanTitle, descText, blockContent);

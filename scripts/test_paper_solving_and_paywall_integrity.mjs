@@ -168,6 +168,16 @@ async function runTests() {
     assert(c1.input === '101101110', `Case 1 input matches "101101110" (Actual: "${c1.input}")`);
     assert(c1.output === 'ABC', `Case 1 expected output matches "ABC" (Actual: "${c1.output}")`);
 
+    // Case 3 (Sanitized 25 ones [Y] + 0 + 26 ones [Z])
+    const c3 = encodedQuestion.testCases[2];
+    assert(c3.input === '1'.repeat(25) + '0' + '1'.repeat(26), `Case 3 input matches 25 ones + 0 + 26 ones (Length: ${c3.input.length})`);
+    assert(c3.output === 'YZ', `Case 3 expected output matches "YZ" (Actual: "${c3.output}")`);
+
+    // Verify student Java algorithm behavior on Case 3
+    const groups = c3.input.split('0');
+    const javaDecoded = groups.map(g => String.fromCharCode(65 + g.length - 1)).join('');
+    assert(javaDecoded === 'YZ', `Student Java algorithm on Case 3 outputs "YZ" matching expected output (Actual: "${javaDecoded}")`);
+
     // Case 4
     const c4 = encodedQuestion.testCases[3];
     assert(c4.input === '1', `Case 4 input matches "1" (Actual: "${c4.input}")`);
