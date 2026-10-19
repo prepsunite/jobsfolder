@@ -10,6 +10,8 @@ export interface TestCaseInput {
   input: string;
   expected_output?: string;
   output?: string;
+  expectedOutput?: string;
+  expected?: string;
   is_hidden?: boolean;
 }
 
@@ -456,7 +458,13 @@ export const codeExecutionService = {
     const evaluateSingle = async (tc: TestCaseInput, index: number): Promise<EvaluatedTestCase> => {
       const isHidden = Boolean(tc.is_hidden);
       const rawStdin = tc.input || '';
-      const realExpected = normalizeOutput(tc.expected_output || tc.output || '');
+      const realExpected = normalizeOutput(
+        tc.expected_output ||
+        tc.output ||
+        tc.expectedOutput ||
+        tc.expected ||
+        ''
+      );
 
       const displayInput = isHidden ? `[Hidden Test Case ${index + 1}]` : rawStdin;
       const displayExpected = isHidden ? '[Hidden Expected Output]' : realExpected;
@@ -528,7 +536,15 @@ export const codeExecutionService = {
       for (let j = 1; j < testCases.length; j++) {
         evaluatedCases.push({
           input: testCases[j].is_hidden ? `[Hidden Test Case ${j + 1}]` : (testCases[j].input || ''),
-          expected: testCases[j].is_hidden ? '[Hidden Expected Output]' : normalizeOutput(testCases[j].expected_output || testCases[j].output || ''),
+          expected: testCases[j].is_hidden
+            ? '[Hidden Expected Output]'
+            : normalizeOutput(
+                testCases[j].expected_output ||
+                testCases[j].output ||
+                testCases[j].expectedOutput ||
+                testCases[j].expected ||
+                ''
+              ),
           actual: 'Skipped due to compilation error.',
           passed: false,
           status: 'SKIPPED',
@@ -664,7 +680,12 @@ export const codeExecutionService = {
     if (isTemplateOrEmptyCode(sourceCode, language)) {
       const emptyCases: EvaluatedTestCase[] = (testCases || []).map((tc) => ({
         input: tc.input || '',
-        expected: tc.expected_output || tc.output || '',
+        expected:
+          tc.expected_output ||
+          tc.output ||
+          tc.expectedOutput ||
+          tc.expected ||
+          '',
         actual: 'No solution code detected. Please write your algorithm before running tests.',
         passed: false,
         status: 'EMPTY_CODE',

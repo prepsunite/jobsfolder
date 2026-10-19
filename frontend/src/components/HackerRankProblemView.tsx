@@ -24,6 +24,7 @@ interface TestCaseItem {
 interface HackerRankProblemViewProps {
   problem: ProgrammingProblem;
   sampleCases: TestCaseItem[];
+  maxVisibleCases?: number;
 }
 
 /**
@@ -53,7 +54,8 @@ export function parseArrayVisualization(_inputStr: string): { elements: string[]
 
 export default function HackerRankProblemView({
   problem,
-  sampleCases,
+  sampleCases = [],
+  maxVisibleCases,
 }: HackerRankProblemViewProps) {
   // Copy state trackers
   const [copiedKeys, setCopiedKeys] = useState<Record<string, boolean>>({});
@@ -181,7 +183,7 @@ export default function HackerRankProblemView({
       {/* 5. Sample Test Cases (Formatted with visual array blocks matching screenshot) */}
       {sampleCases.length > 0 && (
         <div className="space-y-6 pt-1">
-          {sampleCases.slice(0, 2).map((sc, idx) => {
+          {(maxVisibleCases ? sampleCases.slice(0, maxVisibleCases) : sampleCases).map((sc, idx) => {
             const inputKey = `input_${idx}`;
             const outputKey = `output_${idx}`;
             const actualOutput = sc.output || sc.expected_output || '';

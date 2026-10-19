@@ -342,7 +342,13 @@ export default async function handler(req, res) {
     for (let i = 0; i < testCases.length; i++) {
       const tc = testCases[i];
       const isHidden = Boolean(tc.is_hidden);
-      const expectedOut = normalizeOutput(tc.expected_output || tc.output || '');
+      const expectedOut = normalizeOutput(
+        tc.expected_output ||
+        tc.output ||
+        tc.expectedOutput ||
+        tc.expected ||
+        ''
+      );
       const runRes = settledToRunRes(settledResults[i], tc.input || '');
 
       maxRuntimeMs = Math.max(maxRuntimeMs, runRes.timeMs);

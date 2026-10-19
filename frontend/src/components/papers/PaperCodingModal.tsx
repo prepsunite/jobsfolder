@@ -226,9 +226,34 @@ export default function PaperCodingModal({
     }
   };
 
+  // Handle language switch with automatic draft hydration / starter template loading
+  const handleLanguageChange = (newLang: string) => {
+    setSelectedLanguage(newLang);
+    setTestResults(null);
+    setCustomResult(null);
+    setRestoredSource(null);
+
+    if (question) {
+      const storedCodeKey = `paper_code_${question.id}_${newLang}`;
+      const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(storedCodeKey) : null;
+      const newCode = savedDraft && savedDraft.trim().length > 0 ? savedDraft : (STARTER_TEMPLATES[newLang] || STARTER_TEMPLATES.python);
+      isProgrammaticUpdateRef.current = true;
+      setCode(newCode);
+      if (editorRef.current) {
+        editorRef.current.setValue(newCode);
+      }
+      isProgrammaticUpdateRef.current = false;
+    }
+  };
+
   const handleResetTemplate = () => {
-    const template = STARTER_TEMPLATES[selectedLanguage] || '';
+    const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
+    isProgrammaticUpdateRef.current = true;
     setCode(template);
+    if (editorRef.current) {
+      editorRef.current.setValue(template);
+    }
+    isProgrammaticUpdateRef.current = false;
     if (question) {
       localStorage.removeItem(`paper_code_${question.id}_${selectedLanguage}`);
     }
@@ -395,7 +420,11 @@ export default function PaperCodingModal({
         code,
         testCasesToRun.map((tc) => ({
           input: tc.input,
+          expected_output: tc.output,
+          output: tc.output,
           expectedOutput: tc.output,
+          expected: tc.output,
+          is_hidden: false,
         }))
       );
 
@@ -715,7 +744,7 @@ export default function PaperCodingModal({
               <span className="text-[11px] font-bold text-[#8b949e] uppercase">Language:</span>
               <select
                 value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
+                onChange={(e) => handleLanguageChange(e.target.value)}
                 className="bg-[#21262d] border border-[#30363d] text-white text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#FD4A32] cursor-pointer"
               >
                 {Object.entries(LANGUAGE_LABELS).map(([key, label]) => (

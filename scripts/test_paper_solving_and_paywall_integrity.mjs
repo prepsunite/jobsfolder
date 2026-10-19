@@ -134,6 +134,61 @@ async function runTests() {
   assert(parsePaperQuestions(null).length === 0, 'Null content returns empty array');
   assert(parsePaperQuestions('General syllabus text without Q1 or headings').length === 0, 'Non-question text returns empty array (falls back to ContentRenderer)');
 
+  // --------------------------------------------------------------------------
+  // TEST 4: Test Case Expected Output Integrity & Encoded String Decoding
+  // --------------------------------------------------------------------------
+  console.log('\n[STAGE 4] Validating Test Case Expected Output Integrity (Encoded String Decoding)');
+
+  let encodedQuestion = null;
+  for (const ex of fullExams) {
+    function findQuestion(nodes) {
+      for (const n of nodes || []) {
+        if (n.content && n.content.includes('Encoded String Decoding')) {
+          const qs = parsePaperQuestions(n.content);
+          const match = qs.find(q => q.title.includes('Encoded String Decoding'));
+          if (match) return match;
+        }
+        if (n.children) {
+          const res = findQuestion(n.children);
+          if (res) return res;
+        }
+      }
+      return null;
+    }
+    encodedQuestion = findQuestion(ex.paper_tabs);
+    if (encodedQuestion) break;
+  }
+
+  assert(encodedQuestion !== null, 'Encoded String Decoding question discovered in database');
+  if (encodedQuestion) {
+    assert(encodedQuestion.testCases.length === 4, `Encoded String Decoding has 4 test cases (Found: ${encodedQuestion.testCases.length})`);
+    
+    // Case 1
+    const c1 = encodedQuestion.testCases[0];
+    assert(c1.input === '101101110', `Case 1 input matches "101101110" (Actual: "${c1.input}")`);
+    assert(c1.output === 'ABC', `Case 1 expected output matches "ABC" (Actual: "${c1.output}")`);
+
+    // Case 4
+    const c4 = encodedQuestion.testCases[3];
+    assert(c4.input === '1', `Case 4 input matches "1" (Actual: "${c4.input}")`);
+    assert(c4.output === 'A', `Case 4 expected output matches "A" (Actual: "${c4.output}")`);
+
+    // Verify IDE mapping simulation
+    const mappedCases = encodedQuestion.testCases.map(tc => ({
+      input: tc.input,
+      expected_output: tc.output,
+      output: tc.output,
+      expectedOutput: tc.output,
+      expected: tc.output,
+      is_hidden: false,
+    }));
+
+    mappedCases.forEach((tc, idx) => {
+      const realExpected = (tc.expected_output || tc.output || tc.expectedOutput || tc.expected || '').trim();
+      assert(realExpected.length > 0, `Test Case ${idx + 1} expected output is guaranteed non-empty in IDE execution suite ("${realExpected}")`);
+    });
+  }
+
   console.log('\n================================================================================');
   console.log(`SUMMARY: ${passed} / ${assertions} ASSERTIONS PASSED (Exit Code: ${process.exitCode || 0})`);
   console.log('================================================================================\n');
