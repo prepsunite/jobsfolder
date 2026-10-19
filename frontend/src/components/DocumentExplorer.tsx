@@ -138,6 +138,7 @@ export default function DocumentExplorer({
 
   const handleMarkSolved = useCallback((questionId: string) => {
     setSolvedQuestionIds(prev => {
+      if (prev.has(questionId)) return prev;
       const next = new Set(prev);
       next.add(questionId);
       try {
@@ -145,8 +146,7 @@ export default function DocumentExplorer({
       } catch {}
       return next;
     });
-    toast.success('Problem marked as Solved! Great work!');
-  }, [toast]);
+  }, []);
 
   // Synchronize solved placement paper problems across all user devices via Supabase
   useEffect(() => {

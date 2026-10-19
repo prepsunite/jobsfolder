@@ -1039,7 +1039,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     </p>
                   </div>
                 </div>
-              ) : activeTab === 'oldPapers' ? (
+              ) : (!isFullscreenDoc && activeTab === 'oldPapers') ? (
                 <DocumentExplorer
                   examName={currentExam?.name || 'Recruitment Drive'}
                   companyName={companyName}
