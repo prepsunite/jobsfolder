@@ -825,10 +825,12 @@ export default function DocumentExplorer({
         )}
       </div>
 
-      {/* Interactive In-Page Coding IDE Modal */}
+      {/* Interactive Full-Screen Coding Studio (Programme 150 Style) */}
       {selectedCodingQuestion && (
         <PaperCodingModal
           question={selectedCodingQuestion}
+          questions={parsedQuestions}
+          onSelectQuestion={(q) => setSelectedCodingQuestion(q)}
           isOpen={!!selectedCodingQuestion}
           onClose={() => setSelectedCodingQuestion(null)}
           companyName={companyName}

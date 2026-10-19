@@ -1,31 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   X,
   Play,
   RotateCcw,
-  Copy,
-  Check,
   CheckCircle2,
   XCircle,
   AlertCircle,
   Loader2,
   Maximize2,
   Minimize2,
-  Code2,
-  Sparkles,
   Terminal,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
+  Circle,
+  Send,
+  LayoutGrid,
+  List,
+  GripHorizontal,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
+import HackerRankProblemView from '@/components/HackerRankProblemView';
 import {
   codeExecutionService,
   STARTER_TEMPLATES,
   LANGUAGE_LABELS,
   type TestCaseRunResult,
+  type ExecutionResult,
 } from '@/services/codeExecution.service';
+import audioEffects from '@/utils/audioEffects';
+import { useToast } from '@/contexts/ToastContext';
+import type { ProgrammingProblem } from '@/types/technical';
 import type { PaperQuestion } from '@/utils/paperQuestionParser';
 
 interface PaperCodingModalProps {
   question: PaperQuestion | null;
+  questions?: PaperQuestion[];
+  onSelectQuestion?: (question: PaperQuestion) => void;
   isOpen: boolean;
   onClose: () => void;
   companyName?: string;
@@ -34,15 +46,17 @@ interface PaperCodingModalProps {
   onMarkSolved?: (questionId: string) => void;
 }
 
-const SUPPORTED_LANGUAGES = [
-  { id: 'python', label: 'Python 3' },
-  { id: 'cpp', label: 'C++ (GCC)' },
-  { id: 'java', label: 'Java' },
-  { id: 'c', label: 'C' },
-];
+const MONACO_LANGUAGE_MAP: Record<string, string> = {
+  python: 'python',
+  cpp: 'cpp',
+  java: 'java',
+  c: 'c',
+};
 
 export default function PaperCodingModal({
   question,
+  questions = [],
+  onSelectQuestion,
   isOpen,
   onClose,
   companyName = 'Company',
@@ -50,18 +64,55 @@ export default function PaperCodingModal({
   isSolved = false,
   onMarkSolved,
 }: PaperCodingModalProps) {
+  const { toast } = useToast();
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'problem' | 'editor' | 'console'>('editor');
+
+  // Navigation indices
+  const currentIndex = useMemo(() => {
+    if (!question || questions.length === 0) return -1;
+    return questions.findIndex((q) => q.id === question.id);
+  }, [question, questions]);
+
+  const prevQuestion = currentIndex > 0 ? questions[currentIndex - 1] : null;
+  const nextQuestion = currentIndex >= 0 && currentIndex < questions.length - 1 ? questions[currentIndex + 1] : null;
+
+  // Language & Code state
   const [selectedLanguage, setSelectedLanguage] = useState<string>('python');
   const [code, setCode] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'cases' | 'custom' | 'result'>('cases');
-  const [selectedCaseIdx, setSelectedCaseIdx] = useState<number>(0);
-  const [customInput, setCustomInput] = useState<string>('');
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [runResult, setRunResult] = useState<TestCaseRunResult | null>(null);
-  const [customOutput, setCustomOutput] = useState<{ stdout: string; stderr: string; timeMs: number } | null>(null);
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [isMaximized, setIsMaximized] = useState<boolean>(false);
+  const [fontSize] = useState<number>(14);
 
-  // Initialize or reset starter template when question or language changes
+  // Execution & Testing state
+  const [isRunningTests, setIsRunningTests] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
+  const [activeTestTab, setActiveTestTab] = useState<number>(0);
+  const [resultsViewMode, setResultsViewMode] = useState<'grid' | 'tabs'>('grid');
+
+  // Adjustable Console Splitter
+  const [consoleHeight, setConsoleHeight] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('prepunite_console_height');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 160 && parsed <= 900) return parsed;
+      }
+    }
+    return 340;
+  });
+  const [isDraggingConsole, setIsDraggingConsole] = useState(false);
+  const [isConsoleMaximized, setIsConsoleMaximized] = useState(false);
+  const consoleContainerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
+
+  // Custom Input State
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customStdin, setCustomStdin] = useState('');
+  const [customResult, setCustomResult] = useState<ExecutionResult | null>(null);
+  const [isRunningCustom, setIsRunningCustom] = useState(false);
+
+  // Load starter template or saved draft when question or language changes
   useEffect(() => {
     if (!question) return;
     const storedCodeKey = `paper_code_${question.id}_${selectedLanguage}`;
@@ -72,10 +123,22 @@ export default function PaperCodingModal({
       const template = STARTER_TEMPLATES[selectedLanguage] || '# Write your solution here\n';
       setCode(template);
     }
-    setRunResult(null);
-    setCustomOutput(null);
-    setSelectedCaseIdx(0);
+    setTestResults(null);
+    setCustomResult(null);
+    setActiveTestTab(0);
+    setShowCustomInput(false);
   }, [question?.id, selectedLanguage]);
+
+  // Keyboard shortcut listener (Escape to close, Ctrl+Enter to run)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !document.fullscreenElement) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // Auto-save code on change
   const handleCodeChange = (newCode?: string) => {
@@ -86,471 +149,980 @@ export default function PaperCodingModal({
     }
   };
 
-  const handleResetCode = () => {
+  const handleResetTemplate = () => {
     const template = STARTER_TEMPLATES[selectedLanguage] || '';
     setCode(template);
     if (question) {
       localStorage.removeItem(`paper_code_${question.id}_${selectedLanguage}`);
     }
+    toast.info('Code reset to default starter template.');
   };
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(code);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  // Fullscreen toggle handler
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
   };
 
-  const handleRunCode = async () => {
-    if (!question || isRunning) return;
-    setIsRunning(true);
-    setActiveTab('result');
+  // Draggable Splitter handlers
+  const handleSplitterMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingConsole(true);
+    const startY = e.clientY;
+    const startHeight = consoleHeight;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = startY - moveEvent.clientY;
+      const minH = 160;
+      const maxH = Math.max(300, window.innerHeight - 200);
+      const newHeight = Math.max(minH, Math.min(maxH, startHeight + deltaY));
+      setConsoleHeight(newHeight);
+      setIsConsoleMaximized(false);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingConsole(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      setConsoleHeight((prev) => {
+        try {
+          localStorage.setItem('prepunite_console_height', prev.toString());
+        } catch {}
+        return prev;
+      });
+      if (editorRef.current) {
+        setTimeout(() => editorRef.current?.layout(), 50);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const toggleConsoleMaximize = () => {
+    if (isConsoleMaximized) {
+      setIsConsoleMaximized(false);
+      const restored = 340;
+      setConsoleHeight(restored);
+      try {
+        localStorage.setItem('prepunite_console_height', restored.toString());
+      } catch {}
+    } else {
+      setIsConsoleMaximized(true);
+      const maxH = Math.max(450, window.innerHeight - 240);
+      setConsoleHeight(maxH);
+    }
+    setTimeout(() => editorRef.current?.layout(), 100);
+  };
+
+  // Adapter for HackerRankProblemView (Matches Programme 150)
+  const adaptedProblem: ProgrammingProblem = useMemo(() => {
+    if (!question) {
+      return {
+        id: '',
+        title: '',
+        slug: '',
+        track: 'PROGRAMMING_150',
+        level: 'BASIC',
+        category: 'ARRAYS',
+        description: '',
+        solutions: {},
+      };
+    }
+
+    return {
+      id: question.id,
+      title: question.title,
+      slug: question.id,
+      track: 'PROGRAMMING_150',
+      level: question.difficulty,
+      category: 'ARRAYS',
+      categoryLabel: `${companyName} • ${examName}`,
+      description: question.description || 'No detailed problem statement provided.',
+      constraints: question.constraints || [],
+      testCases: (question.testCases || []).map((tc) => ({
+        input: tc.input,
+        output: tc.output || '',
+        explanation: tc.explanation,
+      })),
+      solutions: {},
+    };
+  }, [question, companyName, examName]);
+
+  const sampleCases = useMemo(() => {
+    if (!question?.testCases) return [];
+    return question.testCases.map((tc) => ({
+      input: tc.input,
+      expected_output: tc.output,
+      output: tc.output,
+      explanation: tc.explanation,
+      is_hidden: false,
+    }));
+  }, [question?.testCases]);
+
+  // Display grid cases calculation
+  const displayGridCases = useMemo(() => {
+    if (testResults && testResults.cases && testResults.cases.length > 0) {
+      return testResults.cases;
+    }
+    if (isSubmitting && question?.testCases) {
+      return question.testCases.map((tc) => ({
+        input: tc.input,
+        expected: tc.output || '',
+        actual: '',
+        passed: false,
+        status: 'EVALUATING' as any,
+        timeMs: 0,
+        is_hidden: false,
+      }));
+    }
+    return [];
+  }, [testResults, isSubmitting, question?.testCases]);
+
+  // Run Test Cases against Sandboxed Judge Engine
+  const handleRunTests = async (isSubmit: boolean = false) => {
+    if (isRunningTests || isSubmitting || !question) return;
+
+    if (!code || code.trim().length === 0) {
+      toast.error('Please write your solution code before running tests.');
+      return;
+    }
+
+    const testCasesToRun = question.testCases || [];
+    if (testCasesToRun.length === 0) {
+      toast.error('No test cases available for this question.');
+      return;
+    }
+
+    if (isSubmit) {
+      setIsSubmitting(true);
+    } else {
+      setIsRunningTests(true);
+    }
+
+    setShowCustomInput(false);
 
     try {
-      if (activeTab === 'custom') {
-        // Run with custom input
-        const exec = await codeExecutionService.execute(selectedLanguage, code, customInput);
-        setCustomOutput({
-          stdout: exec.stdout || '',
-          stderr: exec.stderr || exec.errorMessage || '',
-          timeMs: exec.timeMs || 0,
-        });
+      // Direct Judge0 evaluation
+      const result = await codeExecutionService.runTestCasesDirect(
+        selectedLanguage,
+        code,
+        testCasesToRun.map((tc) => ({
+          input: tc.input,
+          expectedOutput: tc.output,
+        }))
+      );
+
+      setTestResults(result);
+      setActiveTestTab(0);
+      setMobileTab('console');
+
+      const allPassed = result.passedCount === result.totalCount && result.totalCount > 0 && !result.compileError;
+
+      if (allPassed) {
+        audioEffects.playSuccessChime();
+        if (isSubmit) {
+          onMarkSolved?.(question.id);
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and marked as solved.`);
+        } else {
+          toast.success(`Sample test cases passed (${result.passedCount}/${result.totalCount})! Click Submit Solution to verify.`);
+        }
+      } else if (result.compileError) {
+        audioEffects.playErrorBuzz();
+        toast.error('Compilation Error detected. Check diagnostic output below.');
       } else {
-        // Run against test cases
-        const formattedCases = (question.testCases && question.testCases.length > 0)
-          ? question.testCases.map(tc => ({
-              input: tc.input,
-              expected_output: tc.output,
-              output: tc.output,
-            }))
-          : [{ input: '', expected_output: '', output: '' }];
-
-        const result = await codeExecutionService.runTestCasesDirect(selectedLanguage, code, formattedCases);
-        setRunResult(result);
-
-        // Auto-mark solved if all cases passed
-        if (result.passedCount === result.totalCount && result.totalCount > 0) {
-          if (onMarkSolved) onMarkSolved(question.id);
+        audioEffects.playErrorBuzz();
+        if (isSubmit) {
+          toast.error(`Solution failed: ${result.passedCount}/${result.totalCount} test cases passed.`);
+        } else {
+          toast.info(`${result.passedCount}/${result.totalCount} Sample Test Cases Passed.`);
         }
       }
     } catch (err: any) {
-      setRunResult({
-        cases: [],
-        passedCount: 0,
-        totalCount: 0,
-        isTemplateOrEmpty: false,
-        compileError: null,
-        runtimeError: err.message || 'Execution failed',
-        summaryMessage: 'Execution failed',
-      });
+      console.error('Failed to run code tests:', err);
+      toast.error(err?.message || 'Failed to communicate with compiler engine.');
     } finally {
-      setIsRunning(false);
+      setIsRunningTests(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  // Run Custom Input
+  const handleRunCustomInput = async () => {
+    if (isRunningCustom || !question) return;
+    if (!code || code.trim().length === 0) {
+      toast.error('Please write code before running custom test.');
+      return;
+    }
+
+    setIsRunningCustom(true);
+    try {
+      const result = await codeExecutionService.execute(selectedLanguage, code, customStdin);
+      setCustomResult(result);
+    } catch (e: any) {
+      toast.error('Failed to run custom input: ' + (e.message || 'Error'));
+    } finally {
+      setIsRunningCustom(false);
     }
   };
 
   if (!isOpen || !question) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
-      <div
-        className={`flex flex-col bg-white dark:bg-[#121212] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 ${
-          isMaximized ? 'w-full h-full rounded-none' : 'w-[96vw] max-w-7xl h-[92vh]'
-        }`}
-      >
-        {/* Header Bar */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#181818] shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center shrink-0">
-              <Terminal className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm sm:text-base font-display font-extrabold text-[#121417] dark:text-white truncate">
-                  {question.title}
-                </h2>
-                <span
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
-                    question.difficulty === 'BASIC'
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                      : question.difficulty === 'HARD'
-                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                  }`}
-                >
-                  {question.difficulty}
-                </span>
-                {isSolved && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span>Solved</span>
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#868E96] dark:text-[#666666] truncate font-sans">
-                {companyName} • {examName} Official Placement Problem
-              </p>
-            </div>
-          </div>
+    <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-[#0d1117] text-[#e6edf3] overflow-hidden select-text animate-fadeIn">
+      {/* Full-window Drag Capture Overlay when dragging Splitter */}
+      {isDraggingConsole && (
+        <div className="fixed inset-0 z-50 cursor-row-resize select-none bg-transparent" />
+      )}
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Language Selector */}
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#333333] text-[#121417] dark:text-[#E9ECEF] focus:outline-hidden focus:border-[#FD4A32]"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.id} value={lang.id}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
+      {/* ============================================================ */}
+      {/* 1. TOP NAVIGATION / WORKSPACE APP BAR (Programme 150 Style)  */}
+      {/* ============================================================ */}
+      <header className="h-14 px-4 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between gap-3 shrink-0 z-20">
+        {/* Left: Back Button, Breadcrumb & Problem Title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors shrink-0 cursor-pointer"
+            title="Return to Paper Overview (Esc)"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back to Papers</span>
+          </button>
 
-            {/* Run Button */}
-            <button
-              onClick={handleRunCode}
-              disabled={isRunning}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32] hover:bg-[#E0351D] text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+          <span className="text-gray-600 hidden sm:inline">/</span>
+
+          {/* Problem Title & Difficulty */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-display font-bold text-sm text-white truncate max-w-[200px] sm:max-w-[320px] md:max-w-[450px]">
+              {question.title}
+            </span>
+
+            {/* Level Badge */}
+            <span
+              className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 ${
+                question.difficulty === 'BASIC'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : question.difficulty === 'MEDIUM'
+                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+              }`}
             >
-              {isRunning ? (
+              {question.difficulty}
+            </span>
+
+            {/* Solved Status Badge */}
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 select-none ${
+                isSolved
+                  ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800'
+                  : 'bg-[#21262d] text-[#8b949e] border-[#30363d]'
+              }`}
+              title={isSolved ? 'Solution verified & test cases passed' : 'Submit your code to mark as solved'}
+            >
+              {isSolved ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Running...</span>
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span className="hidden md:inline">Solved</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Code</span>
+                  <Circle className="w-3 h-3 text-gray-400" />
+                  <span className="hidden md:inline">Unsolved</span>
                 </>
               )}
-            </button>
-
-            {/* Maximize / Close */}
-            <button
-              onClick={() => setIsMaximized(!isMaximized)}
-              className="p-1.5 rounded-lg text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-[#E9ECEF] dark:hover:bg-[#252525] transition-colors"
-              title={isMaximized ? 'Restore' : 'Maximize'}
-            >
-              {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-[#868E96] hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
-              title="Close Workspace"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            </span>
           </div>
         </div>
 
-        {/* Main Split Area */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-          {/* Left Column: Problem Details */}
-          <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r border-[#E9ECEF] dark:border-[#242424] overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-6 bg-white dark:bg-[#121212]">
-            {/* Problem Statement */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold text-[#FD4A32] uppercase tracking-wider font-display">
-                Problem Description
+        {/* Right: Question Stepper, Fullscreen & Close */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Question Stepper */}
+          {questions.length > 0 && currentIndex >= 0 && (
+            <div className="flex items-center gap-1 bg-[#21262d] rounded-lg p-0.5 border border-[#30363d] text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => prevQuestion && onSelectQuestion?.(prevQuestion)}
+                disabled={!prevQuestion}
+                className="p-1 rounded text-[#8b949e] hover:text-white hover:bg-[#30363d] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                title={prevQuestion ? `Previous: ${prevQuestion.title}` : 'First problem'}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              <span className="px-2 text-[11px] text-[#8b949e] font-bold">
+                {currentIndex + 1} / {questions.length}
               </span>
-              <div className="text-xs sm:text-sm text-[#495057] dark:text-[#CCCCCC] leading-relaxed font-sans whitespace-pre-line">
-                {question.description || 'No detailed statement provided.'}
+
+              <button
+                type="button"
+                onClick={() => nextQuestion && onSelectQuestion?.(nextQuestion)}
+                disabled={!nextQuestion}
+                className="p-1 rounded text-[#8b949e] hover:text-white hover:bg-[#30363d] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                title={nextQuestion ? `Next: ${nextQuestion.title}` : 'Last problem'}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-lg text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors cursor-pointer hidden sm:inline-flex"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
+          {/* Close Studio Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[#8b949e] hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+            title="Close Code Studio (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* ============================================================ */}
+      {/* 2. MOBILE RESPONSIVE TABS (< 1024px)                          */}
+      {/* ============================================================ */}
+      <div className="lg:hidden flex items-center justify-around bg-[#161b22] border-b border-[#30363d] px-2 py-1 shrink-0 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => setMobileTab('problem')}
+          className={`flex-1 py-1.5 text-center rounded-md transition-colors ${
+            mobileTab === 'problem' ? 'bg-[#21262d] text-white' : 'text-[#8b949e]'
+          }`}
+        >
+          Description
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('editor')}
+          className={`flex-1 py-1.5 text-center rounded-md transition-colors ${
+            mobileTab === 'editor' ? 'bg-[#21262d] text-white' : 'text-[#8b949e]'
+          }`}
+        >
+          Code Editor
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('console')}
+          className={`flex-1 py-1.5 text-center rounded-md transition-colors relative ${
+            mobileTab === 'console' ? 'bg-[#21262d] text-white' : 'text-[#8b949e]'
+          }`}
+        >
+          Console
+          {testResults && (
+            <span
+              className={`ml-1.5 w-2 h-2 inline-block rounded-full ${
+                testResults.passedCount === testResults.totalCount ? 'bg-emerald-400' : 'bg-rose-400'
+              }`}
+            />
+          )}
+        </button>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 3. MAIN WORKSPACE BODY: TWO-PANE SPLIT LAYOUT                */}
+      {/* ============================================================ */}
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-[#30363d]">
+        {/* ============================================================ */}
+        {/* LEFT COLUMN: Problem Specs, Constraints, Sample I/O          */}
+        {/* ============================================================ */}
+        <section
+          className={`lg:col-span-5 p-5 overflow-y-auto space-y-5 custom-scrollbar bg-white dark:bg-[#151618] text-gray-900 dark:text-gray-100 ${
+            mobileTab === 'problem' ? 'block' : 'hidden lg:block'
+          }`}
+        >
+          {/* Header Metadata: Topic Name & Question Stepper */}
+          <div className="flex items-center justify-between gap-2.5 flex-wrap pb-3 border-b border-gray-200 dark:border-[#25262a]">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25 font-display flex items-center gap-1.5 shadow-2xs">
+                <Layers className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{companyName} • {examName}</span>
+              </span>
+            </div>
+
+            {/* Stepper inside problem pane */}
+            {questions.length > 0 && currentIndex >= 0 && (
+              <div className="inline-flex items-center gap-1 bg-[#F8F9FA] dark:bg-[#16181c] p-0.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => prevQuestion && onSelectQuestion?.(prevQuestion)}
+                  disabled={!prevQuestion}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-gray-200 dark:border-[#2e3238] bg-white dark:bg-[#1c1f24] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:border-[#FD4A32] dark:hover:border-[#FD4A32] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+                  title={prevQuestion ? `Previous: ${prevQuestion.title}` : 'First problem'}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
+                </button>
+
+                <span className="px-2.5 py-1 rounded-md bg-transparent font-display font-bold text-xs text-gray-800 dark:text-gray-200 font-mono">
+                  {currentIndex + 1} / {questions.length}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => nextQuestion && onSelectQuestion?.(nextQuestion)}
+                  disabled={!nextQuestion}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-bold border border-gray-200 dark:border-[#2e3238] bg-white dark:bg-[#1c1f24] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:border-[#FD4A32] dark:hover:border-[#FD4A32] disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+                  title={nextQuestion ? `Next: ${nextQuestion.title}` : 'Last problem'}
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Standardized HackerRank / LeetCode Structured Problem Presentation (Programme 150) */}
+          <HackerRankProblemView
+            problem={adaptedProblem}
+            sampleCases={sampleCases}
+          />
+
+          {/* Test Cases Count Preview */}
+          <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#18191c] border border-gray-200 dark:border-[#25262a] flex items-center justify-between text-xs">
+            <span className="text-gray-500">Evaluation Test Suite:</span>
+            <span className="font-mono font-bold text-gray-800 dark:text-gray-200">
+              {sampleCases.length} Test Cases (Verified Campus I/O)
+            </span>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* RIGHT COLUMN: Code Studio & Execution Test Runner Console    */}
+        {/* ============================================================ */}
+        <section
+          className={`lg:col-span-7 flex flex-col min-h-0 bg-[#0d1117] text-[#e6edf3] ${
+            mobileTab !== 'problem' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
+          {/* Editor Header Bar */}
+          <div className="px-4 py-2.5 bg-[#161b22] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-[#8b949e] uppercase">Language:</span>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="bg-[#21262d] border border-[#30363d] text-white text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#FD4A32] cursor-pointer"
+              >
+                {Object.entries(LANGUAGE_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleResetTemplate}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#8b949e] hover:text-white px-2 py-1 rounded hover:bg-[#21262d] transition-colors cursor-pointer"
+                title="Reset code to starter template"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
+
+              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Auto-Saved</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Monaco Professional Code Editor */}
+          <div className="flex-1 relative flex flex-col overflow-hidden min-h-[140px] bg-[#1e1e1e]">
+            {isDraggingConsole && (
+              <div className="absolute inset-0 z-50 cursor-row-resize select-none bg-transparent" />
+            )}
+            <Editor
+              height="100%"
+              language={MONACO_LANGUAGE_MAP[selectedLanguage] || 'python'}
+              value={code}
+              theme="vs-dark"
+              onChange={(val) => handleCodeChange(val || '')}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+                  handleRunTests(false);
+                });
+              }}
+              options={{
+                fontSize,
+                fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace",
+                fontLigatures: true,
+                tabSize: 4,
+                automaticLayout: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                autoClosingBrackets: 'always',
+                autoClosingQuotes: 'always',
+                autoClosingOvertype: 'always',
+                autoSurround: 'languageDefined',
+                formatOnPaste: true,
+                formatOnType: true,
+                lineNumbers: 'on',
+                renderLineHighlight: 'all',
+                bracketPairColorization: { enabled: true },
+                folding: true,
+                foldingHighlight: true,
+                showFoldingControls: 'always',
+                cursorBlinking: 'smooth',
+                smoothScrolling: true,
+                wordWrap: 'on',
+                lineHeight: 22,
+                padding: { top: 12, bottom: 12 },
+              }}
+              loading={
+                <div className="flex-1 flex flex-col items-center justify-center bg-[#1e1e1e] text-[#8b949e] gap-2 p-8 min-h-[300px]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#FD4A32]" />
+                  <span className="text-xs font-mono">Initializing Code Studio...</span>
+                </div>
+              }
+            />
+          </div>
+
+          {/* ============================================================ */}
+          {/* DRAGGABLE SPLITTER DIVIDER (Between Editor & Test Drawer)    */}
+          {/* ============================================================ */}
+          <div
+            onMouseDown={handleSplitterMouseDown}
+            onDoubleClick={toggleConsoleMaximize}
+            className={`h-2.5 bg-[#161b22] hover:bg-[#21262d] cursor-row-resize flex items-center justify-center transition-colors select-none group shrink-0 border-y border-[#30363d] relative z-20 ${
+              isDraggingConsole ? 'bg-[#21262d] ring-1 ring-[#FD4A32]' : ''
+            }`}
+            title="Drag up/down to adjust editor and test cases space (Double-click to expand/restore)"
+          >
+            <div
+              className={`h-1 rounded-full transition-all flex items-center justify-center ${
+                isDraggingConsole ? 'bg-[#FD4A32] w-20' : 'bg-[#484f58] group-hover:bg-[#FD4A32] w-14'
+              }`}
+            />
+          </div>
+
+          {/* ============================================================ */}
+          {/* CONSOLE & EXECUTION RESULTS DRAWER (Adjustable Height)       */}
+          {/* ============================================================ */}
+          <div
+            ref={consoleContainerRef}
+            style={{ height: `${consoleHeight}px` }}
+            className="bg-[#161b22] shrink-0 flex flex-col min-h-0 overflow-hidden select-text"
+          >
+            {/* Runner Action Toolbar */}
+            <div className="px-4 py-2 bg-[#161b22] flex items-center justify-between border-b border-[#21262d] flex-wrap gap-2 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Run Tests (Sample) */}
+                <button
+                  type="button"
+                  onClick={() => handleRunTests(false)}
+                  disabled={isRunningTests || isSubmitting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  title="Run against visible sample test cases"
+                >
+                  {isRunningTests ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Compiling...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Run Tests</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Submit Solution */}
+                <button
+                  type="button"
+                  onClick={() => handleRunTests(true)}
+                  disabled={isRunningTests || isSubmitting}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  title="Submit solution to verify all test cases & mark as solved"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Evaluating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Submit Solution</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Custom Input Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomInput(!showCustomInput)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer border ${
+                    showCustomInput
+                      ? 'bg-[#21262d] text-white border-[#388bfd]'
+                      : 'bg-[#161b22] text-[#8b949e] border-[#30363d] hover:text-white'
+                  }`}
+                >
+                  Custom Test
+                </button>
+
+                {/* View Mode Switcher (Grid vs Tabs) */}
+                {(testResults || isSubmitting) && (
+                  <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setResultsViewMode('grid')}
+                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                        resultsViewMode === 'grid'
+                          ? 'bg-[#21262d] text-white shadow-xs'
+                          : 'text-[#8b949e] hover:text-white'
+                      }`}
+                      title="Grid View (Matching submission results)"
+                    >
+                      <LayoutGrid className="w-3 h-3" />
+                      <span className="hidden sm:inline">Grid</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResultsViewMode('tabs')}
+                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                        resultsViewMode === 'tabs'
+                          ? 'bg-[#21262d] text-white shadow-xs'
+                          : 'text-[#8b949e] hover:text-white'
+                      }`}
+                      title="Tabs View"
+                    >
+                      <List className="w-3 h-3" />
+                      <span className="hidden sm:inline">Tabs</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {testResults && (
+                  <span
+                    className={`text-xs font-bold font-mono px-2.5 py-1 rounded-lg ${
+                      testResults.passedCount === testResults.totalCount
+                        ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                        : 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                    }`}
+                  >
+                    {testResults.passedCount}/{testResults.totalCount} Passed
+                  </span>
+                )}
+
+                {/* Maximize / Restore Console Button */}
+                <button
+                  type="button"
+                  onClick={toggleConsoleMaximize}
+                  className="p-1.5 rounded-lg text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors cursor-pointer"
+                  title={isConsoleMaximized ? 'Restore console height' : 'Expand test cases space'}
+                >
+                  {isConsoleMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                </button>
+
+                <span className="text-[11px] text-[#8b949e] font-mono hidden md:inline">
+                  Ctrl/Cmd + Enter
+                </span>
               </div>
             </div>
 
-            {/* Constraints */}
-            {question.constraints && question.constraints.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider font-display block">
-                  Constraints:
-                </span>
-                <ul className="list-disc pl-5 space-y-1 text-xs font-mono text-[#495057] dark:text-[#CCCCCC]">
-                  {question.constraints.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Sample Cases */}
-            {question.testCases && question.testCases.length > 0 && (
-              <div className="space-y-3">
-                <span className="text-[10px] font-bold text-[#868E96] dark:text-[#888888] uppercase tracking-wider font-display block">
-                  Sample Test Cases:
-                </span>
-                <div className="space-y-2.5">
-                  {question.testCases.map((tc, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#282828] space-y-2 text-xs font-mono"
+            {/* Console Content Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-[#0d1117] space-y-4 custom-scrollbar">
+              {/* Custom Input Panel */}
+              {showCustomInput && (
+                <div className="p-3.5 bg-[#161b22] rounded-xl border border-[#30363d] space-y-2.5 animate-fadeIn">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#8b949e] uppercase text-[10px]">Custom Stdin Input:</span>
+                    <button
+                      type="button"
+                      onClick={handleRunCustomInput}
+                      disabled={isRunningCustom}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      <span className="text-[10px] font-bold text-[#FD4A32]">
-                        {tc.title || `Test Case #${idx + 1}`}
-                      </span>
+                      {isRunningCustom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
+                      <span>Run Custom</span>
+                    </button>
+                  </div>
+                  <textarea
+                    value={customStdin}
+                    onChange={(e) => setCustomStdin(e.target.value)}
+                    placeholder="Enter inputs here (e.g. 5, 2 7 11 15, etc.)..."
+                    rows={2}
+                    className="w-full p-2.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#FD4A32]"
+                  />
+
+                  {customResult && (
+                    <div className="p-3 rounded-lg bg-[#0d1117] border border-[#30363d] space-y-2 text-xs font-mono">
+                      <div className="flex items-center justify-between text-[11px] text-[#8b949e]">
+                        <span>Status: {customResult.statusDescription}</span>
+                        <span>Time: {customResult.timeMs} ms</span>
+                      </div>
+                      {customResult.compileOutput && (
+                        <pre className="p-2 rounded bg-rose-950/60 text-rose-300 text-[11px] overflow-x-auto whitespace-pre-wrap">
+                          {customResult.compileOutput}
+                        </pre>
+                      )}
+                      {customResult.stderr && (
+                        <pre className="p-2 rounded bg-amber-950/60 text-amber-300 text-[11px] overflow-x-auto whitespace-pre-wrap">
+                          {customResult.stderr}
+                        </pre>
+                      )}
                       <div>
-                        <span className="text-[10px] text-[#868E96] block uppercase tracking-wider">Input:</span>
-                        <pre className="text-gray-800 dark:text-gray-200 text-xs overflow-x-auto whitespace-pre-wrap font-mono mt-0.5">
-                          {tc.input}
+                        <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Output:</span>
+                        <pre className="p-2 rounded bg-[#161b22] text-emerald-400 text-xs overflow-x-auto whitespace-pre-wrap border border-[#21262d] mt-1">
+                          {customResult.stdout || '<No output returned>'}
                         </pre>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-[#868E96] block uppercase tracking-wider">Expected Output:</span>
-                        <pre className="text-emerald-600 dark:text-emerald-400 text-xs font-bold overflow-x-auto whitespace-pre-wrap font-mono mt-0.5">
-                          {tc.output}
-                        </pre>
-                      </div>
-                      {tc.explanation && (
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400 pt-1 border-t border-[#E9ECEF] dark:border-[#282828] font-sans">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Explanation: </span>
-                          {tc.explanation}
-                        </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Boilerplate Unmodified Warning */}
+              {testResults?.isTemplateOrEmpty && (
+                <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/80 text-amber-200 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-400 uppercase tracking-wider text-[11px]">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>No Solution Code Implemented</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-200/90 font-sans">
+                    You ran tests on unmodified template code. Please write your algorithm logic before checking test cases.
+                  </p>
+                </div>
+              )}
+
+              {/* Compilation Error Diagnostics */}
+              {testResults?.compileError && (
+                <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-800/80 text-rose-200 font-mono text-xs space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-rose-400 uppercase tracking-wider text-[11px]">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span>Compilation Error Diagnostics</span>
+                  </div>
+                  <pre className="whitespace-pre-wrap overflow-x-auto text-[11px] leading-relaxed p-2.5 bg-[#080b0f] rounded-lg border border-rose-900/60 text-rose-300 custom-scrollbar max-h-36 font-mono">
+                    {testResults.compileError}
+                  </pre>
+                </div>
+              )}
+
+              {/* Evaluation / Submission View (Multi-Column Grid matching Programme 150) */}
+              {(isSubmitting || testResults) && resultsViewMode === 'grid' && (
+                <div className="p-4 rounded-xl bg-[#161b22] border border-[#30363d] space-y-4 animate-fadeIn">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-display">
+                        Evaluation Results
+                      </h3>
+                      {isSubmitting && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Evaluating Suite...</span>
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Right Column: Monaco Code Editor & Execution Results */}
-          <div className="w-full md:w-1/2 flex flex-col min-h-0 bg-[#1E1E1E]">
-            {/* Editor Top Bar */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-[#333333] bg-[#181818] text-xs font-mono text-[#868E96]">
-              <div className="flex items-center gap-2">
-                <Code2 className="w-3.5 h-3.5 text-[#FD4A32]" />
-                <span className="text-white font-bold">{LANGUAGE_LABELS[selectedLanguage] || selectedLanguage}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCopyCode}
-                  className="flex items-center gap-1 hover:text-white transition-colors"
-                  title="Copy Code"
-                >
-                  {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{isCopied ? 'Copied' : 'Copy'}</span>
-                </button>
-                <button
-                  onClick={handleResetCode}
-                  className="flex items-center gap-1 hover:text-white transition-colors"
-                  title="Reset to Starter Template"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Monaco Editor Component */}
-            <div className="flex-1 min-h-[300px]">
-              <Editor
-                height="100%"
-                language={selectedLanguage === 'c' ? 'c' : selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage}
-                theme="vs-dark"
-                value={code}
-                onChange={handleCodeChange}
-                options={{
-                  fontSize: 13,
-                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  tabSize: 4,
-                  lineNumbers: 'on',
-                }}
-              />
-            </div>
-
-            {/* Bottom Testbench & Execution Panel */}
-            <div className="h-56 flex flex-col border-t border-[#333333] bg-[#141414]">
-              {/* Panel Tabs */}
-              <div className="flex items-center justify-between px-4 border-b border-[#282828] bg-[#181818]">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab('cases')}
-                    className={`py-2 px-3 text-xs font-mono font-bold border-b-2 transition-colors cursor-pointer ${
-                      activeTab === 'cases'
-                        ? 'border-[#FD4A32] text-white'
-                        : 'border-transparent text-[#868E96] hover:text-white'
-                    }`}
-                  >
-                    Test Cases ({question.testCases?.length || 0})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('custom')}
-                    className={`py-2 px-3 text-xs font-mono font-bold border-b-2 transition-colors cursor-pointer ${
-                      activeTab === 'custom'
-                        ? 'border-[#FD4A32] text-white'
-                        : 'border-transparent text-[#868E96] hover:text-white'
-                    }`}
-                  >
-                    Custom Input
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('result')}
-                    className={`py-2 px-3 text-xs font-mono font-bold border-b-2 transition-colors cursor-pointer ${
-                      activeTab === 'result'
-                        ? 'border-[#FD4A32] text-white'
-                        : 'border-transparent text-[#868E96] hover:text-white'
-                    }`}
-                  >
-                    Execution Result
-                  </button>
-                </div>
-
-                {onMarkSolved && (
-                  <button
-                    onClick={() => onMarkSolved(question.id)}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition-all cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{isSolved ? 'Completed' : 'Mark as Solved'}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Panel Content Area */}
-              <div className="flex-1 p-3 overflow-y-auto custom-scrollbar text-xs font-mono text-gray-300">
-                {activeTab === 'cases' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {question.testCases.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedCaseIdx(idx)}
-                          className={`px-3 py-1 rounded text-xs font-mono transition-colors cursor-pointer ${
-                            selectedCaseIdx === idx
-                              ? 'bg-[#FD4A32] text-white font-bold'
-                              : 'bg-[#222222] text-[#868E96] hover:text-white'
-                          }`}
-                        >
-                          Case {idx + 1}
-                        </button>
-                      ))}
-                    </div>
-
-                    {question.testCases[selectedCaseIdx] && (
-                      <div className="space-y-2 pt-1">
-                        <div>
-                          <span className="text-[10px] text-[#868E96] block uppercase tracking-wider">Input:</span>
-                          <pre className="p-2 rounded bg-[#0A0A0A] border border-[#282828] text-gray-200 overflow-x-auto whitespace-pre-wrap">
-                            {question.testCases[selectedCaseIdx].input}
-                          </pre>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-[#868E96] block uppercase tracking-wider">Expected Output:</span>
-                          <pre className="p-2 rounded bg-[#0A0A0A] border border-[#282828] text-emerald-400 font-bold overflow-x-auto whitespace-pre-wrap">
-                            {question.testCases[selectedCaseIdx].output}
-                          </pre>
-                        </div>
-                      </div>
+                    {testResults && !isSubmitting && (
+                      <span
+                        className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${
+                          testResults.passedCount === testResults.totalCount
+                            ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                            : 'bg-rose-950/80 text-rose-400 border-rose-800'
+                        }`}
+                      >
+                        {testResults.passedCount}/{testResults.totalCount} Test Cases Passed
+                      </span>
                     )}
                   </div>
-                )}
 
-                {activeTab === 'custom' && (
-                  <div className="h-full flex flex-col space-y-2">
-                    <span className="text-[10px] text-[#868E96] block uppercase tracking-wider">
-                      Standard Input (stdin):
-                    </span>
-                    <textarea
-                      value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
-                      placeholder="Enter standard input here..."
-                      className="flex-1 w-full p-2.5 rounded bg-[#0A0A0A] border border-[#282828] text-gray-200 font-mono text-xs focus:outline-hidden focus:border-[#FD4A32]"
+                  {/* Progress Bar */}
+                  <div className="w-full h-1.5 bg-[#21262d] rounded-full overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        isSubmitting
+                          ? 'w-4/5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 animate-pulse'
+                          : testResults?.passedCount === testResults?.totalCount
+                          ? 'w-full bg-emerald-500'
+                          : 'w-full bg-amber-500'
+                      }`}
                     />
                   </div>
-                )}
 
-                {activeTab === 'result' && (
-                  <div>
-                    {isRunning ? (
-                      <div className="flex items-center justify-center py-8 text-[#868E96] gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-[#FD4A32]" />
-                        <span>Compiling and executing against Judge0...</span>
-                      </div>
-                    ) : customOutput ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-[11px] text-[#868E96]">
-                          <span>Custom Execution Complete</span>
-                          <span>Time: {customOutput.timeMs}ms</span>
-                        </div>
-                        {customOutput.stderr && (
-                          <div className="p-2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                            <span className="font-bold block">Error:</span>
-                            <pre className="whitespace-pre-wrap">{customOutput.stderr}</pre>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-[10px] text-[#868E96] block uppercase tracking-wider">Stdout:</span>
-                          <pre className="p-2 rounded bg-[#0A0A0A] border border-[#282828] text-emerald-400 overflow-x-auto whitespace-pre-wrap">
-                            {customOutput.stdout || '(no output)'}
-                          </pre>
-                        </div>
-                      </div>
-                    ) : runResult ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {runResult.passedCount === runResult.totalCount && runResult.totalCount > 0 ? (
-                              <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span>Accepted ({runResult.passedCount}/{runResult.totalCount} Passed)</span>
-                              </span>
+                  {/* Test Cases Grid */}
+                  <div className="py-2 overflow-x-auto custom-scrollbar">
+                    <div className="grid grid-flow-col grid-rows-2 sm:grid-rows-3 auto-cols-max gap-x-8 sm:gap-x-12 gap-y-3 min-w-[320px]">
+                      {displayGridCases.map((c, idx) => {
+                        const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
+                        const isPassed = !isEvaluating && c.passed;
+                        const isFailed = !isEvaluating && !c.passed;
+                        const isSelected = activeTestTab === idx;
+
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveTestTab(idx)}
+                            className={`inline-flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-left cursor-pointer select-none group ${
+                              isSelected
+                                ? 'bg-[#21262d] ring-1 ring-emerald-500/60 shadow-sm'
+                                : 'hover:bg-[#1f242c]'
+                            }`}
+                            title={`Click to inspect Test case ${idx + 1} diagnostics`}
+                          >
+                            {isEvaluating ? (
+                              <Loader2 className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
+                            ) : isPassed ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            ) : isFailed ? (
+                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
                             ) : (
-                              <span className="flex items-center gap-1 text-rose-400 font-bold">
-                                <XCircle className="w-4 h-4" />
-                                <span>Wrong Answer ({runResult.passedCount}/{runResult.totalCount} Passed)</span>
-                              </span>
+                              <Circle className="w-4 h-4 text-gray-500 shrink-0" />
                             )}
-                          </div>
-                        </div>
 
-                        {runResult.runtimeError && (
-                          <div className="p-2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
-                            <span className="font-bold block">Execution Error:</span>
-                            <pre className="whitespace-pre-wrap">{runResult.runtimeError}</pre>
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          {runResult.cases.map((c, i) => (
-                            <div
-                              key={i}
-                              className={`p-2 rounded border text-xs ${
-                                c.passed
-                                  ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300'
-                                  : 'bg-rose-500/5 border-rose-500/20 text-rose-300'
+                            <span
+                              className={`text-sm font-medium transition-colors ${
+                                isEvaluating
+                                  ? 'text-gray-300'
+                                  : isPassed
+                                  ? 'text-emerald-400 font-semibold'
+                                  : isFailed
+                                  ? 'text-rose-400 font-semibold'
+                                  : 'text-gray-400'
                               }`}
                             >
-                              <div className="flex items-center justify-between font-bold">
-                                <span>Test Case {i + 1}</span>
-                                <span>{c.passed ? 'PASSED' : 'FAILED'} ({c.timeMs}ms)</span>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 mt-1 font-mono text-[11px]">
-                                <div>
-                                  <span className="text-[#868E96] block text-[10px]">Expected:</span>
-                                  <pre className="whitespace-pre-wrap">{c.expected}</pre>
-                                </div>
-                                <div>
-                                  <span className="text-[#868E96] block text-[10px]">Actual:</span>
-                                  <pre className="whitespace-pre-wrap">{c.actual || '(no output)'}</pre>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-[#868E96]">
-                        Click "Run Code" above to execute and verify your solution.
-                      </div>
-                    )}
+                              Test case {idx + 1}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Tabs View Mode */}
+              {(isSubmitting || testResults) && resultsViewMode === 'tabs' && (
+                <div className="space-y-3">
+                  {displayGridCases.length > 0 && (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                      {displayGridCases.map((c, idx) => {
+                        const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
+                        const isPassed = !isEvaluating && c.passed;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveTestTab(idx)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                              activeTestTab === idx
+                                ? 'bg-[#21262d] text-white border border-[#388bfd]'
+                                : 'bg-[#161b22] text-[#8b949e] hover:text-white'
+                            }`}
+                          >
+                            {isEvaluating ? (
+                              <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin shrink-0" />
+                            ) : isPassed ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            ) : (
+                              <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            )}
+                            <span>Case {idx + 1}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Active Case Diagnostics Card */}
+              {testResults && testResults.cases[activeTestTab] && (
+                <div className="p-3.5 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2.5 text-xs font-mono animate-fadeIn">
+                  <div className="flex items-center justify-between text-[11px] flex-wrap gap-2 pb-2 border-b border-[#21262d]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#8b949e]">Case #{activeTestTab + 1} Status:</span>
+                      <span
+                        className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
+                          testResults.cases[activeTestTab].passed
+                            ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                            : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
+                            ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                            : 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                        }`}
+                      >
+                        {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[#8b949e] text-[10px]">
+                      <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Input (stdin):</span>
+                    <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
+                      {testResults.cases[activeTestTab].input || '<No input provided>'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Expected Output:</span>
+                    <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
+                      {testResults.cases[activeTestTab].expected || '<Empty>'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Your Program Output:</span>
+                    <div
+                      className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 border max-h-24 overflow-y-auto custom-scrollbar ${
+                        testResults.cases[activeTestTab].passed
+                          ? 'text-emerald-400 border-emerald-950'
+                          : 'text-rose-400 border-rose-950'
+                      }`}
+                    >
+                      {testResults.cases[activeTestTab].actual}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ready State */}
+              {!testResults && !isSubmitting && !showCustomInput && (
+                <div className="h-40 flex flex-col items-center justify-center text-center text-[#8b949e] space-y-2 p-4">
+                  <Terminal className="w-8 h-8 text-[#484f58]" />
+                  <p className="text-xs font-mono font-medium text-gray-400 max-w-md">
+                    Click <span className="text-emerald-400 font-bold">Run Tests</span> to test visible sample cases, or{' '}
+                    <span className="text-[#FD4A32] font-bold">Submit Solution</span> to evaluate all cases and mark as solved.
+                  </p>
+                  <p className="text-[11px] text-[#484f58] flex items-center gap-1.5">
+                    <GripHorizontal className="w-3.5 h-3.5" />
+                    <span>Tip: Drag the splitter bar above to expand or shrink the test console.</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
