@@ -45,23 +45,9 @@ export function formatMathConstraint(raw: string): string {
 }
 
 /**
- * Parses space-separated or comma-bracketed array tokens for visual diagram rendering.
+ * Preserved for interface compatibility. Returns null to render standard clean monospace code blocks.
  */
-export function parseArrayVisualization(inputStr: string): { elements: string[]; label: string } | null {
-  if (!inputStr) return null;
-  const lines = inputStr.trim().split('\n').map(l => l.trim()).filter(Boolean);
-  for (const line of lines) {
-    let tokens: string[] = [];
-    if (line.startsWith('[') && line.endsWith(']')) {
-      tokens = line.slice(1, -1).split(',').map(s => s.trim()).filter(Boolean);
-    } else {
-      tokens = line.split(/\s+/).filter(Boolean);
-    }
-    // Render array boxes if between 2 and 10 tokens
-    if (tokens.length >= 2 && tokens.length <= 10 && tokens.every(t => t.length <= 6)) {
-      return { elements: tokens, label: 'Array: arr' };
-    }
-  }
+export function parseArrayVisualization(_inputStr: string): { elements: string[]; label: string } | null {
   return null;
 }
 
@@ -196,7 +182,6 @@ export default function HackerRankProblemView({
       {sampleCases.length > 0 && (
         <div className="space-y-6 pt-1">
           {sampleCases.map((sc, idx) => {
-            const visualArray = parseArrayVisualization(sc.input);
             const inputKey = `input_${idx}`;
             const outputKey = `output_${idx}`;
             const actualOutput = sc.output || sc.expected_output || '';
@@ -211,7 +196,7 @@ export default function HackerRankProblemView({
                       Sample Input {idx}
                     </h3>
 
-                    {/* Copy & Download Actions (matching HackerRank screenshot) */}
+                    {/* Copy & Download Actions (matching HackerRank / LeetCode standard) */}
                     <div className="flex items-center gap-3 text-xs">
                       <button
                         type="button"
@@ -233,31 +218,9 @@ export default function HackerRankProblemView({
                     </div>
                   </div>
 
-                  {/* Sample Input Card (with visual array diagram when array is present) */}
-                  <div className="p-4 bg-sky-50/40 dark:bg-[#121315] rounded-xl border border-sky-100 dark:border-[#2d3036] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                    {/* Visual Array Box Diagram (matching Image 2) */}
-                    {visualArray ? (
-                      <div className="flex flex-col items-center justify-center p-3 bg-white dark:bg-[#1a1f26] rounded-xl border border-gray-200 dark:border-[#30363d] shadow-2xs shrink-0 select-none">
-                        <div className="inline-flex border-2 border-gray-800 dark:border-gray-200 divide-x-2 divide-gray-800 dark:divide-gray-200 bg-white dark:bg-[#121315] rounded-xs overflow-hidden">
-                          {visualArray.elements.map((el, eIdx) => (
-                            <div
-                              key={eIdx}
-                              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center font-mono font-bold text-xs sm:text-sm text-gray-900 dark:text-gray-100"
-                            >
-                              {el}
-                            </div>
-                          ))}
-                        </div>
-                        <span className="text-[11px] font-mono text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
-                          {visualArray.label}
-                        </span>
-                      </div>
-                    ) : null}
-
-                    {/* Raw Stdin Text */}
-                    <div className="flex-1 min-w-0 font-mono text-xs sm:text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
-                      {sc.input}
-                    </div>
+                  {/* Sample Input Card (Clean standard monospace presentation) */}
+                  <div className="p-3.5 bg-gray-50 dark:bg-[#121315] rounded-xl border border-gray-200 dark:border-[#2d3036] font-mono text-xs sm:text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed overflow-x-auto">
+                    {sc.input}
                   </div>
                 </div>
 

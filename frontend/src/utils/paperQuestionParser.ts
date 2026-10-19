@@ -37,6 +37,98 @@ export function cleanHtmlTags(html?: string): string {
     .trim();
 }
 
+/**
+ * Accurately determines question difficulty based on explicit badges, algorithmic taxonomy, and keywords.
+ */
+export function inferQuestionDifficulty(title: string, description = '', rawBlock = ''): 'BASIC' | 'MEDIUM' | 'HARD' {
+  const cleanTitle = (title || '').toLowerCase();
+  const combined = `${title} ${description}`.toLowerCase();
+
+  // 1. Check for explicit difficulty badges/tags in raw HTML/Markdown
+  const explicitMatch = rawBlock.match(/(?:difficulty|level|tier)\s*[:\-]\s*(easy|basic|medium|hard|advanced)/i)
+    || rawBlock.match(/class=["'][^"']*\b(easy|basic|medium|hard|advanced)\b[^"']*["']/i);
+  if (explicitMatch) {
+    const val = explicitMatch[1].toLowerCase();
+    if (val === 'easy' || val === 'basic') return 'BASIC';
+    if (val === 'hard' || val === 'advanced') return 'HARD';
+    if (val === 'medium') return 'MEDIUM';
+  }
+
+  // 2. HARD / ADVANCED Patterns
+  const hardKeywords = [
+    'hard', 'advanced', 'trapping rain', 'median of two sorted', 'n-queens',
+    'word ladder', 'edit distance', 'lru cache', 'lfu cache', 'sliding window maximum',
+    'minimum window substring', 'regular expression', 'wildcard matching', 'sudoku solver',
+    'merge k sorted', 'first missing positive', 'longest valid parentheses',
+    'serialize and deserialize', 'burst balloons', 'alien dictionary', 'dijkstra',
+    'segment tree', 'fenwick', 'trie', 'max flow', 'bellman ford', 'floyd warshall',
+    'traveling salesman', 'convex hull', 'shortest path in a grid with obstacles',
+    'minimum cost to hire k workers', 'string transforms into another string',
+    'maximum number of visible points', 'odd even jump'
+  ];
+  for (const kw of hardKeywords) {
+    if (cleanTitle.includes(kw)) return 'HARD';
+  }
+
+  // 3. MEDIUM Patterns (checked before general basic falls)
+  const mediumKeywords = [
+    'medium', '3sum', 'three sum', '4sum', 'four sum', 'longest substring without',
+    'container with most water', 'rotate array', 'rotate image', 'product of array',
+    'subarray sum equals', 'group anagrams', 'add two numbers', 'remove nth node',
+    'reorder list', 'copy list', 'linked list cycle', 'permutations', 'subsets',
+    'combination sum', 'letter combinations', 'word search', 'level order',
+    'lowest common ancestor', 'validate binary search', 'kth smallest',
+    'kth largest', 'number of islands', 'clone graph', 'course schedule',
+    'rotting oranges', 'coin change', 'longest increasing subsequence',
+    'longest palindromic substring', 'longest common subsequence', 'house robber',
+    'decode ways', 'unique paths', 'word break', 'jump game', 'maximum subarray',
+    'koko eating bananas', 'fruit into baskets', 'sort colors', 'reorganize string',
+    'longest consecutive sequence', 'minimum amplitude', 'logger rate limiter',
+    'snapshot array', 'campus bikes', 'expressive words', 'sentence screen',
+    'time needed to inform', 'encoded string decoding', 'bank transaction',
+    'merge intervals', 'search in rotated', 'sort characters by frequency',
+    'minimum moves to capture', 'maximum coins from k consecutive',
+    'ways to split string', 'server loads', 'obtain from cards', 'replace in string',
+    'compare strings by frequency'
+  ];
+  for (const kw of mediumKeywords) {
+    if (cleanTitle.includes(kw)) return 'MEDIUM';
+  }
+
+  // 4. BASIC / INTRODUCTORY Patterns
+  const basicKeywords = [
+    'easy', 'basic', 'simple', 'two sum', 'palindrome', 'reverse integer',
+    'valid parentheses', 'create hello world', 'valid anagram', 'longest common prefix',
+    'add binary', 'toeplitz matrix', "pascal's triangle", 'pascal triangle',
+    'merge sorted array', 'candies', 'max consecutive ones', 'reverse string',
+    'best time to buy and sell stock', 'majority element', 'remove duplicates',
+    'rat count house', 'binary string operations', 'password security',
+    'difference threshold', 'difference of divisible', 'large small sum',
+    'smallest pair product', 'decimal to base', 'move hyphen', 'number of carries',
+    'replace character', 'arithmetic operation', 'peak score', 'autobiographical',
+    'palindromic numbers', 'factorial', 'fibonacci', 'armstrong', 'prime',
+    'even and odd', 'sum of digits', 'linear search', 'binary search',
+    'vowel count', 'count vowels', 'fizz buzz', 'power of two', 'power of three',
+    'missing number', 'single number', 'contains duplicate', 'find minimum',
+    'find maximum', 'second largest', 'gcd', 'lcm', 'square root', 'leap year',
+    'swap', 'count elements', 'average of', 'check sorted', 'matrix addition',
+    'largest subarray of length k', 'obfuscated clock', 'watering plants'
+  ];
+  for (const kw of basicKeywords) {
+    if (cleanTitle.includes(kw)) return 'BASIC';
+  }
+
+  // 5. Algorithmic intent signals
+  if (/(recursion|binary tree|graph|dynamic programming|backtrack|memoization|heap|priority queue)/i.test(combined)) {
+    return 'MEDIUM';
+  }
+  if (/(single loop|O\(1\) space|time limit.*1 second|brute force)/i.test(combined)) {
+    return 'BASIC';
+  }
+
+  return 'BASIC';
+}
+
 function parseTestCasesFromBlock(blockText: string): PaperTestCase[] {
   if (!blockText) return [];
 
@@ -136,10 +228,7 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
       }
 
       const testCases = parseTestCasesFromBlock(b);
-
-      let difficulty: 'BASIC' | 'MEDIUM' | 'HARD' = 'MEDIUM';
-      if (/easy|basic|simple|palindrome|two sum/i.test(cleanTitle)) difficulty = 'BASIC';
-      else if (/hard|advanced|lru cache|median|trapping/i.test(cleanTitle)) difficulty = 'HARD';
+      const difficulty = inferQuestionDifficulty(cleanTitle, desc, b);
 
       questions.push({
         id: `q-${qNum}-${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
@@ -189,10 +278,7 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
       // Extract description
       const descText = cleanHtmlTags(blockContent).replace(rawTitle, '').split(/Constraints/i)[0].trim();
       const testCases = parseTestCasesFromBlock(blockContent);
-
-      let difficulty: 'BASIC' | 'MEDIUM' | 'HARD' = 'MEDIUM';
-      if (/easy|basic|simple|palindrome|two sum/i.test(cleanTitle)) difficulty = 'BASIC';
-      else if (/hard|advanced|lru cache|median|trapping/i.test(cleanTitle)) difficulty = 'HARD';
+      const difficulty = inferQuestionDifficulty(cleanTitle, descText, blockContent);
 
       questions.push({
         id: `q-${qNum}-${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
@@ -227,10 +313,7 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
 
       const testCases = parseTestCasesFromBlock(blockContent);
       const descText = cleanHtmlTags(blockContent).replace(rawTitle, '').split(/Constraints/i)[0].trim();
-
-      let difficulty: 'BASIC' | 'MEDIUM' | 'HARD' = 'MEDIUM';
-      if (/easy|basic|simple|palindrome|two sum/i.test(cleanTitle)) difficulty = 'BASIC';
-      else if (/hard|advanced|lru cache|median|trapping/i.test(cleanTitle)) difficulty = 'HARD';
+      const difficulty = inferQuestionDifficulty(cleanTitle, descText, blockContent);
 
       questions.push({
         id: `q-${qNum}-${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
