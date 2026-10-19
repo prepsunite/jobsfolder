@@ -64,7 +64,8 @@ export function inferQuestionDifficulty(title: string, description = '', rawBloc
     'segment tree', 'fenwick', 'trie', 'max flow', 'bellman ford', 'floyd warshall',
     'traveling salesman', 'convex hull', 'shortest path in a grid with obstacles',
     'minimum cost to hire k workers', 'string transforms into another string',
-    'maximum number of visible points', 'odd even jump'
+    'maximum number of visible points', 'odd even jump', 'reverse nodes in k-group',
+    'find building where alice and bob'
   ];
   for (const kw of hardKeywords) {
     if (cleanTitle.includes(kw)) return 'HARD';
@@ -89,7 +90,10 @@ export function inferQuestionDifficulty(title: string, description = '', rawBloc
     'merge intervals', 'search in rotated', 'sort characters by frequency',
     'minimum moves to capture', 'maximum coins from k consecutive',
     'ways to split string', 'server loads', 'obtain from cards', 'replace in string',
-    'compare strings by frequency'
+    'compare strings by frequency', 'integer to roman', 'gas station',
+    'longest well-performing', 'mutating substring', 'rearranged number',
+    'maximum sum subarray', 'subarray with given sum', 'operations to make array equal',
+    'quick sort pivot', 'book exchange'
   ];
   for (const kw of mediumKeywords) {
     if (cleanTitle.includes(kw)) return 'MEDIUM';
