@@ -4,6 +4,9 @@ import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
 import { TreeNodeItem } from '@/components/TreeNodeItem';
 import BulkImportPapersModal from '@/components/BulkImportPapersModal';
+import PaperProblemListView from '@/components/papers/PaperProblemListView';
+import PaperCodingModal from '@/components/papers/PaperCodingModal';
+import { parsePaperQuestions, type PaperQuestion } from '@/utils/paperQuestionParser';
 import { useToast } from '@/contexts/ToastContext';
 import {
   cloneTree,
@@ -66,6 +69,28 @@ export default function DocumentExplorer({
     const flat = flattenNodes(tabs);
     return flat[0]?.id || '';
   });
+
+  // Interactive Coding IDE State
+  const [selectedCodingQuestion, setSelectedCodingQuestion] = useState<PaperQuestion | null>(null);
+  const [solvedQuestionIds, setSolvedQuestionIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem('prepunite_solved_paper_questions');
+      if (raw) return new Set(JSON.parse(raw));
+    } catch {}
+    return new Set();
+  });
+
+  const handleMarkSolved = useCallback((questionId: string) => {
+    setSolvedQuestionIds(prev => {
+      const next = new Set(prev);
+      next.add(questionId);
+      try {
+        localStorage.setItem('prepunite_solved_paper_questions', JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+    toast.success('Problem marked as Solved! Great work!');
+  }, [toast]);
 
   const readerPanelRef = useRef<HTMLDivElement>(null);
   const topAnchorRef = useRef<HTMLDivElement>(null);
@@ -181,6 +206,11 @@ export default function DocumentExplorer({
   const activeNode = useMemo(() => {
     return findNodeById(localTabs, selectedNodeId) || localTabs[0] || null;
   }, [localTabs, selectedNodeId]);
+
+  const parsedQuestions = useMemo(() => {
+    if (!activeNode?.content) return [];
+    return parsePaperQuestions(activeNode.content);
+  }, [activeNode?.content]);
 
   const currentIndex = flatNodes.findIndex(n => n.id === activeNode?.id);
   const prevNode = currentIndex > 0 ? flatNodes[currentIndex - 1] : null;
@@ -427,6 +457,7 @@ export default function DocumentExplorer({
                 emojiValue={emojiValue}
                 adminMode={adminMode}
                 isAdmin={isAdmin}
+                hasAccess={hasAccess}
                 searchQuery={searchQuery}
                 onSelectNode={setSelectedNodeId}
                 onToggleExpand={toggleExpand}
@@ -532,7 +563,7 @@ export default function DocumentExplorer({
               )}
             </div>
           )
-        ) : !(hasAccess || isAdmin || activeNode?.isFree === true) ? (
+        ) : !(hasAccess || isAdmin) ? (
           /* PAYWALL OVERLAY */
           <div className="relative flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-[#F8F9FA]/50 dark:bg-[#0C0C0C]/50">
             {/* Visual Abstract Skeleton Background */}
@@ -553,21 +584,21 @@ export default function DocumentExplorer({
               </div>
               <div className="space-y-1.5">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3" /> Previous Paper Locked
+                  <Sparkles className="w-3 h-3" /> Official Company Placement Paper Locked
                 </span>
                 <h3 className="font-display text-lg font-extrabold text-[#121417] dark:text-[#FFFFFF]">
                   Unlock Complete {examName} Archive
                 </h3>
                 <p className="text-xs text-[#868E96] dark:text-[#555555] leading-relaxed font-sans">
-                  Unlock full access to all sections, solved memory questions, and code solutions for <strong>{companyName} – {examName}</strong>.
+                  Unlock full access to view all verified questions, detailed constraints, campus test cases, and practice in the interactive Coding IDE for <strong>{companyName} – {examName}</strong>.
                 </p>
               </div>
               <button
                 onClick={onOpenPaywall}
-                className="w-full py-2.5 px-4 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Unlock All {examName} Tabs (from ₹59)</span>
+                <span>Unlock to View Questions & Practice (from ₹59)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[#868E96] dark:text-[#555555]">
@@ -736,10 +767,20 @@ export default function DocumentExplorer({
                 <p className="font-normal text-rose-600/80">Tampering with anti-piracy watermarks is prohibited. Please reload the page.</p>
               </div>
             ) : activeNode ? (
-              <ContentRenderer
-                content={activeNode.content}
-                emptyText="No content added yet."
-              />
+              parsedQuestions.length > 0 ? (
+                <PaperProblemListView
+                  questions={parsedQuestions}
+                  companyName={companyName}
+                  examName={examName}
+                  solvedQuestionIds={solvedQuestionIds}
+                  onSolveQuestion={(q) => setSelectedCodingQuestion(q)}
+                />
+              ) : (
+                <ContentRenderer
+                  content={activeNode.content}
+                  emptyText="No content added yet."
+                />
+              )
             ) : (
               <div className="p-8 text-center text-[#868E96] text-xs">Select a section from the left.</div>
             )}
@@ -783,6 +824,19 @@ export default function DocumentExplorer({
           </div>
         )}
       </div>
+
+      {/* Interactive In-Page Coding IDE Modal */}
+      {selectedCodingQuestion && (
+        <PaperCodingModal
+          question={selectedCodingQuestion}
+          isOpen={!!selectedCodingQuestion}
+          onClose={() => setSelectedCodingQuestion(null)}
+          companyName={companyName}
+          examName={examName}
+          isSolved={solvedQuestionIds.has(selectedCodingQuestion.id)}
+          onMarkSolved={handleMarkSolved}
+        />
+      )}
     </div>
   );
 }

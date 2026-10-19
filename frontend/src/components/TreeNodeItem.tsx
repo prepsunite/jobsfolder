@@ -13,6 +13,7 @@ import {
   Check,
   X,
   Upload,
+  Lock,
 } from 'lucide-react';
 
 interface TreeNodeItemProps {
@@ -25,6 +26,7 @@ interface TreeNodeItemProps {
   emojiValue: string;
   adminMode: boolean;
   isAdmin: boolean;
+  hasAccess?: boolean;
   searchQuery: string;
   onSelectNode: (id: string) => void;
   onToggleExpand: (id: string, e: React.MouseEvent) => void;
@@ -52,6 +54,7 @@ const TreeNodeItemComponent: React.FC<TreeNodeItemProps> = ({
   emojiValue,
   adminMode,
   isAdmin,
+  hasAccess = false,
   searchQuery,
   onSelectNode,
   onToggleExpand,
@@ -151,6 +154,8 @@ const TreeNodeItemComponent: React.FC<TreeNodeItemProps> = ({
               >
                 {node.isFree === true ? 'FREE' : 'PAID'}
               </button>
+            ) : !(hasAccess || isAdmin) ? (
+              <Lock className="w-3 h-3 text-[#868E96] opacity-60 flex-shrink-0" />
             ) : node.isFree === true ? (
               <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex-shrink-0">
                 FREE
@@ -257,6 +262,7 @@ const TreeNodeItemComponent: React.FC<TreeNodeItemProps> = ({
               emojiValue={emojiValue}
               adminMode={adminMode}
               isAdmin={isAdmin}
+              hasAccess={hasAccess}
               searchQuery={searchQuery}
               onSelectNode={onSelectNode}
               onToggleExpand={onToggleExpand}
