@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   List,
   GripHorizontal,
+  Cloud,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import HackerRankProblemView from '@/components/HackerRankProblemView';
@@ -29,7 +30,9 @@ import {
   type TestCaseRunResult,
   type ExecutionResult,
 } from '@/services/codeExecution.service';
+import { technicalService } from '@/services/technical.service';
 import audioEffects from '@/utils/audioEffects';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import type { ProgrammingProblem } from '@/types/technical';
 import type { PaperQuestion } from '@/utils/paperQuestionParser';
@@ -64,10 +67,17 @@ export default function PaperCodingModal({
   isSolved = false,
   onMarkSolved,
 }: PaperCodingModalProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'problem' | 'editor' | 'console'>('editor');
+
+  // Multi-device Cloud & Local Sync tracking
+  const [restoredSource, setRestoredSource] = useState<'cloud_solution' | 'cloud_draft' | 'local_draft' | null>(null);
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'idle' | 'saving' | 'synced' | 'error'>('idle');
+  const draftTimeoutRef = useRef<any>(null);
+  const isProgrammaticUpdateRef = useRef<boolean>(false);
 
   // Navigation indices
   const currentIndex = useMemo(() => {
@@ -112,22 +122,68 @@ export default function PaperCodingModal({
   const [customResult, setCustomResult] = useState<ExecutionResult | null>(null);
   const [isRunningCustom, setIsRunningCustom] = useState(false);
 
-  // Load starter template or saved draft when question or language changes
+  // Multi-device Hydration: Restores solution or draft from cloud (LeetCode/GfG standard)
   useEffect(() => {
     if (!question) return;
-    const storedCodeKey = `paper_code_${question.id}_${selectedLanguage}`;
-    const saved = localStorage.getItem(storedCodeKey);
-    if (saved) {
-      setCode(saved);
-    } else {
-      const template = STARTER_TEMPLATES[selectedLanguage] || '# Write your solution here\n';
+    let isMounted = true;
+
+    const hydrateProblemCode = async () => {
+      // 1. Check for past saved submission or cloud draft in Supabase (hydrates new devices / new browsers)
+      const cloudSubmission = await technicalService.getUserLatestSubmission(question.id, user?.email);
+      if (!isMounted) return;
+
+      if (cloudSubmission && cloudSubmission.sourceCode && cloudSubmission.sourceCode.trim().length > 0) {
+        const subLang = cloudSubmission.language || 'python';
+        setSelectedLanguage(subLang);
+        isProgrammaticUpdateRef.current = true;
+        setCode(cloudSubmission.sourceCode);
+        if (editorRef.current) {
+          editorRef.current.setValue(cloudSubmission.sourceCode);
+        }
+        setRestoredSource(cloudSubmission.status === 'ACCEPTED' ? 'cloud_solution' : 'cloud_draft');
+        isProgrammaticUpdateRef.current = false;
+
+        if (cloudSubmission.status === 'ACCEPTED') {
+          onMarkSolved?.(question.id);
+        }
+        return;
+      }
+
+      // 2. Check local device draft
+      const storedCodeKey = `paper_code_${question.id}_${selectedLanguage}`;
+      const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(storedCodeKey) : null;
+      if (savedDraft && savedDraft.trim().length > 0) {
+        isProgrammaticUpdateRef.current = true;
+        setCode(savedDraft);
+        if (editorRef.current && editorRef.current.getValue() !== savedDraft) {
+          editorRef.current.setValue(savedDraft);
+        }
+        setRestoredSource('local_draft');
+        isProgrammaticUpdateRef.current = false;
+        return;
+      }
+
+      // 3. Fallback to starter boilerplate template
+      const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
+      isProgrammaticUpdateRef.current = true;
       setCode(template);
-    }
+      if (editorRef.current && editorRef.current.getValue() !== template) {
+        editorRef.current.setValue(template);
+      }
+      setRestoredSource(null);
+      isProgrammaticUpdateRef.current = false;
+    };
+
+    hydrateProblemCode();
     setTestResults(null);
     setCustomResult(null);
     setActiveTestTab(0);
     setShowCustomInput(false);
-  }, [question?.id, selectedLanguage]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [question?.id, user?.email]);
 
   // Keyboard shortcut listener (Escape to close, Ctrl+Enter to run)
   useEffect(() => {
@@ -140,12 +196,33 @@ export default function PaperCodingModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // Auto-save code on change
+  // Handle code change with instant local persistence and debounced cloud draft sync (LeetCode/GfG standard)
   const handleCodeChange = (newCode?: string) => {
+    if (isProgrammaticUpdateRef.current) return;
     const val = newCode || '';
     setCode(val);
-    if (question) {
-      localStorage.setItem(`paper_code_${question.id}_${selectedLanguage}`, val);
+
+    if (!question) return;
+
+    // 1. Instant local persistence (Tier 1: 0ms lag, offline resilience)
+    localStorage.setItem(`paper_code_${question.id}_${selectedLanguage}`, val);
+
+    // 2. Debounced cloud draft persistence (Tier 2: background sync)
+    if (user?.email && user.email !== GUEST_EMAIL) {
+      setCloudSyncStatus('saving');
+      if (draftTimeoutRef.current) {
+        clearTimeout(draftTimeoutRef.current);
+      }
+
+      draftTimeoutRef.current = setTimeout(async () => {
+        try {
+          await technicalService.saveUserDraft(question.id, selectedLanguage, val, user.email);
+          setCloudSyncStatus('synced');
+          setTimeout(() => setCloudSyncStatus('idle'), 2500);
+        } catch {
+          setCloudSyncStatus('error');
+        }
+      }, 2000);
     }
   };
 
@@ -155,6 +232,7 @@ export default function PaperCodingModal({
     if (question) {
       localStorage.removeItem(`paper_code_${question.id}_${selectedLanguage}`);
     }
+    setRestoredSource(null);
     toast.info('Code reset to default starter template.');
   };
 
@@ -326,11 +404,29 @@ export default function PaperCodingModal({
 
       const allPassed = result.passedCount === result.totalCount && result.totalCount > 0 && !result.compileError;
 
+      // Tier 3: Permanent submission recording in Supabase cloud ledger
+      if (isSubmit) {
+        const subVerdict = allPassed
+          ? 'ACCEPTED'
+          : (result.compileError ? 'COMPILATION_ERROR' : (result.runtimeError ? 'RUNTIME_ERROR' : 'WRONG_ANSWER'));
+        await technicalService.saveUserSubmission(
+          question.id,
+          selectedLanguage,
+          code,
+          subVerdict,
+          result.passedCount,
+          result.totalCount,
+          user?.email
+        );
+      }
+
       if (allPassed) {
         audioEffects.playSuccessChime();
         if (isSubmit) {
           onMarkSolved?.(question.id);
-          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and marked as solved.`);
+          setRestoredSource('cloud_solution');
+          setCloudSyncStatus('synced');
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and backed up to cloud.`);
         } else {
           toast.success(`Sample test cases passed (${result.passedCount}/${result.totalCount})! Click Submit Solution to verify.`);
         }
@@ -630,6 +726,40 @@ export default function PaperCodingModal({
             </div>
 
             <div className="flex items-center gap-2.5">
+              {restoredSource === 'cloud_solution' && (
+                <div
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800"
+                  title="Your accepted solution was automatically restored from cloud across your devices"
+                >
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span>Cloud Solution Restored</span>
+                </div>
+              )}
+
+              {restoredSource === 'cloud_draft' && (
+                <div
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded border border-sky-800"
+                  title="Your draft was automatically restored from cloud across your devices"
+                >
+                  <Cloud className="w-3 h-3 text-sky-400" />
+                  <span>Cloud Draft Restored</span>
+                </div>
+              )}
+
+              {cloudSyncStatus === 'saving' && (
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800">
+                  <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+                  <span>Syncing to Cloud...</span>
+                </div>
+              )}
+
+              {cloudSyncStatus === 'synced' && (
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
+                  <Cloud className="w-3 h-3 text-emerald-400" />
+                  <span>Cloud Synced</span>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleResetTemplate}

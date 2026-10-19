@@ -8,6 +8,8 @@ import PaperProblemListView from '@/components/papers/PaperProblemListView';
 import PaperCodingModal from '@/components/papers/PaperCodingModal';
 import { parsePaperQuestions, type PaperQuestion } from '@/utils/paperQuestionParser';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import {
   cloneTree,
   moveUp,
@@ -80,6 +82,8 @@ export default function DocumentExplorer({
     return new Set();
   });
 
+  const { user } = useAuth();
+
   const handleMarkSolved = useCallback((questionId: string) => {
     setSolvedQuestionIds(prev => {
       const next = new Set(prev);
@@ -91,6 +95,36 @@ export default function DocumentExplorer({
     });
     toast.success('Problem marked as Solved! Great work!');
   }, [toast]);
+
+  // Synchronize solved placement paper problems across all user devices via Supabase
+  useEffect(() => {
+    if (!user?.email || user.email === GUEST_EMAIL) return;
+    let isMounted = true;
+
+    async function syncPaperProgress() {
+      try {
+        const { data, error } = await supabase
+          .from('user_technical_progress')
+          .select('problem_id')
+          .eq('user_email', user!.email.toLowerCase().trim())
+          .eq('is_solved', true);
+
+        if (!error && data && isMounted) {
+          setSolvedQuestionIds(prev => {
+            const next = new Set(prev);
+            data.forEach(row => next.add(row.problem_id));
+            try {
+              localStorage.setItem('prepunite_solved_paper_questions', JSON.stringify(Array.from(next)));
+            } catch {}
+            return next;
+          });
+        }
+      } catch {}
+    }
+
+    syncPaperProgress();
+    return () => { isMounted = false; };
+  }, [user?.email]);
 
   const readerPanelRef = useRef<HTMLDivElement>(null);
   const topAnchorRef = useRef<HTMLDivElement>(null);

@@ -319,19 +319,20 @@ export const technicalService = {
     createdAt?: string;
   } | null> {
     // 1. Fast local cache check
+    let localResult: any = null;
     if (typeof window !== 'undefined') {
       try {
         const local = localStorage.getItem(`prepunite_submission_${problemId}`);
         if (local) {
           const parsed = JSON.parse(local);
           if (parsed && typeof parsed.sourceCode === 'string' && parsed.sourceCode.trim().length > 0) {
-            return parsed;
+            localResult = parsed;
           }
         }
       } catch {}
     }
 
-    // 2. Fetch from cloud ledger if user is signed in
+    // 2. Fetch from cloud ledger if user is signed in (Hydrates new device / new browser)
     if (userEmail && userEmail !== GUEST_EMAIL) {
       try {
         const cleanEmail = userEmail.toLowerCase().trim();
@@ -345,7 +346,7 @@ export const technicalService = {
           .maybeSingle();
 
         if (!error && data && data.source_code) {
-          const res = {
+          const cloudRes = {
             language: data.language || 'python',
             sourceCode: data.source_code,
             status: data.status || 'ACCEPTED',
@@ -353,19 +354,68 @@ export const technicalService = {
             totalCases: data.total_cases || 0,
             createdAt: data.created_at,
           };
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(`prepunite_submission_${problemId}`, JSON.stringify(res));
-            } catch {}
+
+          // Reconcile: If local is missing OR cloud record is newer/equal, sync cloud to local disk
+          const cloudTime = new Date(data.created_at).getTime();
+          const localTime = localResult?.createdAt ? new Date(localResult.createdAt).getTime() : 0;
+          if (!localResult || cloudTime >= localTime) {
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(`prepunite_submission_${problemId}`, JSON.stringify(cloudRes));
+                localStorage.setItem(`prepunite_ide_draft_${problemId}_${cloudRes.language}`, cloudRes.sourceCode);
+              } catch {}
+            }
+            return cloudRes;
           }
-          return res;
         }
       } catch (e) {
         console.warn('Failed to load user submission from Supabase:', e);
       }
     }
 
-    return null;
+    return localResult;
+  },
+
+  /**
+   * Debounced cloud draft persistence (Tier 2 in LeetCode/GfG architecture)
+   */
+  async saveUserDraft(
+    problemId: string,
+    language: string,
+    sourceCode: string,
+    userEmail?: string
+  ): Promise<void> {
+    if (!problemId || !sourceCode) return;
+    const cleanEmail = userEmail ? userEmail.toLowerCase().trim() : GUEST_EMAIL;
+
+    // 1. Instant local persistence
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`prepunite_ide_draft_${problemId}_${language}`, sourceCode);
+        localStorage.setItem(`paper_code_${problemId}_${language}`, sourceCode);
+        localStorage.setItem(`prepunite_draft_time_${problemId}_${language}`, Date.now().toString());
+      } catch {}
+    }
+
+    // 2. Cloud draft sync for authenticated users
+    if (userEmail && userEmail !== GUEST_EMAIL) {
+      try {
+        await supabase.from('user_technical_submissions').insert({
+          user_email: cleanEmail,
+          problem_id: problemId,
+          language,
+          source_code: sourceCode,
+          status: 'DRAFT',
+          runtime_ms: 0,
+          memory_kb: 0,
+          passed_cases: 0,
+          total_cases: 0,
+          error_output: null,
+        });
+      } catch (err) {
+        console.warn('Cloud draft auto-save fallback:', err);
+      }
+    }
   },
 
   /**
@@ -395,6 +445,7 @@ export const technicalService = {
       try {
         localStorage.setItem(`prepunite_submission_${problemId}`, JSON.stringify(payload));
         localStorage.setItem(`prepunite_ide_draft_${problemId}_${language}`, sourceCode);
+        localStorage.setItem(`paper_code_${problemId}_${language}`, sourceCode);
       } catch {}
     }
 
@@ -408,7 +459,7 @@ export const technicalService = {
     if (userEmail && userEmail !== GUEST_EMAIL) {
       const cleanEmail = userEmail.toLowerCase().trim();
       try {
-        await supabase.rpc('record_verified_coding_submission', {
+        const { error: rpcErr } = await supabase.rpc('record_verified_coding_submission', {
           p_user_email: cleanEmail,
           p_problem_id: problemId,
           p_language: language,
@@ -420,8 +471,38 @@ export const technicalService = {
           p_total_cases: totalCases,
           p_error_output: null,
         });
-      } catch (err) {
-        console.warn('Direct Supabase submission record fallback:', err);
+
+        if (rpcErr) {
+          // Direct table insert fallback if RPC is not present
+          await supabase.from('user_technical_submissions').insert({
+            user_email: cleanEmail,
+            problem_id: problemId,
+            language,
+            source_code: sourceCode,
+            status,
+            runtime_ms: 0,
+            memory_kb: 0,
+            passed_cases: passedCases,
+            total_cases: totalCases,
+            error_output: null,
+          });
+        }
+      } catch {
+        // Direct table insert fallback
+        try {
+          await supabase.from('user_technical_submissions').insert({
+            user_email: cleanEmail,
+            problem_id: problemId,
+            language,
+            source_code: sourceCode,
+            status,
+            runtime_ms: 0,
+            memory_kb: 0,
+            passed_cases: passedCases,
+            total_cases: totalCases,
+            error_output: null,
+          });
+        } catch {}
       }
     }
   },
