@@ -223,6 +223,19 @@ export default function PaperCodingModal({
     };
   }, [question?.id, user?.email]);
 
+  // Guard against accidental page reload or tab closure when candidate has uncommitted edits
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   // Save Code Draft (Explicitly on Save button or Run & Submit)
   const handleSaveDraft = async (silent: boolean = false) => {
     if (!question) return;

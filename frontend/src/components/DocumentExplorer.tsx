@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router';
 import { type DocTabNode } from '@/services/dataStore';
 import ContentRenderer from '@/components/ContentRenderer';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -72,8 +73,59 @@ export default function DocumentExplorer({
     return flat[0]?.id || '';
   });
 
-  // Interactive Coding IDE State
+  // Interactive Coding IDE State with URL Synchronization (Survives browser refresh)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQuestionId = searchParams.get('questionId') || searchParams.get('q');
   const [selectedCodingQuestion, setSelectedCodingQuestion] = useState<PaperQuestion | null>(null);
+
+  const handleOpenQuestion = useCallback((q: PaperQuestion) => {
+    setSelectedCodingQuestion(q);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('questionId', q.id);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const handleCloseQuestion = useCallback(() => {
+    setSelectedCodingQuestion(null);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete('questionId');
+      next.delete('q');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // Auto-restore active coding question from URL search params (e.g. on page refresh)
+  useEffect(() => {
+    if (!urlQuestionId) return;
+
+    if (
+      selectedCodingQuestion &&
+      (selectedCodingQuestion.id === urlQuestionId ||
+       selectedCodingQuestion.cleanTitle.toLowerCase().trim() === urlQuestionId.toLowerCase().trim())
+    ) {
+      return;
+    }
+
+    const flat = flattenNodes(localTabs);
+    for (const node of flat) {
+      if (!node.content) continue;
+      const questions = parsePaperQuestions(node.content);
+      const found = questions.find(
+        q => q.id === urlQuestionId || q.cleanTitle.toLowerCase().trim() === urlQuestionId.toLowerCase().trim()
+      );
+      if (found) {
+        if (selectedNodeId !== node.id) {
+          setSelectedNodeId(node.id);
+        }
+        setSelectedCodingQuestion(found);
+        break;
+      }
+    }
+  }, [urlQuestionId, localTabs, selectedCodingQuestion, selectedNodeId]);
+
   const [solvedQuestionIds, setSolvedQuestionIds] = useState<Set<string>>(() => {
     try {
       const raw = localStorage.getItem('prepunite_solved_paper_questions');
@@ -807,7 +859,7 @@ export default function DocumentExplorer({
                   companyName={companyName}
                   examName={examName}
                   solvedQuestionIds={solvedQuestionIds}
-                  onSolveQuestion={(q) => setSelectedCodingQuestion(q)}
+                  onSolveQuestion={handleOpenQuestion}
                 />
               ) : (
                 <ContentRenderer
@@ -863,10 +915,10 @@ export default function DocumentExplorer({
       {selectedCodingQuestion && (
         <PaperCodingModal
           question={selectedCodingQuestion}
-          questions={parsedQuestions}
-          onSelectQuestion={(q) => setSelectedCodingQuestion(q)}
+          questions={parsedQuestions.length > 0 ? parsedQuestions : [selectedCodingQuestion]}
+          onSelectQuestion={handleOpenQuestion}
           isOpen={!!selectedCodingQuestion}
-          onClose={() => setSelectedCodingQuestion(null)}
+          onClose={handleCloseQuestion}
           companyName={companyName}
           examName={examName}
           isSolved={solvedQuestionIds.has(selectedCodingQuestion.id)}
