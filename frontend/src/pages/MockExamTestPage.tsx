@@ -82,6 +82,215 @@ function seededShuffle<T>(items: T[], seedStr: string): T[] {
   return copy;
 }
 
+/**
+ * Dynamically samples and shuffles section questions for a candidate:
+ * 1. Checks localStorage cache for frozen assigned sequence.
+ * 2. If pool size > serve target count (e.g. 40 pooled for 20 served),
+ *    groups into atomic passage blocks and standalone questions.
+ * 3. Preserves passage integrity (all questions of a passage stay intact and consecutive).
+ * 4. Deterministically samples required passages and fills remaining count with standalone questions.
+ * 5. Freezes sequence into localStorage and returns targetServeCount questions.
+ */
+export function getSampledSectionQuestionIds(
+  section: any,
+  sectionIndex: number,
+  questionsMap: Record<string, any>,
+  examId: string,
+  studentShuffleSeed: string,
+  shuffleQuestions: boolean = true
+): string[] {
+  const rawIds: string[] = section?.question_ids || [];
+  if (rawIds.length === 0) return [];
+
+  const targetServeCount = Math.min(
+    rawIds.length,
+    section?.serve_count || section?.question_count || rawIds.length
+  );
+
+  // 🛡️ Check persistent cache first (prevents re-sampling or re-shuffling on reload/tab switch)
+  if (typeof window !== 'undefined' && examId) {
+    try {
+      const cached = localStorage.getItem(`prepunite_sec_qids_${examId}_${sectionIndex}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && (parsed.length === targetServeCount || parsed.length === rawIds.length)) {
+          return parsed.slice(0, targetServeCount);
+        }
+      }
+    } catch {}
+  }
+
+  // If no shuffle requested and target matches rawIds:
+  if (!shuffleQuestions && targetServeCount === rawIds.length) {
+    return rawIds;
+  }
+
+  const hasQuestionsLoaded = rawIds.some(qId => Boolean(questionsMap[qId]));
+  if (!hasQuestionsLoaded) {
+    // If questions aren't loaded yet, do deterministic slice with seeded shuffle
+    const shuffledRaw = seededShuffle([...rawIds], `${studentShuffleSeed}_sec_${sectionIndex}_pre`);
+    return shuffledRaw.slice(0, targetServeCount);
+  }
+
+  // Group questions into cohesive blocks
+  const passageBlocks: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+  const soloBlocks: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+  const keyToPassageIdx = new Map<string, number>();
+
+  for (const qId of rawIds) {
+    const q = questionsMap[qId];
+    const passageKey =
+      q?.passageTitle ||
+      q?.contextTitle ||
+      q?.structured_explanation?.passageTitle ||
+      (q?.passage ? `passage-${q.passage.slice(0, 40)}` : null) ||
+      (q?.topic_id && q?.question_number
+        ? (['reading-comprehension', 'cloze-test'].includes(q.topic_id)
+            ? `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`
+            : null)
+        : null);
+
+    if (passageKey) {
+      if (keyToPassageIdx.has(passageKey)) {
+        const idx = keyToPassageIdx.get(passageKey)!;
+        passageBlocks[idx].qIds.push(qId);
+      } else {
+        const newIdx = passageBlocks.length;
+        passageBlocks.push({ key: passageKey, qIds: [qId], isPassage: true });
+        keyToPassageIdx.set(passageKey, newIdx);
+      }
+    } else {
+      soloBlocks.push({ key: `solo-${qId}`, qIds: [qId], isPassage: false });
+    }
+  }
+
+  // Sort questions within each passage block by question_number so Q1..N are in exact stimulus order
+  passageBlocks.forEach(b => {
+    if (b.qIds.length > 1) {
+      b.qIds.sort((aId, bId) => {
+        const qA = questionsMap[aId]?.question_number || 0;
+        const qB = questionsMap[bId]?.question_number || 0;
+        return qA - qB;
+      });
+    }
+  });
+
+  // Seeded shuffle on passage blocks (atomic units)
+  const shuffledPassageBlocks = seededShuffle(passageBlocks, `${studentShuffleSeed}_sec_${sectionIndex}_passages`);
+
+  // Assemble blocks up to targetServeCount
+  const selectedBlocks: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+  let currentCount = 0;
+
+  if (shuffledPassageBlocks.length > 0) {
+    for (const pb of shuffledPassageBlocks) {
+      if (currentCount === 0 || currentCount + pb.qIds.length <= targetServeCount) {
+        selectedBlocks.push(pb);
+        currentCount += pb.qIds.length;
+      }
+      if (currentCount >= targetServeCount) break;
+    }
+  }
+
+  // 🛡️ STRATIFIED EQUI-DIFFICULTY DISTRIBUTION:
+  // Categorize standalone questions into Easy, Medium, and Hard buckets so that EVERY candidate
+  // receives the exact same difficulty quota (e.g. 25% Easy, 50% Medium, 25% Hard).
+  // Eliminates score variance caused by one student randomly getting easier questions than another.
+  const remainingSlots = Math.max(0, targetServeCount - currentCount);
+
+  if (remainingSlots > 0 && soloBlocks.length > 0) {
+    const easySolo: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+    const medSolo: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+    const hardSolo: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
+
+    soloBlocks.forEach(sb => {
+      const q = questionsMap[sb.qIds[0]];
+      const diff = (q?.difficulty || q?.level || 'MEDIUM').toUpperCase();
+      if (diff === 'EASY') {
+        easySolo.push(sb);
+      } else if (diff === 'HARD') {
+        hardSolo.push(sb);
+      } else {
+        medSolo.push(sb);
+      }
+    });
+
+    const totalSolo = soloBlocks.length;
+    // Calculate deterministic quota for each difficulty tier based on pool ratio
+    let quotaEasy = Math.round(remainingSlots * (easySolo.length / totalSolo));
+    let quotaHard = Math.round(remainingSlots * (hardSolo.length / totalSolo));
+    let quotaMed = Math.max(0, remainingSlots - quotaEasy - quotaHard);
+
+    // Bound quotas by available counts
+    if (quotaEasy > easySolo.length) {
+      quotaMed += (quotaEasy - easySolo.length);
+      quotaEasy = easySolo.length;
+    }
+    if (quotaHard > hardSolo.length) {
+      quotaMed += (quotaHard - hardSolo.length);
+      quotaHard = hardSolo.length;
+    }
+    if (quotaMed > medSolo.length) {
+      quotaMed = medSolo.length;
+    }
+
+    // Seeded shuffle each difficulty bucket independently
+    const shuffledEasy = seededShuffle(easySolo, `${studentShuffleSeed}_sec_${sectionIndex}_easy`);
+    const shuffledMed = seededShuffle(medSolo, `${studentShuffleSeed}_sec_${sectionIndex}_med`);
+    const shuffledHard = seededShuffle(hardSolo, `${studentShuffleSeed}_sec_${sectionIndex}_hard`);
+
+    // Pick exact stratified quota for this student
+    const pickedEasy = shuffledEasy.slice(0, quotaEasy);
+    const pickedMed = shuffledMed.slice(0, quotaMed);
+    const pickedHard = shuffledHard.slice(0, quotaHard);
+
+    const stratifiedPicks = [...pickedEasy, ...pickedMed, ...pickedHard];
+    stratifiedPicks.forEach(sb => {
+      selectedBlocks.push(sb);
+      currentCount += sb.qIds.length;
+    });
+
+    // If still have remaining slots due to rounding/bounds, fill from leftovers
+    if (currentCount < targetServeCount) {
+      const pickedKeys = new Set(stratifiedPicks.map(b => b.key));
+      const leftovers = [...shuffledEasy, ...shuffledMed, ...shuffledHard].filter(b => !pickedKeys.has(b.key));
+      for (const sb of leftovers) {
+        selectedBlocks.push(sb);
+        currentCount += sb.qIds.length;
+        if (currentCount >= targetServeCount) break;
+      }
+    }
+  }
+
+  // Fallback: if slots remain and unused passage blocks exist
+  if (currentCount < targetServeCount && shuffledPassageBlocks.length > 0) {
+    for (const pb of shuffledPassageBlocks) {
+      if (!selectedBlocks.includes(pb)) {
+        selectedBlocks.push(pb);
+        currentCount += pb.qIds.length;
+        if (currentCount >= targetServeCount) break;
+      }
+    }
+  }
+
+  // Shuffle selected blocks as atomic units (keeping questions within each passage block consecutive)
+  const finalBlocks = seededShuffle(selectedBlocks, `${studentShuffleSeed}_sec_${sectionIndex}_blocks`);
+  let finalOrder = finalBlocks.flatMap(b => b.qIds);
+
+  if (finalOrder.length > targetServeCount) {
+    finalOrder = finalOrder.slice(0, targetServeCount);
+  }
+
+  // Freeze into localStorage so reload/re-render preserves identical sequence
+  if (typeof window !== 'undefined' && examId && hasQuestionsLoaded && finalOrder.length > 0) {
+    try {
+      localStorage.setItem(`prepunite_sec_qids_${examId}_${sectionIndex}`, JSON.stringify(finalOrder));
+    } catch {}
+  }
+
+  return finalOrder;
+}
+
 export default function MockExamTestPage() {
   const { examId } = useParams<{ examId: string }>();
   const { user, isAdmin, isTpoAdmin } = useAuth();
@@ -635,90 +844,26 @@ export default function MockExamTestPage() {
     return `${exam?.id || examId || 'exam'}_${sessionSeed}`;
   }, [exam?.id, examId, user?.email, user?.id, attemptId]);
 
-  // Deterministically shuffle questions within the current section (enabled by default unless explicitly false),
-  // respecting atomic passage blocks so reading comprehension, cloze tests & DI sets stay 100% consecutive in order.
-  const currentSectionQIds = useMemo(() => {
-    const rawIds = currentSection?.question_ids || [];
-    // Default to true: questions are shuffled by default for anti-cheating security
-    const shouldShuffle = exam?.shuffle_questions !== false;
-    if (!shouldShuffle || rawIds.length <= 1) return rawIds;
-
-    // 🛡️ P1-08: Check persistent frozen order first (prevents async re-shuffling mid-test)
-    if (typeof window !== 'undefined' && examId) {
-      try {
-        const cached = localStorage.getItem(`prepunite_sec_qids_${examId}_${currentSectionIndex}`);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length === rawIds.length) {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-
-    // Wait until questions are loaded before performing passage grouping and seeded shuffle
-    const hasQuestionsLoaded = rawIds.some(qId => Boolean(questionsMap[qId]));
-    if (!hasQuestionsLoaded && rawIds.length > 0) {
-      return rawIds;
-    }
-
-    // 1. Group questions into cohesive blocks
-    const blocks: Array<{ key: string; qIds: string[]; isPassage: boolean }> = [];
-    const keyToBlockIndex = new Map<string, number>();
-
-    for (const qId of rawIds) {
-      const q = questionsMap[qId];
-      // Determine if question belongs to a passage / stimulus set
-      const passageKey =
-        q?.passageTitle ||
-        q?.contextTitle ||
-        q?.structured_explanation?.passageTitle ||
-        (q?.passage ? `passage-${q.passage.slice(0, 40)}` : null) ||
-        (q?.topic_id && q?.question_number
-          ? (['reading-comprehension', 'cloze-test'].includes(q.topic_id)
-              ? `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`
-              : null)
-          : null);
-
-      if (passageKey) {
-        if (keyToBlockIndex.has(passageKey)) {
-          const idx = keyToBlockIndex.get(passageKey)!;
-          blocks[idx].qIds.push(qId);
-        } else {
-          const newIdx = blocks.length;
-          blocks.push({ key: passageKey, qIds: [qId], isPassage: true });
-          keyToBlockIndex.set(passageKey, newIdx);
-        }
-      } else {
-        // Standalone question
-        blocks.push({ key: `solo-${qId}`, qIds: [qId], isPassage: false });
-      }
-    }
-
-    // Sort questions within each passage block by question_number so Q1..N are in exact stimulus order
-    blocks.forEach(b => {
-      if (b.isPassage && b.qIds.length > 1) {
-        b.qIds.sort((aId, bId) => {
-          const qA = questionsMap[aId]?.question_number || 0;
-          const qB = questionsMap[bId]?.question_number || 0;
-          return qA - qB;
-        });
-      }
+  // 🛡️ Precompute deterministic assigned question IDs for all sections
+  const sectionAssignedMap = useMemo(() => {
+    const map: Record<number, string[]> = {};
+    (sections || []).forEach((sec, sIdx) => {
+      map[sIdx] = getSampledSectionQuestionIds(
+        sec,
+        sIdx,
+        questionsMap,
+        exam?.id || examId || '',
+        studentShuffleSeed,
+        exam?.shuffle_questions !== false
+      );
     });
+    return map;
+  }, [sections, questionsMap, exam?.id, examId, studentShuffleSeed, exam?.shuffle_questions]);
 
-    // Seeded shuffle on the blocks (atomic units)
-    const shuffledBlocks = seededShuffle(blocks, `${studentShuffleSeed}_sec_${currentSectionIndex}`);
-    const finalOrder = shuffledBlocks.flatMap(b => b.qIds);
-
-    // Freeze into localStorage so reload/re-render preserves identical sequence
-    if (typeof window !== 'undefined' && examId && hasQuestionsLoaded) {
-      try {
-        localStorage.setItem(`prepunite_sec_qids_${examId}_${currentSectionIndex}`, JSON.stringify(finalOrder));
-      } catch {}
-    }
-
-    return finalOrder;
-  }, [currentSection?.question_ids, exam?.shuffle_questions, studentShuffleSeed, currentSectionIndex, questionsMap, examId]);
+  // Deterministically sampled questions within the current section
+  const currentSectionQIds = useMemo(() => {
+    return sectionAssignedMap[currentSectionIndex] || currentSection?.question_ids || [];
+  }, [sectionAssignedMap, currentSectionIndex, currentSection?.question_ids]);
 
   const currentQuestionId = currentSectionQIds[currentQuestionIndex];
   const currentQuestion = questionsMap[currentQuestionId];
@@ -959,6 +1104,14 @@ export default function MockExamTestPage() {
         // Without this, a student with a perfect solution gets 0 marks if the timer expired
         // before they could click "Run Tests" on their latest edit.
         const autoEvaluatedResponses = { ...currentResponses };
+
+        // 🛡️ DYNAMIC SAMPLING INVARIANT:
+        // Pack all deterministic assigned question IDs across all sections into the response payload
+        // so server-side scoring and student review sheet strictly evaluate the served subset
+        const allAssignedIds: string[] = (exam.sections || []).flatMap((sec, sIdx) =>
+          sectionAssignedMap[sIdx] || sec.question_ids || []
+        );
+        autoEvaluatedResponses.__assigned_question_ids = allAssignedIds as any;
         if (statusOverride !== 'TERMINATED_MALPRACTICE') {
           const codingQIds = Object.keys(autoEvaluatedResponses).filter(qId => {
             const resp = autoEvaluatedResponses[qId];
@@ -1137,8 +1290,15 @@ export default function MockExamTestPage() {
     const syncInterval = setInterval(() => {
       const { attemptId: aId, responses: resp, timeSpent, tabSwitches, events } = syncRef.current;
       if (aId) {
+        const allAssignedIds: string[] = (sections || []).flatMap((sec, idx) =>
+          sectionAssignedMap[idx] || sec.question_ids || []
+        );
+        const respWithAssigned = {
+          ...resp,
+          ...(allAssignedIds.length > 0 ? { __assigned_question_ids: allAssignedIds as any } : {}),
+        };
         tpoService.syncAttemptProgress(aId, {
-          responses: resp,
+          responses: respWithAssigned,
           timeSpentSeconds: timeSpent,
           tabSwitchCount: tabSwitches,
           proctorEvents: events,
@@ -1161,8 +1321,15 @@ export default function MockExamTestPage() {
 
       const { attemptId: aId, responses: resp, timeSpent, tabSwitches, events } = syncRef.current;
       if (aId) {
+        const allAssignedIds: string[] = (sections || []).flatMap((sec, idx) =>
+          sectionAssignedMap[idx] || sec.question_ids || []
+        );
+        const respWithAssigned = {
+          ...resp,
+          ...(allAssignedIds.length > 0 ? { __assigned_question_ids: allAssignedIds as any } : {}),
+        };
         tpoService.syncAttemptProgress(aId, {
-          responses: resp,
+          responses: respWithAssigned,
           timeSpentSeconds: timeSpent,
           tabSwitchCount: tabSwitches,
           proctorEvents: events,
@@ -1870,7 +2037,7 @@ export default function MockExamTestPage() {
       );
     }
 
-    const totalQuestions = (sections || []).reduce((acc, s) => acc + s.question_ids.length, 0);
+    const totalQuestions = (sections || []).reduce((acc, s) => acc + (s.serve_count || s.question_count || s.question_ids?.length || 0), 0);
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0f1012] p-4 sm:p-8 flex items-center justify-center animate-fadeIn">
@@ -2096,7 +2263,7 @@ export default function MockExamTestPage() {
     );
 
     const totalAnsweredCount = Object.values(responses).filter(isQuestionAnswered).length;
-    const allExamQIds = sections.flatMap(s => s.question_ids);
+    const allExamQIds = sections.flatMap((sec, idx) => sectionAssignedMap[idx] || sec.question_ids || []);
 
     return (
       <div className="fixed inset-0 z-40 bg-gray-100 dark:bg-[#0f1012] text-gray-900 dark:text-white flex flex-col select-none overflow-hidden">
@@ -2229,7 +2396,8 @@ export default function MockExamTestPage() {
           {/* Responsive Section Selector Tabs (visible on mobile and desktop) */}
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-[48vw] sm:max-w-md md:max-w-xl py-1 no-scrollbar">
             {sections.map((sec, idx) => {
-              const secAnswered = (sec.question_ids || []).filter(
+              const secQIds = sectionAssignedMap[idx] || sec.question_ids || [];
+              const secAnswered = secQIds.filter(
                 qId => isQuestionAnswered(responses[qId])
               ).length;
               const isCurrent = currentSectionIndex === idx;
@@ -2276,7 +2444,7 @@ export default function MockExamTestPage() {
                         : 'bg-gray-200 dark:bg-[#2b2d31] text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    {secAnswered}/{(sec.question_ids || []).length}
+                    {secAnswered}/{secQIds.length}
                   </span>
                 </button>
               );
@@ -2385,7 +2553,8 @@ export default function MockExamTestPage() {
                   </span>
                   <div className="flex flex-col gap-1.5">
                     {sections.map((sec, idx) => {
-                      const secAns = sec.question_ids.filter(
+                      const secQIds = sectionAssignedMap[idx] || sec.question_ids || [];
+                      const secAns = secQIds.filter(
                         qId => isQuestionAnswered(responses[qId])
                       ).length;
                       const isCur = currentSectionIndex === idx;
@@ -2410,7 +2579,7 @@ export default function MockExamTestPage() {
                                 : 'bg-gray-200 dark:bg-[#2d3035] text-gray-600 dark:text-gray-300'
                             }`}
                           >
-                            {secAns}/{sec.question_ids.length}
+                            {secAns}/{secQIds.length}
                           </span>
                         </button>
                       );

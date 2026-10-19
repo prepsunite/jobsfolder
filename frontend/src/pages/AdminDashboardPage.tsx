@@ -2022,8 +2022,8 @@ export default function AdminDashboardPage() {
                     <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#2b2d31]">
                       {registeredUsersList.map((u: any) => {
                         const tpoInfo = tpoService.findTpoAuthByEmail(u.email);
-                        const isSuper = isSuperAdminEmail(u.email) && !tpoInfo;
-                        const isTpo = Boolean(tpoInfo);
+                        const isTpo = Boolean(tpoInfo) || Boolean(u.is_tpo_admin) || u.role === 'TPO_ADMIN' || u.role === 'tpo';
+                        const isSuper = isSuperAdminEmail(u.email) && !isTpo;
 
                         return (
                           <tr key={u.id} className="hover:bg-[#F8F9FA]/40 dark:hover:bg-[#141517]/40 transition-colors">
@@ -2035,13 +2035,13 @@ export default function AdminDashboardPage() {
                                   {(u.name || u.email || 'U').charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{u.name || 'Student'}</span>
+                              <span className="font-bold text-[#1f1b17] dark:text-[#e3e3e3]">{u.name || (isTpo ? 'TPO Coordinator' : 'Student')}</span>
                             </td>
                             <td className="py-3.5 px-3 text-[#444748] dark:text-[#a6adbb] font-medium">{u.email}</td>
                             <td className="py-3.5 px-3">
                               {isTpo ? (
                                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-orange-100 text-[#FD4A32] dark:bg-orange-950/50 dark:text-orange-300 border border-orange-300 dark:border-orange-700">
-                                  TPO ({tpoInfo?.college_code || 'CRT'})
+                                  TPO {tpoInfo?.college_code ? `(${tpoInfo.college_code})` : ''}
                                 </span>
                               ) : isSuper || u.role === 'admin' ? (
                                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300 dark:border-purple-700">

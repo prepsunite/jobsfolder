@@ -56,8 +56,6 @@ export default function AdminTechnicalPage() {
   const queryClient = useQueryClient();
   const { toast, confirmModal } = useToast();
 
-  if (!isSuperAdminEmail(user?.email)) return <NotFoundPage />;
-
   const [activeTab, setActiveTab] = useState<AdminTab>('topics');
   const [topicTrack, setTopicTrack] = useState<TechnicalTrack>('PROGRAMMING_150');
   const [problemTrack, setProblemTrack] = useState<'PROGRAMMING_150' | 'CAMPUS_DSA'>('PROGRAMMING_150');
@@ -440,6 +438,10 @@ export default function AdminTechnicalPage() {
     MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     HARD: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   };
+
+  if (!isSuperAdminEmail(user?.email)) {
+    return <NotFoundPage />;
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">

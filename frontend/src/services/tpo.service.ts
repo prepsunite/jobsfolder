@@ -230,10 +230,18 @@ export const PASSAGE_BASED_TOPICS = new Set([
  * Helper to get the real-time scheduling lifecycle of an exam
  */
 export function getExamTimingStatus(
-  exam: { is_active?: boolean; is_deleted?: boolean; start_time?: string; end_time?: string; duration_minutes?: number },
+  exam: { id?: string; is_active?: boolean; is_deleted?: boolean; start_time?: string; end_time?: string; duration_minutes?: number },
   referenceDate = new Date()
 ): 'DRAFT' | 'UPCOMING' | 'LIVE' | 'CONCLUDED' {
   if (exam.is_deleted || exam.is_active === false) {
+    return 'DRAFT';
+  }
+  // Ignore/Draft for automated test verification artifacts
+  if (exam.id && (exam.id.startsWith('exam_verify_') || exam.id.startsWith('test_'))) {
+    return 'DRAFT';
+  }
+  // If exam has neither start_time nor end_time, it is unscheduled/draft
+  if (!exam.start_time && !exam.end_time) {
     return 'DRAFT';
   }
   const nowMs = referenceDate.getTime();
@@ -1019,15 +1027,38 @@ export const tpoService = {
       }
     }
 
-    // Mock exams
+    // Mock exams (fetching schedule times to compute real LIVE exam count)
     let exams: any[] = [];
     try {
       const { data: eData } = await supabase
         .from('mock_exams')
-        .select('id, college_id, is_active')
-        .eq('is_deleted', false);
+        .select('id, college_id, is_active, is_deleted, start_time, end_time, duration_minutes')
+        .or('is_deleted.is.null,is_deleted.eq.false');
       if (eData) exams = eData;
     } catch {}
+
+    // Cloud backup exams
+    try {
+      const { data: cloudMsgs } = await supabase
+        .from('contact_messages')
+        .select('message')
+        .like('subject', 'B2B_EXAM:%')
+        .neq('status', 'DELETED');
+      if (cloudMsgs) {
+        const examIds = new Set(exams.map(e => e.id));
+        cloudMsgs.forEach(m => {
+          try {
+            const parsed = JSON.parse(m.message);
+            if (parsed && parsed.id && !examIds.has(parsed.id)) {
+              exams.push(parsed);
+              examIds.add(parsed.id);
+            }
+          } catch {}
+        });
+      }
+    } catch {}
+
+    const now = new Date();
 
     // 4. Map each college with its aggregated enrolled count and active exams count
     return colleges.map(c => {
@@ -1059,7 +1090,7 @@ export const tpoService = {
             (s.college_name && s.college_name.trim().toLowerCase() === c.name.trim().toLowerCase());
           if (matchesCollege) {
             const clean = s.email.trim().toLowerCase();
-            if (!allTpoEmails.has(clean) && s.role !== 'TPO_ADMIN') {
+            if (!allTpoEmails.has(clean) && s.role !== 'TPO_ADMIN' && !s.is_tpo_admin) {
               enrolledEmails.add(clean);
             }
           }
@@ -1068,15 +1099,11 @@ export const tpoService = {
         finalEnrolledCount = enrolledEmails.size;
       }
 
-      // Active mock exams count
-      const localExams = [...getLocalExams(c.id), ...(c.code ? getLocalExams(c.code) : [])];
-      const dbExamsCount = exams.filter(
-        e => (e.college_id === c.id || (c.code && e.college_id === c.code)) && e.is_active !== false
-      ).length;
-      const finalActiveExamsCount =
-        rpcData !== undefined
-          ? rpcData.active_exams_count
-          : Math.max(dbExamsCount, localExams.length);
+      // Real live mock exams count (filtering out concluded and draft test exams)
+      const collegeExams = exams.filter(
+        e => (e.college_id === c.id || (c.code && e.college_id === c.code)) && e.is_active !== false && !e.is_deleted
+      );
+      const finalActiveExamsCount = collegeExams.filter(e => getExamTimingStatus(e, now) === 'LIVE').length;
 
       return {
         ...c,
@@ -1541,6 +1568,33 @@ export const tpoService = {
               });
             }
           } catch {}
+        });
+      }
+    } catch {}
+
+    // 4. Profiles with is_tpo_admin = true fallback
+    try {
+      const { data: profTpos } = await supabase
+        .from('profiles')
+        .select('id, email, name, college_id, is_tpo_admin, role, created_at')
+        .eq('is_tpo_admin', true);
+
+      if (profTpos && profTpos.length > 0) {
+        profTpos.forEach(p => {
+          if (p.email && !results.some(r => r.email.toLowerCase() === p.email.toLowerCase())) {
+            const col = colleges.find(c => c.id === p.college_id);
+            results.push({
+              id: p.id,
+              email: p.email,
+              name: p.name || `TPO Coordinator (${col?.code || 'CRT'})`,
+              college_id: p.college_id || undefined,
+              college_name: col?.name || 'Partner College',
+              max_licenses: col?.max_licenses || 1000,
+              is_tpo_admin: true,
+              role: 'TPO_ADMIN',
+              created_at: p.created_at,
+            });
+          }
         });
       }
     } catch {}
@@ -3627,10 +3681,11 @@ export const tpoService = {
 
     const totalStudents = students.length;
     const now = new Date();
-    const activeExamsCount = exams.filter(e => {
-      if (!e.is_active || e.is_deleted) return false;
-      return getExamTimingStatus(e, now) === 'LIVE';
-    }).length;
+    const validExams = exams.filter(e => !e.is_deleted && !e.id.startsWith('exam_verify_') && !e.id.startsWith('test_'));
+    const totalExams = validExams.length;
+    const liveExamsCount = validExams.filter(e => e.is_active && getExamTimingStatus(e, now) === 'LIVE').length;
+    const concludedExamsCount = validExams.filter(e => e.is_active && getExamTimingStatus(e, now) === 'CONCLUDED').length;
+    const activeExamsCount = liveExamsCount;
 
     // 1. Authoritative Server-Side PostgreSQL Aggregation (Instant sub-15ms, zero network bloat)
     try {
@@ -3645,6 +3700,9 @@ export const tpoService = {
           untestedStudentsCount: rpcStats.untestedStudentsCount ?? 0,
           maxLicenses,
           activeExamsCount: activeExamsCount || 0,
+          totalExams,
+          liveExamsCount,
+          concludedExamsCount,
           totalAttempts: rpcStats.totalAttempts ?? 0,
           avgCollegeScore: Math.round(Number(rpcStats.avgCollegeScore || 0)),
           departments: Array.isArray(rpcStats.departments) ? rpcStats.departments : [],
@@ -3810,6 +3868,9 @@ export const tpoService = {
       untestedStudentsCount,
       maxLicenses,
       activeExamsCount: activeExamsCount || 0,
+      totalExams,
+      liveExamsCount,
+      concludedExamsCount,
       totalAttempts,
       avgCollegeScore,
       departments,
@@ -3998,7 +4059,7 @@ export const tpoService = {
         });
 
         dbExams.forEach(e => {
-          const eSections = secMap.get(e.id) || e.sections || [];
+          let eSections: MockExamSection[] = secMap.get(e.id) || e.sections || [];
           eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
 
           // Unpack audience, sectional lock, and lab passcode metadata if stored in instructions
@@ -4028,6 +4089,20 @@ export const tpoService = {
             } catch {}
           }
           instructions = instructions.replace(/<!--AUDIENCE:.*?-->\n?/, '');
+
+          let serveMap: Record<string, number> = {};
+          if (instructions.includes('<!--SECTION_SERVE_COUNTS:')) {
+            try {
+              const match = instructions.match(/<!--SECTION_SERVE_COUNTS:(.*?)-->/);
+              if (match && match[1]) serveMap = JSON.parse(match[1]);
+            } catch {}
+            instructions = instructions.replace(/<!--SECTION_SERVE_COUNTS:.*?-->\n?/, '');
+          }
+
+            eSections = eSections.map((s: MockExamSection) => {
+              const sc = serveMap[s.id || ''] || serveMap[s.name || ''] || s.serve_count || s.question_count;
+              return sc ? { ...s, serve_count: sc, question_count: sc } : s;
+            });
 
           map.set(e.id, {
             ...e,
@@ -4126,7 +4201,7 @@ export const tpoService = {
         });
 
         dbExams.forEach(e => {
-          const eSections = secMap.get(e.id) || e.sections || [];
+          let eSections: MockExamSection[] = secMap.get(e.id) || e.sections || [];
           eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
 
           let instructions = e.instructions || '';
@@ -4142,6 +4217,20 @@ export const tpoService = {
             }
           }
           instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
+
+          let serveMap: Record<string, number> = {};
+          if (instructions.includes('<!--SECTION_SERVE_COUNTS:')) {
+            try {
+              const match = instructions.match(/<!--SECTION_SERVE_COUNTS:(.*?)-->/);
+              if (match && match[1]) serveMap = JSON.parse(match[1]);
+            } catch {}
+            instructions = instructions.replace(/<!--SECTION_SERVE_COUNTS:.*?-->\n?/, '');
+          }
+
+            eSections = eSections.map((s: MockExamSection) => {
+              const sc = serveMap[s.id || ''] || serveMap[s.name || ''] || s.serve_count || s.question_count;
+              return sc ? { ...s, serve_count: sc, question_count: sc } : s;
+            });
 
           map.set(e.id, {
             ...e,
@@ -4236,19 +4325,24 @@ export const tpoService = {
 
             if (hasTopicIds) {
               const expandedCoding = expandTopicAliases(sec.topic_ids);
-              const targetCats = new Set<string>();
+              const targetTokens = new Set<string>();
               expandedCoding.forEach(t => {
-                targetCats.add(t);
-                targetCats.add(t.toUpperCase());
-                targetCats.add(t.toLowerCase());
+                targetTokens.add(t);
+                targetTokens.add(t.toUpperCase());
+                targetTokens.add(t.toLowerCase());
               });
-              codingQuery = codingQuery.in('category', Array.from(targetCats));
+              const tokenList = Array.from(targetTokens).join(',');
+              codingQuery = codingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
+            } else if ((sec as any).coding_track) {
+              codingQuery = codingQuery.eq('track', (sec as any).coding_track);
             }
 
             const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 10, 50));
 
             if (codingData && codingData.length > 0) {
-              const shuffled = [...codingData].sort(() => Math.random() - 0.5);
+              const testable = codingData.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
+              const pool = testable.length > 0 ? testable : codingData;
+              const shuffled = [...pool].sort(() => Math.random() - 0.5);
               for (const q of shuffled) {
                 if (!usedQuestionIds.has(q.id)) {
                   pooledIds.push(q.id);
@@ -4570,6 +4664,21 @@ export const tpoService = {
         }
         instructions = instructions.replace(/<!--AUDIENCE:.*?-->\n?/, '');
 
+        let serveMap: Record<string, number> = {};
+        if (instructions.includes('<!--SECTION_SERVE_COUNTS:')) {
+          try {
+            const match = instructions.match(/<!--SECTION_SERVE_COUNTS:(.*?)-->/);
+            if (match && match[1]) serveMap = JSON.parse(match[1]);
+          } catch {}
+          instructions = instructions.replace(/<!--SECTION_SERVE_COUNTS:.*?-->\n?/, '');
+        }
+
+        let populatedSections = sections.length > 0 ? sections : (examData.sections || []);
+          populatedSections = populatedSections.map((s: MockExamSection) => {
+            const sc = serveMap[s.id || ''] || serveMap[s.name || ''] || s.serve_count || s.question_count;
+            return sc ? { ...s, serve_count: sc, question_count: sc } : s;
+          });
+
         resolvedExam = {
           ...examData,
           instructions,
@@ -4577,7 +4686,7 @@ export const tpoService = {
           enable_passcode_lock: isPasscodeLock,
           access_passcode: accessPasscode,
           target_batches: targetBatches,
-          sections: sections.length > 0 ? sections : (examData.sections || []),
+          sections: populatedSections,
         };
       }
     } catch {}
@@ -4974,7 +5083,10 @@ export const tpoService = {
 
     for (let idx = 0; idx < sectionConfigs.length; idx++) {
       const sec = sectionConfigs[idx];
-      const neededCount = Math.max(1, sec.question_count || 10);
+      const serveCount = Math.max(1, sec.question_count || 10);
+      // Auto 2x Question Pooling: master pool holds 2x questions for dynamic candidate sampling
+      const poolTargetCount = serveCount * 2;
+      const neededCount = poolTargetCount;
       const questionIds: string[] = [];
       const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
       const isTechnicalMcq =
@@ -5057,7 +5169,8 @@ export const tpoService = {
               }
             });
 
-            codingQuery = codingQuery.in('category', Array.from(targetCategories));
+            const tokenList = Array.from(targetCategories).join(',');
+            codingQuery = codingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
           } else if (sec.coding_track) {
             const trackCats = CODING_CATEGORIES.filter(c => c.track === sec.coding_track).map(c => c.id);
             if (trackCats.length > 0) {
@@ -5066,16 +5179,16 @@ export const tpoService = {
                 const mapped = CODING_TOPIC_TO_DB_CATEGORIES[cat] || [cat];
                 mapped.forEach(m => expandedCats.add(m));
               });
-              codingQuery = codingQuery.in('category', Array.from(expandedCats));
+              const expandedList = Array.from(expandedCats).join(',');
+              codingQuery = codingQuery.or(`category.in.(${expandedList}),topic_id.in.(${expandedList})`);
             }
           }
 
           const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
           if (codingData && codingData.length > 0) {
-            // 🛡️ Prioritize curated placement problems with full test cases
+            // 🛡️ Filter strictly to problems with verified executable test cases
             const testableCurated = codingData.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
-            const otherCodingData = codingData.filter(q => !CAMPUS_DSA_EXAM_PROBLEMS[q.id] && !isProblemTestable(q));
-            const poolToSample = testableCurated.length >= neededCount ? testableCurated : [...testableCurated, ...otherCodingData];
+            const poolToSample = testableCurated.length > 0 ? testableCurated : codingData;
 
             // If topic-specific keywords are present, prioritize problems matching those keywords
             let prioritized: typeof codingData = [];
@@ -5127,7 +5240,8 @@ export const tpoService = {
               .eq('is_deleted', false);
 
             if (hasTopicIds && targetCategories.size > 0) {
-              fallbackCodingQuery = fallbackCodingQuery.in('category', Array.from(targetCategories));
+              const tokenList = Array.from(targetCategories).join(',');
+              fallbackCodingQuery = fallbackCodingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
             } else if (sec.coding_track) {
               const trackCats = CODING_CATEGORIES.filter(c => c.track === sec.coding_track).map(c => c.id);
               if (trackCats.length > 0) {
@@ -5136,7 +5250,8 @@ export const tpoService = {
                   const mapped = CODING_TOPIC_TO_DB_CATEGORIES[cat] || [cat];
                   mapped.forEach(m => expandedCats.add(m));
                 });
-                fallbackCodingQuery = fallbackCodingQuery.in('category', Array.from(expandedCats));
+                const expandedList = Array.from(expandedCats).join(',');
+                fallbackCodingQuery = fallbackCodingQuery.or(`category.in.(${expandedList}),topic_id.in.(${expandedList})`);
               }
             }
 
@@ -5144,7 +5259,9 @@ export const tpoService = {
               .limit(Math.max((neededCount - questionIds.length) * 10, 50));
 
             if (fallbackCoding && fallbackCoding.length > 0) {
-              const shuffled = [...fallbackCoding].sort(() => Math.random() - 0.5);
+              const testableFallback = fallbackCoding.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
+              const finalPool = testableFallback.length > 0 ? testableFallback : fallbackCoding;
+              const shuffled = [...finalPool].sort(() => Math.random() - 0.5);
               for (const q of shuffled) {
                 if (!usedQuestionIds.has(q.id)) {
                   questionIds.push(q.id);
@@ -5200,9 +5317,29 @@ export const tpoService = {
 
           const { data: techData } = await techQuery.limit(Math.max(neededCount * 25, 200));
           if (techData && techData.length > 0) {
-            const shuffled = [...techData].sort(() => Math.random() - 0.5);
-            for (const q of shuffled) {
-              if (!usedQuestionIds.has(q.id)) {
+            const available = techData.filter(q => !usedQuestionIds.has(q.id));
+            const easyQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'EASY');
+            const hardQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'HARD');
+            const medQ = available.filter(q => !easyQ.includes(q) && !hardQ.includes(q));
+
+            if (easyQ.length > 0 && hardQ.length > 0 && (sec.difficulty === 'ALL' || !sec.difficulty)) {
+              const targetEasy = Math.min(easyQ.length, Math.round(neededCount * 0.25));
+              const targetHard = Math.min(hardQ.length, Math.round(neededCount * 0.25));
+              const targetMed = Math.min(medQ.length, neededCount - targetEasy - targetHard);
+
+              const shuffledEasy = [...easyQ].sort(() => Math.random() - 0.5).slice(0, targetEasy);
+              const shuffledHard = [...hardQ].sort(() => Math.random() - 0.5).slice(0, targetHard);
+              const shuffledMed = [...medQ].sort(() => Math.random() - 0.5).slice(0, targetMed);
+
+              [...shuffledEasy, ...shuffledMed, ...shuffledHard].forEach(q => {
+                questionIds.push(q.id);
+                usedQuestionIds.add(q.id);
+              });
+            }
+
+            if (questionIds.length < neededCount) {
+              const remaining = available.filter(q => !usedQuestionIds.has(q.id)).sort(() => Math.random() - 0.5);
+              for (const q of remaining) {
                 questionIds.push(q.id);
                 usedQuestionIds.add(q.id);
                 if (questionIds.length >= neededCount) break;
@@ -5348,28 +5485,41 @@ export const tpoService = {
                 }
               });
 
-              // F10 Fix: Passage blocks MUST be included as atomic units.
-              // Only include a block if the entire block fits within the remaining capacity,
-              // unless questionIds is currently empty (better to include 1 complete passage block than produce an empty section).
-              const shuffledBlockKeys = Object.keys(passageBlocks).sort(() => Math.random() - 0.5);
+              // Dynamic Question Banking & Atomic Multi-Passage Pooling:
+              // For passage-based sections, pool at least 2x complete passage blocks as backup
+              // so candidates get different passages without stimulus fragmentation.
+              const blockKeys = Object.keys(passageBlocks);
+              const shuffledBlockKeys = [...blockKeys].sort(() => Math.random() - 0.5);
               const usedPassageQIds = new Set<string>();
+
+              // If passage blocks exist, determine target passage blocks to pool (at least 2x passages)
+              const avgBlockLen = blockKeys.length > 0 && passageBlocks[blockKeys[0]]?.length > 0
+                ? passageBlocks[blockKeys[0]].length
+                : 5;
+              const passagesToServe = Math.max(1, Math.round(serveCount / avgBlockLen));
+              const passagesToPoolTarget = passagesToServe * 2; // 2x backup passages
+
+              let pooledPassageBlocksCount = 0;
               for (const key of shuffledBlockKeys) {
                 const block = passageBlocks[key];
                 // Sort by question_number ascending so Q1..N are in exact stimulus order
                 block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
                 const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
                 if (unusedInBlock.length === 0) continue;
-                // Skip this block if it would overshoot, unless we have no questions in this section yet
-                if (questionIds.length > 0 && questionIds.length + unusedInBlock.length > neededCount) continue;
+
                 for (const q of unusedInBlock) {
                   questionIds.push(q.id);
                   usedQuestionIds.add(q.id);
                   usedPassageQIds.add(q.id);
                 }
-                if (questionIds.length >= neededCount) break;
+                pooledPassageBlocksCount++;
+
+                if (pooledPassageBlocksCount >= passagesToPoolTarget && questionIds.length >= neededCount) {
+                  break;
+                }
               }
 
-              // Fill remaining capacity with standalone (non-passage) questions only
+              // Fill remaining capacity with standalone (non-passage) questions only up to neededCount
               if (questionIds.length < neededCount) {
                 const shuffledNonPassage = nonPassageQuestions.sort(() => Math.random() - 0.5);
                 for (const q of shuffledNonPassage) {
@@ -5381,10 +5531,33 @@ export const tpoService = {
                 }
               }
             } else {
-              // Standard non-passage sampling
-              const shuffled = [...data].sort(() => Math.random() - 0.5);
-              for (const q of shuffled) {
-                if (!usedQuestionIds.has(q.id)) {
+              // Standard non-passage sampling with Stratified Difficulty Distribution:
+              // Guarantees balanced Easy, Medium, and Hard representation in the master pool
+              const available = data.filter(q => !usedQuestionIds.has(q.id));
+              const easyQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'EASY');
+              const hardQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'HARD');
+              const medQ = available.filter(q => !easyQ.includes(q) && !hardQ.includes(q));
+
+              if (easyQ.length > 0 && hardQ.length > 0 && (sec.difficulty === 'ALL' || !sec.difficulty)) {
+                // Stratify 25% Easy, 50% Medium, 25% Hard (or proportional to available)
+                const targetEasy = Math.min(easyQ.length, Math.round(neededCount * 0.25));
+                const targetHard = Math.min(hardQ.length, Math.round(neededCount * 0.25));
+                const targetMed = Math.min(medQ.length, neededCount - targetEasy - targetHard);
+
+                const shuffledEasy = [...easyQ].sort(() => Math.random() - 0.5).slice(0, targetEasy);
+                const shuffledHard = [...hardQ].sort(() => Math.random() - 0.5).slice(0, targetHard);
+                const shuffledMed = [...medQ].sort(() => Math.random() - 0.5).slice(0, targetMed);
+
+                [...shuffledEasy, ...shuffledMed, ...shuffledHard].forEach(q => {
+                  questionIds.push(q.id);
+                  usedQuestionIds.add(q.id);
+                });
+              }
+
+              // Fill any remaining slots if neededCount not yet reached
+              if (questionIds.length < neededCount) {
+                const remaining = available.filter(q => !usedQuestionIds.has(q.id)).sort(() => Math.random() - 0.5);
+                for (const q of remaining) {
                   questionIds.push(q.id);
                   usedQuestionIds.add(q.id);
                   if (questionIds.length >= neededCount) break;
@@ -5509,6 +5682,7 @@ export const tpoService = {
         }
       }
 
+      const actualServeCount = Math.min(serveCount, questionIds.length);
       sections.push({
         id: `sec-${examId}-${idx + 1}`,
         mock_exam_id: examId,
@@ -5522,6 +5696,9 @@ export const tpoService = {
         marks_per_correct: sec.marks_per_correct,
         negative_marking: sec.negative_marking,
         question_ids: questionIds,
+        question_count: actualServeCount,
+        serve_count: actualServeCount,
+        pool_size: questionIds.length,
         topic_ids: sec.topic_ids,
         created_at: new Date().toISOString(),
       });
@@ -5547,10 +5724,10 @@ export const tpoService = {
     }
 
 
-    // Dynamically calculate exact total marks from materialized questions across all sections
-    // Prevents mark invariant collapse / impossible passing thresholds if topics were underfilled
+    // Dynamically calculate exact total marks from served questions across all sections
+    // Evaluates strictly against candidate served count (e.g. 20 served marks, NOT 40 pooled marks)
     const actualTotalMarks = sections.reduce((sum, s) => {
-      const count = s.question_ids?.length || 0;
+      const count = s.serve_count || s.question_count || s.question_ids?.length || 0;
       const marks = Number(s.marks_per_correct) || 1;
       return sum + (count * marks);
     }, 0);
@@ -5605,7 +5782,7 @@ export const tpoService = {
     } catch {}
 
     // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
-    // Pack target_batches, sectional lock, and lab passcode into instructions metadata for universal multi-device persistence
+    // Pack target_batches, sectional lock, lab passcode, and section serve counts into instructions metadata for universal multi-device persistence
     const sectionalLockMeta = examData.enable_sectional_lock ? `<!--SECTIONAL_LOCK-->\n` : '';
     const passcodeMeta = examData.enable_passcode_lock && examData.access_passcode
       ? `<!--PASSCODE:${examData.access_passcode.trim().toUpperCase()}-->\n`
@@ -5613,7 +5790,18 @@ export const tpoService = {
     const audienceMeta = examData.target_batches && examData.target_batches.length > 0
       ? `<!--AUDIENCE:${JSON.stringify({ target_batches: examData.target_batches })}-->\n`
       : '';
-    const instructionsToSave = `${sectionalLockMeta}${passcodeMeta}${audienceMeta}${examData.instructions || ''}`;
+    const serveCountMap: Record<string, number> = {};
+    sections.forEach(s => {
+      const sc = s.serve_count || s.question_count;
+      if (sc) {
+        serveCountMap[s.name] = sc;
+        if (s.id) serveCountMap[s.id] = sc;
+      }
+    });
+    const serveCountMeta = Object.keys(serveCountMap).length > 0
+      ? `<!--SECTION_SERVE_COUNTS:${JSON.stringify(serveCountMap)}-->\n`
+      : '';
+    const instructionsToSave = `${sectionalLockMeta}${passcodeMeta}${audienceMeta}${serveCountMeta}${examData.instructions || ''}`;
 
     let canonicalCollegeId = examData.college_id;
     if (examData.college_id !== 'PUBLIC' && examData.college_id !== 'SELF') {
@@ -6926,10 +7114,28 @@ export const tpoService = {
     let totalUnattempted = 0;
     const gradedResponses: Record<string, StudentExamResponse> = {};
 
+    const assignedSubset = (responses as any)?.__assigned_question_ids;
+    const assignedSet = Array.isArray(assignedSubset) && assignedSubset.length > 0 ? new Set(assignedSubset) : null;
+
     for (const section of exam.sections || []) {
       const marksPerQ = Number(section.marks_per_correct) || 1;
       const negMarking = Number(section.negative_marking) || 0;
-      const qIds = section.question_ids || [];
+      let qIds = section.question_ids || [];
+
+      // 🛡️ DYNAMIC POOLING INVARIANT:
+      // When sections are pooled (e.g. 40 pooled for a 20-question target), evaluate marks strictly
+      // against the assigned question subset served to the candidate, preventing artificial 50% score deflation.
+      if (assignedSet) {
+        qIds = qIds.filter(id => assignedSet.has(id));
+      } else if (section.serve_count && section.serve_count < qIds.length) {
+        const respondedIds = qIds.filter(id => responses[id] && (responses[id].selected_option !== null && responses[id].selected_option !== undefined || responses[id].code_solution));
+        if (respondedIds.length > 0) {
+          const remaining = qIds.filter(id => !respondedIds.includes(id));
+          qIds = [...respondedIds, ...remaining].slice(0, section.serve_count);
+        } else {
+          qIds = qIds.slice(0, section.serve_count);
+        }
+      }
 
       let secScore = 0;
       let secMaxScore = 0;
@@ -7060,7 +7266,7 @@ export const tpoService = {
 
     // Preserve any responses submitted by student that were not in sections loop
     for (const [qId, resp] of Object.entries(responses || {})) {
-      if (qId !== '__result_summary' && !gradedResponses[qId]) {
+      if (qId !== '__result_summary' && qId !== '__assigned_question_ids' && !gradedResponses[qId]) {
         gradedResponses[qId] = {
           ...resp,
           selected_option: resp && resp.selected_option !== null && resp.selected_option !== undefined ? Number(resp.selected_option) : null,
@@ -7227,7 +7433,11 @@ export const tpoService = {
     }
 
     // Record persistent assigned question sequence for student attempt verification
-    responses.__assigned_question_ids = allQuestionIds as any;
+    const existingAssigned = (responses as any)?.__assigned_question_ids;
+    const finalAssignedQuestionIds = (Array.isArray(existingAssigned) && existingAssigned.length > 0)
+      ? existingAssigned
+      : allQuestionIds;
+    responses.__assigned_question_ids = finalAssignedQuestionIds as any;
 
     // 1. Calculate full candidate result (score, percentage, accuracy, section breakdowns)
     const calculated = this.calculateAttemptResult(
@@ -7285,9 +7495,20 @@ export const tpoService = {
       if (!rpcError && serverGraded && (serverGradedCount > 0 || serverGraded.result_summary) && Number(serverGraded.max_possible_score || 0) > 0) {
         serverGradedSuccessful = true;
         totalScore = Number(serverGraded.total_score ?? totalScore);
-        maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
-        percentage = Number(serverGraded.percentage ?? percentage);
-        passed = Boolean(serverGraded.passed ?? passed);
+        // 🛡️ DYNAMIC POOLING INTEGRITY SHIELD:
+        // When dynamic question pooling is active, candidate is only served an assigned subset.
+        // If the database RPC computed max_possible_score over all pooled questions (e.g. 40 instead of 20),
+        // we must clamp max_possible_score to calculated.maxPossibleScore (20) and recompute percentage.
+        if (calculated.maxPossibleScore > 0 && Number(serverGraded.max_possible_score) > calculated.maxPossibleScore) {
+          console.warn(`[submitAttempt] Server RPC returned un-stratified max score ${serverGraded.max_possible_score}; clamping to assigned subset max score ${calculated.maxPossibleScore}.`);
+          maxPossibleScore = calculated.maxPossibleScore;
+          percentage = calculated.maxPossibleScore > 0 ? Number(((totalScore / calculated.maxPossibleScore) * 100).toFixed(2)) : 0;
+          passed = percentage >= (exam.passing_percentage ?? 40);
+        } else {
+          maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
+          percentage = Number(serverGraded.percentage ?? percentage);
+          passed = Boolean(serverGraded.passed ?? passed);
+        }
         if (serverGraded.status) finalStatus = serverGraded.status;
         if (serverGraded.responses) {
           gradedResponses = {
@@ -7535,7 +7756,10 @@ export const tpoService = {
     }
 
     // 3b. Direct query fallback for questions
-    const questionIds = Object.keys(attempt.responses || {}).filter(k => !k.startsWith('__'));
+    const assignedReviewIds = (attempt.responses as any)?.__assigned_question_ids;
+    const questionIds = Array.isArray(assignedReviewIds) && assignedReviewIds.length > 0
+      ? assignedReviewIds
+      : Object.keys(attempt.responses || {}).filter(k => !k.startsWith('__'));
     let questions: any[] = [];
     try {
       const { data } = await supabase

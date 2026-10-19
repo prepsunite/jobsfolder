@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
@@ -88,7 +88,7 @@ export default function TpoExamsPage() {
   const [selectedScheduleExam, setSelectedScheduleExam] = useState<MockExam | null>(null);
   const [scheduleModalTab, setScheduleModalTab] = useState<'EXTEND' | 'CONCLUDE' | 'PASSCODE'>('EXTEND');
   const [selectedPreviewPaperExam, setSelectedPreviewPaperExam] = useState<MockExam | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'CONCLUDED'>('ALL');
   const [selectedBatchFilter, setSelectedBatchFilter] = useState<string>('ALL');
   const [terminatingExamId, setTerminatingExamId] = useState<string | null>(null);
 
@@ -136,21 +136,55 @@ export default function TpoExamsPage() {
     enabled: !!collegeId,
   });
 
-  const now = new Date();
-  // Apply active/all filter and batch filter
-  const filteredExams = mockExams.filter(exam => {
-    if (filterStatus === 'ACTIVE') {
-      if (!exam.is_active || exam.is_deleted) return false;
-      return getExamTimingStatus(exam, now) === 'LIVE';
-    }
-    if (selectedBatchFilter !== 'ALL') {
-      const batches = exam.target_batches || [];
-      if (batches.length > 0 && !batches.includes('ALL') && !batches.includes(selectedBatchFilter)) {
-        return false;
+  const now = useMemo(() => new Date(), []);
+
+  // Filter out any automated test verification artifacts
+  const validMockExams = useMemo(() => {
+    return mockExams.filter(e => !e.is_deleted && !e.id.startsWith('exam_verify_') && !e.id.startsWith('test_'));
+  }, [mockExams]);
+
+  const liveCount = useMemo(() => {
+    return validMockExams.filter(e => e.is_active && getExamTimingStatus(e, now) === 'LIVE').length;
+  }, [validMockExams, now]);
+
+  const concludedCount = useMemo(() => {
+    return validMockExams.filter(e => e.is_active && getExamTimingStatus(e, now) === 'CONCLUDED').length;
+  }, [validMockExams, now]);
+
+  // Apply active/concluded/all filter and batch filter, then sort by Live > Upcoming > Concluded
+  const filteredExams = useMemo(() => {
+    const list = validMockExams.filter(exam => {
+      const timing = getExamTimingStatus(exam, now);
+      if (filterStatus === 'ACTIVE') {
+        if (!exam.is_active || exam.is_deleted) return false;
+        return timing === 'LIVE';
       }
-    }
-    return true;
-  });
+      if (filterStatus === 'CONCLUDED') {
+        if (!exam.is_active || exam.is_deleted) return false;
+        return timing === 'CONCLUDED';
+      }
+      if (selectedBatchFilter !== 'ALL') {
+        const batches = exam.target_batches || [];
+        if (batches.length > 0 && !batches.includes('ALL') && !batches.includes(selectedBatchFilter)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return list.sort((a, b) => {
+      const timingA = getExamTimingStatus(a, now);
+      const timingB = getExamTimingStatus(b, now);
+
+      const rank = (t: string) => (t === 'LIVE' ? 0 : t === 'UPCOMING' ? 1 : t === 'CONCLUDED' ? 2 : 3);
+      const diff = rank(timingA) - rank(timingB);
+      if (diff !== 0) return diff;
+
+      const dateA = new Date(a.end_time || a.start_time || a.created_at || 0).getTime();
+      const dateB = new Date(b.end_time || b.start_time || b.created_at || 0).getTime();
+      return dateB - dateA;
+    });
+  }, [validMockExams, filterStatus, selectedBatchFilter, now]);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -167,7 +201,7 @@ export default function TpoExamsPage() {
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
-          {/* Active / All Filter Toggle */}
+          {/* Active / Concluded / All Filter Toggle */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
             <button
               onClick={() => setFilterStatus('ALL')}
@@ -177,17 +211,28 @@ export default function TpoExamsPage() {
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              All ({mockExams.length})
+              All ({validMockExams.length})
             </button>
             <button
               onClick={() => setFilterStatus('ACTIVE')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                 filterStatus === 'ACTIVE'
-                  ? 'bg-[#FD4A32] text-white shadow-xs'
+                  ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              Active Only
+              {liveCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />}
+              Live ({liveCount})
+            </button>
+            <button
+              onClick={() => setFilterStatus('CONCLUDED')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filterStatus === 'CONCLUDED'
+                  ? 'bg-slate-700 text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Concluded ({concludedCount})
             </button>
           </div>
 

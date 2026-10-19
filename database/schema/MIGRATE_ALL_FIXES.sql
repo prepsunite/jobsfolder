@@ -921,6 +921,7 @@ DECLARE
     v_total_incorrect INT := 0;
     v_sections_summary JSONB := '[]'::jsonb;
     v_result_summary JSONB;
+    v_assigned_subset JSONB;
 BEGIN
     SELECT * INTO v_attempt 
     FROM public.student_exam_attempts 
@@ -992,6 +993,8 @@ BEGIN
     END IF;
 
     IF v_exam IS NOT NULL THEN
+        v_assigned_subset := p_responses -> '__assigned_question_ids';
+
         FOR v_section IN 
             SELECT * FROM public.mock_exam_sections 
             WHERE mock_exam_id::TEXT = v_exam.id::TEXT
@@ -1009,6 +1012,13 @@ BEGIN
             IF v_section.question_ids IS NOT NULL THEN
                 FOREACH v_q_id IN ARRAY v_section.question_ids
                 LOOP
+                    -- 🛡️ Dynamic Question Pooling Guard: If candidate was served an assigned subset, skip unassigned pooled questions
+                    IF v_assigned_subset IS NOT NULL AND jsonb_typeof(v_assigned_subset) = 'array' AND jsonb_array_length(v_assigned_subset) > 0 THEN
+                        IF NOT (v_assigned_subset ? v_q_id) THEN
+                            CONTINUE;
+                        END IF;
+                    END IF;
+
                     v_max_possible_score := v_max_possible_score + v_marks_per_q;
                     v_sec_max := v_sec_max + v_marks_per_q;
                     v_total_questions := v_total_questions + 1;

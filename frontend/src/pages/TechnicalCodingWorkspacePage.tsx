@@ -379,6 +379,8 @@ export default function TechnicalCodingWorkspacePage() {
       ? problem.sampleCases
       : (problem.testCases && problem.testCases.length > 0)
       ? problem.testCases.filter(tc => !tc.is_hidden)
+      : (problem.test_cases && (problem.test_cases as any).length > 0)
+      ? (problem.test_cases as any).filter((tc: any) => !tc.is_hidden)
       : [];
 
     if (sourceList.length > 0) {
@@ -413,7 +415,11 @@ export default function TechnicalCodingWorkspacePage() {
     // Add hidden edge cases
     const hiddenList = (problem.hiddenTestCases && problem.hiddenTestCases.length > 0)
       ? problem.hiddenTestCases
-      : (problem.testCases ? problem.testCases.filter(tc => tc.is_hidden) : []);
+      : (problem.testCases && problem.testCases.length > 0)
+      ? problem.testCases.filter(tc => tc.is_hidden)
+      : (problem.test_cases && (problem.test_cases as any).length > 0)
+      ? (problem.test_cases as any).filter((tc: any) => tc.is_hidden)
+      : [];
 
     hiddenList.forEach((tc: any) => {
       cases.push({

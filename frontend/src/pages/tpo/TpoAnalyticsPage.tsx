@@ -1043,7 +1043,7 @@ export default function TpoAnalyticsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {mockExams.map(exam => {
-                  const totalQ = exam.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || 0;
+                  const totalQ = exam.sections?.reduce((sum, s) => sum + (s.serve_count || s.question_count || s.question_ids?.length || 0), 0) || 0;
                   const isProctored = exam.enable_fullscreen_lock || exam.enable_tab_switch_detection;
                   return (
                     <tr key={exam.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
@@ -1138,11 +1138,11 @@ export default function TpoAnalyticsPage() {
           passed: Boolean(selectedAttempt.passed),
           tier: (selectedAttempt.percentage || 0) >= 70 ? 'TIER_1' : (selectedAttempt.percentage || 0) >= 50 ? 'TIER_2' : 'TIER_3',
           tier_label: (selectedAttempt.percentage || 0) >= 70 ? 'Tier 1: Day-1 Ready' : (selectedAttempt.percentage || 0) >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed',
-          total_questions: activeExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || totalAttempted,
+          total_questions: activeExam?.sections?.reduce((sum, s) => sum + (s.serve_count || s.question_count || s.question_ids?.length || 0), 0) || totalAttempted,
           total_attempted: totalAttempted,
           total_correct: totalCorrect,
           total_incorrect: totalIncorrect,
-          total_unattempted: Math.max(0, (activeExam?.sections?.reduce((sum, s) => sum + (s.question_ids?.length || 0), 0) || totalAttempted) - totalAttempted),
+          total_unattempted: Math.max(0, (activeExam?.sections?.reduce((sum, s) => sum + (s.serve_count || s.question_count || s.question_ids?.length || 0), 0) || totalAttempted) - totalAttempted),
           overall_accuracy: overallAccuracy,
           time_spent_seconds: selectedAttempt.time_spent_seconds || 0,
           tab_switch_count: selectedAttempt.tab_switch_count || 0,
@@ -1155,13 +1155,13 @@ export default function TpoAnalyticsPage() {
           sections: activeExam?.sections?.map((s, idx) => ({
             section_id: s.id || `sec-${idx}`,
             section_name: s.name,
-            total_questions: s.question_ids?.length || 0,
+            total_questions: s.serve_count || s.question_count || s.question_ids?.length || 0,
             attempted: 0,
             correct: 0,
             incorrect: 0,
-            unattempted: s.question_ids?.length || 0,
+            unattempted: s.serve_count || s.question_count || s.question_ids?.length || 0,
             score: 0,
-            max_score: (s.question_ids?.length || 0) * (Number(s.marks_per_correct) || 1),
+            max_score: (s.serve_count || s.question_count || s.question_ids?.length || 0) * (Number(s.marks_per_correct) || 1),
             percentage: 0,
             accuracy: 0,
           })) || [],

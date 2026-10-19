@@ -232,7 +232,7 @@ export const questionBankService = {
       while (true) {
         const { data: codingBatch, error: codingErr } = await supabase
           .from('technical_problems')
-          .select('category')
+          .select('category, topic_id')
           .eq('is_deleted', false)
           .order('id', { ascending: true })
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -243,6 +243,11 @@ export const questionBankService = {
           if (r.category) {
             const catKey = String(r.category).trim().toUpperCase();
             codingCountMap[catKey] = (codingCountMap[catKey] || 0) + 1;
+          }
+          if (r.topic_id) {
+            const topicKey = String(r.topic_id).trim().toLowerCase();
+            codingCountMap[topicKey] = (codingCountMap[topicKey] || 0) + 1;
+            codingCountMap[topicKey.toUpperCase()] = (codingCountMap[topicKey.toUpperCase()] || 0) + 1;
           }
         });
         if (codingBatch.length < PAGE_SIZE) break;
@@ -325,10 +330,11 @@ export const questionBankService = {
         topicId.toUpperCase(),
         topicId.toLowerCase()
       ]));
+      const tokenList = categoryVariants.join(',');
       let query = supabase
         .from('technical_problems')
         .select('*', { count: 'exact' })
-        .in('category', categoryVariants)
+        .or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 

@@ -99,6 +99,8 @@ export interface MockExamSection {
   negative_marking: number;
   question_ids: string[];
   question_count?: number;
+  serve_count?: number;
+  pool_size?: number;
   topic_ids: string[];
   created_at?: string;
 }
@@ -219,6 +221,9 @@ export interface TpoDashboardStats {
   untestedStudentsCount: number;
   maxLicenses: number;
   activeExamsCount: number;
+  totalExams?: number;
+  liveExamsCount?: number;
+  concludedExamsCount?: number;
   totalAttempts: number;
   avgCollegeScore: number;
   departments: { department: string; studentCount: number; evaluatedCount: number; avgScore: number }[];

@@ -1,0 +1,850 @@
+[
+  {
+    "id": "lc-1",
+    "title": "Two Sum",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "4 9\n2 7 11 15",
+    "sampleOutput": "0 1",
+    "existingInputs": [
+      "4 9\n2 7 11 15",
+      "3 6\n3 2 4",
+      "2 6\n3 3",
+      "5 100\n10 25 35 75 40"
+    ]
+  },
+  {
+    "id": "lc-26",
+    "title": "Remove Duplicates from Sorted Array",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "5\n1 1 2 2 3",
+    "sampleOutput": "3\n1 2 3",
+    "existingInputs": [
+      "5\n1 1 2 2 3",
+      "3\n1 1 1",
+      "4\n1 2 3 4",
+      "6\n0 0 1 1 2 3"
+    ]
+  },
+  {
+    "id": "lc-88",
+    "title": "Merge Sorted Array",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "3 3\n1 2 3\n2 5 6",
+    "sampleOutput": "1 2 2 3 5 6",
+    "existingInputs": [
+      "3 3\n1 2 3\n2 5 6",
+      "1 1\n2\n1",
+      "4 4\n2 4 6 8\n1 3 5 7"
+    ]
+  },
+  {
+    "id": "lc-283",
+    "title": "Move Zeroes to End",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "5\n0 1 0 3 12",
+    "sampleOutput": "1 3 12 0 0",
+    "existingInputs": [
+      "5\n0 1 0 3 12",
+      "1\n0",
+      "4\n1 2 3 4",
+      "5\n0 0 0 1 2"
+    ]
+  },
+  {
+    "id": "lc-121",
+    "title": "Best Time to Buy and Sell Stock",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "6\n7 1 5 3 6 4",
+    "sampleOutput": "5",
+    "existingInputs": [
+      "6\n7 1 5 3 6 4",
+      "5\n7 6 4 3 1",
+      "2\n2 4",
+      "5\n1 2 3 4 5"
+    ]
+  },
+  {
+    "id": "lc-167",
+    "title": "Two Sum II - Input Array Is Sorted",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "4 9\n2 7 11 15",
+    "sampleOutput": "1 2",
+    "existingInputs": [
+      "4 9\n2 7 11 15",
+      "3 6\n2 3 4",
+      "2 -1\n-1 0"
+    ]
+  },
+  {
+    "id": "lc-15",
+    "title": "3Sum - Unique Triplets Summing to Zero",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "6\n-1 0 1 2 -1 -4",
+    "sampleOutput": "2\n-1 -1 2\n-1 0 1",
+    "existingInputs": [
+      "6\n-1 0 1 2 -1 -4",
+      "3\n0 1 1",
+      "3\n0 0 0"
+    ]
+  },
+  {
+    "id": "lc-11",
+    "title": "Container With Most Water",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "9\n1 8 6 2 5 4 8 3 7",
+    "sampleOutput": "49",
+    "existingInputs": [
+      "9\n1 8 6 2 5 4 8 3 7",
+      "2\n1 1",
+      "4\n4 3 2 1 4"
+    ]
+  },
+  {
+    "id": "lc-75",
+    "title": "Sort Colors (Dutch National Flag)",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "6\n2 0 2 1 1 0",
+    "sampleOutput": "0 0 1 1 2 2",
+    "existingInputs": [
+      "6\n2 0 2 1 1 0",
+      "3\n2 0 1",
+      "4\n0 0 0 0"
+    ]
+  },
+  {
+    "id": "lc-189",
+    "title": "Rotate Array to Right by K Steps",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "7 3\n1 2 3 4 5 6 7",
+    "sampleOutput": "5 6 7 1 2 3 4",
+    "existingInputs": [
+      "7 3\n1 2 3 4 5 6 7",
+      "4 2\n-1 -100 3 99",
+      "3 0\n1 2 3"
+    ]
+  },
+  {
+    "id": "lc-53",
+    "title": "Maximum Subarray Sum (Kadane's Algorithm)",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "9\n-2 1 -3 4 -1 2 1 -5 4",
+    "sampleOutput": "6",
+    "existingInputs": [
+      "9\n-2 1 -3 4 -1 2 1 -5 4",
+      "1\n1",
+      "5\n5 4 -1 7 8",
+      "4\n-3 -2 -1 -4"
+    ]
+  },
+  {
+    "id": "lc-560",
+    "title": "Subarray Sum Equals K",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "3 2\n1 1 1",
+    "sampleOutput": "2",
+    "existingInputs": [
+      "3 2\n1 1 1",
+      "3 3\n1 2 3",
+      "5 0\n0 0 0 0 0"
+    ]
+  },
+  {
+    "id": "lc-3",
+    "title": "Longest Substring Without Repeating Characters",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "abcabcbb",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "abcabcbb",
+      "bbbbb",
+      "pwwkew",
+      "abcdef"
+    ]
+  },
+  {
+    "id": "lc-209",
+    "title": "Minimum Size Subarray Sum",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "6 7\n2 3 1 2 4 3",
+    "sampleOutput": "2",
+    "existingInputs": [
+      "6 7\n2 3 1 2 4 3",
+      "3 4\n1 4 4",
+      "5 11\n1 1 1 1 1"
+    ]
+  },
+  {
+    "id": "lc-152",
+    "title": "Maximum Product Subarray",
+    "category": "POINTERS_ARRAYS",
+    "count": 3,
+    "sampleInput": "4\n2 3 -2 4",
+    "sampleOutput": "6",
+    "existingInputs": [
+      "4\n2 3 -2 4",
+      "3\n-2 0 -1",
+      "4\n-2 3 -4 -1"
+    ]
+  },
+  {
+    "id": "lc-206",
+    "title": "Reverse Linked List",
+    "category": "LINEAR_STRUCTURES",
+    "count": 3,
+    "sampleInput": "5\n1 2 3 4 5",
+    "sampleOutput": "5 4 3 2 1",
+    "existingInputs": [
+      "5\n1 2 3 4 5",
+      "2\n1 2",
+      "1\n42"
+    ]
+  },
+  {
+    "id": "lc-21",
+    "title": "Merge Two Sorted Lists",
+    "category": "LINEAR_STRUCTURES",
+    "count": 2,
+    "sampleInput": "3 3\n1 2 4\n1 3 4",
+    "sampleOutput": "1 1 2 3 4 4",
+    "existingInputs": [
+      "3 3\n1 2 4\n1 3 4",
+      "2 2\n1 5\n2 4"
+    ]
+  },
+  {
+    "id": "lc-141",
+    "title": "Linked List Cycle Detection",
+    "category": "LINEAR_STRUCTURES",
+    "count": 3,
+    "sampleInput": "4 1\n3 2 0 -4",
+    "sampleOutput": "true",
+    "existingInputs": [
+      "4 1\n3 2 0 -4",
+      "2 0\n1 2",
+      "1 -1\n1"
+    ]
+  },
+  {
+    "id": "lc-876",
+    "title": "Middle of the Linked List",
+    "category": "LINEAR_STRUCTURES",
+    "count": 3,
+    "sampleInput": "5\n1 2 3 4 5",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "5\n1 2 3 4 5",
+      "6\n1 2 3 4 5 6",
+      "1\n100"
+    ]
+  },
+  {
+    "id": "lc-20",
+    "title": "Valid Parentheses",
+    "category": "LINEAR_STRUCTURES",
+    "count": 5,
+    "sampleInput": "()[]{}",
+    "sampleOutput": "true",
+    "existingInputs": [
+      "()[]{}",
+      "(]",
+      "([])",
+      "([)]",
+      "{[]}"
+    ]
+  },
+  {
+    "id": "lc-739",
+    "title": "Daily Temperatures (Monotonic Stack)",
+    "category": "LINEAR_STRUCTURES",
+    "count": 3,
+    "sampleInput": "8\n73 74 75 71 69 72 76 73",
+    "sampleOutput": "1 1 4 2 1 1 0 0",
+    "existingInputs": [
+      "8\n73 74 75 71 69 72 76 73",
+      "4\n30 40 50 60",
+      "3\n30 60 90"
+    ]
+  },
+  {
+    "id": "lc-496",
+    "title": "Next Greater Element",
+    "category": "LINEAR_STRUCTURES",
+    "count": 3,
+    "sampleInput": "4\n4 5 2 25",
+    "sampleOutput": "5 25 25 -1",
+    "existingInputs": [
+      "4\n4 5 2 25",
+      "4\n13 7 6 12",
+      "3\n1 2 3"
+    ]
+  },
+  {
+    "id": "lc-150",
+    "title": "Evaluate Reverse Polish Notation (Postfix)",
+    "category": "LINEAR_STRUCTURES",
+    "count": 3,
+    "sampleInput": "5\n2 1 + 3 *",
+    "sampleOutput": "9",
+    "existingInputs": [
+      "5\n2 1 + 3 *",
+      "5\n4 13 5 / +",
+      "7\n10 6 9 3 + -11 * / *"
+    ]
+  },
+  {
+    "id": "lc-704",
+    "title": "Binary Search in Sorted Array",
+    "category": "SEARCH_INTERVALS",
+    "count": 3,
+    "sampleInput": "6 9\n-1 0 3 5 9 12",
+    "sampleOutput": "4",
+    "existingInputs": [
+      "6 9\n-1 0 3 5 9 12",
+      "6 2\n-1 0 3 5 9 12",
+      "1 5\n5"
+    ]
+  },
+  {
+    "id": "lc-33",
+    "title": "Search in Rotated Sorted Array",
+    "category": "SEARCH_INTERVALS",
+    "count": 3,
+    "sampleInput": "7 0\n4 5 6 7 0 1 2",
+    "sampleOutput": "4",
+    "existingInputs": [
+      "7 0\n4 5 6 7 0 1 2",
+      "7 3\n4 5 6 7 0 1 2",
+      "1 0\n0"
+    ]
+  },
+  {
+    "id": "lc-162",
+    "title": "Find Peak Element",
+    "category": "SEARCH_INTERVALS",
+    "count": 3,
+    "sampleInput": "4\n1 2 3 1",
+    "sampleOutput": "2",
+    "existingInputs": [
+      "4\n1 2 3 1",
+      "1\n1",
+      "2\n1 2"
+    ]
+  },
+  {
+    "id": "lc-56",
+    "title": "Merge Overlapping Intervals",
+    "category": "SEARCH_INTERVALS",
+    "count": 2,
+    "sampleInput": "4\n1 3\n2 6\n8 10\n15 18",
+    "sampleOutput": "3\n1 6\n8 10\n15 18",
+    "existingInputs": [
+      "4\n1 3\n2 6\n8 10\n15 18",
+      "2\n1 4\n4 5"
+    ]
+  },
+  {
+    "id": "lc-34",
+    "title": "Find First and Last Position of Element in Sorted Array",
+    "category": "SEARCH_INTERVALS",
+    "count": 3,
+    "sampleInput": "6 8\n5 7 7 8 8 10",
+    "sampleOutput": "3 4",
+    "existingInputs": [
+      "6 8\n5 7 7 8 8 10",
+      "6 6\n5 7 7 8 8 10",
+      "1 0\n0"
+    ]
+  },
+  {
+    "id": "lc-104",
+    "title": "Maximum Depth of Binary Tree",
+    "category": "HIERARCHICAL_STRUCTURES",
+    "count": 3,
+    "sampleInput": "7\n3 9 20 -1 -1 15 7",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "7\n3 9 20 -1 -1 15 7",
+      "2\n1 2",
+      "1\n1"
+    ]
+  },
+  {
+    "id": "lc-226",
+    "title": "Invert Binary Tree",
+    "category": "HIERARCHICAL_STRUCTURES",
+    "count": 2,
+    "sampleInput": "7\n4 2 7 1 3 6 9",
+    "sampleOutput": "4 7 2 9 6 3 1",
+    "existingInputs": [
+      "7\n4 2 7 1 3 6 9",
+      "3\n2 1 3"
+    ]
+  },
+  {
+    "id": "lc-215",
+    "title": "Kth Largest Element in an Array",
+    "category": "HIERARCHICAL_STRUCTURES",
+    "count": 3,
+    "sampleInput": "6 2\n3 2 1 5 6 4",
+    "sampleOutput": "5",
+    "existingInputs": [
+      "6 2\n3 2 1 5 6 4",
+      "9 4\n3 2 3 1 2 4 5 5 6",
+      "1 1\n10"
+    ]
+  },
+  {
+    "id": "lc-347",
+    "title": "Top K Frequent Elements",
+    "category": "HIERARCHICAL_STRUCTURES",
+    "count": 3,
+    "sampleInput": "6 2\n1 1 1 2 2 3",
+    "sampleOutput": "1 2",
+    "existingInputs": [
+      "6 2\n1 1 1 2 2 3",
+      "1 1\n1",
+      "7 2\n4 4 4 6 6 7 7"
+    ]
+  },
+  {
+    "id": "lc-78",
+    "title": "Subsets (Power Set Generation)",
+    "category": "RECURSION",
+    "count": 3,
+    "sampleInput": "3\n1 2 3",
+    "sampleOutput": "8",
+    "existingInputs": [
+      "3\n1 2 3",
+      "1\n0",
+      "4\n1 2 3 4"
+    ]
+  },
+  {
+    "id": "lc-46",
+    "title": "Array Permutations",
+    "category": "RECURSION",
+    "count": 3,
+    "sampleInput": "3\n1 2 3",
+    "sampleOutput": "6",
+    "existingInputs": [
+      "3\n1 2 3",
+      "2\n0 1",
+      "4\n1 2 3 4"
+    ]
+  },
+  {
+    "id": "lc-70",
+    "title": "Climbing Stairs",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 5,
+    "sampleInput": "3",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "2",
+      "3",
+      "4",
+      "5",
+      "10"
+    ]
+  },
+  {
+    "id": "lc-198",
+    "title": "House Robber (Max Non-Adjacent Sum)",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 3,
+    "sampleInput": "4\n1 2 3 1",
+    "sampleOutput": "4",
+    "existingInputs": [
+      "4\n1 2 3 1",
+      "5\n2 7 9 3 1",
+      "1\n50"
+    ]
+  },
+  {
+    "id": "lc-322",
+    "title": "Coin Change (Fewest Coins)",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "3 11\n1 2 5",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "3 11\n1 2 5",
+      "1 3\n2",
+      "1 0\n1",
+      "4 6249\n186 419 83 408"
+    ]
+  },
+  {
+    "id": "lc-300",
+    "title": "Longest Increasing Subsequence (LIS)",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 3,
+    "sampleInput": "8\n10 9 2 5 3 7 101 18",
+    "sampleOutput": "4",
+    "existingInputs": [
+      "8\n10 9 2 5 3 7 101 18",
+      "6\n0 1 0 3 2 3",
+      "7\n7 7 7 7 7 7 7"
+    ]
+  },
+  {
+    "id": "lc-200",
+    "title": "Number of Islands",
+    "category": "NETWORK_GRAPH_ALGORITHMS",
+    "count": 2,
+    "sampleInput": "4 5\n1 1 1 1 0\n1 1 0 1 0\n1 1 0 0 0\n0 0 0 0 0",
+    "sampleOutput": "1",
+    "existingInputs": [
+      "4 5\n1 1 1 1 0\n1 1 0 1 0\n1 1 0 0 0\n0 0 0 0 0",
+      "4 5\n1 1 0 0 0\n1 1 0 0 0\n0 0 1 0 0\n0 0 0 1 1"
+    ]
+  },
+  {
+    "id": "lc-207",
+    "title": "Course Schedule (Topological Cycle Detection)",
+    "category": "NETWORK_GRAPH_ALGORITHMS",
+    "count": 3,
+    "sampleInput": "2 1\n1 0",
+    "sampleOutput": "true",
+    "existingInputs": [
+      "2 1\n1 0",
+      "2 2\n1 0\n0 1",
+      "3 2\n1 0\n2 1"
+    ]
+  },
+  {
+    "id": "lc-238",
+    "title": "Product of Array Except Self",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "4\n1 2 3 4",
+    "sampleOutput": "24 12 8 6",
+    "existingInputs": [
+      "4\n1 2 3 4",
+      "5\n-1 1 0 -3 3",
+      "2\n5 10",
+      "5\n1 2 3 0 0"
+    ]
+  },
+  {
+    "id": "lc-42",
+    "title": "Trapping Rain Water",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "12\n0 1 0 2 1 0 1 3 2 1 2 1",
+    "sampleOutput": "6",
+    "existingInputs": [
+      "12\n0 1 0 2 1 0 1 3 2 1 2 1",
+      "6\n4 2 0 3 2 5",
+      "3\n3 2 1",
+      "1\n5"
+    ]
+  },
+  {
+    "id": "lc-128",
+    "title": "Longest Consecutive Sequence",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "6\n100 4 200 1 3 2",
+    "sampleOutput": "4",
+    "existingInputs": [
+      "6\n100 4 200 1 3 2",
+      "10\n0 3 7 2 5 8 4 6 0 1",
+      "0\n",
+      "5\n1 2 0 1 2"
+    ]
+  },
+  {
+    "id": "lc-35",
+    "title": "Search Insert Position",
+    "category": "SEARCH_INTERVALS",
+    "count": 4,
+    "sampleInput": "4 5\n1 3 5 6",
+    "sampleOutput": "2",
+    "existingInputs": [
+      "4 5\n1 3 5 6",
+      "4 2\n1 3 5 6",
+      "4 7\n1 3 5 6",
+      "4 0\n1 3 5 6"
+    ]
+  },
+  {
+    "id": "lc-153",
+    "title": "Find Minimum in Rotated Sorted Array",
+    "category": "SEARCH_INTERVALS",
+    "count": 4,
+    "sampleInput": "5\n3 4 5 1 2",
+    "sampleOutput": "1",
+    "existingInputs": [
+      "5\n3 4 5 1 2",
+      "7\n4 5 6 7 0 1 2",
+      "4\n11 13 15 17",
+      "1\n42"
+    ]
+  },
+  {
+    "id": "lc-74",
+    "title": "Search a 2D Matrix",
+    "category": "SEARCH_INTERVALS",
+    "count": 4,
+    "sampleInput": "3 4 3\n1 3 5 7\n10 11 16 20\n23 30 34 60",
+    "sampleOutput": "true",
+    "existingInputs": [
+      "3 4 3\n1 3 5 7\n10 11 16 20\n23 30 34 60",
+      "3 4 13\n1 3 5 7\n10 11 16 20\n23 30 34 60",
+      "1 1 5\n5",
+      "1 2 1\n2 3"
+    ]
+  },
+  {
+    "id": "lc-62",
+    "title": "Unique Paths",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "3 7",
+    "sampleOutput": "28",
+    "existingInputs": [
+      "3 7",
+      "3 2",
+      "1 10",
+      "7 3"
+    ]
+  },
+  {
+    "id": "lc-64",
+    "title": "Minimum Path Sum",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "3 3\n1 3 1\n1 5 1\n4 2 1",
+    "sampleOutput": "7",
+    "existingInputs": [
+      "3 3\n1 3 1\n1 5 1\n4 2 1",
+      "2 3\n1 2 3\n4 5 6",
+      "1 3\n1 2 3",
+      "2 1\n4\n5"
+    ]
+  },
+  {
+    "id": "lc-1143",
+    "title": "Longest Common Subsequence",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "abcde ace",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "abcde ace",
+      "abc abc",
+      "abc def",
+      "oxcpqrsvwf shmtulskbx"
+    ]
+  },
+  {
+    "id": "lc-72",
+    "title": "Edit Distance",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "horse ros",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "horse ros",
+      "intention execution",
+      "a b",
+      "kitten sitting"
+    ]
+  },
+  {
+    "id": "lc-5",
+    "title": "Longest Palindromic Substring",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "babad",
+    "sampleOutput": "bab",
+    "existingInputs": [
+      "babad",
+      "cbbd",
+      "a",
+      "racecar"
+    ]
+  },
+  {
+    "id": "lc-19",
+    "title": "Remove Nth Node From End of List",
+    "category": "LINEAR_STRUCTURES",
+    "count": 4,
+    "sampleInput": "5 2\n1 2 3 4 5",
+    "sampleOutput": "1 2 3 5",
+    "existingInputs": [
+      "5 2\n1 2 3 4 5",
+      "1 1\n1",
+      "2 1\n1 2",
+      "3 3\n1 2 3"
+    ]
+  },
+  {
+    "id": "lc-234",
+    "title": "Palindrome Linked List",
+    "category": "LINEAR_STRUCTURES",
+    "count": 4,
+    "sampleInput": "4\n1 2 2 1",
+    "sampleOutput": "true",
+    "existingInputs": [
+      "4\n1 2 2 1",
+      "2\n1 2",
+      "1\n9",
+      "5\n1 2 3 2 1"
+    ]
+  },
+  {
+    "id": "lc-994",
+    "title": "Rotting Oranges",
+    "category": "NETWORK_GRAPH_ALGORITHMS",
+    "count": 4,
+    "sampleInput": "3 3\n2 1 1\n1 1 0\n0 1 1",
+    "sampleOutput": "4",
+    "existingInputs": [
+      "3 3\n2 1 1\n1 1 0\n0 1 1",
+      "3 3\n2 1 1\n0 1 1\n1 0 1",
+      "1 2\n0 2",
+      "1 1\n1"
+    ]
+  },
+  {
+    "id": "lc-543",
+    "title": "Diameter of Binary Tree",
+    "category": "HIERARCHICAL_STRUCTURES",
+    "count": 4,
+    "sampleInput": "1 2 3 4 5",
+    "sampleOutput": "3",
+    "existingInputs": [
+      "1 2 3 4 5",
+      "1 2",
+      "1",
+      "1 2 3"
+    ]
+  },
+  {
+    "id": "lc-102",
+    "title": "Binary Tree Level Order Traversal",
+    "category": "HIERARCHICAL_STRUCTURES",
+    "count": 4,
+    "sampleInput": "3 9 20 null null 15 7",
+    "sampleOutput": "3\n9 20\n15 7",
+    "existingInputs": [
+      "3 9 20 null null 15 7",
+      "1",
+      "1 2 3",
+      "1 2 null 3"
+    ]
+  },
+  {
+    "id": "lc-39",
+    "title": "Combination Sum",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "4 7\n2 3 6 7",
+    "sampleOutput": "2",
+    "existingInputs": [
+      "4 7\n2 3 6 7",
+      "3 8\n2 3 5",
+      "1 2\n2",
+      "1 1\n2"
+    ]
+  },
+  {
+    "id": "lc-746",
+    "title": "Min Cost Climbing Stairs",
+    "category": "EXHAUSTIVE_SEARCH_DP",
+    "count": 4,
+    "sampleInput": "3\n10 15 20",
+    "sampleOutput": "15",
+    "existingInputs": [
+      "3\n10 15 20",
+      "10\n1 100 1 1 1 100 1 1 100 1",
+      "2\n0 0",
+      "4\n1 2 3 4"
+    ]
+  },
+  {
+    "id": "lc-27",
+    "title": "Remove Element",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "4 3\n3 2 2 3",
+    "sampleOutput": "2",
+    "existingInputs": [
+      "4 3\n3 2 2 3",
+      "8 2\n0 1 2 2 3 0 4 2",
+      "0 5\n",
+      "3 1\n1 1 1"
+    ]
+  },
+  {
+    "id": "lc-977",
+    "title": "Squares of a Sorted Array",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "5\n-4 -1 0 3 10",
+    "sampleOutput": "0 1 9 16 100",
+    "existingInputs": [
+      "5\n-4 -1 0 3 10",
+      "5\n-7 -3 2 3 11",
+      "1\n-5",
+      "3\n1 2 3"
+    ]
+  },
+  {
+    "id": "lc-122",
+    "title": "Best Time to Buy and Sell Stock II",
+    "category": "POINTERS_ARRAYS",
+    "count": 4,
+    "sampleInput": "6\n7 1 5 3 6 4",
+    "sampleOutput": "7",
+    "existingInputs": [
+      "6\n7 1 5 3 6 4",
+      "5\n1 2 3 4 5",
+      "5\n7 6 4 3 1",
+      "2\n2 4"
+    ]
+  },
+  {
+    "id": "lc-435",
+    "title": "Non-overlapping Intervals",
+    "category": "SEARCH_INTERVALS",
+    "count": 4,
+    "sampleInput": "4\n1 2\n2 3\n3 4\n1 3",
+    "sampleOutput": "1",
+    "existingInputs": [
+      "4\n1 2\n2 3\n3 4\n1 3",
+      "3\n1 2\n1 2\n1 2",
+      "3\n1 2\n2 3\n3 4",
+      "1\n1 10"
+    ]
+  },
+  {
+    "id": "lc-733",
+    "title": "Flood Fill",
+    "category": "NETWORK_GRAPH_ALGORITHMS",
+    "count": 3,
+    "sampleInput": "3 3 1 1 2\n1 1 1\n1 1 0\n1 0 1",
+    "sampleOutput": "2 2 2\n2 2 0\n2 0 1",
+    "existingInputs": [
+      "3 3 1 1 2\n1 1 1\n1 1 0\n1 0 1",
+      "2 2 0 0 0\n0 0 0\n0 0 0",
+      "1 1 0 0 2\n5"
+    ]
+  }
+]

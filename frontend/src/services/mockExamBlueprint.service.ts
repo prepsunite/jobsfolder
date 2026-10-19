@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase';
-import type { MockExamTemplate } from '@/types/tpo';
+import { supabase } from '../lib/supabase';
+import type { MockExamTemplate } from '../types/tpo';
 
 const BLUEPRINTS_STORAGE_KEY = 'prepunite_mock_exam_blueprints';
 
