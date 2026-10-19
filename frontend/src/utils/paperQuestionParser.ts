@@ -239,22 +239,22 @@ function parseTestCasesFromBlock(blockText: string): PaperTestCase[] {
  */
 export const CANONICAL_FALLBACK_TEST_CASES: Record<string, PaperTestCase[]> = {
   'longest palindromic substring': [
-    { title: 'Test Case 1', input: 's = "babad"', output: '"bab"', explanation: '"aba" is also a valid answer.' },
-    { title: 'Test Case 2', input: 's = "cbbd"', output: '"bb"' },
-    { title: 'Test Case 3', input: 's = "a"', output: '"a"' },
-    { title: 'Test Case 4', input: 's = "ac"', output: '"a"' }
+    { title: 'Test Case 1', input: 's = "babad"', output: 'bab', explanation: '"aba" is also a valid answer.' },
+    { title: 'Test Case 2', input: 's = "cbbd"', output: 'bb' },
+    { title: 'Test Case 3', input: 's = "a"', output: 'a' },
+    { title: 'Test Case 4', input: 's = "ac"', output: 'a' }
   ],
   'integer to roman numeral': [
-    { title: 'Test Case 1', input: 'num = 3749', output: '"MMMDCCXLIX"' },
-    { title: 'Test Case 2', input: 'num = 58', output: '"LVIII"' },
-    { title: 'Test Case 3', input: 'num = 1994', output: '"MCMXCIV"' },
-    { title: 'Test Case 4', input: 'num = 4', output: '"IV"' }
+    { title: 'Test Case 1', input: 'num = 3749', output: 'MMMDCCXLIX' },
+    { title: 'Test Case 2', input: 'num = 58', output: 'LVIII' },
+    { title: 'Test Case 3', input: 'num = 1994', output: 'MCMXCIV' },
+    { title: 'Test Case 4', input: 'num = 4', output: 'IV' }
   ],
   'longest common prefix across directory names': [
-    { title: 'Test Case 1', input: 'strs = ["flower","flow","flight"]', output: '"fl"' },
-    { title: 'Test Case 2', input: 'strs = ["dog","racecar","car"]', output: '""' },
-    { title: 'Test Case 3', input: 'strs = ["interspecies","interstellar","interstate"]', output: '"inters"' },
-    { title: 'Test Case 4', input: 'strs = ["cir","car"]', output: '"c"' }
+    { title: 'Test Case 1', input: 'strs = ["flower","flow","flight"]', output: 'fl' },
+    { title: 'Test Case 2', input: 'strs = ["dog","racecar","car"]', output: '""', explanation: 'There is no common prefix among the input strings.' },
+    { title: 'Test Case 3', input: 'strs = ["interspecies","interstellar","interstate"]', output: 'inters' },
+    { title: 'Test Case 4', input: 'strs = ["cir","car"]', output: 'c' }
   ],
   'valid parentheses sequence': [
     { title: 'Test Case 1', input: 's = "()"', output: '1' },

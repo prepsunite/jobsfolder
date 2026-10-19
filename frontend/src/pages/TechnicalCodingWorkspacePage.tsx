@@ -27,6 +27,7 @@ import {
   ArrowRight,
   Circle,
   Send,
+  Save,
   Zap,
   Sparkles,
   BookOpen,
@@ -51,7 +52,7 @@ import {
 } from '@/services/codeExecution.service';
 import { technicalService } from '@/services/technical.service';
 import audioEffects from '@/utils/audioEffects';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import type { ProgrammingProblem } from '@/types/technical';
 
@@ -117,6 +118,8 @@ export default function TechnicalCodingWorkspacePage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('python');
   const [code, setCode] = useState<string>(STARTER_TEMPLATES.python);
   const [fontSize, setFontSize] = useState<number>(14);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Execution & Testing State
   const [isRunningTests, setIsRunningTests] = useState(false);
@@ -269,6 +272,7 @@ export default function TechnicalCodingWorkspacePage() {
           editorRef.current.setValue(pastSubmission.sourceCode);
         }
         setRestoredSource('submission');
+        setHasUnsavedChanges(false);
         isProgrammaticUpdateRef.current = false;
         return;
       }
@@ -283,6 +287,7 @@ export default function TechnicalCodingWorkspacePage() {
           editorRef.current.setValue(savedDraft);
         }
         setRestoredSource('draft');
+        setHasUnsavedChanges(false);
         isProgrammaticUpdateRef.current = false;
         return;
       }
@@ -295,6 +300,7 @@ export default function TechnicalCodingWorkspacePage() {
         editorRef.current.setValue(template);
       }
       setRestoredSource(null);
+      setHasUnsavedChanges(false);
       isProgrammaticUpdateRef.current = false;
     };
 
@@ -308,20 +314,49 @@ export default function TechnicalCodingWorkspacePage() {
     };
   }, [problem?.id, user?.email, getDraftKey]);
 
-  // Handle source changes from Monaco editor with autosave
+  // Save Code Draft (Explicitly on Save button or Run & Submit)
+  const handleSaveDraft = useCallback(async (silent: boolean = false) => {
+    if (!problem) return;
+    setIsSaving(true);
+    try {
+      const draftKey = getDraftKey(problem.id, selectedLanguage);
+      localStorage.setItem(draftKey, code);
+      if (user?.email && user.email !== GUEST_EMAIL) {
+        await technicalService.saveUserDraft(problem.id, selectedLanguage, code, user.email);
+      }
+      setHasUnsavedChanges(false);
+      if (!silent) {
+        audioEffects.playSuccessChime();
+        toast.success('Code saved successfully!');
+      }
+    } catch (err: any) {
+      console.warn('Draft save error:', err);
+      if (!silent) toast.error('Failed to save code');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [problem, selectedLanguage, code, user?.email, getDraftKey, toast]);
+
+  // Window keyboard shortcut listener (Ctrl+S to save)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveDraft(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSaveDraft]);
+
+  // Handle source changes from Monaco editor (no autosave until Save or Run & Submit is clicked)
   const handleCodeChange = (newCode: string) => {
     if (isProgrammaticUpdateRef.current) return;
     runRevisionRef.current += 1;
     setCode(newCode);
+    setHasUnsavedChanges(true);
     setTestResults(null); // Clear previous verdicts
     setShowCelebration(false);
-
-    if (problem) {
-      const draftKey = getDraftKey(problem.id, selectedLanguage);
-      try {
-        localStorage.setItem(draftKey, newCode);
-      } catch {}
-    }
   };
 
   // Language switch handler
@@ -331,6 +366,7 @@ export default function TechnicalCodingWorkspacePage() {
     setTestResults(null);
     setCustomResult(null);
     setRestoredSource(null);
+    setHasUnsavedChanges(false);
 
     if (problem) {
       const draftKey = getDraftKey(problem.id, newLang);
@@ -359,6 +395,7 @@ export default function TechnicalCodingWorkspacePage() {
     }
     isProgrammaticUpdateRef.current = false;
     setRestoredSource(null);
+    setHasUnsavedChanges(true);
     if (problem) {
       const draftKey = getDraftKey(problem.id, selectedLanguage);
       try {
@@ -550,10 +587,9 @@ export default function TechnicalCodingWorkspacePage() {
           queryClient.invalidateQueries({ queryKey: ['programming-150-problems'] });
           queryClient.invalidateQueries({ queryKey: ['campus-dsa-problems'] });
           setShowCelebration(true);
-          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and marked as solved.`);
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and marked as completed.`);
         } else {
-          // STRICT GATE: Run Tests NEVER marks problem as solved
-          toast.success(`Sample test cases passed (${result.passedCount}/${result.totalCount})! Click Submit Solution to evaluate against all edge cases.`);
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed!`);
         }
       } else if (result.compileError) {
         audioEffects.playErrorBuzz();
@@ -574,6 +610,12 @@ export default function TechnicalCodingWorkspacePage() {
         setIsSubmitting(false);
       }
     }
+  };
+
+  // Run & Submit (Saves draft, runs all test cases, and automatically submits when all pass)
+  const handleRunAndSubmit = async () => {
+    await handleSaveDraft(true);
+    await handleRunTests(true);
   };
 
   // Run Custom Input
@@ -944,10 +986,17 @@ export default function TechnicalCodingWorkspacePage() {
                 <span>Reset</span>
               </button>
 
-              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Auto-Saved</span>
-              </div>
+              {hasUnsavedChanges ? (
+                <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800" title="You have unsaved changes (Press Save or Ctrl+S)">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span>Unsaved Changes</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800" title="Code draft is saved">
+                  <Check className="w-3 h-3 text-emerald-400" />
+                  <span>Saved</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -965,7 +1014,10 @@ export default function TechnicalCodingWorkspacePage() {
               onMount={(editor, monaco) => {
                 editorRef.current = editor;
                 editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-                  handleRunTests(false);
+                  handleRunAndSubmit();
+                });
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+                  handleSaveDraft(false);
                 });
               }}
               options={{
@@ -1033,44 +1085,44 @@ export default function TechnicalCodingWorkspacePage() {
             {/* Runner Action Toolbar */}
             <div className="px-4 py-2 bg-[#161b22] flex items-center justify-between border-b border-[#21262d] flex-wrap gap-2 shrink-0">
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Run Tests (Sample) */}
+                {/* 1. Save Code Button */}
                 <button
                   type="button"
-                  onClick={() => handleRunTests(false)}
-                  disabled={isRunningTests || isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
-                  title="Run against visible sample test cases"
+                  onClick={() => handleSaveDraft(false)}
+                  disabled={isRunningTests || isSubmitting || isSaving}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262d] hover:bg-[#30363d] text-white text-xs font-black uppercase tracking-wider transition-all border border-[#30363d] shadow-xs cursor-pointer disabled:opacity-50"
+                  title="Save your code draft without running test cases (Ctrl+S)"
                 >
-                  {isRunningTests ? (
+                  {isSaving ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Compiling...</span>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FD4A32]" />
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Run Tests</span>
+                      <Save className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Save</span>
                     </>
                   )}
                 </button>
 
-                {/* Submit Solution (All Hidden Cases) */}
+                {/* 2. Run & Submit Button */}
                 <button
                   type="button"
-                  onClick={() => handleRunTests(true)}
-                  disabled={isRunningTests || isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
-                  title="Submit solution to verify all hidden edge cases & mark as solved"
+                  onClick={handleRunAndSubmit}
+                  disabled={isRunningTests || isSubmitting || isSaving}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#FD4A32] to-[#E0351D] hover:from-[#E0351D] hover:to-[#C02B15] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  title="Evaluate code against all test cases and automatically submit when all pass (Ctrl+Enter)"
                 >
-                  {isSubmitting ? (
+                  {isRunningTests || isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>Evaluating...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Submit Solution</span>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Run & Submit</span>
                     </>
                   )}
                 </button>
@@ -1364,7 +1416,7 @@ export default function TechnicalCodingWorkspacePage() {
                       </span>
                       <span className="text-[11px] opacity-80 hidden sm:inline">
                         {testResults.totalCount <= sampleCases.length
-                          ? 'Click "Submit Solution" to test against 8+ edge cases & mark as solved'
+                          ? 'Click "Run & Submit" to test against all edge cases & mark as solved'
                           : `${testResults.passedCount}/${testResults.totalCount} Test Cases Passed`}
                       </span>
                     </div>
@@ -1471,8 +1523,8 @@ export default function TechnicalCodingWorkspacePage() {
                 <div className="h-40 flex flex-col items-center justify-center text-center text-[#8b949e] space-y-2 p-4">
                   <Terminal className="w-8 h-8 text-[#484f58]" />
                   <p className="text-xs font-mono font-medium text-gray-400 max-w-md">
-                    Click <span className="text-emerald-400 font-bold">Run Tests</span> to run visible sample test cases, or{' '}
-                    <span className="text-[#FD4A32] font-bold">Submit Solution</span> to evaluate all 8+ test cases and mark as solved.
+                    Click <span className="text-sky-400 font-bold">Save</span> to preserve your progress, or{' '}
+                    <span className="text-[#FD4A32] font-bold">Run & Submit</span> to evaluate all test cases and automatically mark as completed upon passing.
                   </p>
                   <p className="text-[11px] text-[#484f58] flex items-center gap-1.5">
                     <GripHorizontal className="w-3.5 h-3.5" />

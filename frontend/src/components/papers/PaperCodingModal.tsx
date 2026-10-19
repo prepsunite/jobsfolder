@@ -16,6 +16,8 @@ import {
   Layers,
   Circle,
   Send,
+  Save,
+  Check,
   LayoutGrid,
   List,
   GripHorizontal,
@@ -92,6 +94,8 @@ export default function PaperCodingModal({
   const [selectedLanguage, setSelectedLanguage] = useState<string>('python');
   const [code, setCode] = useState<string>('');
   const [fontSize] = useState<number>(14);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Execution & Testing state
   const [isRunningTests, setIsRunningTests] = useState(false);
@@ -141,6 +145,7 @@ export default function PaperCodingModal({
           editorRef.current.setValue(cloudSubmission.sourceCode);
         }
         setRestoredSource(cloudSubmission.status === 'ACCEPTED' ? 'cloud_solution' : 'cloud_draft');
+        setHasUnsavedChanges(false);
         isProgrammaticUpdateRef.current = false;
 
         if (cloudSubmission.status === 'ACCEPTED') {
@@ -159,6 +164,7 @@ export default function PaperCodingModal({
           editorRef.current.setValue(savedDraft);
         }
         setRestoredSource('local_draft');
+        setHasUnsavedChanges(false);
         isProgrammaticUpdateRef.current = false;
         return;
       }
@@ -171,6 +177,7 @@ export default function PaperCodingModal({
         editorRef.current.setValue(template);
       }
       setRestoredSource(null);
+      setHasUnsavedChanges(false);
       isProgrammaticUpdateRef.current = false;
     };
 
@@ -185,53 +192,71 @@ export default function PaperCodingModal({
     };
   }, [question?.id, user?.email]);
 
-  // Keyboard shortcut listener (Escape to close, Ctrl+Enter to run)
+  // Save Code Draft (Explicitly on Save button or Run & Submit)
+  const handleSaveDraft = async (silent: boolean = false) => {
+    if (!question) return;
+    setIsSaving(true);
+    try {
+      // 1. Local device persistence
+      localStorage.setItem(`paper_code_${question.id}_${selectedLanguage}`, code);
+
+      // 2. Cloud draft sync for authenticated users
+      if (user?.email && user.email !== GUEST_EMAIL) {
+        setCloudSyncStatus('saving');
+        await technicalService.saveUserDraft(question.id, selectedLanguage, code, user.email);
+        setCloudSyncStatus('synced');
+      }
+      setHasUnsavedChanges(false);
+      if (!silent) {
+        audioEffects.playSuccessChime();
+        toast.success('Code saved successfully!');
+      }
+    } catch (err: any) {
+      console.warn('Draft save error:', err);
+      setCloudSyncStatus('error');
+      if (!silent) toast.error('Failed to save code');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Run & Submit (Saves draft, runs all test cases, and automatically submits when all pass)
+  const handleRunAndSubmit = async () => {
+    await handleSaveDraft(true);
+    await handleRunTests(true);
+  };
+
+  // Keyboard shortcut listener (Escape to close, Ctrl+S to save, Ctrl+Enter to run & submit)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !document.fullscreenElement) {
         onClose();
       }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveDraft(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, handleSaveDraft]);
 
-  // Handle code change with instant local persistence and debounced cloud draft sync (LeetCode/GfG standard)
+  // Handle code change: updates editor state without saving until Save or Run & Submit is pressed
   const handleCodeChange = (newCode?: string) => {
     if (isProgrammaticUpdateRef.current) return;
     const val = newCode || '';
     setCode(val);
-
-    if (!question) return;
-
-    // 1. Instant local persistence (Tier 1: 0ms lag, offline resilience)
-    localStorage.setItem(`paper_code_${question.id}_${selectedLanguage}`, val);
-
-    // 2. Debounced cloud draft persistence (Tier 2: background sync)
-    if (user?.email && user.email !== GUEST_EMAIL) {
-      setCloudSyncStatus('saving');
-      if (draftTimeoutRef.current) {
-        clearTimeout(draftTimeoutRef.current);
-      }
-
-      draftTimeoutRef.current = setTimeout(async () => {
-        try {
-          await technicalService.saveUserDraft(question.id, selectedLanguage, val, user.email);
-          setCloudSyncStatus('synced');
-          setTimeout(() => setCloudSyncStatus('idle'), 2500);
-        } catch {
-          setCloudSyncStatus('error');
-        }
-      }, 2000);
-    }
+    setHasUnsavedChanges(true);
+    setTestResults(null);
   };
 
-  // Handle language switch with automatic draft hydration / starter template loading
+  // Handle language switch with draft hydration / starter template loading
   const handleLanguageChange = (newLang: string) => {
     setSelectedLanguage(newLang);
     setTestResults(null);
     setCustomResult(null);
     setRestoredSource(null);
+    setHasUnsavedChanges(false);
 
     if (question) {
       const storedCodeKey = `paper_code_${question.id}_${newLang}`;
@@ -456,9 +481,9 @@ export default function PaperCodingModal({
           onMarkSolved?.(question.id);
           setRestoredSource('cloud_solution');
           setCloudSyncStatus('synced');
-          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and backed up to cloud.`);
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed! Solution accepted and marked as completed.`);
         } else {
-          toast.success(`Sample test cases passed (${result.passedCount}/${result.totalCount})! Click Submit Solution to verify.`);
+          toast.success(`🎉 All ${result.totalCount} Test Cases Passed!`);
         }
       } else if (result.compileError) {
         audioEffects.playErrorBuzz();
@@ -800,10 +825,17 @@ export default function PaperCodingModal({
                 <span>Reset</span>
               </button>
 
-              <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Auto-Saved</span>
-              </div>
+              {hasUnsavedChanges ? (
+                <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800" title="You have unsaved changes (Press Save or Ctrl+S)">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span>Unsaved Changes</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800" title="Code draft is saved">
+                  <Check className="w-3 h-3 text-emerald-400" />
+                  <span>Saved</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -821,7 +853,10 @@ export default function PaperCodingModal({
               onMount={(editor, monaco) => {
                 editorRef.current = editor;
                 editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-                  handleRunTests(false);
+                  handleRunAndSubmit();
+                });
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+                  handleSaveDraft(false);
                 });
               }}
               options={{
@@ -888,44 +923,44 @@ export default function PaperCodingModal({
             {/* Runner Action Toolbar */}
             <div className="px-4 py-2 bg-[#161b22] flex items-center justify-between border-b border-[#21262d] flex-wrap gap-2 shrink-0">
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Run Tests (Sample) */}
+                {/* 1. Save Code Button */}
                 <button
                   type="button"
-                  onClick={() => handleRunTests(false)}
-                  disabled={isRunningTests || isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
-                  title="Run against visible sample test cases"
+                  onClick={() => handleSaveDraft(false)}
+                  disabled={isRunningTests || isSubmitting || isSaving}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262d] hover:bg-[#30363d] text-white text-xs font-black uppercase tracking-wider transition-all border border-[#30363d] shadow-xs cursor-pointer disabled:opacity-50"
+                  title="Save your code draft without running test cases (Ctrl+S)"
                 >
-                  {isRunningTests ? (
+                  {isSaving ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Compiling...</span>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FD4A32]" />
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Run Tests</span>
+                      <Save className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Save</span>
                     </>
                   )}
                 </button>
 
-                {/* Submit Solution */}
+                {/* 2. Run & Submit Button */}
                 <button
                   type="button"
-                  onClick={() => handleRunTests(true)}
-                  disabled={isRunningTests || isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
-                  title="Submit solution to verify all test cases & mark as solved"
+                  onClick={handleRunAndSubmit}
+                  disabled={isRunningTests || isSubmitting || isSaving}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#FD4A32] to-[#E0351D] hover:from-[#E0351D] hover:to-[#C02B15] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  title="Evaluate code against all test cases and automatically submit when all pass (Ctrl+Enter)"
                 >
-                  {isSubmitting ? (
+                  {isRunningTests || isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>Evaluating...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Submit Solution</span>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Run & Submit</span>
                     </>
                   )}
                 </button>
@@ -1270,8 +1305,8 @@ export default function PaperCodingModal({
                 <div className="h-40 flex flex-col items-center justify-center text-center text-[#8b949e] space-y-2 p-4">
                   <Terminal className="w-8 h-8 text-[#484f58]" />
                   <p className="text-xs font-mono font-medium text-gray-400 max-w-md">
-                    Click <span className="text-emerald-400 font-bold">Run Tests</span> to test visible sample cases, or{' '}
-                    <span className="text-[#FD4A32] font-bold">Submit Solution</span> to evaluate all cases and mark as solved.
+                    Click <span className="text-sky-400 font-bold">Save</span> to preserve your progress, or{' '}
+                    <span className="text-[#FD4A32] font-bold">Run & Submit</span> to evaluate all test cases and automatically mark as completed upon passing.
                   </p>
                   <p className="text-[11px] text-[#484f58] flex items-center gap-1.5">
                     <GripHorizontal className="w-3.5 h-3.5" />

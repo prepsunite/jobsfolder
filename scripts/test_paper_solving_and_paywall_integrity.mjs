@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 import { parsePaperQuestions } from '../frontend/src/utils/paperQuestionParser.ts';
+import { compareOutputs, stripQuotes, normalizeStdin } from '../frontend/src/utils/codeJudgeComparator.ts';
 
 const envText = fs.readFileSync('frontend/.env', 'utf8');
 const env = {};
@@ -198,6 +199,49 @@ async function runTests() {
       assert(realExpected.length > 0, `Test Case ${idx + 1} expected output is guaranteed non-empty in IDE execution suite ("${realExpected}")`);
     });
   }
+
+  // --------------------------------------------------------------------------
+  // TEST 5: Judge Comparator Tolerances & Competitive Stdin Normalization
+  // --------------------------------------------------------------------------
+  console.log('\n[STAGE 5] Validating Multi-Language Comparator & Stdin Normalization');
+
+  // String quote tolerance
+  assert(compareOutputs('fl', '"fl"'), 'compareOutputs matches unquoted "fl" against quoted \'"fl"\'');
+  assert(compareOutputs('"MMMDCCXLIX"', 'MMMDCCXLIX'), 'compareOutputs matches quoted \'"MMMDCCXLIX"\' against unquoted');
+  assert(stripQuotes('"Hello World"') === 'Hello World', 'stripQuotes strips double quotes');
+  assert(stripQuotes("'Single'") === 'Single', 'stripQuotes strips single quotes');
+
+  // Boolean casing tolerance
+  assert(compareOutputs('True', 'true'), 'compareOutputs matches Python "True" against standard "true"');
+  assert(compareOutputs('False', 'false'), 'compareOutputs matches Python "False" against standard "false"');
+  assert(!compareOutputs('True', 'false'), 'compareOutputs correctly fails mismatched booleans');
+
+  // Array whitespace and JSON format tolerance
+  assert(compareOutputs('[0, 1]', '[0,1]'), 'compareOutputs matches array with spacing differences');
+  assert(compareOutputs('{"a": 1, "b": 2}', '{"b":2,"a":1}'), 'compareOutputs matches JSON objects with key order differences');
+
+  // Empty string tolerance
+  assert(compareOutputs('', '""'), 'compareOutputs matches empty stdout against quoted empty string \'""\'');
+  assert(compareOutputs('""', ''), 'compareOutputs matches quoted empty string \'""\' against empty stdout');
+  assert(!compareOutputs('abc', '""'), 'compareOutputs rejects non-empty string against empty string');
+
+  // Floating point tolerance
+  assert(compareOutputs('1.0000000', '1'), 'compareOutputs matches decimal numbers within floating precision');
+  assert(compareOutputs('3.14159265', '3.14159265'), 'compareOutputs matches exact float strings');
+
+  // Stdin variable-assignment normalization
+  assert(
+    normalizeStdin('nums = [2, 7, 11, 15], target = 9') === '[2, 7, 11, 15] 9',
+    'normalizeStdin converts "nums = [...], target = 9" into "[2, 7, 11, 15] 9"'
+  );
+  assert(
+    normalizeStdin('s = "babad"') === 'babad',
+    'normalizeStdin converts \'s = "babad"\' into "babad"'
+  );
+  assert(
+    normalizeStdin('101101110') === '101101110',
+    'normalizeStdin preserves raw competitive programming stdin intact'
+  );
 
   console.log('\n================================================================================');
   console.log(`SUMMARY: ${passed} / ${assertions} ASSERTIONS PASSED (Exit Code: ${process.exitCode || 0})`);

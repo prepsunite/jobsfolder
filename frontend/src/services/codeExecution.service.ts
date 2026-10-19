@@ -274,48 +274,19 @@ export function isTemplateOrEmptyCode(code?: string, lang: string = 'python'): b
   return false;
 }
 
-/**
- * Normalizes standard input by converting variable-assignment formatted inputs into competitive programming stdin.
- */
-export function normalizeStdin(rawStdin?: string): string {
-  if (!rawStdin) return '';
-  const trimmed = rawStdin.trim();
-  if (!trimmed) return '';
+import {
+  normalizeOutput,
+  stripQuotes,
+  normalizeStdin,
+  compareOutputs,
+} from '@/utils/codeJudgeComparator';
 
-  const hasVariableAssignment = /(?:^|[\n,;])\s*[A-Za-z_]\w*\s*=\s*[^=]/m.test(trimmed);
-  if (!hasVariableAssignment) {
-    return rawStdin;
-  }
-
-  const lines = trimmed.split(/\r?\n/);
-  const normalizedLines = lines.map((line) => {
-    if (/(?:^|[,;])\s*[A-Za-z_]\w*\s*=\s*/.test(line)) {
-      const parts = line.split(/[,;]\s*(?=[A-Za-z_]\w*\s*=)/);
-      const extracted = parts.map((part) => {
-        const val = part.replace(/^\s*[A-Za-z_]\w*\s*=\s*/, '').trim();
-        return val.replace(/^['"](.*)['"]$/, '$1');
-      });
-      return extracted.join(' ');
-    }
-    return line;
-  });
-
-  return normalizedLines.join('\n');
-}
-
-/**
- * Normalizes program output (standardizing newlines and trailing spaces for clean comparison)
- */
-export function normalizeOutput(str?: string): string {
-  if (!str) return '';
-  return str
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .split('\n')
-    .map((line) => line.trimEnd())
-    .join('\n')
-    .trim();
-}
+export {
+  normalizeOutput,
+  stripQuotes,
+  normalizeStdin,
+  compareOutputs,
+};
 
 /**
  * Core Sandboxed Code Execution Service
@@ -515,7 +486,7 @@ export const codeExecutionService = {
       }
 
       const actual = normalizeOutput(execResult.stdout);
-      const isMatch = execResult.isSuccess && actual === realExpected;
+      const isMatch = execResult.isSuccess && compareOutputs(actual, realExpected);
 
       return {
         input: displayInput,
