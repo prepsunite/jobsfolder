@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Copy,
   Check,
-  Download,
   Lightbulb,
   HelpCircle,
   BookOpen,
@@ -57,6 +56,9 @@ export default function HackerRankProblemView({
   sampleCases = [],
   maxVisibleCases,
 }: HackerRankProblemViewProps) {
+  // Active example tab for clean, compact presentation
+  const [activeExampleTab, setActiveExampleTab] = useState<number>(0);
+
   // Copy state trackers
   const [copiedKeys, setCopiedKeys] = useState<Record<string, boolean>>({});
 
@@ -66,6 +68,15 @@ export default function HackerRankProblemView({
   const [isSolutionOpen, setIsSolutionOpen] = useState(false);
   const [solutionViewLang, setSolutionViewLang] = useState<'python' | 'java' | 'cpp' | 'c'>('python');
 
+  // Reset tab when problem changes
+  useEffect(() => {
+    setActiveExampleTab(0);
+  }, [problem?.id]);
+
+  const visibleCases = maxVisibleCases ? sampleCases.slice(0, maxVisibleCases) : sampleCases;
+  const safeIndex = Math.min(activeExampleTab, Math.max(0, visibleCases.length - 1));
+  const currentCase = visibleCases[safeIndex];
+
   const copyText = (text: string, key: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -73,22 +84,6 @@ export default function HackerRankProblemView({
     setTimeout(() => {
       setCopiedKeys(prev => ({ ...prev, [key]: false }));
     }, 2000);
-  };
-
-  const handleDownload = (content: string, filename: string) => {
-    try {
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error('Download failed:', e);
-    }
   };
 
   // Derive standard Input Format descriptions if not already in markdown
@@ -180,91 +175,104 @@ export default function HackerRankProblemView({
         </div>
       )}
 
-      {/* 5. Sample Test Cases (Formatted with visual array blocks matching screenshot) */}
-      {sampleCases.length > 0 && (
-        <div className="space-y-6 pt-1">
-          {(maxVisibleCases ? sampleCases.slice(0, maxVisibleCases) : sampleCases).map((sc, idx) => {
-            const inputKey = `input_${idx}`;
-            const outputKey = `output_${idx}`;
-            const actualOutput = sc.output || sc.expected_output || '';
-
-            return (
-              <div key={idx} className="space-y-4">
-                
-                {/* Sample Input Header & Box */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between pb-0.5">
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white tracking-tight">
-                      Sample Input {idx}
-                    </h3>
-
-                    {/* Copy & Download Actions (matching HackerRank / LeetCode standard) */}
-                    <div className="flex items-center gap-3 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => copyText(sc.input, inputKey)}
-                        className="text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        {copiedKeys[inputKey] ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKeys[inputKey] ? 'Copied' : 'Copy'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(sc.input, `sample_input_${idx}.txt`)}
-                        className="text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Download</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Sample Input Card (Clean standard monospace presentation) */}
-                  <div className="p-3.5 bg-gray-50 dark:bg-[#121315] rounded-xl border border-gray-200 dark:border-[#2d3036] font-mono text-xs sm:text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed overflow-x-auto">
-                    {sc.input}
-                  </div>
-                </div>
-
-                {/* Sample Output Header & Box */}
-                {actualOutput && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between pb-0.5">
-                      <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white tracking-tight">
-                        Sample Output {idx}
-                      </h3>
-
-                      <button
-                        type="button"
-                        onClick={() => copyText(actualOutput, outputKey)}
-                        className="text-xs text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        {copiedKeys[outputKey] ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKeys[outputKey] ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-
-                    <div className="p-3.5 bg-gray-50 dark:bg-[#121315] rounded-xl border border-gray-200 dark:border-[#2d3036] font-mono text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap leading-relaxed">
-                      {actualOutput}
-                    </div>
-                  </div>
-                )}
-
-                {/* Explanation Header & Text */}
-                {sc.explanation && (
-                  <div className="space-y-1.5 pt-0.5">
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white tracking-tight">
-                      Explanation {idx}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-sans">
-                      {sc.explanation}
-                    </p>
-                  </div>
-                )}
-
+      {/* 5. Sample Test Cases (Tabbed Examples to eliminate repetitive clutter) */}
+      {visibleCases.length > 0 && currentCase && (
+        <div className="space-y-2.5 pt-2">
+          {/* Header & Tabs Row */}
+          <div className="flex items-center justify-between flex-wrap gap-2 pb-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Examples:
+              </span>
+              <div className="inline-flex items-center p-0.5 rounded-lg bg-gray-100 dark:bg-[#16181c] border border-gray-200 dark:border-[#2a2d33]">
+                {visibleCases.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveExampleTab(idx)}
+                    className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer ${
+                      safeIndex === idx
+                        ? 'bg-white dark:bg-[#21262d] text-sky-600 dark:text-sky-400 shadow-xs border border-gray-200 dark:border-[#388bfd]'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    }`}
+                  >
+                    Example {idx + 1}
+                  </button>
+                ))}
               </div>
-            );
-          })}
+            </div>
+
+            {/* Copy Input Quick Action */}
+            <button
+              type="button"
+              onClick={() => copyText(currentCase.input, `input_${safeIndex}`)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 transition-colors cursor-pointer"
+              title="Copy input to clipboard"
+            >
+              {copiedKeys[`input_${safeIndex}`] ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-bold">Copied Input</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Input</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Unified Compact Example Card */}
+          <div className="p-3.5 bg-gray-50 dark:bg-[#121315] rounded-xl border border-gray-200 dark:border-[#2d3036] space-y-3 font-mono text-xs sm:text-sm animate-fadeIn">
+            {/* Input */}
+            <div className="space-y-1">
+              <span className="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider font-sans">
+                Input
+              </span>
+              <pre className="p-2.5 rounded-lg bg-white dark:bg-[#0d1117] border border-gray-200 dark:border-[#21262d] text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed overflow-x-auto font-mono">
+                {currentCase.input || '<Empty>'}
+              </pre>
+            </div>
+
+            {/* Expected Output */}
+            {(currentCase.output || currentCase.expected_output) && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider font-sans">
+                    Expected Output
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyText(currentCase.output || currentCase.expected_output || '', `output_${safeIndex}`)}
+                    className="text-xs text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    {copiedKeys[`output_${safeIndex}`] ? (
+                      <Check className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                    <span className="text-[11px]">{copiedKeys[`output_${safeIndex}`] ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+                <pre className="p-2.5 rounded-lg bg-white dark:bg-[#0d1117] border border-gray-200 dark:border-[#21262d] text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap leading-relaxed overflow-x-auto font-mono font-semibold">
+                  {currentCase.output || currentCase.expected_output}
+                </pre>
+              </div>
+            )}
+
+            {/* Explanation */}
+            {currentCase.explanation && (
+              <div className="space-y-1 pt-1 border-t border-gray-200 dark:border-[#21262d]">
+                <span className="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider font-sans">
+                  Explanation
+                </span>
+                <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-sans leading-relaxed">
+                  {currentCase.explanation}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

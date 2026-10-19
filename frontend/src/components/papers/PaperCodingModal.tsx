@@ -102,7 +102,7 @@ export default function PaperCodingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
   const [activeTestTab, setActiveTestTab] = useState<number>(0);
-  const [resultsViewMode, setResultsViewMode] = useState<'grid' | 'tabs'>('grid');
+  const [resultsViewMode, setResultsViewMode] = useState<'grid' | 'tabs'>('tabs');
 
   // Adjustable Console Splitter
   const [consoleHeight, setConsoleHeight] = useState<number>(() => {
@@ -151,38 +151,69 @@ export default function PaperCodingModal({
         if (cloudSubmission.status === 'ACCEPTED') {
           onMarkSolved?.(question.id);
         }
-        return;
-      }
-
-      // 2. Check local device draft
-      const storedCodeKey = `paper_code_${question.id}_${selectedLanguage}`;
-      const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(storedCodeKey) : null;
-      if (savedDraft && savedDraft.trim().length > 0) {
-        isProgrammaticUpdateRef.current = true;
-        setCode(savedDraft);
-        if (editorRef.current && editorRef.current.getValue() !== savedDraft) {
-          editorRef.current.setValue(savedDraft);
+      } else {
+        // 2. Check local device draft
+        const storedCodeKey = `paper_code_${question.id}_${selectedLanguage}`;
+        const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(storedCodeKey) : null;
+        if (savedDraft && savedDraft.trim().length > 0) {
+          isProgrammaticUpdateRef.current = true;
+          setCode(savedDraft);
+          if (editorRef.current && editorRef.current.getValue() !== savedDraft) {
+            editorRef.current.setValue(savedDraft);
+          }
+          setRestoredSource('local_draft');
+          setHasUnsavedChanges(false);
+          isProgrammaticUpdateRef.current = false;
+        } else {
+          // 3. Fallback to starter boilerplate template
+          const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
+          isProgrammaticUpdateRef.current = true;
+          setCode(template);
+          if (editorRef.current && editorRef.current.getValue() !== template) {
+            editorRef.current.setValue(template);
+          }
+          setRestoredSource(null);
+          setHasUnsavedChanges(false);
+          isProgrammaticUpdateRef.current = false;
         }
-        setRestoredSource('local_draft');
-        setHasUnsavedChanges(false);
-        isProgrammaticUpdateRef.current = false;
-        return;
       }
 
-      // 3. Fallback to starter boilerplate template
-      const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
-      isProgrammaticUpdateRef.current = true;
-      setCode(template);
-      if (editorRef.current && editorRef.current.getValue() !== template) {
-        editorRef.current.setValue(template);
+      // 4. Restore test results across page refresh / reload so users don't need to re-run
+      const cachedResultsKey = `paper_last_results_${question.id}`;
+      const cachedResultsStr = typeof window !== 'undefined' ? localStorage.getItem(cachedResultsKey) : null;
+      if (cachedResultsStr) {
+        try {
+          const parsed = JSON.parse(cachedResultsStr);
+          if (parsed && Array.isArray(parsed.cases) && parsed.cases.length > 0) {
+            setTestResults(parsed);
+            return;
+          }
+        } catch {}
       }
-      setRestoredSource(null);
-      setHasUnsavedChanges(false);
-      isProgrammaticUpdateRef.current = false;
+
+      if (cloudSubmission && cloudSubmission.status === 'ACCEPTED') {
+        const suite = ensureFourTestCases(question.testCases || [], question.cleanTitle || '');
+        setTestResults({
+          passedCount: suite.length,
+          totalCount: suite.length,
+          isTemplateOrEmpty: false,
+          summaryMessage: 'All test cases passed successfully.',
+          cases: suite.map((tc) => ({
+            input: tc.input,
+            expected: tc.output || '',
+            actual: tc.output || '',
+            passed: true,
+            status: 'PASSED',
+            timeMs: 40,
+            is_hidden: false,
+          })),
+        });
+      } else {
+        setTestResults(null);
+      }
     };
 
     hydrateProblemCode();
-    setTestResults(null);
     setCustomResult(null);
     setActiveTestTab(0);
     setShowCustomInput(false);
@@ -247,7 +278,6 @@ export default function PaperCodingModal({
     const val = newCode || '';
     setCode(val);
     setHasUnsavedChanges(true);
-    setTestResults(null);
   };
 
   // Handle language switch with draft hydration / starter template loading
@@ -454,6 +484,11 @@ export default function PaperCodingModal({
       );
 
       setTestResults(result);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`paper_last_results_${question.id}`, JSON.stringify(result));
+        } catch {}
+      }
       setActiveTestTab(0);
       setMobileTab('console');
 
@@ -979,40 +1014,38 @@ export default function PaperCodingModal({
                 </button>
 
                 {/* View Mode Switcher (Grid vs Tabs) */}
-                {(testResults || isSubmitting) && (
-                  <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setResultsViewMode('grid')}
-                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                        resultsViewMode === 'grid'
-                          ? 'bg-[#21262d] text-white shadow-xs'
-                          : 'text-[#8b949e] hover:text-white'
-                      }`}
-                      title="Grid View (Matching submission results)"
-                    >
-                      <LayoutGrid className="w-3 h-3" />
-                      <span className="hidden sm:inline">Grid</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setResultsViewMode('tabs')}
-                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                        resultsViewMode === 'tabs'
-                          ? 'bg-[#21262d] text-white shadow-xs'
-                          : 'text-[#8b949e] hover:text-white'
-                      }`}
-                      title="Tabs View"
-                    >
-                      <List className="w-3 h-3" />
-                      <span className="hidden sm:inline">Tabs</span>
-                    </button>
-                  </div>
-                )}
+                <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setResultsViewMode('grid')}
+                    className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                      resultsViewMode === 'grid'
+                        ? 'bg-[#21262d] text-white shadow-xs'
+                        : 'text-[#8b949e] hover:text-white'
+                    }`}
+                    title="Grid View (Matching submission results)"
+                  >
+                    <LayoutGrid className="w-3 h-3" />
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResultsViewMode('tabs')}
+                    className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                      resultsViewMode === 'tabs'
+                        ? 'bg-[#21262d] text-white shadow-xs'
+                        : 'text-[#8b949e] hover:text-white'
+                    }`}
+                    title="Tabs View"
+                  >
+                    <List className="w-3 h-3" />
+                    <span className="hidden sm:inline">Tabs</span>
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {testResults && (
+                {testResults ? (
                   <span
                     className={`text-xs font-bold font-mono px-2.5 py-1 rounded-lg ${
                       testResults.passedCount === testResults.totalCount
@@ -1021,6 +1054,10 @@ export default function PaperCodingModal({
                     }`}
                   >
                     {testResults.passedCount}/{testResults.totalCount} Passed
+                  </span>
+                ) : (
+                  <span className="text-xs font-mono text-[#8b949e] px-2.5 py-1 rounded-lg bg-[#21262d] border border-[#30363d]">
+                    {displayGridCases.length} Test Cases
                   </span>
                 )}
 
@@ -1119,12 +1156,12 @@ export default function PaperCodingModal({
               )}
 
               {/* Evaluation / Submission View (Multi-Column Grid matching Programme 150) */}
-              {(isSubmitting || testResults) && resultsViewMode === 'grid' && (
+              {resultsViewMode === 'grid' && (
                 <div className="p-4 rounded-xl bg-[#161b22] border border-[#30363d] space-y-4 animate-fadeIn">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3">
                       <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-display">
-                        Evaluation Results
+                        {isSubmitting ? 'Evaluating Results' : testResults ? 'Evaluation Results' : 'Test Cases Suite'}
                       </h3>
                       {isSubmitting && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
@@ -1155,7 +1192,9 @@ export default function PaperCodingModal({
                           ? 'w-4/5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 animate-pulse'
                           : testResults?.passedCount === testResults?.totalCount
                           ? 'w-full bg-emerald-500'
-                          : 'w-full bg-amber-500'
+                          : testResults
+                          ? 'w-full bg-amber-500'
+                          : 'w-full bg-gray-700'
                       }`}
                     />
                   </div>
@@ -1165,8 +1204,8 @@ export default function PaperCodingModal({
                     <div className="grid grid-flow-col grid-rows-2 sm:grid-rows-3 auto-cols-max gap-x-8 sm:gap-x-12 gap-y-3 min-w-[320px]">
                       {displayGridCases.map((c, idx) => {
                         const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
-                        const isPassed = !isEvaluating && c.passed;
-                        const isFailed = !isEvaluating && !c.passed;
+                        const isPassed = !isEvaluating && testResults && c.passed;
+                        const isFailed = !isEvaluating && testResults && !c.passed;
                         const isSelected = activeTestTab === idx;
 
                         return (
@@ -1213,13 +1252,33 @@ export default function PaperCodingModal({
               )}
 
               {/* Tabs View Mode */}
-              {(isSubmitting || testResults) && resultsViewMode === 'tabs' && (
+              {resultsViewMode === 'tabs' && (
                 <div className="space-y-3">
+                  {testResults && (
+                    <div className={`px-3 py-2 rounded-lg text-xs font-mono flex items-center justify-between border ${
+                      testResults.passedCount === testResults.totalCount
+                        ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
+                        : 'bg-amber-950/40 border-amber-800 text-amber-300'
+                    }`}>
+                      <span className="font-bold">
+                        {testResults.passedCount === testResults.totalCount
+                          ? `🎉 All ${testResults.totalCount} Test Cases Passed!`
+                          : `⚠️ ${testResults.passedCount}/${testResults.totalCount} Test Cases Passed`}
+                      </span>
+                      <span className="text-[11px] opacity-80 hidden sm:inline">
+                        {testResults.passedCount === testResults.totalCount
+                          ? 'Solution Accepted & Marked Completed'
+                          : 'Review failed test cases below'}
+                      </span>
+                    </div>
+                  )}
+
                   {displayGridCases.length > 0 && (
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
                       {displayGridCases.map((c, idx) => {
                         const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
-                        const isPassed = !isEvaluating && c.passed;
+                        const isPassed = !isEvaluating && testResults && c.passed;
+                        const isFailed = !isEvaluating && testResults && !c.passed;
                         return (
                           <button
                             key={idx}
@@ -1235,8 +1294,10 @@ export default function PaperCodingModal({
                               <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin shrink-0" />
                             ) : isPassed ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            ) : (
+                            ) : isFailed ? (
                               <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            ) : (
+                              <Circle className="w-3.5 h-3.5 text-gray-500 shrink-0" />
                             )}
                             <span>Case {idx + 1}</span>
                           </button>
@@ -1247,41 +1308,51 @@ export default function PaperCodingModal({
                 </div>
               )}
 
-              {/* Active Case Diagnostics Card */}
-              {testResults && testResults.cases[activeTestTab] && (
+              {/* Active Case Diagnostics / Preview Card */}
+              {displayGridCases.length > 0 && displayGridCases[activeTestTab] && (
                 <div className="p-3.5 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2.5 text-xs font-mono animate-fadeIn">
                   <div className="flex items-center justify-between text-[11px] flex-wrap gap-2 pb-2 border-b border-[#21262d]">
                     <div className="flex items-center gap-2">
                       <span className="text-[#8b949e]">Case #{activeTestTab + 1} Status:</span>
-                      <span
-                        className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
-                          testResults.cases[activeTestTab].passed
-                            ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
-                            : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
-                            ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
-                            : 'bg-rose-950/80 text-rose-400 border border-rose-800'
-                        }`}
-                      >
-                        {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
-                      </span>
+                      {testResults && testResults.cases[activeTestTab] ? (
+                        <span
+                          className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
+                            testResults.cases[activeTestTab].passed
+                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                              : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
+                              ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                              : 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                          }`}
+                        >
+                          {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
+                        </span>
+                      ) : (
+                        <span className="font-semibold px-2 py-0.5 rounded text-[10px] tracking-wider uppercase bg-[#21262d] text-gray-300 border border-[#30363d]">
+                          Ready to Test
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 text-[#8b949e] text-[10px]">
-                      <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
+                      {testResults && testResults.cases[activeTestTab] ? (
+                        <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
+                      ) : (
+                        <span className="text-gray-500">Test Case #{activeTestTab + 1}</span>
+                      )}
                     </div>
                   </div>
 
                   <div>
                     <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Input (stdin):</span>
                     <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
-                      {testResults.cases[activeTestTab].input || '<No input provided>'}
+                      {displayGridCases[activeTestTab].input || '<No input provided>'}
                     </div>
                   </div>
 
                   <div>
                     <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Expected Output:</span>
                     <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
-                      {testResults.cases[activeTestTab].expected || '<Empty>'}
+                      {displayGridCases[activeTestTab].expected || '<Empty>'}
                     </div>
                   </div>
 
@@ -1289,29 +1360,18 @@ export default function PaperCodingModal({
                     <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Your Program Output:</span>
                     <div
                       className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 border max-h-24 overflow-y-auto custom-scrollbar ${
-                        testResults.cases[activeTestTab].passed
-                          ? 'text-emerald-400 border-emerald-950'
-                          : 'text-rose-400 border-rose-950'
+                        testResults && testResults.cases[activeTestTab]
+                          ? testResults.cases[activeTestTab].passed
+                            ? 'text-emerald-400 border-emerald-950'
+                            : 'text-rose-400 border-rose-950'
+                          : 'text-gray-400 italic border-[#21262d]'
                       }`}
                     >
-                      {testResults.cases[activeTestTab].actual}
+                      {testResults && testResults.cases[activeTestTab]
+                        ? testResults.cases[activeTestTab].actual
+                        : 'Click "Run & Submit" (Ctrl+Enter) to evaluate your code against this test case.'}
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Ready State */}
-              {!testResults && !isSubmitting && !showCustomInput && (
-                <div className="h-40 flex flex-col items-center justify-center text-center text-[#8b949e] space-y-2 p-4">
-                  <Terminal className="w-8 h-8 text-[#484f58]" />
-                  <p className="text-xs font-mono font-medium text-gray-400 max-w-md">
-                    Click <span className="text-sky-400 font-bold">Save</span> to preserve your progress, or{' '}
-                    <span className="text-[#FD4A32] font-bold">Run & Submit</span> to evaluate all test cases and automatically mark as completed upon passing.
-                  </p>
-                  <p className="text-[11px] text-[#484f58] flex items-center gap-1.5">
-                    <GripHorizontal className="w-3.5 h-3.5" />
-                    <span>Tip: Drag the splitter bar above to expand or shrink the test console.</span>
-                  </p>
                 </div>
               )}
             </div>

@@ -127,7 +127,7 @@ export default function TechnicalCodingWorkspacePage() {
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
   const [activeTestTab, setActiveTestTab] = useState<number>(0);
   const [lastRunIsSubmit, setLastRunIsSubmit] = useState(false);
-  const [resultsViewMode, setResultsViewMode] = useState<'grid' | 'tabs'>('grid');
+  const [resultsViewMode, setResultsViewMode] = useState<'grid' | 'tabs'>('tabs');
 
   // Adjustable Console Splitter State
   const [consoleHeight, setConsoleHeight] = useState<number>(() => {
@@ -252,162 +252,6 @@ export default function TechnicalCodingWorkspacePage() {
     return `prepunite_ide_draft_${pId}_${lang}`;
   }, []);
 
-  // Hydrate code from past submission, draft or starter template when problem changes
-  useEffect(() => {
-    if (!problem) return;
-    let isMounted = true;
-    runRevisionRef.current += 1;
-
-    const hydrateProblemCode = async () => {
-      // 1. Check for past saved submission (from Supabase or local cache)
-      const pastSubmission = await technicalService.getUserLatestSubmission(problem.id, user?.email);
-      if (!isMounted) return;
-
-      if (pastSubmission && pastSubmission.sourceCode && pastSubmission.sourceCode.trim().length > 0) {
-        const subLang = pastSubmission.language || 'python';
-        setSelectedLanguage(subLang);
-        isProgrammaticUpdateRef.current = true;
-        setCode(pastSubmission.sourceCode);
-        if (editorRef.current) {
-          editorRef.current.setValue(pastSubmission.sourceCode);
-        }
-        setRestoredSource('submission');
-        setHasUnsavedChanges(false);
-        isProgrammaticUpdateRef.current = false;
-        return;
-      }
-
-      // 2. Check for local draft for current or default language
-      const draftKey = getDraftKey(problem.id, selectedLanguage);
-      const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
-      if (savedDraft && savedDraft.trim().length > 0) {
-        isProgrammaticUpdateRef.current = true;
-        setCode(savedDraft);
-        if (editorRef.current && editorRef.current.getValue() !== savedDraft) {
-          editorRef.current.setValue(savedDraft);
-        }
-        setRestoredSource('draft');
-        setHasUnsavedChanges(false);
-        isProgrammaticUpdateRef.current = false;
-        return;
-      }
-
-      // 3. Fallback to starter boilerplate template
-      const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
-      isProgrammaticUpdateRef.current = true;
-      setCode(template);
-      if (editorRef.current && editorRef.current.getValue() !== template) {
-        editorRef.current.setValue(template);
-      }
-      setRestoredSource(null);
-      setHasUnsavedChanges(false);
-      isProgrammaticUpdateRef.current = false;
-    };
-
-    hydrateProblemCode();
-    setTestResults(null);
-    setCustomResult(null);
-    setShowCelebration(false);
-
-    return () => {
-      isMounted = false;
-    };
-  }, [problem?.id, user?.email, getDraftKey]);
-
-  // Save Code Draft (Explicitly on Save button or Run & Submit)
-  const handleSaveDraft = useCallback(async (silent: boolean = false) => {
-    if (!problem) return;
-    setIsSaving(true);
-    try {
-      const draftKey = getDraftKey(problem.id, selectedLanguage);
-      localStorage.setItem(draftKey, code);
-      if (user?.email && user.email !== GUEST_EMAIL) {
-        await technicalService.saveUserDraft(problem.id, selectedLanguage, code, user.email);
-      }
-      setHasUnsavedChanges(false);
-      if (!silent) {
-        audioEffects.playSuccessChime();
-        toast.success('Code saved successfully!');
-      }
-    } catch (err: any) {
-      console.warn('Draft save error:', err);
-      if (!silent) toast.error('Failed to save code');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [problem, selectedLanguage, code, user?.email, getDraftKey, toast]);
-
-  // Window keyboard shortcut listener (Ctrl+S to save)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-        e.preventDefault();
-        handleSaveDraft(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveDraft]);
-
-  // Handle source changes from Monaco editor (no autosave until Save or Run & Submit is clicked)
-  const handleCodeChange = (newCode: string) => {
-    if (isProgrammaticUpdateRef.current) return;
-    runRevisionRef.current += 1;
-    setCode(newCode);
-    setHasUnsavedChanges(true);
-    setTestResults(null); // Clear previous verdicts
-    setShowCelebration(false);
-  };
-
-  // Language switch handler
-  const handleLanguageChange = (newLang: string) => {
-    runRevisionRef.current += 1;
-    setSelectedLanguage(newLang);
-    setTestResults(null);
-    setCustomResult(null);
-    setRestoredSource(null);
-    setHasUnsavedChanges(false);
-
-    if (problem) {
-      const draftKey = getDraftKey(problem.id, newLang);
-      const savedDraft = localStorage.getItem(draftKey);
-      const newCode = savedDraft && savedDraft.trim().length > 0 ? savedDraft : (STARTER_TEMPLATES[newLang] || '');
-      isProgrammaticUpdateRef.current = true;
-      setCode(newCode);
-      if (editorRef.current) {
-        editorRef.current.setValue(newCode);
-      }
-      isProgrammaticUpdateRef.current = false;
-    }
-  };
-
-  // Reset to starter template
-  const handleResetTemplate = () => {
-    if (!confirm('Reset code to the original starter template? Any unsaved edits in this language will be reverted.')) {
-      return;
-    }
-    runRevisionRef.current += 1;
-    const template = STARTER_TEMPLATES[selectedLanguage] || '';
-    isProgrammaticUpdateRef.current = true;
-    setCode(template);
-    if (editorRef.current) {
-      editorRef.current.setValue(template);
-    }
-    isProgrammaticUpdateRef.current = false;
-    setRestoredSource(null);
-    setHasUnsavedChanges(true);
-    if (problem) {
-      const draftKey = getDraftKey(problem.id, selectedLanguage);
-      try {
-        localStorage.removeItem(draftKey);
-      } catch {}
-    }
-    setTestResults(null);
-    setCustomResult(null);
-    setShowCelebration(false);
-    toast.info('Code reset to standard template');
-  };
-
   // Parse test cases from problem specs
   // 1. Visible Sample Test Cases (used for Run Tests and visible sample tabs)
   const sampleCases = useMemo<TestCaseItem[]>(() => {
@@ -483,24 +327,214 @@ export default function TechnicalCodingWorkspacePage() {
     return cases;
   }, [problem, sampleCases]);
 
+  // Hydrate code from past submission, draft or starter template when problem changes
+  useEffect(() => {
+    if (!problem) return;
+    let isMounted = true;
+    runRevisionRef.current += 1;
+
+    const hydrateProblemCode = async () => {
+      // 1. Check for past saved submission (from Supabase or local cache)
+      const pastSubmission = await technicalService.getUserLatestSubmission(problem.id, user?.email);
+      if (!isMounted) return;
+
+      if (pastSubmission && pastSubmission.sourceCode && pastSubmission.sourceCode.trim().length > 0) {
+        const subLang = pastSubmission.language || 'python';
+        setSelectedLanguage(subLang);
+        isProgrammaticUpdateRef.current = true;
+        setCode(pastSubmission.sourceCode);
+        if (editorRef.current) {
+          editorRef.current.setValue(pastSubmission.sourceCode);
+        }
+        setRestoredSource('submission');
+        setHasUnsavedChanges(false);
+        isProgrammaticUpdateRef.current = false;
+      } else {
+        // 2. Check for local draft for current or default language
+        const draftKey = getDraftKey(problem.id, selectedLanguage);
+        const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
+        if (savedDraft && savedDraft.trim().length > 0) {
+          isProgrammaticUpdateRef.current = true;
+          setCode(savedDraft);
+          if (editorRef.current && editorRef.current.getValue() !== savedDraft) {
+            editorRef.current.setValue(savedDraft);
+          }
+          setRestoredSource('draft');
+          setHasUnsavedChanges(false);
+          isProgrammaticUpdateRef.current = false;
+        } else {
+          // 3. Fallback to starter boilerplate template
+          const template = STARTER_TEMPLATES[selectedLanguage] || STARTER_TEMPLATES.python;
+          isProgrammaticUpdateRef.current = true;
+          setCode(template);
+          if (editorRef.current && editorRef.current.getValue() !== template) {
+            editorRef.current.setValue(template);
+          }
+          setRestoredSource(null);
+          setHasUnsavedChanges(false);
+          isProgrammaticUpdateRef.current = false;
+        }
+      }
+
+      // 4. Restore test results across page refresh / reload so users don't need to re-run
+      const cachedResultsKey = `prepunite_last_results_${problem.id}`;
+      const cachedResultsStr = typeof window !== 'undefined' ? localStorage.getItem(cachedResultsKey) : null;
+      if (cachedResultsStr) {
+        try {
+          const parsed = JSON.parse(cachedResultsStr);
+          if (parsed && Array.isArray(parsed.cases) && parsed.cases.length > 0) {
+            setTestResults(parsed);
+            if (parsed.passedCount === parsed.totalCount && parsed.totalCount > 0) {
+              setIsSolved(true);
+            }
+            return;
+          }
+        } catch {}
+      }
+
+      if (pastSubmission && pastSubmission.status === 'ACCEPTED') {
+        const targetCases = submitCases.length > 0 ? submitCases : sampleCases;
+        const total = pastSubmission.totalCases || targetCases.length || 8;
+        const passed = pastSubmission.passedCases || total;
+        setTestResults({
+          passedCount: passed,
+          totalCount: total,
+          isTemplateOrEmpty: false,
+          summaryMessage: 'All test cases passed successfully.',
+          cases: targetCases.map((tc) => ({
+            input: tc.input,
+            expected: tc.expected_output || tc.output || '',
+            actual: tc.expected_output || tc.output || '',
+            passed: true,
+            status: 'PASSED',
+            timeMs: 40,
+            is_hidden: tc.is_hidden === true,
+          })),
+        });
+        setIsSolved(true);
+      } else {
+        setTestResults(null);
+      }
+    };
+
+    hydrateProblemCode();
+    setCustomResult(null);
+    setShowCelebration(false);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [problem?.id, user?.email, getDraftKey, submitCases, sampleCases]);
+
+  // Save Code Draft (Explicitly on Save button or Run & Submit)
+  const handleSaveDraft = useCallback(async (silent: boolean = false) => {
+    if (!problem) return;
+    setIsSaving(true);
+    try {
+      const draftKey = getDraftKey(problem.id, selectedLanguage);
+      localStorage.setItem(draftKey, code);
+      if (user?.email && user.email !== GUEST_EMAIL) {
+        await technicalService.saveUserDraft(problem.id, selectedLanguage, code, user.email);
+      }
+      setHasUnsavedChanges(false);
+      if (!silent) {
+        audioEffects.playSuccessChime();
+        toast.success('Code saved successfully!');
+      }
+    } catch (err: any) {
+      console.warn('Draft save error:', err);
+      if (!silent) toast.error('Failed to save code');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [problem, selectedLanguage, code, user?.email, getDraftKey, toast]);
+
+  // Window keyboard shortcut listener (Ctrl+S to save)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveDraft(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSaveDraft]);
+
+  // Handle source changes from Monaco editor (no autosave until Save or Run & Submit is clicked)
+  const handleCodeChange = (newCode: string) => {
+    if (isProgrammaticUpdateRef.current) return;
+    runRevisionRef.current += 1;
+    setCode(newCode);
+    setHasUnsavedChanges(true);
+    setShowCelebration(false);
+  };
+
+  // Language switch handler
+  const handleLanguageChange = (newLang: string) => {
+    runRevisionRef.current += 1;
+    setSelectedLanguage(newLang);
+    setTestResults(null);
+    setCustomResult(null);
+    setRestoredSource(null);
+    setHasUnsavedChanges(false);
+
+    if (problem) {
+      const draftKey = getDraftKey(problem.id, newLang);
+      const savedDraft = localStorage.getItem(draftKey);
+      const newCode = savedDraft && savedDraft.trim().length > 0 ? savedDraft : (STARTER_TEMPLATES[newLang] || '');
+      isProgrammaticUpdateRef.current = true;
+      setCode(newCode);
+      if (editorRef.current) {
+        editorRef.current.setValue(newCode);
+      }
+      isProgrammaticUpdateRef.current = false;
+    }
+  };
+
+  // Reset to starter template
+  const handleResetTemplate = () => {
+    if (!confirm('Reset code to the original starter template? Any unsaved edits in this language will be reverted.')) {
+      return;
+    }
+    runRevisionRef.current += 1;
+    const template = STARTER_TEMPLATES[selectedLanguage] || '';
+    isProgrammaticUpdateRef.current = true;
+    setCode(template);
+    if (editorRef.current) {
+      editorRef.current.setValue(template);
+    }
+    isProgrammaticUpdateRef.current = false;
+    setRestoredSource(null);
+    setHasUnsavedChanges(true);
+    if (problem) {
+      const draftKey = getDraftKey(problem.id, selectedLanguage);
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {}
+    }
+    setTestResults(null);
+    setCustomResult(null);
+    setShowCelebration(false);
+    toast.info('Code reset to standard template');
+  };
+
   // Test cases for Submission Grid View (during submission evaluation or displaying results)
   const displayGridCases = useMemo(() => {
     if (testResults && testResults.cases && testResults.cases.length > 0) {
       return testResults.cases;
     }
-    if (isSubmitting) {
-      return submitCases.map((tc) => ({
-        input: tc.input,
-        expected: tc.expected_output || tc.output || '',
-        actual: '',
-        passed: false,
-        status: 'EVALUATING' as any,
-        timeMs: 0,
-        is_hidden: tc.is_hidden !== false,
-      }));
-    }
-    return [];
-  }, [testResults, isSubmitting, submitCases]);
+    const baseCases = submitCases.length > 0 ? submitCases : sampleCases;
+    return baseCases.map((tc) => ({
+      input: tc.input,
+      expected: tc.expected_output || tc.output || '',
+      actual: '',
+      passed: false,
+      status: isSubmitting ? ('EVALUATING' as any) : undefined,
+      timeMs: 0,
+      is_hidden: tc.is_hidden === true,
+    }));
+  }, [testResults, isSubmitting, submitCases, sampleCases]);
 
   // Run Test Cases against Sandboxed Judge Engine
   const handleRunTests = async (isSubmit: boolean = false) => {
@@ -528,8 +562,7 @@ export default function TechnicalCodingWorkspacePage() {
     if (isSubmit) {
       setIsSubmitting(true);
       setLastRunIsSubmit(true);
-      setResultsViewMode('grid');
-      // Auto-expand console if too small to comfortably display submission grid
+      // Auto-expand console if too small to comfortably display results
       setConsoleHeight((prev) => (prev < 360 ? 380 : prev));
     } else {
       setIsRunningTests(true);
@@ -555,6 +588,11 @@ export default function TechnicalCodingWorkspacePage() {
       }
 
       setTestResults(result);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`prepunite_last_results_${problem.id}`, JSON.stringify(result));
+        } catch {}
+      }
       setActiveTestTab(0);
       setMobileTab('console');
 
@@ -1141,40 +1179,38 @@ export default function TechnicalCodingWorkspacePage() {
                 </button>
 
                 {/* View Mode Switcher (Grid vs Tabs) */}
-                {(testResults || isSubmitting) && (
-                  <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setResultsViewMode('grid')}
-                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                        resultsViewMode === 'grid'
-                          ? 'bg-[#21262d] text-white shadow-xs'
-                          : 'text-[#8b949e] hover:text-white'
-                      }`}
-                      title="Grid View (Matching submission results)"
-                    >
-                      <LayoutGrid className="w-3 h-3" />
-                      <span className="hidden sm:inline">Grid</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setResultsViewMode('tabs')}
-                      className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                        resultsViewMode === 'tabs'
-                          ? 'bg-[#21262d] text-white shadow-xs'
-                          : 'text-[#8b949e] hover:text-white'
-                      }`}
-                      title="Tabs View"
-                    >
-                      <List className="w-3 h-3" />
-                      <span className="hidden sm:inline">Tabs</span>
-                    </button>
-                  </div>
-                )}
+                <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0d1117] border border-[#30363d] text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setResultsViewMode('grid')}
+                    className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                      resultsViewMode === 'grid'
+                        ? 'bg-[#21262d] text-white shadow-xs'
+                        : 'text-[#8b949e] hover:text-white'
+                    }`}
+                    title="Grid View (Matching submission results)"
+                  >
+                    <LayoutGrid className="w-3 h-3" />
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResultsViewMode('tabs')}
+                    className={`px-2 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                      resultsViewMode === 'tabs'
+                        ? 'bg-[#21262d] text-white shadow-xs'
+                        : 'text-[#8b949e] hover:text-white'
+                    }`}
+                    title="Tabs View"
+                  >
+                    <List className="w-3 h-3" />
+                    <span className="hidden sm:inline">Tabs</span>
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {testResults && (
+                {testResults ? (
                   <span
                     className={`text-xs font-bold font-mono px-2.5 py-1 rounded-lg ${
                       testResults.passedCount === testResults.totalCount
@@ -1183,6 +1219,10 @@ export default function TechnicalCodingWorkspacePage() {
                     }`}
                   >
                     {testResults.passedCount}/{testResults.totalCount} Passed
+                  </span>
+                ) : (
+                  <span className="text-xs font-mono text-[#8b949e] px-2.5 py-1 rounded-lg bg-[#21262d] border border-[#30363d]">
+                    {displayGridCases.length} Test Cases
                   </span>
                 )}
 
@@ -1284,14 +1324,14 @@ export default function TechnicalCodingWorkspacePage() {
               )}
 
               {/* Evaluation / Submission View (Screenshot-Matching Multi-Column Grid) */}
-              {(isSubmitting || testResults) && resultsViewMode === 'grid' && (
+              {resultsViewMode === 'grid' && (
                 <div className="p-4 rounded-xl bg-[#161b22] border border-[#30363d] space-y-4 animate-fadeIn">
                   
-                  {/* "Fetching Results" Header */}
+                  {/* Header */}
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3">
                       <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-display">
-                        Fetching Results
+                        {isSubmitting ? 'Evaluating Results' : testResults ? 'Evaluation Results' : 'Test Cases Suite'}
                       </h3>
                       {isSubmitting && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
@@ -1322,7 +1362,9 @@ export default function TechnicalCodingWorkspacePage() {
                           ? 'w-4/5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 animate-pulse'
                           : testResults?.passedCount === testResults?.totalCount
                           ? 'w-full bg-emerald-500'
-                          : 'w-full bg-amber-500'
+                          : testResults
+                          ? 'w-full bg-amber-500'
+                          : 'w-full bg-gray-700'
                       }`}
                     />
                   </div>
@@ -1332,8 +1374,8 @@ export default function TechnicalCodingWorkspacePage() {
                     <div className="grid grid-flow-col grid-rows-4 auto-cols-max gap-x-12 sm:gap-x-16 gap-y-3.5 min-w-[500px]">
                       {displayGridCases.map((c, idx) => {
                         const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
-                        const isPassed = !isEvaluating && c.passed;
-                        const isFailed = !isEvaluating && !c.passed;
+                        const isPassed = !isEvaluating && testResults && c.passed;
+                        const isFailed = !isEvaluating && testResults && !c.passed;
                         const isSelected = activeTestTab === idx;
 
                         return (
@@ -1375,17 +1417,19 @@ export default function TechnicalCodingWorkspacePage() {
                             </span>
 
                             {/* Padlock Icon for Hidden/Edge Test Cases */}
-                            <Lock
-                              className={`w-3.5 h-3.5 ml-0.5 shrink-0 ${
-                                isEvaluating
-                                  ? 'text-gray-400'
-                                  : isPassed
-                                  ? 'text-emerald-400'
-                                  : isFailed
-                                  ? 'text-rose-400'
-                                  : 'text-gray-500'
-                              }`}
-                            />
+                            {c.is_hidden && (
+                              <Lock
+                                className={`w-3.5 h-3.5 ml-0.5 shrink-0 ${
+                                  isEvaluating
+                                    ? 'text-gray-400'
+                                    : isPassed
+                                    ? 'text-emerald-400'
+                                    : isFailed
+                                    ? 'text-rose-400'
+                                    : 'text-gray-500'
+                                }`}
+                              />
+                            )}
                           </button>
                         );
                       })}
@@ -1396,7 +1440,7 @@ export default function TechnicalCodingWorkspacePage() {
               )}
 
               {/* Classic Horizontal Tabs View (when user selects tabs mode) */}
-              {(isSubmitting || testResults) && resultsViewMode === 'tabs' && (
+              {resultsViewMode === 'tabs' && (
                 <div className="space-y-3">
                   {/* Mode Status Indicator Banner */}
                   {testResults && (
@@ -1411,7 +1455,7 @@ export default function TechnicalCodingWorkspacePage() {
                         {testResults.totalCount <= sampleCases.length
                           ? '⚡ Sample Test Run (Debugging Mode)'
                           : testResults.passedCount === testResults.totalCount
-                          ? '🎉 Submission Verified: ALL 8+ CASES PASSED!'
+                          ? '🎉 Submission Verified: ALL CASES PASSED!'
                           : '⚠️ Submission Evaluation: Edge Case Failed'}
                       </span>
                       <span className="text-[11px] opacity-80 hidden sm:inline">
@@ -1427,7 +1471,8 @@ export default function TechnicalCodingWorkspacePage() {
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
                       {displayGridCases.map((c, idx) => {
                         const isEvaluating = isSubmitting || (c as any).status === 'EVALUATING';
-                        const isPassed = !isEvaluating && c.passed;
+                        const isPassed = !isEvaluating && testResults && c.passed;
+                        const isFailed = !isEvaluating && testResults && !c.passed;
                         return (
                           <button
                             key={idx}
@@ -1443,11 +1488,13 @@ export default function TechnicalCodingWorkspacePage() {
                               <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin shrink-0" />
                             ) : isPassed ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            ) : (
+                            ) : isFailed ? (
                               <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            ) : (
+                              <Circle className="w-3.5 h-3.5 text-gray-500 shrink-0" />
                             )}
-                            <span>{idx < sampleCases.length ? `Sample ${idx + 1}` : `Edge ${idx + 1}`}</span>
-                            <Lock className="w-3 h-3 text-emerald-400/70 shrink-0" />
+                            <span>{idx < sampleCases.length ? `Sample ${idx + 1}` : `Case ${idx + 1}`}</span>
+                            {c.is_hidden && <Lock className="w-3 h-3 text-amber-400/70 shrink-0" />}
                           </button>
                         );
                       })}
@@ -1456,50 +1503,64 @@ export default function TechnicalCodingWorkspacePage() {
                 </div>
               )}
 
-              {/* Active Case Diagnostics Card */}
-              {testResults && testResults.cases[activeTestTab] && (
+              {/* Active Case Diagnostics / Preview Card */}
+              {displayGridCases.length > 0 && displayGridCases[activeTestTab] && (
                 <div className="p-3.5 rounded-xl bg-[#161b22] border border-[#30363d] space-y-2.5 text-xs font-mono animate-fadeIn">
                   <div className="flex items-center justify-between text-[11px] flex-wrap gap-2 pb-2 border-b border-[#21262d]">
                     <div className="flex items-center gap-2">
-                      <span className="text-[#8b949e]">Case #{activeTestTab} Status:</span>
-                      <span
-                        className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
-                          testResults.cases[activeTestTab].passed
-                            ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
-                            : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
-                            ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
-                            : testResults.cases[activeTestTab].status === 'RUNTIME_ERROR'
-                            ? 'bg-amber-950/80 text-amber-400 border border-amber-800'
-                            : testResults.cases[activeTestTab].status === 'TIME_LIMIT_EXCEEDED'
-                            ? 'bg-purple-950/80 text-purple-400 border border-purple-800'
-                            : testResults.cases[activeTestTab].status === 'EMPTY_CODE'
-                            ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-800'
-                            : 'bg-rose-950/80 text-rose-400 border border-rose-800'
-                        }`}
-                      >
-                        {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
-                      </span>
+                      <span className="text-[#8b949e]">Case #{activeTestTab + 1} Status:</span>
+                      {testResults && testResults.cases[activeTestTab] ? (
+                        <span
+                          className={`font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ${
+                            testResults.cases[activeTestTab].passed
+                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                              : testResults.cases[activeTestTab].status === 'COMPILATION_ERROR'
+                              ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                              : testResults.cases[activeTestTab].status === 'RUNTIME_ERROR'
+                              ? 'bg-amber-950/80 text-amber-400 border border-amber-800'
+                              : testResults.cases[activeTestTab].status === 'TIME_LIMIT_EXCEEDED'
+                              ? 'bg-purple-950/80 text-purple-400 border border-purple-800'
+                              : testResults.cases[activeTestTab].status === 'EMPTY_CODE'
+                              ? 'bg-yellow-950/80 text-yellow-400 border border-yellow-800'
+                              : 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                          }`}
+                        >
+                          {testResults.cases[activeTestTab].status.replace(/_/g, ' ')}
+                        </span>
+                      ) : (
+                        <span className="font-semibold px-2 py-0.5 rounded text-[10px] tracking-wider uppercase bg-[#21262d] text-gray-300 border border-[#30363d]">
+                          Ready to Test
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 text-[#8b949e] text-[10px]">
-                      <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
-                      {testResults.cases[activeTestTab].memoryKb ? (
-                        <span>• Mem: {Math.round((testResults.cases[activeTestTab].memoryKb! / 1024) * 10) / 10} MB</span>
-                      ) : null}
+                      {testResults && testResults.cases[activeTestTab] ? (
+                        <>
+                          <span>Time: {testResults.cases[activeTestTab].timeMs} ms</span>
+                          {testResults.cases[activeTestTab].memoryKb ? (
+                            <span>• Mem: {Math.round((testResults.cases[activeTestTab].memoryKb! / 1024) * 10) / 10} MB</span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="text-gray-500">
+                          {displayGridCases[activeTestTab].is_hidden ? 'Private Edge Case' : `Sample Case #${activeTestTab + 1}`}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div>
                     <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Standard Input (stdin):</span>
                     <div className="p-2 rounded bg-[#0d1117] text-[#e6edf3] whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
-                      {testResults.cases[activeTestTab].input || '<No input provided>'}
+                      {displayGridCases[activeTestTab].input || '<No input provided>'}
                     </div>
                   </div>
 
                   <div>
                     <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Expected Output:</span>
                     <div className="p-2 rounded bg-[#0d1117] text-emerald-400 whitespace-pre-wrap mt-0.5 border border-[#21262d] max-h-24 overflow-y-auto custom-scrollbar">
-                      {testResults.cases[activeTestTab].expected || '<Empty>'}
+                      {displayGridCases[activeTestTab].expected || '<Empty>'}
                     </div>
                   </div>
 
@@ -1507,29 +1568,18 @@ export default function TechnicalCodingWorkspacePage() {
                     <span className="text-[#8b949e] block text-[10px] uppercase font-bold">Your Program Output:</span>
                     <div
                       className={`p-2 rounded bg-[#0d1117] whitespace-pre-wrap mt-0.5 border max-h-24 overflow-y-auto custom-scrollbar ${
-                        testResults.cases[activeTestTab].passed
-                          ? 'text-emerald-400 border-emerald-950'
-                          : 'text-rose-400 border-rose-950'
+                        testResults && testResults.cases[activeTestTab]
+                          ? testResults.cases[activeTestTab].passed
+                            ? 'text-emerald-400 border-emerald-950'
+                            : 'text-rose-400 border-rose-950'
+                          : 'text-gray-400 italic border-[#21262d]'
                       }`}
                     >
-                      {testResults.cases[activeTestTab].actual}
+                      {testResults && testResults.cases[activeTestTab]
+                        ? testResults.cases[activeTestTab].actual
+                        : 'Click "Run & Submit" (Ctrl+Enter) to evaluate your code against this test case.'}
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Ready State (When no test run has occurred yet) */}
-              {!testResults && !isSubmitting && !showCustomInput && (
-                <div className="h-40 flex flex-col items-center justify-center text-center text-[#8b949e] space-y-2 p-4">
-                  <Terminal className="w-8 h-8 text-[#484f58]" />
-                  <p className="text-xs font-mono font-medium text-gray-400 max-w-md">
-                    Click <span className="text-sky-400 font-bold">Save</span> to preserve your progress, or{' '}
-                    <span className="text-[#FD4A32] font-bold">Run & Submit</span> to evaluate all test cases and automatically mark as completed upon passing.
-                  </p>
-                  <p className="text-[11px] text-[#484f58] flex items-center gap-1.5">
-                    <GripHorizontal className="w-3.5 h-3.5" />
-                    <span>Tip: Drag the splitter bar above to expand the test cases area.</span>
-                  </p>
                 </div>
               )}
 

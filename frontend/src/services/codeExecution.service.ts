@@ -24,6 +24,7 @@ export interface EvaluatedTestCase {
   timeMs: number;
   memoryKb?: number;
   error?: string;
+  is_hidden?: boolean;
 }
 
 export interface TestCaseRunResult {
