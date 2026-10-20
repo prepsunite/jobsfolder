@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
-import { parsePaperQuestions } from '../frontend/src/utils/paperQuestionParser.ts';
+import { parsePaperQuestions, ensureFourTestCases } from '../frontend/src/utils/paperQuestionParser.ts';
 import { compareOutputs, stripQuotes, normalizeStdin } from '../frontend/src/utils/codeJudgeComparator.ts';
 
 const envText = fs.readFileSync('frontend/.env', 'utf8');
@@ -242,6 +242,43 @@ async function runTests() {
     normalizeStdin('101101110') === '101101110',
     'normalizeStdin preserves raw competitive programming stdin intact'
   );
+
+  // --------------------------------------------------------------------------
+  // TEST 6: Distinct Test Cases Integrity (Eliminating Case 3 === Case 4 Duplicates)
+  // --------------------------------------------------------------------------
+  console.log('\n[STAGE 6] Validating Distinct Test Cases Integrity (No Duplicate Case 3 === Case 4)');
+
+  // 1. Validate Accenture Q30 (Trapping Rain Water)
+  const mockQ30Cases = [
+    { title: 'Test Case 1', input: 'n = 5\nheight = [3, 0, 2, 0, 4]', output: '7' },
+    { title: 'Test Case 2', input: 'n = 4\nheight = [4, 2, 0, 3]', output: '4' },
+    { title: 'Test Case 3', input: 'n = 3\nheight = [1, 2, 3]', output: '0' }
+  ];
+  const q30Suite = ensureFourTestCases(mockQ30Cases, 'Trapping Rain Water');
+  assert(q30Suite.length === 4, `Accenture Q30 yields exactly 4 test cases (Found: ${q30Suite.length})`);
+  assert(q30Suite[2].input !== q30Suite[3].input, `Accenture Q30 Case 3 ("${q30Suite[2].input.replace(/\n/g, ' ')}") is distinct from Case 4 ("${q30Suite[3].input.replace(/\n/g, ' ')}")`);
+  assert(q30Suite[3].output === '9', `Accenture Q30 Case 4 has expected output "9" (Actual: "${q30Suite[3].output}")`);
+
+  // 2. Validate Canonical Problem Fallbacks (Valid Parentheses, Palindrome Number, Reverse Integer, etc.)
+  const canonicalChecks = [
+    { title: 'Valid Parentheses', base: [{ title: 'Test Case 1', input: 's = "()"', output: 'true' }, { title: 'Test Case 2', input: 's = "()[]{}"', output: 'true' }, { title: 'Test Case 3', input: 's = "(]"', output: 'false' }] },
+    { title: 'Palindrome Number', base: [{ title: 'Test Case 1', input: 'x = 121', output: 'true' }, { title: 'Test Case 2', input: 'x = -121', output: 'false' }, { title: 'Test Case 3', input: 'x = 10', output: 'false' }] },
+    { title: 'Reverse Integer', base: [{ title: 'Test Case 1', input: 'x = 123', output: '321' }, { title: 'Test Case 2', input: 'x = -123', output: '-321' }, { title: 'Test Case 3', input: 'x = 120', output: '21' }] },
+    { title: 'Rat Count House', base: [{ title: 'Test Case 1', input: 'r = 7, unit = 2, n = 8\narr = [2, 8, 3, 5, 7, 4, 1, 2]', output: '4' }, { title: 'Test Case 2', input: 'r = 10, unit = 5, n = 3\narr = [10, 20, 15]', output: '-1' }, { title: 'Test Case 3', input: 'r = 3, unit = 3, n = 5\narr = [9, 2, 4, 1, 5]', output: '1' }] },
+    { title: 'Word Search', base: [{ title: 'Test Case 1', input: 'board = [["A","B"]], word = "AB"', output: 'true' }, { title: 'Test Case 2', input: 'board = [["A","B"]], word = "BA"', output: 'false' }, { title: 'Test Case 3', input: 'board = [["A"]], word = "B"', output: 'false' }] },
+    { title: 'Fruit Into Baskets', base: [{ title: 'Test Case 1', input: 'fruits = [1, 2, 1]', output: '3' }, { title: 'Test Case 2', input: 'fruits = [0, 1, 2, 2]', output: '3' }, { title: 'Test Case 3', input: 'fruits = [1, 2, 3, 2, 2]', output: '4' }] },
+    { title: 'Pascal\'s Triangle', base: [{ title: 'Test Case 1', input: 'numRows = 5', output: '[[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1]]' }, { title: 'Test Case 2', input: 'numRows = 1', output: '[[1]]' }, { title: 'Test Case 3', input: 'numRows = 3', output: '[[1], [1, 1], [1, 2, 1]]' }] },
+    { title: 'Second Highest Salary', base: [{ title: 'Test Case 1', input: 'salaries = [100, 200, 300]', output: '200' }, { title: 'Test Case 2', input: 'salaries = [100, 100]', output: 'null' }, { title: 'Test Case 3', input: 'salaries = [500, 200, 500, 300]', output: '300' }] },
+    { title: 'Second Highest Salary', base: [{ title: 'Test Case 1', input: 'Employee = [[1, 100], [2, 200], [3, 300]]', output: '200' }, { title: 'Test Case 2', input: 'Employee = [[1, 100]]', output: 'null' }, { title: 'Test Case 3', input: 'Employee = [[1, 500], [2, 500]]', output: 'null' }] },
+    { title: 'Minimum Moves to Capture The Queen', base: [{ title: 'Test Case 1', input: 'a = 1, b = 1, c = 8, d = 8, e = 2, f = 3', output: '2' }, { title: 'Test Case 2', input: 'a = 5, b = 3, c = 3, d = 4, e = 5, f = 2', output: '1' }, { title: 'Test Case 3', input: 'a = 4, b = 3, c = 3, d = 4, e = 2, f = 5', output: '2' }] }
+  ];
+
+  canonicalChecks.forEach(check => {
+    const suite = ensureFourTestCases(check.base, check.title);
+    assert(suite.length === 4, `${check.title} produces 4 test cases`);
+    assert(suite[2].input.trim() !== suite[3].input.trim(), `${check.title} Case 3 input is distinct from Case 4 input`);
+    assert(suite[3].output.trim().length > 0, `${check.title} Case 4 output is verified non-empty ("${suite[3].output}")`);
+  });
 
   console.log('\n================================================================================');
   console.log(`SUMMARY: ${passed} / ${assertions} ASSERTIONS PASSED (Exit Code: ${process.exitCode || 0})`);
