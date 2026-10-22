@@ -239,10 +239,10 @@ function parseTestCasesFromBlock(blockText: string): PaperTestCase[] {
  */
 export const CANONICAL_FALLBACK_TEST_CASES: Record<string, PaperTestCase[]> = {
   'longest palindromic substring': [
-    { title: 'Test Case 1', input: 's = "babad"', output: 'bab', explanation: '"aba" is also a valid answer.' },
-    { title: 'Test Case 2', input: 's = "cbbd"', output: 'bb' },
-    { title: 'Test Case 3', input: 's = "a"', output: 'a' },
-    { title: 'Test Case 4', input: 's = "ac"', output: 'a' }
+    { title: 'Test Case 1', input: 's = "babad"', output: '"bab"', explanation: '"aba" is also a valid answer.' },
+    { title: 'Test Case 2', input: 's = "cbbd"', output: '"bb"' },
+    { title: 'Test Case 3', input: 's = "a"', output: '"a"' },
+    { title: 'Test Case 4', input: 's = "ac"', output: '"a"' }
   ],
   'integer to roman numeral': [
     { title: 'Test Case 1', input: 'num = 3749', output: 'MMMDCCXLIX' },
@@ -269,10 +269,10 @@ export const CANONICAL_FALLBACK_TEST_CASES: Record<string, PaperTestCase[]> = {
     { title: 'Test Case 4', input: 's = ""', output: '0' }
   ],
   'stream of characters': [
-    { title: 'Test Case 1', input: 'words = ["cd", "f", "kl"]', output: '["null", "false", "false", "true"]' },
-    { title: 'Test Case 2', input: 'words = ["ab", "ba"]', output: '["null", "false", "true"]' },
-    { title: 'Test Case 3', input: 'words = ["a"]', output: '["null", "true"]' },
-    { title: 'Test Case 4', input: 'words = ["xyz"]', output: '["null", "false", "false", "true"]' }
+    { title: 'Test Case 1', input: '["StreamChecker","query","query","query","query","query","query"], [[["cd","f","kl"]],[\'a\'],[\'b\'],[\'c\'],[\'d\'],[\'e\'],[\'f\']]', output: '[null,false,false,false,true,false,true]' },
+    { title: 'Test Case 2', input: '["StreamChecker","query","query"], [[["ab","ba"]],[\'a\'],[\'b\']]', output: '[null,false,true]' },
+    { title: 'Test Case 3', input: '["StreamChecker","query","query","query"], [[["a"]],[\'b\'],[\'a\'],[\'a\']]', output: '[null,false,true,true]' },
+    { title: 'Test Case 4', input: '["StreamChecker","query"], [[["a"]],[\'a\']]', output: '[null,true]' }
   ],
   'encoded string decoding': [
     { title: 'Test Case 1', input: '101101110', output: 'ABC' },
@@ -291,6 +291,12 @@ export const CANONICAL_FALLBACK_TEST_CASES: Record<string, PaperTestCase[]> = {
     { title: 'Test Case 2', input: 'n = 6\nheight = [4, 2, 0, 3, 2, 5]', output: '9' },
     { title: 'Test Case 3', input: 'n = 3\nheight = [3, 0, 2]', output: '2' },
     { title: 'Test Case 4', input: 'n = 5\nheight = [2, 0, 2, 0, 2]', output: '4' }
+  ],
+  'peak index in a mountain array': [
+    { title: 'Test Case 1', input: 'arr = [0, 2, 1, 0]', output: '1' },
+    { title: 'Test Case 2', input: 'arr = [0, 1, 4, 10, 5, 2]', output: '3' },
+    { title: 'Test Case 3', input: 'arr = [0, 1, 2, 3, 5, 3]', output: '4' },
+    { title: 'Test Case 4', input: 'arr = [24, 69, 100, 99, 79, 78, 67, 36, 26, 19]', output: '2' }
   ]
 };
 
@@ -320,7 +326,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "asteroid collision": { title: 'Test Case 4', input: "asteroids = [-2, -1, 1, 2]", output: "[-2, -1, 1, 2]" },
   "autobiographical number": { title: 'Test Case 4', input: "str = \"21200\"", output: "3" },
   "basic calculator": { title: 'Test Case 4', input: "s = \"1 - 1\"", output: "0" },
-  "best time to buy and sell stock": { title: 'Test Case 4', input: "n = 4\nprices = [1, 2, 3, 4]", output: "3" },
+  "best time to buy and sell stock": { title: 'Test Case 4', input: "prices = [1, 2, 3, 4]", output: "3" },
   "best time to buy and sell stock ii": { title: 'Test Case 4', input: "prices = [1, 2]", output: "1" },
   "binary search": { title: 'Test Case 4', input: "nums = [2, 5], target = 5", output: "1" },
   "binary string operations": { title: 'Test Case 4', input: "str = \"1B0A1C1\"", output: "0" },
@@ -348,7 +354,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "combine two tables": { title: 'Test Case 4', input: "Person = [], Address = []", output: "[]" },
   "compare strings by frequency of smallest character": { title: 'Test Case 4', input: "queries = [\"a\"], words = [\"a\"]", output: "[0]" },
   "concatenation of array": { title: 'Test Case 4', input: "nums = [1]", output: "[1, 1]" },
-  "container with most water": { title: 'Test Case 4', input: "n = 5\nheight = [2, 3, 4, 5, 18, 17, 6]", output: "17" },
+  "container with most water": { title: 'Test Case 4', input: "height = [2, 3, 4, 5, 18, 17, 6]", output: "17" },
   "contains duplicate": { title: 'Test Case 4', input: "nums = [1]", output: "false" },
   "contiguous array": { title: 'Test Case 4', input: "nums = [0]", output: "0" },
   "convert sorted list to binary search tree": { title: 'Test Case 4', input: "head = [0]", output: "[0]" },
@@ -356,7 +362,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "count and say sequence": { title: 'Test Case 4', input: "n = 3", output: "\"21\"" },
   "count good numbers": { title: 'Test Case 4', input: "n = 2", output: "20" },
   "count inversions in array": { title: 'Test Case 4', input: "n = 3\narr = [3, 2, 1]", output: "3" },
-  "count non adjacent subsets in a rooted tree": { title: 'Test Case 4', input: "n = 1, edges = []", output: "2" },
+  "count non adjacent subsets in a rooted tree": { title: 'Test Case 4', input: "parent = [-1, 0], nums = [2, 3], k = 2", output: "1" },
   "count of smaller numbers after self": { title: 'Test Case 4', input: "nums = [1]", output: "[0]" },
   "count pairs that form a complete day i": { title: 'Test Case 4', input: "hours = [12, 12]", output: "1" },
   "count pairs with given sum": { title: 'Test Case 4', input: "n = 4, k = 5\narr = [1, 4, 2, 3]", output: "2" },
@@ -409,7 +415,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "find original array from doubled array": { title: 'Test Case 4', input: "changed = [0, 0]", output: "[0]" },
   "find peak element": { title: 'Test Case 4', input: "nums = [1, 2]", output: "1" },
   "find peak element in elevation data": { title: 'Test Case 4', input: "n = 3\nnums = [1, 3, 2]", output: "1" },
-  "find sum of array product of magical sequences": { title: 'Test Case 4', input: "nums = [1, 2]", output: "2" },
+  "find sum of array product of magical sequences": { title: 'Test Case 4', input: "m = 1, k = 1, nums = [2]", output: "2" },
   "find the city with the smallest number of neighbors at a threshold distance": { title: 'Test Case 4', input: "n = 1, edges = [], distanceThreshold = 1", output: "0" },
   "find the duplicate number": { title: 'Test Case 4', input: "nums = [2, 2, 2, 2]", output: "2" },
   "find the highest altitude": { title: 'Test Case 4', input: "gain = [1, -2, 3]", output: "2" },
@@ -424,7 +430,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "fruit into baskets": { title: 'Test Case 4', input: "fruits = [3, 3, 3, 1, 2, 1, 1, 2, 3, 3, 4]", output: "5" },
   "gas station": { title: 'Test Case 4', input: "gas = [4], cost = [5]", output: "-1" },
   "gas station tour circuit": { title: 'Test Case 4', input: "n = 3\ngas = [1, 2, 3]\ncost = [2, 3, 1]", output: "2" },
-  "good subsequence queries": { title: 'Test Case 4', input: "nums = [1, 2], queries = [[0, 1]]", output: "[1]" },
+  "good subsequence queries": { title: 'Test Case 4', input: "nums = [1, 2], p = 1, queries = [[0, 1]]", output: "1" },
   "googly prime number": { title: 'Test Case 4', input: "43", output: "Yes" },
   "group anagrams": { title: 'Test Case 4', input: "strs = [\"a\", \"b\", \"a\"]", output: "[[\"b\"], [\"a\", \"a\"]]" },
   "group anagrams by pattern": { title: 'Test Case 4', input: "strs = [\"a\", \"b\", \"a\"]", output: "[[\"b\"], [\"a\", \"a\"]]" },
@@ -432,7 +438,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "happy number cycle detection": { title: 'Test Case 4', input: "n = 4", output: "0" },
   "house robber": { title: 'Test Case 4', input: "nums = [1, 3, 1]", output: "3" },
   "house robber maximum loot across neighborhood": { title: 'Test Case 4', input: "n = 3\nnums = [2, 1, 2]", output: "4" },
-  "implement queue using stacks": { title: 'Test Case 4', input: "[\"MyQueue\", \"push\", \"pop\", \"empty\"], [[], [1], [], []]", output: "[null, null, 1, true]" },
+  "implement queue using stacks": { title: 'Test Case 4', input: "operations = [\"MyQueue\", \"push\", \"pop\", \"empty\"], inputs = [[], [1], [], []]", output: "[null, null, 1, true]" },
   "integer to roman numeral": { title: 'Test Case 4', input: "num = 9", output: "IX" },
   "intersection of two arrays": { title: 'Test Case 4', input: "nums1 = [2, 1], nums2 = [1, 2]", output: "[1, 2]" },
   "intersection of two arrays with unique elements": { title: 'Test Case 4', input: "nums1 = [1, 2]\nnums2 = [2, 3]", output: "[2]" },
@@ -458,11 +464,11 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "linked list cycle ii": { title: 'Test Case 4', input: "head = [1, 2], pos = -1", output: "no cycle" },
   "logger rate limiter": { title: 'Test Case 4', input: "[\"Logger\", \"shouldPrintMessage\"], [[], [1, \"test\"]]", output: "[null, true]" },
   "longest absolute file path": { title: 'Test Case 4', input: "input = \"file.ext\"", output: "8" },
-  "longest common prefix": { title: 'Test Case 4', input: "n = 3\narr = [\"abc\", \"ab\", \"a\"]", output: "a" },
+  "longest common prefix": { title: 'Test Case 4', input: "strs = [\"interspecies\", \"interstellar\", \"interstate\"]", output: "\"inters\"" },
   "longest common prefix across directory names": { title: 'Test Case 4', input: "strs = [\"a\", \"a\"]", output: "a" },
   "longest common prefix across registry names": { title: 'Test Case 4', input: "strs = [\"throne\", \"throne\", \"throne\"]", output: "\"throne\"" },
-  "longest consecutive sequence": { title: 'Test Case 4', input: "n = 5\narr = [5, 4, 3, 2, 1]", output: "5" },
-  "longest increasing subsequence": { title: 'Test Case 4', input: "n = 4\nnums = [1, 3, 6, 7]", output: "4" },
+  "longest consecutive sequence": { title: 'Test Case 4', input: "nums = [5, 4, 3, 2, 1]", output: "5" },
+  "longest increasing subsequence": { title: 'Test Case 4', input: "nums = [1, 3, 6, 7]", output: "4" },
   "longest palindromic subsequence": { title: 'Test Case 4', input: "s = \"abba\"", output: "4" },
   "longest palindromic substring": { title: 'Test Case 4', input: "s = \"racecar\"", output: "\"racecar\"" },
   "longest repeating character replacement": { title: 'Test Case 4', input: "s = \"A\", k = 1", output: "1" },
@@ -474,7 +480,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "lru cache": { title: 'Test Case 4', input: "operations = [\"LRUCache\", \"put\", \"get\"], values = [[1], [2, 5], [2]]", output: "[null, null, 5]" },
   "magic squares in grid": { title: 'Test Case 4', input: "grid = [[5]]", output: "0" },
   "magnetic force between two balls": { title: 'Test Case 4', input: "position = [1, 5], m = 2", output: "4" },
-  "majority element": { title: 'Test Case 4', input: "n = 3\nnums = [3, 2, 3]", output: "3" },
+  "majority element": { title: 'Test Case 4', input: "nums = [2, 1, 2]", output: "2" },
   "majority element ii": { title: 'Test Case 4', input: "nums = [2, 2]", output: "[2]" },
   "majority element in ballot tally": { title: 'Test Case 4', input: "n = 5\nnums = [6, 6, 6, 7, 7]", output: "6" },
   "making a large island": { title: 'Test Case 4', input: "grid = [[0]]", output: "1" },
@@ -491,7 +497,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "maximum depth of binary tree": { title: 'Test Case 4', input: "root = [1]", output: "1" },
   "maximum frequency stack": { title: 'Test Case 4', input: "[\"FreqStack\", \"push\", \"pop\"], [[], [1], []]", output: "[null, null, 1]" },
   "maximum gap": { title: 'Test Case 4', input: "nums = [1, 2]", output: "1" },
-  "maximum good subtree score": { title: 'Test Case 4', input: "vals = [1, 2], edges = [[0, 1]]", output: "3" },
+  "maximum good subtree score": { title: 'Test Case 4', input: "parent = [-1, 0, 0], values = [3, 4, 5]", output: "12" },
   "maximum ice cream bars": { title: 'Test Case 4', input: "costs = [1, 1, 1], coins = 2", output: "2" },
   "maximum length of repeated subarray": { title: 'Test Case 4', input: "nums1 = [1], nums2 = [1]", output: "1" },
   "maximum number of balloons": { title: 'Test Case 4', input: "text = \"balloon\"", output: "1" },
@@ -500,9 +506,9 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "maximum number of visible points": { title: 'Test Case 4', input: "points = [[1, 1]], angle = 90, location = [1, 1]", output: "1" },
   "maximum or": { title: 'Test Case 4', input: "nums = [1], k = 1", output: "2" },
   "maximum points you can obtain from cards": { title: 'Test Case 4', input: "cardPoints = [1, 100, 1], k = 1", output: "1" },
-  "maximum product of three numbers": { title: 'Test Case 4', input: "n = 4\narr = [-1, -2, -3, -4]", output: "-6" },
+  "maximum product of three numbers": { title: 'Test Case 4', input: "nums = [-1, -2, -3, -4]", output: "-6" },
   "maximum product of word lengths": { title: 'Test Case 4', input: "words = [\"a\", \"b\"]", output: "1" },
-  "maximum product subarray": { title: 'Test Case 4', input: "n = 2\nnums = [-2, -3]", output: "6" },
+  "maximum product subarray": { title: 'Test Case 4', input: "nums = [-2, -3]", output: "6" },
   "maximum product subarray in investment returns": { title: 'Test Case 4', input: "n = 3\nnums = [2, -5, -2]", output: "20" },
   "maximum profit in job scheduling": { title: 'Test Case 4', input: "startTime = [1], endTime = [2], profit = [50]", output: "50" },
   "maximum score words formed by letters": { title: 'Test Case 4', input: "words = [\"a\"], letters = [\"a\"], score = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]", output: "1" },
@@ -510,9 +516,9 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "maximum subarray sum": { title: 'Test Case 4', input: "n = 4\narr = [1, 2, 3, -10]", output: "6" },
   "maximum sum circular subarray": { title: 'Test Case 4', input: "nums = [5]", output: "5" },
   "maximum time from obfuscated clock": { title: 'Test Case 4', input: "time = \"1?:2?\"", output: "\"19:29\"" },
-  "maximum total value": { title: 'Test Case 4', input: "nums = [1, 2, 3]", output: "6" },
+  "maximum total value": { title: 'Test Case 4', input: "value = [5], decay = [1], m = 2", output: "9" },
   "maximum vacation days": { title: 'Test Case 4', input: "flights = [[0]], days = [[1]]", output: "1" },
-  "maximum walls destroyed by robots": { title: 'Test Case 4', input: "robots = [1], walls = [1]", output: "1" },
+  "maximum walls destroyed by robots": { title: 'Test Case 4', input: "robots = [1], distance = [1], walls = [1]", output: "1" },
   "median of two sorted arrays": { title: 'Test Case 4', input: "nums1 = [2], nums2 = []", output: "2.00000" },
   "meeting rooms ii": { title: 'Test Case 4', input: "intervals = [[1, 4], [2, 5], [7, 9]]", output: "2" },
   "merge intervals": { title: 'Test Case 4', input: "intervals = [[1, 4], [2, 3]]", output: "[[1, 4]]" },
@@ -522,7 +528,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "merge strings alternately": { title: 'Test Case 4', input: "word1 = \"a\", word2 = \"z\"", output: "\"az\"" },
   "merge two sorted arrays without extra space": { title: 'Test Case 4', input: "n = 2, m = 2\narr1 = [1, 4]\narr2 = [2, 3]", output: "arr1 = [1, 2]\narr2 = [3, 4]" },
   "merge two sorted lists": { title: 'Test Case 4', input: "list1 = [2], list2 = [1]", output: "[1, 2]" },
-  "min stack": { title: 'Test Case 4', input: "[\"MinStack\", \"push\", \"top\"], [[], [5], []]", output: "[null, null, 5]" },
+  "min stack": { title: 'Test Case 4', input: "operations = [\"MinStack\", \"push\", \"top\"], values = [[], [5], []]", output: "[null, null, 5]" },
   "minimum absolute difference": { title: 'Test Case 4', input: "arr = [1, 2]", output: "[[1, 2]]" },
   "minimum absolute difference of server loads": { title: 'Test Case 4', input: "loads = [2, 4, 6]", output: "0" },
   "minimum additions to make parentheses valid": { title: 'Test Case 4', input: "s = \"()))\"", output: "2" },
@@ -595,14 +601,14 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "permutations": { title: 'Test Case 4', input: "nums = [1, 2]", output: "[[1, 2], [2, 1]]" },
   "permutations of consonants": { title: 'Test Case 4', input: "str = \"JAVA\"", output: "2" },
   "pow(x, n)": { title: 'Test Case 4', input: "x = 2.00000, n = 0", output: "1.00000" },
-  "product of array except self": { title: 'Test Case 4', input: "n = 3\narr = [1, 2, 3]", output: "[6, 3, 2]" },
+  "product of array except self": { title: 'Test Case 4', input: "nums = [1, 2, 3]", output: "[6, 3, 2]" },
   "product sales analysis i": { title: 'Test Case 4', input: "Sales = [[1, 200, 2022, 1, 100]], Product = [[200, \"Sony\"]]", output: "[[\"Sony\", 2022, 100]]" },
   "rabbits in forest": { title: 'Test Case 4', input: "answers = [1]", output: "2" },
   "race car": { title: 'Test Case 4', input: "target = 2", output: "4" },
   "random pick with blacklist": { title: 'Test Case 4', input: "[\"Solution\", \"pick\"], [[2, [1]], []]", output: "[null, 0]" },
   "random pick with weight": { title: 'Test Case 4', input: "[\"Solution\", \"pickIndex\"], [[[2]], []]", output: "[null, 0]" },
   "range module": { title: 'Test Case 4', input: "[\"RangeModule\", \"queryRange\"], [[], [1, 2]]", output: "[null, false]" },
-  "range sum query - immutable": { title: 'Test Case 4', input: "[\"NumArray\", \"sumRange\"], [[[-1]], [0, 0]]", output: "[null, -1]" },
+  "range sum query - immutable": { title: 'Test Case 4', input: "nums = [1, 2, 3], queries = [[0, 1], [1, 2]]", output: "[3, 5]" },
   "range sum query 2d - mutable": { title: 'Test Case 4', input: "[\"NumMatrix\", \"sumRegion\"], [[[[1]]], [0, 0, 0, 0]]", output: "[null, 1]" },
   "rat count house": { title: 'Test Case 4', input: "r = 2, unit = 4, n = 3\narr = [3, 5, 2]", output: "2" },
   "rearrange array in alternating signs": { title: 'Test Case 4', input: "n = 4\nnums = [1, -1, 2, -2]", output: "[1, -1, 2, -2]" },
@@ -633,7 +639,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "roman numeral to integer conversion": { title: 'Test Case 4', input: "s = \"IV\"", output: "4" },
   "roman to integer": { title: 'Test Case 4', input: "s = \"IX\"", output: "9" },
   "roman to integer conversion": { title: 'Test Case 4', input: "s = \"IV\"", output: "4" },
-  "rotate array": { title: 'Test Case 4', input: "nums = [1, 2], k = 3", output: "[2, 1]" },
+  "rotate array": { title: 'Test Case 4', input: "nums = [1, 2, 3], k = 1", output: "[3, 1, 2]" },
   "rotate array by k positions": { title: 'Test Case 4', input: "n = 5, k = 2\narr = [1, 2, 3, 4, 5]", output: "4 5 1 2 3" },
   "rotate array by k steps": { title: 'Test Case 4', input: "nums = [1, 2, 3]\nk = 1", output: "[3, 1, 2]" },
   "rotate image matrix by 90 degrees": { title: 'Test Case 4', input: "n = 2\nmatrix = [\n  [1, 2],\n  [3, 4]\n]", output: "[\n  [3, 1],\n  [4, 2]\n]" },
@@ -645,7 +651,7 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "search a 2d matrix": { title: 'Test Case 4', input: "matrix = [[1, 3], [5, 7]], target = 5", output: "true" },
   "search a 2d matrix with row and column ordering": { title: 'Test Case 4', input: "m = 2, n = 2\nmatrix = [\n  [1, 3],\n  [2, 4]\n]\ntarget = 3", output: "1" },
   "search in a 2d sorted matrix": { title: 'Test Case 4', input: "n = 2, m = 2, x = 4\nmat = [[1, 2], [3, 4]]", output: "1" },
-  "search in rotated sorted array": { title: 'Test Case 4', input: "n = 4\nnums = [3, 1, 2, 3]\ntarget = 1", output: "1" },
+  "search in rotated sorted array": { title: 'Test Case 4', input: "nums = [3, 1, 2, 3]\ntarget = 1", output: "1" },
   "search insert position": { title: 'Test Case 4', input: "nums = [1, 3], target = 2", output: "1" },
   "second highest salary": { title: 'Test Case 4', input: "Employee = [[1, 100]]", output: "null" },
   "second most frequent character": { title: 'Test Case 4', input: "str = \"geek\"", output: "g" },
@@ -705,11 +711,11 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "top k frequent elements": { title: 'Test Case 4', input: "nums = [3, 0, 1, 0], k = 1", output: "[0]" },
   "top k frequent elements in query log": { title: 'Test Case 4', input: "n = 3, k = 1\nnums = [1, 1, 2]", output: "[1]" },
   "transform array by parity": { title: 'Test Case 4', input: "nums = [1, 2]", output: "[0, 1]" },
-  "trapping rain water": { title: 'Test Case 4', input: "n = 6\nheight = [4, 2, 0, 3, 2, 5]", output: "9" },
+  "trapping rain water": { title: 'Test Case 4', input: "height = [4, 2, 0, 3, 2, 5]", output: "9" },
   "trapping rain water in elevation wells": { title: 'Test Case 4', input: "n = 5\nheight = [2, 0, 2, 0, 2]", output: "4" },
   "triangle": { title: 'Test Case 4', input: "triangle = [[2], [3, 4]]", output: "5" },
   "trionic array i": { title: 'Test Case 4', input: "nums = [1, 2, 3]", output: "true" },
-  "trionic array ii": { title: 'Test Case 4', input: "nums = [1, 3, 2]", output: "false" },
+  "trionic array ii": { title: 'Test Case 4', input: "nums = [0, 0, 0]", output: "1" },
   "triplet sum to zero in financial ledger": { title: 'Test Case 4', input: "n = 4\nnums = [-2, 0, 1, 1]", output: "[[-2, 1, 1]]" },
   "two sum": { title: 'Test Case 4', input: "nums = [1, 5, 8, 3], target = 9", output: "[1, 3]" },
   "two sum in sorted array": { title: 'Test Case 4', input: "n = 3\nnumbers = [2, 7, 11]\ntarget = 9", output: "[1, 2]" },
@@ -734,10 +740,75 @@ export const CANONICAL_FOURTH_TEST_CASE: Record<string, PaperTestCase> = {
   "word search": { title: 'Test Case 4', input: "board = [[\"a\"]], word = \"a\"", output: "true" },
   "word squares": { title: 'Test Case 4', input: "words = [\"ball\", \"area\", \"lead\", \"lady\"]", output: "[[\"ball\", \"area\", \"lead\", \"lady\"]]" },
   "xor after range multiplication queries i": { title: 'Test Case 4', input: "nums = [1], queries = [[0, 0, 1]]", output: "[1]" },
-  "xor after range multiplication queries ii": { title: 'Test Case 4', input: "nums = [2], queries = [[0, 0, 2]]", output: "[4]" },
+  "xor after range multiplication queries ii": { title: 'Test Case 4', input: "nums = [2], queries = [[0, 0, 2]]", output: "4" },
   "zero sum subarrays detection": { title: 'Test Case 4', input: "n = 3\narr = [1, -1, 0]", output: "3" },
   "zigzag conversion": { title: 'Test Case 4', input: "s = \"AB\", numRows = 1", output: "\"AB\"" }
 };
+
+/**
+ * Harmonizes test case input & output formatting against Case 1 baseline style.
+ * Normalizes variable names (arr vs nums), handles n = array length prefixes,
+ * and maintains consistent quote wrapping.
+ */
+function harmonizeTestCaseInput(c4: PaperTestCase, baseCase: PaperTestCase, title: string = ''): PaperTestCase {
+  let input = c4.input;
+  let output = c4.output;
+  const baseInput = baseCase.input || '';
+  const baseOutput = baseCase.output || '';
+  const normTitle = title.toLowerCase().trim();
+
+  // Longest common prefix handling
+  if (normTitle.includes('longest common prefix')) {
+    if (baseInput.includes('strs =')) {
+      input = 'strs = ["cir", "car"]';
+      output = baseOutput.startsWith('"') ? '"c"' : 'c';
+    } else if (baseInput.includes('arr =')) {
+      input = 'n = 2\narr = ["cir", "car"]';
+      output = 'c';
+    }
+    return { ...c4, input, output };
+  }
+
+  // Variable name harmonization (arr vs nums)
+  if (baseInput.includes('arr =') && !baseInput.includes('nums =')) {
+    input = input.replace(/\bnums\s*=/g, 'arr =');
+  } else if (baseInput.includes('nums =') && !baseInput.includes('arr =')) {
+    input = input.replace(/\barr\s*=/g, 'nums =');
+  }
+
+  // Case-insensitive match for base variables (e.g. person vs Person)
+  const baseVarMatches = baseInput.match(/([a-zA-Z0-9_$]+)\s*=/g) || [];
+  for (const bvm of baseVarMatches) {
+    const rawVar = bvm.replace(/\s*=/, '').trim();
+    const c4VarRegex = new RegExp(`\\b${rawVar}\\s*=`, 'i');
+    if (c4VarRegex.test(input) && !input.includes(`${rawVar} =`)) {
+      input = input.replace(c4VarRegex, `${rawVar} =`);
+    }
+  }
+
+  // Harmonize n = prefix
+  const baseHasN = /\bn\s*=/i.test(baseInput);
+  const c4HasN = /\bn\s*=/i.test(input);
+
+  if (baseHasN && !c4HasN) {
+    const arrMatch = input.match(/=\s*(\[[^\]]*\])/);
+    if (arrMatch) {
+      try {
+        const parsed = JSON.parse(arrMatch[1]);
+        if (Array.isArray(parsed)) {
+          input = `n = ${parsed.length}\n${input}`;
+        }
+      } catch {
+        const items = arrMatch[1].replace(/[\[\]]/g, '').trim().split(',').filter(x => x.trim().length > 0);
+        input = `n = ${items.length}\n${input}`;
+      }
+    }
+  } else if (!baseHasN && c4HasN) {
+    input = input.replace(/n\s*=\s*\d+\s*\n?/gi, '').trim();
+  }
+
+  return { ...c4, input, output };
+}
 
 /**
  * Ensures test cases count is guaranteed to be at least 4 for practice IDE execution.
@@ -748,10 +819,12 @@ export function ensureFourTestCases(cases: PaperTestCase[], title: string = ''):
 
   if (CANONICAL_FALLBACK_TEST_CASES[normTitle]) {
     const canonical = CANONICAL_FALLBACK_TEST_CASES[normTitle];
-    if (!baseCases || baseCases.length < 4 || normTitle === 'encoded string decoding') {
-      if (baseCases && baseCases.length === 3 && canonical.length >= 4) {
+    if (!baseCases || baseCases.length < 4 || normTitle === 'encoded string decoding' || normTitle === 'peak index in a mountain array') {
+      if (normTitle === 'encoded string decoding' || normTitle === 'peak index in a mountain array') {
+        baseCases = canonical;
+      } else if (baseCases && baseCases.length === 3 && canonical.length >= 4) {
         // If 3 cases exist and canonical has 4, take canonical 4th case if distinct
-        const c4 = canonical[3];
+        let c4 = harmonizeTestCaseInput({ ...canonical[3] }, baseCases[0], normTitle);
         const isDuplicate = baseCases.some(b => b.input.trim() === c4.input.trim());
         baseCases = isDuplicate ? canonical : [...baseCases, c4];
       } else {
@@ -769,10 +842,29 @@ export function ensureFourTestCases(cases: PaperTestCase[], title: string = ''):
     }
   }
 
+  // Special branch: Remove Duplicates from Sorted Array has dual output formats (array of unique elements vs integer length k)
+  if (normTitle === 'remove duplicates from sorted array' && baseCases && baseCases.length === 3) {
+    if (baseCases[0].output.trim().startsWith('[')) {
+      return [...baseCases, { title: 'Test Case 4', input: 'nums = [1, 1, 2, 2, 3]', output: '[1, 2, 3]' }];
+    } else {
+      return [...baseCases, { title: 'Test Case 4', input: 'nums = [1, 1, 2, 2, 3]', output: '3' }];
+    }
+  }
+
+  // Special branch: Min Stack has dual input schemas (raw JSON method calls vs operations/values named parameters)
+  if (normTitle === 'min stack' && baseCases && baseCases.length === 3) {
+    if (baseCases[0].input.trim().startsWith('[')) {
+      return [...baseCases, { title: 'Test Case 4', input: '["MinStack", "push", "top"], [[], [5], []]', output: '[null, null, 5]' }];
+    } else {
+      return [...baseCases, { title: 'Test Case 4', input: 'operations = ["MinStack", "push", "top"], values = [[], [5], []]', output: '[null, null, 5]' }];
+    }
+  }
+
   // 2. Check canonical 4th test case catalog
   if (CANONICAL_FOURTH_TEST_CASE[normTitle]) {
-    const c4 = CANONICAL_FOURTH_TEST_CASE[normTitle];
+    const rawC4 = CANONICAL_FOURTH_TEST_CASE[normTitle];
     if (baseCases && baseCases.length === 3) {
+      const c4 = harmonizeTestCaseInput({ ...rawC4 }, baseCases[0], normTitle);
       const isDuplicate = baseCases.some(b => b.input.trim() === c4.input.trim());
       if (!isDuplicate) {
         baseCases = [...baseCases, { ...c4, title: 'Test Case 4' }];
@@ -842,7 +934,7 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
       let testCases = parseTestCasesFromBlock(b);
       const cleanKey = cleanTitle.toLowerCase().trim();
       if (CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
-        if (testCases.length <= 1 || cleanKey === 'encoded string decoding') {
+        if (testCases.length <= 1 || cleanKey === 'encoded string decoding' || cleanKey === 'peak index in a mountain array') {
           testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
         }
       }
@@ -898,7 +990,7 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
       let testCases = parseTestCasesFromBlock(blockContent);
       const cleanKey = cleanTitle.toLowerCase().trim();
       if (CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
-        if (testCases.length <= 1 || cleanKey === 'encoded string decoding') {
+        if (testCases.length <= 1 || cleanKey === 'encoded string decoding' || cleanKey === 'peak index in a mountain array') {
           testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
         }
       }
@@ -938,7 +1030,7 @@ export function parsePaperQuestions(rawContent?: string): PaperQuestion[] {
       let testCases = parseTestCasesFromBlock(blockContent);
       const cleanKey = cleanTitle.toLowerCase().trim();
       if (CANONICAL_FALLBACK_TEST_CASES[cleanKey]) {
-        if (testCases.length <= 1 || cleanKey === 'encoded string decoding') {
+        if (testCases.length <= 1 || cleanKey === 'encoded string decoding' || cleanKey === 'peak index in a mountain array') {
           testCases = CANONICAL_FALLBACK_TEST_CASES[cleanKey];
         }
       }

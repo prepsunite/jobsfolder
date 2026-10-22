@@ -16,6 +16,12 @@ This document outlines the exact infrastructure and paid upgrades required as st
 | **6** | **Publisher Ad Monetization (Carbon Ads / NitroPay / Affiliates)** | **Revenue Stream ($+)** | When organic traffic hits > 5,000 monthly pageviews | Generates passive ad & sponsorship revenue to fund infrastructure |
 | **7** | **Shareable Achievement Cards (LinkedIn / WhatsApp)** | **$0 (Free)** | Once exam results & scoring studio are live | Drives viral organic signups via student LinkedIn/WhatsApp status flexes |
 | **8** | **Campus & Batch Leaderboard Engine** | **$0 (Free)** | When colleges/TPOs onboard multiple student batches | Sparks batch competition & provides TPOs instant candidate shortlisting |
+| **9** | **Submission History & Verdict Review Drawer** | **$0 (Code)** | Next IDE iteration | Students view historical attempts, runtime/memory stats, and past code versions |
+| **10** | **Hints & Optimal Complexity Target Accordion** | **$0 (Code)** | Content enhancement | Progressive hints & O(N) / O(1) targets without spoiling complete code solutions |
+| **11** | **Practice Stopwatch & Countdown Timer** | **$0 (Code)** | Student experience | 20-min countdown timer to simulate real company OA pressure |
+| **12** | **Aptitude & Technical MCQ Paper Audit** | **$0 (Audit)** | Content expansion | Cross-checks parsing, option keys, and explanations across all non-coding tabs |
+| **13** | **Programming 150 Core Sheet Cross-Linking** | **$0 (Code)** | Placement prep flow | Seamless bidirectional linkage between company papers and the Top 150 sheet |
+| **14** | **TPO Real-Time Analytics & Auto-Proctoring** | **$0 (Code)** | Campus drive onboarding | Tab-switch penalty locks, auto-termination at drive cutoff, and Tier 1-3 clustering |
 
 ---
 
@@ -460,6 +466,69 @@ CREATE INDEX IF NOT EXISTS idx_leaderboard_college_rank ON public.college_leader
 -- 3. Automatic periodic refresh (via pg_cron or hourly Supabase Edge Function)
 -- REFRESH MATERIALIZED VIEW CONCURRENTLY public.college_leaderboard_view;
 ```
+
+---
+
+## 8. 🎯 Placement Papers Practice, IDE Polish & TPO Module Roadmap
+
+This section defines the prioritized engineering backlog for the student coding environment, placement paper content, and college TPO analytics.
+
+### 📌 Option A: IDE & Practice Experience Polish (Recommended)
+
+1. **Submission History Drawer in Paper IDE**:
+   - **Current State**: Submissions execute against the multi-tier judge, record the attempt in Supabase (`exam_attempts`) and `localStorage`, and mark problems as solved.
+   - **Target Enhancement**: Introduce a dedicated **"Submissions" tab** in the IDE bottom execution console:
+     - Displays chronological list of previous code attempts for the active problem.
+     - Details execution status (`Accepted`, `Wrong Answer`, `Time Limit Exceeded`), runtime latency (ms), memory footprint (KB), and timestamp.
+     - Includes a one-click **"Load Code"** button to restore past working solutions into the Monaco editor.
+
+2. **Hints / Optimal Approach Accordion**:
+   - **Current State**: Problem description provides constraints and tabbed examples.
+   - **Target Enhancement**: A collapsible **"Hints & Strategy"** section:
+     - Progressive disclosure (e.g. *Hint 1: Consider a two-pointer approach from both ends...*).
+     - Target time and space complexity badge ($O(N)$ time, $O(1)$ space) guiding candidates away from brute force without revealing raw code.
+
+3. **Practice Stopwatch / Countdown Timer**:
+   - **Current State**: Self-paced practice with no ticking clock.
+   - **Target Enhancement**: An optional toggleable **Online Assessment (OA) Timer**:
+     - Presets for 20-minute, 30-minute, or 45-minute countdowns matching standard company coding rounds.
+     - Visual urgency indicators (amber warning at < 5 minutes, red pulse at < 1 minute).
+     - Pause/Resume and local session persistence across browser refreshes.
+
+---
+
+### 📌 Option B: Other Placement Paper Content & Modules
+
+1. **Technical MCQs & Aptitude Papers Audit**:
+   - **Current State**: Completed full 621-question automated audit across all Coding papers (0 duplicate test cases, 100% verified $\ge 4$ distinct test cases).
+   - **Target Enhancement**: Comprehensive programmatic validation of non-coding tabs:
+     - Quantitative Aptitude, Logical Reasoning, and Technical MCQs.
+     - Verification of clean option keys (`A`, `B`, `C`, `D`), absence of unescaped HTML entities, and accurate answer explanations.
+
+2. **Programming 150 Core Sheet Cross-Linking**:
+   - **Current State**: Programming 150 sheet and Company Placement Papers exist as distinct modules.
+   - **Target Enhancement**: Unified problem taxonomy:
+     - Show company appearance badges on Top 150 problems (e.g. *Seen in Accenture Q30, Amazon Q14*).
+     - Seamless two-way navigation allowing students to jump from a paper question to its canonical theory and solution guide in Programming 150.
+
+---
+
+### 📌 Option C: TPO College Portal & Mock Drives
+
+1. **TPO Real-Time Analytics & Student Roster**:
+   - **Target Enhancement**:
+     - Automated validation of bulk student roster uploads via CSV (duplicate email handling, branch assignment, graduation year).
+     - College license quota tracking (enrolled students vs active license ceiling).
+     - Automated readiness clustering categorizing students into placement tiers:
+       - **Tier 1 (Dream / Super Dream > 10 LPA)**: $\ge 80\%$ coding + $\ge 80\%$ aptitude.
+       - **Tier 2 (Core / IT Services 5–10 LPA)**: $60\% - 79\%$.
+       - **Tier 3 (Needs Remediation < 5 LPA)**: $< 60\%$.
+
+2. **Drive Proctoring & Auto-Termination**:
+   - **Target Enhancement**:
+     - Anti-malpractice enforcement: full-screen lock with configurable warning limits (e.g. max 3 tab-switches before auto-disqualification).
+     - Strict cutoff scheduler: automatically locks input and submits active student answer sheets when the drive end time is reached.
+     - Pre-termination vs post-termination analytics isolation, ensuring cancelled or test drives never corrupt college performance aggregates.
 
 ---
 
