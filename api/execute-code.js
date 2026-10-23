@@ -532,7 +532,7 @@ export default async function handler(req, res) {
           caseIndex: i + 1,
           status: 'RUNTIME_ERROR',
           passed: false,
-          error: isHidden ? '[Runtime Error on Hidden Case]' : runRes.stderr,
+          error: runRes.stderr || 'Runtime error.',
           timeMs: runRes.timeMs,
         });
         if (isSubmit) break;
@@ -548,9 +548,9 @@ export default async function handler(req, res) {
           caseIndex: i + 1,
           status: 'PASSED',
           passed: true,
-          input: isHidden ? '[Hidden Test Case]' : tc.input,
-          expected: isHidden ? '[Hidden Expected Output]' : expectedOut,
-          actual: isHidden ? '[Output Matched]' : actualOut,
+          input: tc.input || '',
+          expected: expectedOut,
+          actual: actualOut,
           timeMs: runRes.timeMs,
         });
       } else {
@@ -559,9 +559,9 @@ export default async function handler(req, res) {
           caseIndex: i + 1,
           status: 'WRONG_ANSWER',
           passed: false,
-          input: isHidden ? '[Hidden Test Case]' : tc.input,
-          expected: isHidden ? '[Hidden Expected Output]' : expectedOut,
-          actual: isHidden ? '[Hidden Output Mismatch]' : actualOut,
+          input: tc.input || '',
+          expected: expectedOut,
+          actual: actualOut || '[No output]',
           timeMs: runRes.timeMs,
         });
         if (isSubmit) break;

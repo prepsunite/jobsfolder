@@ -306,7 +306,7 @@ export default function TechnicalCodingWorkspacePage() {
     // Add visible sample cases
     sampleCases.forEach(sc => cases.push(sc));
 
-    // Add hidden edge cases
+    // Add edge cases (all fully visible, test cases 3 to 8 unmasked)
     const hiddenList = (problem.hiddenTestCases && problem.hiddenTestCases.length > 0)
       ? problem.hiddenTestCases
       : (problem.testCases && problem.testCases.length > 0)
@@ -320,7 +320,7 @@ export default function TechnicalCodingWorkspacePage() {
         input: normalizeStdin(tc.input || ''),
         expected_output: tc.expected_output || tc.output || '',
         output: tc.output || tc.expected_output || '',
-        is_hidden: true,
+        is_hidden: false,
       });
     });
 
@@ -332,7 +332,7 @@ export default function TechnicalCodingWorkspacePage() {
         input: ref.input,
         expected_output: ref.expected_output,
         output: ref.output,
-        is_hidden: true,
+        is_hidden: false,
       });
       idx++;
     }
@@ -421,7 +421,7 @@ export default function TechnicalCodingWorkspacePage() {
             passed: true,
             status: 'PASSED',
             timeMs: 40,
-            is_hidden: tc.is_hidden === true,
+            is_hidden: false,
           })),
         });
         setIsSolved(true);
@@ -558,7 +558,7 @@ export default function TechnicalCodingWorkspacePage() {
       passed: false,
       status: isSubmitting ? ('EVALUATING' as any) : undefined,
       timeMs: 0,
-      is_hidden: tc.is_hidden === true,
+      is_hidden: false,
     }));
   }, [testResults, isSubmitting, submitCases, sampleCases]);
 

@@ -488,8 +488,7 @@ export const codeExecutionService = {
     let compileErrorEncountered: string | null = null;
     let firstRuntimeError: string | null = null;
 
-    const evaluateSingle = async (tc: TestCaseInput, index: number): Promise<EvaluatedTestCase> => {
-      const isHidden = Boolean(tc.is_hidden);
+    const evaluateSingle = async (tc: TestCaseInput, _index: number): Promise<EvaluatedTestCase> => {
       const rawStdin = tc.input || '';
       const realExpected = normalizeOutput(
         tc.expected_output ||
@@ -499,8 +498,8 @@ export const codeExecutionService = {
         ''
       );
 
-      const displayInput = isHidden ? `[Hidden Test Case ${index + 1}]` : rawStdin;
-      const displayExpected = isHidden ? '[Hidden Expected Output]' : realExpected;
+      const displayInput = rawStdin;
+      const displayExpected = realExpected;
 
       const execResult = await this.executeDirectJudge0(language, sourceCode, rawStdin);
 
@@ -510,7 +509,7 @@ export const codeExecutionService = {
         return {
           input: displayInput,
           expected: displayExpected,
-          actual: isHidden ? '[Compilation Error on Hidden Case]' : err,
+          actual: err,
           passed: false,
           status: 'COMPILATION_ERROR',
           timeMs: execResult.timeMs,
@@ -525,7 +524,7 @@ export const codeExecutionService = {
         return {
           input: displayInput,
           expected: displayExpected,
-          actual: isHidden ? '[Runtime Error on Hidden Case]' : rErr,
+          actual: rErr,
           passed: false,
           status: 'RUNTIME_ERROR',
           timeMs: execResult.timeMs,
@@ -553,7 +552,7 @@ export const codeExecutionService = {
       return {
         input: displayInput,
         expected: displayExpected,
-        actual: isHidden ? (isMatch ? '[Output Matched]' : '[Hidden Output Mismatch]') : (actual || '[No output]'),
+        actual: actual || '[No output]',
         passed: isMatch,
         status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
         timeMs: execResult.timeMs,
@@ -592,16 +591,14 @@ export const codeExecutionService = {
     if (firstEvaluated.status === 'COMPILATION_ERROR') {
       for (let j = 1; j < testCases.length; j++) {
         evaluatedCases.push({
-          input: testCases[j].is_hidden ? `[Hidden Test Case ${j + 1}]` : (testCases[j].input || ''),
-          expected: testCases[j].is_hidden
-            ? '[Hidden Expected Output]'
-            : normalizeOutput(
-                testCases[j].expected_output ||
-                testCases[j].output ||
-                testCases[j].expectedOutput ||
-                testCases[j].expected ||
-                ''
-              ),
+          input: testCases[j].input || '',
+          expected: normalizeOutput(
+            testCases[j].expected_output ||
+            testCases[j].output ||
+            testCases[j].expectedOutput ||
+            testCases[j].expected ||
+            ''
+          ),
           actual: 'Skipped due to compilation error.',
           passed: false,
           status: 'SKIPPED',

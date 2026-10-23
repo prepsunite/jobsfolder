@@ -185,29 +185,27 @@ class PyodideExecutionService {
     if (firstRes.isCompileError) {
       compileErrorEncountered = firstRes.stderr || 'Syntax error in Python code.';
       evaluatedCases.push({
-        input: firstTc.is_hidden ? '[Hidden Test Case 1]' : (firstTc.input || ''),
-        expected: firstTc.is_hidden ? '[Hidden Expected Output]' : firstExpected,
+        input: firstTc.input || '',
+        expected: firstExpected,
         actual: compileErrorEncountered,
         passed: false,
         status: 'COMPILATION_ERROR',
         timeMs: firstRes.timeMs,
         error: compileErrorEncountered,
-        is_hidden: Boolean(firstTc.is_hidden),
+        is_hidden: false,
       });
 
       // Skip remaining test cases immediately
       for (let j = 1; j < testCases.length; j++) {
         const tc = testCases[j];
         evaluatedCases.push({
-          input: tc.is_hidden ? `[Hidden Test Case ${j + 1}]` : (tc.input || ''),
-          expected: tc.is_hidden
-            ? '[Hidden Expected Output]'
-            : normalizeOutput(tc.expected_output || tc.output || tc.expectedOutput || tc.expected || ''),
+          input: tc.input || '',
+          expected: normalizeOutput(tc.expected_output || tc.output || tc.expectedOutput || tc.expected || ''),
           actual: 'Skipped due to syntax error on Test Case 1.',
           passed: false,
           status: 'SKIPPED',
           timeMs: 0,
-          is_hidden: Boolean(tc.is_hidden),
+          is_hidden: false,
         });
       }
 
@@ -226,8 +224,8 @@ class PyodideExecutionService {
     const firstActual = normalizeOutput(firstRes.stdout);
     const firstMatch = !firstRes.isRuntimeError && !firstRes.isTimeLimitExceeded && compareOutputs(firstActual, firstExpected);
     evaluatedCases.push({
-      input: firstTc.is_hidden ? '[Hidden Test Case 1]' : (firstTc.input || ''),
-      expected: firstTc.is_hidden ? '[Hidden Expected Output]' : firstExpected,
+      input: firstTc.input || '',
+      expected: firstExpected,
       actual: firstRes.isTimeLimitExceeded
         ? 'Time Limit Exceeded (> 4.0s)'
         : (firstRes.isRuntimeError ? firstRes.stderr : (firstActual || '[No output]')),
@@ -237,7 +235,7 @@ class PyodideExecutionService {
         : (firstRes.isRuntimeError ? 'RUNTIME_ERROR' : (firstMatch ? 'PASSED' : 'WRONG_ANSWER')),
       timeMs: firstRes.timeMs,
       error: firstRes.stderr || undefined,
-      is_hidden: Boolean(firstTc.is_hidden),
+      is_hidden: false,
     });
 
     if (firstRes.isRuntimeError && !firstRuntimeError) {
@@ -250,9 +248,8 @@ class PyodideExecutionService {
       const realExpected = normalizeOutput(
         tc.expected_output || tc.output || tc.expectedOutput || tc.expected || ''
       );
-      const isHidden = Boolean(tc.is_hidden);
-      const displayInput = isHidden ? `[Hidden Test Case ${i + 1}]` : (tc.input || '');
-      const displayExpected = isHidden ? '[Hidden Expected Output]' : realExpected;
+      const displayInput = tc.input || '';
+      const displayExpected = realExpected;
 
       const res = await this.executeSingle(sourceCode, tc.input || '', 4000);
 
@@ -265,7 +262,7 @@ class PyodideExecutionService {
           status: 'TIME_LIMIT_EXCEEDED',
           timeMs: res.timeMs,
           error: 'Time Limit Exceeded',
-          is_hidden: isHidden,
+          is_hidden: false,
         });
         continue;
       }
@@ -275,12 +272,12 @@ class PyodideExecutionService {
         evaluatedCases.push({
           input: displayInput,
           expected: displayExpected,
-          actual: isHidden ? '[Runtime Error on Hidden Case]' : res.stderr,
+          actual: res.stderr,
           passed: false,
           status: 'RUNTIME_ERROR',
           timeMs: res.timeMs,
           error: res.stderr,
-          is_hidden: isHidden,
+          is_hidden: false,
         });
         continue;
       }
@@ -291,11 +288,11 @@ class PyodideExecutionService {
       evaluatedCases.push({
         input: displayInput,
         expected: displayExpected,
-        actual: isHidden ? (isMatch ? '[Output Matched]' : '[Hidden Output Mismatch]') : (actualOut || '[No output]'),
+        actual: actualOut || '[No output]',
         passed: isMatch,
         status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
         timeMs: res.timeMs,
-        is_hidden: isHidden,
+        is_hidden: false,
       });
     }
 
