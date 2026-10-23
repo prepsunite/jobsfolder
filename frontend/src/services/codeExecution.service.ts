@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { pyodideExecutionService } from './pyodideExecution.service';
 
 export interface TestCaseInput {
   input: string;
@@ -287,6 +288,7 @@ export {
   stripQuotes,
   normalizeStdin,
   compareOutputs,
+  pyodideExecutionService,
 };
 
 /**
@@ -326,7 +328,7 @@ export const codeExecutionService = {
     };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const apiKey = typeof import.meta !== 'undefined' &&
       (import.meta.env?.VITE_CODE_EXECUTION_API_KEY || import.meta.env?.VITE_JUDGE0_API_KEY || import.meta.env?.VITE_RAPIDAPI_KEY);
@@ -385,7 +387,7 @@ export const codeExecutionService = {
     } catch (err: any) {
       clearTimeout(timeoutId);
       const isAbort = err.name === 'AbortError';
-      const errMsg = isAbort ? 'Execution timed out (> 12s).' : (err.message || 'Execution error.');
+      const errMsg = isAbort ? 'Execution timed out (> 30s).' : (err.message || 'Execution error.');
       return {
         statusId: 0,
         statusDescription: isAbort ? 'Time Limit Exceeded' : 'Execution Error',
@@ -565,6 +567,33 @@ export const codeExecutionService = {
     sourceCode: string,
     stdin: string = ''
   ): Promise<ExecutionResult> {
+    const normLang = normalizeLanguageKey(language);
+    const sanitizedStdin = normalizeStdin(stdin);
+
+    // Fast-path: Execute in-browser via Pyodide for Python ($0 server cost, ~20ms)
+    if (normLang === 'python') {
+      try {
+        const pyRes = await pyodideExecutionService.executeCustom(sourceCode, sanitizedStdin);
+        const isErr = Boolean(pyRes.stderr && pyRes.stderr.trim().length > 0);
+        return {
+          statusId: isErr ? 11 : 3,
+          statusDescription: pyRes.status,
+          stdout: pyRes.stdout || '',
+          stderr: pyRes.stderr || '',
+          compileOutput: '',
+          timeMs: pyRes.timeMs || 0,
+          memoryKb: 0,
+          isSuccess: !isErr && pyRes.status === 'Accepted',
+          isCompileError: pyRes.status === 'Compilation Error',
+          isRuntimeError: isErr || pyRes.status === 'Runtime Error',
+          isTimeLimitExceeded: pyRes.status === 'Time Limit Exceeded',
+          errorMessage: pyRes.stderr || undefined,
+        };
+      } catch (pyodideErr) {
+        console.warn('[codeExecutionService.execute] Pyodide in-browser failed, falling back to serverless proxy:', pyodideErr);
+      }
+    }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
@@ -574,14 +603,12 @@ export const codeExecutionService = {
     };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const sanitizedStdin = normalizeStdin(stdin);
-
     try {
       const response = await fetch('/api/execute-code', {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          language: normalizeLanguageKey(language),
+          language: normLang,
           sourceCode,
           customStdin: sanitizedStdin,
         }),
@@ -682,6 +709,17 @@ export const codeExecutionService = {
       };
     }
 
+    // 2. High-speed In-Browser WebAssembly Pyodide Engine for Python
+    // $0 server cost, ~20ms latency, infinite scalability across 50,000+ candidates
+    if (language === 'python' && testCases && testCases.length > 0) {
+      try {
+        const pyResult = await pyodideExecutionService.runTestCases(sourceCode, testCases);
+        return pyResult;
+      } catch (pyodideErr) {
+        console.warn('[codeExecutionService] Pyodide in-browser execution failed, falling back to serverless proxy:', pyodideErr);
+      }
+    }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
@@ -753,6 +791,24 @@ export const codeExecutionService = {
     sourceCode: string,
     customStdin: string
   ): Promise<{ stdout: string; stderr: string; status: string; timeMs: number }> {
+    const normLang = normalizeLanguageKey(language);
+    const sanitizedStdin = normalizeStdin(customStdin);
+
+    // Fast-path: Execute in-browser via Pyodide for Python ($0 server cost, ~20ms)
+    if (normLang === 'python') {
+      try {
+        const pyRes = await pyodideExecutionService.executeCustom(sourceCode, sanitizedStdin);
+        return {
+          stdout: pyRes.stdout,
+          stderr: pyRes.stderr || '',
+          status: pyRes.status,
+          timeMs: pyRes.timeMs,
+        };
+      } catch (pyodideErr) {
+        console.warn('[codeExecutionService.executeCustom] Pyodide failed, falling back to serverless proxy:', pyodideErr);
+      }
+    }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
@@ -764,9 +820,9 @@ export const codeExecutionService = {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          language: normalizeLanguageKey(language),
+          language: normLang,
           sourceCode,
-          customStdin: normalizeStdin(customStdin),
+          customStdin: sanitizedStdin,
         }),
       });
 

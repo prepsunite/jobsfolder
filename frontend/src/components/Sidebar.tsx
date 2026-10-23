@@ -128,8 +128,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const technicalTracks = [
     { name: 'Programming 150', href: '/technical?track=programming-150', track: 'programming-150', icon: Code2, badge: '150' },
     { name: 'Campus DSA Roadmap', href: '/technical?track=campus-dsa', track: 'campus-dsa', icon: Flame, badge: 'LeetCode' },
-    // Temporarily hidden from navigation (see docs/future.md)
-    // { name: 'Technical MCQs', href: '/technical?track=mcqs', track: 'mcqs', icon: HelpCircle, badge: 'OA' },
+    { name: 'Technical MCQs', href: '/technical?track=mcqs', track: 'mcqs', icon: HelpCircle, badge: 'OA' },
   ];
 
   const interviewCategories = [

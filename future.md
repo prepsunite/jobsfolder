@@ -18,9 +18,8 @@ This file tracks paused, hidden, or upcoming features and content modules so you
 | Component / Layer | File Path | What It Handles |
 |---|---|---|
 | **Sidebar Navigation (Aptitude)** | `frontend/src/components/Sidebar.tsx` | Line ~125: `aptitudeCategories` array (`Technical Aptitude` commented out). |
-| **Sidebar Navigation (Technical)** | `frontend/src/components/Sidebar.tsx` | Line ~132: `technicalTracks` array (`Technical MCQs` commented out). |
 | **Aptitude Controller** | `frontend/src/pages/AptitudePage.tsx` | Line ~467: `categoryTitles['technical-aptitude']` defines the title and header banner. |
-| **Technical Hub Controller** | `frontend/src/pages/TechnicalHubPage.tsx` | Controller for `/technical?track=mcqs` rendering the 10 IndiaBIX subjects. |
+| **Technical Hub Controller** | `frontend/src/pages/TechnicalHubPage.tsx` | Controller for `/technical?track=mcqs` rendering the 10 IndiaBIX subjects (Active). |
 | **Blueprint Registry** | `frontend/src/services/mockExamBlueprint.service.ts` | Lines ~678–686: Built-in category topics definition. |
 | **Slug Resolver** | `frontend/src/services/topicMap.ts` | Lines ~268–289: Maps natural text names to canonical topic slugs. |
 | **Database Target** | Supabase table: `topic_questions` | Storage table where questions for these topics need to be inserted. |
@@ -56,10 +55,6 @@ When you are ready to launch this module:
    - Under `aptitudeCategories` (around line 125), uncomment:
      ```tsx
      { name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },
-     ```
-   - Under `technicalTracks` (around line 132), uncomment:
-     ```tsx
-     { name: 'Technical MCQs', href: '/technical?track=mcqs', track: 'mcqs', icon: HelpCircle, badge: 'OA' },
      ```
 
 3. **Verify Build & Routes**:
