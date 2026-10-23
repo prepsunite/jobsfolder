@@ -185,8 +185,17 @@ export default function PaperCodingModal({
         try {
           const parsed = JSON.parse(cachedResultsStr);
           if (parsed && Array.isArray(parsed.cases) && parsed.cases.length > 0) {
-            setTestResults(parsed);
-            return;
+            // Verify that cached results match current canonical test suite inputs
+            const currentSuite = ensureFourTestCases(question.testCases || [], question.cleanTitle || '');
+            const isMatching = parsed.cases.length === currentSuite.length &&
+              parsed.cases.every((c: any, i: number) => c.input?.trim() === currentSuite[i]?.input?.trim());
+            if (isMatching) {
+              setTestResults(parsed);
+              return;
+            } else {
+              // Cache belongs to an older/stale test case suite: invalidate it
+              localStorage.removeItem(cachedResultsKey);
+            }
           }
         } catch {}
       }
