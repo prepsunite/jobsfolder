@@ -39,9 +39,11 @@ import {
 import Editor from '@monaco-editor/react';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import HackerRankProblemView from '@/components/HackerRankProblemView';
+import CompilerOverloadedModal from '@/components/technical/CompilerOverloadedModal';
 import {
   codeExecutionService,
   pyodideExecutionService,
+  isCompilerOverloaded,
   STARTER_TEMPLATES,
   LANGUAGE_LABELS,
   normalizeStdin,
@@ -160,6 +162,10 @@ export default function TechnicalCodingWorkspacePage() {
   // Show acceptance celebration banner
   const [showCelebration, setShowCelebration] = useState(false);
   const [restoredSource, setRestoredSource] = useState<'submission' | 'draft' | null>(null);
+
+  // Compiler Server Overload / Queue Packed Modal State
+  const [isCompilerPackedModalOpen, setIsCompilerPackedModalOpen] = useState(false);
+  const [compilerPackedReason, setCompilerPackedReason] = useState<string | undefined>(undefined);
 
   const editorRef = useRef<any>(null);
   const runRevisionRef = useRef(0);
@@ -607,6 +613,14 @@ export default function TechnicalCodingWorkspacePage() {
         return;
       }
 
+      // Check if compiler backend was overloaded / queue packed instead of showing errors
+      if (result.isServerOverloaded || isCompilerOverloaded(result)) {
+        setCompilerPackedReason(result.serverOverloadReason || result.summaryMessage || 'Compiler server queue capacity reached.');
+        setIsCompilerPackedModalOpen(true);
+        toast.warning('⚡ The IDE compiler is currently packed. Please retry in a few seconds or switch to Python.');
+        return;
+      }
+
       setTestResults(result);
       if (typeof window !== 'undefined') {
         try {
@@ -661,7 +675,13 @@ export default function TechnicalCodingWorkspacePage() {
       }
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
-      toast.error(err?.message || 'Failed to communicate with compiler engine.');
+      if (isCompilerOverloaded(err)) {
+        setCompilerPackedReason(err?.message || 'High compiler queue congestion');
+        setIsCompilerPackedModalOpen(true);
+        toast.warning('⚡ The IDE compiler is currently packed. Please retry in a few seconds.');
+      } else {
+        toast.error(err?.message || 'Failed to communicate with compiler engine.');
+      }
     } finally {
       if (runRevisionRef.current === currentRevision) {
         setIsRunningTests(false);
@@ -687,9 +707,21 @@ export default function TechnicalCodingWorkspacePage() {
     setIsRunningCustom(true);
     try {
       const result = await codeExecutionService.execute(selectedLanguage, code, customStdin);
+      if (result.isServerOverloaded || isCompilerOverloaded(result)) {
+        setCompilerPackedReason(result.serverOverloadReason || 'Compiler sandbox queue delay.');
+        setIsCompilerPackedModalOpen(true);
+        toast.warning('⚡ The IDE compiler is currently packed. Please retry shortly.');
+        return;
+      }
       setCustomResult(result);
     } catch (e: any) {
-      toast.error('Failed to run custom input: ' + (e.message || 'Error'));
+      if (isCompilerOverloaded(e)) {
+        setCompilerPackedReason(e?.message);
+        setIsCompilerPackedModalOpen(true);
+        toast.warning('⚡ The IDE compiler is currently packed. Please retry in a moment.');
+      } else {
+        toast.error('Failed to run custom input: ' + (e.message || 'Error'));
+      }
     } finally {
       setIsRunningCustom(false);
     }
@@ -1619,6 +1651,16 @@ export default function TechnicalCodingWorkspacePage() {
         </section>
 
       </main>
+
+      {/* Compiler Queue Overload / High Traffic Modal */}
+      <CompilerOverloadedModal
+        isOpen={isCompilerPackedModalOpen}
+        onClose={() => setIsCompilerPackedModalOpen(false)}
+        onRetry={() => handleRunTests(lastRunIsSubmit)}
+        onSwitchLanguage={(lang) => handleLanguageChange(lang)}
+        currentLanguage={selectedLanguage}
+        reason={compilerPackedReason}
+      />
 
     </div>
   );

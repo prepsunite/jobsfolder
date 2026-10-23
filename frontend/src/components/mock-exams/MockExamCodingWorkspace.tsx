@@ -20,10 +20,12 @@ import {
   FileCode,
 } from 'lucide-react';
 import QuestionRichContent from '@/components/QuestionRichContent';
+import CompilerOverloadedModal from '@/components/technical/CompilerOverloadedModal';
 import type { StudentExamResponse } from '@/types/tpo';
 import {
   codeExecutionService,
   isTemplateOrEmptyCode,
+  isCompilerOverloaded,
   normalizeStdin,
   STARTER_TEMPLATES,
   LANGUAGE_LABELS,
@@ -128,6 +130,8 @@ export default function MockExamCodingWorkspace({
   const [copiedInput, setCopiedInput] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);
   const [testResults, setTestResults] = useState<TestCaseRunResult | null>(null);
+  const [isCompilerPackedModalOpen, setIsCompilerPackedModalOpen] = useState(false);
+  const [compilerPackedReason, setCompilerPackedReason] = useState<string | undefined>(undefined);
 
   const editorRef = useRef<any>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -395,6 +399,13 @@ export default function MockExamCodingWorkspace({
         return;
       }
 
+      // Circuit Breaker: If compiler is overloaded / queue packed, show popup instead of errors
+      if (result.isServerOverloaded || isCompilerOverloaded(result)) {
+        setCompilerPackedReason(result.serverOverloadReason || result.summaryMessage || 'Compiler server queue capacity reached.');
+        setIsCompilerPackedModalOpen(true);
+        return;
+      }
+
       setTestResults(result);
       setActiveTestTab(0);
 
@@ -402,6 +413,11 @@ export default function MockExamCodingWorkspace({
       onUpdateCode(capturedCode, capturedLang, result.passedCount, result.totalCount);
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
+      if (isCompilerOverloaded(err)) {
+        setCompilerPackedReason(err?.message || 'High compiler queue congestion');
+        setIsCompilerPackedModalOpen(true);
+        return;
+      }
       setTestResults({
         cases: (testCases || []).map((tc, idx) => ({
           input: tc.is_hidden ? `[Hidden Test Case ${idx + 1}]` : (tc.input || ''),
@@ -934,6 +950,16 @@ export default function MockExamCodingWorkspace({
           </button>
         </div>
       </div>
+
+      {/* Compiler Queue Overload / High Traffic Modal */}
+      <CompilerOverloadedModal
+        isOpen={isCompilerPackedModalOpen}
+        onClose={() => setIsCompilerPackedModalOpen(false)}
+        onRetry={() => handleRunTests()}
+        onSwitchLanguage={(lang) => handleLanguageChange(lang)}
+        currentLanguage={selectedLanguage}
+        reason={compilerPackedReason}
+      />
     </div>
   );
 }

@@ -36,6 +36,8 @@ export interface TestCaseRunResult {
   compileError?: string | null;
   runtimeError?: string | null;
   summaryMessage: string;
+  isServerOverloaded?: boolean;
+  serverOverloadReason?: string;
 }
 
 export interface ExecutionResult {
@@ -51,6 +53,8 @@ export interface ExecutionResult {
   isRuntimeError: boolean;
   isTimeLimitExceeded: boolean;
   errorMessage?: string;
+  isServerOverloaded?: boolean;
+  serverOverloadReason?: string;
 }
 
 // Judge0 Standard Language IDs
@@ -292,6 +296,58 @@ export {
 };
 
 /**
+ * Detects whether an execution error or failure is caused by backend/gateway congestion
+ * (queue saturation, timeout > 12s/30s, 429 rate limit, 503 service unavailable)
+ * rather than candidate code.
+ */
+export function isCompilerOverloaded(errOrResult: any): boolean {
+  if (!errOrResult) return false;
+  if (errOrResult.isServerOverloaded) return true;
+
+  const textToScan = [
+    typeof errOrResult === 'string' ? errOrResult : '',
+    errOrResult.message,
+    errOrResult.error,
+    errOrResult.compileError,
+    errOrResult.runtimeError,
+    errOrResult.summaryMessage,
+    errOrResult.errorMessage,
+    errOrResult.stderr,
+    ...(Array.isArray(errOrResult.cases)
+      ? errOrResult.cases.flatMap((c: any) => [c.actual, c.error, c.status])
+      : []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  // Exclude Pyodide client-side infinite loop (which is candidate logic)
+  if (textToScan.includes('time limit exceeded (> 4.0s)')) {
+    return false;
+  }
+
+  return (
+    textToScan.includes('execution timed out') ||
+    textToScan.includes('> 12s') ||
+    textToScan.includes('> 30s') ||
+    textToScan.includes('abort') ||
+    textToScan.includes('429') ||
+    textToScan.includes('too many requests') ||
+    textToScan.includes('rate limit') ||
+    textToScan.includes('503') ||
+    textToScan.includes('502') ||
+    textToScan.includes('504') ||
+    textToScan.includes('gateway error') ||
+    textToScan.includes('gateway timeout') ||
+    textToScan.includes('service unavailable') ||
+    textToScan.includes('queue is full') ||
+    textToScan.includes('queue full') ||
+    textToScan.includes('compiler engine unreachable') ||
+    textToScan.includes('compiler gateway error')
+  );
+}
+
+/**
  * Core Sandboxed Code Execution Service
  * Proxying all execution through /api/execute-code [P0-01]
  */
@@ -387,7 +443,8 @@ export const codeExecutionService = {
     } catch (err: any) {
       clearTimeout(timeoutId);
       const isAbort = err.name === 'AbortError';
-      const errMsg = isAbort ? 'Execution timed out (> 30s).' : (err.message || 'Execution error.');
+      const isOverload = isAbort || isCompilerOverloaded(err);
+      const errMsg = isAbort ? 'Execution timed out (> 30s) due to high compiler queue traffic.' : (err.message || 'Execution error.');
       return {
         statusId: 0,
         statusDescription: isAbort ? 'Time Limit Exceeded' : 'Execution Error',
@@ -401,6 +458,8 @@ export const codeExecutionService = {
         isRuntimeError: true,
         isTimeLimitExceeded: isAbort,
         errorMessage: errMsg,
+        isServerOverloaded: isOverload,
+        serverOverloadReason: isOverload ? 'Compiler server queue traffic surge.' : undefined,
       };
     }
   },
@@ -504,6 +563,30 @@ export const codeExecutionService = {
 
     // Run first case to check compilation
     const firstEvaluated = await evaluateSingle(testCases[0], 0);
+
+    // Immediate Circuit Breaker if compiler is overloaded / timed out
+    if (isCompilerOverloaded(firstEvaluated.error || firstEvaluated.actual)) {
+      return {
+        cases: testCases.map((tc, idx) => ({
+          input: tc.is_hidden ? `[Hidden Test Case ${idx + 1}]` : (tc.input || ''),
+          expected: tc.is_hidden ? '[Hidden Expected Output]' : normalizeOutput(tc.expected_output || tc.output || ''),
+          actual: 'Execution paused: The IDE compiler is currently packed due to high traffic.',
+          passed: false,
+          status: 'SKIPPED',
+          timeMs: 0,
+          is_hidden: Boolean(tc.is_hidden),
+        })),
+        passedCount: 0,
+        totalCount: testCases.length,
+        isTemplateOrEmpty: false,
+        compileError: null,
+        runtimeError: null,
+        isServerOverloaded: true,
+        serverOverloadReason: firstEvaluated.error || 'Compiler servers experiencing peak queue demand.',
+        summaryMessage: 'The IDE compiler is currently packed due to high traffic surge.',
+      };
+    }
+
     evaluatedCases.push(firstEvaluated);
 
     if (firstEvaluated.status === 'COMPILATION_ERROR') {
@@ -758,6 +841,8 @@ export const codeExecutionService = {
           error: c.error,
         }));
 
+        const hasOverload = isCompilerOverloaded(data) || cases.some(c => isCompilerOverloaded(c.actual || c.error));
+
         return {
           cases,
           passedCount: data.passedCount || 0,
@@ -765,9 +850,13 @@ export const codeExecutionService = {
           isTemplateOrEmpty: false,
           compileError: data.compileError || null,
           runtimeError: data.status === 'RUNTIME_ERROR' ? 'Runtime error occurred.' : null,
-          summaryMessage: data.compileError
-            ? 'Compilation Error: Inspect compiler diagnostic output.'
-            : `${data.passedCount}/${data.totalCount} Test Cases Passed`,
+          isServerOverloaded: hasOverload,
+          serverOverloadReason: hasOverload ? 'Compiler server queue traffic surge.' : undefined,
+          summaryMessage: hasOverload
+            ? 'The IDE compiler is currently packed due to high traffic surge.'
+            : (data.compileError
+                ? 'Compilation Error: Inspect compiler diagnostic output.'
+                : `${data.passedCount}/${data.totalCount} Test Cases Passed`),
         };
       }
       console.warn(`[codeExecutionService] /api/execute-code proxy returned ${response.status}. Using direct Judge0 fallback.`);
@@ -790,7 +879,7 @@ export const codeExecutionService = {
     language: string,
     sourceCode: string,
     customStdin: string
-  ): Promise<{ stdout: string; stderr: string; status: string; timeMs: number }> {
+  ): Promise<{ stdout: string; stderr: string; status: string; timeMs: number; isServerOverloaded?: boolean; serverOverloadReason?: string }> {
     const normLang = normalizeLanguageKey(language);
     const sanitizedStdin = normalizeStdin(customStdin);
 
@@ -834,11 +923,14 @@ export const codeExecutionService = {
     }
 
     const directRes = await this.executeDirectJudge0(language, sourceCode, customStdin);
+    const isOverloaded = directRes.isServerOverloaded || isCompilerOverloaded(directRes);
     return {
       stdout: directRes.stdout,
       stderr: directRes.stderr || directRes.compileOutput,
-      status: directRes.statusDescription,
+      status: isOverloaded ? 'Compiler Queue Busy' : directRes.statusDescription,
       timeMs: directRes.timeMs,
+      isServerOverloaded: isOverloaded,
+      serverOverloadReason: directRes.serverOverloadReason,
     };
   },
 };
