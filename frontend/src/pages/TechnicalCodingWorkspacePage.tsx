@@ -41,6 +41,7 @@ import QuestionRichContent from '@/components/QuestionRichContent';
 import HackerRankProblemView from '@/components/HackerRankProblemView';
 import {
   codeExecutionService,
+  pyodideExecutionService,
   STARTER_TEMPLATES,
   LANGUAGE_LABELS,
   normalizeStdin,
@@ -119,6 +120,13 @@ export default function TechnicalCodingWorkspacePage() {
   const [fontSize, setFontSize] = useState<number>(14);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Background Preload Pyodide WebAssembly engine when Python is active
+  useEffect(() => {
+    if (selectedLanguage === 'python') {
+      pyodideExecutionService.preload();
+    }
+  }, [selectedLanguage]);
 
   // Execution & Testing State
   const [isRunningTests, setIsRunningTests] = useState(false);
