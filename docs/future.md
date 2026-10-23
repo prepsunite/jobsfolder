@@ -533,3 +533,33 @@ This section defines the prioritized engineering backlog for the student coding 
 ---
 
 *Keep this file updated whenever adding new third-party services or infrastructure.*
+
+
+---
+
+## 15. 🧠 Campus Technical & Cognitive Aptitude Track (Hidden / Pending Seeding)
+
+### Summary & Status
+* **Status**: 🟡 **TEMPORARILY HIDDEN** from UI navigation (`frontend/src/components/Sidebar.tsx`).
+* **Reason**: All 6 topics currently display `0 Questions` on `/aptitude/technical-aptitude/topic/*` because questions have not yet been seeded into the database.
+* **Distinction**: Distinct from the IndiaBIX Core CS MCQs in Technical Hub (`/technical?track=mcqs`). This track is tailored for **Company Campus Online Assessments (OAs)** like **Accenture, Capgemini, AMCAT, CoCubes, and Cognizant**.
+
+### Directories & Key Files
+* **Sidebar Link**: `frontend/src/components/Sidebar.tsx` (commented out in `aptitudeCategories`)
+* **Category Definition**: `frontend/src/pages/AptitudePage.tsx` (`categoryTitles['technical-aptitude']`)
+* **Mock Exam Blueprints**: `frontend/src/services/mockExamBlueprint.service.ts`
+* **Topic Resolver**: `frontend/src/services/topicMap.ts`
+* **Target Table**: Supabase table `topic_questions` with `category_slug = 'technical-aptitude'`
+
+### The 6 Topics
+1. `attention-to-detail`: Attention to Detail & Visual Checking (Accenture/CoCubes alphanumeric & symbol error tests)
+2. `bitwise-operators`: Bitwise Operators & Logic (Accenture/Capgemini XOR/shift dry runs)
+3. `recursion-functions`: Recursion & Function Scope (Call stack tracing & static variable updates)
+4. `code-debugging-logic`: Code Debugging & Automata Fix (AMCAT/Cognizant 1-line syntax/logic bug fixes)
+5. `pseudocode-tracing`: Pseudocode & Variable Tracing (Nested loops & conditional dry runs)
+6. `cloud-networking-basics`: General Tech, OS & Cloud Basics (Cloud IaaS/PaaS, Git, virtualization, web fundamentals)
+
+### How to Restore
+1. Seed 20–50 questions per topic in Supabase table `topic_questions`.
+2. Uncomment `{ name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },` in `frontend/src/components/Sidebar.tsx`.
+3. Run `npm --prefix frontend run build` to verify.

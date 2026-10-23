@@ -121,7 +121,8 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'Verbal Reasoning', slug: 'verbal-reasoning', icon: GitMerge },
     { name: 'Verbal Ability', slug: 'verbal-ability', icon: MessageSquare },
     { name: 'Nonverbal Reasoning', slug: 'nonverbal-reasoning', icon: Compass },
-    { name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },
+    // Temporarily hidden from navigation until questions are seeded (see docs/future.md)
+    // { name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },
   ];
 
   const technicalTracks = [
