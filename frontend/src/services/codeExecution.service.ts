@@ -524,10 +524,16 @@ export const codeExecutionService = {
         });
       }
     } else if (testCases.length > 1) {
-      // Run remaining test cases concurrently
-      const remainingPromises = testCases.slice(1).map((tc, idx) => evaluateSingle(tc, idx + 1));
-      const remainingEvaluated = await Promise.all(remainingPromises);
-      evaluatedCases.push(...remainingEvaluated);
+      // Run remaining test cases in controlled concurrency chunks of 3 to avoid queue spikes
+      const remainingCases = testCases.slice(1);
+      const CHUNK_SIZE = 3;
+      for (let i = 0; i < remainingCases.length; i += CHUNK_SIZE) {
+        const chunk = remainingCases.slice(i, i + CHUNK_SIZE);
+        const chunkEvaluated = await Promise.all(
+          chunk.map((tc, idx) => evaluateSingle(tc, i + idx + 1))
+        );
+        evaluatedCases.push(...chunkEvaluated);
+      }
     }
 
     const passedCount = evaluatedCases.filter(c => c.passed).length;

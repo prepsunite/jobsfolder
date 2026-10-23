@@ -310,9 +310,9 @@ export default function TechnicalCodingWorkspacePage() {
       });
     });
 
-    // Fallback: If total cases < 8, synthesize until >= 8
+    // Fallback: If total cases < 5, synthesize until >= 5 high-yield cases
     let idx = cases.length + 1;
-    while (cases.length < 8 && sampleCases.length > 0) {
+    while (cases.length < 5 && sampleCases.length > 0) {
       const ref = sampleCases[(cases.length) % sampleCases.length];
       cases.push({
         input: ref.input,

@@ -430,18 +430,34 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No test cases configured for this problem.' });
     }
 
-    // ─── Phase 1A: Parallel Test Case Execution ──────────────────────────────
-    // All test cases fire simultaneously. For a student with 5 test cases:
-    //   BEFORE (sequential): 5 × ~3s = ~15s total
-    //   AFTER  (parallel):   max(3s, 3s, 3s, 3s, 3s) = ~3s total
-    //
-    // IMPORTANT: Compilation errors on test case #1 will still be detected
-    // correctly — we check all results after all have settled.
-    //
-    // Promise.allSettled never throws — individual failures are handled below.
-    const settledResults = await Promise.allSettled(
-      testCases.map((tc) => executeJudge0(normalizeStdin(tc.input || '')))
-    );
+    // ─── Phase 1A: Smart Fail-Fast & Chunked Execution (Scale-Optimized) ─────
+    // Step 1: Run Test Case 1 first as a compilation and syntax sanity check.
+    // If compilation fails, we skip remaining cases immediately, saving up to 7
+    // redundant compiler runs per broken code submission (huge for concurrent traffic).
+    const firstSettled = (await Promise.allSettled([
+      executeJudge0(normalizeStdin(testCases[0].input || ''))
+    ]))[0];
+
+    const firstRunRes = settledToRunRes(firstSettled, testCases[0].input || '');
+    const isCompileError = firstRunRes.statusId === 6 || (firstRunRes.compileOutput && firstRunRes.compileOutput.trim().length > 0);
+
+    const settledResults = [firstSettled];
+
+    if (!isCompileError && testCases.length > 1) {
+      // Step 2: Execute remaining test cases in controlled concurrency chunks of 3.
+      // This prevents overloading the Judge0 worker queue during peak campus drives
+      // and eliminates the 12-second abort timeout.
+      const remainingCases = testCases.slice(1);
+      const CHUNK_SIZE = 3;
+
+      for (let i = 0; i < remainingCases.length; i += CHUNK_SIZE) {
+        const chunk = remainingCases.slice(i, i + CHUNK_SIZE);
+        const chunkSettled = await Promise.allSettled(
+          chunk.map((tc) => executeJudge0(normalizeStdin(tc.input || '')))
+        );
+        settledResults.push(...chunkSettled);
+      }
+    }
     // ─────────────────────────────────────────────────────────────────────────
 
     // 4. Process Results — Compile, Runtime, TLE, Pass/Fail logic preserved exactly
@@ -462,6 +478,20 @@ export default async function handler(req, res) {
         tc.expected ||
         ''
       );
+
+      // If compilation error occurred on case 1, mark remaining as skipped without executing
+      if (isCompileError && i > 0) {
+        evaluatedCases.push({
+          caseIndex: i + 1,
+          status: 'SKIPPED',
+          passed: false,
+          actual: 'Skipped due to compilation error.',
+          timeMs: 0,
+          memoryKb: 0,
+        });
+        continue;
+      }
+
       const runRes = settledToRunRes(settledResults[i], tc.input || '');
 
       maxRuntimeMs = Math.max(maxRuntimeMs, runRes.timeMs);
