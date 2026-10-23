@@ -32,7 +32,6 @@ import {
   Sparkles,
   BookOpen,
   FileCode,
-  Lock,
   LayoutGrid,
   List,
   GripHorizontal,
@@ -1428,21 +1427,6 @@ export default function TechnicalCodingWorkspacePage() {
                             >
                               Test case {idx}
                             </span>
-
-                            {/* Padlock Icon for Hidden/Edge Test Cases */}
-                            {c.is_hidden && (
-                              <Lock
-                                className={`w-3.5 h-3.5 ml-0.5 shrink-0 ${
-                                  isEvaluating
-                                    ? 'text-gray-400'
-                                    : isPassed
-                                    ? 'text-emerald-400'
-                                    : isFailed
-                                    ? 'text-rose-400'
-                                    : 'text-gray-500'
-                                }`}
-                              />
-                            )}
                           </button>
                         );
                       })}
@@ -1507,7 +1491,6 @@ export default function TechnicalCodingWorkspacePage() {
                               <Circle className="w-3.5 h-3.5 text-gray-500 shrink-0" />
                             )}
                             <span>{idx < sampleCases.length ? `Sample ${idx + 1}` : `Case ${idx + 1}`}</span>
-                            {c.is_hidden && <Lock className="w-3 h-3 text-amber-400/70 shrink-0" />}
                           </button>
                         );
                       })}
@@ -1557,7 +1540,7 @@ export default function TechnicalCodingWorkspacePage() {
                         </>
                       ) : (
                         <span className="text-gray-500">
-                          {displayGridCases[activeTestTab].is_hidden ? 'Private Edge Case' : `Sample Case #${activeTestTab + 1}`}
+                          {`Case #${activeTestTab + 1}`}
                         </span>
                       )}
                     </div>

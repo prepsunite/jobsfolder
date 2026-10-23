@@ -1199,6 +1199,8 @@ export default function TechnicalHubPage() {
                       className={`p-5 sm:p-6 rounded-xl border transition-all duration-300 space-y-4 shadow-xs relative ${
                         mcq.is_hidden
                           ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                          : isSolved
+                          ? 'bg-white dark:bg-[#141414] border-emerald-500/40 dark:border-emerald-500/40 bg-emerald-500/[0.02] hover:border-emerald-500/60 text-[#121417] dark:text-[#FFFFFF]'
                           : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/40 text-[#121417] dark:text-[#FFFFFF]'
                       } ${selectedItemIds.has(mcq.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                     >
@@ -1511,6 +1513,8 @@ export default function TechnicalHubPage() {
                       className={`p-5 sm:p-6 rounded-xl border transition-all duration-300 space-y-4 shadow-xs relative ${
                         problem.is_hidden
                           ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                          : isSolved
+                          ? 'bg-white dark:bg-[#141414] border-emerald-500/40 dark:border-emerald-500/40 bg-emerald-500/[0.02] hover:border-emerald-500/60 text-[#121417] dark:text-[#FFFFFF]'
                           : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] hover:border-neutral-400 dark:hover:border-neutral-600 text-[#121417] dark:text-[#FFFFFF]'
                       } ${selectedItemIds.has(problem.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                     >

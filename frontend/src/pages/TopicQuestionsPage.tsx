@@ -1099,6 +1099,8 @@ export default function TopicQuestionsPage() {
                   className={`p-5 rounded-xl border transition-all duration-300 shadow-sm hover:shadow-md space-y-3.5 relative ${
                     q.isHidden
                       ? 'opacity-70 border-dashed border-amber-500/50 bg-amber-500/5'
+                      : isSolved
+                      ? 'bg-white dark:bg-[#141414] border-emerald-500/40 dark:border-emerald-500/40 bg-emerald-500/[0.02] hover:border-emerald-500/60 text-[#121417] dark:text-[#FFFFFF]'
                       : 'bg-white dark:bg-[#141414] border-[#D1D5DB] dark:border-[#3A3A3A] hover:border-[#9CA3AF] dark:hover:border-[#555555] text-[#121417] dark:text-[#FFFFFF]'
                   } ${selectedQuestionIds.has(q.id) ? 'ring-2 ring-purple-500/50 border-purple-500 shadow-md' : ''}`}
                 >
