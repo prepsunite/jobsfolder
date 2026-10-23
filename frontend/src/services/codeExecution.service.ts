@@ -6,6 +6,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { pyodideExecutionService } from './pyodideExecution.service';
+import { cExecutionService } from './cExecution.service';
 
 export interface TestCaseInput {
   input: string;
@@ -293,6 +294,7 @@ export {
   normalizeStdin,
   compareOutputs,
   pyodideExecutionService,
+  cExecutionService,
 };
 
 /**
@@ -674,6 +676,30 @@ export const codeExecutionService = {
       }
     }
 
+    // Fast-path: Execute in-browser via C Engine for C11 ($0 server cost, ~20ms)
+    if (normLang === 'c') {
+      try {
+        const cRes = await cExecutionService.executeCustom(sourceCode, sanitizedStdin);
+        const isErr = Boolean(cRes.stderr && cRes.stderr.trim().length > 0);
+        return {
+          statusId: isErr ? 11 : 3,
+          statusDescription: cRes.status,
+          stdout: cRes.stdout || '',
+          stderr: cRes.stderr || '',
+          compileOutput: '',
+          timeMs: cRes.timeMs || 0,
+          memoryKb: 0,
+          isSuccess: !isErr && cRes.status === 'Accepted',
+          isCompileError: cRes.status === 'Compilation Error',
+          isRuntimeError: isErr || cRes.status === 'Runtime Error',
+          isTimeLimitExceeded: cRes.status === 'Time Limit Exceeded',
+          errorMessage: cRes.stderr || undefined,
+        };
+      } catch (cErr) {
+        console.warn('[codeExecutionService.execute] C in-browser failed, falling back to serverless proxy:', cErr);
+      }
+    }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
@@ -800,6 +826,16 @@ export const codeExecutionService = {
       }
     }
 
+    // 3. High-speed In-Browser Engine for C ($0 server cost, ~20ms latency)
+    if (language === 'c' && testCases && testCases.length > 0) {
+      try {
+        const cResult = await cExecutionService.runTestCases(sourceCode, testCases);
+        return cResult;
+      } catch (cErr) {
+        console.warn('[codeExecutionService] In-browser C execution failed, falling back to serverless proxy:', cErr);
+      }
+    }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
@@ -892,6 +928,21 @@ export const codeExecutionService = {
         };
       } catch (pyodideErr) {
         console.warn('[codeExecutionService.executeCustom] Pyodide failed, falling back to serverless proxy:', pyodideErr);
+      }
+    }
+
+    // Fast-path: Execute in-browser via C Engine for C11 ($0 server cost, ~20ms)
+    if (normLang === 'c') {
+      try {
+        const cRes = await cExecutionService.executeCustom(sourceCode, sanitizedStdin);
+        return {
+          stdout: cRes.stdout,
+          stderr: cRes.stderr || '',
+          status: cRes.status,
+          timeMs: cRes.timeMs,
+        };
+      } catch (cErr) {
+        console.warn('[codeExecutionService.executeCustom] In-browser C failed, falling back to serverless proxy:', cErr);
       }
     }
 

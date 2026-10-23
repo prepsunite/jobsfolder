@@ -43,6 +43,7 @@ import CompilerOverloadedModal from '@/components/technical/CompilerOverloadedMo
 import {
   codeExecutionService,
   pyodideExecutionService,
+  cExecutionService,
   isCompilerOverloaded,
   STARTER_TEMPLATES,
   LANGUAGE_LABELS,
@@ -123,10 +124,12 @@ export default function TechnicalCodingWorkspacePage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Background Preload Pyodide WebAssembly engine when Python is active
+  // Background Preload In-Browser engines when Python or C is active
   useEffect(() => {
     if (selectedLanguage === 'python') {
       pyodideExecutionService.preload();
+    } else if (selectedLanguage === 'c') {
+      cExecutionService.preload();
     }
   }, [selectedLanguage]);
 

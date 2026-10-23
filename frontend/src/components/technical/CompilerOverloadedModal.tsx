@@ -47,7 +47,7 @@ export default function CompilerOverloadedModal({
 
   if (!isOpen) return null;
 
-  const isPython = currentLanguage.toLowerCase().includes('python');
+  const isInstantLanguage = currentLanguage.toLowerCase().includes('python') || currentLanguage.toLowerCase() === 'c';
 
   const handleRetryClick = () => {
     setIsRetrying(true);
@@ -59,10 +59,10 @@ export default function CompilerOverloadedModal({
     }
   };
 
-  const handleSwitchToPython = () => {
+  const handleSwitchToLanguage = (lang: string) => {
     onClose();
     if (onSwitchLanguage) {
-      onSwitchLanguage('python');
+      onSwitchLanguage(lang);
     }
   };
 
@@ -117,38 +117,67 @@ export default function CompilerOverloadedModal({
 
         {/* Recommended Actions */}
         <div className="space-y-3">
-          {!isPython ? (
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/30 border border-blue-500/30 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                  <Zap className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <span>Switch to Python 3</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 font-mono font-normal">
-                      Instant Wasm
-                    </span>
+          {!isInstantLanguage ? (
+            <div className="space-y-2.5">
+              <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/30 border border-blue-500/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                    <Zap className="w-5 h-5 text-blue-400" />
                   </div>
-                  <p className="text-[11px] text-gray-300">
-                    Runs 100% inside your browser tab with <strong>zero server queue wait (~20ms)</strong>.
-                  </p>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>Switch to Python 3</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 font-mono font-normal">
+                        Instant Wasm (~20ms)
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-300">
+                      Zero server queue wait — runs directly inside your browser.
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitchToLanguage('python')}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
+                >
+                  Switch
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleSwitchToPython}
-                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
-              >
-                Switch
-              </button>
+              <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 to-teal-950/30 border border-emerald-500/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Zap className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>Switch to C11 (GCC)</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-300 font-mono font-normal">
+                        Instant Engine (~20ms)
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-300">
+                      Standard C input/output (`scanf`, `printf`, pointers, arrays) runs in-browser.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitchToLanguage('c')}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
+                >
+                  Switch
+                </button>
+              </div>
             </div>
           ) : (
             <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/20 flex items-center gap-2.5 text-xs text-emerald-300">
               <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>
-                Tip: Pyodide runs in-browser. If this was a backend fallback, re-running now will attempt direct in-browser Wasm execution.
+                Tip: Your selected language supports instant in-browser execution. If this was a backend fallback, re-running now will attempt direct client-side execution.
               </span>
             </div>
           )}
