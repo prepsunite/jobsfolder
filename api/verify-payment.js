@@ -62,7 +62,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const cleanEnv = (val) => (val ? String(val).replace(/^["']|["']$/g, '').trim() : '');
+
+    const key_secret = cleanEnv(process.env.RAZORPAY_KEY_SECRET);
     if (!key_secret) {
       console.error('[api/verify-payment] RAZORPAY_KEY_SECRET configuration missing on server.');
       return res.status(500).json({ success: false, error: 'Payment gateway configuration missing on server.' });
@@ -81,8 +83,8 @@ export default async function handler(req, res) {
     }
 
     // 2. Initialize Supabase Admin Client
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = cleanEnv(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+    const supabaseServiceKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY);
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('[api/verify-payment] Supabase service role credentials not configured.');

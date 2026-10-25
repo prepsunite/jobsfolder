@@ -50,13 +50,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid currency. Only INR transactions are accepted.' });
     }
 
+    // Helper to sanitize env variables (strips trailing whitespace, newlines, quotes from copy-paste)
+    const cleanEnv = (val) => (val ? String(val).replace(/^["']|["']$/g, '').trim() : '');
+
     // 2. Initialize Supabase Admin Client
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = cleanEnv(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+    const supabaseServiceKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY);
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('[api/create-order] Supabase service role credentials not configured.');
-      return res.status(500).json({ error: 'Database service configuration missing on server.' });
+      return res.status(500).json({
+        error: 'Database service configuration missing on server.',
+        detail: `Missing: ${[!supabaseUrl && 'SUPABASE_URL', !supabaseServiceKey && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean).join(', ')}`,
+      });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
@@ -107,12 +113,15 @@ export default async function handler(req, res) {
     const finalAmountINR = serverExpectedPrice;
     const amountPaise = Math.round(finalAmountINR * 100);
 
-    const key_id = process.env.RAZORPAY_KEY_ID;
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_id = cleanEnv(process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID);
+    const key_secret = cleanEnv(process.env.RAZORPAY_KEY_SECRET);
 
     if (!key_id || !key_secret) {
       console.error('[api/create-order] Payment gateway credentials not configured on server.');
-      return res.status(500).json({ error: 'Payment gateway credentials not configured on server.' });
+      return res.status(500).json({
+        error: 'Payment gateway credentials not configured on server.',
+        detail: `Missing: ${[!key_id && 'RAZORPAY_KEY_ID', !key_secret && 'RAZORPAY_KEY_SECRET'].filter(Boolean).join(', ')}`,
+      });
     }
 
     const razorpay = new Razorpay({ key_id, key_secret });
@@ -147,7 +156,10 @@ export default async function handler(req, res) {
     if (ledgerError) {
       console.error('[api/create-order] Failed to record pre-order ledger:', ledgerError.message);
       // Fail closed to prevent untracked orders
-      return res.status(500).json({ error: 'Failed to record pre-order in payment ledger.' });
+      return res.status(500).json({
+        error: 'Failed to record pre-order in payment ledger.',
+        detail: ledgerError.message,
+      });
     }
 
     return res.status(200).json({
@@ -157,14 +169,16 @@ export default async function handler(req, res) {
       itemType: normalizedItemType,
     });
   } catch (error) {
-    console.error('[api/create-order] Error creating order:', error?.message || 'Unknown error', {
-      stack: error?.stack,
-      statusCode: error?.statusCode,
-      error: error?.error,
-    });
+    const errorDescription =
+      error?.error?.description ||
+      error?.description ||
+      error?.message ||
+      (typeof error === 'object' ? JSON.stringify(error) : String(error));
+
+    console.error('[api/create-order] Error creating order:', errorDescription, error);
     return res.status(500).json({
       error: 'Failed to create payment order',
-      detail: error?.message || 'Unknown error',
+      detail: errorDescription,
     });
   }
 }

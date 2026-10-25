@@ -77,7 +77,10 @@ export default function PaywallModal({
       });
 
       const orderData = await res.json();
-      if (!res.ok) throw new Error(orderData.error || 'Failed to create order');
+      if (!res.ok) {
+        const errorMsg = orderData.detail ? `${orderData.error || 'Failed to create order'} (${orderData.detail})` : (orderData.error || 'Failed to create order');
+        throw new Error(errorMsg);
+      }
 
       // 2. Open Razorpay checkout if key is configured
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
