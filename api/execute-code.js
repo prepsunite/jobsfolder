@@ -398,9 +398,7 @@ export default async function handler(req, res) {
     let testCases = [];
 
     if (Array.isArray(clientTestCases) && clientTestCases.length > 0) {
-      testCases = isSubmit
-        ? clientTestCases
-        : clientTestCases.filter(tc => !tc.is_hidden);
+      testCases = clientTestCases;
     }
 
     if (testCases.length === 0 && problemId && supabaseAdmin) {
@@ -419,7 +417,7 @@ export default async function handler(req, res) {
             ? problem.hidden_test_cases
             : (Array.isArray(problem.test_cases) ? problem.test_cases.filter(tc => tc.is_hidden) : []);
 
-          testCases = isSubmit ? [...sampleList, ...hiddenList] : sampleList;
+          testCases = [...sampleList, ...hiddenList];
         }
       } catch (dbErr) {
         console.warn('[api/execute-code] DB problem lookup error:', dbErr?.message);
@@ -521,7 +519,6 @@ export default async function handler(req, res) {
           passed: false,
           timeMs: runRes.timeMs,
         });
-        if (isSubmit) break;
         continue;
       }
 
@@ -535,7 +532,6 @@ export default async function handler(req, res) {
           error: runRes.stderr || 'Runtime error.',
           timeMs: runRes.timeMs,
         });
-        if (isSubmit) break;
         continue;
       }
 

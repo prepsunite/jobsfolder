@@ -22,6 +22,25 @@ interface CRunSingleResponse {
   isTimeLimitExceeded?: boolean;
 }
 
+export function isCEngineLimitation(stderr?: string): boolean {
+  if (!stderr) return false;
+  const s = stderr.toLowerCase();
+  return (
+    s.includes('does not exist') ||
+    s.includes('is not defined') ||
+    s.includes('no method') ||
+    s.includes('cannot read propert') ||
+    s.includes('parsing failure') ||
+    s.includes('unsupported') ||
+    s.includes('not implemented') ||
+    s.includes('ast') ||
+    s.includes('syntax error') ||
+    s.includes('malloc') ||
+    s.includes('struct') ||
+    s.includes('qsort')
+  );
+}
+
 class CExecutionService {
   private worker: Worker | null = null;
   private messageCounter = 0;
@@ -179,6 +198,11 @@ class CExecutionService {
     );
     const firstRes = await this.executeSingle(sourceCode, firstTc.input || '', 3500);
 
+    // If C code uses advanced features unsupported by in-browser interpreter, fail over to real GCC
+    if (isCEngineLimitation(firstRes.stderr)) {
+      throw new Error(`C_ENGINE_LIMITATION: ${firstRes.stderr}`);
+    }
+
     if (firstRes.isCompileError) {
       compileErrorEncountered = firstRes.stderr || 'Syntax error in C code.';
       evaluatedCases.push({
@@ -189,7 +213,7 @@ class CExecutionService {
         status: 'COMPILATION_ERROR',
         timeMs: firstRes.timeMs,
         error: compileErrorEncountered,
-        is_hidden: false,
+        is_hidden: Boolean(firstTc.is_hidden),
       });
 
       // Skip remaining test cases immediately
@@ -202,7 +226,7 @@ class CExecutionService {
           passed: false,
           status: 'SKIPPED',
           timeMs: 0,
-          is_hidden: false,
+          is_hidden: Boolean(tc.is_hidden),
         });
       }
 
@@ -232,7 +256,7 @@ class CExecutionService {
         : (firstRes.isRuntimeError ? 'RUNTIME_ERROR' : (firstMatch ? 'PASSED' : 'WRONG_ANSWER')),
       timeMs: firstRes.timeMs,
       error: firstRes.stderr || undefined,
-      is_hidden: false,
+      is_hidden: Boolean(firstTc.is_hidden),
     });
 
     if (firstRes.isRuntimeError && !firstRuntimeError) {
@@ -250,6 +274,10 @@ class CExecutionService {
 
       const res = await this.executeSingle(sourceCode, tc.input || '', 3500);
 
+      if (isCEngineLimitation(res.stderr)) {
+        throw new Error(`C_ENGINE_LIMITATION: ${res.stderr}`);
+      }
+
       if (res.isTimeLimitExceeded) {
         evaluatedCases.push({
           input: displayInput,
@@ -259,7 +287,7 @@ class CExecutionService {
           status: 'TIME_LIMIT_EXCEEDED',
           timeMs: res.timeMs,
           error: 'Time Limit Exceeded',
-          is_hidden: false,
+          is_hidden: Boolean(tc.is_hidden),
         });
         continue;
       }
@@ -274,7 +302,7 @@ class CExecutionService {
           status: 'RUNTIME_ERROR',
           timeMs: res.timeMs,
           error: res.stderr,
-          is_hidden: false,
+          is_hidden: Boolean(tc.is_hidden),
         });
         continue;
       }
@@ -289,7 +317,7 @@ class CExecutionService {
         passed: isMatch,
         status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
         timeMs: res.timeMs,
-        is_hidden: false,
+        is_hidden: Boolean(tc.is_hidden),
       });
     }
 
@@ -323,6 +351,9 @@ class CExecutionService {
     status: string;
   }> {
     const res = await this.executeSingle(sourceCode, customStdin, 3500);
+    if (isCEngineLimitation(res.stderr)) {
+      throw new Error(`C_ENGINE_LIMITATION: ${res.stderr}`);
+    }
     return {
       stdout: res.stdout,
       stderr: res.stderr,

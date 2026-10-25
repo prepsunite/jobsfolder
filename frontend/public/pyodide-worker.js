@@ -21,6 +21,10 @@ async function initPyodide() {
       // Inject standard Python stdin/stdout wrapper once
       const runnerCode = `
 import sys, io, traceback
+try:
+    sys.setrecursionlimit(50000)
+except Exception:
+    pass
 
 def _exec_candidate(code_str, stdin_str):
     old_stdin, old_stdout, old_stderr = sys.stdin, sys.stdout, sys.stderr
@@ -37,7 +41,10 @@ def _exec_candidate(code_str, stdin_str):
     except SyntaxError:
         is_compile = True
         err = traceback.format_exc()
-    except Exception:
+    except SystemExit as se:
+        if se.code not in (0, None):
+            err = f"SystemExit: {se.code}"
+    except BaseException:
         err = traceback.format_exc()
     finally:
         out = sys.stdout.getvalue()

@@ -583,8 +583,8 @@ export const codeExecutionService = {
     if (isCompilerOverloaded(firstEvaluated.error || firstEvaluated.actual)) {
       return {
         cases: testCases.map((tc, idx) => ({
-          input: tc.is_hidden ? `[Hidden Test Case ${idx + 1}]` : (tc.input || ''),
-          expected: tc.is_hidden ? '[Hidden Expected Output]' : normalizeOutput(tc.expected_output || tc.output || ''),
+          input: tc.input || `[Test Case ${idx + 1}]`,
+          expected: normalizeOutput(tc.expected_output || tc.output || tc.expectedOutput || tc.expected || ''),
           actual: 'Execution paused: The IDE compiler is currently packed due to high traffic.',
           passed: false,
           status: 'SKIPPED',

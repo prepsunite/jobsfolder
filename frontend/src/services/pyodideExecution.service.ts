@@ -205,7 +205,7 @@ class PyodideExecutionService {
         status: 'COMPILATION_ERROR',
         timeMs: firstRes.timeMs,
         error: compileErrorEncountered,
-        is_hidden: false,
+        is_hidden: Boolean(firstTc.is_hidden),
       });
 
       // Skip remaining test cases immediately
@@ -218,7 +218,7 @@ class PyodideExecutionService {
           passed: false,
           status: 'SKIPPED',
           timeMs: 0,
-          is_hidden: false,
+          is_hidden: Boolean(tc.is_hidden),
         });
       }
 
@@ -248,7 +248,7 @@ class PyodideExecutionService {
         : (firstRes.isRuntimeError ? 'RUNTIME_ERROR' : (firstMatch ? 'PASSED' : 'WRONG_ANSWER')),
       timeMs: firstRes.timeMs,
       error: firstRes.stderr || undefined,
-      is_hidden: false,
+      is_hidden: Boolean(firstTc.is_hidden),
     });
 
     if (firstRes.isRuntimeError && !firstRuntimeError) {
@@ -275,7 +275,7 @@ class PyodideExecutionService {
           status: 'TIME_LIMIT_EXCEEDED',
           timeMs: res.timeMs,
           error: 'Time Limit Exceeded',
-          is_hidden: false,
+          is_hidden: Boolean(tc.is_hidden),
         });
         continue;
       }
@@ -290,7 +290,7 @@ class PyodideExecutionService {
           status: 'RUNTIME_ERROR',
           timeMs: res.timeMs,
           error: res.stderr,
-          is_hidden: false,
+          is_hidden: Boolean(tc.is_hidden),
         });
         continue;
       }
@@ -305,7 +305,7 @@ class PyodideExecutionService {
         passed: isMatch,
         status: isMatch ? 'PASSED' : 'WRONG_ANSWER',
         timeMs: res.timeMs,
-        is_hidden: false,
+        is_hidden: Boolean(tc.is_hidden),
       });
     }
 
