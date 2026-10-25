@@ -3,9 +3,7 @@ import {
   Flame,
   X,
   RotateCcw,
-  Sparkles,
   Server,
-  Zap,
   Clock,
   CheckCircle2,
 } from 'lucide-react';
@@ -23,8 +21,6 @@ export default function CompilerOverloadedModal({
   isOpen,
   onClose,
   onRetry,
-  onSwitchLanguage,
-  currentLanguage = 'python',
   reason,
 }: CompilerOverloadedModalProps) {
   const [countdown, setCountdown] = useState<number>(5);
@@ -47,8 +43,6 @@ export default function CompilerOverloadedModal({
 
   if (!isOpen) return null;
 
-  const isInstantLanguage = currentLanguage.toLowerCase().includes('python') || currentLanguage.toLowerCase() === 'c';
-
   const handleRetryClick = () => {
     setIsRetrying(true);
     onClose();
@@ -56,13 +50,6 @@ export default function CompilerOverloadedModal({
       setTimeout(() => {
         onRetry();
       }, 100);
-    }
-  };
-
-  const handleSwitchToLanguage = (lang: string) => {
-    onClose();
-    if (onSwitchLanguage) {
-      onSwitchLanguage(lang);
     }
   };
 
@@ -98,7 +85,7 @@ export default function CompilerOverloadedModal({
 
           <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
             <strong className="text-emerald-400 font-semibold">Your code is completely fine!</strong>{' '}
-            Our backend sandbox servers are currently processing thousands of concurrent candidate test runs, causing temporary queue delays.
+            Our backend sandbox servers are currently processing a high volume of candidate test runs, causing temporary queue delays.
           </p>
         </div>
 
@@ -111,74 +98,6 @@ export default function CompilerOverloadedModal({
           {reason && (
             <div className="text-[11px] font-mono text-gray-400 bg-black/40 p-2 rounded border border-white/5 overflow-x-auto">
               Diagnostic: {reason}
-            </div>
-          )}
-        </div>
-
-        {/* Recommended Actions */}
-        <div className="space-y-3">
-          {!isInstantLanguage ? (
-            <div className="space-y-2.5">
-              <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/30 border border-blue-500/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                    <Zap className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span>Switch to Python 3</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 font-mono font-normal">
-                        Instant Wasm (~20ms)
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-300">
-                      Zero server queue wait — runs directly inside your browser.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleSwitchToLanguage('python')}
-                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
-                >
-                  Switch
-                </button>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 to-teal-950/30 border border-emerald-500/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                    <Zap className="w-5 h-5 text-emerald-400" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span>Switch to C11 (GCC)</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-300 font-mono font-normal">
-                        Instant Engine (~20ms)
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-300">
-                      Standard C input/output (`scanf`, `printf`, pointers, arrays) runs in-browser.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleSwitchToLanguage('c')}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
-                >
-                  Switch
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/20 flex items-center gap-2.5 text-xs text-emerald-300">
-              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>
-                Tip: Your selected language supports instant in-browser execution. If this was a backend fallback, re-running now will attempt direct client-side execution.
-              </span>
             </div>
           )}
         </div>

@@ -620,7 +620,7 @@ export default function TechnicalCodingWorkspacePage() {
       if (result.isServerOverloaded || isCompilerOverloaded(result)) {
         setCompilerPackedReason(result.serverOverloadReason || result.summaryMessage || 'Compiler server queue capacity reached.');
         setIsCompilerPackedModalOpen(true);
-        toast.warning('⚡ The IDE compiler is currently packed. Please retry in a few seconds or switch to Python.');
+        toast.warning('⚡ The IDE compiler is currently packed. Please retry in a few moments.');
         return;
       }
 
