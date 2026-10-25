@@ -175,10 +175,13 @@ export default async function handler(req, res) {
       error?.message ||
       (typeof error === 'object' ? JSON.stringify(error) : String(error));
 
+    const kid = cleanEnv(process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID);
+    const ksec = cleanEnv(process.env.RAZORPAY_KEY_SECRET);
+
     console.error('[api/create-order] Error creating order:', errorDescription, error);
     return res.status(500).json({
       error: 'Failed to create payment order',
-      detail: errorDescription,
+      detail: `${errorDescription} (KeyID len: ${kid?.length || 0}, Secret len: ${ksec?.length || 0})`,
     });
   }
 }
