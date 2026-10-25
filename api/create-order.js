@@ -157,7 +157,14 @@ export default async function handler(req, res) {
       itemType: normalizedItemType,
     });
   } catch (error) {
-    console.error('[api/create-order] Error creating order:', error?.message || 'Unknown error');
-    return res.status(500).json({ error: 'Failed to create payment order' });
+    console.error('[api/create-order] Error creating order:', error?.message || 'Unknown error', {
+      stack: error?.stack,
+      statusCode: error?.statusCode,
+      error: error?.error,
+    });
+    return res.status(500).json({
+      error: 'Failed to create payment order',
+      detail: error?.message || 'Unknown error',
+    });
   }
 }
