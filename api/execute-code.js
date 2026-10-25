@@ -220,7 +220,7 @@ async function executeOnHost(host, stdinText, sourceCode, langId) {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(12000), // 12s — covers 5s wall limit + network overhead
+    signal: AbortSignal.timeout(30000), // 30s — covers 5s wall limit + queue wait under heavy campus drive traffic
   });
 
   if (!judgeRes.ok) {

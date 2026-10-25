@@ -46,6 +46,7 @@ class PyodideExecutionService {
         }
 
         if (type === 'RESULT_SINGLE') {
+          this.isReady = true;
           const cb = this.pendingCallbacks.get(id);
           if (cb) {
             this.pendingCallbacks.delete(id);
@@ -61,12 +62,11 @@ class PyodideExecutionService {
       };
 
       this.worker.onerror = (err) => {
-        console.warn('[PyodideExecutionService] Worker error:', err);
-        // Clean up pending callbacks with error
+        console.warn('[PyodideExecutionService] Worker error (CDN or WebAssembly unavailable):', err);
         this.pendingCallbacks.forEach((cb) => {
           cb({
             stdout: '',
-            stderr: 'WebAssembly Python Worker error.',
+            stderr: 'CDN_LOAD_FAILURE: In-browser Python WebAssembly engine could not be loaded.',
             timeMs: 0,
             isCompileError: false,
             isRuntimeError: true,
@@ -103,7 +103,8 @@ class PyodideExecutionService {
   }
 
   /**
-   * Executes a single Python run with an isolated 4.0s timeout to protect against infinite loops.
+   * Executes a single Python run with an isolated timeout to protect against infinite loops.
+   * Allows up to 20s for the first-time CDN download of Pyodide, and strict 4.0s for code execution.
    */
   async executeSingle(
     sourceCode: string,
@@ -112,17 +113,25 @@ class PyodideExecutionService {
   ): Promise<PyodideRunSingleResponse> {
     const w = this.getWorker();
     const msgId = ++this.messageCounter;
+    const effectiveTimeout = this.isReady ? timeoutMs : Math.max(timeoutMs, 20000);
 
-    return new Promise<PyodideRunSingleResponse>((resolve) => {
+    return new Promise<PyodideRunSingleResponse>((resolve, reject) => {
       let isSettled = false;
 
-      // Timer to abort infinite loops (e.g. while True:)
+      // Timer to abort infinite loops (e.g. while True:) or CDN load failure
       const timer = setTimeout(() => {
         if (!isSettled) {
           isSettled = true;
           this.pendingCallbacks.delete(msgId);
-          // Terminate the frozen worker immediately and spawn fresh one for next run
+          const wasReady = this.isReady;
           this.terminateWorker();
+
+          if (!wasReady) {
+            // Cold start download timed out — throw so codeExecutionService immediately falls back to Judge0
+            reject(new Error('CDN_DOWNLOAD_TIMEOUT: Pyodide WebAssembly cold start took too long. Falling back to backend compiler.'));
+            return;
+          }
+
           resolve({
             stdout: '',
             stderr: 'Time Limit Exceeded (> 4.0s). Check for infinite loops or deep recursion.',
@@ -132,12 +141,16 @@ class PyodideExecutionService {
             isTimeLimitExceeded: true,
           });
         }
-      }, timeoutMs);
+      }, effectiveTimeout);
 
       this.pendingCallbacks.set(msgId, (res) => {
         if (!isSettled) {
           isSettled = true;
           clearTimeout(timer);
+          if (res.stderr && res.stderr.includes('CDN_LOAD_FAILURE')) {
+            reject(new Error(res.stderr));
+            return;
+          }
           resolve(res);
         }
       });

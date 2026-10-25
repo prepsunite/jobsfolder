@@ -299,8 +299,8 @@ export {
 
 /**
  * Detects whether an execution error or failure is caused by backend/gateway congestion
- * (queue saturation, timeout > 12s/30s, 429 rate limit, 503 service unavailable)
- * rather than candidate code.
+ * (queue saturation, timeout > 30s, 429 rate limit, 503 service unavailable)
+ * rather than candidate code bugs (e.g. division by zero, assertion aborts, syntax errors).
  */
 export function isCompilerOverloaded(errOrResult: any): boolean {
   if (!errOrResult) return false;
@@ -323,23 +323,37 @@ export function isCompilerOverloaded(errOrResult: any): boolean {
     .join(' ')
     .toLowerCase();
 
-  // Exclude Pyodide client-side infinite loop (which is candidate logic)
-  if (textToScan.includes('time limit exceeded (> 4.0s)')) {
+  // Exclude candidate-side logic errors and student runtime faults
+  if (
+    textToScan.includes('time limit exceeded (> 4.0s)') ||
+    textToScan.includes('time limit exceeded (> 3.5s)') ||
+    textToScan.includes('sigabrt') ||
+    textToScan.includes('core dumped') ||
+    textToScan.includes('segmentation fault') ||
+    textToScan.includes('assertion') ||
+    textToScan.includes('zerodivisionerror') ||
+    textToScan.includes('indexerror') ||
+    textToScan.includes('keyerror') ||
+    textToScan.includes('nullpointerexception') ||
+    textToScan.includes('arrayindexoutofboundsexception') ||
+    textToScan.includes('syntaxerror')
+  ) {
     return false;
   }
 
+  // Strictly check for genuine infrastructure / server / queue overload indicators
   return (
-    textToScan.includes('execution timed out') ||
-    textToScan.includes('> 12s') ||
-    textToScan.includes('> 30s') ||
-    textToScan.includes('abort') ||
-    textToScan.includes('429') ||
+    textToScan.includes('execution timed out (> 30s)') ||
+    textToScan.includes('due to high compiler queue traffic') ||
+    textToScan.includes('the operation was aborted') ||
+    textToScan.includes('aborted due to timeout') ||
+    textToScan.includes('status 429') ||
+    textToScan.includes('429 too many') ||
     textToScan.includes('too many requests') ||
     textToScan.includes('rate limit') ||
-    textToScan.includes('503') ||
-    textToScan.includes('502') ||
-    textToScan.includes('504') ||
-    textToScan.includes('gateway error') ||
+    textToScan.includes('status 503') ||
+    textToScan.includes('status 502') ||
+    textToScan.includes('status 504') ||
     textToScan.includes('gateway timeout') ||
     textToScan.includes('service unavailable') ||
     textToScan.includes('queue is full') ||
