@@ -175,10 +175,17 @@ export default async function handler(req, res) {
       error?.message ||
       (typeof error === 'object' ? JSON.stringify(error) : String(error));
 
-    console.error('[api/create-order] Error creating order:', errorDescription, error);
+    let diagnostic = errorDescription;
+    const rawKeyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID;
+    const rawSecret = process.env.RAZORPAY_KEY_SECRET;
+    if (errorDescription.includes('Authentication failed')) {
+      diagnostic += ` (Vercel has KeyID: "${rawKeyId ? rawKeyId.substring(0, 10) + '...' : 'MISSING'}" len=${rawKeyId?.length || 0}, Secret: "${rawSecret ? rawSecret.substring(0, 4) + '...' : 'MISSING'}" len=${rawSecret?.length || 0})`;
+    }
+
+    console.error('[api/create-order] Error creating order:', diagnostic, error);
     return res.status(500).json({
       error: 'Failed to create payment order',
-      detail: errorDescription,
+      detail: diagnostic,
     });
   }
 }
