@@ -7,6 +7,7 @@ import {
   type PaywallPricingTier,
 } from '@/constants/pricingData';
 import { useToast } from '@/contexts/ToastContext';
+import PaymentResultModal, { type PaymentResultData } from '@/components/PaymentResultModal';
 
 export type { PaywallOptionType };
 
@@ -32,6 +33,7 @@ export default function PaywallModal({
   const [selectedOption, setSelectedOption] = useState<PaywallOptionType>('MONTHLY');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<PaymentResultData | null>(null);
   const { toast } = useToast();
 
   if (!isOpen) return null;
@@ -94,6 +96,17 @@ export default function PaywallModal({
           order_id: orderData.orderId,
           prefill: { email },
           handler: async (response: any) => {
+            // Apple-style immediate processing sheet
+            setPaymentResult({
+              status: 'processing',
+              planName: description,
+              amount: amountINR,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              userEmail: email,
+              onClose: () => setPaymentResult(null),
+            });
+
             // 3. Verify payment server-side with session JWT
             const { data: sessionData } = await supabase.auth.getSession();
             const token = sessionData?.session?.access_token;
@@ -116,32 +129,88 @@ export default function PaywallModal({
 
             if (!verifyRes.ok) {
               const vd = await verifyRes.json().catch(() => ({}));
-              toast.error(`Payment verification failed: ${vd.error || 'Please contact support with Payment ID: ' + response.razorpay_payment_id}`);
               setIsProcessing(false);
+              setPaymentResult({
+                status: 'failed',
+                planName: description,
+                amount: amountINR,
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                userEmail: email,
+                errorMessage: vd.error || 'Payment signature verification failed. Please contact support.',
+                onRetry: () => {
+                  setPaymentResult(null);
+                  handleCheckout(option);
+                },
+                onClose: () => setPaymentResult(null),
+              });
               return;
             }
 
             // 4. Verification successful on Supabase database
             setIsProcessing(false);
-            setPaymentSuccess(true);
-            toast.success('Payment verified! Paper unlocked.');
-            setTimeout(() => {
-              setPaymentSuccess(false);
-              onUnlocked();
-              onClose();
-            }, 1200);
+            setPaymentResult({
+              status: 'success',
+              planName: description,
+              amount: amountINR,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              userEmail: email,
+              onClose: () => {
+                setPaymentResult(null);
+                onUnlocked();
+                onClose();
+              },
+            });
           },
           modal: { ondismiss: () => setIsProcessing(false) },
         };
         const rzp = new (window as any).Razorpay(options);
+
+        rzp.on('payment.failed', function (failureRes: any) {
+          setIsProcessing(false);
+          setPaymentResult({
+            status: 'failed',
+            planName: description,
+            amount: amountINR,
+            orderId: orderData.orderId,
+            paymentId: failureRes.error?.metadata?.payment_id,
+            userEmail: email,
+            errorMessage: failureRes.error?.description || 'Your payment was declined or cancelled. No funds were debited.',
+            onRetry: () => {
+              setPaymentResult(null);
+              handleCheckout(option);
+            },
+            onClose: () => setPaymentResult(null),
+          });
+        });
+
         rzp.open();
       } else {
         // Dev/staging fallback — shown only when Razorpay key is NOT configured
-        toast.info(`[Dev Mode] Order created: ${orderData.orderId}\nConfigure VITE_RAZORPAY_KEY_ID to enable live payments.`);
+        setPaymentResult({
+          status: 'failed',
+          planName: description,
+          amount: amountINR,
+          userEmail: email,
+          errorMessage: `[Preview Mode] Order created: ${orderData.orderId}`,
+          onClose: () => setPaymentResult(null),
+        });
         setIsProcessing(false);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Payment initiation failed. Please try again.');
+      setPaymentResult({
+        status: 'failed',
+        planName: description,
+        amount: amountINR,
+        userEmail: email,
+        errorMessage: err.message || 'Payment initiation failed. Please try again.',
+        onRetry: () => {
+          setPaymentResult(null);
+          handleCheckout(option);
+        },
+        onClose: () => setPaymentResult(null),
+      });
       setIsProcessing(false);
     }
   };
@@ -305,6 +374,9 @@ export default function PaywallModal({
           </div>
         )}
       </div>
+
+      {/* Apple-grade payment result popup */}
+      {paymentResult && <PaymentResultModal {...paymentResult} />}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { examService, formatExamDisplayName, isExamPaywalled, type ExamWithCompany } from '@/services/exam.service';
+import PaymentResultModal, { type PaymentResultData } from '@/components/PaymentResultModal';
 
 type BillingDuration = '1M' | '6M' | '1Y';
 
@@ -28,6 +29,7 @@ export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [selectedExamId, setSelectedExamId] = useState<string>('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [paymentModal, setPaymentModal] = useState<PaymentResultData | null>(null);
   const [showComparison, setShowComparison] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
@@ -223,15 +225,28 @@ export default function PricingPage() {
           ULTRA_1Y: 'Jobsfolder Ultra 1-Year Pass (Unlimited Mocks - ₹1,799)',
         };
 
+        const readablePlan = planDescriptions[planType] || `PrepUnite Pass`;
+
         const options = {
           key: razorpayKey,
           amount: orderData.amount,
           currency: orderData.currency || 'INR',
           name: 'PrepUnite / Jobsfolder',
-          description: planDescriptions[planType] || `PrepUnite Pass`,
+          description: readablePlan,
           order_id: orderData.orderId,
           prefill: { email: userEmail },
           handler: async function (response: any) {
+            // Apple-style immediate indeterminate authorizing sheet
+            setPaymentModal({
+              status: 'processing',
+              planName: readablePlan,
+              amount,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              userEmail,
+              onClose: () => setPaymentModal(null),
+            });
+
             // Get session token for secure server verification
             const { data: sessionData } = await supabase.auth.getSession();
             const token = sessionData?.session?.access_token;
@@ -254,39 +269,95 @@ export default function PricingPage() {
 
             if (!verifyRes.ok) {
               const verifyData = await verifyRes.json().catch(() => ({}));
-              setNotification({
-                type: 'error',
-                message: `Payment verification failed: ${verifyData.error || 'Please contact support with Payment ID: ' + response.razorpay_payment_id}`,
+              setPaymentModal({
+                status: 'failed',
+                planName: readablePlan,
+                amount,
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                userEmail,
+                errorMessage: verifyData.error || 'Payment signature could not be verified by the server. Please contact support.',
+                onRetry: () => {
+                  setPaymentModal(null);
+                  handleBuy(planType, amount, examId);
+                },
+                onClose: () => setPaymentModal(null),
               });
               return;
             }
 
-            setNotification({
-              type: 'success',
-              message: 'Payment Verified! Your pass has been securely activated. Redirecting...',
+            // Successfully Verified on PostgreSQL Server
+            const targetNextRoute = planType.startsWith('PRO') || planType.startsWith('ULTRA')
+              ? '/student/exams'
+              : targetExamId
+              ? `/companies?examId=${targetExamId}`
+              : '/companies';
+
+            setPaymentModal({
+              status: 'success',
+              planName: readablePlan,
+              amount,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              userEmail,
+              nextRoute: targetNextRoute,
+              onClose: () => {
+                setPaymentModal(null);
+                window.location.href = targetNextRoute;
+              },
             });
-            setTimeout(() => {
-              if (planType.startsWith('PRO') || planType.startsWith('ULTRA')) {
-                window.location.href = '/student/exams';
-              } else {
-                window.location.href = targetExamId ? `/companies?examId=${targetExamId}` : '/companies';
-              }
-            }, 1500);
+          },
+          modal: {
+            ondismiss: function () {
+              setLoadingPlan(null);
+            },
           },
         };
 
         const rzp = new (window as any).Razorpay(options);
+
+        // Catch payment failures from bank or user cancellation
+        rzp.on('payment.failed', function (failureRes: any) {
+          setLoadingPlan(null);
+          setPaymentModal({
+            status: 'failed',
+            planName: readablePlan,
+            amount,
+            orderId: orderData.orderId,
+            paymentId: failureRes.error?.metadata?.payment_id,
+            userEmail,
+            errorMessage: failureRes.error?.description || 'Your payment was declined or cancelled by your bank. No money was deducted.',
+            onRetry: () => {
+              setPaymentModal(null);
+              handleBuy(planType, amount, examId);
+            },
+            onClose: () => setPaymentModal(null),
+          });
+        });
+
         rzp.open();
       } else {
-        setNotification({
-          type: 'info',
-          message: `Order Created: ${orderData.orderId}. Razorpay payment gateway is running in preview mode.`,
+        setPaymentModal({
+          status: 'failed',
+          planName: 'PrepUnite Pass',
+          amount,
+          userEmail,
+          errorMessage: `Payment gateway preview mode. Order ID: ${orderData.orderId}`,
+          onClose: () => setPaymentModal(null),
         });
       }
     } catch (err: any) {
-      setNotification({
-        type: 'error',
-        message: err.message || 'Payment initiation failed. Please try again.',
+      setPaymentModal({
+        status: 'failed',
+        planName: 'PrepUnite Pass',
+        amount,
+        userEmail: user?.email,
+        errorMessage: err.message || 'Payment initiation failed. Please try again.',
+        onRetry: () => {
+          setPaymentModal(null);
+          handleBuy(planType, amount, examId);
+        },
+        onClose: () => setPaymentModal(null),
       });
     } finally {
       setLoadingPlan(null);
@@ -815,6 +886,9 @@ export default function PricingPage() {
         <ShieldCheck className="w-4 h-4 text-[#FD4A32]" />
         <span>Secure 256-bit Razorpay Checkout • Instant Access Activation • DPDP Act 2023 Compliant</span>
       </div>
+
+      {/* Apple-Grade Payment Feedback Modal */}
+      {paymentModal && <PaymentResultModal {...paymentModal} />}
     </div>
   );
 }
