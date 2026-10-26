@@ -30,7 +30,7 @@ export const PAYWALL_PRICING_TIERS: PaywallPricingTier[] = [
   {
     id: 'MONTHLY',
     title: 'Pro Monthly All-Access Pass',
-    subtitle: '30 Days 100% Ad-Free access to ALL 50+ company papers & 5 mock exams',
+    subtitle: '30 Days 100% Ad-Free access to 50+ placement archives & 5 mock exams',
     priceDisplay: '₹129',
     amountINR: 129,
     durationLabel: '/ 30 Days',

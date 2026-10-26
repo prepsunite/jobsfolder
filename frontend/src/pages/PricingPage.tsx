@@ -391,7 +391,7 @@ export default function PricingPage() {
     },
     {
       q: 'What is the main difference between Pro and Ultra?',
-      a: 'Both Pro and Ultra unlock complete access to all 50+ company past papers, OA question banks, and code solutions. The difference is the mock test quota: Pro includes 5 blueprint mock exams per cycle for targeted practice, while Ultra gives you 100% UNLIMITED blueprint mock exams across every company test pattern.',
+      a: 'Both Pro and Ultra unlock complete access to 50+ placement paper archives, OA question banks, and verified code solutions across top campus recruiters. The difference is the mock test quota: Pro includes 5 blueprint mock exams per cycle for targeted practice, while Ultra gives you 100% UNLIMITED blueprint mock exams across every company test pattern.',
     },
     {
       q: 'Are Pro and Ultra plans ad-free?',
@@ -526,7 +526,7 @@ export default function PricingPage() {
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
-                <span>50+ company recruitment overviews & test patterns</span>
+                <span>50+ placement drive archives & test patterns</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0" />
@@ -596,7 +596,7 @@ export default function PricingPage() {
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
-                <span className="text-[#121417] dark:text-white font-semibold"><strong>All 50+ company exam question papers & archives</strong></span>
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>50+ placement paper archives & question banks</strong></span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
@@ -647,7 +647,7 @@ export default function PricingPage() {
                 <Sparkles className="w-4 h-4 text-[#FD4A32]" />
               </h3>
               <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
-                Unrestricted practice across all companies + complete 50+ past archives.
+                Unrestricted practice across all recruiters + complete 50+ past drive archives.
               </p>
             </div>
 
@@ -673,7 +673,7 @@ export default function PricingPage() {
             </div>
 
             <div className="py-2 px-3 rounded-lg bg-[#FD4A32]/10 text-[11px] font-bold text-[#FD4A32] border border-[#FD4A32]/25">
-              🚀 <strong>Unlimited Mock Exams</strong> + Full 50+ Company Archives
+              🚀 <strong>Unlimited Mock Exams</strong> + 50+ Placement Paper Archives
             </div>
 
             <ul className="space-y-2.5 text-xs text-[#495057] dark:text-[#999999] pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
@@ -687,7 +687,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
-                <span className="text-[#121417] dark:text-white font-semibold"><strong>Unlimited access to all 50+ company archives</strong></span>
+                <span className="text-[#121417] dark:text-white font-semibold"><strong>Unlimited access to 50+ placement paper archives</strong></span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#FD4A32] shrink-0" />
@@ -838,7 +838,7 @@ export default function PricingPage() {
                   <td className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">✓ In Scorecard & Archives</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">All 50+ Company Question Papers & Archives</td>
+                  <td className="py-3 px-4 font-medium text-[#121417] dark:text-white">50+ Placement Paper Archives & Question Banks</td>
                   <td className="py-3 px-4 text-center text-[#868E96]">Overview only</td>
                   <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ Full 50+ Archives Unlocked</td>
                   <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">✓ Full 50+ Archives Unlocked</td>
