@@ -1570,9 +1570,39 @@ export default function AdminDashboardPage() {
                     <span className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] block uppercase tracking-wider">
                       Message Content:
                     </span>
-                    <p className="text-xs text-[#121417] dark:text-[#FFFFFF] font-sans whitespace-pre-wrap leading-relaxed">
-                      {msg.message}
-                    </p>
+                    {(() => {
+                      const urlMatch = msg.message.match(/https?:\/\/[^\s]+(?:\/public_assets\/[^\s]+|\.png|\.jpg|\.jpeg|\.webp|\.gif)/i);
+                      const cleanText = urlMatch ? msg.message.replace(/📷 Attached Screenshot(?: \/ Proof)?:\s*https?:\/\/[^\s]+/i, '').trim() : msg.message;
+                      return (
+                        <div className="space-y-2">
+                          <p className="text-xs text-[#121417] dark:text-[#FFFFFF] font-sans whitespace-pre-wrap leading-relaxed">
+                            {cleanText}
+                          </p>
+                          {urlMatch && (
+                            <div className="pt-1.5 border-t border-[#E9ECEF]/60 dark:border-[#242424]/60">
+                              <span className="text-[9px] font-display font-bold text-[#FD4A32] block uppercase tracking-wider mb-1">
+                                Attached Screenshot / Evidence:
+                              </span>
+                              <a
+                                href={urlMatch[0]}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-block group relative rounded-md overflow-hidden border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#FD4A32] transition-colors"
+                              >
+                                <img
+                                  src={urlMatch[0]}
+                                  alt="Attachment"
+                                  className="max-h-56 rounded object-contain bg-black/5 dark:bg-white/5"
+                                />
+                                <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/80 text-white flex items-center gap-1 group-hover:bg-[#FD4A32] group-hover:text-black transition-colors">
+                                  View Full Image ↗
+                                </span>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle, ShieldCheck, Loader2, ShieldAlert } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle, ShieldCheck, Loader2, ShieldAlert, Paperclip, Image as ImageIcon, X, ExternalLink } from 'lucide-react';
 import { feedbackService } from '@/services/feedback.service';
 import { rateLimiter, type RateLimitStatus } from '@/utils/rateLimiter';
 
@@ -9,6 +9,15 @@ export default function ContactPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState(''); // Anti-bot honeypot trap
   const [rateStatus, setRateStatus] = useState<RateLimitStatus>(() => rateLimiter.check('contact_message'));
+
+  // Attachment state (picture/screenshot)
+  const [attachment, setAttachment] = useState<{
+    file: File;
+    previewUrl: string;
+    base64: string;
+  } | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -22,11 +31,58 @@ export default function ContactPage() {
     setRateStatus(rateLimiter.check('contact_message'));
   }, [submitted]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAttachmentError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate size (max 4.5 MB)
+    if (file.size > 4.5 * 1024 * 1024) {
+      setAttachmentError('File is too large. Maximum image size is 4.5 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Validate type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      setAttachmentError('Unsupported file type. Please attach a PNG, JPG, or WEBP image.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      const previewUrl = URL.createObjectURL(file);
+      setAttachment({ file, previewUrl, base64 });
+    };
+    reader.onerror = () => {
+      setAttachmentError('Failed to read file. Please try another image.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeAttachment = () => {
+    if (attachment?.previewUrl) {
+      URL.revokeObjectURL(attachment.previewUrl);
+    }
+    setAttachment(null);
+    setAttachmentError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Build a mailto link that pre-fills everything the user has typed
+  const mailtoUrl = `mailto:prepsunite@gmail.com?subject=${encodeURIComponent(
+    `[PrepUnite Support] ${form.subject}`
+  )}&body=${encodeURIComponent(
+    `Hello PrepUnite Team,\n\nName: ${form.name || '(Candidate)'}\nEmail: ${form.email || '(Your email)'}\nQuery Type: ${form.subject}\n\nMessage:\n${form.message || '(Please describe your issue or question here...)'}\n\n(Tip: You can easily attach any screenshots, transaction receipts, or photos directly to this email!)`
+  )}`;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 1. Invisible Anti-Bot Honeypot Trap
-    // Bots automatically populate hidden inputs; humans do not see or touch them.
     if (honeypot.trim()) {
       setSubmitted(true); // Fake success to disarm automated spam scrapers
       return;
@@ -46,13 +102,40 @@ export default function ContactPage() {
     setErrorMsg(null);
 
     try {
+      let finalMessage = form.message.trim();
+
+      // If a screenshot was attached, upload it to storage first
+      if (attachment) {
+        const uploadRes = await fetch('/api/upload-support-attachment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: attachment.file.name,
+            fileType: attachment.file.type,
+            base64: attachment.base64,
+          }),
+        });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || 'Failed to upload attached screenshot.');
+        }
+
+        const { url } = await uploadRes.json();
+        if (url) {
+          finalMessage += `\n\n📷 Attached Screenshot / Proof:\n${url}`;
+        }
+      }
+
       await feedbackService.submitContactMessage({
         name: form.name,
         email: form.email,
         subject: form.subject,
-        message: form.message,
+        message: finalMessage,
       });
+
       setSubmitted(true);
+      removeAttachment();
       setRateStatus(rateLimiter.check('contact_message'));
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to send message. Please try again or email us directly.');
@@ -113,6 +196,23 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-2">
+            <h4 className="font-display font-bold text-xs text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5" />
+              <span>Prefer Your Email App?</span>
+            </h4>
+            <p className="text-[11px] text-[#868E96] dark:text-[#555555] leading-relaxed font-sans">
+              You can also send directly from your personal Gmail or Outlook client. Attach photos, screenshots, or receipts easily!
+            </p>
+            <a
+              href={mailtoUrl}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-[10px] font-display font-bold uppercase tracking-wider transition-colors mt-1 w-full justify-center"
+            >
+              <span>Open in Mail App</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
 
           <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
@@ -221,6 +321,65 @@ export default function ContactPage() {
                 />
               </div>
 
+              {/* Picture / Screenshot Attachment Uploader */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-display font-bold text-[#868E96] dark:text-[#555555] uppercase block">
+                    Attach Screenshot / Image (Optional)
+                  </label>
+                  <span className="text-[10px] text-[#868E96] dark:text-[#555555]">Max 4.5 MB · PNG, JPG, WEBP</span>
+                </div>
+
+                {!attachment ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border border-dashed border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] rounded-md p-3 text-center cursor-pointer transition-colors bg-[#F8F9FA]/60 dark:bg-[#0C0C0C]/60 flex items-center justify-center gap-2 group"
+                  >
+                    <Paperclip className="w-3.5 h-3.5 text-[#FD4A32] group-hover:scale-110 transition-transform" />
+                    <span className="text-xs text-[#868E96] dark:text-[#888888]">
+                      Click to attach a payment receipt, question photo, or error screenshot
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </div>
+                ) : (
+                  <div className="relative p-2 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={attachment.previewUrl}
+                        alt="Attachment preview"
+                        className="w-10 h-10 object-cover rounded-sm border border-[#E9ECEF] dark:border-[#2E2E2E] shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold text-[#121417] dark:text-white truncate block">
+                          {attachment.file.name}
+                        </span>
+                        <span className="text-[10px] text-[#868E96] dark:text-[#666666] block font-mono">
+                          {(attachment.file.size / (1024 * 1024)).toFixed(2)} MB · Ready to upload
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeAttachment}
+                      className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-[#868E96] hover:text-rose-500 transition-colors cursor-pointer"
+                      title="Remove attachment"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {attachmentError && (
+                  <p className="text-[11px] text-rose-500 font-medium">{attachmentError}</p>
+                )}
+              </div>
+
               {(!rateStatus.allowed || errorMsg) && (
                 <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-start gap-2">
                   <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
@@ -228,23 +387,36 @@ export default function ContactPage() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isSubmitting || !rateStatus.allowed}
-                className="w-full py-2.5 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Sending Message...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit Message</span>
-                  </>
-                )}
-              </button>
+              {/* Dual Action: Submit Online OR Open in Mail App */}
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !rateStatus.allowed}
+                  className="w-full sm:flex-1 py-2.5 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Submitting Inquiry...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Submit Online</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={mailtoUrl}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-white text-[#121417] dark:text-white text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap bg-white dark:bg-[#1C1C1C] cursor-pointer"
+                  title="Opens your installed email client (Gmail, Outlook) with these details pre-filled"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#FD4A32]" />
+                  <span>Send via Mail App</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              </div>
             </form>
           )}
         </div>
