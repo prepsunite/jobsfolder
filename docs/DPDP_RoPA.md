@@ -1,6 +1,6 @@
 # DPDP Act 2023 — Records of Processing Activities (RoPA)
 **PrepUnite / Jobsfolder**
-**Data Fiduciary:** Mukala Venkat
+**Data Fiduciary:** MockFolder Compliance Team
 **Contact:** prepsunite@gmail.com
 *Version 1.0 | August 2026 | DPDP Act 2023, Section 10*
 
@@ -15,7 +15,7 @@
 |-------|---------|
 | **Organisation Name** | PrepUnite / Jobsfolder |
 | **Business Type** | EdTech / Placement Intelligence Platform |
-| **Grievance Officer** | Mukala Venkat |
+| **Grievance Officer** | MockFolder Compliance Team |
 | **Contact Email** | prepsunite@gmail.com |
 | **Platform URL** | jobsfolder.vercel.app |
 | **Database Region** | ap-southeast-1 (Singapore, Supabase) |
@@ -34,7 +34,7 @@
 | **Data Source** | Google Identity Platform |
 | **Legal Basis** | Explicit consent at sign-in (DPDP Act §6) |
 | **Purpose** | Create and authenticate user account |
-| **Who Can Access** | Admin (Mukala Venkat) — read only via Supabase dashboard |
+| **Who Can Access** | Admin (MockFolder Compliance Team) — read only via Supabase dashboard |
 | **Stored In** | `public.profiles` table (Supabase) |
 | **Retention Period** | Until account deletion request is fulfilled |
 | **Cross-Border Transfer** | Google (US-based) processes OAuth → data stored in Singapore |
@@ -124,7 +124,7 @@ User (Browser)
     │
     └── Bookmarks / Progress ────────────► Browser localStorage (never leaves device)
 
-Admin (Mukala Venkat)
+Admin (MockFolder Compliance Team)
     └── Supabase Dashboard ──────────────► Read all tables (service role)
 ```
 
@@ -145,7 +145,7 @@ Admin (Mukala Venkat)
 
 | Date | Reviewed By | Changes Made |
 |------|------------|--------------|
-| August 2026 | Mukala Venkat | Initial version created |
+| August 2026 | MockFolder Compliance Team | Initial version created |
 
 *This document must be reviewed whenever a new data processing activity is added, a vendor changes, or the Privacy Policy is updated.*
 

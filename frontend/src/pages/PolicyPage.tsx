@@ -189,10 +189,9 @@ function PrivacyPolicyContent() {
             Grievance Redressal Officer
           </p>
           <div className="text-[11px] space-y-0.5">
-            <p><strong>Officer Name:</strong> Mukala Venkat</p>
-            <p><strong>Designation:</strong> Founder &amp; Data Protection Officer</p>
+            <p><strong>Designation:</strong> Data Protection &amp; Grievance Redressal Officer</p>
             <p><strong>Organisation:</strong> MockFolder</p>
-            <p><strong>Email:</strong> <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a></p>
+            <p><strong>Email:</strong> <a href="mailto:support@mockfolder.in" className="text-[#FD4A32] underline">support@mockfolder.in</a></p>
             <p><strong>Response SLA:</strong> Within 7 working days of receipt</p>
           </div>
           <p className="text-[10px] text-[#868E96] dark:text-[#555555]">

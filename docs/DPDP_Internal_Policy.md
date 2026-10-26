@@ -1,6 +1,6 @@
 # DPDP Act 2023 — Internal Data Handling Policy
 **PrepUnite / Jobsfolder**
-**Policy Owner:** Mukala Venkat (Founder & Grievance Officer)
+**Policy Owner:** MockFolder Compliance Team (Founder & Grievance Officer)
 *Version 1.0 | August 2026*
 
 > This 1-page policy defines what you (and anyone you hire) can and cannot do
@@ -98,4 +98,4 @@ Do this every year in August:
 
 ---
 
-*Version 1.0 | Mukala Venkat | PrepUnite / Jobsfolder | DPDP Act 2023*
+*Version 1.0 | MockFolder Compliance Team | PrepUnite / Jobsfolder | DPDP Act 2023*

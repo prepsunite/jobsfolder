@@ -1,9 +1,9 @@
 # DPDP Act 2023 — Vendor DPA Register & Data Processor Checklist
-**PrepUnite / Jobsfolder | Mukala Venkat**
+**PrepUnite / Jobsfolder | MockFolder Compliance Team**
 *Version 1.0 | August 2026*
 
 > Under DPDP Act 2023, Section 8(2): a Data Fiduciary may engage a Data Processor
-> only through a **valid contract**. You (Mukala Venkat) remain liable for breaches
+> only through a **valid contract**. You (MockFolder Compliance Team) remain liable for breaches
 > caused by your vendors. This register tracks DPA status for all processors.
 
 ---
@@ -112,7 +112,7 @@ Before adding any new SaaS tool that touches user data (analytics, email, CRM, e
 
 | Date | Reviewed By | Changes |
 |------|------------|---------|
-| August 2026 | Mukala Venkat | Initial version |
+| August 2026 | MockFolder Compliance Team | Initial version |
 
 ---
 

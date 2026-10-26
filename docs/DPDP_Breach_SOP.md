@@ -1,5 +1,5 @@
 # DPDP Act 2023 — Breach Response SOP
-**PrepUnite / Jobsfolder | Grievance Officer: Mukala Venkat**
+**PrepUnite / Jobsfolder | Grievance Officer: MockFolder Compliance Team**
 *Version 1.0 | August 2026*
 
 > This document is your step-by-step guide to follow if a data breach is detected.
@@ -83,7 +83,7 @@ Create an entry in the incident log below immediately after assessing.
 Incident ID: INC-[YYYY-MM-DD]-[001]
 Date Discovered: 
 Time Discovered:
-Discovered By: Mukala Venkat
+Discovered By: MockFolder Compliance Team
 Description of breach:
 Data categories affected:
 Estimated users affected:
@@ -110,7 +110,7 @@ Lessons learned:
 
 ```
 Organisation: PrepUnite / Jobsfolder
-Data Fiduciary Name: Mukala Venkat
+Data Fiduciary Name: MockFolder Compliance Team
 Contact Email: prepsunite@gmail.com
 Date & Time of Breach Discovery: [datetime]
 Nature of Breach: [access/loss/disclosure/exfiltration]
@@ -152,11 +152,11 @@ We are writing to inform you of a security incident that may have affected your 
 We sincerely apologise for this incident and are taking steps to prevent recurrence.
 
 For questions or concerns, contact:
-Mukala Venkat — Founder & Grievance Officer
+MockFolder Compliance Team — Founder & Grievance Officer
 📧 prepsunite@gmail.com
 
 Regards,
-Mukala Venkat
+MockFolder Compliance Team
 PrepUnite / Jobsfolder
 
 ---
@@ -195,4 +195,4 @@ Run this every 3 months to make sure you're ready:
 
 ---
 
-*Version 1.0 | DPDP Act 2023, Rule 7 | Mukala Venkat, PrepUnite*
+*Version 1.0 | DPDP Act 2023, Rule 7 | MockFolder Compliance Team, PrepUnite*
