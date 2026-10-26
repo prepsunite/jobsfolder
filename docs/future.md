@@ -563,3 +563,34 @@ This section defines the prioritized engineering backlog for the student coding 
 1. Seed 20–50 questions per topic in Supabase table `topic_questions`.
 2. Uncomment `{ name: 'Technical Aptitude', slug: 'technical-aptitude', icon: Terminal },` in `frontend/src/components/Sidebar.tsx`.
 3. Run `npm --prefix frontend run build` to verify.
+
+---
+
+## 16. 🛡️ Razorpay Payment Gateway: Production Security Architecture & Anti-Bypass Guardrails
+
+### Summary & Status
+* **Status**: 🟢 **LIVE IN PRODUCTION** (`rzp_live_...` active across Vercel & Supabase).
+* **Core Protection**: Strict zero-trust server validation. No candidate can bypass the paywall, forge a payment, tamper with prices, or substitute a cheap plan for an expensive one.
+* **Relevant Endpoints**:
+  * `/api/create-order.js`: Server-side order creation and pre-order ledger lock.
+  * `/api/verify-payment.js`: Instant client-triggered HMAC-SHA256 signature verification & entitlement fulfillment.
+  * `/api/webhook.js`: Asynchronous background capture, deduplication, and refund/chargeback revocation.
+
+### Test Mode vs. Live Mode
+* **Test Mode Sandbox**: During test mode (`rzp_test_...`), Razorpay presents a developer simulator prompt with "Success" and "Failure" buttons so engineers can test flows without debiting real funds.
+* **Live Mode**: In live mode (`rzp_live_...`), that prompt is completely disabled. Real candidates must authenticate with their bank (UPI PIN or 3D-Secure SMS OTP) and funds must be captured before any signature is issued.
+
+### The 6-Layer Security Shield Protecting Jobsfolder
+
+1. **Zero-Trust Pricing (`api/create-order.js`)**: Server ignores whatever price the client sends; resolves price strictly from `PRICING_CATALOG` (`PRO=129`, `ULTRA=169`, `SINGLE=59`).
+2. **Cryptographic Signature (`api/verify-payment.js`)**: Constant-time `HMAC-SHA256(order_id | payment_id, RAZORPAY_KEY_SECRET)` comparison via `crypto.timingSafeEqual`.
+3. **Anti-Plan Substitution (`database/migrations/TARGET_D_PAYMENT_GATEWAY_AND_ENTITLEMENTS.sql`)**: PostgreSQL RPC `fulfill_payment_order` locks the order in `payment_orders` by `order_id` and grants entitlements strictly based on the plan recorded at order creation time.
+4. **Identity & Anti-Replay**: Both order creation and verification validate Supabase JWT session. Payment IDs have a `UNIQUE` database constraint, preventing double-redemption.
+5. **Database Row-Level Security (`TARGET_H_COMPANY_PAPERS_AND_DRM_HARDENING.sql`)**: Paid question content in `public.paper_tab_nodes` is guarded by Postgres RLS. Unpaid users receive 0 rows from the database even if client state is hacked.
+6. **Atomic Quotas & Concurrency (`consume_mock_exam_quota`)**: Database RPC decrements mock exam quotas atomically, preventing race conditions or automated loop generation.
+
+### Webhook Dual-Redundancy Setup
+1. In Razorpay Dashboard &rarr; **Settings** &rarr; **Webhooks**, add `https://jobsfolder.vercel.app/api/webhook`.
+2. Select events: `payment.captured`, `refund.processed`, `payment.dispute.created`.
+3. Set secret in Vercel as `RAZORPAY_WEBHOOK_SECRET`.
+
