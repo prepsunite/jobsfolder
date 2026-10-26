@@ -163,6 +163,21 @@ export default function PricingPage() {
   }, [billingDuration]);
 
   const handleBuy = async (planType: string, amount: number, examId?: string) => {
+    const targetExamId = (planType === 'SINGLE_PAPER' || planType === 'SINGLE') ? (examId || selectedExamId) : undefined;
+    const selectedExam = exams.find((e) => e.id === targetExamId);
+    const selectedExamName = selectedExam ? formatExamDisplayName(selectedExam) : 'Selected Paper';
+
+    const planDescriptions: Record<string, string> = {
+      SINGLE_PAPER: `Single Paper: ${selectedExamName}`,
+      PRO_1M: 'Jobsfolder Pro · 1 Month',
+      PRO_6M: 'Jobsfolder Pro · 6 Months',
+      PRO_1Y: 'Jobsfolder Pro · 1 Year',
+      ULTRA_1M: 'Jobsfolder Ultra · 1 Month',
+      ULTRA_6M: 'Jobsfolder Ultra · 6 Months',
+      ULTRA_1Y: 'Jobsfolder Ultra · 1 Year',
+    };
+    const readablePlan = planDescriptions[planType] || `PrepUnite Pass`;
+
     try {
       setLoadingPlan(planType);
       setNotification(null);
@@ -177,8 +192,6 @@ export default function PricingPage() {
         }, 1500);
         return;
       }
-
-      const targetExamId = (planType === 'SINGLE_PAPER' || planType === 'SINGLE') ? (examId || selectedExamId) : undefined;
 
       if ((planType === 'SINGLE_PAPER' || planType === 'SINGLE') && !targetExamId) {
         setNotification({ type: 'error', message: 'Please select a target company exam paper to unlock.' });
@@ -212,20 +225,6 @@ export default function PricingPage() {
       // 2. Open Razorpay Checkout Modal
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
       if (razorpayKey && (window as any).Razorpay) {
-        const selectedExam = exams.find((e) => e.id === targetExamId);
-        const selectedExamName = selectedExam ? formatExamDisplayName(selectedExam) : 'Selected Paper';
-
-        const planDescriptions: Record<string, string> = {
-          SINGLE_PAPER: `1-Month Paper Access: ${selectedExamName}`,
-          PRO_1M: 'Jobsfolder Pro (5 Mock Exams / 1 Month)',
-          PRO_6M: 'Jobsfolder Pro 6-Month Pass (5 Mock Exams/cycle)',
-          PRO_1Y: 'Jobsfolder Pro 1-Year Pass (5 Mock Exams/cycle - ₹1,299)',
-          ULTRA_1M: 'Jobsfolder Ultra (Unlimited Mock Exams / 1 Month)',
-          ULTRA_6M: 'Jobsfolder Ultra 6-Month Pass (Unlimited Mocks)',
-          ULTRA_1Y: 'Jobsfolder Ultra 1-Year Pass (Unlimited Mocks - ₹1,799)',
-        };
-
-        const readablePlan = planDescriptions[planType] || `PrepUnite Pass`;
 
         let paymentHandled = false;
 
@@ -360,7 +359,7 @@ export default function PricingPage() {
       } else {
         setPaymentModal({
           status: 'failed',
-          planName: 'PrepUnite Pass',
+          planName: readablePlan,
           amount,
           userEmail,
           errorMessage: `Payment gateway preview mode. Order ID: ${orderData.orderId}`,
@@ -370,7 +369,7 @@ export default function PricingPage() {
     } catch (err: any) {
       setPaymentModal({
         status: 'failed',
-        planName: 'PrepUnite Pass',
+        planName: readablePlan,
         amount,
         userEmail: user?.email,
         errorMessage: err.message || 'Payment initiation failed. Please try again.',

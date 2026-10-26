@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import {
-  CheckCircle2,
-  XCircle,
-  Loader2,
   Copy,
   Check,
   ShieldCheck,
@@ -47,7 +44,7 @@ export default function PaymentResultModal({
     try {
       navigator.clipboard.writeText(paymentId);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 1800);
     } catch {
       // Fallback
     }
@@ -65,90 +62,72 @@ export default function PaymentResultModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 dark:bg-black/75 backdrop-blur-md animate-fadeIn"
       onClick={status !== 'processing' ? onClose : undefined}
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white dark:bg-[#121214] border border-black/[0.08] dark:border-white/[0.12] shadow-2xl p-6 sm:p-7 text-center space-y-5 animate-scaleUp"
+        className="relative w-full max-w-[380px] overflow-hidden rounded-[28px] bg-white dark:bg-[#1C1C1E] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_24px_50px_rgba(0,0,0,0.25)] dark:shadow-[0_24px_50px_rgba(0,0,0,0.6)] p-6 sm:p-7 text-center space-y-5 animate-scaleUp font-sans"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Dismiss Button (Disabled while processing) */}
+        {/* Top Dismiss Button */}
         {status !== 'processing' && (
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-black/40 hover:text-black dark:text-white/40 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            className="absolute top-4 right-4 w-7 h-7 rounded-full bg-neutral-100 dark:bg-white/[0.08] hover:bg-neutral-200 dark:hover:bg-white/[0.15] text-neutral-400 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 stroke-[2.2]" />
           </button>
         )}
 
-        {/* ── 1. Hero State Indicator (Apple-Style Concentric Glow) ── */}
-        <div>
+        {/* ── 1. Minimal Apple Status Indicator ── */}
+        <div className="pt-1">
           {status === 'processing' && (
-            <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full bg-[#FD4A32]/20 animate-ping opacity-30" />
-              <div className="relative w-16 h-16 rounded-full bg-[#FD4A32]/10 dark:bg-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center ring-4 ring-[#FD4A32]/15 shadow-inner">
-                <Loader2 className="w-8 h-8 animate-spin stroke-[2.5]" />
-              </div>
-            </div>
+            <div className="w-11 h-11 mx-auto rounded-full border-2 border-neutral-200 dark:border-neutral-800 border-t-neutral-900 dark:border-t-white animate-spin" />
           )}
 
           {status === 'success' && (
-            <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full bg-emerald-500/20 dark:bg-emerald-500/25 animate-ping opacity-30" />
-              <div className="relative w-16 h-16 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center ring-4 ring-emerald-500/15 shadow-inner">
-                <CheckCircle2 className="w-9 h-9 stroke-[2.2]" />
-              </div>
+            <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
+              <Check className="w-6 h-6 stroke-[2.5]" />
             </div>
           )}
 
           {status === 'failed' && (
-            <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+            <>
               {isCancelled ? (
-                <>
-                  <div className="absolute inset-0 rounded-full bg-amber-500/20 dark:bg-amber-500/25 animate-ping opacity-30" />
-                  <div className="relative w-16 h-16 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-4 ring-amber-500/15 shadow-inner">
-                    <XCircle className="w-9 h-9 stroke-[2.2]" />
-                  </div>
-                </>
+                <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 dark:bg-white/[0.08] text-neutral-600 dark:text-neutral-300 flex items-center justify-center shadow-xs">
+                  <X className="w-5 h-5 stroke-[2.2]" />
+                </div>
               ) : (
-                <>
-                  <div className="absolute inset-0 rounded-full bg-rose-500/20 dark:bg-rose-500/25 animate-ping opacity-30" />
-                  <div className="relative w-16 h-16 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center ring-4 ring-rose-500/15 shadow-inner">
-                    <XCircle className="w-9 h-9 stroke-[2.2]" />
-                  </div>
-                </>
+                <div className="w-12 h-12 mx-auto rounded-full bg-rose-500/10 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400 flex items-center justify-center shadow-xs">
+                  <X className="w-5 h-5 stroke-[2.2]" />
+                </div>
               )}
-            </div>
+            </>
           )}
         </div>
 
-        {/* ── 2. Headline & Subtitle Hierarchy ── */}
-        <div className="space-y-1.5 px-2">
+        {/* ── 2. Clean Typography Hierarchy ── */}
+        <div className="space-y-1 px-1">
           {status === 'processing' && (
             <>
-              <h3 className="font-display font-extrabold text-xl text-[#121417] dark:text-white tracking-tight">
-                Authorizing Transaction
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+                Authorizing Payment
               </h3>
-              <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
-                Verifying your bank signature with the secure server ledger. Please do not close or refresh this tab.
+              <p className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-normal max-w-xs mx-auto">
+                Verifying your transaction with the bank. Please do not close or refresh this tab.
               </p>
             </>
           )}
 
           {status === 'success' && (
             <>
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-display font-bold uppercase tracking-wider mb-1">
-                <Check className="w-3 h-3 stroke-[2.5]" />
-                <span>Payment Confirmed</span>
-              </div>
-              <h3 className="font-display font-extrabold text-2xl text-[#121417] dark:text-white tracking-tight">
-                Access Activated!
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+                Payment Confirmed
               </h3>
-              <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
-                Your pass has been securely issued and permanently linked to your account.
+              <p className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-normal max-w-xs mx-auto">
+                Your pass has been activated and permanently linked to your account.
               </p>
             </>
           )}
@@ -157,30 +136,21 @@ export default function PaymentResultModal({
             <>
               {isCancelled ? (
                 <>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-display font-bold uppercase tracking-wider mb-1">
-                    <X className="w-3 h-3 stroke-[2.5]" />
-                    <span>Payment Cancelled</span>
-                  </div>
-                  <h3 className="font-display font-extrabold text-2xl text-[#121417] dark:text-white tracking-tight">
-                    Checkout Cancelled
+                  <h3 className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+                    Payment Cancelled
                   </h3>
-                  <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
-                    {errorMessage ||
-                      'You closed the payment window before completing the transaction. No money was deducted.'}
+                  <p className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-normal max-w-xs mx-auto">
+                    No charges were made to your account. You can complete your order anytime.
                   </p>
                 </>
               ) : (
                 <>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-display font-bold uppercase tracking-wider mb-1">
-                    <X className="w-3 h-3 stroke-[2.5]" />
-                    <span>Transaction Incomplete</span>
-                  </div>
-                  <h3 className="font-display font-extrabold text-2xl text-[#121417] dark:text-white tracking-tight">
-                    Payment Failed
+                  <h3 className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+                    Payment Unsuccessful
                   </h3>
-                  <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
+                  <p className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-normal max-w-xs mx-auto">
                     {errorMessage ||
-                      'No money was deducted from your account. If debited by your bank, an automatic reversal is issued within 2–4 hours.'}
+                      'The bank was unable to authorize this transaction. No funds were debited.'}
                   </p>
                 </>
               )}
@@ -188,123 +158,130 @@ export default function PaymentResultModal({
           )}
         </div>
 
-        {/* ── 3. Apple-Style Digital Receipt Card ── */}
-        <div className="rounded-2xl bg-[#F5F5F7] dark:bg-[#1C1C1E] border border-black/[0.05] dark:border-white/[0.08] p-4 text-left space-y-2.5 text-xs font-sans shadow-inner">
-          <div className="flex items-center justify-between">
-            <span className="text-[#868E96] dark:text-[#8E8E93] text-[11px]">Selected Item</span>
-            <span className="font-semibold text-[#121417] dark:text-white text-right truncate max-w-[200px]">
-              {planName}
-            </span>
-          </div>
-
+        {/* ── 3. Apple-Grade Digital Receipt Slip ── */}
+        <div className="rounded-2xl bg-neutral-50 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06] p-4 text-center space-y-3 shadow-inner">
           {typeof amount === 'number' && amount > 0 && (
-            <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.08] pt-2">
-              <span className="text-[#868E96] dark:text-[#8E8E93] text-[11px]">Amount</span>
-              <span className="font-display font-bold text-sm text-[#121417] dark:text-white">
-                ₹{amount}
-              </span>
-            </div>
-          )}
-
-          {userEmail && (
-            <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.08] pt-2">
-              <span className="text-[#868E96] dark:text-[#8E8E93] text-[11px]">Linked Account</span>
-              <span className="font-mono text-[11px] text-[#121417] dark:text-white truncate max-w-[200px]">
-                {userEmail}
-              </span>
-            </div>
-          )}
-
-          {paymentId && (
-            <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.08] pt-2">
-              <span className="text-[#868E96] dark:text-[#8E8E93] text-[11px]">Reference ID</span>
-              <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#121417] dark:text-white">
-                <span className="truncate max-w-[130px]">{paymentId}</span>
-                <button
-                  type="button"
-                  onClick={handleCopyPaymentId}
-                  className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 text-[#868E96] hover:text-[#FD4A32] transition-colors cursor-pointer"
-                  title="Copy Reference ID"
-                >
-                  {copied ? (
-                    <Check className="w-3 h-3 text-emerald-500" />
-                  ) : (
-                    <Copy className="w-3 h-3" />
-                  )}
-                </button>
+            <div className="pb-3 border-b border-black/[0.05] dark:border-white/[0.06]">
+              <div className="text-3xl font-semibold tracking-tight text-neutral-900 dark:text-white">
+                ₹{amount.toLocaleString('en-IN')}
+              </div>
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium truncate max-w-[270px] mx-auto">
+                {planName}
               </div>
             </div>
           )}
 
-          {orderId && !paymentId && (
-            <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.08] pt-2">
-              <span className="text-[#868E96] dark:text-[#8E8E93] text-[11px]">Order ID</span>
-              <span className="font-mono text-[11px] text-[#121417] dark:text-white truncate max-w-[160px]">
-                {orderId}
+          <div className="space-y-2 text-xs">
+            {userEmail && (
+              <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
+                <span>Account</span>
+                <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[190px]">
+                  {userEmail}
+                </span>
+              </div>
+            )}
+
+            {paymentId && (
+              <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
+                <span>Payment Ref</span>
+                <div className="flex items-center gap-1 font-medium text-neutral-800 dark:text-neutral-200">
+                  <span className="truncate max-w-[130px]">{paymentId}</span>
+                  <button
+                    type="button"
+                    onClick={handleCopyPaymentId}
+                    className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                    title="Copy Reference"
+                  >
+                    {copied ? (
+                      <Check className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {orderId && !paymentId && (
+              <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
+                <span>Order Ref</span>
+                <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[160px]">
+                  {orderId}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2 border-t border-black/[0.05] dark:border-white/[0.06] text-[11px]">
+              <span className="text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>256-Bit SSL Encrypted</span>
+              </span>
+              <span
+                className={`font-medium ${
+                  status === 'success'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : isCancelled
+                    ? 'text-neutral-500 dark:text-neutral-400'
+                    : status === 'failed'
+                    ? 'text-rose-500 dark:text-rose-400'
+                    : 'text-neutral-500 dark:text-neutral-400'
+                }`}
+              >
+                {status === 'success' ? 'Settled' : isCancelled ? 'Cancelled' : status === 'failed' ? 'Declined' : 'Pending'}
               </span>
             </div>
-          )}
-
-          <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.08] pt-2 text-[10px] text-[#868E96] dark:text-[#666666]">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-[#FD4A32]" />
-              <span>Razorpay 256-Bit SSL Encrypted</span>
-            </span>
-            <span className={`font-semibold ${status === 'success' ? 'text-emerald-600 dark:text-emerald-400' : isCancelled ? 'text-amber-600 dark:text-amber-400' : status === 'failed' ? 'text-rose-600 dark:text-rose-400' : ''}`}>
-              {status === 'success' ? 'Settled' : isCancelled ? 'Cancelled' : status === 'failed' ? 'Declined' : 'Pending'}
-            </span>
           </div>
         </div>
 
-        {/* ── 4. Primary & Secondary Actions ── */}
-        <div className="space-y-2 pt-1">
+        {/* ── 4. Clean Apple Action Buttons ── */}
+        <div className="space-y-3 pt-1">
           {status === 'success' && (
             <button
               type="button"
               onClick={handleActionClick}
-              className="w-full py-3 px-5 rounded-2xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-black dark:hover:bg-neutral-200 text-xs font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-xl"
+              className="w-full py-3 px-5 rounded-full bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 font-medium text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Start Practicing Now</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Start Practicing</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           )}
 
           {status === 'failed' && (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {onRetry && (
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="w-full py-3 px-5 rounded-2xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg"
+                  className="w-full py-3 px-5 rounded-full bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 font-medium text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{isCancelled ? 'Resume Checkout' : 'Try Again'}</span>
+                  <span>{isCancelled ? 'Resume Payment' : 'Try Again'}</span>
                 </button>
               )}
 
-              <div className="flex items-center justify-center gap-3 pt-1">
+              <div className="flex items-center justify-center gap-4 pt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer font-medium"
+                >
+                  Dismiss
+                </button>
+                <span className="text-neutral-300 dark:text-neutral-700">|</span>
                 <a
-                  href={`/contact?subject=Payment+Issue&body=Hi+Support,+my+payment+did+not+go+through.+Order+Ref:+${paymentId || orderId || 'None'}`}
-                  className="text-xs text-[#868E96] hover:text-[#FD4A32] dark:text-[#8E8E93] dark:hover:text-[#FD4A32] font-semibold flex items-center gap-1 transition-colors"
+                  href={`/contact?subject=Payment+Assistance&body=Order+Ref:+${paymentId || orderId || 'None'}`}
+                  className="hover:text-neutral-900 dark:hover:text-white transition-colors font-medium flex items-center gap-1"
                 >
                   <Mail className="w-3 h-3" />
                   <span>Contact Support</span>
                 </a>
-                <span className="text-[#868E96]/40 dark:text-[#8E8E93]/40">·</span>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="text-xs text-[#868E96] hover:text-[#121417] dark:text-[#8E8E93] dark:hover:text-white font-medium cursor-pointer transition-colors"
-                >
-                  Dismiss
-                </button>
               </div>
             </div>
           )}
 
           {status === 'processing' && (
-            <div className="text-[11px] text-[#868E96] dark:text-[#666666] font-medium pt-1">
-              Finalizing cryptographic receipt...
+            <div className="text-xs text-neutral-400 dark:text-neutral-500 font-medium pt-1">
+              Securing transaction signature...
             </div>
           )}
         </div>
