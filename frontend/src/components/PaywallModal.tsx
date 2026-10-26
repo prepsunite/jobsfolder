@@ -87,6 +87,8 @@ export default function PaywallModal({
       // 2. Open Razorpay checkout if key is configured
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
       if (razorpayKey && (window as any).Razorpay) {
+        let paymentHandled = false;
+
         const options = {
           key: razorpayKey,
           amount: orderData.amount,
@@ -95,7 +97,30 @@ export default function PaywallModal({
           description,
           order_id: orderData.orderId,
           prefill: { email },
+          modal: {
+            confirm_close: true,
+            ondismiss: () => {
+              setIsProcessing(false);
+              if (!paymentHandled) {
+                paymentHandled = true;
+                setPaymentResult({
+                  status: 'failed',
+                  planName: description,
+                  amount: amountINR,
+                  orderId: orderData.orderId,
+                  userEmail: email,
+                  errorMessage: 'Payment was cancelled before completion. No money was deducted from your account.',
+                  onRetry: () => {
+                    setPaymentResult(null);
+                    handleCheckout(option);
+                  },
+                  onClose: () => setPaymentResult(null),
+                });
+              }
+            },
+          },
           handler: async (response: any) => {
+            paymentHandled = true;
             // Apple-style immediate processing sheet
             setPaymentResult({
               status: 'processing',
@@ -163,11 +188,11 @@ export default function PaywallModal({
               },
             });
           },
-          modal: { ondismiss: () => setIsProcessing(false) },
         };
         const rzp = new (window as any).Razorpay(options);
 
         rzp.on('payment.failed', function (failureRes: any) {
+          paymentHandled = true;
           setIsProcessing(false);
           setPaymentResult({
             status: 'failed',

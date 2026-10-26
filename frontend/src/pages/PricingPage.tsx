@@ -227,6 +227,8 @@ export default function PricingPage() {
 
         const readablePlan = planDescriptions[planType] || `PrepUnite Pass`;
 
+        let paymentHandled = false;
+
         const options = {
           key: razorpayKey,
           amount: orderData.amount,
@@ -235,7 +237,30 @@ export default function PricingPage() {
           description: readablePlan,
           order_id: orderData.orderId,
           prefill: { email: userEmail },
+          modal: {
+            confirm_close: true,
+            ondismiss: function () {
+              setLoadingPlan(null);
+              if (!paymentHandled) {
+                paymentHandled = true;
+                setPaymentModal({
+                  status: 'failed',
+                  planName: readablePlan,
+                  amount,
+                  orderId: orderData.orderId,
+                  userEmail,
+                  errorMessage: 'Payment was cancelled before completion. No money was deducted from your account.',
+                  onRetry: () => {
+                    setPaymentModal(null);
+                    handleBuy(planType, amount, examId);
+                  },
+                  onClose: () => setPaymentModal(null),
+                });
+              }
+            },
+          },
           handler: async function (response: any) {
+            paymentHandled = true;
             // Apple-style immediate indeterminate authorizing sheet
             setPaymentModal({
               status: 'processing',
@@ -307,17 +332,13 @@ export default function PricingPage() {
               },
             });
           },
-          modal: {
-            ondismiss: function () {
-              setLoadingPlan(null);
-            },
-          },
         };
 
         const rzp = new (window as any).Razorpay(options);
 
         // Catch payment failures from bank or user cancellation
         rzp.on('payment.failed', function (failureRes: any) {
+          paymentHandled = true;
           setLoadingPlan(null);
           setPaymentModal({
             status: 'failed',

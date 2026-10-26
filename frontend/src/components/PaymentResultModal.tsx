@@ -40,6 +40,7 @@ export default function PaymentResultModal({
   onClose,
 }: PaymentResultData) {
   const [copied, setCopied] = useState(false);
+  const isCancelled = status === 'failed' && Boolean(errorMessage?.toLowerCase().includes('cancel'));
 
   const handleCopyPaymentId = () => {
     if (!paymentId) return;
@@ -105,9 +106,21 @@ export default function PaymentResultModal({
 
           {status === 'failed' && (
             <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-              <div className="relative w-16 h-16 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center ring-4 ring-rose-500/15 shadow-inner">
-                <XCircle className="w-9 h-9 stroke-[2.2]" />
-              </div>
+              {isCancelled ? (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-amber-500/20 dark:bg-amber-500/25 animate-ping opacity-30" />
+                  <div className="relative w-16 h-16 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-4 ring-amber-500/15 shadow-inner">
+                    <XCircle className="w-9 h-9 stroke-[2.2]" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-rose-500/20 dark:bg-rose-500/25 animate-ping opacity-30" />
+                  <div className="relative w-16 h-16 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center ring-4 ring-rose-500/15 shadow-inner">
+                    <XCircle className="w-9 h-9 stroke-[2.2]" />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -142,17 +155,35 @@ export default function PaymentResultModal({
 
           {status === 'failed' && (
             <>
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-display font-bold uppercase tracking-wider mb-1">
-                <X className="w-3 h-3 stroke-[2.5]" />
-                <span>Transaction Incomplete</span>
-              </div>
-              <h3 className="font-display font-extrabold text-2xl text-[#121417] dark:text-white tracking-tight">
-                Payment Failed or Cancelled
-              </h3>
-              <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
-                {errorMessage ||
-                  'No money was deducted from your account. If debited by your bank, an automatic reversal is issued within 2–4 hours.'}
-              </p>
+              {isCancelled ? (
+                <>
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-display font-bold uppercase tracking-wider mb-1">
+                    <X className="w-3 h-3 stroke-[2.5]" />
+                    <span>Payment Cancelled</span>
+                  </div>
+                  <h3 className="font-display font-extrabold text-2xl text-[#121417] dark:text-white tracking-tight">
+                    Checkout Cancelled
+                  </h3>
+                  <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
+                    {errorMessage ||
+                      'You closed the payment window before completing the transaction. No money was deducted.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-display font-bold uppercase tracking-wider mb-1">
+                    <X className="w-3 h-3 stroke-[2.5]" />
+                    <span>Transaction Incomplete</span>
+                  </div>
+                  <h3 className="font-display font-extrabold text-2xl text-[#121417] dark:text-white tracking-tight">
+                    Payment Failed
+                  </h3>
+                  <p className="text-xs text-[#868E96] dark:text-[#8E8E93] leading-relaxed font-sans">
+                    {errorMessage ||
+                      'No money was deducted from your account. If debited by your bank, an automatic reversal is issued within 2–4 hours.'}
+                  </p>
+                </>
+              )}
             </>
           )}
         </div>
@@ -219,8 +250,8 @@ export default function PaymentResultModal({
               <ShieldCheck className="w-3 h-3 text-[#FD4A32]" />
               <span>Razorpay 256-Bit SSL Encrypted</span>
             </span>
-            <span className="font-medium">
-              {status === 'success' ? 'Settled' : status === 'failed' ? 'Failed' : 'Pending'}
+            <span className={`font-semibold ${status === 'success' ? 'text-emerald-600 dark:text-emerald-400' : isCancelled ? 'text-amber-600 dark:text-amber-400' : status === 'failed' ? 'text-rose-600 dark:text-rose-400' : ''}`}>
+              {status === 'success' ? 'Settled' : isCancelled ? 'Cancelled' : status === 'failed' ? 'Declined' : 'Pending'}
             </span>
           </div>
         </div>
@@ -247,7 +278,7 @@ export default function PaymentResultModal({
                   className="w-full py-3 px-5 rounded-2xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Try Again</span>
+                  <span>{isCancelled ? 'Resume Checkout' : 'Try Again'}</span>
                 </button>
               )}
 
