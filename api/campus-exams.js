@@ -1066,7 +1066,7 @@ export default async function handler(req, res) {
       if (collegeIdUpper === 'PUBLIC' || collegeIdUpper === 'OPEN') {
         // Tier 1: Public Admin Mock Exam - ONLY Super Admin can create or publish
         if (!isSuperAdmin) {
-          return res.status(403).json({ error: 'Forbidden: Only PrepUnite Super Admins can publish Open National Mock Exams.' });
+          return res.status(403).json({ error: 'Forbidden: Only MockFolder Super Admins can publish Open National Mock Exams.' });
         }
       } else if (collegeIdUpper === 'SELF' || collegeIdUpper === 'INDIVIDUAL') {
         // Tier 3: Student Self-Practice Exam - Student creates their own private practice exam

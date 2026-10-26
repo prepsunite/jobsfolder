@@ -26,7 +26,7 @@ export interface PaymentResultData {
 
 export default function PaymentResultModal({
   status,
-  planName = 'PrepUnite Pass',
+  planName = 'MockFolder Pass',
   amount,
   paymentId,
   orderId,

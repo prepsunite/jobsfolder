@@ -165,11 +165,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 to={isTpo ? "/tpo" : "/"}
                 onClick={onClose}
                 className="p-1 rounded-full hover:scale-105 transition-transform"
-                title="PrepUnite Home"
+                title="MockFolder Home"
               >
                 <img
                   src="/favicon.svg"
-                  alt="PrepUnite Logo"
+                  alt="MockFolder Logo"
                   className="w-8 h-8 rounded-full object-contain shrink-0"
                 />
               </Link>
@@ -188,12 +188,12 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               <Link to={isTpo ? "/tpo" : "/"} onClick={onClose} className="flex items-center gap-2.5 group">
                 <img
                   src="/favicon.svg"
-                  alt="PrepUnite Logo"
+                  alt="MockFolder Logo"
                   className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
                 />
                 <div className="flex flex-col">
                   <span className="font-display font-extrabold text-base tracking-tight text-[#121417] dark:text-[#FFFFFF]">
-                    Prep<span className="text-[#FD4A32]">Unite</span>
+                    Mock<span className="text-[#FD4A32]">Folder</span>
                   </span>
                   <span className="text-[8px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider">
                     {isAdmin
@@ -376,7 +376,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#495057] dark:text-[#999999] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414]"
                   >
                     <Info className="w-3.5 h-3.5 text-[#868E96]" />
-                    <span>About Jobsfolder</span>
+                    <span>About MockFolder</span>
                   </Link>
                   <Link
                     to="/contact"

@@ -87,7 +87,7 @@ export default function BulkStudentImportModal({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `prepunite_${collegeName.toLowerCase().replace(/\s+/g, '_')}_student_template.csv`);
+    link.setAttribute('download', `mockfolder_${collegeName.toLowerCase().replace(/\s+/g, '_')}_student_template.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -267,7 +267,7 @@ export default function BulkStudentImportModal({
                   Your CSV file contains <strong>{validCount}</strong> valid students, but your college is only licensed for <strong>{remainingSeats}</strong> more seat(s) (Capacity: {maxLicenses} students).
                 </p>
                 <p className="text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium">
-                  Please trim your CSV file or contact your PrepUnite Account Administrator to expand your institutional student quota.
+                  Please trim your CSV file or contact your MockFolder Account Administrator to expand your institutional student quota.
                 </p>
               </div>
             </div>

@@ -196,7 +196,7 @@ export default function TpoExamsPage() {
             Mock Placement Drives
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Configure company-pattern assessments pooled from PrepUnite's verified question repository
+            Configure company-pattern assessments pooled from MockFolder's verified question repository
           </p>
         </div>
 

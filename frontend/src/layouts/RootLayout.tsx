@@ -85,12 +85,12 @@ export default function RootLayout() {
           <div className="pub-nav-inner">
             {/* Brand */}
             <Link to="/" className="pub-nav-brand">
-              <img src="/favicon.svg" alt="Jobsfolder Logo" className="pub-nav-logo-img" />
+              <img src="/favicon.svg" alt="MockFolder Logo" className="pub-nav-logo-img" />
               <div className="pub-nav-brand-text">
                 <span className="pub-nav-brand-name">
-                  Jobs<span>folder</span>
+                  Mock<span>folder</span>
                 </span>
-                <span className="pub-nav-brand-sub">PrepUnite Placement Intelligence</span>
+                <span className="pub-nav-brand-sub">Placement Intelligence Operating System</span>
               </div>
             </Link>
 
@@ -156,11 +156,11 @@ export default function RootLayout() {
             {/* Brand column */}
             <div className="pub-footer-brand">
               <Link to="/" className="pub-footer-logo">
-                <img src="/favicon.svg" alt="Jobsfolder Logo" className="pub-footer-logo-img" />
-                <span className="pub-footer-logo-name">Jobs<span>folder</span></span>
+                <img src="/favicon.svg" alt="MockFolder Logo" className="pub-footer-logo-img" />
+                <span className="pub-footer-logo-name">Mock<span>folder</span></span>
               </Link>
               <p className="pub-footer-tagline">
-                PrepUnite's placement intelligence platform for engineering students preparing for India's top campus recruiters.
+                India's placement intelligence platform for engineering students preparing for top campus recruiters.
               </p>
               <div className="pub-footer-social">
                 <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on X">X</a>
@@ -227,7 +227,7 @@ export default function RootLayout() {
 
           {/* Bottom bar */}
           <div className="pub-footer-bottom">
-            <p className="pub-footer-copy">© 2026 PrepUnite · Jobsfolder · Placement Intelligence Operating System</p>
+            <p className="pub-footer-copy">© 2026 MockFolder · Placement Intelligence Operating System</p>
             <div className="pub-footer-legal">
               <Link to="/privacy-policy">Privacy Policy</Link>
               <Link to="/terms-and-conditions">Terms of Service</Link>
@@ -254,9 +254,9 @@ export default function RootLayout() {
           <Menu className="w-5 h-5" />
         </button>
         <Link to="/" className="flex items-center gap-2">
-          <img src="/favicon.svg" alt="PrepUnite Logo" className="w-6 h-6 rounded-full" />
+          <img src="/favicon.svg" alt="MockFolder Logo" className="w-6 h-6 rounded-full" />
           <span className="font-display font-extrabold text-sm tracking-tight text-[#121417] dark:text-white">
-            Prep<span className="text-[#FD4A32]">Unite</span>
+            Mock<span className="text-[#FD4A32]">Folder</span>
           </span>
         </Link>
         <button
@@ -325,7 +325,7 @@ export default function RootLayout() {
         </main>
         
         <footer className="border-t border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] py-4 px-8 text-xs text-[#868E96] dark:text-[#555555] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
-          <p>© 2026 PrepUnite · Placement Intelligence Operating System.</p>
+          <p>© 2026 MockFolder · Placement Intelligence Operating System.</p>
           <div className="flex flex-wrap items-center gap-4 font-semibold text-[#495057] dark:text-[#999999]">
             <Link to="/about" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">About Us</Link>
             <Link to="/contact" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">Contact Us</Link>

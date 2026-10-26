@@ -17,4 +17,4 @@ Disallow: /profile
 Disallow: /profile/
 Disallow: /api/
 
-Sitemap: https://prepunite.com/sitemap.xml
+Sitemap: https://mockfolder.in/sitemap.xml

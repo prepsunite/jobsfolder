@@ -169,14 +169,14 @@ export default function PricingPage() {
 
     const planDescriptions: Record<string, string> = {
       SINGLE_PAPER: `Single Paper: ${selectedExamName}`,
-      PRO_1M: 'Jobsfolder Pro · 1 Month',
-      PRO_6M: 'Jobsfolder Pro · 6 Months',
-      PRO_1Y: 'Jobsfolder Pro · 1 Year',
-      ULTRA_1M: 'Jobsfolder Ultra · 1 Month',
-      ULTRA_6M: 'Jobsfolder Ultra · 6 Months',
-      ULTRA_1Y: 'Jobsfolder Ultra · 1 Year',
+      PRO_1M: 'MockFolder Pro · 1 Month',
+      PRO_6M: 'MockFolder Pro · 6 Months',
+      PRO_1Y: 'MockFolder Pro · 1 Year',
+      ULTRA_1M: 'MockFolder Ultra · 1 Month',
+      ULTRA_6M: 'MockFolder Ultra · 6 Months',
+      ULTRA_1Y: 'MockFolder Ultra · 1 Year',
     };
-    const readablePlan = planDescriptions[planType] || `PrepUnite Pass`;
+    const readablePlan = planDescriptions[planType] || `MockFolder Pass`;
 
     try {
       setLoadingPlan(planType);
@@ -232,7 +232,7 @@ export default function PricingPage() {
           key: razorpayKey,
           amount: orderData.amount,
           currency: orderData.currency || 'INR',
-          name: 'PrepUnite / Jobsfolder',
+          name: 'MockFolder',
           description: readablePlan,
           order_id: orderData.orderId,
           prefill: { email: userEmail },

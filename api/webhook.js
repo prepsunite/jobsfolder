@@ -161,28 +161,28 @@ export default async function handler(req, res) {
               );
             } else {
               let days = 30;
-              let planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+              let planName = 'MockFolder Pro (5 Mock Exams/mo)';
               if (normalizedItemType.startsWith('ULTRA')) {
                 if (normalizedItemType.includes('6M')) {
                   days = 180;
-                  planName = 'PrepUnite Ultra 6-Month Pass (Unlimited)';
+                  planName = 'MockFolder Ultra 6-Month Pass (Unlimited)';
                 } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
                   days = 365;
-                  planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
+                  planName = 'MockFolder Ultra 1-Year Pass (Unlimited)';
                 } else {
                   days = 30;
-                  planName = 'PrepUnite Ultra (Unlimited)';
+                  planName = 'MockFolder Ultra (Unlimited)';
                 }
               } else if (normalizedItemType.startsWith('PRO')) {
                 if (normalizedItemType.includes('6M')) {
                   days = 180;
-                  planName = 'PrepUnite Pro 6-Month Pass (5 Mock Exams/mo)';
+                  planName = 'MockFolder Pro 6-Month Pass (5 Mock Exams/mo)';
                 } else if (normalizedItemType.includes('1Y') || normalizedItemType.includes('YEARLY')) {
                   days = 365;
-                  planName = 'PrepUnite Pro 1-Year Pass (5 Mock Exams/mo)';
+                  planName = 'MockFolder Pro 1-Year Pass (5 Mock Exams/mo)';
                 } else {
                   days = 30;
-                  planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+                  planName = 'MockFolder Pro (5 Mock Exams/mo)';
                 }
               }
 

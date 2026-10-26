@@ -333,7 +333,7 @@ export default function StudentAnswerSheetPage() {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-2xl font-black uppercase tracking-tight text-black">
-                PREPUNITE • CANDIDATE EXAMINATION ANSWER SHEET
+                MOCKFOLDER • CANDIDATE EXAMINATION ANSWER SHEET
               </h1>
               <p className="text-xs font-bold text-gray-700 uppercase">
                 {exam.target_company} Placement Assessment • Official Evaluation Dossier

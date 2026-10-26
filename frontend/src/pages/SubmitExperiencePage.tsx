@@ -236,7 +236,7 @@ export default function SubmitExperiencePage() {
             <label className="text-[9px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#555555] block">Preparation Resources Used</label>
             <input
               type="text"
-              placeholder="e.g. PrepUnite Archives, LeetCode, Striver A2Z"
+              placeholder="e.g. MockFolder Archives, LeetCode, Striver A2Z"
               value={resourcesUsed}
               onChange={(e) => setResourcesUsed(e.target.value)}
               className="w-full bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] rounded-md px-3 py-2 text-xs focus:outline-none focus:border-[#121417] dark:focus:border-[#444444] font-sans"

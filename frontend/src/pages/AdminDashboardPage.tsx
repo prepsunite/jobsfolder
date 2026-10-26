@@ -663,7 +663,7 @@ export default function AdminDashboardPage() {
             Authenticated Administrator Master Management Center
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1f1b17] dark:text-[#e3e3e3] tracking-tight">
-            PrepUnite Master Admin Console
+            MockFolder Master Admin Console
           </h1>
           <p className="text-[#444748] dark:text-[#a6adbb] text-sm leading-relaxed font-sans">
             Full control center for company papers, student experience moderation, question reports, contact inquiries, and analytics.
@@ -1393,7 +1393,7 @@ export default function AdminDashboardPage() {
                       )}
                       {report.reporter_email && (
                         <a
-                          href={`mailto:${encodeURIComponent(report.reporter_email)}?subject=${encodeURIComponent('PrepUnite: Issue Resolved for Reported Question')}&body=${encodeURIComponent(`Hi,\n\nThank you for reporting the issue on PrepUnite regarding:\n"${report.question_statement || 'Question'}"\n\nOur curriculum team has reviewed and resolved the question.\n\nBest regards,\nPrepUnite Editorial Team`)}`}
+                          href={`mailto:${encodeURIComponent(report.reporter_email)}?subject=${encodeURIComponent('MockFolder: Issue Resolved for Reported Question')}&body=${encodeURIComponent(`Hi,\n\nThank you for reporting the issue on MockFolder regarding:\n"${report.question_statement || 'Question'}"\n\nOur curriculum team has reviewed and resolved the question.\n\nBest regards,\nMockFolder Editorial Team`)}`}
                           className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-md border border-blue-500/30 flex items-center gap-1.5 transition-colors"
                           title="Notify student via email"
                         >

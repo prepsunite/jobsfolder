@@ -747,7 +747,7 @@ export default function TechnicalCodingWorkspacePage() {
     return (
       <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center text-white space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-[#FD4A32]" />
-        <p className="text-sm font-mono text-[#8b949e]">Loading PrepUnite Code Studio...</p>
+        <p className="text-sm font-mono text-[#8b949e]">Loading MockFolder Code Studio...</p>
       </div>
     );
   }

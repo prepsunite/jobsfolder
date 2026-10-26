@@ -208,7 +208,7 @@ export default function StudentExamsPage() {
           .maybeSingle();
 
         if (data) {
-          return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
+          return { isPro: true, planName: data.plan_name || 'MockFolder Pro Pass', expiresAt: data.expires_at };
         }
       } catch {}
 

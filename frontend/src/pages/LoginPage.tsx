@@ -114,11 +114,11 @@ export default function LoginPage() {
             <Link to="/" className="inline-flex items-center gap-2.5 group">
               <img
                 src="/favicon.svg"
-                alt="Jobsfolder Logo"
+                alt="MockFolder Logo"
                 className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
               />
               <span className="font-display text-xl font-extrabold tracking-tight text-white">
-                Jobs<span className="text-[#FD4A32]">folder</span>
+                Mock<span className="text-[#FD4A32]">Folder</span>
               </span>
             </Link>
 
@@ -183,11 +183,11 @@ export default function LoginPage() {
             <Link to="/" className="inline-flex items-center gap-2">
               <img
                 src="/favicon.svg"
-                alt="Jobsfolder Logo"
+                alt="MockFolder Logo"
                 className="w-8 h-8 rounded-full object-contain shrink-0"
               />
               <span className="font-display text-lg font-extrabold text-[#121417] dark:text-white">
-                Jobs<span className="text-[#FD4A32] dark:text-[#FD4A32]">folder</span>
+                Mock<span className="text-[#FD4A32] dark:text-[#FD4A32]">Folder</span>
               </span>
             </Link>
 
@@ -267,7 +267,7 @@ export default function LoginPage() {
               
               <div className="space-y-1.5 text-center sm:text-left">
                 <h1 className="font-display text-2xl font-extrabold text-[#121417] dark:text-white tracking-tight">
-                  Sign In to PrepUnite
+                  Sign In to MockFolder
                 </h1>
                 <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
                   Use your Google Account to log in with 1-click. No password required.
@@ -309,7 +309,7 @@ export default function LoginPage() {
                     </div>
                   </div>
                   <span className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans leading-relaxed">
-                    I have read and agree to Jobsfolder's{' '}
+                    I have read and agree to MockFolder's{' '}
                     <Link to="/privacy-policy" className="text-[#FD4A32] underline hover:text-[#e03e28]" onClick={(e) => e.stopPropagation()}>
                       Privacy Policy
                     </Link>{' '}

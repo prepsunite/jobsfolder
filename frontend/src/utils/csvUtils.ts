@@ -1,5 +1,5 @@
 /**
- * Universal CSV Utilities for Prepunite
+ * Universal CSV Utilities for MockFolder
  * 
  * Provides:
  * 1. Formula & DDE injection protection (CWE-1236)

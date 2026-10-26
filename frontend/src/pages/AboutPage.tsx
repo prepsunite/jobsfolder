@@ -71,7 +71,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-sm sm:text-base text-[var(--e-text-2)] leading-relaxed max-w-2xl mx-auto font-sans">
-            PrepUnite aggregates, verifies, and organizes authentic memory-reconstructed campus placement questions into structured company drive blueprints for engineering students.
+            MockFolder aggregates, verifies, and organizes authentic memory-reconstructed campus placement questions into structured company drive blueprints for engineering students.
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export default function AboutPage() {
                 Manifesto
               </div>
               <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-[var(--e-text)]">
-                Why We Built PrepUnite
+                Why We Built MockFolder
               </h2>
             </div>
             <div className="flex items-center gap-2 text-xs font-mono text-[var(--e-text-3)] bg-[var(--e-surface-2)] px-3 py-1.5 rounded-md border border-[var(--e-border)]">
@@ -158,7 +158,7 @@ export default function AboutPage() {
               Campus recruitment in India can feel chaotic and overwhelming. Students spend dozens of hours scouring random Telegram channels, unstructured WhatsApp groups, and outdated blogs trying to guess what actually appeared in TCS NQT, Accenture ASE, Infosys SP, or Amazon drives.
             </p>
             <p>
-              PrepUnite eliminates the guesswork. We deliver structured paper archives, memory-verified questions, step-by-step explanations, and real candidate interview experiences—organized strictly by company and drive year.
+              MockFolder eliminates the guesswork. We deliver structured paper archives, memory-verified questions, step-by-step explanations, and real candidate interview experiences—organized strictly by company and drive year.
             </p>
           </div>
 

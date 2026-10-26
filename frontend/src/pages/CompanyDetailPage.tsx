@@ -129,7 +129,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
   useSeo({
     title: `${companyName} Placement Papers, Drive Syllabus & Solutions 2026`,
-    description: `Master ${companyName} campus recruitment with real memory-based OA questions, interview transcripts, and round patterns on PrepUnite.`,
+    description: `Master ${companyName} campus recruitment with real memory-based OA questions, interview transcripts, and round patterns on MockFolder.`,
     image: currentCompanyStoreItem.logoUrl || '/og-image.png',
   });
 
@@ -212,7 +212,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   };
 
   // Watermark text for document viewer
-  const watermarkText = user?.email ? `${user.email} • PrepUnite` : 'PrepUnite Confidential';
+  const watermarkText = user?.email ? `${user.email} • MockFolder` : 'MockFolder Confidential';
 
   // Bookmark State
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
@@ -1259,7 +1259,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         title={`${companyName} Placement Papers, Drive Syllabus & Solutions 2026`}
-        description={`Master ${companyName} campus recruitment with real memory-based OA questions, interview transcripts, and round patterns on PrepUnite.`}
+        description={`Master ${companyName} campus recruitment with real memory-based OA questions, interview transcripts, and round patterns on MockFolder.`}
         companyLogoUrl={currentCompanyStoreItem.logoUrl}
         companyName={companyName}
       />

@@ -211,36 +211,36 @@ export default async function handler(req, res) {
       );
     } else {
       let days = 30;
-      let planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+      let planName = 'MockFolder Pro (5 Mock Exams/mo)';
 
       if (authoritativeItemType.startsWith('ULTRA')) {
         if (authoritativeItemType.includes('6M')) {
           days = 180;
-          planName = 'PrepUnite Ultra 6-Month Pass (Unlimited)';
+          planName = 'MockFolder Ultra 6-Month Pass (Unlimited)';
         } else if (authoritativeItemType.includes('1Y') || authoritativeItemType.includes('YEARLY')) {
           days = 365;
-          planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
+          planName = 'MockFolder Ultra 1-Year Pass (Unlimited)';
         } else {
           days = 30;
-          planName = 'PrepUnite Ultra (Unlimited)';
+          planName = 'MockFolder Ultra (Unlimited)';
         }
       } else if (authoritativeItemType.startsWith('PRO')) {
         if (authoritativeItemType.includes('6M')) {
           days = 180;
-          planName = 'PrepUnite Pro 6-Month Pass (5 Mock Exams/mo)';
+          planName = 'MockFolder Pro 6-Month Pass (5 Mock Exams/mo)';
         } else if (authoritativeItemType.includes('1Y') || authoritativeItemType.includes('YEARLY')) {
           days = 365;
-          planName = 'PrepUnite Pro 1-Year Pass (5 Mock Exams/mo)';
+          planName = 'MockFolder Pro 1-Year Pass (5 Mock Exams/mo)';
         } else {
           days = 30;
-          planName = 'PrepUnite Pro (5 Mock Exams/mo)';
+          planName = 'MockFolder Pro (5 Mock Exams/mo)';
         }
       } else if (authoritativeItemType === 'QUARTERLY') {
         days = 90;
-        planName = 'PrepUnite Pro Quarterly Pass';
+        planName = 'MockFolder Pro Quarterly Pass';
       } else if (authoritativeItemType === 'YEARLY') {
         days = 365;
-        planName = 'PrepUnite Ultra 1-Year Pass (Unlimited)';
+        planName = 'MockFolder Ultra 1-Year Pass (Unlimited)';
       }
 
       // Atomic extension [P1-02]: Check existing active subscription to prevent truncation

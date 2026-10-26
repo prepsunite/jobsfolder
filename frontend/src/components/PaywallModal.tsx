@@ -93,7 +93,7 @@ export default function PaywallModal({
           key: razorpayKey,
           amount: orderData.amount,
           currency: orderData.currency || 'INR',
-          name: 'PrepUnite',
+          name: 'MockFolder',
           description,
           order_id: orderData.orderId,
           prefill: { email },

@@ -51,7 +51,7 @@ function PrivacyPolicyContent() {
 
       <Section title="1. Who We Are (Data Fiduciary)">
         <p>
-          <strong className="text-[#121417] dark:text-white">Jobsfolder / PrepUnite</strong> ("we", "us", "our") is a placement intelligence platform operated
+          <strong className="text-[#121417] dark:text-white">MockFolder</strong> ("we", "us", "our") is a placement intelligence platform operated
           in India. We are the <strong>Data Fiduciary</strong> under the DPDP Act, 2023, meaning we determine
           the purpose and means of processing your personal data.
         </p>
@@ -191,7 +191,7 @@ function PrivacyPolicyContent() {
           <div className="text-[11px] space-y-0.5">
             <p><strong>Officer Name:</strong> Mukala Venkat</p>
             <p><strong>Designation:</strong> Founder &amp; Data Protection Officer</p>
-            <p><strong>Organisation:</strong> PrepUnite / Jobsfolder</p>
+            <p><strong>Organisation:</strong> MockFolder</p>
             <p><strong>Email:</strong> <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a></p>
             <p><strong>Response SLA:</strong> Within 7 working days of receipt</p>
           </div>
@@ -219,7 +219,7 @@ function TermsContent() {
 
       <Section title="1. Acceptance of Terms">
         <p>
-          By creating an account or using any part of the Jobsfolder / PrepUnite platform ("Platform"),
+          By creating an account or using any part of the MockFolder platform ("Platform"),
           you ("User", "Data Principal") agree to be bound by these Terms and our{' '}
           <Link to="/privacy-policy" className="text-[#FD4A32] underline">Privacy Policy</Link>.
           If you do not agree, you must not use the Platform.
@@ -228,7 +228,7 @@ function TermsContent() {
 
       <Section title="2. Platform Description & Eligibility">
         <p>
-          Jobsfolder is a placement preparation platform providing access to previous year Online Assessment (OA)
+          MockFolder is a placement preparation platform providing access to previous year Online Assessment (OA)
           papers, interview experiences, and aptitude resources. The Platform is intended for users aged 18 and above.
           By using this Platform, you represent that you are at least 18 years old or have obtained verifiable
           parental/guardian consent.
@@ -256,12 +256,12 @@ function TermsContent() {
       <Section title="5. Intellectual Property">
         <p>
           All platform content — including question papers, UI design, aptitude content, and experience writeups
-          contributed by the Jobsfolder team — is the intellectual property of PrepUnite. Unauthorised reproduction,
+          contributed by the MockFolder team — is the intellectual property of MockFolder. Unauthorised reproduction,
           redistribution, or commercial use is strictly prohibited.
         </p>
         <p>
           Content submitted by users (interview experiences) remains your intellectual property. By submitting,
-          you grant PrepUnite a non-exclusive licence to display it on the platform.
+          you grant MockFolder a non-exclusive licence to display it on the platform.
         </p>
       </Section>
 
@@ -300,7 +300,7 @@ function TermsContent() {
 
       <Section title="9. Limitation of Liability">
         <p>
-          To the maximum extent permitted by Indian law, PrepUnite's liability for any claim arising out of
+          To the maximum extent permitted by Indian law, MockFolder's liability for any claim arising out of
           these Terms or use of the Platform shall not exceed the amount paid by you in the 12 months preceding the claim.
         </p>
       </Section>
@@ -338,7 +338,7 @@ function RefundContent() {
 
       <Section title="1. Nature of Product">
         <p>
-          Jobsfolder Pro Pass is a <strong>digital subscription product</strong>. Upon successful payment,
+          MockFolder Pro Pass is a <strong>digital subscription product</strong>. Upon successful payment,
           access to Pro content is granted immediately and automatically. Because the digital product is
           accessible the moment payment is confirmed, the following refund terms apply.
         </p>
@@ -377,7 +377,7 @@ function RefundContent() {
 
       <Section title="4. Cancellation">
         <p>
-          Jobsfolder Pro Pass is a one-time purchase for a fixed period (not a recurring subscription),
+          MockFolder Pro Pass is a one-time purchase for a fixed period (not a recurring subscription),
           so there is no auto-renewal to cancel. Your access expires at the end of the plan period.
         </p>
       </Section>
@@ -403,7 +403,7 @@ const POLICY_META = {
   },
   terms: {
     title: 'Terms & Conditions',
-    subtitle: 'Rules governing the use of Jobsfolder services, platform content, and subscriptions.',
+    subtitle: 'Rules governing the use of MockFolder services, platform content, and subscriptions.',
     icon: FileText,
     badge: 'IT Act 2000 · Consumer Protection Act 2019',
   },

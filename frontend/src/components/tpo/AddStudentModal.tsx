@@ -93,7 +93,7 @@ export default function AddStudentModal({
 
     if (isQuotaFull) {
       setErrorMessage(
-        `Seat capacity reached! Your institution has ${maxLicenses} paid seats and all seats are filled. Contact PrepUnite to upgrade.`
+        `Seat capacity reached! Your institution has ${maxLicenses} paid seats and all seats are filled. Contact MockFolder to upgrade.`
       );
       return;
     }

@@ -22,7 +22,7 @@ export default function ErrorBoundary() {
   if (isRouteErrorResponse(error)) {
     errorMessage = `${error.status} - Page ${error.statusText}`;
   } else if (isChunkError) {
-    errorMessage = 'A new version of PrepUnite has been deployed. Refreshing to update...';
+    errorMessage = 'A new version of MockFolder has been deployed. Refreshing to update...';
   } else if (error instanceof Error) {
     errorMessage = error.message;
   }

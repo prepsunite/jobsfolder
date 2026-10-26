@@ -2512,7 +2512,7 @@ export const tpoService = {
 
     if (contractStatus === 'EXPIRED' || contractStatus === 'SUSPENDED') {
       throw new Error(
-        `Institutional contract for "${college.name}" is currently ${contractStatus}. Student batch provisioning is paused. Please contact PrepUnite.`
+        `Institutional contract for "${college.name}" is currently ${contractStatus}. Student batch provisioning is paused. Please contact MockFolder.`
       );
     }
 
@@ -2526,7 +2526,7 @@ export const tpoService = {
 
     if (currentEnrolled + trulyNewCount > maxLicenses) {
       throw new Error(
-        `College Seat Limit Exceeded! Your institution has paid for ${maxLicenses} total student licenses across all batches combined. Currently enrolled: ${currentEnrolled}. You only have ${remainingSeats} seat(s) remaining, but tried to import ${trulyNewCount} new student(s). All batches share this total pool. Please contact PrepUnite Admin to increase your student capacity.`
+        `College Seat Limit Exceeded! Your institution has paid for ${maxLicenses} total student licenses across all batches combined. Currently enrolled: ${currentEnrolled}. You only have ${remainingSeats} seat(s) remaining, but tried to import ${trulyNewCount} new student(s). All batches share this total pool. Please contact MockFolder Admin to increase your student capacity.`
       );
     }
 
@@ -3159,7 +3159,7 @@ export const tpoService = {
     if (contractStatus === 'EXPIRED' || contractStatus === 'SUSPENDED') {
       return {
         success: false,
-        error: `Institutional contract for "${college.name}" is currently ${contractStatus}. Student provisioning is paused. Please contact PrepUnite.`,
+        error: `Institutional contract for "${college.name}" is currently ${contractStatus}. Student provisioning is paused. Please contact MockFolder.`,
       };
     }
 
@@ -3170,7 +3170,7 @@ export const tpoService = {
     if (!alreadyExists && currentStudents.length >= maxLicenses) {
       return {
         success: false,
-        error: `College Seat Limit Exceeded! Your institution has paid for ${maxLicenses} total student licenses across all batches combined, and all seats are currently filled. Batches share this total quota. Please contact PrepUnite to upgrade capacity.`,
+        error: `College Seat Limit Exceeded! Your institution has paid for ${maxLicenses} total student licenses across all batches combined, and all seats are currently filled. Batches share this total quota. Please contact MockFolder to upgrade capacity.`,
       };
     }
 

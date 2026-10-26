@@ -724,7 +724,7 @@ export default function CreateMockExamModal({
                   ? 'Launch in 1-click using verified industry exam blueprints'
                   : modalMode === 'ADMIN_EDIT_TEMPLATE'
                   ? 'Customize section patterns, question counts, and duration for institutions'
-                  : "Pooled automatically from PrepUnite's verified question repository"}
+                  : "Pooled automatically from MockFolder's verified question repository"}
               </p>
             </div>
           </div>

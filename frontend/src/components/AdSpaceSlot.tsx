@@ -26,16 +26,16 @@ export default function AdSpaceSlot({
   // Pseudo-randomly rotate ad creative based on slot ID to keep experience fresh
   const adCreatives = [
     {
-      tag: 'PrepUnite Pro • Ad-Free',
+      tag: 'MockFolder Pro • Ad-Free',
       badge: 'PRO PASS • ₹129/MO',
       title: 'Tired of distractions?',
-      desc: 'Upgrade to PrepUnite Pro for a 100% ad-free experience, plus full access to 50+ company past papers and 5 blueprint mock exams.',
+      desc: 'Upgrade to MockFolder Pro for a 100% ad-free experience, plus full access to 50+ company past papers and 5 blueprint mock exams.',
       cta: 'Remove Ads with Pro',
       ctaLink: '/pricing',
       accentColor: 'from-[#FD4A32]/15 via-[#FD4A32]/5 to-transparent',
     },
     {
-      tag: 'PrepUnite Ultra • Unlimited',
+      tag: 'MockFolder Ultra • Unlimited',
       badge: 'ULTRA PASS • BEST VALUE',
       title: 'Crack Your Next OA',
       desc: 'Get 100% Ad-Free practice with unlimited timed proctored mocks modeled after TCS NQT, Accenture, and Amazon placement patterns.',

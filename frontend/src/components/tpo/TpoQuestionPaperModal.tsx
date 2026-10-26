@@ -486,7 +486,7 @@ export default function TpoQuestionPaperModal({
         {/* Modal Footer (Hidden in Print) */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#151d2e] flex items-center justify-between text-xs shrink-0 print:hidden">
           <div className="text-slate-400 font-medium">
-            Accreditation Ready • PrepUnite Verified Institutional Blueprint
+            Accreditation Ready • MockFolder Verified Institutional Blueprint
           </div>
           <button
             onClick={onClose}

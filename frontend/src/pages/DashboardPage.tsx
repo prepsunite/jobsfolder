@@ -116,7 +116,7 @@ export default function DashboardPage() {
           .maybeSingle();
 
         if (data) {
-          return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
+          return { isPro: true, planName: data.plan_name || 'MockFolder Pro Pass', expiresAt: data.expires_at };
         }
       } catch {}
 
@@ -1346,7 +1346,7 @@ export default function DashboardPage() {
             </div>
 
             <p className="text-xs text-[#868E96] dark:text-[#888888] leading-relaxed font-sans">
-              Under India's <strong>Digital Personal Data Protection Act, 2023 (Rule 6)</strong>, PrepUnite operates under your informed consent as a Data Fiduciary. You retain unconditional rights to review, export, withdraw consent, or request complete erasure of your digital footprint.
+              Under India's <strong>Digital Personal Data Protection Act, 2023 (Rule 6)</strong>, MockFolder operates under your informed consent as a Data Fiduciary. You retain unconditional rights to review, export, withdraw consent, or request complete erasure of your digital footprint.
             </p>
           </div>
 

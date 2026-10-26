@@ -1801,7 +1801,7 @@ export default function TopicQuestionsPage() {
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        title={`${topicName} Placement Aptitude Practice & Shortcuts on PrepUnite`}
+        title={`${topicName} Placement Aptitude Practice & Shortcuts on MockFolder`}
       />
     </div>
   );

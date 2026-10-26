@@ -155,7 +155,7 @@ export default function HomePage() {
                   <div className="hp-mock-avatar">R</div>
                   <div>
                     <div className="hp-mock-name">Rahul K.</div>
-                    <div className="hp-mock-role">Placed at TCS · Used PrepUnite papers</div>
+                    <div className="hp-mock-role">Placed at TCS · Used MockFolder papers</div>
                   </div>
                   <div className="hp-mock-pkg">Got offer</div>
                 </div>
@@ -280,7 +280,7 @@ export default function HomePage() {
           </div>
           <div className="hp-proof-quote">
             <p className="hp-proof-quote-text">
-              "Practiced the TCS NQT papers on PrepUnite and 3 out of 4 coding
+              "Practiced the TCS NQT papers on MockFolder and 3 out of 4 coding
               questions in my actual test were identical. This is the only prep
               resource that actually matters."
             </p>

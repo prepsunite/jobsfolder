@@ -79,7 +79,7 @@ export default async function handler(req, res) {
   const baseUrl = `${proto}://${host}`;
 
   const defaultSquareLogo = `${baseUrl}/og-square.png`;
-  let title = 'PrepUnite – Placement Intelligence Operating System';
+  let title = 'MockFolder – Placement Intelligence Operating System';
   let description =
     'Master campus recruitment with authentic memory-based OA papers, solved questions, and real interview experiences across 50+ hiring giants.';
   let imageUrl = defaultSquareLogo;
@@ -129,13 +129,13 @@ export default async function handler(req, res) {
 
     if (company) {
       const displayName = company.shortName || company.name;
-      title = `${displayName} Campus Drive 2026: OA Papers, Syllabus & Questions – PrepUnite`;
-      description = `Practice real memory-based OA questions, test patterns, aptitude question banks, and interview transcripts for ${company.name} on PrepUnite.`;
+      title = `${displayName} Campus Drive 2026: OA Papers, Syllabus & Questions – MockFolder`;
+      description = `Practice real memory-based OA questions, test patterns, aptitude question banks, and interview transcripts for ${company.name} on MockFolder.`;
       imageUrl = company.logoUrl || defaultSquareLogo;
     } else {
       const formattedName = normalizedSlug.toUpperCase();
-      title = `${formattedName} Placement Drive 2026: Papers & Patterns – PrepUnite`;
-      description = `Master ${formattedName} campus recruitment drives with authentic OA papers, solved questions, and interview experiences on PrepUnite.`;
+      title = `${formattedName} Placement Drive 2026: Papers & Patterns – MockFolder`;
+      description = `Master ${formattedName} campus recruitment drives with authentic OA papers, solved questions, and interview experiences on MockFolder.`;
       imageUrl = defaultSquareLogo;
     }
   }
@@ -143,9 +143,9 @@ export default async function handler(req, res) {
   // 2. Exam Route Preview (/exam/:id)
   else if (type === 'exam' && id) {
     pageUrl = `${baseUrl}/exam/${encodeURIComponent(id)}`;
-    title = 'Online Mock Assessment Drive 2026 – PrepUnite';
+    title = 'Online Mock Assessment Drive 2026 – MockFolder';
     description =
-      'Attempt full-length memory-based placement mock test with real company test patterns, aptitude, reasoning, and proctoring on PrepUnite.';
+      'Attempt full-length memory-based placement mock test with real company test patterns, aptitude, reasoning, and proctoring on MockFolder.';
     imageUrl = defaultSquareLogo;
 
     try {
@@ -166,10 +166,10 @@ export default async function handler(req, res) {
 
         if (exam) {
           const comp = exam.target_company || 'Campus Recruitment';
-          title = `${exam.title || comp + ' Mock Test 2026'} | PrepUnite Assessment`;
+          title = `${exam.title || comp + ' Mock Test 2026'} | MockFolder Assessment`;
           description =
             exam.description ||
-            `Practice authentic ${comp} placement assessment (${exam.duration_minutes || 60} mins, ${exam.total_marks || 100} marks) with instant scorecard on PrepUnite.`;
+            `Practice authentic ${comp} placement assessment (${exam.duration_minutes || 60} mins, ${exam.total_marks || 100} marks) with instant scorecard on MockFolder.`;
 
           const normComp = (exam.target_company || '').toLowerCase().trim();
           if (KNOWN_COMPANIES[normComp]?.logoUrl) {
@@ -185,9 +185,9 @@ export default async function handler(req, res) {
   // 3. Interview Experience Route Preview (/experiences/:id)
   else if (type === 'experience' && id) {
     pageUrl = `${baseUrl}/experiences`;
-    title = 'Verified Campus Interview Experience – PrepUnite';
+    title = 'Verified Campus Interview Experience – MockFolder';
     description =
-      'Explore round-by-round interview questions, technical rounds, coding problems, and candidate verdicts on PrepUnite.';
+      'Explore round-by-round interview questions, technical rounds, coding problems, and candidate verdicts on MockFolder.';
     imageUrl = defaultSquareLogo;
   }
 
@@ -212,7 +212,7 @@ export default async function handler(req, res) {
 
     <!-- Open Graph (WhatsApp, LinkedIn, Telegram, Facebook) -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PrepUnite" />
+    <meta property="og:site_name" content="MockFolder" />
     <meta property="og:url" content="${safePageUrl}" />
     <meta property="og:title" content="${safeTitle}" />
     <meta property="og:description" content="${safeDesc}" />
@@ -225,8 +225,8 @@ export default async function handler(req, res) {
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@prepunite" />
-    <meta name="twitter:creator" content="@prepunite" />
+    <meta name="twitter:site" content="@mockfolder" />
+    <meta name="twitter:creator" content="@mockfolder" />
     <meta name="twitter:title" content="${safeTitle}" />
     <meta name="twitter:description" content="${safeDesc}" />
     <meta name="twitter:image" content="${safeImageUrl}" />
@@ -236,7 +236,7 @@ export default async function handler(req, res) {
   </head>
   <body style="background:#0B0D12;color:#ffffff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
     <div style="text-align:center;">
-      <h2 style="color:#FD4A32;">PrepUnite</h2>
+      <h2 style="color:#FD4A32;">MockFolder</h2>
       <p>Redirecting to <a href="${safePageUrl}" style="color:#ffffff;">${safeTitle}</a>...</p>
     </div>
     <script>window.location.replace("${safePageUrl}");</script>

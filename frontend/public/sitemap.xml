@@ -1,127 +1,127 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://prepunite.com/</loc>
+    <loc>https://mockfolder.in/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies</loc>
+    <loc>https://mockfolder.in/companies</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/tcs</loc>
+    <loc>https://mockfolder.in/companies/tcs</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/accenture</loc>
+    <loc>https://mockfolder.in/companies/accenture</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/cognizant</loc>
+    <loc>https://mockfolder.in/companies/cognizant</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/amazon</loc>
+    <loc>https://mockfolder.in/companies/amazon</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/infosys</loc>
+    <loc>https://mockfolder.in/companies/infosys</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/wipro</loc>
+    <loc>https://mockfolder.in/companies/wipro</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/capgemini</loc>
+    <loc>https://mockfolder.in/companies/capgemini</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/companies/ibm</loc>
+    <loc>https://mockfolder.in/companies/ibm</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/questions</loc>
+    <loc>https://mockfolder.in/questions</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/experiences</loc>
+    <loc>https://mockfolder.in/experiences</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/arithmetic-aptitude</loc>
+    <loc>https://mockfolder.in/aptitude/arithmetic-aptitude</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/data-interpretation</loc>
+    <loc>https://mockfolder.in/aptitude/data-interpretation</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/logical-reasoning</loc>
+    <loc>https://mockfolder.in/aptitude/logical-reasoning</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/verbal-reasoning</loc>
+    <loc>https://mockfolder.in/aptitude/verbal-reasoning</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/verbal-ability</loc>
+    <loc>https://mockfolder.in/aptitude/verbal-ability</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/nonverbal-reasoning</loc>
+    <loc>https://mockfolder.in/aptitude/nonverbal-reasoning</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/aptitude/technical-aptitude</loc>
+    <loc>https://mockfolder.in/aptitude/technical-aptitude</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/pricing</loc>
+    <loc>https://mockfolder.in/pricing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/about</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://prepunite.com/contact</loc>
+    <loc>https://mockfolder.in/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/privacy-policy</loc>
+    <loc>https://mockfolder.in/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://mockfolder.in/privacy-policy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/terms-and-conditions</loc>
+    <loc>https://mockfolder.in/terms-and-conditions</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://prepunite.com/refund-policy</loc>
+    <loc>https://mockfolder.in/refund-policy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>

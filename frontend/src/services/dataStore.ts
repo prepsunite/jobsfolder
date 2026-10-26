@@ -1278,14 +1278,14 @@ class DataStoreManager {
 
   activateSubscription(planType: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY'): void {
     let days = 30;
-    let planName = 'Jobsfolder Pro Monthly Pass';
+    let planName = 'MockFolder Pro Monthly Pass';
 
     if (planType === 'QUARTERLY') {
       days = 90;
-      planName = 'Jobsfolder Pro Quarterly Pass';
+      planName = 'MockFolder Pro Quarterly Pass';
     } else if (planType === 'YEARLY') {
       days = 365;
-      planName = 'Jobsfolder Master Yearly Pass';
+      planName = 'MockFolder Master Yearly Pass';
     }
 
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -1319,7 +1319,7 @@ class DataStoreManager {
       isAuthorized: true,
       userEmail,
       timestamp: new Date().toLocaleString(),
-      watermarkText: `${userEmail} • Jobsfolder Verified Pass • ${new Date().toLocaleDateString()}`,
+      watermarkText: `${userEmail} • MockFolder Verified Pass • ${new Date().toLocaleDateString()}`,
       reasonCode: 'AUTHORIZED',
     };
   }

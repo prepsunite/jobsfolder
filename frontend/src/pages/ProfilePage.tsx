@@ -69,7 +69,7 @@ export default function ProfilePage() {
           .maybeSingle();
 
         if (data) {
-          return { isPro: true, planName: data.plan_name || 'Jobsfolder Pro Pass', expiresAt: data.expires_at };
+          return { isPro: true, planName: data.plan_name || 'MockFolder Pro Pass', expiresAt: data.expires_at };
         }
       } catch {}
 
@@ -390,7 +390,7 @@ export default function ProfilePage() {
               </span>
             </div>
             <p className="text-xs text-[#868E96] dark:text-[#777777]">
-              PrepUnite processes your personal data under your explicit, informed consent (DPDP Act 2023 §6).
+              MockFolder processes your personal data under your explicit, informed consent (DPDP Act 2023 §6).
             </p>
           </div>
 
@@ -427,7 +427,7 @@ export default function ProfilePage() {
               Data Fiduciary
             </span>
             <span className="font-semibold text-[#121417] dark:text-gray-200">
-              PrepUnite / Jobsfolder
+              MockFolder
             </span>
           </div>
         </div>

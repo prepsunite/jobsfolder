@@ -52,7 +52,7 @@ export default function ConsentBanner() {
               Your Privacy &amp; Data Rights (DPDP Act, 2023)
             </p>
             <p className="text-[11px] text-[#868E96] dark:text-[#777777] font-sans leading-relaxed mt-0.5">
-              Jobsfolder collects your <strong className="text-[#495057] dark:text-[#999999]">name, email address, and profile picture</strong> via Google
+              MockFolder collects your <strong className="text-[#495057] dark:text-[#999999]">name, email address, and profile picture</strong> via Google
               Sign-In to authenticate your account and personalise your learning experience.
               We do <strong className="text-[#495057] dark:text-[#999999]">not</strong> sell your data. You can withdraw consent and delete your
               account at any time from your Dashboard or Profile page.{' '}

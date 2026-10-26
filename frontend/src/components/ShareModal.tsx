@@ -16,7 +16,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   onClose,
   title,
   url,
-  description = 'Solved placement drive papers, memory questions, and interview transcripts on PrepUnite.',
+  description = 'Solved placement drive papers, memory questions, and interview transcripts on MockFolder.',
   companyLogoUrl,
   companyName,
 }) => {
@@ -24,7 +24,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   if (!isOpen) return null;
 
-  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://prepunite.com');
+  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://mockfolder.in');
   const shareMessage = `🎯 *${title}*\n\nPractice genuine memory-based placement papers, online assessment patterns, and interview transcripts:\n${shareUrl}`;
 
   const handleCopy = async () => {
@@ -128,9 +128,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FD4A32]/15 text-[#FD4A32]">
-                  {companyName || 'PrepUnite Card'}
+                  {companyName || 'MockFolder Card'}
                 </span>
-                <span className="text-[10px] text-gray-400 font-mono">prepunite.com</span>
+                <span className="text-[10px] text-gray-400 font-mono">mockfolder.in</span>
               </div>
               <h4 className="font-bold text-xs text-gray-900 dark:text-white mt-1 leading-snug line-clamp-2">
                 {title}

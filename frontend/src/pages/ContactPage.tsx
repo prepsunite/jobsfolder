@@ -118,12 +118,12 @@ export default function ContactPage() {
 
   const getEffectiveSubject = () => {
     if (customEmailContext?.subject) return customEmailContext.subject;
-    return `[PrepUnite Support] ${form.subject}`;
+    return `[MockFolder Support] ${form.subject}`;
   };
 
   const getEffectiveBody = () => {
     if (customEmailContext?.body) return customEmailContext.body;
-    return `Hello PrepUnite Team,\n\nName: ${form.name || '(Candidate)'}\nEmail: ${form.email || '(Your email)'}\nQuery Type: ${form.subject}\n\nMessage:\n${form.message || '(Please describe your issue or question here...)'}\n\n(Tip: You can easily attach any screenshots, transaction receipts, or photos directly to this email!)`;
+    return `Hello MockFolder Team,\n\nName: ${form.name || '(Candidate)'}\nEmail: ${form.email || '(Your email)'}\nQuery Type: ${form.subject}\n\nMessage:\n${form.message || '(Please describe your issue or question here...)'}\n\n(Tip: You can easily attach any screenshots, transaction receipts, or photos directly to this email!)`;
   };
 
   const openGmailWeb = () => {
@@ -558,7 +558,7 @@ export default function ContactPage() {
               title: 'Request Data Access',
               desc: 'Get a summary of all personal data we hold about you.',
               subject: '[DPDP] Data Access Request',
-              body: 'I request a summary of all personal data Jobsfolder holds about me under the DPDP Act 2023.',
+              body: 'I request a summary of all personal data MockFolder holds about me under the DPDP Act 2023.',
             },
             {
               title: 'Request Data Correction',
@@ -570,7 +570,7 @@ export default function ContactPage() {
               title: 'Request Account Deletion',
               desc: 'Request permanent deletion of your account and personal data.',
               subject: '[DPDP] Account Deletion Request',
-              body: 'I request permanent deletion of my Jobsfolder account and all associated personal data under the DPDP Act 2023.',
+              body: 'I request permanent deletion of my MockFolder account and all associated personal data under the DPDP Act 2023.',
             },
             {
               title: 'File a Privacy Complaint',

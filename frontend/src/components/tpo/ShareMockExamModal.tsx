@@ -30,10 +30,10 @@ export default function ShareMockExamModal({
 
   if (!isOpen || !exam) return null;
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prepunite.com';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mockfolder.in';
   const candidateUrl = `${origin}/exam/${exam.id}`;
   const isPublic = exam.college_id === 'PUBLIC' || exam.college_id === 'OPEN';
-  const resolvedCollege = isPublic ? 'PrepUnite National Challenge' : (collegeName || 'Campus Placement Cell');
+  const resolvedCollege = isPublic ? 'MockFolder National Challenge' : (collegeName || 'Campus Placement Cell');
   const targetDepts = isPublic
     ? 'All Candidates Nationwide'
     : exam.target_departments?.length ? exam.target_departments.join(', ') : 'All Branches';
@@ -52,11 +52,11 @@ export default function ShareMockExamModal({
 ${candidateUrl}
 
 ⚡ *Challenge Highlights:*
-1. Sign in to PrepUnite and test your placement readiness.
+1. Sign in to MockFolder and test your placement readiness.
 2. Real-time proctored test environment with live anti-cheat.
 3. In-depth scorecard, ranking, and solutions.
 ━━━━━━━━━━━━━━━━━━━━
-_Powered by PrepUnite National Mock Engine_`
+_Powered by MockFolder National Mock Engine_`
     : `📢 *CAMPUS PLACEMENT ASSESSMENT: ${resolvedCollege}*
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *Assessment:* ${exam.title}
@@ -73,7 +73,7 @@ ${candidateUrl}
 2. Fullscreen mode required with tab-switch monitoring.
 3. Finish and submit test before the deadline.
 ━━━━━━━━━━━━━━━━━━━━
-_Powered by PrepUnite Placement Assessment Suite_`;
+_Powered by MockFolder Placement Assessment Suite_`;
 
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappBroadcastText)}`;
 
@@ -85,7 +85,7 @@ _Powered by PrepUnite Placement Assessment Suite_`;
   const emailBodyText = isPublic
     ? `Hello Candidates,
 
-PrepUnite has published an open national placement mock challenge: ${exam.title} modeled after the official ${exam.target_company} pattern.
+MockFolder has published an open national placement mock challenge: ${exam.title} modeled after the official ${exam.target_company} pattern.
 
 Assessment Details:
 • Title: ${exam.title}
@@ -99,14 +99,14 @@ Direct Test Link:
 ${candidateUrl}
 
 Guidelines:
-1. Log in to PrepUnite with your email to launch the examination.
+1. Log in to MockFolder with your email to launch the examination.
 2. Ensure you have an uninterrupted internet connection.
 3. Fullscreen proctored environment with automated malpractice detection.
 
 Sharable with friends, campus batches, and peer study groups.
 
 Regards,
-PrepUnite Engineering & Placement Team`
+MockFolder Engineering & Placement Team`
     : `Dear Students,
 
 As part of our upcoming campus placement readiness drive, the Placement Cell has scheduled an official proctored mock assessment for ${exam.target_company}.
@@ -123,7 +123,7 @@ Direct Test Link:
 ${candidateUrl}
 
 Instructions:
-1. Please log in to PrepUnite using your registered college email.
+1. Please log in to MockFolder using your registered college email.
 2. Ensure you have an uninterrupted internet connection and a working browser.
 3. Test runs with fullscreen lock and automated malpractice detection. Switching windows or tabs will be logged.
 
@@ -294,7 +294,7 @@ Training & Placement Office`;
         <div className="p-3 bg-orange-50/70 dark:bg-[#FD4A32]/5 border border-orange-200/60 dark:border-[#FD4A32]/20 rounded-2xl flex items-start gap-2.5 text-[11px] text-gray-600 dark:text-gray-300">
           <Sparkles className="w-4 h-4 text-[#FD4A32] shrink-0 mt-0.5" />
           <span>
-            <strong>Automatic Student Discovery:</strong> All students enrolled under <em>{resolvedCollege}</em> will automatically see this exam on their PrepUnite Student Dashboard!
+            <strong>Automatic Student Discovery:</strong> All students enrolled under <em>{resolvedCollege}</em> will automatically see this exam on their MockFolder Student Dashboard!
           </span>
         </div>
 
