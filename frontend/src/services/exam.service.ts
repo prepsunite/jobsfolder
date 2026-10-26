@@ -138,11 +138,13 @@ export const formatExamDisplayName = (exam: {
  * 
  * Rules:
  * 1. Must NOT be soft-deleted.
- * 2. Price must be > 0 (or undefined, defaulting to 99). If explicitly 0, it's free.
- * 3. Must have valid non-empty paperTabs.
- * 4. Must contain at least one locked node (hasLockedPaperNodes).
- *    (If all nodes have isFree === true, the entire archive is 100% free practice).
- * 5. NEVER rejects based on name/title strings!
+ * 2. Must NOT be explicitly flagged as a public/free exam (is_public_exam = true).
+ * 3. Price must be > 0 (or undefined, defaulting to 99). If explicitly 0, it's free.
+ * 4. Tab content check: If tab nodes are loaded over the wire, verify that at least
+ *    one node is locked (if all nodes have isFree === true, it's 100% free practice).
+ * 5. Global catalog fallback: If tab nodes were omitted over the wire (e.g. in getAllExams()
+ *    to preserve bandwidth and DRM protection), any non-public exam with price > 0 is paywalled.
+ * 6. NEVER rejects based on name/title strings!
  */
 export const isExamPaywalled = (exam: Partial<ExamWithCompany> | Partial<ExamItem> | any): boolean => {
   if (!exam) return false;
@@ -150,15 +152,23 @@ export const isExamPaywalled = (exam: Partial<ExamWithCompany> | Partial<ExamIte
   // 1. Soft-deleted check
   if (exam.is_deleted === true || exam.isDeleted === true) return false;
 
-  // 2. Explicitly ₹0 price check
+  // 2. Explicit public/free exam flag
+  if (exam.is_public_exam === true || exam.isPublicExam === true) return false;
+
+  // 3. Explicitly ₹0 price check
   if (exam.price !== undefined && Number(exam.price) === 0) return false;
 
-  // 3. Tab content check: never sell an empty exam archive with no papers/tabs
-  const tabs = parsePaperTabs(exam.paperTabs || exam.paper_tabs);
-  if (!tabs || tabs.length === 0) return false;
+  // 4. Tab content check: if tabs are present, verify at least one locked node
+  const rawTabs = exam.paperTabs || exam.paper_tabs;
+  if (rawTabs && (Array.isArray(rawTabs) ? rawTabs.length > 0 : true)) {
+    const tabs = parsePaperTabs(rawTabs);
+    if (tabs && tabs.length > 0) {
+      return hasLockedPaperNodes(tabs);
+    }
+  }
 
-  // 4. Must contain at least one locked node.
-  return hasLockedPaperNodes(tabs);
+  // 5. Global catalog fallback: any non-public exam with price > 0 is paywalled
+  return true;
 };
 
 export const examService = {

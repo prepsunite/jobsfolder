@@ -37,10 +37,47 @@ export default function PricingPage() {
     queryFn: () => examService.getAllExams(),
   });
 
-  // Filter out public/free exams
+  // Filter out public/free exams and sort alphabetically for clean presentation
   const paywalledExams = useMemo(() => {
-    return exams.filter(isExamPaywalled);
+    return exams
+      .filter(isExamPaywalled)
+      .sort((a, b) => formatExamDisplayName(a).localeCompare(formatExamDisplayName(b)));
   }, [exams]);
+
+  // Check active single-paper passes for logged-in user
+  const { data: userPurchases = [] } = useQuery<string[]>({
+    queryKey: ['user-active-purchases', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const { data, error } = await supabase
+        .from('user_paper_purchases')
+        .select('exam_id')
+        .eq('user_email', user.email.toLowerCase().trim())
+        .gt('expires_at', new Date().toISOString());
+      if (error) return [];
+      return (data || []).map((r) => r.exam_id);
+    },
+    enabled: !!user?.email,
+  });
+
+  // Check active Pro / Ultra subscription for logged-in user
+  const { data: hasActiveSubscription = false } = useQuery<boolean>({
+    queryKey: ['user-active-subscription', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return false;
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .select('id')
+        .eq('user_email', user.email.toLowerCase().trim())
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', new Date().toISOString())
+        .limit(1)
+        .maybeSingle();
+      if (error) return false;
+      return !!data;
+    },
+    enabled: !!user?.email,
+  });
 
   // Pre-select exam from URL parameter or default to first paywalled exam
   useEffect(() => {
@@ -173,7 +210,8 @@ export default function PricingPage() {
       // 2. Open Razorpay Checkout Modal
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
       if (razorpayKey && (window as any).Razorpay) {
-        const selectedExamName = exams.find((e) => e.id === targetExamId)?.name || 'Selected Paper';
+        const selectedExam = exams.find((e) => e.id === targetExamId);
+        const selectedExamName = selectedExam ? formatExamDisplayName(selectedExam) : 'Selected Paper';
 
         const planDescriptions: Record<string, string> = {
           SINGLE_PAPER: `1-Month Paper Access: ${selectedExamName}`,
@@ -601,23 +639,33 @@ export default function PricingPage() {
               Unlock 30 days of complete past OA papers, full syllabus breakdowns, and code solutions for that single drive.
             </p>
 
-            <div className="pt-1 max-w-sm">
+            <div className="pt-1 max-w-sm space-y-1.5">
               <select
                 value={selectedExamId}
                 onChange={(e) => setSelectedExamId(e.target.value)}
                 disabled={paywalledExams.length === 0}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-[#1c1c1c] border border-[#E9ECEF] dark:border-[#2E2E2E] text-xs font-semibold text-[#121417] dark:text-white focus:outline-hidden focus:border-[#FD4A32] disabled:opacity-60 cursor-pointer"
+                className="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1c1c1c] border border-[#E9ECEF] dark:border-[#2E2E2E] text-xs font-semibold text-[#121417] dark:text-white focus:outline-hidden focus:border-[#FD4A32] disabled:opacity-60 cursor-pointer shadow-xs"
               >
                 {paywalledExams.length > 0 ? (
-                  paywalledExams.map((exam) => (
-                    <option key={exam.id} value={exam.id}>
-                      {formatExamDisplayName(exam)}
-                    </option>
-                  ))
+                  paywalledExams.map((exam) => {
+                    const isAlreadyPurchased = userPurchases.includes(exam.id);
+                    return (
+                      <option key={exam.id} value={exam.id}>
+                        {formatExamDisplayName(exam)}{isAlreadyPurchased ? ' (Active Pass)' : ''}
+                      </option>
+                    );
+                  })
                 ) : (
-                  <option value="">All placement papers currently open!</option>
+                  <option value="">No paid company papers found</option>
                 )}
               </select>
+
+              {hasActiveSubscription && (
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 pt-0.5">
+                  <Check className="w-3.5 h-3.5 shrink-0" />
+                  <span>Your active subscription grants full access to all 17 company paper archives.</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -632,7 +680,11 @@ export default function PricingPage() {
               disabled={loadingPlan === 'SINGLE_PAPER' || !selectedExamId}
               className="px-5 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs shadow-[#FD4A32]/20 shrink-0"
             >
-              {loadingPlan === 'SINGLE_PAPER' ? 'Connecting...' : 'Unlock Paper (₹59)'}
+              {loadingPlan === 'SINGLE_PAPER'
+                ? 'Connecting...'
+                : userPurchases.includes(selectedExamId)
+                ? 'Extend Pass (+30 Days for ₹59)'
+                : 'Unlock Paper (₹59)'}
             </button>
           </div>
         </div>
