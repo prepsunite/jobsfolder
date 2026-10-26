@@ -1,5 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
-import { Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock, HelpCircle, ShieldCheck, Loader2, ShieldAlert, Paperclip, Image as ImageIcon, X, ExternalLink } from 'lucide-react';
+import {
+  Mail,
+  MessageSquare,
+  Send,
+  CheckCircle2,
+  MapPin,
+  Clock,
+  HelpCircle,
+  ShieldCheck,
+  Loader2,
+  ShieldAlert,
+  Paperclip,
+  X,
+  ExternalLink,
+  Copy,
+  Check,
+  Globe,
+  Smartphone,
+} from 'lucide-react';
 import { feedbackService } from '@/services/feedback.service';
 import { rateLimiter, type RateLimitStatus } from '@/utils/rateLimiter';
 
@@ -9,6 +27,12 @@ export default function ContactPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState(''); // Anti-bot honeypot trap
   const [rateStatus, setRateStatus] = useState<RateLimitStatus>(() => rateLimiter.check('contact_message'));
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [customEmailContext, setCustomEmailContext] = useState<{
+    subject?: string;
+    body?: string;
+  } | null>(null);
 
   // Attachment state (picture/screenshot)
   const [attachment, setAttachment] = useState<{
@@ -30,6 +54,17 @@ export default function ContactPage() {
   useEffect(() => {
     setRateStatus(rateLimiter.check('contact_message'));
   }, [submitted]);
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showEmailModal) {
+        setShowEmailModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showEmailModal]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAttachmentError(null);
@@ -72,12 +107,58 @@ export default function ContactPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Build a mailto link that pre-fills everything the user has typed
-  const mailtoUrl = `mailto:prepsunite@gmail.com?subject=${encodeURIComponent(
-    `[PrepUnite Support] ${form.subject}`
-  )}&body=${encodeURIComponent(
-    `Hello PrepUnite Team,\n\nName: ${form.name || '(Candidate)'}\nEmail: ${form.email || '(Your email)'}\nQuery Type: ${form.subject}\n\nMessage:\n${form.message || '(Please describe your issue or question here...)'}\n\n(Tip: You can easily attach any screenshots, transaction receipts, or photos directly to this email!)`
-  )}`;
+  const openEmailModal = (subject?: string, body?: string) => {
+    if (subject || body) {
+      setCustomEmailContext({ subject, body });
+    } else {
+      setCustomEmailContext(null);
+    }
+    setShowEmailModal(true);
+  };
+
+  const getEffectiveSubject = () => {
+    if (customEmailContext?.subject) return customEmailContext.subject;
+    return `[PrepUnite Support] ${form.subject}`;
+  };
+
+  const getEffectiveBody = () => {
+    if (customEmailContext?.body) return customEmailContext.body;
+    return `Hello PrepUnite Team,\n\nName: ${form.name || '(Candidate)'}\nEmail: ${form.email || '(Your email)'}\nQuery Type: ${form.subject}\n\nMessage:\n${form.message || '(Please describe your issue or question here...)'}\n\n(Tip: You can easily attach any screenshots, transaction receipts, or photos directly to this email!)`;
+  };
+
+  const openGmailWeb = () => {
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=prepsunite@gmail.com&su=${encodeURIComponent(
+      getEffectiveSubject()
+    )}&body=${encodeURIComponent(getEffectiveBody())}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setShowEmailModal(false);
+  };
+
+  const openOutlookWeb = () => {
+    const url = `https://outlook.live.com/mail/0/deeplink/compose?to=prepsunite@gmail.com&subject=${encodeURIComponent(
+      getEffectiveSubject()
+    )}&body=${encodeURIComponent(getEffectiveBody())}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setShowEmailModal(false);
+  };
+
+  const openDefaultMail = () => {
+    const url = `mailto:prepsunite@gmail.com?subject=${encodeURIComponent(
+      getEffectiveSubject()
+    )}&body=${encodeURIComponent(getEffectiveBody())}`;
+    window.location.href = url;
+    setShowEmailModal(false);
+  };
+
+  const copyEmailAddress = () => {
+    try {
+      navigator.clipboard.writeText('prepsunite@gmail.com');
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2500);
+    } catch {
+      // Fallback
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +231,7 @@ export default function ContactPage() {
       <div className="text-center space-y-3 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
           <Mail className="w-3 h-3" />
-          <span>Support & Enquiries</span>
+          <span>Support &amp; Enquiries</span>
         </div>
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#121417] dark:text-[#FFFFFF] tracking-tight">
           Contact Us
@@ -174,9 +255,13 @@ export default function ContactPage() {
                 <Mail className="w-3.5 h-3.5 text-[#121417] dark:text-[#FD4A32] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-[#121417] dark:text-[#FFFFFF] block text-[11px]">Email</span>
-                  <a href="mailto:prepsunite@gmail.com" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">
+                  <button
+                    type="button"
+                    onClick={() => openEmailModal()}
+                    className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32] text-left cursor-pointer font-mono"
+                  >
                     prepsunite@gmail.com
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -198,21 +283,43 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-2">
+          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-2.5">
             <h4 className="font-display font-bold text-xs text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5" />
               <span>Prefer Your Email App?</span>
             </h4>
             <p className="text-[11px] text-[#868E96] dark:text-[#555555] leading-relaxed font-sans">
-              You can also send directly from your personal Gmail or Outlook client. Attach photos, screenshots, or receipts easily!
+              Send directly from your personal Gmail or Outlook client. Attach photos, screenshots, or receipts easily!
             </p>
-            <a
-              href={mailtoUrl}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-[10px] font-display font-bold uppercase tracking-wider transition-colors mt-1 w-full justify-center"
+            <button
+              type="button"
+              onClick={() => openEmailModal()}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-[11px] font-display font-bold uppercase tracking-wider transition-colors w-full justify-center cursor-pointer hover:bg-black/80 dark:hover:bg-neutral-200"
             >
-              <span>Open in Mail App</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
+              <Mail className="w-3.5 h-3.5 text-[#FD4A32]" />
+              <span>Send via Email / Gmail</span>
+              <ExternalLink className="w-3 h-3 opacity-70" />
+            </button>
+            <div className="flex items-center justify-between text-[11px] pt-1 px-1 font-mono text-[#868E96] dark:text-[#777777]">
+              <span>prepsunite@gmail.com</span>
+              <button
+                type="button"
+                onClick={copyEmailAddress}
+                className="text-xs hover:text-[#FD4A32] dark:hover:text-[#FD4A32] inline-flex items-center gap-1 cursor-pointer font-sans"
+              >
+                {copiedEmail ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-500" />
+                    <span className="text-emerald-500 text-[10px] font-semibold">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span className="text-[10px]">Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5">
@@ -240,7 +347,7 @@ export default function ContactPage() {
               <button
                 type="button"
                 onClick={() => setSubmitted(false)}
-                className="px-4 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider transition-colors"
+                className="px-4 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Send Another Message
               </button>
@@ -407,15 +514,16 @@ export default function ContactPage() {
                   )}
                 </button>
 
-                <a
-                  href={mailtoUrl}
+                <button
+                  type="button"
+                  onClick={() => openEmailModal()}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-white text-[#121417] dark:text-white text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap bg-white dark:bg-[#1C1C1C] cursor-pointer"
-                  title="Opens your installed email client (Gmail, Outlook) with these details pre-filled"
+                  title="Choose Gmail, Outlook, or Default Mail client with pre-filled details"
                 >
                   <Mail className="w-3.5 h-3.5 text-[#FD4A32]" />
-                  <span>Send via Mail App</span>
+                  <span>Send via Email</span>
                   <ExternalLink className="w-3 h-3 opacity-60" />
-                </a>
+                </button>
               </div>
             </form>
           )}
@@ -449,38 +557,39 @@ export default function ContactPage() {
             {
               title: 'Request Data Access',
               desc: 'Get a summary of all personal data we hold about you.',
-              subject: 'Data Access Request',
-              body: 'I request a summary of all personal data Jobsfolder holds about me.',
+              subject: '[DPDP] Data Access Request',
+              body: 'I request a summary of all personal data Jobsfolder holds about me under the DPDP Act 2023.',
             },
             {
               title: 'Request Data Correction',
               desc: 'Ask us to correct or complete inaccurate personal data.',
-              subject: 'Data Correction Request',
-              body: 'I request correction of the following personal data: [describe what needs correcting]',
+              subject: '[DPDP] Data Correction Request',
+              body: 'I request correction of the following personal data under the DPDP Act 2023: [describe what needs correcting]',
             },
             {
               title: 'Request Account Deletion',
               desc: 'Request permanent deletion of your account and personal data.',
-              subject: 'Account Deletion Request',
-              body: 'I request permanent deletion of my Jobsfolder account and all associated personal data.',
+              subject: '[DPDP] Account Deletion Request',
+              body: 'I request permanent deletion of my Jobsfolder account and all associated personal data under the DPDP Act 2023.',
             },
             {
               title: 'File a Privacy Complaint',
               desc: 'Report a concern about how your data has been handled.',
-              subject: 'Privacy Complaint',
-              body: 'I wish to file a privacy complaint regarding: [describe your concern]',
+              subject: '[DPDP] Privacy Complaint',
+              body: 'I wish to file a privacy complaint under the DPDP Act 2023 regarding: [describe your concern]',
             },
           ].map(({ title, desc, subject, body }) => (
-            <a
+            <button
               key={title}
-              href={`mailto:prepsunite@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
-              className="p-3.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] group transition-colors space-y-1 block"
+              type="button"
+              onClick={() => openEmailModal(subject, body)}
+              className="p-3.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] group transition-colors space-y-1 block text-left cursor-pointer w-full"
             >
               <p className="text-xs font-display font-bold text-[#121417] dark:text-white group-hover:text-[#FD4A32] transition-colors">
                 {title}
               </p>
               <p className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">{desc}</p>
-            </a>
+            </button>
           ))}
         </div>
 
@@ -490,16 +599,162 @@ export default function ContactPage() {
             <strong className="text-[#495057] dark:text-[#999999]">SLA:</strong> 7 working days ·{' '}
             If unresolved in 30 days, escalate to the Data Protection Board of India (DPBI).
           </div>
-          <a
-            href="mailto:prepsunite@gmail.com"
-            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[11px] font-display font-bold uppercase tracking-wider transition-colors"
+          <button
+            type="button"
+            onClick={() =>
+              openEmailModal(
+                '[DPDP] Grievance Escalation',
+                'Dear Grievance Officer,\n\nI am contacting you regarding...'
+              )
+            }
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#FD4A32] hover:bg-[#e03e28] text-white text-[11px] font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
           >
             <Mail className="w-3.5 h-3.5" />
             Email Grievance Officer
-          </a>
+          </button>
         </div>
       </div>
 
+      {/* Interactive Email Provider Selector Modal */}
+      {showEmailModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setShowEmailModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] rounded-xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
+                  <Mail className="w-3 h-3" />
+                  <span>Direct Email Support</span>
+                </div>
+                <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                  Choose Your Email Provider
+                </h3>
+                <p className="text-xs text-[#868E96] dark:text-[#777777] font-sans">
+                  How would you like to email <span className="font-mono text-[#121417] dark:text-white font-semibold">prepsunite@gmail.com</span>?
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEmailModal(false)}
+                className="p-1 rounded-md text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              {/* Option 1: Gmail Web (Browser) */}
+              <button
+                type="button"
+                onClick={openGmailWeb}
+                className="w-full p-3 rounded-lg border border-[#E9ECEF] dark:border-[#262626] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] bg-[#F8F9FA] dark:bg-[#1A1A1A] hover:bg-white dark:hover:bg-[#202020] transition-all flex items-center justify-between group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-display font-bold text-xs text-[#121417] dark:text-white group-hover:text-[#FD4A32] transition-colors">
+                        Gmail (Web Browser)
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        Recommended
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#868E96] dark:text-[#777777] block font-sans">
+                      Opens in Gmail Web with details pre-filled
+                    </span>
+                  </div>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-[#868E96] group-hover:text-[#FD4A32] transition-colors shrink-0" />
+              </button>
+
+              {/* Option 2: Outlook / Hotmail Web */}
+              <button
+                type="button"
+                onClick={openOutlookWeb}
+                className="w-full p-3 rounded-lg border border-[#E9ECEF] dark:border-[#262626] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] bg-[#F8F9FA] dark:bg-[#1A1A1A] hover:bg-white dark:hover:bg-[#202020] transition-all flex items-center justify-between group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white group-hover:text-[#FD4A32] transition-colors block">
+                      Outlook / Hotmail (Web)
+                    </span>
+                    <span className="text-[11px] text-[#868E96] dark:text-[#777777] block font-sans">
+                      Opens in outlook.live.com in a new tab
+                    </span>
+                  </div>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-[#868E96] group-hover:text-[#FD4A32] transition-colors shrink-0" />
+              </button>
+
+              {/* Option 3: Default Mail App (Desktop/Mobile) */}
+              <button
+                type="button"
+                onClick={openDefaultMail}
+                className="w-full p-3 rounded-lg border border-[#E9ECEF] dark:border-[#262626] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] bg-[#F8F9FA] dark:bg-[#1A1A1A] hover:bg-white dark:hover:bg-[#202020] transition-all flex items-center justify-between group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white group-hover:text-[#FD4A32] transition-colors block">
+                      Default Mail App
+                    </span>
+                    <span className="text-[11px] text-[#868E96] dark:text-[#777777] block font-sans">
+                      Launches Apple Mail, Windows Mail, or Outlook App
+                    </span>
+                  </div>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-[#868E96] group-hover:text-[#FD4A32] transition-colors shrink-0" />
+              </button>
+
+              {/* Option 4: Copy Email Address */}
+              <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[10px] uppercase font-bold text-[#868E96] dark:text-[#555555] block">
+                    Or copy email directly:
+                  </span>
+                  <span className="font-mono text-xs text-[#121417] dark:text-white font-semibold truncate block">
+                    prepsunite@gmail.com
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyEmailAddress}
+                  className={`px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+                    copiedEmail
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                      : 'bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-black/80'
+                  }`}
+                >
+                  {copiedEmail ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
