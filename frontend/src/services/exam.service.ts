@@ -140,11 +140,10 @@ export const formatExamDisplayName = (exam: {
  * 1. Must NOT be soft-deleted.
  * 2. Must NOT be explicitly flagged as a public/free exam (is_public_exam = true).
  * 3. Price must be > 0 (or undefined, defaulting to 99). If explicitly 0, it's free.
- * 4. Tab content check: If tab nodes are loaded over the wire, verify that at least
- *    one node is locked (if all nodes have isFree === true, it's 100% free practice).
- * 5. Global catalog fallback: If tab nodes were omitted over the wire (e.g. in getAllExams()
- *    to preserve bandwidth and DRM protection), any non-public exam with price > 0 is paywalled.
- * 6. NEVER rejects based on name/title strings!
+ * 4. Tab content check: NEVER offer an exam for purchase if it has no papers, tabs, or content!
+ *    (Prevents students from paying for empty placeholder archives with no questions).
+ * 5. Must contain at least one locked (paid) tab (hasLockedPaperNodes).
+ *    (If all tabs are free demo tabs with isFree === true, the entire archive is 100% free practice).
  */
 export const isExamPaywalled = (exam: Partial<ExamWithCompany> | Partial<ExamItem> | any): boolean => {
   if (!exam) return false;
@@ -158,17 +157,13 @@ export const isExamPaywalled = (exam: Partial<ExamWithCompany> | Partial<ExamIte
   // 3. Explicitly ₹0 price check
   if (exam.price !== undefined && Number(exam.price) === 0) return false;
 
-  // 4. Tab content check: if tabs are present, verify at least one locked node
-  const rawTabs = exam.paperTabs || exam.paper_tabs;
-  if (rawTabs && (Array.isArray(rawTabs) ? rawTabs.length > 0 : true)) {
-    const tabs = parsePaperTabs(rawTabs);
-    if (tabs && tabs.length > 0) {
-      return hasLockedPaperNodes(tabs);
-    }
-  }
+  // 4. Tab content check: never sell an empty exam archive with no papers/tabs
+  const tabs = parsePaperTabs(exam.paperTabs || exam.paper_tabs);
+  if (!tabs || !Array.isArray(tabs) || tabs.length === 0) return false;
 
-  // 5. Global catalog fallback: any non-public exam with price > 0 is paywalled
-  return true;
+  // 5. Must contain at least one locked (paid) node.
+  // If all nodes have isFree === true, the exam is 100% free practice.
+  return hasLockedPaperNodes(tabs);
 };
 
 export const examService = {
@@ -254,12 +249,9 @@ export const examService = {
 
   getAllExams: async (includeHidden = false): Promise<ExamWithCompany[]> => {
     try {
-      // 🛡️ SECURITY & PERFORMANCE: Exclude paper_tabs from global catalog query.
-      // Paper contents are paywalled proprietary assets and must only be fetched
-      // on demand per company via get_secure_exams_by_company or get_secure_exam_by_id RPCs.
       let query = supabase
         .from('exams')
-        .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
+        .select('id, company_slug, company_id, name, badge, content, old_papers, price, is_public_exam, upvotes, google_doc_embed_url, google_doc_edit_url, is_deleted, paper_tabs, companies(id, slug, name, logo_url, industry, about_company, description, is_deleted)')
         .eq('is_deleted', false);
 
       // 🛡️ SECURITY: Filter hidden/draft exams at the PostgreSQL engine level so drafts are not transmitted over the wire

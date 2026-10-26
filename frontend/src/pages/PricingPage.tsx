@@ -663,7 +663,7 @@ export default function PricingPage() {
               {hasActiveSubscription && (
                 <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 pt-0.5">
                   <Check className="w-3.5 h-3.5 shrink-0" />
-                  <span>Your active subscription grants full access to all 17 company paper archives.</span>
+                  <span>Your active subscription grants full access to all company paper archives.</span>
                 </div>
               )}
             </div>
