@@ -55,7 +55,7 @@ function PrivacyPolicyContent() {
           in India. We are the <strong>Data Fiduciary</strong> under the DPDP Act, 2023, meaning we determine
           the purpose and means of processing your personal data.
         </p>
-        <p>Contact: <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a></p>
+        <p>Contact: <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a></p>
       </Section>
 
       <Section title="2. Personal Data We Collect (DPDP Rule 3 Disclosure)">
@@ -148,7 +148,7 @@ function PrivacyPolicyContent() {
           To exercise any of these rights, visit your{' '}
           <Link to="/dashboard" className="text-[#FD4A32] underline">Dashboard → Data &amp; Privacy</Link>{' '}
           page or email our Grievance Officer at{' '}
-          <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a>.
+          <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a>.
           We will respond within <strong>7 working days</strong>.
         </p>
       </Section>
@@ -170,7 +170,7 @@ function PrivacyPolicyContent() {
           We do not knowingly collect data from individuals under 18 years of age.
           If you are a minor, please obtain parental or guardian consent before using this platform.
           If we discover we have inadvertently collected data from a minor without verifiable parental consent,
-          we will delete it promptly. Contact: <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a>.
+          we will delete it promptly. Contact: <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a>.
         </p>
       </Section>
 
@@ -191,7 +191,7 @@ function PrivacyPolicyContent() {
           <div className="text-[11px] space-y-0.5">
             <p><strong>Designation:</strong> Data Protection &amp; Grievance Redressal Officer</p>
             <p><strong>Organisation:</strong> MockFolder</p>
-            <p><strong>Email:</strong> <a href="mailto:support@mockfolder.in" className="text-[#FD4A32] underline">support@mockfolder.in</a></p>
+            <p><strong>Email:</strong> <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a></p>
             <p><strong>Response SLA:</strong> Within 7 working days of receipt</p>
           </div>
           <p className="text-[10px] text-[#868E96] dark:text-[#555555]">
@@ -309,7 +309,7 @@ function TermsContent() {
           These Terms are governed by the laws of the <strong>Republic of India</strong>. Any disputes shall
           be subject to the exclusive jurisdiction of the courts located in India. We encourage you to first
           contact our Grievance Officer at{' '}
-          <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a>{' '}
+          <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a>{' '}
           to resolve disputes amicably before initiating legal proceedings.
         </p>
       </Section>
@@ -367,7 +367,7 @@ function RefundContent() {
 
       <Section title="3. Refund Process">
         <ol className="list-decimal ml-4 space-y-1">
-          <li>Email <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a> with subject: <strong>Refund Request — [Your Razorpay Payment ID]</strong></li>
+          <li>Email <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a> with subject: <strong>Refund Request — [Your Razorpay Payment ID]</strong></li>
           <li>Include your registered email address and a brief description of the issue.</li>
           <li>We will review and respond within <strong>5 working days</strong>.</li>
           <li>Approved refunds are processed via the original payment method within <strong>7–10 business days</strong> (as per Razorpay's standard timeline).</li>
@@ -384,7 +384,7 @@ function RefundContent() {
       <Section title="5. Contact for Disputes">
         <p>
           For unresolved payment disputes, you may also contact:{' '}
-          <a href="mailto:prepsunite@gmail.com" className="text-[#FD4A32] underline">prepsunite@gmail.com</a>{' '}
+          <a href="mailto:mockfolder@gmail.com" className="text-[#FD4A32] underline">mockfolder@gmail.com</a>{' '}
           (Grievance Officer) or initiate a dispute via Razorpay's customer portal.
         </p>
       </Section>
@@ -465,10 +465,10 @@ export default function PolicyPage({ type }: PolicyPageProps) {
           </div>
         </div>
         <a
-          href="mailto:prepsunite@gmail.com"
+          href="mailto:mockfolder@gmail.com"
           className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#FD4A32] text-white text-[11px] font-display font-bold uppercase tracking-wider hover:bg-[#e03e28] transition-colors"
         >
-          prepsunite@gmail.com
+          mockfolder@gmail.com
         </a>
       </div>
 

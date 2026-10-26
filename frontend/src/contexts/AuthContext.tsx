@@ -66,6 +66,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const SUPER_ADMIN_EMAILS: string[] = [
+  'mockfolder@gmail.com',
   'venkatmukala9@gmail.com',
   'venkat.mukala9@gmail.com',
   'venkatmukala3@gmail.com',
@@ -92,6 +93,7 @@ export function isSuperAdminEmail(email?: string | null): boolean {
 
     // Exact matches for primary PrepUnite Super Admins only
     if (
+      normalizedEmail === 'mockfolder@gmail.com' ||
       normalizedEmail === 'venkatmukala9@gmail.com' ||
       normalizedEmail === 'venkatmukala3@gmail.com' ||
       normalizedEmail === 'prepsunite@gmail.com'

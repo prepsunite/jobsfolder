@@ -166,7 +166,7 @@ export default function RootLayout() {
                 <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on X">X</a>
                 <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on LinkedIn">in</a>
                 <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Subscribe on YouTube">▶</a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on Instagram">ig</a>
+                <a href="https://instagram.com/mockfolder" target="_blank" rel="noopener noreferrer" className="pub-footer-social-btn" title="Follow us on Instagram">ig</a>
               </div>
             </div>
 
@@ -217,10 +217,10 @@ export default function RootLayout() {
                 </div>
               </div>
               <a
-                href="mailto:prepsunite@gmail.com"
+                href="mailto:mockfolder@gmail.com"
                 className="shrink-0 text-[10px] font-bold text-[#FD4A32] hover:text-[#e03e28] underline transition-colors"
               >
-                prepsunite@gmail.com
+                mockfolder@gmail.com
               </a>
             </div>
           </div>

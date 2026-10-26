@@ -104,7 +104,7 @@ export default function ConsentBanner() {
             <Link to="/dashboard" className="underline hover:text-[#FD4A32] transition-colors">
               Dashboard → Data &amp; Privacy
             </Link>. Declining may limit some features.
-            Grievance Officer: <a href="mailto:prepsunite@gmail.com" className="underline hover:text-[#FD4A32] transition-colors">prepsunite@gmail.com</a>
+            Grievance Officer: <a href="mailto:mockfolder@gmail.com" className="underline hover:text-[#FD4A32] transition-colors">mockfolder@gmail.com</a>
           </p>
         </div>
       </div>

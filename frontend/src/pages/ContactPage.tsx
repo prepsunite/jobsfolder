@@ -127,7 +127,7 @@ export default function ContactPage() {
   };
 
   const openGmailWeb = () => {
-    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=prepsunite@gmail.com&su=${encodeURIComponent(
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=mockfolder@gmail.com&su=${encodeURIComponent(
       getEffectiveSubject()
     )}&body=${encodeURIComponent(getEffectiveBody())}`;
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -135,7 +135,7 @@ export default function ContactPage() {
   };
 
   const openOutlookWeb = () => {
-    const url = `https://outlook.live.com/mail/0/deeplink/compose?to=prepsunite@gmail.com&subject=${encodeURIComponent(
+    const url = `https://outlook.live.com/mail/0/deeplink/compose?to=mockfolder@gmail.com&subject=${encodeURIComponent(
       getEffectiveSubject()
     )}&body=${encodeURIComponent(getEffectiveBody())}`;
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -143,7 +143,7 @@ export default function ContactPage() {
   };
 
   const openDefaultMail = () => {
-    const url = `mailto:prepsunite@gmail.com?subject=${encodeURIComponent(
+    const url = `mailto:mockfolder@gmail.com?subject=${encodeURIComponent(
       getEffectiveSubject()
     )}&body=${encodeURIComponent(getEffectiveBody())}`;
     window.location.href = url;
@@ -152,7 +152,7 @@ export default function ContactPage() {
 
   const copyEmailAddress = () => {
     try {
-      navigator.clipboard.writeText('prepsunite@gmail.com');
+      navigator.clipboard.writeText('mockfolder@gmail.com');
       setCopiedEmail(true);
       setTimeout(() => setCopiedEmail(false), 2500);
     } catch {
@@ -260,7 +260,7 @@ export default function ContactPage() {
                     onClick={() => openEmailModal()}
                     className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32] text-left cursor-pointer font-mono"
                   >
-                    prepsunite@gmail.com
+                    mockfolder@gmail.com
                   </button>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function ContactPage() {
               <ExternalLink className="w-3 h-3 opacity-70" />
             </button>
             <div className="flex items-center justify-between text-[11px] pt-1 px-1 font-mono text-[#868E96] dark:text-[#777777]">
-              <span>prepsunite@gmail.com</span>
+              <span>mockfolder@gmail.com</span>
               <button
                 type="button"
                 onClick={copyEmailAddress}
@@ -595,7 +595,7 @@ export default function ContactPage() {
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-[#E9ECEF] dark:border-[#242424]">
           <div className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">
-            <strong className="text-[#495057] dark:text-[#999999]">Grievance Officer:</strong> prepsunite@gmail.com ·{' '}
+            <strong className="text-[#495057] dark:text-[#999999]">Grievance Officer:</strong> mockfolder@gmail.com ·{' '}
             <strong className="text-[#495057] dark:text-[#999999]">SLA:</strong> 7 working days ·{' '}
             If unresolved in 30 days, escalate to the Data Protection Board of India (DPBI).
           </div>
@@ -635,7 +635,7 @@ export default function ContactPage() {
                   Choose Your Email Provider
                 </h3>
                 <p className="text-xs text-[#868E96] dark:text-[#777777] font-sans">
-                  How would you like to email <span className="font-mono text-[#121417] dark:text-white font-semibold">prepsunite@gmail.com</span>?
+                  How would you like to email <span className="font-mono text-[#121417] dark:text-white font-semibold">mockfolder@gmail.com</span>?
                 </p>
               </div>
               <button
@@ -726,7 +726,7 @@ export default function ContactPage() {
                     Or copy email directly:
                   </span>
                   <span className="font-mono text-xs text-[#121417] dark:text-white font-semibold truncate block">
-                    prepsunite@gmail.com
+                    mockfolder@gmail.com
                   </span>
                 </div>
                 <button

@@ -8147,6 +8147,7 @@ export const tpoService = {
     // If caller is an enrolled student (not bypassed and not super admin), strictly filter
     // collegeExams so other batches' exams are never displayed on their dashboard or exam list.
     const isSuperAdminCaller = [
+      'mockfolder@gmail.com',
       'venkatmukala9@gmail.com',
       'venkat.mukala9@gmail.com',
       'prepsunite@gmail.com',

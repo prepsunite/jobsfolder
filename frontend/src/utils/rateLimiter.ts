@@ -111,7 +111,7 @@ export const rateLimiter = {
     if (usedToday >= config.maxDaily) {
       return {
         allowed: false,
-        reason: `Daily limit reached (${config.maxDaily}/${config.maxDaily} ${config.label}). For urgent assistance, please contact prepsunite@gmail.com.`,
+        reason: `Daily limit reached (${config.maxDaily}/${config.maxDaily} ${config.label}). For urgent assistance, please contact mockfolder@gmail.com.`,
         usedToday,
         maxDaily: config.maxDaily,
         remainingToday: 0,

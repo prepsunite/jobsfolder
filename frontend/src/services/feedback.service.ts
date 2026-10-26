@@ -262,7 +262,7 @@ export const feedbackService = {
       });
 
       if (!rpcErr && quota && typeof quota === 'object' && quota.allowed === false) {
-        throw new Error('Daily inquiry limit reached (3/3) for this email. For urgent assistance, please contact prepsunite@gmail.com directly.');
+        throw new Error('Daily inquiry limit reached (3/3) for this email. For urgent assistance, please contact mockfolder@gmail.com directly.');
       }
     } catch (checkErr: any) {
       if (checkErr.message?.includes('Daily inquiry limit reached')) {

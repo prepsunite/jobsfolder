@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const ADMIN_EMAILS = [
+  'mockfolder@gmail.com',
   'venkatmukala9@gmail.com',
   'venkat.mukala9@gmail.com',
   'prepsunite@gmail.com',
