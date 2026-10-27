@@ -6965,7 +6965,9 @@ export const tpoService = {
       }
     } catch {}
 
-    const newAttemptId = `att-${mockExamId}-${cleanStudentId || 'anon'}-${Date.now().toString(36)}`;
+    // Deterministic attempt ID per student per exam prevents multi-tab race conditions
+    const candidateKey = cleanStudentId ? cleanStudentId.replace(/[^a-zA-Z0-9_-]/g, '_') : `anon_${Date.now().toString(36)}`;
+    const newAttemptId = `att-${mockExamId}-${candidateKey}`;
     const newAttempt: StudentExamAttempt = {
       id: newAttemptId,
       mock_exam_id: mockExamId,
@@ -8149,9 +8151,7 @@ export const tpoService = {
     const isSuperAdminCaller = [
       'mockfolder@gmail.com',
       'venkatmukala9@gmail.com',
-      'venkat.mukala9@gmail.com',
       'prepsunite@gmail.com',
-      'veen1kat@gmail.com',
     ].includes(cleanEmail);
     const shouldBypassFilter = Boolean(options?.bypassCohortFilter || isSuperAdminCaller);
 

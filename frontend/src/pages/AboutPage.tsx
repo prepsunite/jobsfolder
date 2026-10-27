@@ -9,9 +9,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Zap,
-  Download,
 } from 'lucide-react';
-import AboutGridOverlay from '@/components/AboutGridOverlay';
+import AtmosphericBackground from '@/components/AtmosphericBackground';
 import '@/hp-styles.css';
 
 export default function AboutPage() {
@@ -55,8 +54,8 @@ export default function AboutPage() {
 
   return (
     <div className="relative min-h-screen py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* 📐 Geometric Architectural Grid Overlay with Elliptical Radial Mask */}
-      <AboutGridOverlay />
+      {/* 📐 Live Switchable Atmospheric Background */}
+      <AtmosphericBackground initialStyle="spotlight" showSwitcher={true} />
 
       <div className="relative z-10 max-w-5xl mx-auto space-y-16 animate-fadeIn">
         {/* ── HERO HEADER ── */}
@@ -81,7 +80,7 @@ export default function AboutPage() {
           {stats.map((s, idx) => (
             <div
               key={idx}
-              className="p-4 sm:p-5 rounded-xl bg-white/70 dark:bg-[#141414]/70 backdrop-blur-md border border-[var(--e-border)] hover:border-[#FD4A32]/40 transition-all duration-300 shadow-sm text-center space-y-1"
+              className="p-4 sm:p-5 rounded-xl bg-white/70 dark:bg-[#141414]/70 backdrop-blur-md border border-[var(--e-border)] hover:border-[#FD4A32]/60 hover:-translate-y-1 hover:shadow-md transition-all duration-300 shadow-sm text-center space-y-1"
             >
               <div className="font-display font-black text-2xl sm:text-3xl text-[var(--e-text)] tracking-tight">
                 {s.num.startsWith('₹') ? <span className="text-[#FD4A32]">{s.num}</span> : s.num}
@@ -111,7 +110,7 @@ export default function AboutPage() {
             {pillars.map((p, i) => (
               <div
                 key={i}
-                className="group relative p-6 rounded-xl bg-white/80 dark:bg-[#141414]/80 backdrop-blur-md border border-[var(--e-border)] hover:border-[#FD4A32]/45 transition-all duration-300 shadow-sm space-y-3.5"
+                className="group relative p-6 rounded-xl bg-white/80 dark:bg-[#141414]/80 backdrop-blur-md border border-[var(--e-border)] hover:border-[#FD4A32]/60 hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300 shadow-sm space-y-3.5"
               >
                 {/* Header with Icon & Technical Monospace Tag */}
                 <div className="flex items-center justify-between">
@@ -138,7 +137,7 @@ export default function AboutPage() {
         </div>
 
         {/* ── PHILOSOPHY & WHY WE BUILT PREPUNITE ── */}
-        <div className="p-6 sm:p-10 rounded-2xl bg-white/80 dark:bg-[#141414]/85 backdrop-blur-md border border-[var(--e-border)] hover:border-[#FD4A32]/30 transition-all duration-300 shadow-sm space-y-6">
+        <div className="p-6 sm:p-10 rounded-2xl bg-white/80 dark:bg-[#141414]/85 backdrop-blur-md border border-[var(--e-border)] hover:border-[#FD4A32]/40 hover:shadow-lg transition-all duration-300 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--e-border)] pb-5">
             <div className="space-y-1">
               <div className="text-[10.5px] font-bold uppercase tracking-widest text-[#FD4A32]">
@@ -184,56 +183,6 @@ export default function AboutPage() {
                 <span>Browse Companies</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Brand Assets / Official Logo Download */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#141414]/85 backdrop-blur-md border border-[var(--e-border)] shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--e-border)] pb-4">
-            <div>
-              <div className="text-[10.5px] font-bold uppercase tracking-widest text-[#FD4A32]">
-                Brand Assets
-              </div>
-              <h3 className="font-display font-extrabold text-xl text-[var(--e-text)]">
-                MockFolder Official Logo &amp; Identity
-              </h3>
-            </div>
-            <span className="text-[11px] font-mono text-[var(--e-text-3)] bg-[var(--e-surface-2)] px-2.5 py-1 rounded border border-[var(--e-border)]">
-              Transparent · 930 × 930 px
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-[#F8F9FA] dark:bg-[#1C1C1C] border border-[var(--e-border)] flex items-center justify-center p-3 shrink-0 shadow-inner">
-              <img
-                src="/mockfolder-logo.png"
-                alt="MockFolder Official Logo"
-                className="w-full h-full object-contain drop-shadow"
-              />
-            </div>
-            <div className="space-y-3 flex-1 text-center sm:text-left">
-              <p className="text-xs sm:text-sm text-[var(--e-text-2)] leading-relaxed font-sans">
-                Download the official high-resolution transparent MockFolder emblem for media, presentations, campus notices, or profile badges.
-              </p>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
-                <a
-                  href="/mockfolder-logo.png"
-                  download="mockfolder-logo.png"
-                  className="px-4 py-2 rounded-lg bg-[#FD4A32] hover:bg-[#E03E28] text-white font-display font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-sm cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download High-Res PNG (930×930)</span>
-                </a>
-                <a
-                  href="/mockfolder-logo.svg"
-                  download="mockfolder-logo.svg"
-                  className="px-4 py-2 rounded-lg bg-[var(--e-surface-2)] hover:bg-[var(--e-surface)] text-[var(--e-text)] border border-[var(--e-border)] font-display font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download Vector SVG</span>
-                </a>
-              </div>
             </div>
           </div>
         </div>

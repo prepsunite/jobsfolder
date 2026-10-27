@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { examService, formatExamDisplayName, isExamPaywalled, type ExamWithCompany } from '@/services/exam.service';
 import PaymentResultModal, { type PaymentResultData } from '@/components/PaymentResultModal';
+import AtmosphericBackground from '@/components/AtmosphericBackground';
 
 type BillingDuration = '1M' | '6M' | '1Y';
 
@@ -416,47 +417,51 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 py-8 px-4 animate-fadeIn">
-      {/* 1. Hero Header */}
-      <div className="text-center space-y-3.5 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider">
-          <Zap className="w-3.5 h-3.5" />
-          <span>Transparent Student Pricing</span>
-        </div>
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold tracking-tight text-[#121417] dark:text-white">
-          Invest in Your <span className="bg-gradient-to-r from-[#FD4A32] via-[#FD4A32] to-[#FF8066] bg-clip-text text-transparent">Dream Career</span>
-        </h1>
-        <p className="text-sm text-[#495057] dark:text-[#999999] max-w-xl mx-auto leading-relaxed">
-          Master placement season with authentic company blueprints, timed proctored mocks, and step-by-step OA solutions.
-        </p>
-      </div>
+    <div className="relative min-h-screen py-8 px-4 overflow-hidden">
+      {/* 📐 Live Switchable Atmospheric Background */}
+      <AtmosphericBackground initialStyle="spotlight" showSwitcher={true} />
 
-      {/* Notification Toast */}
-      {notification && (
-        <div
-          role="alert"
-          className={`max-w-2xl mx-auto p-4 rounded-xl text-xs font-medium flex items-center justify-between border transition-all ${
-            notification.type === 'error'
-              ? 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
-              : notification.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-              : 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400'
-          }`}
-        >
-          <span>{notification.message}</span>
-          <button
-            type="button"
-            onClick={() => setNotification(null)}
-            className="ml-3 text-xs opacity-70 hover:opacity-100 font-bold px-2 py-1 rounded cursor-pointer"
+      <div className="relative z-10 max-w-6xl mx-auto space-y-12 animate-fadeIn">
+        {/* 1. Hero Header */}
+        <div className="text-center space-y-3.5 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider">
+            <Zap className="w-3.5 h-3.5" />
+            <span>Transparent Student Pricing</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold tracking-tight text-[#121417] dark:text-white">
+            Invest in Your <span className="bg-gradient-to-r from-[#FD4A32] via-[#FD4A32] to-[#FF8066] bg-clip-text text-transparent">Dream Career</span>
+          </h1>
+          <p className="text-sm text-[#495057] dark:text-[#999999] max-w-xl mx-auto leading-relaxed">
+            Master placement season with authentic company blueprints, timed proctored mocks, and step-by-step OA solutions.
+          </p>
+        </div>
+
+        {/* Notification Toast */}
+        {notification && (
+          <div
+            role="alert"
+            className={`max-w-2xl mx-auto p-4 rounded-xl text-xs font-medium flex items-center justify-between border transition-all ${
+              notification.type === 'error'
+                ? 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+                : notification.type === 'success'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                : 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400'
+            }`}
           >
-            ✕
-          </button>
-        </div>
-      )}
+            <span>{notification.message}</span>
+            <button
+              type="button"
+              onClick={() => setNotification(null)}
+              className="ml-3 text-xs opacity-70 hover:opacity-100 font-bold px-2 py-1 rounded cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
-      {/* 2. Targeted 1-Month Pass (Single Company Drive Pass) */}
-      <div className="max-w-6xl mx-auto">
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xs">
+        {/* 2. Targeted 1-Month Pass (Single Company Drive Pass) */}
+        <div className="max-w-6xl mx-auto">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#F8F9FA]/90 dark:bg-[#141414]/90 backdrop-blur-md border border-[#E9ECEF] dark:border-[#242424] hover:border-[#FD4A32]/50 hover:shadow-md transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xs">
           <div className="space-y-1.5 flex-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
               <BookOpen className="w-3 h-3" />
@@ -568,7 +573,7 @@ export default function PricingPage() {
       {/* 4. Core Tiers Grid: Basic, Pro, Ultra */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
         {/* Tier 1: Basic (Free) */}
-        <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-6 shadow-xs hover:border-gray-300 dark:hover:border-[#333333] transition-all">
+        <div className="p-6 sm:p-7 rounded-2xl bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-6 shadow-xs hover:-translate-y-1.5 hover:shadow-lg hover:border-gray-300 dark:hover:border-[#333333] transition-all duration-300">
           <div className="space-y-4">
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase tracking-wider font-display">
@@ -622,7 +627,7 @@ export default function PricingPage() {
         </div>
 
         {/* Tier 2: Pro (5 Mock Exams / cycle) */}
-        <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2E2E2E] flex flex-col justify-between space-y-6 relative shadow-xs hover:border-[#FD4A32]/60 transition-all">
+        <div className="p-6 sm:p-7 rounded-2xl bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md border border-[#E9ECEF] dark:border-[#2E2E2E] flex flex-col justify-between space-y-6 relative shadow-xs hover:-translate-y-1.5 hover:shadow-xl hover:border-[#FD4A32]/70 transition-all duration-300">
           <div className="space-y-4">
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-[#FD4A32] uppercase tracking-wider font-display">
@@ -698,9 +703,10 @@ export default function PricingPage() {
         </div>
 
         {/* Tier 3: Ultra (Unlimited Mock Exams) - Featured */}
-        <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#141414] border-2 border-[#FD4A32] dark:border-[#FD4A32] flex flex-col justify-between space-y-6 relative shadow-lg shadow-[#FD4A32]/10">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#FD4A32] text-white text-[9px] font-display font-black uppercase tracking-wider shadow-xs">
-            Most Popular • Unlimited
+        <div className="p-6 sm:p-7 rounded-2xl bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border-2 border-[#FD4A32] dark:border-[#FD4A32] flex flex-col justify-between space-y-6 relative shadow-lg shadow-[#FD4A32]/10 animate-feature-pulse hover:-translate-y-2 hover:shadow-2xl transition-all duration-300">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#FD4A32] text-white text-[9px] font-display font-black uppercase tracking-wider shadow-xs overflow-hidden">
+            <span className="relative z-1">Most Popular • Unlimited</span>
+            <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 animate-shimmer-sweep pointer-events-none" />
           </div>
 
           <div className="space-y-4">
@@ -909,6 +915,7 @@ export default function PricingPage() {
 
       {/* Apple-Grade Payment Feedback Modal */}
       {paymentModal && <PaymentResultModal {...paymentModal} />}
+      </div>
     </div>
   );
 }

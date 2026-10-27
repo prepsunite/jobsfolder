@@ -125,6 +125,18 @@ export default async function handler(req, res) {
           if (rpcError) {
             console.error('[api/webhook] fulfill_payment_order RPC error:', rpcError.message);
             // Fallback: direct table updates if RPC is pending migration
+            // 🛡️ Concurrency Guard: Check if transaction was already fulfilled by client verify
+            const { data: existingTx } = await supabaseAdmin
+              .from('transactions')
+              .select('id, payment_id')
+              .eq('payment_id', paymentId)
+              .maybeSingle();
+
+            if (existingTx) {
+              console.log(`[api/webhook] Transaction ${paymentId} already recorded. Skipping duplicate fulfillment.`);
+              return res.status(200).send('OK');
+            }
+
             const { itemType = 'SINGLE_PAPER', examId } = payment.notes || {};
             const amount = payment.amount ? payment.amount / 100 : 59;
             const normalizedItemType = itemType.toUpperCase();

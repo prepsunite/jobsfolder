@@ -68,9 +68,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const SUPER_ADMIN_EMAILS: string[] = [
   'mockfolder@gmail.com',
   'venkatmukala9@gmail.com',
-  'venkat.mukala9@gmail.com',
-  'venkatmukala3@gmail.com',
-  'venkat.mukala3@gmail.com',
   'prepsunite@gmail.com',
 ];
 
@@ -91,11 +88,10 @@ export function isSuperAdminEmail(email?: string | null): boolean {
     const actualDomain = domain === 'googlemail.com' ? 'gmail.com' : domain;
     const normalizedEmail = `${normalizedUser}@${actualDomain}`;
 
-    // Exact matches for primary PrepUnite Super Admins only
+    // Exact matches for primary MockFolder Super Admins only
     if (
       normalizedEmail === 'mockfolder@gmail.com' ||
       normalizedEmail === 'venkatmukala9@gmail.com' ||
-      normalizedEmail === 'venkatmukala3@gmail.com' ||
       normalizedEmail === 'prepsunite@gmail.com'
     ) {
       return true;

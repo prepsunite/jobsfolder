@@ -1075,8 +1075,8 @@ export default function MockExamTestPage() {
       // freezes permanently with no way to submit.
       let aId = syncRef.current.attemptId;
       if (!aId && exam?.id) {
-        const candidateSlug = user?.email?.split('@')[0] || user?.id?.slice(0, 8) || 'candidate';
-        aId = `att-${exam.id}-${candidateSlug}-${Date.now().toString(36)}`;
+        const candidateSlug = (user?.email?.split('@')[0] || user?.id?.slice(0, 8) || 'candidate').replace(/[^a-zA-Z0-9_-]/g, '_');
+        aId = `att-${exam.id}-${candidateSlug}`;
         setAttemptId(aId);
         syncRef.current = { ...syncRef.current, attemptId: aId };
       }

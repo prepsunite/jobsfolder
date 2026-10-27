@@ -754,3 +754,71 @@ pre.test-case-code {
 
 
 
+
+
+/* ===== Atmospheric & Ambient Background Motion Utilities ===== */
+@keyframes ambientDrift1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(45px, -35px) scale(1.08); }
+  66% { transform: translate(-25px, 30px) scale(0.95); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes ambientDrift2 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(-40px, 35px) scale(1.06); }
+  66% { transform: translate(30px, -25px) scale(0.92); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes ambientPulse {
+  0%, 100% { opacity: 0.16; transform: scale(1); }
+  50% { opacity: 0.32; transform: scale(1.12); }
+}
+
+@keyframes featureBorderPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(253, 74, 50, 0.22), 0 10px 25px -5px rgba(253, 74, 50, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(253, 74, 50, 0.1), 0 20px 35px -5px rgba(253, 74, 50, 0.2);
+  }
+}
+
+@keyframes badgeShimmerSweep {
+  0% { transform: translateX(-150%); }
+  50%, 100% { transform: translateX(250%); }
+}
+
+.animate-ambient-drift-1 {
+  animation: ambientDrift1 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-ambient-drift-2 {
+  animation: ambientDrift2 26s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-ambient-pulse {
+  animation: ambientPulse 8s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.animate-feature-pulse {
+  animation: featureBorderPulse 4s ease-in-out infinite;
+}
+
+.animate-shimmer-sweep {
+  animation: badgeShimmerSweep 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-drift-1,
+  .animate-ambient-drift-2,
+  .animate-ambient-pulse,
+  .animate-feature-pulse,
+  .animate-shimmer-sweep {
+    animation: none !important;
+  }
+}

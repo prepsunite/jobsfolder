@@ -3,9 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const ADMIN_EMAILS = [
   'mockfolder@gmail.com',
   'venkatmukala9@gmail.com',
-  'venkat.mukala9@gmail.com',
   'prepsunite@gmail.com',
-  'veen1kat@gmail.com',
 ];
 
 export default async function handler(req, res) {
@@ -937,10 +935,25 @@ export default async function handler(req, res) {
           }
         } catch {}
 
+        // 🛡️ Concurrency Guard: Check for existing active attempt before creating new
+        const effectiveStudentId = attempt.student_id || user.id || cleanEmail;
+        const { data: existingAttempt } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .select('*')
+          .eq('mock_exam_id', attempt.mock_exam_id)
+          .or(`student_id.eq.${effectiveStudentId},student_email.eq.${cleanEmail}`)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (existingAttempt) {
+          return res.status(200).json({ success: true, attempt: existingAttempt });
+        }
+
         const startRow = {
           id: attempt.id,
           mock_exam_id: attempt.mock_exam_id,
-          student_id: attempt.student_id || user.id || cleanEmail,
+          student_id: effectiveStudentId,
           student_email: cleanEmail,
           college_id: attempt.college_id || 'unknown_college',
           status: 'IN_PROGRESS',
@@ -1016,6 +1029,21 @@ export default async function handler(req, res) {
           } catch (rpcEx) {
             console.warn('[api/campus-exams] submit_exam_attempt_v2 exception:', rpcEx);
           }
+        }
+
+        // 🛡️ Concurrency Guard: Check if attempt is already finalized before applying fallback
+        const { data: dbAttempt } = await supabaseAdmin
+          .from('student_exam_attempts')
+          .select('*')
+          .eq('id', attempt.id)
+          .maybeSingle();
+
+        if (dbAttempt && ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE'].includes(dbAttempt.status)) {
+          return res.status(200).json({
+            success: true,
+            attempt: dbAttempt,
+            alreadyFinalized: true,
+          });
         }
 
         // Fallback / Draft update: Prevent client-side score forgery

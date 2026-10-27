@@ -167,6 +167,16 @@ export default async function handler(req, res) {
       });
     }
 
+    // 🛡️ Concurrency Guard: If webhook or previous call already fulfilled this order, return success
+    if (orderRecord.status === 'PAID' && orderRecord.payment_id === razorpay_payment_id) {
+      return res.status(200).json({
+        success: true,
+        isUnlocked: true,
+        message: 'Payment already verified and access active.',
+        details: { already_fulfilled: true, item_type: orderRecord.item_type },
+      });
+    }
+
     const authoritativeItemType = orderRecord.item_type.toUpperCase().trim();
     const authoritativeAmount = orderRecord.amount_inr;
     const authoritativeExamId = orderRecord.exam_id;
