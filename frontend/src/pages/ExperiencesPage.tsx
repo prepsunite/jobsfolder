@@ -19,6 +19,7 @@ import {
   Bookmark,
   BookmarkCheck,
   ThumbsUp,
+  Sparkles,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import { useToast } from '@/contexts/ToastContext';
@@ -481,48 +482,66 @@ export default function ExperiencesPage() {
 
                 {/* Overall Candidate Experience */}
                 {exp.overallExperience && (
-                  <div className="p-3.5 rounded-md bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 space-y-1.5">
-                    <h4 className="text-[10px] font-display font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
-                      Overall Experience & Insights
-                    </h4>
-                    <p className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <div className="p-4 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400">
+                      <Layers className="w-3.5 h-3.5" />
+                      <h4 className="text-[10px] font-display font-bold uppercase tracking-wider">
+                        Candidate Summary & Overview
+                      </h4>
+                    </div>
+                    <p className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                       {exp.overallExperience}
                     </p>
                   </div>
                 )}
 
-                {/* Interview Rounds & Details */}
+                {/* Step-by-Step Connected Interview Timeline */}
                 {exp.rounds && exp.rounds.length > 0 && (
-                  <div className="space-y-3">
-                    {exp.rounds.map((rd, rIdx) => (
-                      <div
-                        key={rIdx}
-                        className="p-3.5 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-2"
-                      >
-                        {rd.roundTitle && (
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
-                            <h4 className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
-                              {rd.roundTitle}
-                            </h4>
+                  <div className="pt-2">
+                    <div className="text-[10px] font-display font-bold uppercase tracking-wider text-[#868E96] dark:text-[#777777] mb-3">
+                      Interview Selection Process ({exp.rounds.length} {exp.rounds.length === 1 ? 'Round' : 'Rounds'})
+                    </div>
+
+                    <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-3.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#FD4A32] before:via-gray-300 dark:before:via-[#333333] before:to-transparent">
+                      {exp.rounds.map((rd, rIdx) => (
+                        <div key={rIdx} className="relative group">
+                          {/* Step Number Dot / Badge */}
+                          <div className="absolute -left-6 sm:-left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#121417] dark:bg-white text-white dark:text-black text-[11px] font-display font-extrabold shadow-sm ring-4 ring-white dark:ring-[#141414] group-hover:scale-110 transition-transform">
+                            {rIdx + 1}
                           </div>
-                        )}
-                        <ContentRenderer
-                          content={rd.details}
-                          className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
-                        />
-                      </div>
-                    ))}
+
+                          {/* Step Content Card */}
+                          <div className="space-y-2">
+                            {rd.roundTitle && (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-sm font-display font-extrabold text-[#121417] dark:text-[#FFFFFF]">
+                                  {rd.roundTitle}
+                                </h4>
+                              </div>
+                            )}
+                            <div className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed bg-[#F8F9FA]/70 dark:bg-[#181818]/70 p-4 rounded-lg border border-[#E9ECEF] dark:border-[#262626]">
+                              <ContentRenderer
+                                content={rd.details}
+                                className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 {/* Candidate Tips & Advice */}
                 {exp.tips && (
-                  <div className="p-3.5 rounded-md bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1.5">
-                    <h4 className="text-[10px] font-display font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                      Preparation Tips & Pro Advice
-                    </h4>
-                    <p className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <div className="p-4 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <h4 className="text-[10px] font-display font-bold uppercase tracking-wider">
+                        Preparation Tips & Pro Advice
+                      </h4>
+                    </div>
+                    <p className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                       {exp.tips}
                     </p>
                   </div>

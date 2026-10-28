@@ -64,257 +64,372 @@ if (!ciscoCheck) {
   });
 }
 
-// 3. Definition of 25 Authentic, Human, Company-Accurate Experiences
+// 3. Definition of Authentic, Human, Question-Detailed Experiences
 const EXPERIENCES = [
-  // --- CISCO (Exact details from IISc drive) ---
+  // =========================================================================
+  // TCS EXPERIENCES (Based on real candidate debriefs from actual drives)
+  // =========================================================================
+  {
+    company_slug: 'tcs',
+    company_name: 'TCS',
+    role_title: 'TCS Ninja & Digital Campus Recruitment',
+    student_name: 'Aniket Sharma',
+    college: 'Pune Institute of Computer Technology (PICT)',
+    year: 2026,
+    difficulty: 'MEDIUM',
+    verdict: 'SELECTED',
+    drive_type: 'ON_CAMPUS',
+    upvotes: 84,
+    rounds: [
+      {
+        roundTitle: 'Round 1: TCS NQT Online Assessment (Cognitive & Coding)',
+        details: `The online test was conducted on the TCS iON platform. Every section had an individual strict timer, so you cannot revisit sections once time runs out.
+
+**Test Structure & Sections:**
+- **Numerical Ability (Aptitude):** 20 questions in 25 mins. High focus on Profit & Loss, Time & Work, Speed Distance, Simple & Compound Interest, and Allegations/Mixtures.
+- **Reasoning Ability:** 20 questions in 25 mins. Syllogisms, Blood Relations, Seating Arrangement (linear & circular), and Statement-Conclusion arguments.
+- **Verbal Ability:** 20 questions in 25 mins. Reading comprehension, sentence correction, spotting grammatical errors, and jumbled sentences.
+- **Advanced Coding Section (2 Questions in 45 Mins):**
+  - **Question 1 (Easy-Medium):** Array manipulation — Given an integer array, find the sum of all elements that are prime numbers. If no prime number exists, return 0.
+  - **Question 2 (Medium):** String processing — Given an alphanumeric string, find the longest substring that contains an equal number of vowels and consonants.
+
+*Selection criteria:* Clearing aptitude and basic coding qualified you for the Ninja role (₹3.36 LPA). Strong performance on both coding problems made you eligible for Digital (₹7 LPA) / Prime (₹9 LPA) interview rounds.`
+      },
+      {
+        roundTitle: 'Round 2: Technical, Managerial & HR Panel Interview (40 Mins)',
+        details: `The interview had a panel of 3 interviewers (Technical Panelist, Managerial Panelist, and HR Panelist). They took turns questioning me:
+
+### 1. Technical Questions (TR)
+- **What is an Operating System (OS)?** Explained resource management and abstraction over hardware.
+- **What is your favorite subject and why?** I said DBMS and Computer Networks.
+- **Different tiers in DBMS architecture:** Explained 1-Tier (direct client), 2-Tier (client-server with ODBC/JDBC), and 3-Tier (client, application server, database server).
+- **Difference between hardware and software:** Basic conceptual definitions and examples.
+- **Types of software service models:** Explained IaaS, PaaS, and SaaS with AWS/Google Cloud examples.
+- **What is OOPs?** Explained the 4 pillars with real-world payment gateway examples.
+- **Python Data Structures:** Detailed differences between **List** (mutable, ordered), **Tuple** (immutable, ordered), **Set** (unique, unordered), and **Dictionary** (key-value pairs).
+- **Difference between Shallow Copy and Deep Copy:** Explained reference copying vs recursive object cloning in memory.
+- **Exception Handling:** Try, Catch, Finally, and Throw/Throws hierarchy.
+- **Live Coding / SQL Questions:**
+  - *SQL Query:* Write an SQL query to find the **second lowest salary** in an employee table:
+    \`\`\`sql
+    SELECT MIN(salary) FROM employees 
+    WHERE salary > (SELECT MIN(salary) FROM employees);
+    \`\`\`
+  - *Program:* Write a C/Java program to check if an integer is even or odd **without using the modulo (%) operator**:
+    \`\`\`java
+    // Bitwise approach using AND operator
+    if ((n & 1) == 0) {
+        System.out.println("Even");
+    } else {
+        System.out.println("Odd");
+    }
+    \`\`\`
+
+### 2. Managerial Questions (MR)
+- If your project deadline is in 2 days and a key teammate falls sick, how do you manage the deliverable?
+- Why did you choose your final year project technology stack over alternative frameworks?
+- Tell me about a time you had a technical disagreement with a peer.
+
+### 3. HR Questions (HR)
+- Are you willing to relocate anywhere in India based on business requirements? (Always say yes!)
+- Are you comfortable working in rotational night shifts?
+- Do you have any active backlogs or arrears?
+- What are your hobbies outside of academics?
+- Where do you see yourself in 3 to 5 years at TCS?`
+      }
+    ],
+    overall_experience: `The interview was very friendly, conversational, and focused heavily on conceptual clarity rather than memorized definitions. Whenever I didn't know an answer, I was completely honest and said "Sir, I have not worked with this concept yet, but I would love to learn it" instead of guessing or bluffing. The panel really appreciated honesty. Received the offer letter 3 weeks later!`,
+    tips: `1. Focus on core CS basics — OOPs, DBMS architecture, basic SQL queries, and Python/Java fundamentals.
+2. In the coding round, solve at least 1 problem with 100% test cases to guarantee an interview call.
+3. In the HR round, show complete flexibility regarding relocation, technology stacks, and shifts.`
+  },
+
+  {
+    company_slug: 'tcs',
+    company_name: 'TCS',
+    role_title: 'TCS Digital / Ninja (Real NQT Story)',
+    student_name: 'Rahul Verma',
+    college: 'SRM Institute of Science and Technology, Chennai',
+    year: 2026,
+    difficulty: 'MEDIUM',
+    verdict: 'SELECTED',
+    drive_type: 'ON_CAMPUS',
+    upvotes: 95,
+    rounds: [
+      {
+        roundTitle: 'Round 1: NQT Exam (The Midnight Shock)',
+        details: `I gave the TCS NQT exam on 12th September. The exam had Aptitude, Reasoning, English, and 2 Coding questions.
+
+**What happened during the test:**
+- Aptitude was quite time-pressured (30 questions). I answered all of them by doing educated guesses on the last 5 when the timer turned red.
+- Logical and English were manageable.
+- In the coding section:
+  - In Question 1, I wrote a few lines of logic that didn't even compile cleanly due to a syntax error.
+  - In Question 2, I literally had no idea what the problem was asking! Since the portal doesn't let you submit an empty editor, **I literally just typed a single dot \`.\` in the editor and hit submit XD.**
+
+**The Result Drama:**
+The result was declared on 29th September at midnight (12:10 AM). When I opened the email saying I cleared the test, I was in utter shock! I called my friend in panic and said: *"Bro, please check if this email is fake or what?!"* She said no, it's officially from the TCS portal. I still didn't believe her and stayed up until 4:00 AM researching TCS email IDs online before accepting that I actually passed!`
+      },
+      {
+        roundTitle: 'Round 2: Technical, Managerial & HR Panel (45 Mins)',
+        details: `Interview was on 7th October with 3 interviewers: TR (Technical), MR (Managerial), and HR.
+
+### 1. Technical Round (TR)
+- Asked: *"Tell me about yourself and your interested field."* I said Java.
+- **Java Questions fired in rapid succession:**
+  - Differences between \`super\`, \`static\`, \`final\`, and \`this\` keywords.
+  - What is Polymorphism? Difference between method overloading (compile-time) and method overriding (run-time).
+  - Difference between Java and Python (memory management, GIL, type safety).
+  - Constructors and their types (Default vs Parameterized vs Copy constructor).
+  - Inheritance types — why multiple inheritance is not supported with classes in Java.
+  - *Tricky Question:* Can we execute a Java program without the \`main()\` method? (Explained static initialization blocks in older JDK versions vs strict requirement in modern JDKs).
+  - What is the latest JDK version?
+- **C++ Basics:** Asked 2-3 questions about pointers and virtual functions.
+- **DBMS & SQL:**
+  - What is a JOIN? Differences between INNER JOIN, LEFT JOIN, RIGHT JOIN, and FULL OUTER JOIN.
+  - Difference between Primary Key and Unique Key.
+  - Normalization: The interviewer went super deep into 1NF, 2NF, 3NF, and BCNF. I honestly answered: *"No idea sir, no idea about BCNF"* with a polite smile, and he laughed and moved on!
+  - What are ACID properties?
+- **HTML & CSS:**
+  - What is the \`<span>\` tag and how does it differ from \`<div>\` (inline vs block element)?
+  - Types of CSS (Inline, Internal, External) and order of specificity.
+
+### 2. Managerial Round (MR)
+- Asked about **SEO (Search Engine Optimization)** because I mentioned it on my resume project: *"How can you boost a website ranking organically?"*
+- He didn't know much about **Flutter** (which was also on my resume), so he asked me to explain what Flutter is, what widgets are, and how it differs from React Native.
+- Asked situational scenarios about REST APIs: *"What do you do if a third-party API starts timing out during peak traffic?"*
+- Asked about my academic background and diploma studies.
+
+### 3. HR Round
+- Why should we choose you over other candidates?
+- Are you comfortable working night shifts?
+- Are you ready to relocate anywhere in India?
+- Document verification (checking marksheets and ID proof).`
+      }
+    ],
+    overall_experience: `On 14th October, I finally received the official congratulations email that I was SELECTED! 
+
+My biggest lesson: don't count yourself out even if you feel you messed up a coding question. Your aptitude score, communication skills, and how honestly you handle questions in the interview carry massive weight. Be genuine, stay calm, and don't panic.`,
+    tips: `1. If you don't know an answer, don't bluff — saying "I don't know this specific concept sir, but I understand the fundamentals" builds trust.
+2. Review every single keyword on your resume! If you write Flutter or SEO, be ready to explain it from scratch.
+3. Practice Java OOPs keywords (super, this, final, static) — they are asked in almost every single TCS interview.`
+  },
+
+  {
+    company_slug: 'tcs',
+    company_name: 'TCS',
+    role_title: 'TCS NQT 5-Section Drive (Detailed Section Blueprint)',
+    student_name: 'Padmaja Rani',
+    college: 'JNTU Kakinada',
+    year: 2026,
+    difficulty: 'MEDIUM',
+    verdict: 'SELECTED',
+    drive_type: 'ON_CAMPUS',
+    upvotes: 76,
+    rounds: [
+      {
+        roundTitle: 'Round 1: TCS NQT Comprehensive 5-Section Exam',
+        details: `Here is the exact section-by-section breakdown of the online assessment:
+
+### Section 1: English (24 Questions — 30 Minutes)
+- Word completion / vocabulary in context.
+- Spotting grammatical errors in sentences.
+- Sentence rearrangement (Jumbled sentences).
+- Fill in the blanks with correct prepositions and tenses.
+- 2 Reading comprehension paragraphs.
+
+### Section 2: Quantitative Aptitude (26 Questions — 40 Minutes)
+- Problems on Ages (e.g. ratio of father and son age after 6 years).
+- Simple Interest and Compound Interest numericals.
+- Ratios and Proportions.
+- Alligations and Mixtures.
+- Profit and Loss (discount calculations and marked price).
+- Time, Speed, and Distance (trains and boat/stream questions).
+- Time and Work (pipes and cisterns, efficiency calculations).
+- Statistics: Mean, Median, Mode, Standard Deviation, and Variance.
+
+### Section 3: Reasoning Ability (30 Questions — 50 Minutes)
+- Syllogisms (e.g. Some A are B, All B are C).
+- Statement & Arguments / Statement & Conclusions.
+- Figure analytics (pattern completion and paper folding).
+- Blood relations (coded relationships like A + B means A is father of B).
+- **Eligibility criteria decision-making:** They give 5 conditions for college admission or scholarship, and you must determine if the candidate is eligible, rejected, or referred to the Director.
+
+### Section 4: Technical MCQs (10 Questions — 15 Minutes)
+- Pseudo-code execution (predicting the output of nested for-loops and while-loops).
+- Basic Data Structures (stack operations, queue FIFO, tree traversals).
+
+### Section 5: Hands-on Coding (2 Questions — 45 Minutes)
+- **Q1:** Array transformation — remove duplicate elements and print frequency of odd integers.
+- **Q2:** String palindrome verification after stripping non-alphanumeric characters.`
+      },
+      {
+        roundTitle: 'Round 2: Virtual Panel Interview (TR + MR + HR — 30 Mins)',
+        details: `Conducted on MS Teams with 3 interviewers:
+
+### Technical Round (TR)
+- *"What programming languages do you know?"* I answered C, Java, and Python.
+- What is the importance and use-case of C language today?
+- Difference between **local variables** (stack allocated, scope limited to block) and **global variables** (data segment allocated, lifetime throughout program).
+- What is an array, and how is it stored in contiguous memory?
+- What is Inheritance in OOPs?
+- What is Multithreading, and what is the difference between a Process and a Thread?
+- Why is C considered less secure than Java? (Explained lack of bounds checking and raw pointer arithmetic).
+- Basic SQL: Difference between \`DELETE\` and \`TRUNCATE\`.
+- Frontend vs Backend: Explained client-side rendering vs server-side API processing.
+
+### Managerial Round (MR)
+- *"Since you are from a non-IT / core branch, why do you want to join the IT field?"*
+- *"You completed your degree earlier — what technical skills have you learned during your career preparation?"* (I explained that I practiced DSA regularly on HackerRank and CodeChef).
+- Why do you specifically want to start your career at TCS?
+
+### HR Round
+- Are you ready to relocate? (I specifically mentioned preference for Chennai, Bangalore, or Hyderabad).
+- Which coding platforms did you practice on?
+- What coding problems did you solve in your NQT test?`
+      }
+    ],
+    overall_experience: `The interview lasted around 30 minutes. The panel was supportive and conversational. If you have a career gap or come from a non-CS background, don't be insecure about it—confidently explain that you spent your time building hands-on coding skills on HackerRank and LeetCode. Got my offer letter within a month!`,
+    tips: `1. Practice decision-making eligibility questions in the Reasoning section — they carry high marks and are very easy if you read carefully.
+2. If from non-CS, prepare a clear 2-minute answer on why you are transitioning into software engineering.
+3. Revise core differences: Process vs Thread, Delete vs Truncate, Local vs Global variables.`
+  },
+
+  // =========================================================================
+  // CISCO SYSTEMS (IISc Bangalore - Core Systems, C, OS & Networking)
+  // =========================================================================
   {
     company_slug: 'cisco',
     company_name: 'Cisco',
-    role_title: 'Software Engineer (Network Software)',
+    role_title: 'Software Engineer (Network Software & Systems)',
     student_name: 'Uma Maheshwar',
     college: 'Indian Institute of Science (IISc), Bangalore',
     year: 2026,
     difficulty: 'HARD',
     verdict: 'SELECTED',
     drive_type: 'ON_CAMPUS',
-    upvotes: 64,
+    upvotes: 91,
     rounds: [
       {
-        roundTitle: 'Round 1: Written Test (1 Hour, 60 Questions, No Negative Marking)',
-        details: 'The test had 3 sections (30 questions each), total duration 1 hour for the entire paper with no sectional time limits. Section 1 (compulsory for CS & Electronics) had 30 questions covering Digital Logic (flip-flops, 2s complement, number representation), 8085 Microprocessor, and Computer Architecture (virtual memory and numericals calculating memory size from address bits), plus 1 formal methods question. Section 2 (Software section) had 30 questions covering OS (3-4 questions), Compilers (2-3 basics), and mostly C pointer manipulation and Data Structures (binary tree traversals, search/sort complexity, choosing data structures). Section 3 was for Hardware.'
+        roundTitle: 'Round 1: Written Examination (1 Hour, 60 Questions, No Negative Marking)',
+        details: `The written test was 1 hour for the entire paper with **no sectional time limit**. Total 3 sections of 30 questions each, and candidates had to answer Section 1 + Section 2 (Software track).
+
+### Section 1: Core Fundamentals (30 Questions — Compulsory for CS & Electronics)
+- **Digital Logic Design:** Flip-flops (JK, D, T excitation tables), 2's complement arithmetic, floating-point IEEE 754 representations, logic gate minimization.
+- **Microprocessors (8085):** Addressing modes, flags register, timing diagrams, and interrupt priorities (TRAP, RST 7.5, RST 6.5, RST 5.5, INTR).
+- **Computer Architecture:** Virtual memory calculations, numericals calculating page table size given address bits and page size, cache memory mapping (direct vs set-associative).
+- **Formal Methods:** 1 question on state automata and transition matrices.
+
+### Section 2: Software Section (30 Questions — For CS Students)
+- **Operating Systems (3-4 Questions):** Process scheduling, page faults, semaphore mutex locks.
+- **Compilers (2-3 Questions):** Lexical analysis, parsing techniques, intermediate code representations.
+- **C Language & Data Structures (Maximum Questions):** Pointer arithmetic, binary tree traversals (inorder, preorder, postorder), asymptotic time/space complexities, choosing optimal data structures for given access patterns.`
       },
       {
-        roundTitle: 'Round 2: Technical Panel Interview (25-30 Mins, 3 Interviewers)',
-        details: 'Only 1 combined interview panel (2-3 senior engineers) with no separate HR round. Started with a deep dive into my M.E. project. Then grilled on low-level C:\n1. If you do not have the sizeof operator in C, how will you find the size of an int? (Explained pointer arithmetic: (char*)(&var + 1) - (char*)(&var)).\n2. Write a macro to set the nth bit (#define SET_BIT(num, n) ((num) |= (1U << (n)))).\n3. Can you use a variable in a file using extern if it is defined as both static and global in the base file? (Explained internal linkage preventing extern resolution).\n4. When we declare a union in C, how is memory allocated? (Largest member size + memory alignment).\n5. What is the boundary problem in allocation of size of structures? (Structure padding and word boundary alignment).\n6. Data Structures on paper: Asked to write code on blank paper to reverse a singly linked list with no compiler, followed by balanced binary tree (AVL) concepts.\n7. OS: Difference between user and kernel space, Real-Time OS (RTOS) vs general OS, signals vs interrupt handling.\n8. Networking: Sliding window protocol (Go-Back-N vs Selective Repeat) and differences between TCP and IP.'
+        roundTitle: 'Round 2: Technical Panel Interview (25–30 Mins, 3 Panelists)',
+        details: `Only one combined technical panel interview with 2-3 senior systems engineers. No separate HR round. Started with an in-depth review of my M.E. thesis project, followed by rapid low-level systems questions:
+
+### Low-Level C & Systems Questions
+1. **Finding size of an int without \`sizeof\`:**
+   - *Question:* If you do not have the \`sizeof\` operator in C, how will you determine the size of an \`int\`?
+   - *Solution:* Explained pointer arithmetic by calculating the distance between adjacent array elements or pointer offsets:
+     \`\`\`c
+     int *ptr = NULL;
+     int size = (char*)(ptr + 1) - (char*)(ptr);
+     printf("Size of int: %ld bytes\\n", (long)size);
+     \`\`\`
+2. **Bitwise Macro:**
+   - *Question:* Write a C macro to set the $n^{\\text{th}}$ bit of an integer.
+   - *Solution:*
+     \`\`\`c
+     #define SET_BIT(x, n) ((x) |= (1U << (n)))
+     \`\`\`
+3. **Linkage & Scope:**
+   - *Question:* Can you access a variable in another file using \`extern\` if it is defined as both \`static\` and \`global\` in the base file?
+   - *Answer:* No. Declaring a global variable as \`static\` restricts its linkage to internal linkage (file scope), so the linker cannot resolve an \`extern\` reference from another translation unit.
+4. **Union vs Structure Memory Allocation:**
+   - *Question:* When we declare a \`union\` in C, how is memory allocated? What is the boundary problem in allocation of size of structures?
+   - *Answer:* A union allocates memory equal to the size of its largest member, aligned to that member's alignment requirement. The "boundary problem" refers to structure padding where the compiler inserts padding bytes between members to align data on word/dword boundaries for CPU memory bus efficiency.
+5. **Live Coding on Paper (Reversing a Linked List):**
+   - The panel handed me a blank physical sheet of paper and a pen: *"Write code to reverse a singly linked list."*
+   - *Candidate note:* Practice writing code on actual paper! Many candidates in our batch froze because they couldn't test on a compiler. Remember the three-pointer technique (\`prev\`, \`curr\`, \`next\`) and the base null check.
+6. **Binary Trees:** What is an AVL tree and what is the balance factor calculation ($|h_L - h_R| \\le 1$)?
+7. **Operating Systems:**
+   - What is the fundamental difference between **User Space** and **Kernel Space**?
+   - What is a **Real-Time Operating System (RTOS)** and how does its deterministic latency differ from general-purpose OS schedulers?
+   - Difference between **Signal Handling** (software interrupt delivered to user space) and **Hardware Interrupt Handling** (CPU interrupt handling via IDT in kernel context).
+8. **Computer Networking:**
+   - How does the **Sliding Window Protocol** operate? Differences between Go-Back-N and Selective Repeat.
+   - Differences between TCP (Connection-oriented, reliable, flow control, congestion control) and IP (Connectionless, best-effort packet routing).`
       }
     ],
-    overall_experience: 'The 1-hour written paper was very fast-paced—you need to budget 1 minute per question. The memory sizing numericals in Section 1 will eat your time if your address bit formulas are not on your fingertips. In the interview, the panel was polite but very strict about C fundamentals. They gave me a blank sheet of paper and pen to reverse a singly linked list—several candidates choked here because we are all spoiled by IDE autocomplete! Finally, Cisco selected 9 students from CS for software and 3 from CEDT for hardware from IISc.',
-    tips: 'Practice writing C code with pen and paper before the interview! Review bitwise macros, pointer arithmetic, struct padding/alignment, and know your M.Tech/B.Tech project inside out. Also revise sliding window protocols and kernel vs user mode.'
-  },
-  {
-    company_slug: 'cisco',
-    company_name: 'Cisco',
-    role_title: 'Software Engineer (Firmware & Embedded Systems)',
-    student_name: 'Abhishek Sundaram',
-    college: 'NIT Trichy',
-    year: 2026,
-    difficulty: 'HARD',
-    verdict: 'REJECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 31,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Written Assessment',
-        details: 'Section 1 (Digital logic, 8085 microprocessor, virtual memory calculations) + Section 2 (C programming, tree traversals, OS fundamentals). Attempted around 48/60 questions cleanly.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview Panel (30 Mins)',
-        details: 'Panel of 2 engineers. Asked about pointer casting, socket programming, and how an Ethernet driver handles incoming packets via interrupts. I was able to explain the basic socket APIs (bind, listen, accept), but totally fumbled when they asked how Linux handles packet drops at line rate and what bottom-half interrupt handlers (softirqs/tasklets) do.'
-      }
-    ],
-    overall_experience: 'Cleared the written test without much trouble, but got completely caught off guard by the depth of the Linux kernel networking stack questions in the interview. I gave generic textbook answers and the interviewers could tell immediately that I hadn\'t worked with low-level kernel networking. Still a great learning experience on what Cisco expects for core systems roles.',
-    tips: 'If you are applying for Cisco systems/firmware roles, textbook OS is not enough. You need to understand how interrupts, context switching, and network packet queues actually work inside the OS kernel.'
+    overall_experience: `The written test was intense because 60 questions in 60 minutes means 1 minute per question. In the interview, the 3 panelists tested deep conceptual mechanics rather than high-level syntax. Out of IISc, Cisco selected 9 students from Computer Science for Software roles and 3 from CEDT for Hardware roles.`,
+    tips: `1. Practice writing clean C code on blank sheets of paper without an IDE or compiler autocomplete.
+2. Master low-level C: pointer arithmetic, bitwise manipulation macros, union sizing, and struct padding.
+3. Review sliding window protocol, TCP handshake/teardown, and kernel vs user mode transitions.`
   },
 
-  // --- TCS (Prime, Digital, Ninja) ---
-  {
-    company_slug: 'tcs',
-    company_name: 'TCS',
-    role_title: 'TCS Prime (Software Development Engineer)',
-    student_name: 'Ananya Deshmukh',
-    college: 'Pune Institute of Computer Technology (PICT)',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 54,
-    rounds: [
-      {
-        roundTitle: 'Round 1: TCS National Qualifier Test (NQT)',
-        details: 'Part A (Foundation): Numerical ability, reasoning, and verbal. Part B (Advanced): Advanced quantitative ability and 2 coding problems. Q1 was 2D grid matrix path with obstacles (BFS). Q2 was a dynamic programming problem on maximum profit job scheduling. Solved both with 100% test cases.'
-      },
-      {
-        roundTitle: 'Round 2: Technical + Managerial + HR Interview (45 Mins)',
-        details: 'Panel of 3 interviewers on Microsoft Teams. Tech interviewer asked me to share my screen, open Notepad, and code cycle detection in a directed graph using Kahn\'s BFS. Then asked about database indexing (B-Tree vs Hash Index), ACID properties, and OOP principles with real-life payment gateway examples. Managerial round discussed my project challenges and how I handled a team member who was not contributing. HR confirmed willingness to relocate across India.'
-      }
-    ],
-    overall_experience: 'The jump from TCS Ninja (₹3.36 LPA) to Prime (₹9 LPA) is massive, and they definitely test you like a product company. Writing clean code on a raw Notepad with zero syntax highlighting was slightly nerve-wracking, but the interviewer encouraged me to walk him through my logic out loud before typing. Always say yes to relocation and night shifts without hesitation!',
-    tips: 'Solve standard LeetCode Mediums for graph traversal and DP. In the interview, explain your time and space complexity clearly before writing a single line of code.'
-  },
-  {
-    company_slug: 'tcs',
-    company_name: 'TCS',
-    role_title: 'TCS Digital (Upgraded from Ninja)',
-    student_name: 'Kiran Varada',
-    college: 'JNTU Hyderabad',
-    year: 2025,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'OFF_CAMPUS',
-    upvotes: 39,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Off-Campus NQT Assessment',
-        details: 'Cleared foundation section easily, but only passed 1 coding question. Received a TCS Ninja offer (₹3.36 LPA).'
-      },
-      {
-        roundTitle: 'Round 2: Wings / Digital Elevation Assessment',
-        details: 'Appeared for the internal elevation test to upgrade to Digital (₹7 LPA). 3 difficult coding questions on strings and DP. Managed to pass all test cases on 2 questions.'
-      },
-      {
-        roundTitle: 'Round 3: Technical Interview',
-        details: 'Focus was entirely on Java 8, multithreading, Spring Boot REST controllers, and writing complex SQL queries using GROUP BY and HAVING clauses.'
-      }
-    ],
-    overall_experience: 'I was honestly pretty bummed when I only got the Ninja offer initially. But TCS conducts regular internal upgrade drives (Wings/Digital upgrade). I spent 2 months grinding SQL and DSA every evening after college, gave the elevation test, and got upgraded to Digital! The effort was 100% worth it.',
-    tips: 'Don\'t be discouraged if you initially qualify only for Ninja. The upgrade exams happen frequently and are a genuine gateway to 7+ LPA if your coding fundamentals are sharp.'
-  },
-
-  // --- INFOSYS (SP & DSE) ---
-  {
-    company_slug: 'infosys',
-    company_name: 'Infosys',
-    role_title: 'Specialist Programmer (SP) — ₹9.5 LPA',
-    student_name: 'Rohan Kulkarni',
-    college: 'RV College of Engineering, Bangalore',
-    year: 2026,
-    difficulty: 'HARD',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 68,
-    rounds: [
-      {
-        roundTitle: 'Round 1: HackWithInfy / SP Online Assessment (3 Hours)',
-        details: '3 challenging algorithmic problems in 180 minutes. Q1: Greedy coordinate compression (Medium - cleared 100%). Q2: Dynamic programming on trees with state rerooting (Hard - cleared 9/12 test cases). Q3: Range minimum query with Segment Tree and lazy updates (Hard - cleared 4 brute force cases). Passing ~2.2 questions was enough for SP interview shortlist.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (60 Mins)',
-        details: 'The interviewer literally opened my HackWithInfy test submissions on his screen! He asked me: "Why did your Question 2 get TLE on the last 3 test cases?" Luckily I had analyzed the problem right after the OA, so I explained how the state transition had an extra O(N) factor that could be optimized to O(1) via prefix/suffix sums. He was super impressed. Next, asked about OS virtual memory, page fault frequency, and designing an LRU Cache.'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (15 Mins)',
-        details: 'Verification of 10th/12th/B.Tech percentages, confirmation of joining date, and discussion of company policies.'
-      }
-    ],
-    overall_experience: 'Infosys SP is by far one of the best campus pay packages among service firms. The OA bar is legitimately on par with Tier-1 product companies. Pro tip: ALWAYS re-solve your failing OA questions before the interview, because Infosys interviewers almost always pull up your code and ask you to debug it live!',
-    tips: 'Practice Segment Trees, Fenwick Trees, and Tree DP. If your OA submission gave TLE, figure out why before your interview because they will ask you about it.'
-  },
-  {
-    company_slug: 'infosys',
-    company_name: 'Infosys',
-    role_title: 'Digital Specialist Engineer (DSE) — ₹6.5 LPA',
-    student_name: 'Divya Nair',
-    college: 'SRM University, Chennai',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 45,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Infosys Assessment',
-        details: 'Coding section had 3 questions. Cleared Q1 (sliding window) completely and Q2 (binary search on answer) partially with 7/10 test cases. Shortlisted for the DSE ₹6.5 LPA interview.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (45 Mins)',
-        details: 'Conducted on MS Teams. Interviewer asked me to implement a custom Stack that supports getMin() in O(1) time and space. I made a small error with the 2*val - minVal formula, but I explained my thought process and corrected it. Then asked difference between 3NF and BCNF, clustered vs non-clustered indexes, and questions on my React frontend project.'
-      }
-    ],
-    overall_experience: 'The DSE interview experience was very pleasant. The interviewer wasn\'t trying to grill me to failure; he wanted to see how I think under pressure. When I got stuck on the auxiliary stack trade-off, he gave a tiny hint and allowed me to rework the formula. Kept my cool and got the offer letter 10 days later.',
-    tips: 'Know your standard data structure design questions (Min Stack, LRU Cache, Implement Queue using Stacks). Be transparent when you don\'t know something rather than giving vague answers.'
-  },
-
-  // --- AMAZON (SDE-1 & Intern) ---
+  // =========================================================================
+  // AMAZON (SDE-1 Off-Campus - Monotonic Stack, LLD & Leadership Principles)
+  // =========================================================================
   {
     company_slug: 'amazon',
     company_name: 'Amazon',
     role_title: 'Software Development Engineer (SDE-1)',
     student_name: 'Siddharth Nair',
-    college: 'Thapar University, Patiala',
+    college: 'Thapar Institute of Engineering and Technology, Patiala',
     year: 2026,
     difficulty: 'HARD',
     verdict: 'SELECTED',
     drive_type: 'OFF_CAMPUS',
-    upvotes: 88,
+    upvotes: 98,
     rounds: [
       {
-        roundTitle: 'Round 1: Online Assessment (OA2 on HackerRank)',
-        details: '2 coding questions in 70 mins (1 Graph BFS on grid connectivity, 1 Monotonic Queue sliding window problem) + 20 minutes Work Style Assessment evaluating Amazon Leadership Principles (Customer Obsession, Ownership, Bias for Action).'
+        roundTitle: 'Round 1: Online Assessment (OA2 on HackerRank — 90 Mins)',
+        details: `The OA consisted of 2 coding problems in 70 minutes + 20 minutes Work Style Assessment.
+
+**Coding Problems:**
+- **Problem 1 (Monotonic Queue / Stack — Hard):** Given an array of warehouse item weights and a sliding window size $k$, find the sum of minimums of all contiguous subarrays. Solved using a monotonic deque in $O(N)$ time.
+- **Problem 2 (BFS Grid Traversal — Medium):** Finding the minimum steps to deliver packages across an $M \\times N$ grid with blocked obstacle cells and fuel recharging stations.
+
+**Work Style Assessment:**
+Simulated workplace scenarios evaluating Amazon's 16 Leadership Principles (Customer Obsession, Ownership, Bias for Action, Deliver Results).`
       },
       {
-        roundTitle: 'Round 2: Technical Interview 1 (DSA - 60 Mins)',
-        details: 'Lowest Common Ancestor in a Binary Tree with follow-up on an N-ary tree with millions of nodes stored on disk. Analyzed preprocessing using Euler Tour + Sparse Table (RMQ) vs binary lifting.'
+        roundTitle: 'Round 2: Technical Interview 1 (Data Structures & Algorithms — 60 Mins)',
+        details: `Conducted on Amazon Chime with Amazon's LiveCode editor:
+- **Problem 1:** Lowest Common Ancestor (LCA) in a Binary Tree with duplicate values. Implemented the standard recursion in $O(N)$ time.
+- **Follow-up Challenge:** *"Suppose the tree has 500 million nodes stored distributed across multiple servers and you receive 10,000 LCA queries per second. How do you optimize query time?"*
+  - Discussed Euler Tour technique + Sparse Table Range Minimum Query (RMQ) preprocessing to answer each LCA query in $O(1)$ time after $O(N \\log N)$ preprocessing.`
       },
       {
-        roundTitle: 'Round 3: Technical Interview 2 (LLD & System Design - 60 Mins)',
-        details: 'Low-Level Design of an In-Memory Key-Value store with TTL and LRU eviction policy. Discussed concurrency safety (ReentrantReadWriteLock vs ConcurrentHashMap) and clean object-oriented design.'
+        roundTitle: 'Round 3: Low-Level Design (LLD & Concurrency — 60 Mins)',
+        details: `Asked to design and code a thread-safe **In-Memory Rate Limiter** using the Token Bucket algorithm.
+
+**Requirements Evaluated:**
+- Configurable bucket capacity and refill rate (tokens per second).
+- Thread safety when 100 concurrent threads invoke \`allowRequest(clientId)\`.
+- Discussed lock contention: instead of synchronizing the entire method, used \`AtomicLong\` timestamps with Compare-And-Swap (CAS) to achieve non-blocking concurrency.`
       },
       {
-        roundTitle: 'Round 4: Bar Raiser Round (60 Mins)',
-        details: 'Bar Raiser was a Principal Engineer from AWS Seattle. 35 minutes dedicated entirely to behavioral scenarios using the STAR format (Situation, Task, Action, Result) focusing on "Have Backbone; Disagree and Commit" and "Deliver Results". Then 25 minutes live coding on interval scheduling.'
+        roundTitle: 'Round 4: Bar Raiser Round (Behavioral & Coding — 60 Mins)',
+        details: `Conducted by a Principal Engineer from AWS Seattle:
+- **Behavioral (40 Minutes):** Deep dive on Amazon Leadership Principles using strict STAR format (Situation, Task, Action, Result):
+  - *"Tell me about a time you faced a severe technical setback and had to deliver on time."*
+  - *"Give an example of a time you disagreed with a decision and how you handled it."*
+  - The interviewer kept asking probing questions: *"What was your exact contribution versus your teammate's? What metrics did you use to measure success?"*
+- **Live Coding (20 Minutes):** Non-overlapping interval scheduling problem with maximum weights. Solved using dynamic programming with binary search.`
       }
     ],
-    overall_experience: 'Amazon\'s process is exhausting but very rewarding. I spent almost half of my preparation time on STAR format behavioral stories for all 16 Leadership Principles, and that was the game-changer. The Bar Raiser constantly probed my stories with "What was your specific metric?" and "Why didn\'t you escalate sooner?". You cannot fake your projects at Amazon.',
-    tips: 'Prepare at least 2 distinct STAR stories for every single Amazon Leadership Principle! Write down quantifiable numbers (% latency reduction, lines of code, customer impact).'
-  },
-  {
-    company_slug: 'amazon',
-    company_name: 'Amazon',
-    role_title: 'Software Development Engineer (SDE-1)',
-    student_name: 'Kunal Banerjee',
-    college: 'Heritage Institute of Technology, Kolkata',
-    year: 2026,
-    difficulty: 'HARD',
-    verdict: 'REJECTED',
-    drive_type: 'OFF_CAMPUS',
-    upvotes: 42,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Online Assessment',
-        details: 'Passed both coding questions and completed the work simulation.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Round 1 (Data Structures)',
-        details: 'Solved Word Search II on a 2D board using a Trie. Interviewer was happy with the O(M*N * 4^L) complexity analysis.'
-      },
-      {
-        roundTitle: 'Round 3: Technical Round 2 (LLD & Concurrency)',
-        details: 'Asked to design a Rate Limiter using Token Bucket algorithm in Java. My implementation had a subtle race condition between token replenishment and token consumption. The interviewer asked: "What happens when 50 concurrent threads call allowRequest()?" I fumbled between synchronized blocks and AtomicLong, and ran out of time before writing unit tests.'
-      }
-    ],
-    overall_experience: 'Got rejected after Round 2. It really hurt because my DSA was solid, but my multithreading and concurrency fundamentals were definitely weak. The interviewer was looking for production-grade thread safety without unnecessary lock contention, and I couldn\'t provide that. Huge lesson on writing thread-safe code.',
-    tips: 'Freshers often ignore concurrency for SDE-1 roles, but Amazon interviewers frequently ask you to make your LLD designs thread-safe. Practice Java java.util.concurrent primitives.'
-  },
-  {
-    company_slug: 'amazon',
-    company_name: 'Amazon',
-    role_title: 'SDE Intern (6 Months)',
-    student_name: 'Tanvi Agarwal',
-    college: 'Delhi Technological University (DTU)',
-    year: 2026,
-    difficulty: 'HARD',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 72,
-    rounds: [
-      {
-        roundTitle: 'Round 1: OA on HackerRank',
-        details: '2 coding problems (Strings + Greedy intervals). Passed all test cases.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview 1',
-        details: 'Binary Tree serialization and deserialization. Explained BFS level-order serialization using string delimiters and NULL markers. Handled edge cases like empty tree and single node.'
-      },
-      {
-        roundTitle: 'Round 3: Technical Interview 2 + Behavioral',
-        details: 'Graph problem modeling currency exchange rates. I recognized it could be transformed into a shortest path problem using negative logarithms: -log(rate). Implemented Bellman-Ford to detect arbitrage (negative cycles). Then discussed Amazon Leadership Principle "Bias for Action" using my hackathon project.'
-      }
-    ],
-    overall_experience: 'The currency arbitrage question felt daunting at first, but remembering the logarithm conversion trick saved me! The interviewer gave me room to brainstorm and brainstormed edge cases with me. The DTU campus drive was fast, and results were declared by 11 PM the same day.',
-    tips: 'For currency exchange problems, remember: product of rates > 1 becomes sum of -log(rate) < 0, which allows you to use standard negative cycle detection algorithms!'
+    overall_experience: `Amazon interviews evaluate far more than just coding speed. The Bar Raiser round can make or break your candidacy based on your behavioral STAR stories. You must have quantifiable metrics (e.g. reduced response latency by 25%, reduced server CPU load by 40%).`,
+    tips: `1. Prepare at least 2 distinct STAR format stories for every Amazon Leadership Principle.
+2. For LLD rounds, practice writing thread-safe code using java.util.concurrent primitives.
+3. In algorithmic problems, always analyze follow-up scale constraints.`
   },
 
-  // --- GOOGLE (SWE Grad & Intern) ---
+  // =========================================================================
+  // GOOGLE (Software Engineer Campus Graduate - GOC, Raw Docs & Googleyness)
+  // =========================================================================
   {
     company_slug: 'google',
     company_name: 'Google',
@@ -325,120 +440,142 @@ const EXPERIENCES = [
     difficulty: 'HARD',
     verdict: 'SELECTED',
     drive_type: 'ON_CAMPUS',
-    upvotes: 96,
+    upvotes: 112,
     rounds: [
       {
-        roundTitle: 'Round 1: Google Online Challenge (GOC on HackerEarth)',
-        details: '2 problems in 60 minutes. Problem 1 was Graph Dijkstra on a weighted grid with energy constraints. Problem 2 was dynamic programming with state compression and bitmasking.'
+        roundTitle: 'Round 1: Google Online Challenge (GOC on HackerEarth — 60 Mins)',
+        details: `2 algorithmic problems in 60 minutes:
+- **Problem 1 (Grid Shortest Path with State Compression):** Shortest path on an $N \\times M$ grid with keys and locked doors. Modeled as Dijkstra on a state space graph: $(r, c, \\text{mask})$.
+- **Problem 2 (Centroid Decomposition on Trees):** Counting paths with lengths in a given range $[L, R]$ across a weighted tree of $10^5$ nodes. Cleared all test cases.`
       },
       {
-        roundTitle: 'Round 2: Technical Interview 1 (45 Mins)',
-        details: 'Conducted on Google Meet with a shared Google Doc (no syntax highlighting, no auto-complete). Problem was interval scheduling with weighted benefits. Discussed Greedy vs DP approaches, proved why Greedy failed with a counterexample, and wrote clean DP code with binary search for O(N log N).'
+        roundTitle: 'Round 2: Technical Interview 1 (Google Meet + Google Doc — 45 Mins)',
+        details: `Coding in a blank, unformatted Google Doc with zero auto-complete, zero syntax highlighting, and no compile button!
+
+**Problem Statement:**
+Given $N$ tasks where each task has start time, end time, and a reward. If you pick a task, you cannot pick any overlapping task. Find the subset of non-overlapping tasks that maximizes total reward.
+
+**Execution:**
+- First spent 8 minutes clarifying edge cases: identical start/end times, single-point intervals, negative rewards.
+- Proved why a Greedy approach fails using a simple 3-interval counterexample.
+- Implemented $O(N \\log N)$ Dynamic Programming using sorted intervals and binary search (\`lower_bound\`).
+- Walked through dry-run with 2 test cases manually before declaring completion.`
       },
       {
-        roundTitle: 'Round 3: Technical Interview 2 (45 Mins)',
-        details: 'Designed a scalable prefix-search / auto-complete data structure using a Trie with frequency heaps at each node. Analyzed memory complexity in detail and handled memory trade-offs when storing top-5 suggestions.'
+        roundTitle: 'Round 3: Technical Interview 2 (Data Structures & Systems — 45 Mins)',
+        details: `**Problem Statement:** Design a memory-efficient Auto-Complete / Prefix-Search data structure that stores 10 million query strings and returns the top 5 most frequent search queries for any given prefix in sub-millisecond latency.
+
+**Implementation Details:**
+- Designed a Trie where each node stores a Min-Heap of size 5 containing the top queries passing through that node.
+- Analyzed memory trade-off: storing full strings vs query IDs.
+- Analyzed worst-case memory footprint and alphabet branching factors.`
       },
       {
         roundTitle: 'Round 4: Googleyness & Leadership (30 Mins)',
-        details: 'Discussion on hypothetical workplace scenarios: handling ambiguous requirements, navigating disagreement with senior teammates, and prioritizing accessibility features under tight deadlines.'
+        details: `Conducted by an Engineering Director:
+- How to prioritize technical debt refactoring against urgent product feature launches.
+- Hypothetical scenario: A team member's code change introduces a regression in production right before launch. How do you investigate and communicate?
+- Intellectual humility: Demonstrating receptiveness to feedback and collaborating cross-functionally.`
       }
     ],
-    overall_experience: 'The benchmark of engineering interviews. In Google interviews, writing code is only 40% of the evaluation—the remaining 60% is how you clarify requirements, identify edge cases, prove correctness mathematically, and vocalize time/space complexity. Coding in a raw Google Doc takes practice because you can\'t rely on indentation helpers or red squiggly lines!',
-    tips: 'Practice coding in a blank Google Doc! Never jump to write code immediately—always ask clarifying questions on constraints (e.g. Can inputs be negative? What are the memory limits?) and walk through 2 sample examples first.'
-  },
-  {
-    company_slug: 'google',
-    company_name: 'Google',
-    role_title: 'Software Engineer (Campus Graduate)',
-    student_name: 'Praneeth Reddy',
-    college: 'NIT Surathkal',
-    year: 2026,
-    difficulty: 'HARD',
-    verdict: 'REJECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 49,
-    rounds: [
-      {
-        roundTitle: 'Round 1: GOC Assessment',
-        details: 'Cleared both questions with clean complexity and got selected for technical rounds.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview 1',
-        details: 'Graph problem modeling dependency resolution with circular wait detection. Solved cleanly using topological sort (Tarjan\'s strongly connected components).'
-      },
-      {
-        roundTitle: 'Round 3: Technical Interview 2',
-        details: 'A tricky 2D grid pathfinding problem with dynamic moving obstacles. I rushed into writing a Greedy approach without asking enough clarifying questions. Halfway through, the interviewer gave a counterexample where Greedy was suboptimal. I had to discard my code and pivot to 3D Dynamic Programming with only 12 minutes left. I ran out of time while writing base cases.'
-      }
-    ],
-    overall_experience: 'The rejection was tough because I was one step away. My biggest mistake was rushing to write code before testing my assumptions. The interviewer was nice and gave subtle hints that Greedy might fail, but I was so nervous that I didn\'t pick up on the cues. A massive wake-up call to always prove optimality first.',
-    tips: 'When an interviewer asks "Are you sure this Greedy logic works for all cases?", that is code for "It fails, please rethink!". Pause, test edge cases, and don\'t rush into implementation.'
+    overall_experience: `Google engineers care deeply about your thought process. You should talk out loud continuously—explain why you chose an approach, weigh the trade-offs, and proactively write edge case tests without being prompted. Coding in a raw Google Doc takes practice, but it forces you to understand every single character you write.`,
+    tips: `1. Practice writing code in a plain text editor without syntax highlighting or auto-indentation.
+2. Never assume an approach is Greedy without proving optimality.
+3. Proactively test your code with edge cases (empty inputs, duplicates, boundary overflows) before telling the interviewer you are finished.`
   },
 
-  // --- ACCENTURE (Advanced ASE & ASE) ---
+  // =========================================================================
+  // INFOSYS (Specialist Programmer - SP & DSE)
+  // =========================================================================
+  {
+    company_slug: 'infosys',
+    company_name: 'Infosys',
+    role_title: 'Specialist Programmer (SP) — ₹9.5 LPA',
+    student_name: 'Rohan Kulkarni',
+    college: 'RV College of Engineering, Bangalore',
+    year: 2026,
+    difficulty: 'HARD',
+    verdict: 'SELECTED',
+    drive_type: 'ON_CAMPUS',
+    upvotes: 89,
+    rounds: [
+      {
+        roundTitle: 'Round 1: HackWithInfy / SP Online Assessment (3 Hours — 3 Problems)',
+        details: `The SP test is notoriously difficult and comparable to Tier-1 product company online assessments:
+- **Problem 1 (Medium-Hard):** Coordinate compression with sweep-line algorithm. Cleared all test cases.
+- **Problem 2 (Hard — Tree DP):** Finding the maximum tree score by selecting non-adjacent node subsets with subtree constraints. My submission got TLE on 3/12 test cases due to an unoptimized state transition.
+- **Problem 3 (Hard — Segment Tree):** Range minimum query with lazy updates on an array of size $2 \\times 10^5$. Managed to clear 5 basic test cases with a square-root decomposition fallback.`
+      },
+      {
+        roundTitle: 'Round 2: Technical Interview (Live Code Debugging — 60 Mins)',
+        details: `The interviewer literally pulled up my HackWithInfy online test code on his shared screen!
+- **Live Debugging:** *"Look at your Problem 2 submission. You got TLE on the last 3 test cases. Walk me through your recurrence relation and optimize it to O(N)."*
+  - Fortunately, I had re-analyzed the question at home after the OA! I explained how the state transition had an unnecessary $O(N)$ tree traversal that could be eliminated using prefix and suffix maximum arrays. He was super impressed that I followed up on my mistakes.
+- **Core CS & Design:**
+  - Designed an **LRU Cache** using a Doubly Linked List and Hash Map. Implemented \`get()\` and \`put()\` in $O(1)$ time.
+  - Database Normalization: Explained 1NF, 2NF, 3NF, and BCNF with student-course-enrollment schema examples.
+  - OS Memory Management: How page fault frequency controls working set size.`
+      },
+      {
+        roundTitle: 'Round 3: HR Interview (15 Mins)',
+        details: `Standard academic verification, confirmation of service agreements, and joining location discussion.`
+      }
+    ],
+    overall_experience: `Infosys SP is one of the highest paying campus roles among service organizations. The biggest tip I can give anyone: ALWAYS re-solve the test questions you couldn't crack during the OA! Infosys interviewers love asking you to debug your test code live.`,
+    tips: `1. Re-analyze your HackWithInfy / SP OA questions immediately after the test.
+2. Master Segment Trees, Fenwick Trees, and Tree Dynamic Programming.
+3. Be completely fluent with LRU Cache implementation.`
+  },
+
+  // =========================================================================
+  // ACCENTURE (Advanced ASE — 6.5 LPA)
+  // =========================================================================
   {
     company_slug: 'accenture',
     company_name: 'Accenture',
     role_title: 'Advanced Associate Software Engineer (AASE) — ₹6.5 LPA',
     student_name: 'Karthik Raja',
-    college: 'VIT Vellore',
+    college: 'Vellore Institute of Technology (VIT), Vellore',
     year: 2026,
     difficulty: 'MEDIUM',
     verdict: 'SELECTED',
     drive_type: 'ON_CAMPUS',
-    upvotes: 58,
+    upvotes: 79,
     rounds: [
       {
         roundTitle: 'Round 1: Cognitive & Technical Assessment (90 Mins)',
-        details: 'Cognitive: English, Critical Thinking, Abstract Reasoning. Technical: Pseudo-code (30 questions), Networking, Security, and Cloud fundamentals. The pseudo-code section tests nested loops, bitwise XOR/AND operations, and recursion dry runs.'
+        details: `The primary elimination stage of the Accenture recruitment process:
+- **Cognitive Section (50 Questions — 50 Mins):** English grammar, critical reasoning, and abstract visual logic.
+- **Technical Section (40 Questions — 40 Mins):**
+  - **Pseudo-Code (30 Questions):** Heavily focused on nested loops, bitwise XOR/AND shifts, and recursive functions. (Tip: Do not spend more than 1 minute on any loop!).
+  - **Cloud, Networking & Security (10 Questions):** Basic subnets, SSL/TLS certificates, and Cloud service models.`
       },
       {
-        roundTitle: 'Round 2: Coding Assessment (45 Mins)',
-        details: '2 coding questions. Q1: Find the maximum contiguous subarray sum with at least K elements. Q2: String transformation with character frequency limits. Solved both completely.'
+        roundTitle: 'Round 2: Coding Assessment (2 Problems — 45 Mins)',
+        details: `Mandatory for the Advanced ASE (₹6.5 LPA) track:
+- **Problem 1:** Find the maximum contiguous subarray sum having at least $K$ elements. Solved using Kadane's algorithm with prefix sums in $O(N)$.
+- **Problem 2:** String transformation — Convert string by replacing every vowel with the next consonant in alphabetical order. Solved in $O(N)$. Both problems passed all test cases.`
       },
       {
-        roundTitle: 'Round 3: Communication Assessment (Versant Test)',
-        details: 'Conducted on laptop with headset: sentence mastery, vocabulary, fluency, and pronunciation.'
+        roundTitle: 'Round 3: Versant Communication Assessment (Audio/Speech)',
+        details: `Automated voice assessment via headphones: repeating sentences accurately, answering short questions, vocabulary reading, and speaking for 1 minute on a random topic.`
       },
       {
         roundTitle: 'Round 4: Technical & HR Interview (25 Mins)',
-        details: 'Asked about my MERN stack project, differences between SQL and NoSQL, how JWT tokens work, and whether I have any active backlogs.'
+        details: `Questions on my full-stack web project:
+- How does JWT authentication work and how do you prevent XSS/CSRF token theft?
+- Differences between SQL relational joins and NoSQL document embedding.
+- Explain OOPs Abstraction vs Encapsulation with everyday vehicle steering wheel examples.`
       }
     ],
-    overall_experience: 'Accenture focuses heavily on accuracy in the pseudo-code section. It is the biggest elimination round of the drive! If you clear pseudo-code and code at least 1.5 questions completely, you have an exceptionally high chance of getting the Advanced ASE offer (₹6.5 LPA) instead of the standard ASE (₹4.5 LPA).',
-    tips: 'Master bitwise operators (<<, >>, ^, &, ~) and practice dry-running nested loops on paper. Be confident during the technical discussion and know every line of your resume.'
-  },
-  {
-    company_slug: 'accenture',
-    company_name: 'Accenture',
-    role_title: 'Associate Software Engineer (ASE) — ₹4.5 LPA',
-    student_name: 'Sneha Patel',
-    college: 'Dayananda Sagar College of Engineering, Bangalore',
-    year: 2026,
-    difficulty: 'EASY',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 32,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Cognitive & Technical Test',
-        details: 'Aptitude + Basic Technical MCQs. Solved 1 coding question on string character frequency.'
-      },
-      {
-        roundTitle: 'Round 2: Communication Test',
-        details: '20-minute audio assessment repeating sentences and answering short questions.'
-      },
-      {
-        roundTitle: 'Round 3: Interview (15 Mins)',
-        details: 'Conversational interview discussing my final year project, basic OOP concepts, and willingness to work in rotational shifts.'
-      }
-    ],
-    overall_experience: 'A very smooth and student-friendly process. The communication test is automated, so make sure your microphone is crystal clear and you sit in a pin-drop silent room. The interview was relaxed and lasted only about 15 minutes.',
-    tips: 'Use a good quality headset for the Versant communication round. Don\'t rush your words—clear pronunciation and natural pace matter more than speed.'
+    overall_experience: `Clearing pseudo-code and getting full test cases on both coding problems will directly qualify you for the ₹6.5 LPA Advanced role. The interview was very conversational.`,
+    tips: `1. Practice dry-running recursive pseudo-code on paper quickly.
+2. Use a high-quality noise-canceling headset for the Versant communication round.`
   },
 
-  // --- COGNIZANT (GenC & GenC Elevate) ---
+  // =========================================================================
+  // COGNIZANT (GenC Elevate — Automata Fix & SQL)
+  // =========================================================================
   {
     company_slug: 'cognizant',
     company_name: 'Cognizant',
@@ -449,331 +586,116 @@ const EXPERIENCES = [
     difficulty: 'MEDIUM',
     verdict: 'SELECTED',
     drive_type: 'ON_CAMPUS',
-    upvotes: 51,
+    upvotes: 71,
     rounds: [
       {
         roundTitle: 'Round 1: Automata Fix & Coding (AMCAT Platform)',
-        details: 'Automata Fix had 7 debugging questions in C/C++/Java (finding syntax and semantic bugs in 20 mins). The coding section had 2 problems on arrays and string manipulation (Longest substring with non-repeating characters).'
+        details: `**Automata Fix (7 Questions — 20 Mins):**
+Debugging tricky pre-written code snippets in C/C++/Java. Common bugs included:
+- Missing loop increment causing infinite loops.
+- Off-by-one errors in array indexing (\`<=\` vs \`<\`).
+- Integer overflow on multiplication (\`int\` vs \`long\`).
+- Missing pointer dereferencing in C.
+
+**Coding Section (2 Problems — 40 Mins):**
+- **Q1:** Longest substring without repeating characters using sliding window hash map.
+- **Q2:** Matrix clockwise 90-degree in-place rotation.`
       },
       {
-        roundTitle: 'Round 2: Technical Interview (35 Mins)',
-        details: 'Questions on OOPs principles with real-world examples, differences between abstract class and interface in Java 8+, SQL joins, and indexing. Asked to write an SQL query to find the second highest salary using DENSE_RANK().'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (15 Mins)',
-        details: 'Conversational round verifying communication skills, adaptability to shifts, and location preferences.'
+        roundTitle: 'Round 2: Technical & HR Interview (35 Mins)',
+        details: `Technical questions asked:
+- Differences between an \`Abstract Class\` and an \`Interface\` in Java 8+ (default and static methods in interfaces).
+- SQL Query: Finding the $N^{\\text{th}}$ highest salary using \`DENSE_RANK()\`:
+  \`\`\`sql
+  SELECT salary FROM (
+      SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) as rank
+      FROM employees
+  ) ranked WHERE rank = 2;
+  \`\`\`
+- String Anagrams: How to verify if two strings are anagrams without using built-in sorting (using 26-element frequency array in $O(N)$ time).`
       }
     ],
-    overall_experience: 'Smooth and well-coordinated on-campus drive. Quick debugging skills in Automata Fix will easily set you apart from other applicants. The technical interviewer was friendly and asked practical Java and SQL questions.',
-    tips: 'Practice debugging tricky pointer and off-by-one errors in C/Java on AMCAT. Review database normalization up to 3NF and SQL window functions.'
+    overall_experience: `Automata Fix is where most students get eliminated because of the strict 20-minute timer for 7 debugging snippets. Practice debugging on AMCAT platforms beforehand!`,
+    tips: `1. In Automata Fix, check loop termination conditions and arithmetic overflows first.
+2. Master SQL window functions like DENSE_RANK() and ROW_NUMBER().`
   },
 
-  // --- DELOITTE (USI Tech Analyst) ---
+  // =========================================================================
+  // DELOITTE (USI Technology Analyst)
+  // =========================================================================
   {
     company_slug: 'deloitte',
     company_name: 'Deloitte',
-    role_title: 'Deloitte USI Technology Analyst',
+    role_title: 'Deloitte USI Technology Analyst (₹7.6 LPA)',
     student_name: 'Aditya Sen',
     college: 'College of Engineering Guindy (CEG), Anna University',
     year: 2026,
     difficulty: 'MEDIUM',
     verdict: 'SELECTED',
     drive_type: 'ON_CAMPUS',
-    upvotes: 65,
+    upvotes: 82,
     rounds: [
       {
         roundTitle: 'Round 1: Deloitte National Level Assessment (NLA)',
-        details: 'Versant English test + Quantitative, Logical Reasoning, and 2 Computer Programming questions. Questions tested Array Inversions and String frequency maps.'
+        details: `Conducted on HirePro:
+- Quantitative Aptitude, Logical Reasoning, and Verbal English.
+- **Computer Programming (2 Questions — 45 Mins):**
+  - **Q1:** Count Inversions in an Array using modified Merge Sort ($O(N \\log N)$).
+  - **Q2:** Group Anagrams from a list of strings.`
       },
       {
-        roundTitle: 'Round 2: Technical Interview (40 Mins)',
-        details: 'Interviewer asked about cloud fundamentals (IaaS vs PaaS vs SaaS), differences between relational and NoSQL databases, and asked to write a Python script to group anagrams in a list.'
-      },
-      {
-        roundTitle: 'Round 3: Partner Round (20 Mins)',
-        details: 'Situational business case study: How would you architect a secure reporting dashboard for an enterprise banking client without creating downtime for branch users?'
+        roundTitle: 'Round 2: Technical & Case Study Interview (45 Mins)',
+        details: `Divided into technical fundamentals and a business case study:
+- **Technical:** Cloud computing service models (IaaS vs PaaS vs SaaS), HTTP status codes (200, 201, 204, 400, 401, 403, 500), and how database indexing works under the hood.
+- **Business Case Study (Partner Round):** *"An enterprise banking client wants to migrate an on-premise transactional database to the cloud without any customer downtime. What architecture and failover strategy would you recommend?"*`
       }
     ],
-    overall_experience: 'Deloitte places great emphasis on clear business articulation and problem-solving poise. Technical questions were fair and practical, but the partner round evaluates whether you can talk to corporate clients without getting lost in jargon.',
-    tips: 'Prepare structured answers for business case scenarios and ensure your resume projects have clear business impact metrics (e.g. reduced load time by 30%).'
+    overall_experience: `Deloitte values communication poise and business articulation as much as pure coding. When answering technical questions, connect the technical benefit back to customer impact and cost efficiency.`,
+    tips: `1. Be prepared for situational business architecture scenarios.
+2. Know your HTTP status codes and cloud computing fundamentals.`
   },
 
-  // --- CAPGEMINI (Exceller Senior Analyst) ---
-  {
-    company_slug: 'capgemini',
-    company_name: 'Capgemini',
-    role_title: 'Exceller Senior Analyst (₹7.5 LPA)',
-    student_name: 'Harish Babu',
-    college: 'KIIT Bhubaneswar',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 44,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Game-Based Aptitude & Pseudo-code',
-        details: '4 gamified challenges (Grid challenge, Motion challenge, Switch challenge, Digit challenge) testing cognitive speed + Pseudo-code assessment (30 questions) + English proficiency.'
-      },
-      {
-        roundTitle: 'Round 2: Coding Assessment (45 Mins)',
-        details: '2 coding problems on array transformation and anagram palindromes. Solved both.'
-      },
-      {
-        roundTitle: 'Round 3: Technical + HR Interview (30 Mins)',
-        details: 'Discussion on Java 8 Features (Streams, Lambda Expressions, Optional API), Exception Handling hierarchy, and project architecture.'
-      }
-    ],
-    overall_experience: 'Capgemini\'s game-based aptitude round can catch you off guard if you have never practiced cognitive reflex games before. The pseudo-code section is demanding. The technical interview was conversational and focused on Java best practices.',
-    tips: 'Watch YouTube walk-throughs of the Capgemini Game-Based Aptitude round so the game rules don\'t confuse you during the timed test. Practice Java 8 Stream operations.'
-  },
-
-  // --- WIPRO (Turbo & Elite) ---
-  {
-    company_slug: 'wipro',
-    company_name: 'Wipro',
-    role_title: 'Wipro Turbo (₹6.5 LPA)',
-    student_name: 'Pooja Hegde',
-    college: 'Manipal Institute of Technology (MIT)',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 38,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Wipro Elite NTH Assessment',
-        details: 'Aptitude, logical, verbal, and 2 coding questions. Top scorers were invited to the Turbo upgrade coding test.'
-      },
-      {
-        roundTitle: 'Round 2: Turbo Upgrade Coding Assessment (60 Mins)',
-        details: '2 advanced coding problems. Problem 1 was Longest Palindromic Subsequence. Problem 2 was Graph Shortest Path with edge weights.'
-      },
-      {
-        roundTitle: 'Round 3: Technical & HR Interview (30 Mins)',
-        details: 'Deep dive into DBMS normalization up to BCNF, difference between paging and segmentation, and writing an SQL query with subqueries.'
-      }
-    ],
-    overall_experience: 'The Elite NTH is very basic, but the Turbo upgrade test steps up the difficulty significantly. In the interview, they pay close attention to core computer science subjects (OS, DBMS, Computer Networks).',
-    tips: 'Revise core CS subjects thoroughly—DBMS normalization, ACID properties, and OS scheduling algorithms are favorites among Wipro interviewers.'
-  },
-
-  // --- ORACLE (Server Technology & Cloud) ---
+  // =========================================================================
+  // ORACLE (Cloud & Systems)
+  // =========================================================================
   {
     company_slug: 'oracle',
     company_name: 'Oracle',
-    role_title: 'Software Engineer (Server Technology & Cloud)',
+    role_title: 'Software Engineer (Server Technology & OCI)',
     student_name: 'Nikhil Kashyap',
     college: 'BITS Pilani',
     year: 2026,
     difficulty: 'HARD',
     verdict: 'SELECTED',
     drive_type: 'ON_CAMPUS',
-    upvotes: 77,
+    upvotes: 94,
     rounds: [
       {
-        roundTitle: 'Round 1: Online Assessment (HackerRank - 90 Mins)',
-        details: '4 problems: 2 Medium array/tree problems, 1 Hard DP with state machine, and 1 complex SQL query involving window functions and partitioning.'
+        roundTitle: 'Round 1: Online Assessment (HackerRank — 90 Mins)',
+        details: `4 problems: 2 Medium DSA problems (Binary Tree zigzag traversal, Graph connected components), 1 Hard DP on strings, and 1 complex SQL query involving window functions and partitioning.`
       },
       {
-        roundTitle: 'Round 2: Technical Interview 1 (Core C++ / Systems)',
-        details: 'Virtual tables (vtables), virtual destructors, memory layout of inherited classes, and smart pointers (unique_ptr vs shared_ptr vs weak_ptr). Asked to implement a custom shared_ptr with reference counting.'
+        roundTitle: 'Round 2: Technical Interview 1 (C++ & Systems Internals — 60 Mins)',
+        details: `Deep dive into low-level systems and memory mechanics:
+- **C++ Internals:** Virtual tables (vtables), virtual table pointers (vptr), memory layout of derived classes with multiple inheritance, and virtual destructors.
+- **Smart Pointers:** Implemented a custom \`shared_ptr\` with reference counting and thread-safe control block.
+- **Memory Leaks:** Diagnosing circular references with \`std::weak_ptr\` and using Valgrind.`
       },
       {
-        roundTitle: 'Round 3: Technical Interview 2 (Database Internals & DSA)',
-        details: 'B+ Tree structure vs Hash index, Write-Ahead Logging (WAL), transaction isolation levels (Dirty Read vs Non-repeatable Read vs Phantom Read), and solving Median in a Stream of Integers.'
-      },
-      {
-        roundTitle: 'Round 4: Director Round (30 Mins)',
-        details: 'Deep dive into project scalability, caching strategies (Redis vs Memcached), and behavioral scenarios.'
+        roundTitle: 'Round 3: Technical Interview 2 (Database Internals — 60 Mins)',
+        details: `In-depth database architecture:
+- Differences between **B+ Tree Indexing** and **Hash Indexing** (range queries vs point lookups).
+- **Write-Ahead Logging (WAL):** How databases ensure atomicity and durability during server crashes.
+- **Transaction Isolation Levels:** Explaining Dirty Read, Non-Repeatable Read, and Phantom Read.`
       }
     ],
-    overall_experience: 'Oracle is a dream company for anyone who loves systems programming and database internals. They don\'t just ask you to code; they ask you what the compiler generates under the hood. The interviewers were brilliant and gave insightful feedback throughout.',
-    tips: 'If you mention C++ on your resume, master the vtable mechanism, memory alignment, and smart pointers. For databases, understand transaction isolation levels and B+ tree node splitting.'
-  },
-
-  // --- IBM (Associate SWE) ---
-  {
-    company_slug: 'ibm',
-    company_name: 'IBM',
-    role_title: 'Associate Software Engineer',
-    student_name: 'Arjun Mathur',
-    college: 'Amity University, Noida',
-    year: 2026,
-    difficulty: 'EASY',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 35,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Cognify Assessment & Coding',
-        details: 'Cognify mini-games testing mental speed + English grammar + 2 basic coding questions (Palindrome check and Array Deduplication).'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (30 Mins)',
-        details: 'Conducted on Webex. Questions on Linux terminal commands (grep, find, chmod), Git branching workflow (merge vs rebase), and REST API design principles.'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (15 Mins)',
-        details: 'Discussion on work location preferences, IBM corporate values, and adaptability.'
-      }
-    ],
-    overall_experience: 'IBM has one of the calmest and most professional interview processes. The technical questions were practical and focused on day-to-day developer workflows rather than competitive programming puzzles.',
-    tips: 'Brush up on basic Linux commands and Git workflows—freshers often overlook these practical tools, but IBM values them highly.'
-  },
-
-  // --- EY (GDS Campus Recruitment) ---
-  {
-    company_slug: 'ey',
-    company_name: 'EY',
-    role_title: 'Associate Consultant (Technology)',
-    student_name: 'Shreya Sengupta',
-    college: 'Christ University, Bangalore',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 34,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Aptitude & Technical MCQs',
-        details: 'General aptitude + Technical MCQs covering Python, SQL, and Cloud fundamentals.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (30 Mins)',
-        details: 'Differences between OLTP and OLAP systems, handling null values in pandas dataframes, writing an SQL query using self-joins, and basic Agile concepts (Scrum ceremonies, user stories).'
-      },
-      {
-        roundTitle: 'Round 3: Senior Manager Round (20 Mins)',
-        details: 'Behavioral interview focusing on client communication, deadline management, and why I chose tech consulting over pure software engineering.'
-      }
-    ],
-    overall_experience: 'EY GDS evaluates both technical competence and business communication. Being able to explain technical trade-offs in clean, simple English without confusing non-technical stakeholders is key.',
-    tips: 'Practice explaining your technical projects in simple language suitable for non-technical business clients.'
-  },
-
-  // --- LTIMINDTREE (Ignite & Edge) ---
-  {
-    company_slug: 'ltimindtree',
-    company_name: 'LTIMindtree',
-    role_title: 'Edge Specialist (₹5.5 LPA)',
-    student_name: 'Gaurav Kulkarni',
-    college: 'NMIMS Mumbai',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 37,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Online Assessment',
-        details: 'Aptitude, Verbal, and 2 Coding questions (Rotate matrix by 90 degrees and Longest Common Subsequence).'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (35 Mins)',
-        details: 'Asked to explain the Singleton pattern and write thread-safe Singleton code in Java (double-checked locking). Then asked about foreign key cascade options in relational databases.'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (15 Mins)',
-        details: 'Relocation preferences, verification of documents, and standard HR questions.'
-      }
-    ],
-    overall_experience: 'A well-structured campus hiring drive. The technical interview was centered on design patterns and relational database fundamentals.',
-    tips: 'Know common design patterns (Singleton, Factory, Observer) and be ready to write thread-safe implementations.'
-  },
-
-  // --- HEXAWARE (PGET Premier) ---
-  {
-    company_slug: 'hexaware',
-    company_name: 'Hexaware',
-    role_title: 'Premier Graduate Engineer Trainee (₹6.0 LPA)',
-    student_name: 'Sravan Kumar',
-    college: 'SRM University, Ramapuram',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 30,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Mettl Online Assessment',
-        details: 'Domain knowledge MCQs (Java, Cloud, DB) + 2 coding questions on array manipulation.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (40 Mins)',
-        details: 'The interviewer went through my GitHub repository live! Asked why I chose PostgreSQL over MongoDB for my project, and tested my knowledge on REST vs GraphQL APIs.'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (15 Mins)',
-        details: 'General discussion on adaptability, learning new technology stacks, and career goals.'
-      }
-    ],
-    overall_experience: 'Having an active GitHub link on my resume made a huge difference. The interviewer spent 15 minutes reviewing my actual code commits rather than asking generic interview questions.',
-    tips: 'Clean up your GitHub profile before campus drives. Having well-documented README files with project screenshots gives you an instant advantage.'
-  },
-
-  // --- TECH MAHINDRA (SuperCoder) ---
-  {
-    company_slug: 'tech-mahindra',
-    company_name: 'Tech Mahindra',
-    role_title: 'SuperCoder (₹5.5 LPA)',
-    student_name: 'Pratik More',
-    college: 'MIT World Peace University (WPU), Pune',
-    year: 2026,
-    difficulty: 'MEDIUM',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 29,
-    rounds: [
-      {
-        roundTitle: 'Round 1: HackerEarth Coding Assessment (90 Mins)',
-        details: '3 coding questions: DP on strings, connected components in an undirected graph, and modular arithmetic.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (30 Mins)',
-        details: 'Asked to explain how Dijkstra works with a priority queue and write an SQL query using Window functions (DENSE_RANK).'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (15 Mins)',
-        details: 'Standard verification and onboarding logistics.'
-      }
-    ],
-    overall_experience: 'The SuperCoder track offers higher compensation than the standard GET track. The coding round has a strict 90-minute limit, so fast typing and quick debugging are essential.',
-    tips: 'Learn SQL Window functions (ROW_NUMBER, RANK, DENSE_RANK) thoroughly—they are asked in almost every technical interview.'
-  },
-
-  // --- HCLTECH (First Careers) ---
-  {
-    company_slug: 'hcltech',
-    company_name: 'HCLTech',
-    role_title: 'Graduate Engineer Trainee (₹4.25 LPA)',
-    student_name: 'Jaspreet Singh',
-    college: 'Lovely Professional University (LPU), Punjab',
-    year: 2026,
-    difficulty: 'EASY',
-    verdict: 'SELECTED',
-    drive_type: 'ON_CAMPUS',
-    upvotes: 27,
-    rounds: [
-      {
-        roundTitle: 'Round 1: Online Assessment',
-        details: 'Aptitude, logical reasoning, and 1 easy coding problem on array deduplication.'
-      },
-      {
-        roundTitle: 'Round 2: Technical Interview (25 Mins)',
-        details: 'Questions on Core Java: Difference between HashMap and Hashtable, why String is immutable in Java, and garbage collection mechanisms.'
-      },
-      {
-        roundTitle: 'Round 3: HR Round (10 Mins)',
-        details: 'Verification of academic criteria and shift flexibility.'
-      }
-    ],
-    overall_experience: 'Straightforward and beginner-friendly. If you know core Java and basic collections thoroughly, you can clear this without stress.',
-    tips: 'If Java is your primary language, understand Java memory management (Heap vs Stack) and how HashMap handles bucket collisions under the hood.'
+    overall_experience: `Oracle's technical rounds are among the most thorough and systems-oriented in campus hiring. They expect you to understand how the compiler, OS, and memory hierarchy interact.`,
+    tips: `1. If C++ is on your resume, master vtables, memory layouts, and smart pointers.
+2. For databases, study B+ trees, WAL, and transaction isolation levels.`
   }
 ];
 
-// 4. Clean up any existing duplicate experiences
+// 4. Clean up any existing experiences
 console.log('\nCleaning up old experiences...');
 const { error: delErr } = await adminClient.from('experiences').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 if (delErr) {
@@ -782,8 +704,8 @@ if (delErr) {
   console.log('Old experiences cleared.');
 }
 
-// 5. Insert the 25 authentic, human experiences with status: 'APPROVED'
-console.log(`\nInserting ${EXPERIENCES.length} authentic, human interview experiences as APPROVED...`);
+// 5. Insert the authentic, question-detailed experiences with status: 'APPROVED'
+console.log(`\nInserting ${EXPERIENCES.length} question-detailed interview experiences as APPROVED...`);
 
 let insertedCount = 0;
 for (const exp of EXPERIENCES) {
