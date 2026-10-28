@@ -375,7 +375,7 @@ export default function DashboardPage() {
           chunks.map((chunk) =>
             supabase
               .from('experiences')
-              .select('id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, rounds, description, overall_experience, status')
+              .select('id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, rounds, overall_experience, tips, status')
               .in('id', chunk)
               .eq('is_deleted', false)
           )
@@ -401,7 +401,7 @@ export default function DashboardPage() {
               try {
                 return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : e.rounds || [];
               } catch {
-                return [{ roundTitle: 'Interview', details: e.description || e.overall_experience || '' }];
+                return [{ roundTitle: 'Interview', details: e.overall_experience || e.tips || '' }];
               }
             })(),
             status: e.status || 'APPROVED',

@@ -37,6 +37,7 @@ interface ExperienceDbRow {
   drive_type?: 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS' | null;
   rounds?: unknown;
   overall_experience?: string | null;
+  tips?: string | null;
   description?: string | null;
   status?: string | null;
   user_id?: string | null;
@@ -112,7 +113,7 @@ export default function ExperiencesPage() {
       let query = supabase
         .from('experiences')
         .select(
-          'id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, upvotes, drive_type, rounds, overall_experience, description, status, user_id, user_email'
+          'id, company_name, company_slug, role_title, student_name, college, year, difficulty, verdict, upvotes, drive_type, rounds, overall_experience, tips, status, user_id, user_email'
         )
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
@@ -151,11 +152,13 @@ export default function ExperiencesPage() {
           driveType: e.drive_type || 'ON_CAMPUS',
           userId: e.user_id || undefined,
           userEmail: e.user_email || undefined,
+          overallExperience: e.overall_experience || undefined,
+          tips: e.tips || undefined,
           rounds: (() => {
             try {
               return typeof e.rounds === 'string' ? JSON.parse(e.rounds) : (e.rounds as any) || [];
             } catch {
-              return [{ roundTitle: 'Interview', details: e.overall_experience || e.description || '' }];
+              return [{ roundTitle: 'Interview', details: e.overall_experience || '' }];
             }
           })(),
           status: e.status === 'APPROVED' || e.status === 'REJECTED' ? e.status : 'PENDING',
@@ -471,6 +474,18 @@ export default function ExperiencesPage() {
                   </div>
                 </div>
 
+                {/* Overall Candidate Experience */}
+                {exp.overallExperience && (
+                  <div className="p-3.5 rounded-md bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 space-y-1.5">
+                    <h4 className="text-[10px] font-display font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+                      Overall Experience & Insights
+                    </h4>
+                    <p className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {exp.overallExperience}
+                    </p>
+                  </div>
+                )}
+
                 {/* Interview Rounds & Details */}
                 {exp.rounds && exp.rounds.length > 0 && (
                   <div className="space-y-3">
@@ -493,6 +508,18 @@ export default function ExperiencesPage() {
                         />
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Candidate Tips & Advice */}
+                {exp.tips && (
+                  <div className="p-3.5 rounded-md bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1.5">
+                    <h4 className="text-[10px] font-display font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                      Preparation Tips & Pro Advice
+                    </h4>
+                    <p className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {exp.tips}
+                    </p>
                   </div>
                 )}
               </div>
