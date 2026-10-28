@@ -45,7 +45,7 @@ interface ExperienceDbRow {
 }
 
 export default function ExperiencesPage() {
-  const { role, user } = useAuth();
+  const { role, user, isGuest } = useAuth();
   const isAdmin = role === 'ADMIN';
   const { toast, confirmModal } = useToast();
   const queryClient = useQueryClient();
@@ -119,20 +119,25 @@ export default function ExperiencesPage() {
         .order('created_at', { ascending: false });
 
       if (!isAdmin) {
-        if (user?.id || user?.email) {
+        const isRealUser = !isGuest && user && user.id && user.id !== 'guest' && user.email !== 'guest@prepunite.com';
+        if (isRealUser) {
           const conditions: string[] = ['status.eq.APPROVED'];
-          if (user.id) conditions.push(`user_id.eq.${user.id}`);
-          if (user.email) conditions.push(`user_email.ilike.${user.email.toLowerCase()}`);
-          query = query.or(conditions.join(','));
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+          if (isUuid) conditions.push(`user_id.eq.${user.id}`);
+          if (user.email && !user.email.includes('guest@')) conditions.push(`user_email.ilike.${user.email.toLowerCase()}`);
+          query = conditions.length > 1 ? query.or(conditions.join(',')) : query.eq('status', 'APPROVED');
         } else {
           query = query.eq('status', 'APPROVED');
         }
       }
 
-      if (searchTerm) {
-        query = query.or(
-          `company_slug.ilike.%${searchTerm}%,role_title.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`
-        );
+      if (searchTerm && searchTerm.trim()) {
+        const clean = searchTerm.trim().replace(/[%_]/g, '');
+        if (clean) {
+          query = query.or(
+            `company_name.ilike.%${clean}%,company_slug.ilike.%${clean}%,role_title.ilike.%${clean}%,student_name.ilike.%${clean}%`
+          );
+        }
       }
 
       const { data, error } = await query;
