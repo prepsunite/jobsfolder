@@ -38,6 +38,10 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     const finalStudentName = isAnonymous ? 'Anonymous Student' : (user?.name || 'Anonymous Student');
     const status = isAdmin ? 'APPROVED' : 'PENDING';
 
+    const isValidUUID = (val?: string | null) =>
+      typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    const resolvedUserId = user?.id && isValidUUID(user.id) ? user.id : null;
+
     try {
       const { error } = await supabase.from('experiences').insert({
         company_name: companyName,
@@ -48,15 +52,15 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
         year,
         difficulty,
         verdict,
-        rounds: JSON.stringify([
+        rounds: [
           {
             roundTitle: 'Interview Rounds & Details',
             details: roundsText || 'Interview experience details provided.',
           },
-        ]),
+        ],
         status,
         is_deleted: false,
-        user_id: user?.id || null,
+        user_id: resolvedUserId,
         user_email: user?.email || null,
       });
 

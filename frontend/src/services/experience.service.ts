@@ -192,12 +192,67 @@ export const experienceService = {
     // 🛡️ DPDP Compliance ([P0-02]): Bind authenticated user context
     const { data: authData } = await supabase.auth.getUser();
     const currentUser = authData?.user;
-    const resolvedUserId = req.userId || currentUser?.id || null;
-    const resolvedUserEmail = req.userEmail || currentUser?.email || null;
+
+    const isValidUUID = (val?: string | null): val is string =>
+      typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+    const resolvedUserId = (isValidUUID(currentUser?.id) ? currentUser.id : null) || (isValidUUID(req.userId) ? req.userId : null) || null;
+    const resolvedUserEmail = (currentUser?.email || req.userEmail || '').trim().toLowerCase() || null;
+
+    // Smart round parser: extract round breakdowns from markdown content if explicit rounds aren't provided
+    let parsedRounds = req.rounds && req.rounds.length > 0 ? req.rounds : [];
+    let overallExp = req.content || '';
+
+    if (parsedRounds.length === 0 && req.content && req.content.trim()) {
+      const roundSplits = req.content
+        .split(/(?:^|\n)(?:---+\s*\n+)?(?=#{1,4}\s*Round|\bRound\s*\d+[:\-\.])/i)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (roundSplits.length > 1) {
+        let startIndex = 0;
+        if (!/^#{0,4}\s*Round\s*\d+/i.test(roundSplits[0])) {
+          overallExp = roundSplits[0].replace(/^Overall\s+Experience[:\s]*/i, '').trim();
+          startIndex = 1;
+        } else {
+          overallExp = '';
+        }
+
+        const extracted: { roundTitle: string; details: string }[] = [];
+        for (let i = startIndex; i < roundSplits.length; i++) {
+          const section = roundSplits[i];
+          const lines = section.split('\n');
+          const title = lines[0].replace(/^#{1,4}\s*/, '').replace(/\*+/g, '').trim();
+          const details = lines.slice(1).join('\n').trim();
+          extracted.push({
+            roundTitle: title || `Round ${extracted.length + 1}`,
+            details: details || title,
+          });
+        }
+
+        if (extracted.length > 0) {
+          parsedRounds = extracted;
+        }
+      } else {
+        parsedRounds = [
+          {
+            roundTitle: 'Interview Process & Details',
+            details: req.content.trim(),
+          },
+        ];
+      }
+    }
+
+    const isCompanyUUID = isValidUUID(req.companyId);
+    const resolvedCompanySlug = (req.companySlug || req.companyName || (isCompanyUUID ? 'campus' : req.companyId) || 'tcs')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    const resolvedCompanyName = req.companyName || (isCompanyUUID ? 'Campus Recruitment' : (req.companyId || 'TCS').toUpperCase());
 
     const payload = {
-      company_slug: (req.companyId || 'tcs').toLowerCase(),
-      company_name: req.companyName || (req.companyId || 'tcs').toUpperCase(),
+      company_id: isCompanyUUID ? req.companyId : null,
+      company_slug: resolvedCompanySlug,
+      company_name: resolvedCompanyName,
       student_name: req.isAnonymous ? 'Anonymous Candidate' : (req.studentName?.trim() || 'Student Explorer'),
       role_title: req.role || 'Software Engineer',
       college: req.college || 'Engineering College',
@@ -206,8 +261,8 @@ export const experienceService = {
       verdict: req.verdict || 'SELECTED',
       result: req.verdict || 'SELECTED',
       drive_type: req.driveType || 'ON_CAMPUS',
-      rounds: req.rounds || [],
-      overall_experience: req.content || '',
+      rounds: parsedRounds,
+      overall_experience: overallExp,
       tips: req.tips || '',
       status: 'PENDING',
       upvotes: 0,

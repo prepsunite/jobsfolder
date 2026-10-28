@@ -64,10 +64,14 @@ export default function SubmitExperiencePage() {
       return;
     }
 
+    const selectedCompany = companies.find((c) => String(c.id) === String(companyId));
+
     submitMutation.mutate({
       companyId,
+      companyName: selectedCompany?.name,
+      companySlug: (selectedCompany as any)?.slug || selectedCompany?.name?.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       role: role.trim(),
-      studentName: user?.name || '',
+      studentName: isAnonymous ? 'Anonymous Candidate' : (user?.name || 'Student Explorer'),
       college: college.trim(),
       year: Number(year),
       difficulty,
@@ -88,7 +92,7 @@ export default function SubmitExperiencePage() {
         </div>
         <h2 className="font-display text-xl font-extrabold text-[#121417] dark:text-[#FFFFFF]">Experience Submitted!</h2>
         <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans">
-          Thank you for helping fellow placement candidates! Redirecting to feed...
+          Thank you for helping fellow students! Your interview experience has been submitted and is under review before going live. Redirecting...
         </p>
       </div>
     );
@@ -127,7 +131,7 @@ export default function SubmitExperiencePage() {
           )}
           {submitMutation.isError && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-600 dark:text-red-400 text-xs font-sans animate-fadeIn">
-              Failed to submit experience. Please verify your connection and try again.
+              {(submitMutation.error as any)?.message || 'Failed to submit experience. Please verify your connection and try again.'}
             </div>
           )}
 

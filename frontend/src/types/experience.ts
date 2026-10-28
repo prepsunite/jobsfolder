@@ -66,6 +66,7 @@ export interface InterviewExperience {
 export interface SubmitExperienceRequest {
   companyId: string;
   companyName?: string;
+  companySlug?: string;
   role: string;
   studentName?: string;
   college?: string;
