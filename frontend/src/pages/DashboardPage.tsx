@@ -1267,18 +1267,23 @@ export default function DashboardPage() {
                   </div>
 
                   {exp.rounds && exp.rounds.length > 0 && (
-                    <div className="space-y-3 pt-3 border-t border-[#E9ECEF] dark:border-[#2b2d31]">
+                    <div className="relative pl-6 space-y-4 pt-4 border-t border-[#E9ECEF] dark:border-[#2b2d31] before:absolute before:left-2.5 before:top-5 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#FD4A32] before:via-gray-300 dark:before:via-[#333333] before:to-transparent">
                       {exp.rounds.map((rd, idx) => (
-                        <div key={idx} className="p-4 bg-[#F8F9FA] dark:bg-[#141517]/60 rounded-[18px] border border-[#E9ECEF] dark:border-[#2b2d31] space-y-2">
+                        <div key={idx} className="relative group space-y-1.5">
+                          <div className="absolute -left-6 top-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-[#121417] dark:bg-white text-white dark:text-black text-[10px] font-display font-extrabold shadow-sm ring-2 ring-white dark:ring-[#1e1f22]">
+                            {idx + 1}
+                          </div>
                           {rd.roundTitle && !['Interview Rounds & Details', 'Interview Breakdown & Rounds Details'].includes(rd.roundTitle) && (
-                            <span className="text-xs font-black text-[#FD4A32] dark:text-[#FD4A32] uppercase tracking-wider block">
+                            <h4 className="text-xs font-display font-bold text-[#121417] dark:text-[#FFFFFF]">
                               {rd.roundTitle}
-                            </span>
+                            </h4>
                           )}
-                          <ContentRenderer
-                            content={rd.details}
-                            className="text-xs font-sans"
-                          />
+                          <div className="p-3.5 bg-[#F8F9FA]/70 dark:bg-[#141517]/70 rounded-lg border border-[#E9ECEF] dark:border-[#2b2d31]">
+                            <ContentRenderer
+                              content={rd.details}
+                              className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
