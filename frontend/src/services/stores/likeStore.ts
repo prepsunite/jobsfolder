@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   LIKED_EXPERIENCES: 'prepunite_upvoted_experiences',
   LIKED_COMPANIES: 'prepunite_liked_companies',
   LIKED_EXAMS: 'prepunite_liked_exams',
+  CLIENT_ID: 'prepunite_client_id',
 } as const;
 
 class LikeStore {
@@ -30,6 +31,15 @@ class LikeStore {
     }
   }
 
+  private getClientId(): string {
+    let id = this.getStorage<string>(STORAGE_KEYS.CLIENT_ID, '');
+    if (!id) {
+      id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `client_${Date.now()}`;
+      this.setStorage(STORAGE_KEYS.CLIENT_ID, id);
+    }
+    return id;
+  }
+
   // ==========================================
   // --- EXPERIENCES UPVOTES / HELPFUL ---
   // ==========================================
@@ -44,6 +54,10 @@ class LikeStore {
 
   getExperienceLikeCount(expId: string, baseCount: number = 0): number {
     const isLiked = this.isExperienceLiked(expId);
+    const serverDbCount = this.getStorage<number | null>(`prepunite_db_count_experience_${expId}`, null);
+    if (serverDbCount !== null) {
+      return serverDbCount;
+    }
     return Math.max(0, (baseCount || 0) + (isLiked ? 1 : 0));
   }
 
@@ -62,14 +76,18 @@ class LikeStore {
     }
 
     this.setStorage(STORAGE_KEYS.LIKED_EXPERIENCES, updated);
+
+    const currentCount = this.getExperienceLikeCount(expId, baseCount);
+    const optimisticCount = Math.max(0, isLiked ? currentCount + 1 : currentCount - 1);
+    this.setStorage(`prepunite_db_count_experience_${expId}`, optimisticCount);
     this.notify();
 
-    // Async sync with Supabase user_bookmarks if user is authenticated
+    // Persist directly to Supabase PostgreSQL via serverless backend
     this.persistLikeCloud('experience', expId, isLiked);
 
     return {
       isLiked,
-      count: Math.max(0, (baseCount || 0) + (isLiked ? 1 : 0)),
+      count: optimisticCount,
     };
   }
 
@@ -98,8 +116,13 @@ class LikeStore {
   }
 
   getCompanyLikeCount(slugOrId: string): number {
-    const base = this.getCompanyBaseCount(slugOrId);
-    const isLiked = this.isCompanyLiked(slugOrId);
+    const clean = (slugOrId || 'tcs').toLowerCase().trim();
+    const isLiked = this.isCompanyLiked(clean);
+    const serverDbCount = this.getStorage<number | null>(`prepunite_db_count_company_${clean}`, null);
+    const base = this.getCompanyBaseCount(clean);
+    if (serverDbCount !== null) {
+      return base + serverDbCount;
+    }
     return base + (isLiked ? 1 : 0);
   }
 
@@ -119,13 +142,17 @@ class LikeStore {
     }
 
     this.setStorage(STORAGE_KEYS.LIKED_COMPANIES, updated);
+
+    const currentCount = this.getCompanyLikeCount(clean);
+    const optimisticCount = Math.max(0, isLiked ? currentCount + 1 : currentCount - 1);
     this.notify();
 
+    // Persist directly to Supabase PostgreSQL via serverless backend
     this.persistLikeCloud('company', clean, isLiked);
 
     return {
       isLiked,
-      count: this.getCompanyLikeCount(clean),
+      count: optimisticCount,
     };
   }
 
@@ -152,8 +179,12 @@ class LikeStore {
   }
 
   getExamLikeCount(examId: string, baseCount: number = 0): number {
-    const base = this.getExamBaseCount(examId, baseCount);
     const isLiked = this.isExamLiked(examId);
+    const serverDbCount = this.getStorage<number | null>(`prepunite_db_count_exam_${examId}`, null);
+    if (serverDbCount !== null) {
+      return serverDbCount;
+    }
+    const base = this.getExamBaseCount(examId, baseCount);
     return base + (isLiked ? 1 : 0);
   }
 
@@ -172,50 +203,58 @@ class LikeStore {
     }
 
     this.setStorage(STORAGE_KEYS.LIKED_EXAMS, updated);
+
+    const currentCount = this.getExamLikeCount(examId, baseCount);
+    const optimisticCount = Math.max(0, isLiked ? currentCount + 1 : currentCount - 1);
+    this.setStorage(`prepunite_db_count_exam_${examId}`, optimisticCount);
     this.notify();
 
-    this.persistLikeCloud('exam_like', examId, isLiked);
+    // Persist directly to Supabase PostgreSQL via serverless backend
+    this.persistLikeCloud('exam', examId, isLiked);
 
     return {
       isLiked,
-      count: this.getExamLikeCount(examId, baseCount),
+      count: optimisticCount,
     };
   }
 
   // ==========================================
-  // --- CLOUD SYNC (OPTIONAL / FIRE & FORGET) ---
+  // --- REAL POSTGRESQL CLOUD PERSISTENCE ---
   // ==========================================
   private async persistLikeCloud(
-    itemType: 'experience' | 'company' | 'exam_like',
+    itemType: 'experience' | 'company' | 'exam',
     itemId: string,
     isLiked: boolean
   ): Promise<void> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const userEmail = session?.user?.email;
-      if (!userEmail) return;
+      const clientIdentifier = this.getClientId();
 
-      const normalizedEmail = userEmail.trim().toLowerCase();
+      const response = await fetch('/api/toggle-like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemType,
+          itemId,
+          delta: isLiked ? 1 : -1,
+          clientIdentifier,
+          userEmail,
+        }),
+      });
 
-      if (isLiked) {
-        await supabase.from('user_bookmarks').upsert(
-          {
-            user_email: normalizedEmail,
-            user_id: session.user.id,
-            item_type: itemType,
-            item_id: itemId,
-          },
-          { onConflict: 'user_email,item_type,item_id' }
-        );
-      } else {
-        await supabase.from('user_bookmarks').delete().match({
-          user_email: normalizedEmail,
-          item_type: itemType,
-          item_id: itemId,
-        });
+      if (response.ok) {
+        const result = await response.json();
+        if (typeof result.upvotes === 'number') {
+          // Store actual server database count
+          this.setStorage(`prepunite_db_count_${itemType}_${itemId}`, result.upvotes);
+          this.notify();
+        }
       }
-    } catch {
-      // Fail silent without breaking client experience
+    } catch (err) {
+      console.warn(`[likeStore] Live server database sync notice:`, err);
     }
   }
 }
