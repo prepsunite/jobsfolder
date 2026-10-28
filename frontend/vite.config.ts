@@ -8,16 +8,25 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   build: {
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2500,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('interviewSeedData')) {
             return 'interview-seed-data';
+          }
+          if (id.includes('technicalMcqSeedData')) {
+            return 'technical-mcq-seed-data';
+          }
+          if (id.includes('programming150TestCases')) {
+            return 'programming-test-cases';
+          }
+          if (id.includes('campusDsaRoadmap') || id.includes('campusDsaExamDataset')) {
+            return 'campus-dsa-dataset';
           }
           if (id.includes('node_modules')) {
             if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('rehype-raw')) {
@@ -26,7 +35,7 @@ export default defineConfig({
             if (id.includes('lucide-react')) {
               return 'icons-vendor';
             }
-            if (id.includes('@tanstack/react-query')) {
+            if (id.includes('@tanstack/react-query') || id.includes('@tanstack/query-broadcast-client-experimental')) {
               return 'query-vendor';
             }
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {

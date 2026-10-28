@@ -8251,7 +8251,7 @@ export const tpoService = {
           (attemptStudentId && (attemptStudentId === callerId || attemptStudentId === callerEmail))
         );
         const isTpo = this.isTpoForCollege(attempt.college_id, callerEmail);
-        const isAdmin = user.user_metadata?.role === 'super_admin' || (typeof window !== 'undefined' && localStorage.getItem('prepunite_role') === 'SUPER_ADMIN');
+        const isAdmin = user.user_metadata?.role === 'super_admin' || user.app_metadata?.role === 'admin';
 
         if (!isOwner && !isTpo && !isAdmin) {
           console.warn('[getStudentAttemptAnswerSheet] Access denied: Caller is neither attempt owner nor authorized TPO.');

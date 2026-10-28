@@ -1,28 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-const ADMIN_EMAILS = [
-  'mockfolder@gmail.com',
-  'venkatmukala9@gmail.com',
-  'prepsunite@gmail.com',
-];
-
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
 
   try {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://qcelcsswvalvvtlxohbl.supabase.co';
-    const supabaseServiceKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.SUPABASE_SERVICE_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      process.env.SUPABASE_ANON_KEY;
+    const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+    const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '').trim();
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return res.status(200).json({
-        success: false,
+      return res.status(500).json({
+        error: 'Database service configuration missing on server.',
         disabled: true,
-        notice: 'Supabase service configuration missing on server.',
         exams: [],
         attempts: [],
         templates: [],
@@ -53,19 +42,19 @@ export default async function handler(req, res) {
   // 2. Authorization Helper Functions
   const userEmail = (user.email || '').trim().toLowerCase();
 
-  // Check if caller is super admin
-  let isSuperAdmin = ADMIN_EMAILS.includes(userEmail);
-  if (!isSuperAdmin) {
-    try {
-      const { data: prof } = await supabaseAdmin
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (prof?.role === 'admin') {
-        isSuperAdmin = true;
-      }
-    } catch {}
+  // Authoritative database role verification for super admin
+  let isSuperAdmin = false;
+  try {
+    const { data: prof } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (prof?.role?.toLowerCase() === 'admin') {
+      isSuperAdmin = true;
+    }
+  } catch (adminCheckErr) {
+    console.warn('[api/campus-exams] Super admin verification notice:', adminCheckErr?.message);
   }
 
   // Helper: Resolve college identifier across id, code, slug, and name

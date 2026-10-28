@@ -328,25 +328,31 @@ export default async function handler(req, res) {
       }
     }
 
-    // ─── Phase 1B: Per-User Rate Limiting ────────────────────────────────────
-    // Key by authenticated email; fall back to IP for unauthenticated "Run" clicks.
-    const rateLimitKey = userEmail || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'anon';
+    // ─── Phase 1B: Per-User / Per-IP Rate Limiting ──────────────────────────
+    // Key by authenticated email; fall back to sanitized client IP for unauthenticated "Run" clicks.
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+                     req.headers['x-real-ip'] ||
+                     req.socket?.remoteAddress ||
+                     'anon';
+    const rateLimitKey = userEmail ? `user_${userEmail}` : `ip_${clientIp}`;
+    const effectiveCooldownMs = userEmail ? USER_COOLDOWN_MS : 8000; // 8s cooldown for unauthenticated runs
+
     const now = Date.now();
     const lastRun = recentRequests.get(rateLimitKey) || 0;
 
-    if (now - lastRun < USER_COOLDOWN_MS) {
-      const waitMs = USER_COOLDOWN_MS - (now - lastRun);
+    if (now - lastRun < effectiveCooldownMs) {
+      const waitMs = effectiveCooldownMs - (now - lastRun);
       res.setHeader('Retry-After', Math.ceil(waitMs / 1000));
       return res.status(429).json({
-        error: `Please wait ${Math.ceil(waitMs / 1000)}s before running again.`,
+        error: `Please wait ${Math.ceil(waitMs / 1000)}s before running again.${!userEmail ? ' Sign in for shorter cooldowns.' : ''}`,
         retryAfterMs: waitMs,
       });
     }
     recentRequests.set(rateLimitKey, now);
 
-    // Prevent memory leak: clean entries older than 1 minute
+    // Prevent memory leak: clean entries older than 5 minutes
     if (recentRequests.size > 5000) {
-      const cutoff = now - 60000;
+      const cutoff = now - 300000;
       for (const [key, ts] of recentRequests.entries()) {
         if (ts < cutoff) recentRequests.delete(key);
       }

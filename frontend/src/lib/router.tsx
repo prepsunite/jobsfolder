@@ -2,11 +2,11 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router';
 import RootLayout from '@/layouts/RootLayout';
 import TpoLayout from '@/layouts/TpoLayout';
-import HomePage from '@/pages/HomePage';
-import NotFoundPage from '@/pages/NotFoundPage';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const CompaniesPage = lazy(() => import('@/pages/CompaniesPage'));
 const CompanyDetailPage = lazy(() => import('@/pages/CompanyDetailPage'));
@@ -64,7 +64,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <HomePage />,
+        element: withSuspense(HomePage),
       },
       {
         path: '/about',
@@ -220,7 +220,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '*',
-        element: <NotFoundPage />,
+        element: withSuspense(NotFoundPage),
       },
     ],
   },
@@ -260,7 +260,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '*',
-        element: <NotFoundPage />,
+        element: withSuspense(NotFoundPage),
       },
     ],
   },
