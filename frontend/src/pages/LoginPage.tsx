@@ -30,7 +30,8 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const rawRedirectTo = searchParams.get('redirectTo');
+  // Support both redirectTo and redirect params
+  const rawRedirectTo = searchParams.get('redirectTo') || searchParams.get('redirect');
 
   /**
    * 🛡️ Open Redirect Protection:
@@ -57,21 +58,20 @@ export default function LoginPage() {
   // Status & loading states
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // DPDP Act 2023, Rule 3: explicit unticked consent checkbox
-  const [consentChecked, setConsentChecked] = useState(false);
 
-  // Automatically navigate away from /login when authenticated
+  // Automatically navigate away from /login ONLY when an explicit redirect destination was provided
+  // (Prevents kicking signed-in users out who navigate to /login to view status or sign out)
   useEffect(() => {
-    if (isAuthenticated && user && !authLoading) {
+    if (isAuthenticated && user && !authLoading && rawRedirectTo) {
       if (role === 'ADMIN') {
-        const targetPath = rawRedirectTo && rawRedirectTo.startsWith('/admin')
+        const targetPath = rawRedirectTo.startsWith('/admin')
           ? sanitizeRedirectPath(rawRedirectTo, '/admin')
           : '/admin';
         navigate(targetPath, { replace: true });
         return;
       }
       if (role === 'TPO_ADMIN' || user.isTpoAdmin) {
-        const targetPath = rawRedirectTo && rawRedirectTo.startsWith('/tpo')
+        const targetPath = rawRedirectTo.startsWith('/tpo')
           ? sanitizeRedirectPath(rawRedirectTo, '/tpo')
           : '/tpo';
         navigate(targetPath, { replace: true });
@@ -86,8 +86,7 @@ export default function LoginPage() {
     setErrorMessage(null);
     setGoogleLoading(true);
     try {
-      // User has ticked the checkbox — record explicit consent in ConsentContext
-      // This syncs the status across the app (Profile page, banner, etc.)
+      // Record explicit consent in ConsentContext for DPDP Act 2023 compliance
       acceptConsent();
       const res = await signInWithGoogle(safeRedirectTo);
       if (res?.error) {
@@ -105,8 +104,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fadeIn">
-      <div className="w-full max-w-4xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative">
+    <div className="min-h-[75vh] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fadeIn">
+      <div className="w-full max-w-4xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative">
         
         {/* LEFT COLUMN: Brand Value Proposition (Desktop View) */}
         <div className="lg:col-span-5 bg-[#121417] dark:bg-[#0C0C0C] p-8 sm:p-10 text-white flex flex-col justify-between relative border-r border-[#242424] hidden lg:flex">
@@ -115,6 +114,8 @@ export default function LoginPage() {
               <img
                 src="/favicon.svg"
                 alt="MockFolder Logo"
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-full object-contain shrink-0 transition-transform group-hover:scale-105"
               />
               <span className="font-display text-xl font-extrabold tracking-tight text-white">
@@ -178,32 +179,14 @@ export default function LoginPage() {
         {/* RIGHT COLUMN: 1-Click Google OAuth Form */}
         <div className="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-between relative z-10 bg-white dark:bg-[#141414]">
 
-          {/* Mobile Header Brand */}
-          <div className="flex lg:hidden items-center justify-between mb-6">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <img
-                src="/favicon.svg"
-                alt="MockFolder Logo"
-                className="w-8 h-8 rounded-full object-contain shrink-0"
-              />
-              <span className="font-display text-lg font-extrabold text-[#121417] dark:text-white">
-                Mock<span className="text-[#FD4A32] dark:text-[#FD4A32]">Folder</span>
-              </span>
-            </Link>
-
-            <span className="px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase">
-              Google OAuth
-            </span>
-          </div>
-
           {/* STATE 1: LOGGED IN USER VIEW */}
           {isAuthenticated && user ? (
-            <div className="my-auto space-y-5 max-w-sm mx-auto w-full text-center animate-fadeIn">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#FD4A32]/10 border-2 border-[#FD4A32] dark:border-[#FD4A32] relative mx-auto">
+            <div className="my-auto space-y-5 max-w-sm mx-auto w-full text-center animate-fadeIn py-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#FD4A32]/10 border-2 border-[#FD4A32] relative mx-auto">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  <span className="font-display font-black text-xl text-[#FD4A32] dark:text-[#FD4A32]">
+                  <span className="font-display font-black text-xl text-[#FD4A32]">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -221,10 +204,10 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              <div className="p-3 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-1.5 text-xs font-sans">
+              <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-2 text-xs font-sans">
                 <div className="flex justify-between">
                   <span className="text-[#868E96] dark:text-[#555555]">Role:</span>
-                  <span className="font-bold text-[#FD4A32] dark:text-[#FD4A32]">{role}</span>
+                  <span className="font-bold text-[#FD4A32]">{role}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#868E96] dark:text-[#555555]">Auth Provider:</span>
@@ -232,14 +215,15 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5 pt-2">
                 <button
+                  type="button"
                   onClick={() => {
                     if (role === 'ADMIN') navigate('/admin');
                     else if (role === 'TPO_ADMIN' || user?.isTpoAdmin) navigate('/tpo');
                     else navigate('/dashboard');
                   }}
-                  className="w-full py-2.5 px-4 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider hover:bg-[#1E2227] dark:hover:bg-[#E5E7EB] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   <span>
@@ -253,8 +237,9 @@ export default function LoginPage() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={logout}
-                  className="w-full py-2 px-4 rounded-md border border-[#E9ECEF] dark:border-[#242424] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-xs font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2 px-4 rounded-lg border border-[#E9ECEF] dark:border-[#242424] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-xs font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -263,14 +248,14 @@ export default function LoginPage() {
             </div>
           ) : (
             /* STATE 2: 1-CLICK GOOGLE SIGN-IN VIEW */
-            <div className="my-auto space-y-6 max-w-sm mx-auto w-full">
+            <div className="my-auto space-y-6 max-w-sm mx-auto w-full py-4">
               
               <div className="space-y-1.5 text-center sm:text-left">
                 <h1 className="font-display text-2xl font-extrabold text-[#121417] dark:text-white tracking-tight">
                   Sign In to MockFolder
                 </h1>
                 <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
-                  Use your Google Account to log in with 1-click. No password required.
+                  Use your Google Account to access verified past papers, interview experiences, and solutions.
                 </p>
               </div>
 
@@ -281,79 +266,45 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* DPDP Act 2023 — Rule 3: Explicit Consent Disclosure */}
-              <div className="p-3 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-2.5">
-                <p className="text-[10px] font-display font-bold text-[#495057] dark:text-[#777777] uppercase tracking-wider">
-                  Data We Collect (DPDP Act, 2023)
-                </p>
-                <ul className="space-y-1 text-[10px] text-[#868E96] dark:text-[#555555] font-sans leading-relaxed list-none">
-                  <li>• <strong className="text-[#495057] dark:text-[#777777]">Google name &amp; email</strong> — to create and identify your account</li>
-                  <li>• <strong className="text-[#495057] dark:text-[#777777]">Profile picture</strong> — to personalise your workspace display</li>
-                  <li>• <strong className="text-[#495057] dark:text-[#777777]">Usage activity</strong> — to save bookmarks and track your progress</li>
-                </ul>
-                <p className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans">
-                  We do <strong className="text-[#495057] dark:text-[#777777]">not</strong> sell or share your data with advertisers. You may withdraw consent and delete your account at any time via your Dashboard or Profile page.
-                </p>
+              {/* GIANT GOOGLE OAUTH BUTTON — Instant, Clickable, High-Contrast */}
+              <div className="space-y-4">
+                <button
+                  type="button"
+                  disabled={googleLoading}
+                  onClick={handleGoogleSignIn}
+                  className="w-full py-3.5 px-4 rounded-lg bg-white dark:bg-[#1A1A1A] border-2 border-[#E5E7EB] dark:border-[#333333] hover:border-[#121417] dark:hover:border-[#666666] text-[#121417] dark:text-white font-display font-bold text-sm tracking-wide transition-all shadow-xs hover:shadow-md flex items-center justify-center gap-3 cursor-pointer active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed group"
+                >
+                  {googleLoading ? (
+                    <div className="w-5 h-5 border-2 border-[#FD4A32] border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                  )}
+                  <span>Continue with Google</span>
+                </button>
 
-                {/* Explicit unticked checkbox — DPDP Rule 3 */}
-                <label className="flex items-start gap-2.5 cursor-pointer group">
-                  <div className="relative mt-0.5 shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={consentChecked}
-                      onChange={(e) => setConsentChecked(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${consentChecked ? 'bg-[#FD4A32] border-[#FD4A32]' : 'bg-white dark:bg-[#1C1C1C] border-[#CED4DA] dark:border-[#3E3E3E] group-hover:border-[#FD4A32]'}`}>
-                      {consentChecked && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-[#868E96] dark:text-[#555555] font-sans leading-relaxed">
-                    I have read and agree to MockFolder's{' '}
-                    <Link to="/privacy-policy" className="text-[#FD4A32] underline hover:text-[#e03e28]" onClick={(e) => e.stopPropagation()}>
-                      Privacy Policy
-                    </Link>{' '}
-                    and{' '}
-                    <Link to="/terms-and-conditions" className="text-[#FD4A32] underline hover:text-[#e03e28]" onClick={(e) => e.stopPropagation()}>
-                      Terms &amp; Conditions
-                    </Link>
-                    . I consent to the processing of my personal data as described above.
-                  </span>
-                </label>
+                {/* Clean, authoritative 1-line legal disclosure under DPDP Act 2023 */}
+                <p className="text-[11px] text-[#868E96] dark:text-[#555555] text-center font-sans leading-relaxed px-1">
+                  By continuing, you agree to MockFolder's{' '}
+                  <Link to="/terms-and-conditions" className="text-[#FD4A32] underline hover:text-[#e03e28]">
+                    Terms &amp; Conditions
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy-policy" className="text-[#FD4A32] underline hover:text-[#e03e28]">
+                    Privacy Policy
+                  </Link>
+                  , and consent to account authentication data processing under the DPDP Act, 2023.
+                </p>
               </div>
-
-              {/* GIANT GOOGLE OAUTH BUTTON — disabled until consent is given */}
-              <button
-                type="button"
-                disabled={googleLoading || !consentChecked}
-                onClick={handleGoogleSignIn}
-                title={!consentChecked ? 'Please accept the privacy policy and terms to continue' : undefined}
-                className="w-full py-3 px-4 rounded-md bg-white dark:bg-[#1C1C1C] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-[#121417] dark:hover:border-[#555555] text-[#121417] dark:text-white font-display font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group shadow-xs"
-              >
-                {googleLoading ? (
-                  <div className="w-4 h-4 border-2 border-[#FD4A32] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                  </svg>
-                )}
-                <span>Continue with Google</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32] ml-auto" />
-              </button>
-
-              {!consentChecked && (
-                <p className="text-[10px] text-[#ADB5BD] dark:text-[#444444] text-center font-sans">
-                  ☝ Please tick the consent box above to enable Sign-In.
-                </p>
-              )}
 
               {/* SECURITY FOOTER */}
               <div className="pt-4 border-t border-[#E9ECEF] dark:border-[#242424]">
-                <div className="flex items-center justify-center gap-1 text-[11px] text-[#868E96] dark:text-[#555555] font-sans">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#FD4A32] dark:text-[#FD4A32]" />
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#868E96] dark:text-[#555555] font-sans">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#FD4A32]" />
                   <span>Secured by Supabase OAuth 2.0 &amp; 256-bit SSL</span>
                 </div>
               </div>

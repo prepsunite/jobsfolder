@@ -28,7 +28,7 @@ export default function ConsentBanner() {
 
   // Don't render once the user has responded or when candidate is taking an exam
   if (hasResponded) return null;
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/exam/')) return null;
+  if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/exam/') || window.location.pathname === '/login')) return null;
 
   return (
     <div

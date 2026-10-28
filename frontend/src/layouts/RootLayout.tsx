@@ -85,7 +85,13 @@ export default function RootLayout() {
           <div className="pub-nav-inner">
             {/* Brand */}
             <Link to="/" className="pub-nav-brand">
-              <img src="/favicon.svg" alt="MockFolder Logo" className="pub-nav-logo-img" />
+              <img
+                src="/favicon.svg"
+                alt="MockFolder Logo"
+                width={32}
+                height={32}
+                className="pub-nav-logo-img w-8 h-8 rounded-full object-contain shrink-0"
+              />
               <div className="pub-nav-brand-text">
                 <span className="pub-nav-brand-name">
                   Mock<span>folder</span>
@@ -156,7 +162,13 @@ export default function RootLayout() {
             {/* Brand column */}
             <div className="pub-footer-brand">
               <Link to="/" className="pub-footer-logo">
-                <img src="/favicon.svg" alt="MockFolder Logo" className="pub-footer-logo-img" />
+                <img
+                src="/favicon.svg"
+                alt="MockFolder Logo"
+                width={28}
+                height={28}
+                className="pub-footer-logo-img w-7 h-7 rounded-full object-contain shrink-0"
+              />
                 <span className="pub-footer-logo-name">Mock<span>folder</span></span>
               </Link>
               <p className="pub-footer-tagline">
