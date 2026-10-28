@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import type { Company } from '@/types/company';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { Building2, ArrowRight, Edit3, Trash2, Eye, EyeOff } from 'lucide-react';
+import { likeStore } from '@/services/stores/likeStore';
+import { Building2, ArrowRight, Edit3, Trash2, Eye, EyeOff, Heart } from 'lucide-react';
 
 interface CompanyCardProps {
   company: Company & { examsList?: string[] };
@@ -15,6 +17,21 @@ export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibil
   const { role, user } = useAuth();
   const { confirmModal } = useToast();
   const isAdmin = role === 'ADMIN' || isSuperAdminEmail(user?.email);
+
+  const [isLiked, setIsLiked] = useState(() => likeStore.isCompanyLiked(company.slug));
+  const [likeCount, setLikeCount] = useState(() => likeStore.getCompanyLikeCount(company.slug));
+
+  useEffect(() => {
+    setIsLiked(likeStore.isCompanyLiked(company.slug));
+    setLikeCount(likeStore.getCompanyLikeCount(company.slug));
+
+    const handleLikesChanged = () => {
+      setIsLiked(likeStore.isCompanyLiked(company.slug));
+      setLikeCount(likeStore.getCompanyLikeCount(company.slug));
+    };
+    window.addEventListener('prepunite_likes_changed', handleLikesChanged);
+    return () => window.removeEventListener('prepunite_likes_changed', handleLikesChanged);
+  }, [company.slug]);
 
   return (
     <div className={`group relative bg-white dark:bg-[#141414] border rounded-lg p-4 transition-all duration-200 hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:shadow-md hover:shadow-[#FD4A32]/10 flex flex-col justify-between ${
@@ -117,14 +134,34 @@ export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibil
           </div>
         </div>
 
-        {/* Right: Action Button */}
-        <Link
-          to={`/companies/${company.slug}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#23272f] dark:hover:bg-[#e6e6e6] font-display font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
-        >
-          <span>Exams</span>
-          <ArrowRight className="w-3 h-3" />
-        </Link>
+        {/* Right: Action Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              likeStore.toggleCompanyLike(company.slug);
+            }}
+            className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-display font-bold border transition-colors cursor-pointer ${
+              isLiked
+                ? 'bg-rose-500 text-white border-rose-500 shadow-2xs'
+                : 'bg-white dark:bg-[#1C1C1C] text-[#868E96] dark:text-[#555555] border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-rose-400 hover:text-rose-500'
+            }`}
+            title={isLiked ? 'Unlike company' : 'Like company'}
+          >
+            <Heart className={`w-3 h-3 ${isLiked ? 'fill-current text-white' : 'text-rose-500'}`} />
+            <span>{likeCount}</span>
+          </button>
+
+          <Link
+            to={`/companies/${company.slug}`}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#23272f] dark:hover:bg-[#e6e6e6] font-display font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
+          >
+            <span>Exams</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
       </div>
     </div>
   );

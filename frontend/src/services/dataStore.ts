@@ -2,6 +2,8 @@ import { resolveTopicSlug } from './topicMap';
 import { supabase } from '@/lib/supabase';
 import { bookmarkStore } from './stores/bookmarkStore';
 import { experienceStore } from './stores/experienceStore';
+import { likeStore } from './stores/likeStore';
+export { likeStore };
 import {
   validateQuestionItem,
   generateQuestionFingerprint,

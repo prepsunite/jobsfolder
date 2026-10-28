@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
 import { examService } from '@/services/exam.service';
-import { dataStore, type ExamItem } from '@/services/dataStore';
+import { dataStore, likeStore, type ExamItem } from '@/services/dataStore';
 import { PaperService } from '@/services/paper.service';
 import { supabasePaymentService } from '@/services/supabasePaymentService';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
@@ -155,9 +155,11 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
 
   const currentExam = companyExams.find((e) => e.id === selectedExamId) || companyExams[0];
 
-  // Upvote State
-  const [upvoteCount, setUpvoteCount] = useState<number>(70);
-  const [isUpvoted, setIsUpvoted] = useState<boolean>(false);
+  // Company & Exam Like States (100% Persistent across reloads via likeStore)
+  const [isCompanyLiked, setIsCompanyLiked] = useState<boolean>(() => likeStore.isCompanyLiked(slug || ''));
+  const [companyLikes, setCompanyLikes] = useState<number>(() => likeStore.getCompanyLikeCount(slug || ''));
+  const [isExamLiked, setIsExamLiked] = useState<boolean>(false);
+  const [examLikes, setExamLikes] = useState<number>(0);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
   // Edit Company Header State
@@ -214,14 +216,56 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   // Watermark text for document viewer
   const watermarkText = user?.email ? `${user.email} • MockFolder` : 'MockFolder Confidential';
 
-  // Bookmark State
+  // Bookmark & Like Synchronization
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
 
   useEffect(() => {
+    setIsCompanyLiked(likeStore.isCompanyLiked(slug || ''));
+    setCompanyLikes(likeStore.getCompanyLikeCount(slug || ''));
+
     if (currentExam) {
+      setIsExamLiked(likeStore.isExamLiked(currentExam.id));
+      setExamLikes(likeStore.getExamLikeCount(currentExam.id, currentExam.upvotes || 0));
       setIsBookmarked(dataStore.isExamBookmarked(currentExam.id));
     }
-  }, [currentExam]);
+
+    const handleLikesChanged = () => {
+      setIsCompanyLiked(likeStore.isCompanyLiked(slug || ''));
+      setCompanyLikes(likeStore.getCompanyLikeCount(slug || ''));
+      if (currentExam) {
+        setIsExamLiked(likeStore.isExamLiked(currentExam.id));
+        setExamLikes(likeStore.getExamLikeCount(currentExam.id, currentExam.upvotes || 0));
+      }
+    };
+
+    const handleBookmarksChanged = () => {
+      if (currentExam) {
+        setIsBookmarked(dataStore.isExamBookmarked(currentExam.id));
+      }
+    };
+
+    window.addEventListener('prepunite_likes_changed', handleLikesChanged);
+    window.addEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+
+    return () => {
+      window.removeEventListener('prepunite_likes_changed', handleLikesChanged);
+      window.removeEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+    };
+  }, [slug, currentExam]);
+
+  const handleToggleCompanyLike = () => {
+    if (!slug) return;
+    const res = likeStore.toggleCompanyLike(slug);
+    setIsCompanyLiked(res.isLiked);
+    setCompanyLikes(res.count);
+  };
+
+  const handleToggleExamLike = () => {
+    if (!currentExam) return;
+    const res = likeStore.toggleExamLike(currentExam.id, currentExam.upvotes || 0);
+    setIsExamLiked(res.isLiked);
+    setExamLikes(res.count);
+  };
 
   const handleToggleBookmark = () => {
     if (!currentExam) return;
@@ -456,15 +500,7 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     }
   };
 
-  const handleUpvote = () => {
-    if (isUpvoted) {
-      setUpvoteCount(upvoteCount - 1);
-      setIsUpvoted(false);
-    } else {
-      setUpvoteCount(upvoteCount + 1);
-      setIsUpvoted(true);
-    }
-  };
+
 
   if (isCompanyLoading) {
     return (
@@ -640,15 +676,16 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
             )}
 
             <button
-              onClick={handleUpvote}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold transition-all border ${
-                isUpvoted
-                  ? 'bg-rose-500 text-white border-rose-500'
+              onClick={handleToggleCompanyLike}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold transition-all border cursor-pointer ${
+                isCompanyLiked
+                  ? 'bg-rose-500 text-white border-rose-500 shadow-sm'
                   : 'bg-white dark:bg-[#1C1C1C] text-[#121417] dark:text-[#FFFFFF] border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-rose-400'
               }`}
+              title={isCompanyLiked ? 'Unlike this company' : 'Like this company'}
             >
-              <Heart className={`w-3.5 h-3.5 ${isUpvoted ? 'fill-current text-white' : 'text-rose-500'}`} />
-              <span>{upvoteCount}</span>
+              <Heart className={`w-3.5 h-3.5 ${isCompanyLiked ? 'fill-current text-white' : 'text-rose-500'}`} />
+              <span>{companyLikes}</span>
             </button>
 
             {currentCompanyStoreItem.website && (
@@ -817,6 +854,24 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     <Share2 className="w-4 h-4 text-[#121417] dark:text-[#FD4A32]" />
                     <span>Share with Batch</span>
                   </button>
+
+                  {currentExam && (
+                    <button
+                      type="button"
+                      onClick={handleToggleExamLike}
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs transition-all shadow-xs cursor-pointer ${
+                        isExamLiked
+                          ? 'bg-rose-500/15 border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25'
+                          : isDarkMode
+                          ? 'bg-[#2b2d31] hover:bg-[#383a40] text-[#e3e3e3] border border-[#383a40]'
+                          : 'bg-white hover:bg-[#F8F9FA] text-[#121417] border border-[#E9ECEF]'
+                      }`}
+                      title={isExamLiked ? "You liked this exam track" : "Like this exam track"}
+                    >
+                      <Heart className={`w-4 h-4 ${isExamLiked ? 'fill-rose-500 text-rose-500' : 'text-rose-500'}`} />
+                      <span>{examLikes}</span>
+                    </button>
+                  )}
 
                   {currentExam && (
                     <button

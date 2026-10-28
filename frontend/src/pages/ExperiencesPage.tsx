@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { dataStore, type ExperienceItem } from '@/services/dataStore';
+import { likeStore } from '@/services/stores/likeStore';
 import { useAuth } from '@/contexts/AuthContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import { AddExperienceModal } from '@/components/AddExperienceModal';
@@ -59,34 +60,22 @@ export default function ExperiencesPage() {
   const [verdictFilter, setVerdictFilter] = useState<'ALL' | 'SELECTED' | 'REJECTED'>('ALL');
   const [driveTypeFilter, setDriveTypeFilter] = useState<'ALL' | 'ON_CAMPUS' | 'OFF_CAMPUS' | 'POOL_CAMPUS'>('ALL');
 
-  // Upvote / Helpful State
-  const [upvotedIds, setUpvotedIds] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem('prepunite_upvoted_experiences');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [localUpvotes, setLocalUpvotes] = useState<Record<string, number>>({});
+  // Upvote / Helpful State (100% Persistent across reloads via likeStore)
+  const [upvotedIds, setUpvotedIds] = useState<string[]>(() => likeStore.getLikedExperienceIds());
 
-  const handleToggleUpvote = async (expId: string) => {
-    try {
-      const res = await experienceService.toggleUpvote(expId);
-      if (res.upvoted) {
-        setUpvotedIds((prev) => Array.from(new Set([...prev, expId])));
-      } else {
-        setUpvotedIds((prev) => prev.filter((id) => id !== expId));
-      }
+  useEffect(() => {
+    const handleLikesChanged = () => {
+      setUpvotedIds(likeStore.getLikedExperienceIds());
+    };
+    window.addEventListener('prepunite_likes_changed', handleLikesChanged);
+    return () => window.removeEventListener('prepunite_likes_changed', handleLikesChanged);
+  }, []);
 
-      setLocalUpvotes((prev) => ({
-        ...prev,
-        [expId]: res.upvotes,
-      }));
-
-      queryClient.invalidateQueries({ queryKey: ['live-experiences'] });
-    } catch (err: any) {
-      toast.error('Failed to update vote.');
+  const handleToggleUpvote = (expId: string, baseCount = 0) => {
+    const res = likeStore.toggleExperienceLike(expId, baseCount);
+    setUpvotedIds(likeStore.getLikedExperienceIds());
+    if (res.isLiked) {
+      toast.success('Marked as helpful!');
     }
   };
 
@@ -380,7 +369,7 @@ export default function ExperiencesPage() {
           {filteredExperiences.map((exp) => {
             const isBookmarked = bookmarkedExpIds.includes(exp.id);
             const isUpvoted = upvotedIds.includes(exp.id);
-            const displayUpvotes = (exp.upvotes ?? 0) + (localUpvotes[exp.id] ?? 0);
+            const displayUpvotes = likeStore.getExperienceLikeCount(exp.id, exp.upvotes ?? 0);
             const isAuthor = Boolean(
               user && (
                 (exp.userId && exp.userId === user.id) ||
@@ -429,7 +418,7 @@ export default function ExperiencesPage() {
                     {/* Upvote / Helpful Action */}
                     <button
                       type="button"
-                      onClick={() => handleToggleUpvote(exp.id)}
+                      onClick={() => handleToggleUpvote(exp.id, exp.upvotes ?? 0)}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all cursor-pointer ${
                         isUpvoted
                           ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-2xs'

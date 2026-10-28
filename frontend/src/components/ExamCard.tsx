@@ -5,7 +5,8 @@ import { dataStore } from '@/services/dataStore';
 import { examService } from '@/services/exam.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck, Eye, EyeOff } from 'lucide-react';
+import { Building2, Edit3, Trash2, ArrowRight, Bookmark, BookmarkCheck, Eye, EyeOff, Heart } from 'lucide-react';
+import { likeStore } from '@/services/stores/likeStore';
 
 interface ExamCardProps {
   exam: ExamWithCompany;
@@ -20,6 +21,8 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
   const isAdmin = role === 'ADMIN';
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(() => dataStore.isExamBookmarked(exam.id));
+  const [isLiked, setIsLiked] = useState<boolean>(() => likeStore.isExamLiked(exam.id));
+  const [likeCount, setLikeCount] = useState<number>(() => likeStore.getExamLikeCount(exam.id, exam.upvotes || 0));
   const [localIsHidden, setLocalIsHidden] = useState<boolean>(Boolean(exam.isHidden));
 
   useEffect(() => {
@@ -28,12 +31,33 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
 
   useEffect(() => {
     setIsBookmarked(dataStore.isExamBookmarked(exam.id));
-    const handleChanged = () => {
+    setIsLiked(likeStore.isExamLiked(exam.id));
+    setLikeCount(likeStore.getExamLikeCount(exam.id, exam.upvotes || 0));
+
+    const handleBookmarksChanged = () => {
       setIsBookmarked(dataStore.isExamBookmarked(exam.id));
     };
-    window.addEventListener('prepunite_bookmarks_changed', handleChanged);
-    return () => window.removeEventListener('prepunite_bookmarks_changed', handleChanged);
-  }, [exam.id]);
+    const handleLikesChanged = () => {
+      setIsLiked(likeStore.isExamLiked(exam.id));
+      setLikeCount(likeStore.getExamLikeCount(exam.id, exam.upvotes || 0));
+    };
+
+    window.addEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+    window.addEventListener('prepunite_likes_changed', handleLikesChanged);
+
+    return () => {
+      window.removeEventListener('prepunite_bookmarks_changed', handleBookmarksChanged);
+      window.removeEventListener('prepunite_likes_changed', handleLikesChanged);
+    };
+  }, [exam.id, exam.upvotes]);
+
+  const handleToggleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const res = likeStore.toggleExamLike(exam.id, exam.upvotes || 0);
+    setIsLiked(res.isLiked);
+    setLikeCount(res.count);
+  };
 
   const handleToggleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -77,6 +101,19 @@ export default function ExamCard({ exam, onEdit, onDelete, onToggleVisibility }:
     >
       {/* Top Right Action Overlay Bar */}
       <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 pointer-events-none">
+        <button
+          onClick={handleToggleLike}
+          className={`pointer-events-auto flex items-center gap-1 px-1.5 py-1 rounded-md border shadow-xs transition-all cursor-pointer ${
+            isLiked
+              ? 'bg-rose-500 border-rose-600 text-white'
+              : 'bg-white dark:bg-[#1C1C1C] border-[#E9ECEF] dark:border-[#2E2E2E] text-[#868E96] dark:text-[#555555] hover:text-rose-500 hover:border-rose-300'
+          }`}
+          title={isLiked ? 'Unlike exam track' : 'Like this exam'}
+        >
+          <Heart className={`w-3 h-3 ${isLiked ? 'fill-white text-white' : 'text-rose-500'}`} />
+          <span className="text-[10px] font-display font-bold">{likeCount}</span>
+        </button>
+
         <button
           onClick={handleToggleBookmark}
           className={`pointer-events-auto p-1.5 rounded-md border shadow-xs transition-all cursor-pointer ${
