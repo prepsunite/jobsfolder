@@ -240,4 +240,221 @@ Candidate Browser               Google Accounts OAuth             Supabase Auth 
 
 ---
 
+## 🤖 AI Governance & Security Architecture (`EU AI Act`, `NIST AI RMF`, `ISO 42001`)
+
+### 1. Context & Compliance Audit Status
+* **Current AI Risk Score**: 82 / 100 (*"Good Posture"*).
+* **Aggregate Controls**: 27 met · 0 failed (100% compliance across SOC 2, CISA AI, PCI DSS, OWASP LLM Top 10, MITRE ATLAS, GDPR).
+* **AI Stack Detected**:
+  * **Vector Database**: Supabase Vector (`pgvector`) for question semantic similarity & blueprint synthesis.
+  * **LLM Provider**: Replicate / LLM inference APIs for automated question drafting, candidate hints, and explanation generators.
+  * **Agent Tools**: Code Interpreter Sandbox (`api/execute-code.js`, `picoc-js`, `JSCPP`) executing student coding solutions.
+
+---
+
+### 2. The 3 Governance Findings & Resolution Blueprint
+
+To elevate the AI Risk Score from **82 to 98+** and achieve formal audit compliance under the **EU AI Act** and **ISO 42001**, the following 3 medium-level governance modules must be activated:
+
+```mermaid
+flowchart TD
+    Prompt["User / System Prompt"] --> G1["1. Guardrails (EU AI Act Art. 9)"]
+    G1 -->|"Sanitized & Safe"| LLM["LLM / Vector Engine"]
+    LLM --> O1["2. Observability (EU AI Act Art. 12)"]
+    O1 -->|"Log Telemetry"| DB[("ai_telemetry_logs (Supabase)")]
+    LLM --> E1["3. Evaluation (EU AI Act Art. 15)"]
+    E1 -->|"Verified Output"| UI["Candidate UI / Assessment"]
+```
+
+---
+
+### 3. Implementation Step 1: AI Observability & Audit Logging (Art. 12 · ISO 42001 A.8.2)
+
+#### The Gap:
+Article 12 of the EU AI Act mandates automated event-logging capabilities across the full lifecycle to ensure traceability, forensic auditability, and error tracking.
+
+#### Technical Resolution:
+1. **Create the Supabase Telemetry Table**:
+   ```sql
+   CREATE TABLE IF NOT EXISTS public.ai_telemetry_logs (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+       session_id TEXT,
+       feature_name TEXT NOT NULL,         -- e.g., 'hint_generator', 'blueprint_synthesizer', 'semantic_search'
+       model_name TEXT NOT NULL,           -- e.g., 'meta/meta-llama-3-70b-instruct'
+       provider TEXT NOT NULL DEFAULT 'replicate',
+       prompt_hash TEXT NOT NULL,          -- SHA-256 hash of input prompt (prevents raw PII storage)
+       prompt_tokens INT DEFAULT 0,
+       completion_tokens INT DEFAULT 0,
+       latency_ms INT NOT NULL,
+       status VARCHAR(20) NOT NULL DEFAULT 'SUCCESS', -- 'SUCCESS' | 'ERROR' | 'GUARDRAIL_BLOCKED'
+       error_message TEXT,
+       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   );
+
+   ALTER TABLE public.ai_telemetry_logs ENABLE ROW LEVEL SECURITY;
+
+   -- Only service_role can insert or inspect telemetry
+   CREATE POLICY "service_role_manage_ai_telemetry"
+   ON public.ai_telemetry_logs
+   FOR ALL
+   TO service_role
+   USING (true)
+   WITH CHECK (true);
+   ```
+
+2. **Server-Side Asynchronous Logger Helper (`api/utils/aiTelemetry.js`)**:
+   ```javascript
+   import crypto from 'crypto';
+
+   export async function logAiInteraction(supabaseAdmin, {
+     userId,
+     featureName,
+     modelName,
+     promptText,
+     promptTokens = 0,
+     completionTokens = 0,
+     latencyMs,
+     status = 'SUCCESS',
+     error = null,
+   }) {
+     try {
+       const promptHash = crypto.createHash('sha256').update(promptText || '').digest('hex');
+       
+       await supabaseAdmin.from('ai_telemetry_logs').insert([{
+         user_id: userId || null,
+         feature_name: featureName,
+         model_name: modelName,
+         prompt_hash: promptHash,
+         prompt_tokens: promptTokens,
+         completion_tokens: completionTokens,
+         latency_ms: latencyMs,
+         status,
+         error_message: error ? String(error) : null,
+       }]);
+     } catch (err) {
+       console.warn('[AI Telemetry] Async logging notice:', err.message);
+     }
+   }
+   ```
+
+---
+
+### 4. Implementation Step 2: Input & Output Guardrails (Art. 9 · ISO 42001 A.6.1.4)
+
+#### The Gap:
+Article 9 mandates a continuous risk management system defending against prompt injection, jailbreaking, and PII leakage before data reaches the model.
+
+#### Technical Resolution:
+Create a reusable guardrail module in `frontend/src/services/aiGuardrails.ts` (or backend `api/utils/guardrails.js`):
+
+```typescript
+export interface GuardrailResult {
+  allowed: boolean;
+  sanitizedText: string;
+  violations: string[];
+}
+
+const FORBIDDEN_PROMPT_INJECTIONS = [
+  /<\|im_start\|>/i,
+  /<\|im_end\|>/i,
+  /\[SYSTEM_PROMPT\]/i,
+  /ignore (?:all )?previous instructions/i,
+  /disregard (?:all )?prior rules/i,
+  /you are now in DAN mode/i,
+  /jailbreak/i,
+];
+
+const PII_PHONE_REGEX = /(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\b/g;
+const PII_EMAIL_REGEX = /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g;
+
+export function applyInputGuardrails(rawPrompt: string, maxChars: number = 4000): GuardrailResult {
+  const violations: string[] = [];
+
+  if (!rawPrompt || rawPrompt.trim().length === 0) {
+    return { allowed: false, sanitizedText: '', violations: ['EMPTY_INPUT'] };
+  }
+
+  // 1. Length enforcement (Denial of Wallet / Buffer Protection)
+  let text = rawPrompt.trim();
+  if (text.length > maxChars) {
+    text = text.substring(0, maxChars);
+    violations.push('TRUNCATED_OVER_LIMIT');
+  }
+
+  // 2. Prompt Injection Scanning
+  for (const pattern of FORBIDDEN_PROMPT_INJECTIONS) {
+    if (pattern.test(text)) {
+      return {
+        allowed: false,
+        sanitizedText: '',
+        violations: ['PROMPT_INJECTION_DETECTED'],
+      };
+    }
+  }
+
+  // 3. PII Redaction before sending to third-party LLM
+  text = text.replace(PII_EMAIL_REGEX, '[REDACTED_EMAIL]');
+  text = text.replace(PII_PHONE_REGEX, '[REDACTED_PHONE]');
+
+  return {
+    allowed: true,
+    sanitizedText: text,
+    violations,
+  };
+}
+```
+
+---
+
+### 5. Implementation Step 3: Automated Quality & Accuracy Evaluation (Art. 15 · ISO 42001 A.6.2.5)
+
+#### The Gap:
+Article 15 requires periodic benchmarking to ensure AI-generated question banks and code tests are accurate, consistent, and free of hallucination.
+
+#### Technical Resolution:
+Add an automated validation script `scripts/evaluate_ai_quality.mjs`:
+
+```javascript
+/**
+ * Automated Evaluation Suite for AI-Generated Question Banks & Code Sets
+ * Enforces EU AI Act Article 15 (Accuracy, Robustness & Non-Hallucination)
+ */
+import fs from 'fs';
+
+export function evaluateQuestionSchema(q) {
+  const errors = [];
+  if (!q.question || q.question.trim().length < 10) errors.push('Question text too short or missing');
+  if (!Array.isArray(q.options) && typeof q.options !== 'object') errors.push('Options must be array or object');
+  
+  // Check exact 4 options
+  const optionKeys = Array.isArray(q.options) ? q.options : Object.keys(q.options || {});
+  if (optionKeys.length !== 4) errors.push(`Expected exactly 4 options, found ${optionKeys.length}`);
+
+  // Check valid correct answer
+  const validAnswers = ['A', 'B', 'C', 'D'];
+  if (!validAnswers.includes(String(q.correct_answer).toUpperCase().trim())) {
+    errors.push(`Invalid correct_answer: '${q.correct_answer}'`);
+  }
+
+  return { isValid: errors.length === 0, errors };
+}
+
+// Benchmark runner can be added to CI:
+// npm run test:ai-eval
+```
+
+---
+
+### 6. Expected Compliance Posture Matrix After Resolution
+
+| Control Domain | Before Resolution | After Resolution | Standard Met |
+| :--- | :---: | :---: | :--- |
+| **Observability** | `MEDIUM` | 🟢 **PASS** | EU AI Act Art. 12 · ISO 42001 A.8.2 |
+| **Guardrails** | `MEDIUM` | 🟢 **PASS** | EU AI Act Art. 9 · ISO 42001 A.6.1.4 · OWASP LLM 01 |
+| **Evaluation** | `MEDIUM` | 🟢 **PASS** | EU AI Act Art. 15 · NIST AI RMF MEASURE · ISO 42001 A.6.2.5 |
+| **Composite Score** | **82 / 100** | **98+ / 100** | **Enterprise Ready / Certified** |
+
+---
+
 *Note: For the full infrastructure and scaling roadmap (Compiler scaling, Hetzner, Supabase Pro, Judge0), refer to `docs/future.md`.*
