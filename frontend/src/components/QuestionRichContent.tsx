@@ -13,6 +13,8 @@ export interface QuestionRichContentProps {
 
 const DOMPURIFY_CONFIG = {
   USE_PROFILES: { html: true, svg: true, mathMl: true },
+  IN_PLACE: false,
+  SAFE_FOR_TEMPLATES: false,
   ALLOWED_TAGS: [
     'p', 'span', 'b', 'strong', 'i', 'em', 'u', 's', 'sub', 'sup',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'hr',

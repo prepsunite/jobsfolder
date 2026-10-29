@@ -169,6 +169,8 @@ function renderContentToHTML(content: string): string {
   // 🛡️ SECURITY HARDENING ([P1-03]): Sanitize all rendered HTML with DOMPurify.
   // Explicitly disallow iframes, embedded scripts, and arbitrary forms to eliminate phishing and Stored XSS vectors.
   return DOMPurify.sanitize(rawHtml, {
+    IN_PLACE: false,
+    SAFE_FOR_TEMPLATES: false,
     ALLOWED_TAGS: [
       'p', 'br', 'b', 'i', 'strong', 'em', 'u', 's', 'strike',
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',

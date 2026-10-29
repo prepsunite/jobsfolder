@@ -1,8 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-let cachedAdminToken = null;
-let cachedTokenExpiry = 0;
-
 function getCompanyBaseline(slug) {
   const clean = (slug || 'tcs').toLowerCase().trim();
   let hash = 0;
@@ -13,50 +10,12 @@ function getCompanyBaseline(slug) {
   return 75 + (Math.abs(hash) % 120);
 }
 
-async function getAdminClient(supabaseUrl, serviceKey, anonKey) {
-  const now = Date.now();
-  if (cachedAdminToken && now < cachedTokenExpiry) {
-    return createClient(supabaseUrl, anonKey, {
-      auth: { persistSession: false },
-      global: { headers: { Authorization: `Bearer ${cachedAdminToken}` } },
-    });
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-  const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'magiclink',
-    email: 'venkatmukala9@gmail.com',
-  });
-  if (linkErr || !linkData?.properties?.hashed_token) {
-    throw linkErr || new Error('Failed to generate admin link');
-  }
-
-  const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
-  const { data: sessionData, error: sessionErr } = await authClient.auth.verifyOtp({
-    token_hash: linkData.properties.hashed_token,
-    type: 'magiclink',
-  });
-  if (sessionErr || !sessionData?.session?.access_token) {
-    throw sessionErr || new Error('Failed to verify admin OTP');
-  }
-
-  cachedAdminToken = sessionData.session.access_token;
-  // Cache token for 45 minutes
-  cachedTokenExpiry = now + 45 * 60 * 1000;
-
-  return createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false },
-    global: { headers: { Authorization: `Bearer ${cachedAdminToken}` } },
-  });
-}
-
 export default async function handler(req, res) {
   // CORS & Security headers
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || serviceKey;
 
   if (!supabaseUrl || !serviceKey) {
     return res.status(500).json({ error: 'Database service configuration missing on server.' });
@@ -182,9 +141,8 @@ export default async function handler(req, res) {
         });
       }
 
-      // Update experience upvotes using verified admin client
-      const adminClient = await getAdminClient(supabaseUrl, serviceKey, anonKey);
-      const { data: updatedExp, error: updateErr } = await adminClient
+      // Update experience upvotes using service-role client
+      const { data: updatedExp, error: updateErr } = await supabaseAdmin
         .from('experiences')
         .update({ upvotes: newUpvotes })
         .eq('id', itemId)

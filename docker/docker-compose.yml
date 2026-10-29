@@ -6,12 +6,21 @@ services:
     image: postgres:17-alpine
     container_name: prepunite-db
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
     environment:
       POSTGRES_DB: prepunite
       POSTGRES_USER: prepunite
-      POSTGRES_PASSWORD: prepunite_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prepunite_dev_password}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../database/V1__initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -29,8 +38,15 @@ services:
     image: redis:7-alpine
     container_name: prepunite-cache
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -48,13 +64,17 @@ services:
       dockerfile: Dockerfile
     container_name: prepunite-backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/prepunite
       SPRING_DATASOURCE_USERNAME: prepunite
-      SPRING_DATASOURCE_PASSWORD: prepunite_dev_password
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-prepunite_dev_password}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
@@ -62,6 +82,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   # ============================================
   # Frontend (Vite Dev Server)
@@ -72,12 +97,26 @@ services:
       dockerfile: Dockerfile
     container_name: prepunite-frontend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     environment:
       VITE_API_BASE_URL: http://localhost:8080/api
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5173 || exit 0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data:

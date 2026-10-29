@@ -70,12 +70,42 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-export default async function handler(req, res) {
-  const { type = 'company', slug = '', id = '' } = req.query;
+function sanitizeHost(rawHost) {
+  if (!rawHost || typeof rawHost !== 'string') return 'jobsfolder.vercel.app';
+  const trimmed = rawHost.trim();
+  if (/^[a-zA-Z0-9.-]+(?::[0-9]{1,5})?$/.test(trimmed)) {
+    return trimmed;
+  }
+  return 'jobsfolder.vercel.app';
+}
 
-  // Resolve actual live host dynamically (e.g. jobsfolder.vercel.app or prepunite.com)
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'jobsfolder.vercel.app';
-  const proto = req.headers['x-forwarded-proto'] || 'https';
+function sanitizeProto(rawProto) {
+  if (rawProto === 'http') return 'http';
+  return 'https';
+}
+
+function isSafeUrl(urlStr) {
+  if (!urlStr || typeof urlStr !== 'string') return false;
+  try {
+    const parsed = new URL(urlStr);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+export default async function handler(req, res) {
+  const type = typeof req.query.type === 'string' ? req.query.type : 'company';
+  const rawSlug = typeof req.query.slug === 'string' ? req.query.slug : '';
+  const rawId = typeof req.query.id === 'string' ? req.query.id : '';
+
+  // Sanitize route parameters to safe characters only
+  const normalizedSlug = rawSlug.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
+  const normalizedId = rawId.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+
+  // Resolve actual live host dynamically and sanitize against header injection
+  const host = sanitizeHost(req.headers['x-forwarded-host'] || req.headers.host);
+  const proto = sanitizeProto(req.headers['x-forwarded-proto']);
   const baseUrl = `${proto}://${host}`;
 
   const defaultSquareLogo = `${baseUrl}/og-square.png`;
@@ -87,13 +117,13 @@ export default async function handler(req, res) {
   let imageWidth = '400';
   let imageHeight = '400';
 
-  const normalizedSlug = (slug || '').toLowerCase().trim();
-
   // 1. Company Route Preview (/companies/:slug)
   if (type === 'company' && normalizedSlug) {
     pageUrl = `${baseUrl}/companies/${encodeURIComponent(normalizedSlug)}`;
 
-    let company = KNOWN_COMPANIES[normalizedSlug];
+    let company = Object.prototype.hasOwnProperty.call(KNOWN_COMPANIES, normalizedSlug)
+      ? KNOWN_COMPANIES[normalizedSlug]
+      : null;
 
     if (!company) {
       try {
@@ -141,8 +171,8 @@ export default async function handler(req, res) {
   }
 
   // 2. Exam Route Preview (/exam/:id)
-  else if (type === 'exam' && id) {
-    pageUrl = `${baseUrl}/exam/${encodeURIComponent(id)}`;
+  else if (type === 'exam' && normalizedId) {
+    pageUrl = `${baseUrl}/exam/${encodeURIComponent(normalizedId)}`;
     title = 'Online Mock Assessment Drive 2026 – MockFolder';
     description =
       'Attempt full-length memory-based placement mock test with real company test patterns, aptitude, reasoning, and proctoring on MockFolder.';
@@ -160,7 +190,7 @@ export default async function handler(req, res) {
         const { data: exam } = await supabase
           .from('mock_exams')
           .select('title, target_company, description, duration_minutes, total_marks')
-          .eq('id', id)
+          .eq('id', normalizedId)
           .limit(1)
           .maybeSingle();
 
@@ -172,7 +202,7 @@ export default async function handler(req, res) {
             `Practice authentic ${comp} placement assessment (${exam.duration_minutes || 60} mins, ${exam.total_marks || 100} marks) with instant scorecard on MockFolder.`;
 
           const normComp = (exam.target_company || '').toLowerCase().trim();
-          if (KNOWN_COMPANIES[normComp]?.logoUrl) {
+          if (Object.prototype.hasOwnProperty.call(KNOWN_COMPANIES, normComp) && KNOWN_COMPANIES[normComp]?.logoUrl) {
             imageUrl = KNOWN_COMPANIES[normComp].logoUrl;
           }
         }
@@ -183,7 +213,7 @@ export default async function handler(req, res) {
   }
 
   // 3. Interview Experience Route Preview (/experiences/:id)
-  else if (type === 'experience' && id) {
+  else if (type === 'experience' && normalizedId) {
     pageUrl = `${baseUrl}/experiences`;
     title = 'Verified Campus Interview Experience – MockFolder';
     description =
@@ -191,15 +221,22 @@ export default async function handler(req, res) {
     imageUrl = defaultSquareLogo;
   }
 
-  // Ensure image URL is absolute
+  // Ensure image URL is absolute and validated
   if (imageUrl.startsWith('/')) {
     imageUrl = `${baseUrl}${imageUrl}`;
+  }
+  if (!isSafeUrl(imageUrl)) {
+    imageUrl = defaultSquareLogo;
+  }
+  if (!isSafeUrl(pageUrl)) {
+    pageUrl = baseUrl;
   }
 
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
   const safeImageUrl = escapeHtml(imageUrl);
   const safePageUrl = escapeHtml(pageUrl);
+  const jsonSafePageUrl = JSON.stringify(pageUrl).replace(/</g, '\\u003c');
 
   const html = `<!doctype html>
 <html lang="en">
@@ -239,11 +276,19 @@ export default async function handler(req, res) {
       <h2 style="color:#FD4A32;">MockFolder</h2>
       <p>Redirecting to <a href="${safePageUrl}" style="color:#ffffff;">${safeTitle}</a>...</p>
     </div>
-    <script>window.location.replace("${safePageUrl}");</script>
+    <script>
+      (function() {
+        var dest = ${jsonSafePageUrl};
+        if (dest && (dest.indexOf('https://') === 0 || dest.indexOf('http://') === 0)) {
+          window.location.replace(dest);
+        }
+      })();
+    </script>
   </body>
 </html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   return res.status(200).send(html);
 }
