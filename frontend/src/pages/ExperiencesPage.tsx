@@ -64,6 +64,10 @@ export default function ExperiencesPage() {
   const [upvotedIds, setUpvotedIds] = useState<string[]>(() => likeStore.getLikedExperienceIds());
 
   useEffect(() => {
+    likeStore.init(user?.email);
+  }, [user?.email]);
+
+  useEffect(() => {
     const handleLikesChanged = () => {
       setUpvotedIds(likeStore.getLikedExperienceIds());
     };
@@ -74,6 +78,13 @@ export default function ExperiencesPage() {
   const handleToggleUpvote = (expId: string, baseCount = 0) => {
     const res = likeStore.toggleExperienceLike(expId, baseCount);
     setUpvotedIds(likeStore.getLikedExperienceIds());
+    // Optimistically update React Query cache so the counter updates instantly
+    queryClient.setQueryData<ExperienceItem[]>(['live-experiences'], (old) => {
+      if (!old) return old;
+      return old.map((item) =>
+        item.id === expId ? { ...item, upvotes: res.count } : item
+      );
+    });
     if (res.isLiked) {
       toast.success('Marked as helpful!');
     }

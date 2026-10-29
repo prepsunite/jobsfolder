@@ -220,6 +220,10 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
 
   useEffect(() => {
+    likeStore.init(user?.email);
+  }, [user?.email]);
+
+  useEffect(() => {
     setIsCompanyLiked(likeStore.isCompanyLiked(slug || ''));
     setCompanyLikes(likeStore.getCompanyLikeCount(slug || ''));
 
@@ -265,6 +269,12 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
     const res = likeStore.toggleExamLike(currentExam.id, currentExam.upvotes || 0);
     setIsExamLiked(res.isLiked);
     setExamLikes(res.count);
+    queryClient.setQueryData<ExamItem[]>(['company-exams', slug], (old) => {
+      if (!old) return old;
+      return old.map((ex) =>
+        ex.id === currentExam.id ? { ...ex, upvotes: res.count } : ex
+      );
+    });
   };
 
   const handleToggleBookmark = () => {

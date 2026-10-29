@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CompanyCard from '@/components/CompanyCard';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import { Search, Building2, SlidersHorizontal, Plus, XCircle, EyeOff } from 'lucide-react';
 import type { Company } from '@/types/company';
 import LogoLoader from '@/components/LogoLoader';
+import { likeStore } from '@/services/stores/likeStore';
 
 import { companyService } from '@/services/company.service';
 import { useToast } from '@/contexts/ToastContext';
@@ -28,6 +29,10 @@ export default function CompaniesPage() {
     website: '',
     headquarters: 'India & Global',
   });
+
+  useEffect(() => {
+    likeStore.init(user?.email);
+  }, [user?.email]);
 
   const { data: allCompanies = [], isLoading } = useQuery({
     queryKey: ['live-companies', searchTerm],

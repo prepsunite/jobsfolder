@@ -3,6 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 let cachedAdminToken = null;
 let cachedTokenExpiry = 0;
 
+function getCompanyBaseline(slug) {
+  const clean = (slug || 'tcs').toLowerCase().trim();
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash << 5) - hash + clean.charCodeAt(i);
+    hash |= 0;
+  }
+  return 75 + (Math.abs(hash) % 120);
+}
+
 async function getAdminClient(supabaseUrl, serviceKey, anonKey) {
   const now = Date.now();
   if (cachedAdminToken && now < cachedTokenExpiry) {
@@ -44,6 +54,87 @@ export default async function handler(req, res) {
   // CORS & Security headers
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || serviceKey;
+
+  if (!supabaseUrl || !serviceKey) {
+    return res.status(500).json({ error: 'Database service configuration missing on server.' });
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  // ========================================================
+  // GET: Fetch Global Company Likes + Current User's Likes
+  // ========================================================
+  if (req.method === 'GET') {
+    try {
+      const userEmail = req.query.userEmail ? String(req.query.userEmail).toLowerCase().trim() : null;
+      const clientIdentifier = req.query.clientIdentifier ? String(req.query.clientIdentifier).toLowerCase().trim() : null;
+
+      // 1. Fetch all companies to build global counts
+      const { data: comps } = await supabaseAdmin
+        .from('companies')
+        .select('slug')
+        .eq('is_deleted', false);
+
+      // 2. Fetch all company_like bookmarks
+      const { data: companyBookmarks } = await supabaseAdmin
+        .from('user_bookmarks')
+        .select('item_id')
+        .eq('item_type', 'company_like');
+
+      const companyCounts = {};
+      for (const b of (companyBookmarks || [])) {
+        companyCounts[b.item_id] = (companyCounts[b.item_id] || 0) + 1;
+      }
+
+      const companyLikes = {};
+      for (const c of (comps || [])) {
+        companyLikes[c.slug] = getCompanyBaseline(c.slug) + (companyCounts[c.slug] || 0);
+      }
+
+      // 3. If user identifiers provided, fetch what THIS user has liked
+      const userLiked = {
+        companies: [],
+        exams: [],
+        experiences: [],
+      };
+
+      const searchEmails = [];
+      if (userEmail) searchEmails.push(userEmail);
+      if (clientIdentifier) searchEmails.push(`${clientIdentifier}@jobsfolder.user`);
+
+      if (searchEmails.length > 0) {
+        const { data: userLikes } = await supabaseAdmin
+          .from('user_bookmarks')
+          .select('item_type, item_id')
+          .in('user_email', searchEmails)
+          .in('item_type', ['company_like', 'exam_like', 'experience_like']);
+
+        for (const row of (userLikes || [])) {
+          if (row.item_type === 'company_like') userLiked.companies.push(row.item_id);
+          if (row.item_type === 'exam_like') userLiked.exams.push(row.item_id);
+          if (row.item_type === 'experience_like') userLiked.experiences.push(row.item_id);
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        companyLikes,
+        userLiked,
+      });
+    } catch (getErr) {
+      console.error('[api/toggle-like] GET error:', getErr);
+      return res.status(500).json({ error: getErr.message || 'Failed to fetch likes summary' });
+    }
+  }
+
+  // ========================================================
+  // POST: Atomic Toggle Like with Postgres & User Bookmarks
+  // ========================================================
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -55,19 +146,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing itemType or itemId' });
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-    const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !serviceKey) {
-      return res.status(500).json({ error: 'Database service configuration missing on server.' });
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
     const voteDelta = Number(delta) < 0 ? -1 : 1;
+    const identifier = (userEmail || clientIdentifier || 'anon_client').toLowerCase().trim();
+    const formattedEmail = identifier.includes('@') ? identifier : `${identifier}@jobsfolder.user`;
 
     // 1. EXPERIENCES
     if (itemType === 'experience') {
@@ -83,7 +164,25 @@ export default async function handler(req, res) {
 
       const newUpvotes = Math.max(0, (exp.upvotes || 0) + voteDelta);
 
-      // Use verified admin client to satisfy trg_enforce_experience_invariants
+      // Persist user-level like in user_bookmarks
+      if (voteDelta > 0) {
+        await supabaseAdmin.from('user_bookmarks').upsert(
+          {
+            item_type: 'experience_like',
+            item_id: String(itemId),
+            user_email: formattedEmail,
+          },
+          { onConflict: 'user_email,item_type,item_id' }
+        );
+      } else {
+        await supabaseAdmin.from('user_bookmarks').delete().match({
+          item_type: 'experience_like',
+          item_id: String(itemId),
+          user_email: formattedEmail,
+        });
+      }
+
+      // Update experience upvotes using verified admin client
       const adminClient = await getAdminClient(supabaseUrl, serviceKey, anonKey);
       const { data: updatedExp, error: updateErr } = await adminClient
         .from('experiences')
@@ -102,6 +201,7 @@ export default async function handler(req, res) {
         itemType: 'experience',
         itemId,
         upvotes: updatedExp.upvotes,
+        isLiked: voteDelta > 0,
       });
     }
 
@@ -118,6 +218,25 @@ export default async function handler(req, res) {
       }
 
       const newUpvotes = Math.max(0, (exam.upvotes || 0) + voteDelta);
+
+      // Persist user-level like in user_bookmarks
+      if (voteDelta > 0) {
+        await supabaseAdmin.from('user_bookmarks').upsert(
+          {
+            item_type: 'exam_like',
+            item_id: String(itemId),
+            user_email: formattedEmail,
+          },
+          { onConflict: 'user_email,item_type,item_id' }
+        );
+      } else {
+        await supabaseAdmin.from('user_bookmarks').delete().match({
+          item_type: 'exam_like',
+          item_id: String(itemId),
+          user_email: formattedEmail,
+        });
+      }
+
       const { data: updatedExam, error: examUpdateErr } = await supabaseAdmin
         .from('exams')
         .update({ upvotes: newUpvotes })
@@ -135,20 +254,20 @@ export default async function handler(req, res) {
         itemType: 'exam',
         itemId,
         upvotes: updatedExam.upvotes,
+        isLiked: voteDelta > 0,
       });
     }
 
     // 3. COMPANIES
     if (itemType === 'company') {
       const companySlug = itemId.toLowerCase().trim();
-      const identifier = (userEmail || clientIdentifier || 'anon_client').toLowerCase().trim();
 
       if (voteDelta > 0) {
         await supabaseAdmin.from('user_bookmarks').upsert(
           {
             item_type: 'company_like',
             item_id: companySlug,
-            user_email: identifier.includes('@') ? identifier : `${identifier}@jobsfolder.user`,
+            user_email: formattedEmail,
           },
           { onConflict: 'user_email,item_type,item_id' }
         );
@@ -156,7 +275,7 @@ export default async function handler(req, res) {
         await supabaseAdmin.from('user_bookmarks').delete().match({
           item_type: 'company_like',
           item_id: companySlug,
-          user_email: identifier.includes('@') ? identifier : `${identifier}@jobsfolder.user`,
+          user_email: formattedEmail,
         });
       }
 
@@ -167,11 +286,14 @@ export default async function handler(req, res) {
         .eq('item_type', 'company_like')
         .eq('item_id', companySlug);
 
+      const totalUpvotes = getCompanyBaseline(companySlug) + (liveLikes || 0);
+
       return res.status(200).json({
         success: true,
         itemType: 'company',
         itemId: companySlug,
-        upvotes: liveLikes || 0,
+        upvotes: totalUpvotes,
+        isLiked: voteDelta > 0,
       });
     }
 

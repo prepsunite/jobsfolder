@@ -5,9 +5,29 @@ const STORAGE_KEYS = {
   LIKED_COMPANIES: 'prepunite_liked_companies',
   LIKED_EXAMS: 'prepunite_liked_exams',
   CLIENT_ID: 'prepunite_client_id',
+  CACHED_COMPANY_COUNTS: 'prepunite_cached_company_counts',
 } as const;
 
 class LikeStore {
+  // In-memory cache of authoritative global company like counts
+  private companyLikesCache: Record<string, number> = {};
+  // Pending optimistic deltas while network request is in flight
+  private pendingDeltas = new Map<string, number>();
+  private syncPromise: Promise<void> | null = null;
+
+  constructor() {
+    this.companyLikesCache = this.getStorage<Record<string, number>>(
+      STORAGE_KEYS.CACHED_COMPANY_COUNTS,
+      {}
+    );
+    if (typeof window !== 'undefined') {
+      // Background init on load
+      setTimeout(() => {
+        this.init();
+      }, 50);
+    }
+  }
+
   private getStorage<T>(key: string, fallback: T): T {
     try {
       const data = localStorage.getItem(key);
@@ -31,13 +51,76 @@ class LikeStore {
     }
   }
 
-  private getClientId(): string {
+  public getClientId(): string {
     let id = this.getStorage<string>(STORAGE_KEYS.CLIENT_ID, '');
     if (!id) {
       id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `client_${Date.now()}`;
       this.setStorage(STORAGE_KEYS.CLIENT_ID, id);
     }
     return id;
+  }
+
+  // ==========================================
+  // --- CLOUD SYNC & GLOBAL INITIALIZATION ---
+  // ==========================================
+  async init(userEmail?: string): Promise<void> {
+    if (this.syncPromise) return this.syncPromise;
+    this.syncPromise = this.fetchLikesSummary(userEmail);
+    try {
+      await this.syncPromise;
+    } finally {
+      this.syncPromise = null;
+    }
+  }
+
+  async fetchLikesSummary(userEmail?: string): Promise<void> {
+    try {
+      const clientId = this.getClientId();
+      let email = userEmail;
+      if (!email) {
+        const { data: { session } } = await supabase.auth.getSession();
+        email = session?.user?.email;
+      }
+
+      const params = new URLSearchParams();
+      if (email) params.set('userEmail', email);
+      if (clientId) params.set('clientIdentifier', clientId);
+
+      const res = await fetch(`/api/toggle-like?${params.toString()}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.companyLikes && typeof data.companyLikes === 'object') {
+        this.companyLikesCache = {
+          ...this.companyLikesCache,
+          ...data.companyLikes,
+        };
+        this.setStorage(STORAGE_KEYS.CACHED_COMPANY_COUNTS, this.companyLikesCache);
+      }
+
+      // Merge server-known liked items into local user state
+      if (data.userLiked) {
+        if (Array.isArray(data.userLiked.companies) && data.userLiked.companies.length > 0) {
+          const local = new Set(this.getLikedCompanySlugs());
+          data.userLiked.companies.forEach((c: string) => local.add(c.toLowerCase()));
+          this.setStorage(STORAGE_KEYS.LIKED_COMPANIES, Array.from(local));
+        }
+        if (Array.isArray(data.userLiked.exams) && data.userLiked.exams.length > 0) {
+          const local = new Set(this.getLikedExamIds());
+          data.userLiked.exams.forEach((e: string) => local.add(e));
+          this.setStorage(STORAGE_KEYS.LIKED_EXAMS, Array.from(local));
+        }
+        if (Array.isArray(data.userLiked.experiences) && data.userLiked.experiences.length > 0) {
+          const local = new Set(this.getLikedExperienceIds());
+          data.userLiked.experiences.forEach((e: string) => local.add(e));
+          this.setStorage(STORAGE_KEYS.LIKED_EXPERIENCES, Array.from(local));
+        }
+      }
+
+      this.notify();
+    } catch (err) {
+      console.warn('[likeStore] fetchLikesSummary notice:', err);
+    }
   }
 
   // ==========================================
@@ -53,12 +136,9 @@ class LikeStore {
   }
 
   getExperienceLikeCount(expId: string, baseCount: number = 0): number {
-    const isLiked = this.isExperienceLiked(expId);
-    const serverDbCount = this.getStorage<number | null>(`prepunite_db_count_experience_${expId}`, null);
-    if (serverDbCount !== null) {
-      return serverDbCount;
-    }
-    return Math.max(0, (baseCount || 0) + (isLiked ? 1 : 0));
+    if (!expId) return baseCount || 0;
+    const delta = this.pendingDeltas.get(`experience_${expId}`) || 0;
+    return Math.max(0, (baseCount || 0) + delta);
   }
 
   toggleExperienceLike(expId: string, baseCount: number = 0): { isLiked: boolean; count: number } {
@@ -70,16 +150,17 @@ class LikeStore {
     if (list.includes(expId)) {
       updated = list.filter((id) => id !== expId);
       isLiked = false;
+      this.pendingDeltas.set(`experience_${expId}`, -1);
     } else {
       updated = [...list, expId];
       isLiked = true;
+      this.pendingDeltas.set(`experience_${expId}`, 1);
     }
 
     this.setStorage(STORAGE_KEYS.LIKED_EXPERIENCES, updated);
 
-    const currentCount = this.getExperienceLikeCount(expId, baseCount);
-    const optimisticCount = Math.max(0, isLiked ? currentCount + 1 : currentCount - 1);
-    this.setStorage(`prepunite_db_count_experience_${expId}`, optimisticCount);
+    const delta = this.pendingDeltas.get(`experience_${expId}`) || 0;
+    const optimisticCount = Math.max(0, (baseCount || 0) + delta);
     this.notify();
 
     // Persist directly to Supabase PostgreSQL via serverless backend
@@ -104,7 +185,6 @@ class LikeStore {
     return this.getLikedCompanySlugs().includes(clean);
   }
 
-  // Deterministic baseline like count for each company (75 - 195)
   private getCompanyBaseCount(slugOrId: string): number {
     const clean = (slugOrId || 'tcs').toLowerCase().trim();
     let hash = 0;
@@ -117,13 +197,10 @@ class LikeStore {
 
   getCompanyLikeCount(slugOrId: string): number {
     const clean = (slugOrId || 'tcs').toLowerCase().trim();
-    const isLiked = this.isCompanyLiked(clean);
-    const serverDbCount = this.getStorage<number | null>(`prepunite_db_count_company_${clean}`, null);
-    const base = this.getCompanyBaseCount(clean);
-    if (serverDbCount !== null) {
-      return base + serverDbCount;
-    }
-    return base + (isLiked ? 1 : 0);
+    const serverCount = this.companyLikesCache[clean];
+    const base = typeof serverCount === 'number' ? serverCount : this.getCompanyBaseCount(clean);
+    const delta = this.pendingDeltas.get(`company_${clean}`) || 0;
+    return Math.max(0, base + delta);
   }
 
   toggleCompanyLike(slugOrId: string): { isLiked: boolean; count: number } {
@@ -136,15 +213,20 @@ class LikeStore {
     if (list.includes(clean)) {
       updated = list.filter((s) => s !== clean);
       isLiked = false;
+      this.pendingDeltas.set(`company_${clean}`, -1);
     } else {
       updated = [...list, clean];
       isLiked = true;
+      this.pendingDeltas.set(`company_${clean}`, 1);
     }
 
     this.setStorage(STORAGE_KEYS.LIKED_COMPANIES, updated);
 
-    const currentCount = this.getCompanyLikeCount(clean);
-    const optimisticCount = Math.max(0, isLiked ? currentCount + 1 : currentCount - 1);
+    const delta = this.pendingDeltas.get(`company_${clean}`) || 0;
+    const currentBase = typeof this.companyLikesCache[clean] === 'number'
+      ? this.companyLikesCache[clean]
+      : this.getCompanyBaseCount(clean);
+    const optimisticCount = Math.max(0, currentBase + delta);
     this.notify();
 
     // Persist directly to Supabase PostgreSQL via serverless backend
@@ -168,24 +250,10 @@ class LikeStore {
     return this.getLikedExamIds().includes(examId);
   }
 
-  private getExamBaseCount(examId: string, baseCount: number = 0): number {
-    if (baseCount && baseCount > 0) return baseCount;
-    let hash = 0;
-    for (let i = 0; i < examId.length; i++) {
-      hash = (hash << 5) - hash + examId.charCodeAt(i);
-      hash |= 0;
-    }
-    return 45 + (Math.abs(hash) % 85);
-  }
-
   getExamLikeCount(examId: string, baseCount: number = 0): number {
-    const isLiked = this.isExamLiked(examId);
-    const serverDbCount = this.getStorage<number | null>(`prepunite_db_count_exam_${examId}`, null);
-    if (serverDbCount !== null) {
-      return serverDbCount;
-    }
-    const base = this.getExamBaseCount(examId, baseCount);
-    return base + (isLiked ? 1 : 0);
+    if (!examId) return baseCount || 0;
+    const delta = this.pendingDeltas.get(`exam_${examId}`) || 0;
+    return Math.max(0, (baseCount || 0) + delta);
   }
 
   toggleExamLike(examId: string, baseCount: number = 0): { isLiked: boolean; count: number } {
@@ -197,16 +265,17 @@ class LikeStore {
     if (list.includes(examId)) {
       updated = list.filter((id) => id !== examId);
       isLiked = false;
+      this.pendingDeltas.set(`exam_${examId}`, -1);
     } else {
       updated = [...list, examId];
       isLiked = true;
+      this.pendingDeltas.set(`exam_${examId}`, 1);
     }
 
     this.setStorage(STORAGE_KEYS.LIKED_EXAMS, updated);
 
-    const currentCount = this.getExamLikeCount(examId, baseCount);
-    const optimisticCount = Math.max(0, isLiked ? currentCount + 1 : currentCount - 1);
-    this.setStorage(`prepunite_db_count_exam_${examId}`, optimisticCount);
+    const delta = this.pendingDeltas.get(`exam_${examId}`) || 0;
+    const optimisticCount = Math.max(0, (baseCount || 0) + delta);
     this.notify();
 
     // Persist directly to Supabase PostgreSQL via serverless backend
@@ -247,11 +316,16 @@ class LikeStore {
 
       if (response.ok) {
         const result = await response.json();
+        // Clear optimistic delta
+        this.pendingDeltas.delete(`${itemType}_${itemId}`);
+
         if (typeof result.upvotes === 'number') {
-          // Store actual server database count
-          this.setStorage(`prepunite_db_count_${itemType}_${itemId}`, result.upvotes);
-          this.notify();
+          if (itemType === 'company') {
+            this.companyLikesCache[itemId] = result.upvotes;
+            this.setStorage(STORAGE_KEYS.CACHED_COMPANY_COUNTS, this.companyLikesCache);
+          }
         }
+        this.notify();
       }
     } catch (err) {
       console.warn(`[likeStore] Live server database sync notice:`, err);

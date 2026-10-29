@@ -151,4 +151,93 @@ While browser-based verification (`/api/verify-payment`) works in real-time, con
 
 ---
 
+## 🔐 Google OAuth & Supabase Auth White-Labeling (`Choose an account to continue to...`)
+
+### 1. Symptom & Root Cause
+* **Symptom**: When candidates click "Sign in with Google", Google's account picker displays:
+  ```
+  Choose an account to continue to tufajuhxjfbrbxsfzbpx.supabase.co
+  ```
+  instead of **"to continue to PrepUnite"**.
+* **Root Cause**:
+  1. Google OAuth displays the **App Name** from the Google Cloud Console OAuth Consent Screen. If unconfigured or in testing mode without branding, Google defaults to displaying the raw OAuth redirect URI origin domain (`tufajuhxjfbrbxsfzbpx.supabase.co`).
+  2. The OAuth redirect callback URL is currently hosted on Supabase's default shared domain (`https://<project-ref>.supabase.co/auth/v1/callback`), so Google displays the Supabase domain as the authorized destination.
+
+---
+
+### 2. Immediate Fix: Configure Google Cloud OAuth Consent Screen (Free)
+
+This updates Google's header prompt to show your company name (e.g., **"Continue to PrepUnite"**):
+
+1. **Open Google Cloud Console**:
+   * Navigate to [Google Cloud Console](https://console.cloud.google.com/) $\to$ Select your project.
+2. **Access OAuth Consent Screen**:
+   * Go to **APIs & Services** $\to$ **OAuth consent screen** (or **Branding**).
+3. **Configure App Branding**:
+   * **App name**: `PrepUnite` (or your registered legal company name).
+   * **User support email**: Select your verified administrator email (e.g., `prepsunite@gmail.com`).
+   * **App logo**: Upload PrepUnite square logo (120x120px PNG/JPG).
+   * **Application home page**: `https://prepunite.com`
+   * **Application privacy policy link**: `https://prepunite.com/privacy`
+   * **Application terms of service link**: `https://prepunite.com/terms`
+   * **Authorized domains**: Add `prepunite.com` and `supabase.co`.
+   * **Developer contact information**: `prepsunite@gmail.com`.
+4. **Publishing Status**:
+   * If status is **Testing**, click **Publish App** to move it to **In Production**.
+   * *Note*: Standard scopes (`openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`) are non-sensitive and do not trigger a full Google manual review or verification audit.
+
+---
+
+### 3. Production White-Label Upgrade: Supabase Custom Domain (`auth.prepunite.com`)
+
+To completely eliminate `tufajuhxjfbrbxsfzbpx.supabase.co` from the browser address bar and Google redirect prompts:
+
+* **Requirement**: Supabase Pro plan ($25/mo) + Custom Domain add-on ($10/mo).
+
+#### Step-by-Step Migration:
+1. **Configure in Supabase Dashboard**:
+   * Navigate to **Project Settings** $\to$ **Custom Domains**.
+   * Enter your desired subdomain: `auth.prepunite.com`.
+2. **Add DNS Records (Cloudflare / DNS Provider)**:
+   * **CNAME Record**: `auth` $\to$ `tufajuhxjfbrbxsfzbpx.supabase.co` (Proxy status: DNS Only if using Cloudflare).
+   * **TXT Record**: Add the TXT verification record provided by Supabase for Let's Encrypt / Google Trust Services SSL generation.
+3. **Activate Domain**:
+   * In the Supabase Dashboard, click **Verify Domain**. Once SSL status turns Green/Active, all auth routes resolve through `https://auth.prepunite.com`.
+4. **Update Google Cloud Console OAuth Credentials**:
+   * Go to **APIs & Services** $\to$ **Credentials** $\to$ Select your Web OAuth 2.0 Client.
+   * Under **Authorized redirect URIs**, add:
+     ```
+     https://auth.prepunite.com/auth/v1/callback
+     ```
+   * *(Keep the old `.supabase.co` callback temporarily during DNS propagation to avoid downtime)*.
+5. **Update Codebase & Environment Variables**:
+   * In `frontend/.env` and Vercel Project Settings:
+     ```env
+     VITE_SUPABASE_URL=https://auth.prepunite.com
+     ```
+   * Deploy the frontend. All auth flows will now show `auth.prepunite.com` end-to-end.
+
+---
+
+### 4. Architectural Auth Redirect Flow
+
+```
+Candidate Browser               Google Accounts OAuth             Supabase Auth Engine
+┌─────────────────┐             ┌─────────────────────┐          ┌───────────────────────────┐
+│ Click "Sign In  │ ──────────> │ "Continue to        │          │ Validates Identity &      │
+│ with Google"    │             │  PrepUnite"         │          │ Issues Supabase Session   │
+└─────────────────┘             └─────────────────────┘          └───────────────────────────┘
+         ▲                                 │                                    │
+         │                                 ▼                                    │
+         │                      [User Grants Consent]                           │
+         │                                 │                                    │
+         │                                 ▼                                    ▼
+┌─────────────────┐             ┌─────────────────────┐          ┌───────────────────────────┐
+│ Redirect to     │ <────────── │ Callback:           │ <─────── │ Auth Token & Cookie Set   │
+│ /dashboard      │             │ auth.prepunite.com  │          │ (JWT + Refresh Token)     │
+└─────────────────┘             └─────────────────────┘          └───────────────────────────┘
+```
+
+---
+
 *Note: For the full infrastructure and scaling roadmap (Compiler scaling, Hetzner, Supabase Pro, Judge0), refer to `docs/future.md`.*

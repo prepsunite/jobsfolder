@@ -141,7 +141,9 @@ export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibil
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              likeStore.toggleCompanyLike(company.slug);
+              const res = likeStore.toggleCompanyLike(company.slug);
+              setIsLiked(res.isLiked);
+              setLikeCount(res.count);
             }}
             className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-display font-bold border transition-colors cursor-pointer ${
               isLiked

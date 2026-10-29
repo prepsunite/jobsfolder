@@ -148,6 +148,23 @@ Supabase Realtime (WebSocket)
 - **Automated Daily Backups**: Point-in-time recovery for all student exam scores and attempts.
 - **100,000 Monthly Active Users (MAU)**.
 - **Dedicated Database Compute**: Easily handles bursts of 2,500 simultaneous exam submissions.
+- **Custom Auth Domain & Full White-Labeling ($10/mo add-on)**: Allows running Supabase Auth and OAuth callbacks under `auth.prepunite.com` instead of `tufajuhxjfbrbxsfzbpx.supabase.co`.
+
+### 🌐 Custom Auth Domain & Google OAuth White-Labeling (`auth.prepunite.com`)
+
+When candidates sign in with Google OAuth, Google displays **"Choose an account to continue to..."**. To ensure professional branding:
+
+#### 1. Free Immediate Fix (Google Cloud Console):
+- Set **App name** to `PrepUnite` in Google Cloud Console $\to$ **APIs & Services** $\to$ **OAuth consent screen**.
+- Add authorized domain `prepunite.com` and `supabase.co`.
+- Set Publishing status to **In Production** (standard profile/email scopes require no manual verification).
+- This updates the consent dialog title from the raw Supabase URL to **"Continue to PrepUnite"**.
+
+#### 2. Full White-Labeling (Supabase Custom Domain Add-On):
+- Add `auth.prepunite.com` in Supabase Dashboard $\to$ **Project Settings** $\to$ **Custom Domains**.
+- Add CNAME record: `auth` $\to$ `tufajuhxjfbrbxsfzbpx.supabase.co` (DNS Only on Cloudflare) and TXT SSL record.
+- In Google Cloud Console $\to$ **Credentials**, add Authorized redirect URI: `https://auth.prepunite.com/auth/v1/callback`.
+- Update `VITE_SUPABASE_URL=https://auth.prepunite.com` in `frontend/.env` and Vercel.
 
 ---
 
