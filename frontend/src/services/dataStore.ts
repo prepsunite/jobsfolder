@@ -595,7 +595,7 @@ class DataStoreManager {
       if (e?.name === 'QuotaExceededError' || e?.code === 22 || e?.code === 1014) {
         console.warn(`[DataStore] Browser localStorage quota reached for '${key}'. Operating safely in-memory.`);
       } else {
-        console.error(`[DataStore] Failed to write key '${key}' to localStorage:`, e);
+        console.error('[DataStore] Failed to write key to localStorage:', { key, error: e });
       }
     }
   }

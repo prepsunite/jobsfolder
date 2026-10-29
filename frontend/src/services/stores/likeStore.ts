@@ -41,7 +41,7 @@ class LikeStore {
     try {
       localStorage.setItem(key, JSON.stringify(val));
     } catch (e: any) {
-      console.warn(`[likeStore] Failed to cache key "${key}":`, e);
+      console.warn('[likeStore] Failed to cache key:', { key, error: e });
     }
   }
 

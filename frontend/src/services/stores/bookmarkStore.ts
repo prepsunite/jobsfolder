@@ -66,7 +66,7 @@ class BookmarkStore {
         }
       }
     } catch (err) {
-      console.warn(`[bookmarkStore] Failed to persist ${itemType} bookmark to Supabase:`, err);
+      console.warn('[bookmarkStore] Failed to persist bookmark to Supabase:', { itemType, error: err });
     }
   }
 
