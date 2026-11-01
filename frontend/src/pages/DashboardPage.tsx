@@ -11,11 +11,12 @@ import { tpoService, isAttemptCompleted, getExamTimingStatus } from '@/services/
 import type { StudentExamAttempt } from '@/types/tpo';
 import StudentAnalyticsHub from '@/components/StudentAnalyticsHub';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useConsent } from '@/contexts/ConsentContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import QuestionRichContent from '@/components/QuestionRichContent';
 import { normalizeMathText } from '@/utils/questionParser';
 import { useToast } from '@/contexts/ToastContext';
+import { bookmarkStore } from '@/services/stores/bookmarkStore';
+import type { JobListing } from '@/types/jobs';
 import {
   User,
   BookmarkCheck,
@@ -33,28 +34,28 @@ import {
   ArrowRight,
   Sparkles,
   ShieldCheck,
-  Download,
   AlertTriangle,
   Clock,
   Award,
   TrendingUp,
   GraduationCap,
+  Briefcase,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, role, isTpoAdmin, isAdmin, logout } = useAuth();
-  const { consentStatus: dpdpConsentStatus, consentTimestamp, consentVersion, withdrawConsent, acceptConsent } = useConsent();
+  const { user, role, isTpoAdmin, isAdmin } = useAuth();
 
   const queryClient = useQueryClient();
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';
 
-  const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences' | 'privacy'>('exams');
+  const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences' | 'jobs'>('exams');
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [visibleQuestionsCount, setVisibleQuestionsCount] = useState(20);
   const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
-  const [deletionRequested, setDeletionRequested] = useState(false);
-  const { toast, confirmModal } = useToast();
+  const { toast } = useToast();
 
   // 🚦 STUDENT COLLEGE REMOVAL WATCHDOG:
   // When a TPO deletes a batch or removes a student, AuthContext fires 'prepunite-college-removed'.
@@ -217,6 +218,7 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-exams'] });
       queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-topic-questions'] });
       queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-experiences'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-jobs'] });
     };
     const handleProgressSynced = () => {
       queryClient.invalidateQueries({ queryKey: ['user-aptitude-progress', user?.email] });
@@ -421,6 +423,26 @@ export default function DashboardPage() {
     staleTime: 60 * 1000,
   });
 
+  // TanStack Query: Bookmarked Jobs
+  const { data: bookmarkedJobs = [] } = useQuery({
+    queryKey: ['profile-bookmarked-jobs'],
+    queryFn: async () => {
+      const jobIds = bookmarkStore.getBookmarkedJobIds();
+      if (jobIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('job_listings')
+        .select('*')
+        .in('id', jobIds);
+      if (error) {
+        console.warn('Failed to fetch bookmarked jobs:', error);
+        return [];
+      }
+      const jobMap = new Map((data || []).map((j: JobListing) => [j.id, j]));
+      return jobIds.map((id) => jobMap.get(id)).filter(Boolean) as JobListing[];
+    },
+    staleTime: 60 * 1000,
+  });
+
   const getTopicDisplayName = (topicId: string) => {
     return topicId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
@@ -481,87 +503,10 @@ export default function DashboardPage() {
     queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-experiences'] });
   };
 
-  const handleExportData = () => {
-    const exportPayload = {
-      exportedAt: new Date().toISOString(),
-      user: {
-        id: user?.id,
-        name: user?.name,
-        email: user?.email,
-        role: user?.role,
-      },
-      subscription: subData,
-      bookmarks: {
-        exams: bookmarkedExams,
-        topicQuestionsCount: bookmarkedTopicQuestions.length,
-        oaQuestionsCount: bookmarkedQuestions.length,
-        experiencesCount: bookmarkedExperiences.length,
-      },
-      aptitudeStats,
-      dpdpCompliance: {
-        act: 'Digital Personal Data Protection Act, 2023 (DPDP)',
-        consentStatus: dpdpConsentStatus,
-        consentTimestamp: consentTimestamp || 'Session Synchronized',
-        policyVersion: consentVersion,
-        purpose: 'Authentication, learning analytics, bookmark synchronization',
-      },
-    };
-
-    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `prepunite-data-export-${user?.email || 'user'}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleWithdrawConsent = async () => {
-    const confirmed = await confirmModal({
-      title: 'Withdraw DPDP Consent',
-      message: 'Are you sure you want to withdraw DPDP consent? While your basic account stays active, personalized analytics and sync features will be paused until re-consented.',
-      confirmText: 'Withdraw Consent',
-      isDanger: true,
-    });
-    if (confirmed) {
-      await withdrawConsent();
-      toast.info('Your consent has been successfully withdrawn and synchronized. You may re-consent anytime.');
-    }
-  };
-
-  const handleRequestDeletion = async () => {
-    const confirmed = await confirmModal({
-      title: 'Permanent Account Erasure (DPDP Act §12(3))',
-      message: 'Are you sure you want to request permanent erasure of your account under Section 12(3) of DPDP Act 2023? All personal identifiers, exam attempts, bookmarks, and submissions will be permanently purged or anonymized. This action is irreversible.',
-      confirmText: 'Purge Account & Data',
-      isDanger: true,
-    });
-    if (confirmed) {
-      try {
-        setDeletionRequested(true);
-        handleExportData();
-
-        const { error } = await supabase.rpc('request_dpdp_user_deletion', {
-          p_reason: 'Self-service account deletion requested via Dashboard under DPDP Section 12(3)',
-        });
-
-        if (error) {
-          console.warn('[handleRequestDeletion] Server notice:', error.message);
-        }
-
-        toast.success('Your account and personal data have been purged in compliance with DPDP Act 2023. Logging out...');
-        setTimeout(async () => {
-          await logout();
-          window.location.href = '/';
-        }, 1500);
-      } catch (err: any) {
-        console.error('[handleRequestDeletion] Error:', err);
-        toast.error('Failed to complete automated deletion. Please contact prepunite@gmail.com.');
-        setDeletionRequested(false);
-      }
-    }
+  const handleRemoveJobBookmark = (jobId: string) => {
+    bookmarkStore.toggleBookmarkJob(jobId);
+    queryClient.invalidateQueries({ queryKey: ['profile-bookmarked-jobs'] });
+    toast.success('Removed job from bookmarks');
   };
 
   // TPO Coordinators do not use student dashboard — redirect directly to TPO dashboard
@@ -861,15 +806,15 @@ export default function DashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('privacy')}
+            onClick={() => setActiveTab('jobs')}
             className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
-              activeTab === 'privacy'
+              activeTab === 'jobs'
                 ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
                 : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
             }`}
           >
-            <ShieldCheck className={`w-3.5 h-3.5 transition-colors ${activeTab === 'privacy' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
-            <span>Data & Privacy</span>
+            <Briefcase className={`w-3.5 h-3.5 transition-colors ${activeTab === 'jobs' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
+            <span>Saved Jobs ({bookmarkedJobs.length})</span>
           </button>
         </div>
       </div>
@@ -1329,122 +1274,141 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Tab Content: DPDP Act 2023 Data & Privacy */}
-      {activeTab === 'privacy' && (
-        <div className="space-y-6 animate-fadeIn">
-          {/* Privacy Overview Banner */}
-          <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-3 shadow-xs">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                <h3 className="font-display font-bold text-base text-[#121417] dark:text-white">
-                  Digital Personal Data Protection (DPDP Act, 2023) Management
+      {/* Tab Content: Saved Jobs */}
+      {activeTab === 'jobs' && (
+        <div className="space-y-4">
+          {bookmarkedJobs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {bookmarkedJobs.map((job) => {
+                const deadline = job.deadline ? new Date(job.deadline) : null;
+                const isExpired = deadline ? deadline.getTime() < Date.now() : false;
+                const diffDays = deadline
+                  ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                  : null;
+
+                return (
+                  <div
+                    key={job.id}
+                    className="p-5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      {/* Top Header: Logo + Title + Trash button */}
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-11 h-11 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0 shadow-2xs">
+                            {job.company_logo_url ? (
+                              <img
+                                src={job.company_logo_url}
+                                alt={job.company_name}
+                                className="w-full h-full object-contain p-1"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              (job.company_name || 'J').charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[11px] font-display font-bold text-[#868E96] dark:text-[#555555] block truncate">
+                              {job.company_name}
+                            </span>
+                            <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] truncate leading-tight">
+                              {job.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveJobBookmark(job.id)}
+                          className="p-1.5 text-[#868E96] dark:text-[#555555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors shrink-0 cursor-pointer"
+                          title="Remove from saved jobs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Metadata Badges */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                          {job.type === 'JOB' ? 'Full-Time' : 'Internship'}
+                        </span>
+
+                        <span className="bg-[#F1F3F5] dark:bg-[#202020] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[9px] font-display font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                          <MapPin className="w-2.5 h-2.5 text-rose-500" />
+                          <span>{job.location}</span>
+                        </span>
+
+                        {job.stipend_or_salary && (
+                          <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-display font-bold px-2 py-0.5 rounded">
+                            {job.stipend_or_salary}
+                          </span>
+                        )}
+
+                        {deadline && (
+                          <span
+                            className={`text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
+                              isExpired
+                                ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                                : diffDays !== null && diffDays <= 3
+                                ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse'
+                                : 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20'
+                            }`}
+                          >
+                            {isExpired ? 'Expired' : `${diffDays}d left`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Buttons */}
+                    <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
+                      <Link
+                        to={`/jobs?jobId=${job.id}`}
+                        className="flex-1 py-1.5 px-3 bg-[#121417] hover:bg-[#FD4A32] dark:bg-white dark:hover:bg-[#FD4A32] text-white dark:text-black font-display font-bold rounded-md text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
+                      >
+                        View Details
+                      </Link>
+
+                      <a
+                        href={job.apply_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
+                        title="Apply on official company portal"
+                      >
+                        <span>Apply</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-[#FD4A32]" />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
+              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
+            }`}>
+              <BookmarkCheck className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
+              <div className="space-y-1">
+                <h3 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3]">
+                  No Saved Jobs Yet
                 </h3>
-              </div>
-              <span className={`px-2.5 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider ${
-                dpdpConsentStatus === 'accepted'
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-              }`}>
-                Consent: {dpdpConsentStatus === 'accepted' ? 'ACTIVE' : 'WITHDRAWN'}
-              </span>
-            </div>
-
-            <p className="text-xs text-[#868E96] dark:text-[#888888] leading-relaxed font-sans">
-              Under India's <strong>Digital Personal Data Protection Act, 2023 (Rule 6)</strong>, MockFolder operates under your informed consent as a Data Fiduciary. You retain unconditional rights to review, export, withdraw consent, or request complete erasure of your digital footprint.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* 1. Data Portability / Export */}
-            <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-4 shadow-xs">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
-                  <Download className="w-4 h-4" />
-                  <h4 className="font-display font-bold text-sm text-[#121417] dark:text-white">Right to Data Portability</h4>
-                </div>
-                <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
-                  Download a machine-readable JSON copy of your entire user profile, bookmarks, solve history, payment receipts, and consent metadata.
+                <p className="text-xs text-[#747878] dark:text-[#a6adbb] max-w-md mx-auto leading-relaxed">
+                  Explore verified full-time roles and internships, and click the bookmark button on any opening to save it here for quick access.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleExportData}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-xs"
+              <Link
+                to="/jobs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-display font-bold uppercase tracking-wider bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export My Data (JSON)</span>
-              </button>
+                <span>Browse Jobs Board</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-
-            {/* 2. Consent Withdrawal & Re-Consent */}
-            <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-4 shadow-xs">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-amber-500">
-                  <AlertTriangle className="w-4 h-4" />
-                  <h4 className="font-display font-bold text-sm text-[#121417] dark:text-white">
-                    {dpdpConsentStatus === 'accepted' ? 'Withdraw DPDP Consent' : 'Re-Enable Personalization'}
-                  </h4>
-                </div>
-                <p className="text-xs text-[#868E96] dark:text-[#777777] leading-relaxed">
-                  {dpdpConsentStatus === 'accepted'
-                    ? 'You may withdraw your consent for learning analytics and profile personalization at any time without terminating your basic access.'
-                    : 'Your consent is currently withdrawn. You can grant consent at any time to re-enable personalized progress synchronization.'}
-                </p>
-              </div>
-
-              {dpdpConsentStatus === 'accepted' ? (
-                <button
-                  type="button"
-                  onClick={handleWithdrawConsent}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-amber-500 text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-white hover:text-amber-500 transition-all cursor-pointer"
-                >
-                  Withdraw Processing Consent
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await acceptConsent();
-                    toast.success('Consent granted! Personalization features active.');
-                  }}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer"
-                >
-                  Re-Grant DPDP Consent
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* 3. Account Erasure / Deletion & Grievance */}
-          <div className="p-6 rounded-xl bg-white dark:bg-[#141414] border border-rose-500/30 dark:border-rose-500/20 space-y-4 shadow-xs">
-            <div className="flex items-start justify-between flex-wrap gap-4">
-              <div className="space-y-1 max-w-xl">
-                <h4 className="font-display font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  <span>Right to Erasure (Account Deletion)</span>
-                </h4>
-                <p className="text-xs text-[#868E96] dark:text-[#888888] leading-relaxed">
-                  Under Section 12(3) of the DPDP Act 2023, you can request permanent erasure of your account, bookmarks, and contact messages. Once initiated, personal identifiers are purged within 30 days.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleRequestDeletion}
-                disabled={deletionRequested}
-                className="px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 disabled:opacity-50"
-              >
-                {deletionRequested ? 'Deletion Request Logged' : 'Request Account Deletion'}
-              </button>
-            </div>
-
-            <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between flex-wrap gap-2 text-[11px] text-[#868E96] dark:text-[#666666]">
-              <span>Data Protection Grievance Officer: <strong>prepunite@gmail.com</strong></span>
-              <Link to="/privacy-policy" className="hover:text-[#FD4A32] underline">Read Full DPDP Privacy Policy</Link>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
