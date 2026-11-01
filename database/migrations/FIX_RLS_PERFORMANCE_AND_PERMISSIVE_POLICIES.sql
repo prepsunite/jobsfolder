@@ -20,6 +20,9 @@ BEGIN;
 -- ====================================================================
 -- 1. JOB LISTINGS (Consolidate SELECT, INSERT, UPDATE, DELETE)
 -- ====================================================================
+GRANT SELECT ON public.job_listings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.job_listings TO authenticated;
+
 ALTER TABLE public.job_listings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Admins select all job listings" ON public.job_listings;
@@ -34,7 +37,7 @@ DROP POLICY IF EXISTS "job_listings_delete_policy" ON public.job_listings;
 
 CREATE POLICY "job_listings_select_policy" ON public.job_listings
   FOR SELECT USING (
-    (is_active = true AND deadline >= CURRENT_DATE)
+    (is_active = true AND (deadline IS NULL OR deadline >= CURRENT_TIMESTAMP))
     OR (SELECT public.is_admin())
   );
 

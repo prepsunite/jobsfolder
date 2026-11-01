@@ -159,7 +159,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
                 <img
                   src={job.company_logo_url}
                   alt={job.company_name}
-                  className="w-full h-full object-contain p-1"
+                  className="w-full h-full object-contain p-0.5"
                   onError={(e) => {
                     const t = e.currentTarget as HTMLImageElement;
                     t.style.display = 'none';
@@ -283,6 +283,161 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
   );
 }
 
+// ─── Smart Job Description Arranger / Formatter ──────────────────────────────
+
+interface JobDescriptionViewerProps {
+  description?: string | null;
+}
+
+function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
+  if (!description || description.trim().length === 0) {
+    return (
+      <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#242424]">
+        <p className="text-xs text-[#868E96] italic">
+          No formal description provided. Click &quot;Apply on Official Website&quot; above to view comprehensive job responsibilities, eligibility requirements, and interview rounds.
+        </p>
+      </div>
+    );
+  }
+
+  // Split lines, trim, and filter empties
+  const rawLines = description.split('\n').map((l) => l.trim()).filter(Boolean);
+
+  const isHeading = (line: string): boolean => {
+    // Ends with a colon (e.g., "Educational Qualification:" or "Responsibilities:")
+    if (/^[A-Za-z0-9\s&/'-]+:$/.test(line)) return true;
+
+    const lower = line.toLowerCase().replace(/[:\-–]/g, '').trim();
+    const commonHeadings = [
+      'about the role', 'about the job', 'about the company', 'about niit',
+      'role overview', 'job overview', 'position summary', 'job summary',
+      'educational qualification', 'educational qualifications', 'education',
+      'academic qualification', 'academic qualifications', 'eligibility',
+      'eligibility criteria', 'experience', 'work experience', 'experience required',
+      'responsibilities', 'key responsibilities', 'roles & responsibilities',
+      'roles and responsibilities', 'what you will do', 'what you\'ll do',
+      'day to day responsibilities', 'requirements', 'minimum requirements',
+      'basic qualifications', 'preferred qualifications', 'skills required',
+      'technical skills', 'key skills', 'competencies', 'core competencies',
+      'what we are looking for', 'who you are', 'who should apply',
+      'benefits', 'perks', 'perks & benefits', 'perks and benefits',
+      'selection process', 'interview process', 'location', 'work mode',
+      'stipend and perks', 'compensation and benefits',
+    ];
+
+    if (commonHeadings.includes(lower)) return true;
+
+    // Short line (<= 40 chars) written in ALL CAPS with no trailing period
+    if (line.length <= 40 && !line.endsWith('.') && line.toUpperCase() === line && /[A-Z]{3,}/.test(line)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const isBulletItem = (line: string): boolean => {
+    // Explicit bullet or number prefixes
+    if (/^([•\-\*›▪▫–\+]|\d+[\.\)]|\([a-zA-Z0-9]+\))\s+/.test(line)) return true;
+
+    // Typical responsibilities or qualifications sentences starting with action verbs or requirement terms
+    const lower = line.toLowerCase();
+    const actionVerbs = [
+      'participate', 'debug', 'test', 'stay', 'contribute', 'develop', 'design',
+      'implement', 'build', 'collaborate', 'maintain', 'create', 'work', 'ensure',
+      'lead', 'analyze', 'support', 'write', 'assist', 'manage', 'understand',
+      'coordinate', 'perform', 'review', 'execute', 'monitor', 'optimize',
+      'troubleshoot', 'deploy', 'automate', 'architect', 'research',
+    ];
+    const firstWord = lower.split(/[\s,]+/)[0];
+    if (firstWord && actionVerbs.includes(firstWord)) return true;
+
+    if (/^(0|1|2|3|4|5|bachelor|master|b\.tech|b\.e|m\.tech|mca|degree|strong|basic|good|excellent|proven|hands-on|knowledge|proficiency|experience|familiarity|understanding|ability|must have|should have|responsible for)\b/i.test(line)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const cleanBullet = (line: string): string => {
+    return line.replace(/^([•\-\*›▪▫–\+]|\d+[\.\)]|\([a-zA-Z0-9]+\))\s*/, '').trim();
+  };
+
+  interface Block {
+    type: 'heading' | 'list' | 'paragraph';
+    title?: string;
+    items?: string[];
+    text?: string;
+  }
+
+  const blocks: Block[] = [];
+  let currentList: string[] = [];
+
+  const flushList = () => {
+    if (currentList.length > 0) {
+      blocks.push({ type: 'list', items: [...currentList] });
+      currentList = [];
+    }
+  };
+
+  for (const line of rawLines) {
+    if (isHeading(line)) {
+      flushList();
+      blocks.push({ type: 'heading', title: line.replace(/[:]+$/, '') });
+    } else if (isBulletItem(line)) {
+      currentList.push(cleanBullet(line));
+    } else {
+      flushList();
+      blocks.push({ type: 'paragraph', text: line });
+    }
+  }
+  flushList();
+
+  return (
+    <div className="p-5 rounded-2xl bg-[#FDFDFD] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424] space-y-4">
+      {blocks.map((block, idx) => {
+        if (block.type === 'heading') {
+          return (
+            <div
+              key={idx}
+              className="flex items-center gap-2 pt-4 border-t border-[#E9ECEF] dark:border-[#242424] first:pt-0 first:border-0"
+            >
+              <span className="w-1.5 h-4 bg-emerald-500 rounded-full shrink-0" />
+              <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#121417] dark:text-white">
+                {block.title}
+              </h4>
+            </div>
+          );
+        }
+
+        if (block.type === 'list' && block.items) {
+          return (
+            <ul key={idx} className="space-y-2.5 pl-1">
+              {block.items.map((item, itemIdx) => (
+                <li
+                  key={itemIdx}
+                  className="flex items-start gap-2.5 text-xs sm:text-[13px] text-[#343A40] dark:text-[#D1D5DB] leading-relaxed"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mt-2 shrink-0" />
+                  <span className="flex-1">{item}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <p
+            key={idx}
+            className="text-xs sm:text-[13px] text-[#495057] dark:text-[#CCCCCC] leading-relaxed"
+          >
+            {block.text}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Job Details Master-Detail Pane (LinkedIn & Indeed Style) ──────────────────
 
 interface JobDetailPaneProps {
@@ -301,7 +456,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl shadow-xl overflow-hidden">
       {/* Sticky Header Top Bar */}
-      <div className="sticky top-0 z-20 px-6 py-4 bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3">
+      <div className="shrink-0 px-6 py-4 bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3 z-10">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -352,8 +507,8 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
         </div>
       </div>
 
-      {/* Scrollable Content Body */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      {/* Scrollable Content Body with overscroll-contain */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 overscroll-contain">
         {/* Company & Role Hero */}
         <div className="flex items-start gap-4">
           <div className="relative w-16 h-16 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
@@ -361,7 +516,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
               <img
                 src={job.company_logo_url}
                 alt={job.company_name}
-                className="w-full h-full object-contain p-1.5"
+                className="w-full h-full object-contain p-0.5"
                 onError={(e) => {
                   const t = e.currentTarget as HTMLImageElement;
                   t.style.display = 'none';
@@ -501,20 +656,12 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
           </div>
         )}
 
-        {/* Job Description */}
+        {/* Job Description with Smart Arranger */}
         <div>
           <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#868E96] mb-3">
             About the Role &amp; Description
           </h3>
-          <div className="text-sm text-[#343A40] dark:text-[#D1D5DB] leading-relaxed whitespace-pre-line bg-[#FDFDFD] dark:bg-[#161616] p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424]">
-            {job.description && job.description.trim().length > 0 ? (
-              job.description
-            ) : (
-              <p className="text-[#868E96] italic">
-                No formal description provided. Click &quot;Apply on Official Website&quot; above to view comprehensive job responsibilities, eligibility requirements, and interview rounds.
-              </p>
-            )}
-          </div>
+          <JobDescriptionViewer description={job.description} />
         </div>
 
         {/* PrepUnite Placement Preparation Callout */}
@@ -752,11 +899,10 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0C0C0C]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="space-y-6 animate-fadeIn pb-8">
+      {/* Page Header */}
+      <div className="mb-2">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lime-500 to-emerald-600 flex items-center justify-center shadow-sm">
                 <Briefcase className="w-5 h-5 text-white stroke-[2.5]" />
@@ -931,7 +1077,7 @@ export default function JobsPage() {
             <div
               className={`transition-all ${
                 selectedJob
-                  ? 'lg:w-[44%] xl:w-[40%] space-y-3.5 max-h-[calc(100vh-140px)] overflow-y-auto pr-1'
+                  ? 'lg:w-[42%] xl:w-[38%] space-y-3.5 h-[calc(100vh-220px)] min-h-[580px] overflow-y-auto pr-2 overscroll-contain custom-scrollbar'
                   : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'
               }`}
             >
@@ -948,18 +1094,16 @@ export default function JobsPage() {
               ))}
             </div>
 
-            {/* Right Column: Desktop Detail Pane (Sticky, Closable) */}
+            {/* Right Column: Desktop Detail Pane (Independent scroll, Closable) */}
             {selectedJob && (
-              <div className="hidden lg:block lg:w-[56%] xl:w-[60%] sticky top-20">
-                <div className="max-h-[calc(100vh-120px)]">
-                  <JobDetailPane
-                    job={selectedJob}
-                    onClose={() => setSelectedJobId(null)}
-                    isBookmarked={bookmarkedIds.has(selectedJob.id)}
-                    onToggleBookmark={() => toggleBookmark(selectedJob.id)}
-                    onShare={() => shareJob(selectedJob)}
-                  />
-                </div>
+              <div className="hidden lg:block lg:w-[58%] xl:w-[62%] h-[calc(100vh-220px)] min-h-[580px] sticky top-4">
+                <JobDetailPane
+                  job={selectedJob}
+                  onClose={() => setSelectedJobId(null)}
+                  isBookmarked={bookmarkedIds.has(selectedJob.id)}
+                  onToggleBookmark={() => toggleBookmark(selectedJob.id)}
+                  onShare={() => shareJob(selectedJob)}
+                />
               </div>
             )}
 
@@ -980,6 +1124,5 @@ export default function JobsPage() {
           </div>
         )}
       </div>
-    </div>
-  );
+    );
 }
