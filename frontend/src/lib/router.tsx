@@ -27,6 +27,8 @@ const AdminTechnicalPage = lazy(() => import('@/pages/AdminTechnicalPage'));
 const AdminInterviewPage = lazy(() => import('@/pages/AdminInterviewPage'));
 const AdminQuestionBankPage = lazy(() => import('@/pages/AdminQuestionBankPage'));
 const AdminBlueprintManager = lazy(() => import('@/components/admin/AdminBlueprintManager'));
+const JobsPage = lazy(() => import('@/pages/JobsPage'));
+const AdminJobsPage = lazy(() => import('@/pages/AdminJobsPage'));
 
 // Dedicated TPO Portal Pages
 const TpoOverviewPage = lazy(() => import('@/pages/tpo/TpoOverviewPage'));
@@ -139,6 +141,10 @@ export const router = createBrowserRouter([
         element: withSuspense(InterviewPrepPage),
       },
       {
+        path: '/jobs',
+        element: withSuspense(JobsPage),
+      },
+      {
         path: '/dashboard',
         element: (
           <ProtectedRoute>
@@ -215,6 +221,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requireAdmin>
             {withSuspense(AdminBlueprintManager)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin/jobs',
+        element: (
+          <ProtectedRoute requireAdmin>
+            {withSuspense(AdminJobsPage)}
           </ProtectedRoute>
         ),
       },

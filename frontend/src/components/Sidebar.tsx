@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import {
@@ -111,6 +111,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
+    { name: 'Jobs & Internships', href: '/jobs', icon: Briefcase, badge: 'NEW' },
     { name: 'Pricing & Passes', href: '/pricing', icon: Zap },
   ];
 
@@ -585,6 +586,18 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       <MessageSquareQuote className="w-4 h-4 text-teal-400" />
                     </Link>
                     <Link
+                      to="/admin/jobs"
+                      onClick={onClose}
+                      title="Jobs Board"
+                      className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/jobs')
+                          ? 'bg-green-900/20 text-green-400 border border-green-500/40'
+                          : 'text-[#868E96] hover:text-green-400 hover:bg-green-900/10'
+                      }`}
+                    >
+                      <Briefcase className="w-4 h-4 text-green-400" />
+                    </Link>
+                    <Link
                       to="/student/exams?tab=blueprints"
                       onClick={onClose}
                       title="Mock Exam Blueprints & Patterns"
@@ -895,6 +908,24 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       </div>
                       <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300">
                         Prep
+                      </span>
+                    </Link>
+
+                    <Link
+                      to="/admin/jobs"
+                      onClick={onClose}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
+                        location.pathname.startsWith('/admin/jobs')
+                          ? 'bg-green-900/10 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-500/30'
+                          : 'text-[#495057] dark:text-[#CCCCCC] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-white dark:hover:bg-[#141414] border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                        <span>Jobs Board</span>
+                      </div>
+                      <span className="text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">
+                        NEW
                       </span>
                     </Link>
 
