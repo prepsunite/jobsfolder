@@ -5,7 +5,7 @@ import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Sparkles, Code, Check, Building2, GraduationCap, ArrowRight,
-  CheckCircle2, Flame, Award, Eye
+  CheckCircle2, Flame, Award, Eye, AlertCircle
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
@@ -761,7 +761,7 @@ export default function JobsPage() {
   }, []);
 
   // Fetch Live Active Job Listings
-  const { data: listings = [], isLoading } = useQuery({
+  const { data: listings = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['job_listings'],
     queryFn: () => jobsService.getActiveListings(),
     staleTime: 5 * 60 * 1000,
@@ -814,7 +814,7 @@ export default function JobsPage() {
         const q = filters.search.toLowerCase();
         const inTitle = job.title.toLowerCase().includes(q);
         const inCompany = job.company_name.toLowerCase().includes(q);
-        const inTags = job.tags.some((t) => t.toLowerCase().includes(q));
+        const inTags = Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(q));
         if (!inTitle && !inCompany && !inTags) return false;
       }
 
@@ -1047,6 +1047,25 @@ export default function JobsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <JobCardSkeleton key={i} />)}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-[#141414] border border-rose-200 dark:border-rose-900/40 rounded-2xl p-8 shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center mb-3">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+            <h3 className="text-base font-extrabold text-[#121417] dark:text-white mb-1">
+              Unable to load opportunities
+            </h3>
+            <p className="text-xs text-[#868E96] max-w-sm mb-4">
+              {error instanceof Error ? error.message : 'A temporary connection error occurred while retrieving job listings.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-sm"
+            >
+              Retry Connection
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-8">

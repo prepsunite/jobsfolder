@@ -17,6 +17,16 @@
 
 BEGIN;
 
+-- 0. GLOBAL FUNCTION EXECUTE PERMISSIONS (Prevents 42501 for unauthenticated/student visitors)
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role;
+
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'is_tpo_for_college') THEN
+    GRANT EXECUTE ON FUNCTION public.is_tpo_for_college(text) TO anon, authenticated, service_role;
+  END IF;
+END $$;
+
 -- ====================================================================
 -- 1. JOB LISTINGS (Consolidate SELECT, INSERT, UPDATE, DELETE)
 -- ====================================================================
@@ -38,7 +48,7 @@ DROP POLICY IF EXISTS "job_listings_delete_policy" ON public.job_listings;
 CREATE POLICY "job_listings_select_policy" ON public.job_listings
   FOR SELECT USING (
     (is_active = true AND (deadline IS NULL OR deadline >= CURRENT_TIMESTAMP))
-    OR (SELECT public.is_admin())
+    OR (auth.uid() IS NOT NULL AND (SELECT public.is_admin()))
   );
 
 CREATE POLICY "job_listings_insert_policy" ON public.job_listings
