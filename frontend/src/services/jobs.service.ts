@@ -85,4 +85,36 @@ export const jobsService = {
 
     if (error) throw error;
   },
+
+  /**
+   * Bulk-purge all expired listings in an atomic single database query.
+   * Deletes all rows where deadline is strictly in the past (< now).
+   * Returns count of purged rows.
+   */
+  async purgeExpiredListings(): Promise<number> {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('job_listings')
+      .delete()
+      .lt('deadline', nowIso)
+      .select('id');
+
+    if (error) throw error;
+    return (data ?? []).length;
+  },
+
+  /**
+   * Bulk-delete a specific set of IDs in a single query.
+   */
+  async purgeListingsByIds(ids: string[]): Promise<number> {
+    if (!ids.length) return 0;
+    const { data, error } = await supabase
+      .from('job_listings')
+      .delete()
+      .in('id', ids)
+      .select('id');
+
+    if (error) throw error;
+    return (data ?? []).length;
+  },
 };

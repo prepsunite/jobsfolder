@@ -5,7 +5,7 @@ import {
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon,
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
-import type { JobListing, JobListingFilters, JobType } from '@/types/jobs';
+import type { JobListing, JobListingFilters, JobType, JobSortOption } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -202,12 +202,20 @@ const EXP_OPTIONS: { label: string; value: JobListingFilters['expLevel'] }[] = [
   { label: '5+ yrs', value: '5+' },
 ];
 
+const SORT_OPTIONS: { label: string; value: JobSortOption }[] = [
+  { label: 'Recommended', value: 'RECOMMENDED' },
+  { label: 'Newest Added', value: 'NEWEST' },
+  { label: 'Closing Soonest', value: 'CLOSING_SOON' },
+];
+
 export default function JobsPage() {
   const [filters, setFilters] = useState<JobListingFilters>({
     type: 'ALL',
     location: '',
     expLevel: 'ANY',
     search: '',
+    sortBy: 'RECOMMENDED',
+    closingSoonOnly: false,
   });
 
   const { data: listings = [], isLoading } = useQuery({
@@ -218,10 +226,17 @@ export default function JobsPage() {
 
   const filtered = useMemo(() => {
     const nowMs = Date.now();
-    return listings.filter((job) => {
+    const result = listings.filter((job) => {
       // Hide inactive or past-deadline listings from students
       if (!job.is_active) return false;
       if (job.deadline && new Date(job.deadline).getTime() < nowMs) return false;
+
+      // Closing soon only filter (< 3 days)
+      if (filters.closingSoonOnly) {
+        if (!job.deadline) return false;
+        const diffDays = Math.ceil((new Date(job.deadline).getTime() - nowMs) / (1000 * 60 * 60 * 24));
+        if (diffDays > 3) return false;
+      }
 
       // Type filter
       if (filters.type && filters.type !== 'ALL' && job.type !== filters.type) return false;
@@ -243,11 +258,41 @@ export default function JobsPage() {
 
       return true;
     });
+
+    const sort = filters.sortBy || 'RECOMMENDED';
+    return [...result].sort((a, b) => {
+      if (sort === 'NEWEST') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      if (sort === 'CLOSING_SOON') {
+        if (!a.deadline && !b.deadline) return 0;
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      }
+      // RECOMMENDED: featured first, then sort_order, then newest
+      if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   }, [listings, filters]);
 
-  const hasActiveFilters = filters.type !== 'ALL' || !!filters.search || !!filters.location || (filters.expLevel && filters.expLevel !== 'ANY');
+  const hasActiveFilters =
+    filters.type !== 'ALL' ||
+    !!filters.search ||
+    !!filters.location ||
+    (filters.expLevel && filters.expLevel !== 'ANY') ||
+    Boolean(filters.closingSoonOnly);
 
-  const clearFilters = () => setFilters({ type: 'ALL', location: '', expLevel: 'ANY', search: '' });
+  const clearFilters = () =>
+    setFilters({
+      type: 'ALL',
+      location: '',
+      expLevel: 'ANY',
+      search: '',
+      sortBy: 'RECOMMENDED',
+      closingSoonOnly: false,
+    });
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0C0C0C]">
@@ -261,9 +306,6 @@ export default function JobsPage() {
             <h1 className="text-2xl font-display font-extrabold text-[#121417] dark:text-white tracking-tight">
               Jobs &amp; Internships
             </h1>
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-              NEW
-            </span>
           </div>
           <p className="text-sm text-[#495057] dark:text-[#AAAAAA] ml-12">
             Curated opportunities for placement-ready students — full-time roles &amp; internships.
@@ -272,22 +314,54 @@ export default function JobsPage() {
 
         {/* Filter Bar */}
         <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-4 mb-6 space-y-3">
-          {/* Type toggle */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {TYPE_OPTIONS.map((opt) => (
+          {/* Top row: Type toggle + Closing Soon chip + Sort selector */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {TYPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFilters((f) => ({ ...f, type: opt.value }))}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                    filters.type === opt.value
+                      ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417] border-[#121417] dark:border-white shadow-xs'
+                      : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+
               <button
-                key={opt.value}
                 type="button"
-                onClick={() => setFilters((f) => ({ ...f, type: opt.value }))}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                  filters.type === opt.value
-                    ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417] border-[#121417] dark:border-white shadow-xs'
-                    : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white'
+                onClick={() => setFilters((f) => ({ ...f, closingSoonOnly: !f.closingSoonOnly }))}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  filters.closingSoonOnly
+                    ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
+                    : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-rose-400'
                 }`}
               >
-                {opt.label}
+                <Clock className="w-3 h-3" />
+                Closing Soon
               </button>
-            ))}
+            </div>
+
+            {/* Sort selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#868E96]">Sort:</span>
+              <div className="relative">
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#868E96] pointer-events-none" />
+                <select
+                  value={filters.sortBy || 'RECOMMENDED'}
+                  onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as JobSortOption }))}
+                  className="appearance-none pl-3 pr-7 py-1.5 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white font-semibold focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Search + Location + Experience */}

@@ -21,9 +21,13 @@ export interface JobListing {
   updated_at: string;
 }
 
+export type JobSortOption = 'RECOMMENDED' | 'NEWEST' | 'CLOSING_SOON';
+
 export interface JobListingFilters {
   type?: JobType | 'ALL';
   location?: string;
   expLevel?: 'ANY' | 'FRESHER' | '0-2' | '2-5' | '5+';
   search?: string;
+  sortBy?: JobSortOption;
+  closingSoonOnly?: boolean;
 }

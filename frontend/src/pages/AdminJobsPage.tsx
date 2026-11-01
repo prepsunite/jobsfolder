@@ -53,6 +53,17 @@ const EMPTY_FORM: FormState = {
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
+const COMPANY_PRESETS = [
+  { name: 'Google', logo: 'https://www.google.com/favicon.ico' },
+  { name: 'Microsoft', logo: 'https://www.microsoft.com/favicon.ico' },
+  { name: 'Amazon', logo: 'https://www.amazon.in/favicon.ico' },
+  { name: 'TCS', logo: 'https://www.tcs.com/favicon.ico' },
+  { name: 'Infosys', logo: 'https://www.infosys.com/favicon.ico' },
+  { name: 'Wipro', logo: 'https://www.wipro.com/favicon.ico' },
+  { name: 'Accenture', logo: 'https://www.accenture.com/favicon.ico' },
+  { name: 'Cognizant', logo: 'https://www.cognizant.com/favicon.ico' },
+];
+
 interface JobFormModalProps {
   initial?: JobListing | null;
   onClose: () => void;
@@ -138,7 +149,10 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
               />
             </div>
             <div>
-              <label className={labelCls}>Company Name *</label>
+              <div className="flex items-center justify-between">
+                <label className={labelCls}>Company Name *</label>
+                <span className="text-[9px] text-[#868E96]">Quick autofill:</span>
+              </div>
               <input
                 required
                 type="text"
@@ -147,18 +161,36 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
                 placeholder="e.g. Google"
                 className={inputCls}
               />
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {COMPANY_PRESETS.map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => {
+                      set('company_name', p.name);
+                      set('company_logo_url', p.logo);
+                    }}
+                    className="px-1.5 py-0.5 text-[9px] font-semibold bg-[#F8F9FA] dark:bg-[#1F1F1F] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded text-[#495057] dark:text-[#AAAAAA] hover:border-[#121417] dark:hover:border-white transition-all cursor-pointer"
+                  >
+                    +{p.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Logo URL with preview */}
           <div>
-            <label className={labelCls}>Company Logo URL</label>
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Company Logo URL</label>
+              <span className="text-[9px] text-[#868E96]">Leave blank for gradient letter badge</span>
+            </div>
             <div className="flex items-center gap-3">
               <input
                 type="url"
                 value={form.company_logo_url ?? ''}
                 onChange={(e) => set('company_logo_url', e.target.value)}
-                placeholder="https://..."
+                placeholder="https://... (PNG/SVG/favicon URL)"
                 className={`${inputCls} flex-1`}
               />
               {form.company_logo_url && (
@@ -239,7 +271,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
                 type="text"
                 value={form.stipend_or_salary ?? ''}
                 onChange={(e) => set('stipend_or_salary', e.target.value)}
-                placeholder="e.g. ₹20,000/month"
+                placeholder="e.g. ₹20,000/month or ₹8–12 LPA"
                 className={inputCls}
               />
             </div>
@@ -250,7 +282,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
                 type="url"
                 value={form.apply_url}
                 onChange={(e) => set('apply_url', e.target.value)}
-                placeholder="https://..."
+                placeholder="https://careers.company.com/job/..."
                 className={inputCls}
               />
             </div>
@@ -258,7 +290,10 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
 
           {/* Deadline */}
           <div>
-            <label className={labelCls}>Deadline (optional)</label>
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Deadline</label>
+              <span className="text-[9px] text-[#868E96]">Leave empty for rolling admissions (no deadline)</span>
+            </div>
             <input
               type="datetime-local"
               value={form.deadline ?? ''}
@@ -271,22 +306,25 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
           <div>
             <label className={labelCls}>Description</label>
             <textarea
-              rows={4}
+              rows={3}
               value={form.description ?? ''}
               onChange={(e) => set('description', e.target.value)}
-              placeholder="Role description, requirements..."
+              placeholder="Eligibility, batch eligibility, skills, selection process..."
               className={`${inputCls} resize-y`}
             />
           </div>
 
           {/* Tags */}
           <div>
-            <label className={labelCls}>Tags (comma-separated)</label>
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Tags (comma-separated)</label>
+              <span className="text-[9px] text-[#868E96]">e.g. 2026 Batch, Java, Python, Remote</span>
+            </div>
             <input
               type="text"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="React, Node.js, Bangalore"
+              placeholder="2026 Batch, B.Tech, React, On-Campus"
               className={inputCls}
             />
           </div>
@@ -294,7 +332,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
           {/* Toggles + Sort Order */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className={labelCls}>Active</label>
+              <label className={labelCls}>Active Status</label>
               <button
                 type="button"
                 onClick={() => set('is_active', !form.is_active)}
@@ -304,25 +342,31 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
                     : 'border-[#E9ECEF] dark:border-[#2A2A2A] text-[#495057] dark:text-[#AAAAAA]'
                 }`}
               >
-                {form.is_active ? 'Active' : 'Inactive'}
+                {form.is_active ? 'Live (Visible)' : 'Draft (Hidden)'}
               </button>
             </div>
             <div>
-              <label className={labelCls}>Featured</label>
+              <div className="flex items-center justify-between">
+                <label className={labelCls}>Featured</label>
+                <span className="text-[8px] text-amber-500 font-bold">Top Pin</span>
+              </div>
               <button
                 type="button"
                 onClick={() => set('is_featured', !form.is_featured)}
                 className={`w-full py-2 rounded-lg text-xs font-bold border transition-all ${
                   form.is_featured
-                    ? 'bg-amber-500 text-white border-amber-500'
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                     : 'border-[#E9ECEF] dark:border-[#2A2A2A] text-[#495057] dark:text-[#AAAAAA]'
                 }`}
               >
-                {form.is_featured ? '★ Featured' : 'Not Featured'}
+                {form.is_featured ? '★ Featured Drive' : 'Standard'}
               </button>
             </div>
             <div>
-              <label className={labelCls}>Sort Order</label>
+              <div className="flex items-center justify-between">
+                <label className={labelCls}>Sort Priority</label>
+                <span className="text-[8px] text-[#868E96]">0 = normal</span>
+              </div>
               <input
                 type="number"
                 value={form.sort_order}
@@ -358,6 +402,8 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
 
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 
+type AdminJobTab = 'LIVE' | 'EXPIRED' | 'DRAFT' | 'ALL';
+
 export default function AdminJobsPage() {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -366,8 +412,10 @@ export default function AdminJobsPage() {
   const isEffectiveAdmin = Boolean(isAdmin || isSuperAdminEmail(user?.email));
 
   // All hooks MUST be called unconditionally (Rules of Hooks)
+  const [activeTab, setActiveTab] = useState<AdminJobTab>('LIVE');
   const [modalJob, setModalJob] = useState<JobListing | null | 'new'>(null);
   const [saving, setSaving] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [search, setSearch] = useState('');
 
   const { data: listings = [], isLoading } = useQuery({
@@ -382,13 +430,47 @@ export default function AdminJobsPage() {
     queryClient.invalidateQueries({ queryKey: ['job_listings'] });
   }, [queryClient]);
 
+  // Single-pass O(N) partitioning into disjoint sets (Live, Expired, Draft)
+  const { liveListings, expiredListings, draftListings } = useMemo(() => {
+    const nowMs = Date.now();
+    const live: JobListing[] = [];
+    const expired: JobListing[] = [];
+    const draft: JobListing[] = [];
+
+    for (let i = 0; i < listings.length; i++) {
+      const job = listings[i];
+      const isPastDeadline = Boolean(job.deadline && new Date(job.deadline).getTime() < nowMs);
+
+      if (isPastDeadline) {
+        expired.push(job);
+      } else if (!job.is_active) {
+        draft.push(job);
+      } else {
+        live.push(job);
+      }
+    }
+
+    return { liveListings: live, expiredListings: expired, draftListings: draft };
+  }, [listings]);
+
+  // Select target tab pool
+  const currentTabPool = useMemo(() => {
+    switch (activeTab) {
+      case 'LIVE': return liveListings;
+      case 'EXPIRED': return expiredListings;
+      case 'DRAFT': return draftListings;
+      case 'ALL': default: return listings;
+    }
+  }, [activeTab, liveListings, expiredListings, draftListings, listings]);
+
+  // Filter within current pool
   const filtered = useMemo(() => {
-    if (!search) return listings;
-    const q = search.toLowerCase();
-    return listings.filter(
+    if (!search.trim()) return currentTabPool;
+    const q = search.trim().toLowerCase();
+    return currentTabPool.filter(
       (j) => j.title.toLowerCase().includes(q) || j.company_name.toLowerCase().includes(q)
     );
-  }, [listings, search]);
+  }, [currentTabPool, search]);
 
   // Guard: If not an admin, render NotFoundPage so unauthorized users cannot even inspect the UI
   if (!isEffectiveAdmin) {
@@ -450,6 +532,29 @@ export default function AdminJobsPage() {
     }
   };
 
+  const handlePurgeExpired = async () => {
+    if (expiredListings.length === 0) return;
+    const confirmed = await confirmModal({
+      title: 'Purge All Expired Listings',
+      message: `Permanently remove all ${expiredListings.length} expired listing(s) from the database? This action cannot be undone.`,
+      confirmText: `Purge ${expiredListings.length} Listing(s)`,
+      cancelText: 'Cancel',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    setPurging(true);
+    try {
+      const count = await jobsService.purgeExpiredListings();
+      toast.success(`Successfully purged ${count} expired listing(s).`);
+      invalidate();
+    } catch (err: any) {
+      toast.error(err?.message || 'Purge failed.');
+    } finally {
+      setPurging(false);
+    }
+  };
+
   return (
     <>
       {/* Modal */}
@@ -472,29 +577,102 @@ export default function AdminJobsPage() {
               </div>
               <div>
                 <h1 className="text-xl font-display font-extrabold text-[#121417] dark:text-white">Jobs Board Admin</h1>
-                <p className="text-xs text-[#868E96]">{listings.length} listing{listings.length !== 1 ? 's' : ''} total</p>
+                <p className="text-xs text-[#868E96]">
+                  {liveListings.length} live · {expiredListings.length} expired · {draftListings.length} drafts
+                </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setModalJob('new')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Add New Listing
             </button>
           </div>
 
-          {/* Search */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
-            <input
-              type="text"
-              placeholder="Search listings..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full max-w-sm pl-8 pr-3 py-2 text-xs bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors"
-            />
+          {/* Navigation Tabs + Search + Purge Action Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
+            {/* Status Tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-[#E9ECEF]/60 dark:bg-[#1A1A1A] rounded-xl border border-[#E9ECEF] dark:border-[#2A2A2A] overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setActiveTab('LIVE')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'LIVE'
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                Live ({liveListings.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('EXPIRED')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'EXPIRED'
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                Expired ({expiredListings.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('DRAFT')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'DRAFT'
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                <EyeOff className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                Drafts ({draftListings.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('ALL')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'ALL'
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                All ({listings.length})
+              </button>
+            </div>
+
+            {/* Actions: Search + Purge button */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-60">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
+                <input
+                  type="text"
+                  placeholder="Filter listings..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors"
+                />
+              </div>
+
+              {activeTab === 'EXPIRED' && expiredListings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePurgeExpired}
+                  disabled={purging}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-600 hover:text-white transition-all shadow-xs cursor-pointer whitespace-nowrap disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {purging ? 'Purging...' : `Purge Expired (${expiredListings.length})`}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Table */}
@@ -507,9 +685,25 @@ export default function AdminJobsPage() {
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <AlertCircle className="w-10 h-10 text-[#868E96] mb-3" />
-                <p className="text-sm font-semibold text-[#121417] dark:text-white">No listings found</p>
-                <p className="text-xs text-[#868E96] mt-1">
-                  {search ? 'Try a different search.' : 'Click "Add New Listing" to create one.'}
+                <p className="text-sm font-semibold text-[#121417] dark:text-white">
+                  {search
+                    ? 'No matching listings found'
+                    : activeTab === 'LIVE'
+                    ? 'No active live listings right now'
+                    : activeTab === 'EXPIRED'
+                    ? 'No expired listings! All drives are current.'
+                    : activeTab === 'DRAFT'
+                    ? 'No drafts currently saved.'
+                    : 'No listings posted yet'}
+                </p>
+                <p className="text-xs text-[#868E96] mt-1 max-w-sm">
+                  {search
+                    ? 'Try clearing your search query.'
+                    : activeTab === 'LIVE'
+                    ? 'Click "Add New Listing" to publish a new role, or activate a draft.'
+                    : activeTab === 'EXPIRED'
+                    ? 'Expired opportunities will appear here once their deadline passes.'
+                    : 'Click "Add New Listing" to create your first opportunity.'}
                 </p>
               </div>
             ) : (

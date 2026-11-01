@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import {
@@ -111,7 +111,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'Companies & Exams', href: '/companies', icon: Building2 },
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
-    { name: 'Jobs & Internships', href: '/jobs', icon: Briefcase, badge: 'NEW' },
+    { name: 'Jobs & Internships', href: '/jobs', icon: Briefcase },
     { name: 'Pricing & Passes', href: '/pricing', icon: Zap },
   ];
 

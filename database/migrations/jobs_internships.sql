@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.job_listings (
 -- 2. Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_job_listings_is_active ON public.job_listings (is_active);
 CREATE INDEX IF NOT EXISTS idx_job_listings_type ON public.job_listings (type);
+CREATE INDEX IF NOT EXISTS idx_job_listings_deadline ON public.job_listings (deadline) WHERE deadline IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_job_listings_sort ON public.job_listings (is_featured DESC, sort_order ASC, created_at DESC);
 
 -- 3. Row Level Security (RLS) Lockdown
@@ -37,6 +38,7 @@ ALTER TABLE public.job_listings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read active job listings" ON public.job_listings;
 DROP POLICY IF EXISTS "Admin full access job listings" ON public.job_listings;
 DROP POLICY IF EXISTS "Admins full access job listings" ON public.job_listings;
+DROP POLICY IF EXISTS "Admins select all job listings" ON public.job_listings;
 DROP POLICY IF EXISTS "Admins insert job listings" ON public.job_listings;
 DROP POLICY IF EXISTS "Admins update job listings" ON public.job_listings;
 DROP POLICY IF EXISTS "Admins delete job listings" ON public.job_listings;
