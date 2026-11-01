@@ -88,70 +88,78 @@ function expMatchesFilter(min: number, max: number | null | undefined, level: Jo
 
 function JobCardSkeleton() {
   return (
-    <div className="rounded-2xl p-5 bg-white dark:bg-[#141C12] border border-[#E5E7EB] dark:border-[#22331E] space-y-4 animate-pulse">
+    <div className="rounded-2xl p-5 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] space-y-4 animate-pulse">
       <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-[#202E1B] shrink-0" />
+        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#202020] shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-200 dark:bg-[#202E1B] rounded w-3/4" />
-          <div className="h-3 bg-gray-200 dark:bg-[#202E1B] rounded w-1/2" />
-          <div className="h-3 bg-gray-200 dark:bg-[#202E1B] rounded w-2/3" />
+          <div className="h-4 bg-gray-100 dark:bg-[#202020] rounded w-3/4" />
+          <div className="h-3 bg-gray-100 dark:bg-[#202020] rounded w-1/2" />
+          <div className="h-3 bg-gray-100 dark:bg-[#202020] rounded w-2/3" />
         </div>
       </div>
-      <div className="h-px bg-gray-200 dark:bg-[#202E1B] w-full" />
+      <div className="h-px bg-gray-100 dark:bg-[#202020] w-full" />
       <div className="flex items-center justify-between">
-        <div className="h-3 bg-gray-200 dark:bg-[#202E1B] rounded w-1/3" />
-        <div className="h-7 bg-gray-200 dark:bg-[#202E1B] rounded-full w-24" />
+        <div className="h-3 bg-gray-100 dark:bg-[#202020] rounded w-1/3" />
+        <div className="h-7 bg-gray-100 dark:bg-[#202020] rounded-full w-24" />
       </div>
     </div>
   );
 }
 
-// ─── Job Card (Inspired by User Design Pic 1) ─────────────────────────────────
+// ─── Job Card ─────────────────────────────────────────────────────────────────
 
 interface JobCardProps {
   job: JobListing;
   isSelected?: boolean;
   onSelect: (job: JobListing) => void;
+  onClose: () => void;
   isBookmarked: boolean;
   onToggleBookmark: (e: React.MouseEvent) => void;
 }
 
-function JobCard({ job, isSelected, onSelect, isBookmarked, onToggleBookmark }: JobCardProps) {
+function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBookmark }: JobCardProps) {
   const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
 
   return (
     <div
-      onClick={() => onSelect(job)}
+      onClick={() => {
+        if (isSelected) {
+          onClose();
+        } else {
+          onSelect(job);
+        }
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onSelect(job);
+          if (isSelected) onClose();
+          else onSelect(job);
         }
       }}
       className={`group relative rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer select-none text-left flex flex-col justify-between ${
-        // Vibrant lime card in light mode, high-contrast dark forest card in dark mode
-        'bg-[#8AE844] hover:bg-[#82E03A] text-[#121A0F] border border-[#76DA30] dark:bg-[#141C12] dark:hover:bg-[#182316] dark:text-white dark:border-[#283C24]'
+        // Clean high-contrast card background matching Prepunite style
+        'bg-white dark:bg-[#141414] text-[#121417] dark:text-white'
       } ${
         isSelected
-          ? 'ring-4 ring-[#121A0F] dark:ring-[#8AE844] shadow-2xl scale-[1.01] z-10'
-          : 'hover:shadow-lg hover:-translate-y-0.5 shadow-xs'
+          ? 'border-2 border-emerald-500 dark:border-emerald-500 bg-emerald-50/15 dark:bg-emerald-950/20 shadow-sm'
+          : 'border border-[#E9ECEF] dark:border-[#242424] hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-md'
       }`}
     >
       <div>
-        {/* Top Header Row: Logo badge + Info + Bookmark button */}
+        {/* Top Header Row: Logo + Info + Bookmark button */}
         <div className="flex items-start gap-3 justify-between">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            {/* Dark squarish badge with coding icon </> and active green status dot */}
-            <div className="relative w-12 h-12 rounded-xl bg-[#151D13] dark:bg-[#0C120B] border border-black/10 dark:border-white/10 flex items-center justify-center shrink-0 shadow-xs">
+            {/* Logo container: full space occupation, no double borders */}
+            <div className="relative w-12 h-12 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
               {job.company_logo_url ? (
                 <img
                   src={job.company_logo_url}
                   alt={job.company_name}
-                  className="w-8 h-8 rounded-lg object-contain"
+                  className="w-full h-full object-contain p-1"
                   onError={(e) => {
                     const t = e.currentTarget as HTMLImageElement;
                     t.style.display = 'none';
@@ -161,40 +169,40 @@ function JobCard({ job, isSelected, onSelect, isBookmarked, onToggleBookmark }: 
                 />
               ) : null}
               <div
-                className={`w-full h-full flex items-center justify-center ${job.company_logo_url ? 'hidden' : ''}`}
+                className={`w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black ${job.company_logo_url ? 'hidden' : ''}`}
               >
-                <Code className="w-5 h-5 text-[#38BDF8] stroke-[2.5]" />
+                <Code className="w-5 h-5 text-[#0EA5E9] stroke-[2.5]" />
               </div>
 
-              {/* Green online/active dot on top right corner of the badge */}
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#22C55E] border-2 border-[#151D13] dark:border-[#0C120B] rounded-full shadow-xs" />
+              {/* Green online/active dot */}
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#22C55E] rounded-full ring-2 ring-white dark:ring-[#141414]" />
             </div>
 
             {/* Title & Company */}
             <div className="min-w-0 flex-1 pr-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="font-extrabold text-base sm:text-[17px] text-[#121A0F] dark:text-white leading-snug truncate">
+                <h3 className="font-bold text-sm sm:text-base text-[#121417] dark:text-white leading-snug truncate">
                   {job.title}
                 </h3>
                 {job.is_featured && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400 text-amber-950 border border-amber-500 shadow-xs">
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-400 text-amber-950 border border-amber-500 shadow-2xs">
                     <Star className="w-2.5 h-2.5 fill-current" />
                     Featured
                   </span>
                 )}
               </div>
 
-              <p className="text-xs font-semibold text-[#273B22] dark:text-[#A7BAA2] truncate mt-0.5">
+              <p className="text-xs font-medium text-[#495057] dark:text-[#AAAAAA] truncate mt-0.5">
                 {job.company_name}
               </p>
 
               {/* Location & Salary inline metadata */}
-              <div className="flex items-center gap-3 text-xs mt-1 flex-wrap text-[#273B22] dark:text-[#C5D6C1]">
+              <div className="flex items-center gap-3 text-xs mt-1.5 flex-wrap text-[#6C757D] dark:text-[#888888]">
                 <div className="flex items-center gap-1 min-w-0 truncate">
-                  <MapPin className="w-3.5 h-3.5 shrink-0 text-[#273B22] dark:text-[#A7BAA2]" />
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-[#868E96]" />
                   <span className="truncate">{job.location}</span>
                 </div>
-                <div className="flex items-center gap-0.5 font-bold text-[#121A0F] dark:text-[#8AE844] shrink-0">
+                <div className="flex items-center gap-0.5 font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                   <span className="font-semibold text-xs">₹</span>
                   <span>{job.stipend_or_salary || 'Competitive'}</span>
                 </div>
@@ -208,23 +216,23 @@ function JobCard({ job, isSelected, onSelect, isBookmarked, onToggleBookmark }: 
             onClick={onToggleBookmark}
             aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
             title={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
               isBookmarked
-                ? 'bg-[#151D13] text-amber-400 shadow-sm'
-                : 'bg-[#151D13]/15 hover:bg-[#151D13]/30 dark:bg-white/10 dark:hover:bg-white/20 text-[#121A0F] dark:text-white'
+                ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                : 'bg-[#F1F3F5] hover:bg-[#E9ECEF] dark:bg-[#202020] dark:hover:bg-[#2A2A2A] text-[#495057] dark:text-[#AAAAAA]'
             }`}
           >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current text-amber-400' : ''}`} />
+            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-current text-amber-500' : ''}`} />
           </button>
         </div>
 
         {/* Subtle Divider Line */}
-        <div className="border-t border-[#151D13]/15 dark:border-white/10 my-3" />
+        <div className="border-t border-[#E9ECEF] dark:border-[#242424] my-3" />
       </div>
 
-      {/* Bottom Metadata & Pill Action Button */}
+      {/* Bottom Metadata & Action Button */}
       <div className="flex items-center justify-between gap-2 mt-auto">
-        <div className="flex items-center gap-2.5 text-xs font-semibold text-[#273B22] dark:text-[#A7BAA2] flex-wrap">
+        <div className="flex items-center gap-2.5 text-xs text-[#6C757D] dark:text-[#888888] flex-wrap">
           <div className="flex items-center gap-1">
             <Briefcase className="w-3.5 h-3.5 shrink-0" />
             <span>{expLabel}</span>
@@ -236,18 +244,40 @@ function JobCard({ job, isSelected, onSelect, isBookmarked, onToggleBookmark }: 
             </div>
           )}
           {deadline && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${deadline.color} ${deadline.pulse ? 'animate-pulse' : ''}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${deadline.color} ${deadline.pulse ? 'animate-pulse' : ''}`}>
               {deadline.label}
             </span>
           )}
         </div>
 
-        {/* White Pill Action Button (Matches ✨ AI Tools ⌵ in Pic 1) */}
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white dark:bg-[#1F2C1B] text-[#121A0F] dark:text-white shadow-xs border border-black/5 dark:border-white/10 group-hover:shadow-md transition-all">
-          <Sparkles className="w-3.5 h-3.5 text-[#121A0F] dark:text-[#8AE844]" />
-          <span>{isSelected ? 'Viewing' : 'View Details'}</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </div>
+        {/* Action Button: "Close" when active, "View Details" when inactive */}
+        {isSelected ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-400 dark:border-rose-900/60 transition-all shadow-2xs"
+            title="Close details"
+          >
+            <X className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Close</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(job);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#F8F9FA] dark:bg-[#1E1E1E] hover:bg-[#121417] hover:text-white dark:hover:bg-white dark:hover:text-[#121417] text-[#121417] dark:text-white transition-all border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs group-hover:border-zinc-400"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <span>View Details</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -326,12 +356,12 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Company & Role Hero */}
         <div className="flex items-start gap-4">
-          <div className="relative w-16 h-16 rounded-2xl bg-[#151D13] dark:bg-[#0C120B] border border-black/10 dark:border-white/10 flex items-center justify-center shrink-0 shadow-md">
+          <div className="relative w-16 h-16 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
             {job.company_logo_url ? (
               <img
                 src={job.company_logo_url}
                 alt={job.company_name}
-                className="w-10 h-10 rounded-xl object-contain"
+                className="w-full h-full object-contain p-1.5"
                 onError={(e) => {
                   const t = e.currentTarget as HTMLImageElement;
                   t.style.display = 'none';
@@ -340,10 +370,10 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
                 }}
               />
             ) : null}
-            <div className={`w-full h-full flex items-center justify-center ${job.company_logo_url ? 'hidden' : ''}`}>
-              <Code className="w-8 h-8 text-[#38BDF8] stroke-[2.5]" />
+            <div className={`w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black ${job.company_logo_url ? 'hidden' : ''}`}>
+              <Code className="w-8 h-8 text-[#0EA5E9] stroke-[2.5]" />
             </div>
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#22C55E] border-2 border-[#151D13] dark:border-[#0C120B] rounded-full shadow-xs" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#22C55E] rounded-full ring-2 ring-white dark:ring-[#141414]" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -911,6 +941,7 @@ export default function JobsPage() {
                   job={job}
                   isSelected={selectedJob?.id === job.id}
                   onSelect={(j) => setSelectedJobId(j.id)}
+                  onClose={() => setSelectedJobId(null)}
                   isBookmarked={bookmarkedIds.has(job.id)}
                   onToggleBookmark={(e) => toggleBookmark(job.id, e)}
                 />
