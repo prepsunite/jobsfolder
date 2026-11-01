@@ -1,18 +1,41 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams, Link } from 'react-router';
 import {
-  MapPin, Briefcase, Star, Search, X, ChevronDown,
-  ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon,
+  MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
+  ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
+  Share2, Sparkles, Code, Check, Building2, GraduationCap, ArrowRight,
+  CheckCircle2, Flame, Award, Eye
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
+import { bookmarkStore } from '@/services/stores/bookmarkStore';
+import { useToast } from '@/contexts/ToastContext';
 import type { JobListing, JobListingFilters, JobType, JobSortOption } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getRelativeTime(dateStr: string): string {
+  if (!dateStr) return '';
+  const now = new Date().getTime();
+  const past = new Date(dateStr).getTime();
+  const diffSec = Math.max(0, Math.floor((now - past) / 1000));
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth}mo ago`;
+  return `${Math.floor(diffMonth / 12)}y ago`;
+}
 
 function getDeadlineInfo(deadline: string | null | undefined): {
   label: string;
   color: string;
   pulse: boolean;
+  daysRemaining: number;
 } | null {
   if (!deadline) return null;
   const now = new Date();
@@ -20,10 +43,36 @@ function getDeadlineInfo(deadline: string | null | undefined): {
   const diffMs = end.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) return null; // Already past - RLS should filter these but guard here
-  if (diffDays < 2) return { label: 'Closing soon!', color: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800', pulse: true };
-  if (diffDays <= 7) return { label: `${diffDays}d left`, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800', pulse: false };
-  return { label: `${diffDays}d left`, color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800', pulse: false };
+  if (diffDays < 0) return null;
+  if (diffDays < 2) {
+    return {
+      label: 'Closing soon!',
+      color: 'text-red-700 bg-red-100 border-red-300 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+      pulse: true,
+      daysRemaining: diffDays,
+    };
+  }
+  if (diffDays <= 7) {
+    return {
+      label: `${diffDays}d left`,
+      color: 'text-amber-800 bg-amber-100 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+      pulse: false,
+      daysRemaining: diffDays,
+    };
+  }
+  return {
+    label: `${diffDays}d left`,
+    color: 'text-emerald-800 bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+    pulse: false,
+    daysRemaining: diffDays,
+  };
+}
+
+function formatExperience(min: number, max?: number | null): string {
+  if (min === 0 && (!max || max === 0)) return 'Fresher';
+  if (!max) return `${min}+ yrs`;
+  if (min === max) return `${min} yr${min > 1 ? 's' : ''}`;
+  return `${min}–${max} yrs`;
 }
 
 function expMatchesFilter(min: number, max: number | null | undefined, level: JobListingFilters['expLevel']): boolean {
@@ -39,158 +88,454 @@ function expMatchesFilter(min: number, max: number | null | undefined, level: Jo
 
 function JobCardSkeleton() {
   return (
-    <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-5 space-y-3 animate-pulse">
+    <div className="rounded-2xl p-5 bg-white dark:bg-[#141C12] border border-[#E5E7EB] dark:border-[#22331E] space-y-4 animate-pulse">
       <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-lg bg-[#E9ECEF] dark:bg-[#242424] shrink-0" />
+        <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-[#202E1B] shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-[#E9ECEF] dark:bg-[#242424] rounded w-3/4" />
-          <div className="h-3 bg-[#E9ECEF] dark:bg-[#242424] rounded w-1/2" />
+          <div className="h-4 bg-gray-200 dark:bg-[#202E1B] rounded w-3/4" />
+          <div className="h-3 bg-gray-200 dark:bg-[#202E1B] rounded w-1/2" />
+          <div className="h-3 bg-gray-200 dark:bg-[#202E1B] rounded w-2/3" />
         </div>
       </div>
-      <div className="h-3 bg-[#E9ECEF] dark:bg-[#242424] rounded w-full" />
-      <div className="h-3 bg-[#E9ECEF] dark:bg-[#242424] rounded w-2/3" />
-      <div className="h-9 bg-[#E9ECEF] dark:bg-[#242424] rounded-lg mt-2" />
+      <div className="h-px bg-gray-200 dark:bg-[#202E1B] w-full" />
+      <div className="flex items-center justify-between">
+        <div className="h-3 bg-gray-200 dark:bg-[#202E1B] rounded w-1/3" />
+        <div className="h-7 bg-gray-200 dark:bg-[#202E1B] rounded-full w-24" />
+      </div>
     </div>
   );
 }
 
-// ─── Job Card ─────────────────────────────────────────────────────────────────
+// ─── Job Card (Inspired by User Design Pic 1) ─────────────────────────────────
 
-function JobCard({ job }: { job: JobListing }) {
-  const deadline = getDeadlineInfo(job.deadline);
+interface JobCardProps {
+  job: JobListing;
+  isSelected?: boolean;
+  onSelect: (job: JobListing) => void;
+  isBookmarked: boolean;
+  onToggleBookmark: (e: React.MouseEvent) => void;
+}
 
-  const expLabel = useMemo(() => {
-    if (job.experience_min === 0 && !job.experience_max) return 'Fresher';
-    if (job.experience_min === 0 && job.experience_max === 0) return 'Fresher';
-    if (!job.experience_max) return `${job.experience_min}+ yrs`;
-    if (job.experience_min === job.experience_max) return `${job.experience_min} yr`;
-    return `${job.experience_min}–${job.experience_max} yrs`;
-  }, [job.experience_min, job.experience_max]);
-
-  const logoLetter = job.company_name.charAt(0).toUpperCase();
-  const logoColors = [
-    'from-blue-500 to-indigo-600',
-    'from-green-500 to-emerald-600',
-    'from-purple-500 to-violet-600',
-    'from-orange-500 to-amber-600',
-    'from-pink-500 to-rose-600',
-    'from-teal-500 to-cyan-600',
-  ];
-  const logoColor = logoColors[logoLetter.charCodeAt(0) % logoColors.length];
+function JobCard({ job, isSelected, onSelect, isBookmarked, onToggleBookmark }: JobCardProps) {
+  const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
+  const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
+  const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
 
   return (
-    <div className={`group relative bg-white dark:bg-[#141414] border rounded-xl p-5 flex flex-col gap-3 transition-all hover:shadow-md hover:-translate-y-0.5 ${
-      job.is_featured
-        ? 'border-amber-300 dark:border-amber-700/60 shadow-amber-100 dark:shadow-amber-900/10'
-        : 'border-[#E9ECEF] dark:border-[#242424]'
-    }`}>
-      {/* Featured ribbon */}
-      {job.is_featured && (
-        <div className="absolute top-3 right-3">
-          <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
-        </div>
-      )}
+    <div
+      onClick={() => onSelect(job)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(job);
+        }
+      }}
+      className={`group relative rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer select-none text-left flex flex-col justify-between ${
+        // Vibrant lime card in light mode, high-contrast dark forest card in dark mode
+        'bg-[#8AE844] hover:bg-[#82E03A] text-[#121A0F] border border-[#76DA30] dark:bg-[#141C12] dark:hover:bg-[#182316] dark:text-white dark:border-[#283C24]'
+      } ${
+        isSelected
+          ? 'ring-4 ring-[#121A0F] dark:ring-[#8AE844] shadow-2xl scale-[1.01] z-10'
+          : 'hover:shadow-lg hover:-translate-y-0.5 shadow-xs'
+      }`}
+    >
+      <div>
+        {/* Top Header Row: Logo badge + Info + Bookmark button */}
+        <div className="flex items-start gap-3 justify-between">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {/* Dark squarish badge with coding icon </> and active green status dot */}
+            <div className="relative w-12 h-12 rounded-xl bg-[#151D13] dark:bg-[#0C120B] border border-black/10 dark:border-white/10 flex items-center justify-center shrink-0 shadow-xs">
+              {job.company_logo_url ? (
+                <img
+                  src={job.company_logo_url}
+                  alt={job.company_name}
+                  className="w-8 h-8 rounded-lg object-contain"
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.style.display = 'none';
+                    const fallback = t.nextElementSibling as HTMLElement | null;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div
+                className={`w-full h-full flex items-center justify-center ${job.company_logo_url ? 'hidden' : ''}`}
+              >
+                <Code className="w-5 h-5 text-[#38BDF8] stroke-[2.5]" />
+              </div>
 
-      {/* Header: logo + title + type badge */}
-      <div className="flex items-start gap-3">
-        {job.company_logo_url ? (
-          <img
-            src={job.company_logo_url}
-            alt={job.company_name}
-            className="w-12 h-12 rounded-lg object-contain border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#1A1A1A] p-1 shrink-0"
-            onError={(e) => {
-              const t = e.currentTarget as HTMLImageElement;
-              t.style.display = 'none';
-              (t.nextSibling as HTMLElement)?.removeAttribute('style');
-            }}
-          />
-        ) : null}
-        <div
-          className={`w-12 h-12 rounded-lg bg-gradient-to-br ${logoColor} flex items-center justify-center text-white font-bold text-lg shrink-0 ${job.company_logo_url ? 'hidden' : ''}`}
-          style={job.company_logo_url ? { display: 'none' } : {}}
-        >
-          {logoLetter}
-        </div>
+              {/* Green online/active dot on top right corner of the badge */}
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#22C55E] border-2 border-[#151D13] dark:border-[#0C120B] rounded-full shadow-xs" />
+            </div>
 
-        <div className="flex-1 min-w-0 pr-6">
-          <h3 className="text-sm font-bold text-[#121417] dark:text-white leading-snug truncate">
-            {job.title}
-          </h3>
-          <p className="text-xs text-[#495057] dark:text-[#AAAAAA] mt-0.5 truncate">{job.company_name}</p>
-        </div>
-      </div>
+            {/* Title & Company */}
+            <div className="min-w-0 flex-1 pr-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="font-extrabold text-base sm:text-[17px] text-[#121A0F] dark:text-white leading-snug truncate">
+                  {job.title}
+                </h3>
+                {job.is_featured && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400 text-amber-950 border border-amber-500 shadow-xs">
+                    <Star className="w-2.5 h-2.5 fill-current" />
+                    Featured
+                  </span>
+                )}
+              </div>
 
-      {/* Badges row */}
-      <div className="flex flex-wrap gap-1.5">
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-          job.type === 'JOB'
-            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-            : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
-        }`}>
-          <Briefcase className="w-2.5 h-2.5" />
-          {job.type === 'JOB' ? 'Job' : 'Internship'}
-        </span>
+              <p className="text-xs font-semibold text-[#273B22] dark:text-[#A7BAA2] truncate mt-0.5">
+                {job.company_name}
+              </p>
 
-        {deadline && (
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${deadline.color} ${deadline.pulse ? 'animate-pulse' : ''}`}>
-            <Clock className="w-2.5 h-2.5" />
-            {deadline.label}
-          </span>
-        )}
-      </div>
-
-      {/* Details */}
-      <div className="flex flex-col gap-1.5 text-xs text-[#495057] dark:text-[#AAAAAA]">
-        <div className="flex items-center gap-1.5">
-          <MapPin className="w-3 h-3 shrink-0 text-[#868E96]" />
-          <span>{job.location}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3 h-3 shrink-0 text-[#868E96]" />
-          <span>{expLabel} experience</span>
-        </div>
-        {job.stipend_or_salary && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[#868E96] font-semibold text-[10px]">₹</span>
-            <span className="font-medium text-[#121417] dark:text-white">{job.stipend_or_salary}</span>
+              {/* Location & Salary inline metadata */}
+              <div className="flex items-center gap-3 text-xs mt-1 flex-wrap text-[#273B22] dark:text-[#C5D6C1]">
+                <div className="flex items-center gap-1 min-w-0 truncate">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-[#273B22] dark:text-[#A7BAA2]" />
+                  <span className="truncate">{job.location}</span>
+                </div>
+                <div className="flex items-center gap-0.5 font-bold text-[#121A0F] dark:text-[#8AE844] shrink-0">
+                  <span className="font-semibold text-xs">₹</span>
+                  <span>{job.stipend_or_salary || 'Competitive'}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Top-Right Bookmark Button */}
+          <button
+            type="button"
+            onClick={onToggleBookmark}
+            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
+            title={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
+            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
+              isBookmarked
+                ? 'bg-[#151D13] text-amber-400 shadow-sm'
+                : 'bg-[#151D13]/15 hover:bg-[#151D13]/30 dark:bg-white/10 dark:hover:bg-white/20 text-[#121A0F] dark:text-white'
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current text-amber-400' : ''}`} />
+          </button>
+        </div>
+
+        {/* Subtle Divider Line */}
+        <div className="border-t border-[#151D13]/15 dark:border-white/10 my-3" />
       </div>
 
-      {/* Tags */}
-      {job.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {job.tags.slice(0, 5).map((tag) => (
-            <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded text-[10px] text-[#495057] dark:text-[#999999]">
-              <Tag className="w-2 h-2" />
-              {tag}
+      {/* Bottom Metadata & Pill Action Button */}
+      <div className="flex items-center justify-between gap-2 mt-auto">
+        <div className="flex items-center gap-2.5 text-xs font-semibold text-[#273B22] dark:text-[#A7BAA2] flex-wrap">
+          <div className="flex items-center gap-1">
+            <Briefcase className="w-3.5 h-3.5 shrink-0" />
+            <span>{expLabel}</span>
+          </div>
+          {relativeTime && (
+            <div className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span>{relativeTime}</span>
+            </div>
+          )}
+          {deadline && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${deadline.color} ${deadline.pulse ? 'animate-pulse' : ''}`}>
+              {deadline.label}
             </span>
-          ))}
-          {job.tags.length > 5 && (
-            <span className="px-1.5 py-0.5 text-[10px] text-[#868E96]">+{job.tags.length - 5}</span>
           )}
         </div>
-      )}
 
-      {/* Apply button */}
-      <a
-        href={job.apply_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-auto flex items-center justify-center gap-1.5 w-full py-2 px-4 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all group-hover:shadow-sm"
-      >
-        <ExternalLink className="w-3.5 h-3.5" />
-        Apply Now
-      </a>
+        {/* White Pill Action Button (Matches ✨ AI Tools ⌵ in Pic 1) */}
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white dark:bg-[#1F2C1B] text-[#121A0F] dark:text-white shadow-xs border border-black/5 dark:border-white/10 group-hover:shadow-md transition-all">
+          <Sparkles className="w-3.5 h-3.5 text-[#121A0F] dark:text-[#8AE844]" />
+          <span>{isSelected ? 'Viewing' : 'View Details'}</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Job Details Master-Detail Pane (LinkedIn & Indeed Style) ──────────────────
+
+interface JobDetailPaneProps {
+  job: JobListing;
+  onClose: () => void;
+  isBookmarked: boolean;
+  onToggleBookmark: () => void;
+  onShare: () => void;
+}
+
+function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }: JobDetailPaneProps) {
+  const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
+  const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
+  const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
+
+  return (
+    <div className="flex flex-col h-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl shadow-xl overflow-hidden">
+      {/* Sticky Header Top Bar */}
+      <div className="sticky top-0 z-20 px-6 py-4 bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            Active Opportunity
+          </span>
+          {deadline && (
+            <span className={`ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${deadline.color}`}>
+              {deadline.label}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {/* Share Button */}
+          <button
+            type="button"
+            onClick={onShare}
+            className="p-2 rounded-xl text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:bg-[#F1F3F5] dark:hover:bg-[#202020] transition-colors"
+            title="Share this listing"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+
+          {/* Bookmark Button */}
+          <button
+            type="button"
+            onClick={onToggleBookmark}
+            className={`p-2 rounded-xl transition-colors ${
+              isBookmarked
+                ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
+                : 'text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:bg-[#F1F3F5] dark:hover:bg-[#202020]'
+            }`}
+            title={isBookmarked ? 'Saved to bookmarks' : 'Save job'}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+          </button>
+
+          {/* Prominent CLOSE BUTTON (X) */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-[#222222] dark:hover:bg-[#2E2E2E] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-all shadow-xs"
+            title="Close details (Esc)"
+            aria-label="Close details"
+          >
+            <X className="w-5 h-5 stroke-[2.5]" />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable Content Body */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Company & Role Hero */}
+        <div className="flex items-start gap-4">
+          <div className="relative w-16 h-16 rounded-2xl bg-[#151D13] dark:bg-[#0C120B] border border-black/10 dark:border-white/10 flex items-center justify-center shrink-0 shadow-md">
+            {job.company_logo_url ? (
+              <img
+                src={job.company_logo_url}
+                alt={job.company_name}
+                className="w-10 h-10 rounded-xl object-contain"
+                onError={(e) => {
+                  const t = e.currentTarget as HTMLImageElement;
+                  t.style.display = 'none';
+                  const fallback = t.nextElementSibling as HTMLElement | null;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className={`w-full h-full flex items-center justify-center ${job.company_logo_url ? 'hidden' : ''}`}>
+              <Code className="w-8 h-8 text-[#38BDF8] stroke-[2.5]" />
+            </div>
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#22C55E] border-2 border-[#151D13] dark:border-[#0C120B] rounded-full shadow-xs" />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-black text-[#121417] dark:text-white leading-tight">
+                {job.title}
+              </h2>
+            </div>
+            <p className="text-sm font-bold text-[#495057] dark:text-[#BBBBBB] mt-1 flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>{job.company_name}</span>
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              </span>
+            </p>
+
+            <div className="flex items-center gap-3 text-xs text-[#868E96] dark:text-[#999999] mt-2 flex-wrap">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                {job.location}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Briefcase className="w-3.5 h-3.5 text-blue-500" />
+                {job.type === 'JOB' ? 'Full-Time Role' : 'Internship'}
+              </span>
+              {relativeTime && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    Posted {relativeTime}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Primary Action Buttons Bar */}
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+          <a
+            href={job.apply_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-extrabold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-md group"
+          >
+            <span>Apply on Official Website</span>
+            <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </a>
+
+          <button
+            type="button"
+            onClick={onToggleBookmark}
+            className={`flex items-center gap-1.5 py-3 px-4 rounded-xl text-xs font-bold border transition-all ${
+              isBookmarked
+                ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                : 'bg-white dark:bg-[#222222] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#333333] hover:border-black dark:hover:border-white'
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+            <span>{isBookmarked ? 'Saved' : 'Save'}</span>
+          </button>
+        </div>
+
+        {/* Key Highlights Grid */}
+        <div>
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#868E96] mb-3">
+            Key Job Overview
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block mb-1">
+                Experience
+              </span>
+              <p className="text-sm font-extrabold text-[#121417] dark:text-white">{expLabel}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block mb-1">
+                Job Type
+              </span>
+              <p className="text-sm font-extrabold text-[#121417] dark:text-white">
+                {job.type === 'JOB' ? 'Full Time' : 'Internship'}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block mb-1">
+                Compensation
+              </span>
+              <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                {job.stipend_or_salary || 'Competitive'}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+              <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block mb-1">
+                Deadline
+              </span>
+              <p className="text-sm font-extrabold text-[#121417] dark:text-white">
+                {deadline ? deadline.label : 'Open until filled'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tags & Skills */}
+        {job.tags && job.tags.length > 0 && (
+          <div>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#868E96] mb-2.5">
+              Target Skills &amp; Keywords
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {job.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#F1F3F5] dark:bg-[#202020] text-[#121417] dark:text-[#E0E0E0] border border-[#E9ECEF] dark:border-[#2E2E2E]"
+                >
+                  <Tag className="w-3 h-3 text-[#868E96]" />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Job Description */}
+        <div>
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#868E96] mb-3">
+            About the Role &amp; Description
+          </h3>
+          <div className="text-sm text-[#343A40] dark:text-[#D1D5DB] leading-relaxed whitespace-pre-line bg-[#FDFDFD] dark:bg-[#161616] p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424]">
+            {job.description && job.description.trim().length > 0 ? (
+              job.description
+            ) : (
+              <p className="text-[#868E96] italic">
+                No formal description provided. Click &quot;Apply on Official Website&quot; above to view comprehensive job responsibilities, eligibility requirements, and interview rounds.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* PrepUnite Placement Preparation Callout */}
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 dark:border-emerald-500/30">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-xs">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-extrabold text-[#121417] dark:text-white">
+                Preparing for {job.company_name}?
+              </h4>
+              <p className="text-xs text-[#495057] dark:text-[#A0AEC0] mt-1">
+                Boost your interview selection chances by practicing simulated company mock tests and topic-wise aptitude questions on PrepUnite.
+              </p>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <Link
+                  to="/aptitude"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors shadow-2xs"
+                >
+                  <span>Practice Aptitude</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+                <Link
+                  to="/technical"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors shadow-2xs"
+                >
+                  <span>Coding Workspace</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+                <Link
+                  to="/experiences"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors shadow-2xs"
+                >
+                  <span>Interview Archive</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page Component ──────────────────────────────────────────────────────
 
 const TYPE_OPTIONS: { label: string; value: 'ALL' | JobType }[] = [
-  { label: 'All', value: 'ALL' },
-  { label: 'Jobs', value: 'JOB' },
+  { label: 'All Opportunities', value: 'ALL' },
+  { label: 'Full-time Jobs', value: 'JOB' },
   { label: 'Internships', value: 'INTERNSHIP' },
 ];
 
@@ -209,6 +554,10 @@ const SORT_OPTIONS: { label: string; value: JobSortOption }[] = [
 ];
 
 export default function JobsPage() {
+  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Filters State
   const [filters, setFilters] = useState<JobListingFilters>({
     type: 'ALL',
     location: '',
@@ -218,18 +567,60 @@ export default function JobsPage() {
     closingSoonOnly: false,
   });
 
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(() => searchParams.get('jobId'));
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => new Set(bookmarkStore.getBookmarkedJobIds()));
+
+  // Sync Bookmarks from local & remote store
+  useEffect(() => {
+    const handleBookmarkChange = () => {
+      setBookmarkedIds(new Set(bookmarkStore.getBookmarkedJobIds()));
+    };
+
+    window.addEventListener('prepunite_bookmarks_changed', handleBookmarkChange);
+    return () => {
+      window.removeEventListener('prepunite_bookmarks_changed', handleBookmarkChange);
+    };
+  }, []);
+
+  // Fetch Live Active Job Listings
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ['job_listings'],
     queryFn: () => jobsService.getActiveListings(),
     staleTime: 5 * 60 * 1000,
   });
 
+  // Keep URL param in sync with selectedJobId
+  useEffect(() => {
+    if (selectedJobId) {
+      searchParams.set('jobId', selectedJobId);
+      setSearchParams(searchParams, { replace: true });
+    } else {
+      searchParams.delete('jobId');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [selectedJobId, searchParams, setSearchParams]);
+
+  // Handle Escape key to close the detail pane
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedJobId) {
+        setSelectedJobId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedJobId]);
+
+  // Filter & Sort Logic
   const filtered = useMemo(() => {
     const nowMs = Date.now();
     const result = listings.filter((job) => {
-      // Hide inactive or past-deadline listings from students
       if (!job.is_active) return false;
       if (job.deadline && new Date(job.deadline).getTime() < nowMs) return false;
+
+      // Saved only toggle
+      if (savedOnly && !bookmarkedIds.has(job.id)) return false;
 
       // Closing soon only filter (< 3 days)
       if (filters.closingSoonOnly) {
@@ -244,7 +635,10 @@ export default function JobsPage() {
       // Search filter
       if (filters.search) {
         const q = filters.search.toLowerCase();
-        if (!job.title.toLowerCase().includes(q) && !job.company_name.toLowerCase().includes(q)) return false;
+        const inTitle = job.title.toLowerCase().includes(q);
+        const inCompany = job.company_name.toLowerCase().includes(q);
+        const inTags = job.tags.some((t) => t.toLowerCase().includes(q));
+        if (!inTitle && !inCompany && !inTags) return false;
       }
 
       // Location filter
@@ -275,16 +669,47 @@ export default function JobsPage() {
       if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [listings, filters]);
+  }, [listings, filters, savedOnly, bookmarkedIds]);
+
+  // Selected Job Object
+  const selectedJob = useMemo(() => {
+    if (!selectedJobId) return null;
+    return listings.find((j) => j.id === selectedJobId) || null;
+  }, [selectedJobId, listings]);
+
+  const toggleBookmark = useCallback((jobId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const isNowBookmarked = bookmarkStore.toggleBookmarkJob(jobId);
+    setBookmarkedIds(new Set(bookmarkStore.getBookmarkedJobIds()));
+    if (isNowBookmarked) {
+      toast.success('Job saved to your bookmarks!');
+    } else {
+      toast.info('Job removed from bookmarks.');
+    }
+  }, [toast]);
+
+  const shareJob = useCallback((job: JobListing) => {
+    const url = `${window.location.origin}/jobs?jobId=${job.id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        toast.success('Direct listing link copied to clipboard!');
+      }).catch(() => {
+        toast.info(url);
+      });
+    } else {
+      toast.info(url);
+    }
+  }, [toast]);
 
   const hasActiveFilters =
     filters.type !== 'ALL' ||
     !!filters.search ||
     !!filters.location ||
     (filters.expLevel && filters.expLevel !== 'ANY') ||
-    Boolean(filters.closingSoonOnly);
+    Boolean(filters.closingSoonOnly) ||
+    savedOnly;
 
-  const clearFilters = () =>
+  const clearFilters = () => {
     setFilters({
       type: 'ALL',
       location: '',
@@ -293,27 +718,49 @@ export default function JobsPage() {
       sortBy: 'RECOMMENDED',
       closingSoonOnly: false,
     });
+    setSavedOnly(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0C0C0C]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
+        <div className="mb-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lime-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                <Briefcase className="w-5 h-5 text-white stroke-[2.5]" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-[#121417] dark:text-white tracking-tight">
+                  Jobs &amp; Internships
+                </h1>
+                <p className="text-xs sm:text-sm text-[#495057] dark:text-[#AAAAAA] mt-0.5">
+                  Curated opportunities for placement-ready students — click any role to view complete details.
+                </p>
+              </div>
             </div>
-            <h1 className="text-2xl font-display font-extrabold text-[#121417] dark:text-white tracking-tight">
-              Jobs &amp; Internships
-            </h1>
+
+            {/* Quick Status Stats */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSavedOnly((s) => !s)}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                  savedOnly
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                    : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-black dark:hover:border-white'
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${savedOnly ? 'fill-current' : ''}`} />
+                <span>Saved Jobs ({bookmarkedIds.size})</span>
+              </button>
+            </div>
           </div>
-          <p className="text-sm text-[#495057] dark:text-[#AAAAAA] ml-12">
-            Curated opportunities for placement-ready students — full-time roles &amp; internships.
-          </p>
         </div>
 
-        {/* Filter Bar */}
-        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-4 mb-6 space-y-3">
+        {/* Filter Controls Bar */}
+        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-4 mb-6 space-y-3 shadow-xs">
           {/* Top row: Type toggle + Closing Soon chip + Sort selector */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -322,7 +769,7 @@ export default function JobsPage() {
                   key={opt.value}
                   type="button"
                   onClick={() => setFilters((f) => ({ ...f, type: opt.value }))}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                     filters.type === opt.value
                       ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417] border-[#121417] dark:border-white shadow-xs'
                       : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white'
@@ -335,26 +782,26 @@ export default function JobsPage() {
               <button
                 type="button"
                 onClick={() => setFilters((f) => ({ ...f, closingSoonOnly: !f.closingSoonOnly }))}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                   filters.closingSoonOnly
                     ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
                     : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-rose-400'
                 }`}
               >
-                <Clock className="w-3 h-3" />
+                <Flame className="w-3.5 h-3.5" />
                 Closing Soon
               </button>
             </div>
 
             {/* Sort selector */}
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#868E96]">Sort:</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#868E96]">Sort By:</span>
               <div className="relative">
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#868E96] pointer-events-none" />
                 <select
                   value={filters.sortBy || 'RECOMMENDED'}
                   onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as JobSortOption }))}
-                  className="appearance-none pl-3 pr-7 py-1.5 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white font-semibold focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
+                  className="appearance-none pl-3 pr-7 py-1.5 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white font-semibold focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
                 >
                   {SORT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -370,10 +817,10 @@ export default function JobsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
               <input
                 type="text"
-                placeholder="Search title or company..."
+                placeholder="Search job title, company, or skills..."
                 value={filters.search ?? ''}
                 onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-                className="w-full pl-8 pr-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors"
+                className="w-full pl-8 pr-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors"
               />
             </div>
 
@@ -381,10 +828,10 @@ export default function JobsPage() {
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
               <input
                 type="text"
-                placeholder="Filter by location..."
+                placeholder="City, state, or remote..."
                 value={filters.location ?? ''}
                 onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
-                className="w-full pl-8 pr-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors"
+                className="w-full pl-8 pr-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors"
               />
             </div>
 
@@ -393,7 +840,7 @@ export default function JobsPage() {
               <select
                 value={filters.expLevel ?? 'ANY'}
                 onChange={(e) => setFilters((f) => ({ ...f, expLevel: e.target.value as JobListingFilters['expLevel'] }))}
-                className="w-full appearance-none pl-3 pr-8 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
+                className="w-full appearance-none pl-3 pr-8 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
               >
                 {EXP_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -402,11 +849,11 @@ export default function JobsPage() {
             </div>
           </div>
 
-          {/* Clear filters */}
+          {/* Active Filters Clear Bar */}
           {hasActiveFilters && (
             <div className="flex items-center justify-between pt-1">
               <span className="text-xs text-[#868E96]">
-                {filtered.length} result{filtered.length !== 1 ? 's' : ''} found
+                {filtered.length} opportunity{filtered.length !== 1 ? 'ies' : ''} match your filters
               </span>
               <button
                 type="button"
@@ -414,50 +861,91 @@ export default function JobsPage() {
                 className="flex items-center gap-1 text-xs font-semibold text-[#FD4A32] hover:text-[#e0432c] transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
-                Clear filters
+                Reset filters
               </button>
             </div>
           )}
         </div>
 
-        {/* Results count (when no active filters) */}
-        {!hasActiveFilters && !isLoading && listings.length > 0 && (
-          <p className="text-xs text-[#868E96] mb-4">
-            {listings.length} listing{listings.length !== 1 ? 's' : ''} available
-          </p>
-        )}
-
-        {/* Grid */}
+        {/* Master-Detail Layout (LinkedIn & Indeed Split View) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <JobCardSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#E9ECEF] dark:bg-[#242424] flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-8">
+            <div className="w-16 h-16 rounded-2xl bg-[#F1F3F5] dark:bg-[#242424] flex items-center justify-center mb-4">
               <InboxIcon className="w-8 h-8 text-[#868E96]" />
             </div>
-            <h3 className="text-sm font-bold text-[#121417] dark:text-white mb-1">
-              {hasActiveFilters ? 'No listings match your filters' : 'No listings yet'}
+            <h3 className="text-base font-extrabold text-[#121417] dark:text-white mb-1">
+              {hasActiveFilters ? 'No opportunities match your filters' : 'No listings currently active'}
             </h3>
-            <p className="text-xs text-[#868E96] max-w-xs">
+            <p className="text-xs text-[#868E96] max-w-sm mb-4">
               {hasActiveFilters
-                ? 'Try adjusting your search or clearing the filters.'
-                : 'New opportunities will be posted here soon. Check back later!'}
+                ? 'Try broadening your search keyword, changing the location, or resetting filters.'
+                : 'Verified full-time and internship openings are published regularly. Check back soon!'}
             </p>
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 text-xs font-bold rounded-lg bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all"
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-sm"
               >
-                Clear Filters
+                Reset All Filters
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((job) => <JobCard key={job.id} job={job} />)}
+          <div className={`transition-all ${selectedJob ? 'lg:flex lg:gap-6 items-start' : ''}`}>
+            {/* Left Column: Job Cards List */}
+            <div
+              className={`transition-all ${
+                selectedJob
+                  ? 'lg:w-[44%] xl:w-[40%] space-y-3.5 max-h-[calc(100vh-140px)] overflow-y-auto pr-1'
+                  : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'
+              }`}
+            >
+              {filtered.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  isSelected={selectedJob?.id === job.id}
+                  onSelect={(j) => setSelectedJobId(j.id)}
+                  isBookmarked={bookmarkedIds.has(job.id)}
+                  onToggleBookmark={(e) => toggleBookmark(job.id, e)}
+                />
+              ))}
+            </div>
+
+            {/* Right Column: Desktop Detail Pane (Sticky, Closable) */}
+            {selectedJob && (
+              <div className="hidden lg:block lg:w-[56%] xl:w-[60%] sticky top-20">
+                <div className="max-h-[calc(100vh-120px)]">
+                  <JobDetailPane
+                    job={selectedJob}
+                    onClose={() => setSelectedJobId(null)}
+                    isBookmarked={bookmarkedIds.has(selectedJob.id)}
+                    onToggleBookmark={() => toggleBookmark(selectedJob.id)}
+                    onShare={() => shareJob(selectedJob)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Mobile / Tablet Drawer (Slide-Over, Closable) */}
+            {selectedJob && (
+              <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+                <div className="w-full max-w-lg h-full bg-white dark:bg-[#141414] shadow-2xl overflow-hidden flex flex-col">
+                  <JobDetailPane
+                    job={selectedJob}
+                    onClose={() => setSelectedJobId(null)}
+                    isBookmarked={bookmarkedIds.has(selectedJob.id)}
+                    onToggleBookmark={() => toggleBookmark(selectedJob.id)}
+                    onShare={() => shareJob(selectedJob)}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

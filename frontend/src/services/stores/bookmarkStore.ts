@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   BOOKMARKED_EXAMS: 'prepunite_bookmarked_exams',
   BOOKMARKED_QUESTIONS: 'prepunite_bookmarked_questions',
   BOOKMARKED_EXPERIENCES: 'prepunite_bookmarked_experiences',
+  BOOKMARKED_JOBS: 'prepunite_bookmarked_jobs',
 } as const;
 
 class BookmarkStore {
@@ -31,7 +32,7 @@ class BookmarkStore {
    * Completely avoids storing bookmark IDs in JWT user_metadata, eliminating HTTP 431 header explosion risks.
    */
   private async persistBookmarkItem(
-    itemType: 'question' | 'exam' | 'experience',
+    itemType: 'question' | 'exam' | 'experience' | 'job',
     itemId: string,
     isBookmarked: boolean
   ): Promise<void> {
@@ -163,6 +164,37 @@ class BookmarkStore {
     return isBookmarked;
   }
 
+  // --- JOB BOOKMARKS ---
+  getBookmarkedJobIds(): string[] {
+    return this.getStorage<string[]>(STORAGE_KEYS.BOOKMARKED_JOBS, []);
+  }
+
+  isJobBookmarked(jobId: string): boolean {
+    return this.getBookmarkedJobIds().includes(jobId);
+  }
+
+  toggleBookmarkJob(jobId: string): boolean {
+    const list = this.getBookmarkedJobIds();
+    let updated: string[];
+    let isBookmarked: boolean;
+
+    if (list.includes(jobId)) {
+      updated = list.filter((id) => id !== jobId);
+      isBookmarked = false;
+    } else {
+      updated = [...list, jobId];
+      isBookmarked = true;
+    }
+
+    this.setStorage(STORAGE_KEYS.BOOKMARKED_JOBS, updated);
+    this.persistBookmarkItem('job', jobId, isBookmarked);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
+    }
+    return isBookmarked;
+  }
+
   // --- SUPABASE CLOUD SYNC ---
   async syncBookmarksWithSupabase(): Promise<void> {
     try {
@@ -174,6 +206,7 @@ class BookmarkStore {
       const questions = this.getBookmarkedQuestionIds();
       const exams = this.getBookmarkedExamIds();
       const experiences = this.getBookmarkedExperienceIds();
+      const jobs = this.getBookmarkedJobIds();
 
       const rowsToUpsert = [
         ...questions.map((id) => ({
@@ -192,6 +225,12 @@ class BookmarkStore {
           user_email: normalizedEmail,
           user_id: session.user.id,
           item_type: 'experience',
+          item_id: id,
+        })),
+        ...jobs.map((id) => ({
+          user_email: normalizedEmail,
+          user_id: session.user.id,
+          item_type: 'job',
           item_id: id,
         })),
       ];
@@ -213,7 +252,7 @@ class BookmarkStore {
    * Hydrates bookmarks from public.user_bookmarks in Supabase.
    * Merges with any guest/offline bookmarks stored locally and pushes delta to database.
    */
-  async hydrateBookmarksFromSupabase(_userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
+  async hydrateBookmarksFromSupabase(_userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[]; jobs: string[] }> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.email) {
@@ -221,6 +260,7 @@ class BookmarkStore {
           questions: this.getBookmarkedQuestionIds(),
           exams: this.getBookmarkedExamIds(),
           experiences: this.getBookmarkedExperienceIds(),
+          jobs: this.getBookmarkedJobIds(),
         };
       }
 
@@ -238,27 +278,32 @@ class BookmarkStore {
           questions: this.getBookmarkedQuestionIds(),
           exams: this.getBookmarkedExamIds(),
           experiences: this.getBookmarkedExperienceIds(),
+          jobs: this.getBookmarkedJobIds(),
         };
       }
 
       const remoteQuestions: string[] = [];
       const remoteExams: string[] = [];
       const remoteExperiences: string[] = [];
+      const remoteJobs: string[] = [];
 
       (data || []).forEach((row: { item_type: string; item_id: string }) => {
         if (row.item_type === 'question') remoteQuestions.push(row.item_id);
         else if (row.item_type === 'exam') remoteExams.push(row.item_id);
         else if (row.item_type === 'experience') remoteExperiences.push(row.item_id);
+        else if (row.item_type === 'job') remoteJobs.push(row.item_id);
       });
 
       const localQuestions = this.getBookmarkedQuestionIds();
       const localExams = this.getBookmarkedExamIds();
       const localExperiences = this.getBookmarkedExperienceIds();
+      const localJobs = this.getBookmarkedJobIds();
 
       // Migrate any locally saved guest bookmarks to remote database
       const missingQuestions = localQuestions.filter((id) => !remoteQuestions.includes(id));
       const missingExams = localExams.filter((id) => !remoteExams.includes(id));
       const missingExps = localExperiences.filter((id) => !remoteExperiences.includes(id));
+      const missingJobs = localJobs.filter((id) => !remoteJobs.includes(id));
 
       const missingItems = [
         ...missingQuestions.map((id) => ({
@@ -279,6 +324,12 @@ class BookmarkStore {
           item_type: 'experience',
           item_id: id,
         })),
+        ...missingJobs.map((id) => ({
+          user_email: userEmail,
+          user_id: session.user.id,
+          item_type: 'job',
+          item_id: id,
+        })),
       ];
 
       if (missingItems.length > 0) {
@@ -290,10 +341,12 @@ class BookmarkStore {
       const mergedQuestions = Array.from(new Set([...localQuestions, ...remoteQuestions]));
       const mergedExams = Array.from(new Set([...localExams, ...remoteExams]));
       const mergedExps = Array.from(new Set([...localExperiences, ...remoteExperiences]));
+      const mergedJobs = Array.from(new Set([...localJobs, ...remoteJobs]));
 
       this.setStorage(STORAGE_KEYS.BOOKMARKED_QUESTIONS, mergedQuestions);
       this.setStorage(STORAGE_KEYS.BOOKMARKED_EXAMS, mergedExams);
       this.setStorage(STORAGE_KEYS.BOOKMARKED_EXPERIENCES, mergedExps);
+      this.setStorage(STORAGE_KEYS.BOOKMARKED_JOBS, mergedJobs);
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('prepunite_bookmarks_changed'));
@@ -303,6 +356,7 @@ class BookmarkStore {
         questions: mergedQuestions,
         exams: mergedExams,
         experiences: mergedExps,
+        jobs: mergedJobs,
       };
     } catch (e) {
       console.warn('[bookmarkStore] Hydrate bookmarks notice:', e);
@@ -310,6 +364,7 @@ class BookmarkStore {
         questions: this.getBookmarkedQuestionIds(),
         exams: this.getBookmarkedExamIds(),
         experiences: this.getBookmarkedExperienceIds(),
+        jobs: this.getBookmarkedJobIds(),
       };
     }
   }

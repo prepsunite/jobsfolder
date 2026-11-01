@@ -1151,8 +1151,20 @@ class DataStoreManager {
     return bookmarkStore.syncBookmarksWithSupabase();
   }
 
-  hydrateBookmarksFromSupabase(userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[] }> {
+  hydrateBookmarksFromSupabase(userMetadata?: any): Promise<{ questions: string[]; exams: string[]; experiences: string[]; jobs: string[] }> {
     return bookmarkStore.hydrateBookmarksFromSupabase(userMetadata);
+  }
+
+  getBookmarkedJobIds(): string[] {
+    return bookmarkStore.getBookmarkedJobIds();
+  }
+
+  isJobBookmarked(jobId: string): boolean {
+    return bookmarkStore.isJobBookmarked(jobId);
+  }
+
+  toggleBookmarkJob(jobId: string): boolean {
+    return bookmarkStore.toggleBookmarkJob(jobId);
   }
 
   getBookmarkedExamIds(): string[] {
