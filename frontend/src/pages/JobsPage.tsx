@@ -654,7 +654,13 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
   const [reportOpen, setReportOpen] = React.useState(false);
-  const [reported, setReported] = React.useState(false);
+  const [reported, setReported] = React.useState(() => jobsService.hasReportedJob(job.id));
+
+  // Sync reported status whenever a different job is selected
+  React.useEffect(() => {
+    setReported(jobsService.hasReportedJob(job.id));
+    setReportOpen(false);
+  }, [job.id]);
 
   // Reset inner scroll whenever a different job is selected
   React.useEffect(() => {
@@ -682,59 +688,67 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
         {/* Right: Report · Share · Bookmark · Close */}
         <div className="flex items-center gap-1">
-          {/* Report button */}
+          {/* Report button (Spam-proof: single submission per client) */}
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setReportOpen((o) => !o)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
-                reported
-                  ? 'text-rose-500 border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20'
-                  : 'text-[#868E96] border-[#E9ECEF] dark:border-[#2A2A2A] hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-900/50 bg-transparent hover:bg-rose-50 dark:hover:bg-rose-950/20'
-              }`}
-              title="Report this listing"
-            >
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>{reported ? 'Reported' : 'Report'}</span>
-            </button>
-
-            {/* Report dropdown */}
-            {reportOpen && !reported && (
-              <div className="absolute right-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                <p className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider text-[#868E96] border-b border-[#E9ECEF] dark:border-[#2A2A2A]">
-                  Report this listing
-                </p>
-                {[
-                  'No longer accepting applications',
-                  'Position already filled / closed',
-                  'Listing seems outdated',
-                  'Incorrect or misleading info',
-                  'Broken apply link',
-                ].map((reason) => (
-                  <button
-                    key={reason}
-                    type="button"
-                    onClick={async () => {
-                      setReported(true);
-                      setReportOpen(false);
-                      try {
-                        await jobsService.submitJobReport({
-                          job_id: job.id,
-                          job_title: job.title,
-                          company_name: job.company_name,
-                          reason,
-                        });
-                        toast.info(`Feedback sent to admin: "${reason}". Thank you!`);
-                      } catch {
-                        toast.info(`Feedback noted: "${reason}". Thank you!`);
-                      }
-                    }}
-                    className="w-full text-left px-3.5 py-2.5 text-xs text-[#343A40] dark:text-[#D1D5DB] hover:bg-[#F8F9FA] dark:hover:bg-[#242424] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
-                  >
-                    {reason}
-                  </button>
-                ))}
+            {reported ? (
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-rose-500 border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 cursor-default select-none"
+                title="You have already reported this listing"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Reported</span>
               </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setReportOpen((o) => !o)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer text-[#868E96] border-[#E9ECEF] dark:border-[#2A2A2A] hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-900/50 bg-transparent hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                  title="Report this listing"
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Report</span>
+                </button>
+
+                {/* Report dropdown */}
+                {reportOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <p className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider text-[#868E96] border-b border-[#E9ECEF] dark:border-[#2A2A2A]">
+                      Report this listing
+                    </p>
+                    {[
+                      'No longer accepting applications',
+                      'Position already filled / closed',
+                      'Listing seems outdated',
+                      'Incorrect or misleading info',
+                      'Broken apply link',
+                    ].map((reason) => (
+                      <button
+                        key={reason}
+                        type="button"
+                        onClick={async () => {
+                          setReported(true);
+                          setReportOpen(false);
+                          try {
+                            await jobsService.submitJobReport({
+                              job_id: job.id,
+                              job_title: job.title,
+                              company_name: job.company_name,
+                              reason,
+                            });
+                            toast.success(`Feedback sent to admin: "${reason}". Thank you!`);
+                          } catch (err: any) {
+                            toast.info(err?.message || `Feedback noted: "${reason}". Thank you!`);
+                          }
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-[#343A40] dark:text-[#D1D5DB] hover:bg-[#F8F9FA] dark:hover:bg-[#242424] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
+                      >
+                        {reason}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 

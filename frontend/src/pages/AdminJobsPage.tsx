@@ -937,7 +937,9 @@ export default function AdminJobsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
-                      {filteredReports.map((report, index) => (
+                      {filteredReports.map((report, index) => {
+                        const targetJob = listingsById.get(report.job_id);
+                        return (
                         <tr
                           key={report.id}
                           className={`transition-colors hover:bg-[#F8F9FA] dark:hover:bg-[#1A1A1A] ${
@@ -967,22 +969,85 @@ export default function AdminJobsPage() {
                             </span>
                           </td>
 
-                          {/* Target listing */}
+                          {/* Target listing - Click to identify & inspect */}
                           <td className="px-4 py-3">
-                            <div className="font-semibold text-[#121417] dark:text-white max-w-[240px] truncate">
-                              {report.job_title}
-                            </div>
-                            <div className="text-[#868E96] text-[11px]">{report.company_name}</div>
-                            {listingsById.get(report.job_id)?.apply_url && (
-                              <a
-                                href={listingsById.get(report.job_id)!.apply_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:underline mt-0.5"
-                              >
-                                <span>Verify apply link</span>
-                                <ExternalLink className="w-2.5 h-2.5" />
-                              </a>
+                            {targetJob ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => setModalJob(targetJob)}
+                                    className="font-bold text-xs text-[#121417] dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline text-left max-w-[260px] truncate cursor-pointer transition-colors"
+                                    title="Click to view and edit full listing details"
+                                  >
+                                    {targetJob.title}
+                                  </button>
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                      targetJob.is_active
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700'
+                                    }`}
+                                  >
+                                    {targetJob.is_active ? 'Live' : 'Deactivated'}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-[#868E96] text-[11px] flex-wrap">
+                                  <span className="font-medium text-[#495057] dark:text-[#AAAAAA]">{targetJob.company_name}</span>
+                                  <span>•</span>
+                                  <span>{targetJob.location}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => setModalJob(targetJob)}
+                                    className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                                    title="Open modal to inspect and edit this job"
+                                  >
+                                    <Edit3 className="w-2.5 h-2.5" />
+                                    <span>Inspect Listing</span>
+                                  </button>
+
+                                  {targetJob.apply_url && (
+                                    <>
+                                      <span className="text-[#868E96] text-[10px]">•</span>
+                                      <a
+                                        href={targetJob.apply_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-[10px] text-zinc-600 dark:text-zinc-400 hover:text-blue-500 hover:underline"
+                                        title="Open the external apply URL in a new tab"
+                                      >
+                                        <span>Verify Apply Link</span>
+                                        <ExternalLink className="w-2.5 h-2.5" />
+                                      </a>
+                                    </>
+                                  )}
+
+                                  <span className="text-[#868E96] text-[10px]">•</span>
+                                  <a
+                                    href={`/jobs?jobId=${targetJob.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[10px] text-zinc-500 hover:text-[#121417] dark:hover:text-white"
+                                    title="Open on the public Jobs Board"
+                                  >
+                                    <span>View on Board</span>
+                                  </a>
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="font-semibold text-[#121417] dark:text-white max-w-[240px] truncate">
+                                  {report.job_title}
+                                </div>
+                                <div className="text-[#868E96] text-[11px]">{report.company_name}</div>
+                                <span className="inline-block mt-0.5 text-[10px] text-amber-600 dark:text-amber-400 italic">
+                                  (Listing was removed or deleted)
+                                </span>
+                              </div>
                             )}
                           </td>
 
@@ -1024,6 +1089,16 @@ export default function AdminJobsPage() {
                           {/* Actions */}
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {targetJob && (
+                                <button
+                                  type="button"
+                                  onClick={() => setModalJob(targetJob)}
+                                  title="Inspect & Edit listing details"
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all cursor-pointer"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              )}
                               {report.status === 'OPEN' && (
                                 <>
                                   <button
@@ -1066,7 +1141,8 @@ export default function AdminJobsPage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      );
+                    })}
                     </tbody>
                   </table>
                 </div>

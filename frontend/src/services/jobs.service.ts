@@ -118,9 +118,34 @@ export const jobsService = {
     return (data ?? []).length;
   },
 
-  // ─── Job Reports & Community Moderation ───────────────────────────────────
+  // ─── Job Reports & Community Moderation (Spam-Proof) ─────────────────────
 
-  /** Submit a user report for a job listing (public / candidate). */
+  /** Check if this client/user has already reported a given job */
+  hasReportedJob(jobId: string): boolean {
+    try {
+      const raw = localStorage.getItem('mockfolder_reported_job_ids');
+      const set: string[] = raw ? JSON.parse(raw) : [];
+      return set.includes(jobId);
+    } catch {
+      return false;
+    }
+  },
+
+  /** Mark a job as reported locally so client cannot submit duplicate reports */
+  markJobReported(jobId: string): void {
+    try {
+      const raw = localStorage.getItem('mockfolder_reported_job_ids');
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(jobId)) {
+        list.push(jobId);
+        localStorage.setItem('mockfolder_reported_job_ids', JSON.stringify(list));
+      }
+    } catch (e) {
+      console.warn('[jobsService.markJobReported] Local storage write notice:', e);
+    }
+  },
+
+  /** Submit a user report for a job listing (public / candidate, single-report enforced). */
   async submitJobReport(data: {
     job_id: string;
     job_title: string;
@@ -128,6 +153,10 @@ export const jobsService = {
     reason: string;
     details?: string;
   }): Promise<JobReport> {
+    if (this.hasReportedJob(data.job_id)) {
+      throw new Error('You have already submitted a report for this job listing.');
+    }
+
     const reportId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('rep_' + Date.now());
     const nowIso = new Date().toISOString();
 
@@ -161,6 +190,9 @@ export const jobsService = {
       console.error('[jobsService.submitJobReport] Supabase insert error:', error.message);
       throw error;
     }
+
+    // Persist to prevent multiple reports from this client
+    this.markJobReported(data.job_id);
 
     return reportObj;
   },
