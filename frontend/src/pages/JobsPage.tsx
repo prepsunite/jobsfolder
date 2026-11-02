@@ -5,7 +5,7 @@ import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Code, Check, Building2, GraduationCap, ArrowRight,
-  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe
+  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe, Sparkles
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
@@ -84,6 +84,206 @@ function expMatchesFilter(min: number, max: number | null | undefined, level: Jo
   return true;
 }
 
+// ─── Location & Geographic Intelligence ──────────────────────────────────────
+
+const LOCATION_SYNONYMS: Record<string, string[]> = {
+  haryana: ['gurgaon', 'gurugram', 'faridabad', 'panchkula', 'manesar', 'sonipat', 'rohtak', 'karnal', 'haryana', 'ncr', 'delhi ncr'],
+  gurgaon: ['gurgaon', 'gurugram', 'haryana', 'ncr', 'delhi ncr', 'manesar'],
+  gurugram: ['gurgaon', 'gurugram', 'haryana', 'ncr', 'delhi ncr', 'manesar'],
+  manesar: ['manesar', 'gurgaon', 'gurugram', 'haryana', 'ncr'],
+  faridabad: ['faridabad', 'haryana', 'ncr', 'delhi ncr'],
+  panchkula: ['panchkula', 'haryana', 'chandigarh'],
+
+  delhi: ['delhi', 'new delhi', 'ncr', 'delhi ncr', 'noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad'],
+  'new delhi': ['delhi', 'new delhi', 'ncr', 'delhi ncr'],
+  ncr: ['delhi', 'new delhi', 'noida', 'greater noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad', 'haryana', 'uttar pradesh'],
+  'delhi ncr': ['delhi', 'new delhi', 'noida', 'greater noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad', 'haryana', 'uttar pradesh'],
+
+  noida: ['noida', 'greater noida', 'uttar pradesh', 'up', 'ncr', 'delhi ncr', 'ghaziabad'],
+  'greater noida': ['noida', 'greater noida', 'uttar pradesh', 'up', 'ncr', 'delhi ncr'],
+  'uttar pradesh': ['noida', 'greater noida', 'lucknow', 'kanpur', 'ghaziabad', 'varanasi', 'agra', 'up'],
+  up: ['noida', 'greater noida', 'lucknow', 'kanpur', 'ghaziabad', 'uttar pradesh'],
+  lucknow: ['lucknow', 'uttar pradesh', 'up'],
+  kanpur: ['kanpur', 'uttar pradesh', 'up'],
+  ghaziabad: ['ghaziabad', 'noida', 'delhi', 'ncr', 'uttar pradesh'],
+
+  karnataka: ['bengaluru', 'bangalore', 'mysore', 'mysuru', 'hubli', 'mangalore', 'mangaluru', 'karnataka', 'blr'],
+  bengaluru: ['bengaluru', 'bangalore', 'karnataka', 'blr'],
+  bangalore: ['bengaluru', 'bangalore', 'karnataka', 'blr'],
+  blr: ['bengaluru', 'bangalore', 'karnataka'],
+  mysore: ['mysore', 'mysuru', 'karnataka'],
+
+  maharashtra: ['mumbai', 'pune', 'navi mumbai', 'thane', 'nagpur', 'nashik', 'maharashtra', 'mh'],
+  mumbai: ['mumbai', 'navi mumbai', 'thane', 'maharashtra', 'bombay'],
+  'navi mumbai': ['mumbai', 'navi mumbai', 'thane', 'maharashtra'],
+  thane: ['mumbai', 'navi mumbai', 'thane', 'maharashtra'],
+  pune: ['pune', 'hinjewadi', 'maharashtra'],
+  nagpur: ['nagpur', 'maharashtra'],
+
+  telangana: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd'],
+  hyderabad: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd'],
+  secunderabad: ['hyderabad', 'secunderabad', 'telangana'],
+  cyberabad: ['hyderabad', 'cyberabad', 'telangana'],
+  hyd: ['hyderabad', 'secunderabad', 'telangana'],
+
+  'tamil nadu': ['chennai', 'coimbatore', 'madurai', 'trichy', 'tamil nadu', 'tn'],
+  tn: ['chennai', 'coimbatore', 'tamil nadu'],
+  chennai: ['chennai', 'tamil nadu', 'tn', 'madras'],
+  coimbatore: ['coimbatore', 'tamil nadu', 'tn'],
+
+  'west bengal': ['kolkata', 'calcutta', 'howrah', 'west bengal', 'wb'],
+  wb: ['kolkata', 'west bengal'],
+  kolkata: ['kolkata', 'calcutta', 'howrah', 'west bengal'],
+
+  gujarat: ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'baroda', 'gift city', 'gujarat'],
+  ahmedabad: ['ahmedabad', 'gandhinagar', 'gujarat'],
+  gandhinagar: ['ahmedabad', 'gandhinagar', 'gift city', 'gujarat'],
+
+  kerala: ['kochi', 'cochin', 'thiruvananthapuram', 'trivandrum', 'kozhikode', 'calicut', 'kerala'],
+  kochi: ['kochi', 'cochin', 'kerala'],
+  trivandrum: ['thiruvananthapuram', 'trivandrum', 'kerala'],
+
+  rajasthan: ['jaipur', 'jodhpur', 'udaipur', 'rajasthan'],
+  jaipur: ['jaipur', 'rajasthan'],
+
+  punjab: ['mohali', 'chandigarh', 'ludhiana', 'amritsar', 'punjab'],
+  chandigarh: ['chandigarh', 'mohali', 'panchkula', 'punjab', 'haryana'],
+  mohali: ['mohali', 'chandigarh', 'punjab'],
+
+  remote: ['remote', 'work from home', 'wfh', 'pan-india', 'pan india', 'anywhere', 'virtual'],
+  wfh: ['remote', 'work from home', 'wfh', 'pan-india', 'anywhere'],
+  'work from home': ['remote', 'work from home', 'wfh', 'pan-india'],
+};
+
+function locationMatches(jobLocation: string | undefined | null, query: string): boolean {
+  if (!query || !query.trim()) return true;
+  if (!jobLocation) return false;
+
+  const locNorm = jobLocation.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const qNorm = query.toLowerCase().trim().replace(/[^a-z0-9\s]/g, ' ');
+
+  // 1. Direct substring match
+  if (locNorm.includes(qNorm) || qNorm.includes(locNorm.trim())) {
+    return true;
+  }
+
+  // 2. Tokenized match (e.g. "gurgaon haryana" or "bangalore karnataka")
+  const qTokens = qNorm.split(/\s+/).filter(Boolean);
+  if (qTokens.length === 0) return true;
+
+  const locTokens = locNorm.split(/\s+/).filter(Boolean);
+
+  // Every token in query must be satisfied either directly or via region mappings
+  return qTokens.every((token) => {
+    // Direct match
+    if (locNorm.includes(token)) return true;
+
+    // Check query token's mapped regions
+    const mapped = LOCATION_SYNONYMS[token];
+    if (mapped && mapped.some((m) => locNorm.includes(m))) {
+      return true;
+    }
+
+    // Check if any word in the job location maps back to this query token
+    for (const locWord of locTokens) {
+      const locMapped = LOCATION_SYNONYMS[locWord];
+      if (locMapped && locMapped.includes(token)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+}
+
+// ─── Skill & Multi-Field Search Intelligence ──────────────────────────────────
+
+const SKILL_SYNONYMS: Record<string, string[]> = {
+  python: ['python', 'py', 'django', 'fastapi', 'flask', 'pandas', 'numpy', 'pytorch'],
+  py: ['python', 'py'],
+  javascript: ['javascript', 'js', 'node', 'nodejs', 'react', 'typescript'],
+  js: ['javascript', 'js', 'node', 'nodejs', 'react'],
+  typescript: ['typescript', 'ts'],
+  ts: ['typescript', 'ts'],
+  cpp: ['c++', 'cpp'],
+  'c++': ['c++', 'cpp'],
+  csharp: ['c#', 'csharp', '.net', 'dotnet'],
+  'c#': ['c#', 'csharp', '.net', 'dotnet'],
+  java: ['java', 'spring', 'springboot', 'spring boot', 'hibernate', 'jvm'],
+  react: ['react', 'reactjs', 'nextjs', 'next.js', 'frontend'],
+  reactjs: ['react', 'reactjs', 'nextjs'],
+  angular: ['angular', 'angularjs'],
+  vue: ['vue', 'vuejs'],
+  node: ['node', 'nodejs', 'express', 'nestjs', 'backend'],
+  nodejs: ['node', 'nodejs', 'express', 'nestjs'],
+  sql: ['sql', 'mysql', 'postgresql', 'postgres', 'oracle', 'database', 'rdbms'],
+  nosql: ['nosql', 'mongodb', 'mongo', 'dynamodb', 'redis', 'cassandra'],
+  mongo: ['mongodb', 'mongo', 'nosql'],
+  mongodb: ['mongodb', 'mongo', 'nosql'],
+  aws: ['aws', 'amazon web services', 'cloud', 'ec2', 's3', 'lambda'],
+  cloud: ['cloud', 'aws', 'azure', 'gcp', 'google cloud', 'devops'],
+  azure: ['azure', 'microsoft azure', 'cloud'],
+  gcp: ['gcp', 'google cloud', 'cloud'],
+  devops: ['devops', 'ci/cd', 'docker', 'kubernetes', 'k8s', 'terraform', 'jenkins'],
+  docker: ['docker', 'container', 'kubernetes', 'k8s'],
+  kubernetes: ['kubernetes', 'k8s', 'docker'],
+  ai: ['ai', 'artificial intelligence', 'ml', 'machine learning', 'llm', 'genai', 'nlp'],
+  ml: ['machine learning', 'ml', 'deep learning', 'data science', 'ai'],
+  data: ['data', 'data science', 'data analytics', 'data engineer', 'analyst', 'sql', 'python'],
+  qa: ['qa', 'quality assurance', 'testing', 'tester', 'automation', 'selenium', 'cypress', 'playwright', 'manual testing'],
+  sde: ['sde', 'software engineer', 'software development engineer', 'developer', 'programmer'],
+  frontend: ['frontend', 'front-end', 'ui', 'ux', 'web developer', 'react', 'vue', 'angular', 'javascript'],
+  backend: ['backend', 'back-end', 'server', 'api', 'microservices', 'node', 'java', 'golang', 'python', 'spring'],
+  fullstack: ['fullstack', 'full-stack', 'full stack', 'mern', 'mean'],
+  dsa: ['dsa', 'data structures', 'algorithms', 'problem solving', 'leetcode'],
+  fresher: ['fresher', 'freshers', 'entry level', 'graduate', '0-1', 'intern', 'trainee', 'campus'],
+};
+
+function jobMatchesSearch(job: JobListing, query: string): boolean {
+  if (!query || !query.trim()) return true;
+
+  const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ') : '';
+  const corpus = [
+    job.title,
+    job.company_name,
+    job.location,
+    job.stipend_or_salary || '',
+    tagsStr,
+    job.description || '',
+    job.type === 'JOB' ? 'full-time full time job' : 'internship intern',
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  const q = query.toLowerCase().trim();
+
+  // If entire query matches in corpus directly
+  if (corpus.includes(q)) return true;
+
+  // Tokenized search
+  const tokens = q.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return true;
+
+  return tokens.every((token) => {
+    // Direct token substring
+    if (corpus.includes(token)) return true;
+
+    // Check skill synonyms
+    const skillSyns = SKILL_SYNONYMS[token];
+    if (skillSyns && skillSyns.some((syn) => corpus.includes(syn))) {
+      return true;
+    }
+
+    // Check location synonyms (in case user searches location inside the main search bar)
+    const locSyns = LOCATION_SYNONYMS[token];
+    if (locSyns && locSyns.some((syn) => corpus.includes(syn))) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function JobCardSkeleton() {
@@ -145,7 +345,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
         'bg-white dark:bg-[#141414] text-[#121417] dark:text-white'
       } ${
         isSelected
-          ? 'border-2 border-emerald-500 dark:border-emerald-500 bg-emerald-50/15 dark:bg-emerald-950/20 shadow-sm'
+          ? 'border-2 border-[#FD4A32] dark:border-[#FD4A32] bg-[#FD4A32]/[0.03] dark:bg-[#FD4A32]/[0.06] shadow-md shadow-[#FD4A32]/5'
           : 'border border-[#E9ECEF] dark:border-[#242424] hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-md'
       }`}
     >
@@ -400,7 +600,7 @@ function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
               key={idx}
               className="flex items-center gap-2 pt-4 border-t border-[#E9ECEF] dark:border-[#242424] first:pt-0 first:border-0"
             >
-              <span className="w-1.5 h-4 bg-emerald-500 rounded-full shrink-0" />
+              <span className="w-1.5 h-4 bg-[#FD4A32] rounded-full shrink-0" />
               <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#121417] dark:text-white">
                 {block.title}
               </h4>
@@ -416,7 +616,7 @@ function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
                   key={itemIdx}
                   className="flex items-start gap-2.5 text-xs sm:text-[13px] text-[#343A40] dark:text-[#D1D5DB] leading-relaxed"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mt-2 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32] mt-2 shrink-0" />
                   <span className="flex-1">{item}</span>
                 </li>
               ))}
@@ -630,7 +830,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
               <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block mb-1">
                 Compensation
               </span>
-              <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+              <p className="text-sm font-extrabold text-[#FD4A32]">
                 {job.stipend_or_salary || 'Competitive'}
               </p>
             </div>
@@ -676,12 +876,16 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
         {/* MockFolder Placement Preparation Callout */}
         <div className="p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424] relative overflow-hidden shadow-xs">
+          {/* Top highlight accent stripe in MockFolder orange */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FD4A32] via-[#FF7A00] to-[#FD4A32]" />
+
           <div className="flex items-start gap-3.5 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 border border-[#FD4A32]/20 flex items-center justify-center shrink-0">
               <GraduationCap className="w-5 h-5 stroke-[2.2] text-[#FD4A32]" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/20 mb-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/20 mb-1">
+                <Sparkles className="w-3 h-3" />
                 MockFolder Placement Suite
               </div>
               <h4 className="text-base sm:text-lg font-black text-[#121417] dark:text-white leading-tight">
@@ -697,7 +901,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4">
             <Link
               to="/aptitude"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
                 <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
@@ -712,7 +916,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
             <Link
               to="/technical"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
                 <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
@@ -727,7 +931,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
             <Link
               to="/experiences"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
                 <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
@@ -787,6 +991,17 @@ const SORT_OPTIONS: { label: string; value: JobSortOption }[] = [
   { label: 'Recommended', value: 'RECOMMENDED' },
   { label: 'Newest Added', value: 'NEWEST' },
   { label: 'Closing Soonest', value: 'CLOSING_SOON' },
+];
+
+const POPULAR_LOCATIONS = [
+  { label: '🌐 Remote', value: 'Remote' },
+  { label: 'Bengaluru', value: 'Bengaluru' },
+  { label: 'Gurgaon / Haryana', value: 'Haryana' },
+  { label: 'Delhi NCR', value: 'Delhi NCR' },
+  { label: 'Hyderabad', value: 'Hyderabad' },
+  { label: 'Pune', value: 'Pune' },
+  { label: 'Mumbai', value: 'Mumbai' },
+  { label: 'Noida', value: 'Noida' },
 ];
 
 export default function JobsPage() {
@@ -875,19 +1090,14 @@ export default function JobsPage() {
       // Type filter
       if (filters.type && filters.type !== 'ALL' && job.type !== filters.type) return false;
 
-      // Search filter
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        const inTitle = job.title.toLowerCase().includes(q);
-        const inCompany = job.company_name.toLowerCase().includes(q);
-        const inTags = Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(q));
-        if (!inTitle && !inCompany && !inTags) return false;
+      // Search filter (searches title, company, skills/tags, description, salary with synonyms)
+      if (filters.search && !jobMatchesSearch(job, filters.search)) {
+        return false;
       }
 
-      // Location filter
-      if (filters.location) {
-        const loc = filters.location.toLowerCase();
-        if (!job.location.toLowerCase().includes(loc)) return false;
+      // Location filter (searches city, state, regions like Gurgaon <-> Haryana, NCR, Bengaluru <-> Karnataka with bidirectional synonyms)
+      if (filters.location && !locationMatches(job.location, filters.location)) {
+        return false;
       }
 
       // Work Mode filter
@@ -1060,6 +1270,37 @@ export default function JobsPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── Popular Tech Hubs Quick Chips ── */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
+        <span className="text-[11px] font-bold text-[#868E96] shrink-0 mr-1 flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-[#FD4A32]" />
+          Top Hubs:
+        </span>
+        {POPULAR_LOCATIONS.map((loc) => {
+          const isSelected = filters.location?.toLowerCase().trim() === loc.value.toLowerCase().trim();
+          return (
+            <button
+              key={loc.value}
+              type="button"
+              onClick={() => {
+                setFilters((f) => ({
+                  ...f,
+                  location: isSelected ? '' : loc.value,
+                }));
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                isSelected
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs font-bold'
+                  : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400 dark:hover:border-zinc-600'
+              }`}
+            >
+              {loc.label}
+              {isSelected && <X className="inline-block w-3 h-3 ml-1 stroke-[2.5]" />}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Tier 2: Horizontal Filter Ribbon (Pills, Dropdowns, Toggles) ── */}
