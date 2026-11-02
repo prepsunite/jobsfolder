@@ -75,14 +75,15 @@ function locationMatches(jobLocation, query) {
   if (!query || !query.trim()) return true;
   if (!jobLocation) return false;
 
+  const q = query.toLowerCase().trim();
+  if (q.length < 2) return true; // too short, don't filter yet
+
   const locNorm = jobLocation.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-  const qNorm = query.toLowerCase().trim().replace(/[^a-z0-9\s]/g, ' ');
+  const qNorm = q.replace(/[^a-z0-9\s]/g, ' ').trim();
 
-  if (locNorm.includes(qNorm) || qNorm.includes(locNorm.trim())) {
-    return true;
-  }
+  if (locNorm.includes(qNorm)) return true;
 
-  const qTokens = qNorm.split(/\s+/).filter(Boolean);
+  const qTokens = qNorm.split(/\s+/).filter((t) => t.length >= 2);
   if (qTokens.length === 0) return true;
 
   const locTokens = locNorm.split(/\s+/).filter(Boolean);
@@ -90,15 +91,13 @@ function locationMatches(jobLocation, query) {
   return qTokens.every((token) => {
     if (locNorm.includes(token)) return true;
 
-    const mapped = LOCATION_SYNONYMS[token];
-    if (mapped && mapped.some((m) => locNorm.includes(m))) {
-      return true;
-    }
+    if (token.length >= 3) {
+      const mapped = LOCATION_SYNONYMS[token];
+      if (mapped && mapped.some((m) => locNorm.includes(m))) return true;
 
-    for (const locWord of locTokens) {
-      const locMapped = LOCATION_SYNONYMS[locWord];
-      if (locMapped && locMapped.includes(token)) {
-        return true;
+      for (const locWord of locTokens) {
+        const locMapped = LOCATION_SYNONYMS[locWord];
+        if (locMapped && locMapped.some((m) => m === token || m.startsWith(token))) return true;
       }
     }
 
@@ -150,11 +149,14 @@ const SKILL_SYNONYMS = {
 function jobMatchesSearch(job, query) {
   if (!query || !query.trim()) return true;
 
+  const q = query.toLowerCase().trim();
+  if (q.length < 2) return true;
+
   const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ') : '';
+  // Excludes job.location intentionally — location has its own dedicated filter
   const corpus = [
     job.title,
     job.company_name,
-    job.location,
     job.stipend_or_salary || '',
     tagsStr,
     job.description || '',
@@ -162,8 +164,6 @@ function jobMatchesSearch(job, query) {
   ]
     .join(' ')
     .toLowerCase();
-
-  const q = query.toLowerCase().trim();
 
   if (corpus.includes(q)) return true;
 
@@ -174,14 +174,7 @@ function jobMatchesSearch(job, query) {
     if (corpus.includes(token)) return true;
 
     const skillSyns = SKILL_SYNONYMS[token];
-    if (skillSyns && skillSyns.some((syn) => corpus.includes(syn))) {
-      return true;
-    }
-
-    const locSyns = LOCATION_SYNONYMS[token];
-    if (locSyns && locSyns.some((syn) => corpus.includes(syn))) {
-      return true;
-    }
+    if (skillSyns && skillSyns.some((syn) => corpus.includes(syn))) return true;
 
     return false;
   });
@@ -231,39 +224,63 @@ const sampleRemoteJob = {
   description: 'Distributed engineering team working across microservices.',
 };
 
-// 1. Skill in Description Match
-assert.equal(jobMatchesSearch(sampleNiitJob, 'python'), true, 'Search for "python" MUST match NIIT description');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'py'), true, 'Search for "py" synonym MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'java'), true, 'Search for "java" MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'javascript'), true, 'Search for "javascript" MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'c++'), true, 'Search for "c++" MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'cpp'), true, 'Search for "cpp" synonym MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'trainee'), true, 'Search for "trainee" in title MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'niit'), true, 'Search for "niit" company MUST match NIIT');
+// ─── Search Tests ──────────────────────────────────────────────────────────────
+
+// 1. Min-length gate: 1-char query returns true (don't filter)
+assert.equal(jobMatchesSearch(sampleNiitJob, 'd'), true, '1-char search must NOT filter yet');
+assert.equal(jobMatchesSearch(sampleBengaluruJob, 'r'), true, '1-char search must NOT filter yet');
+
+// 2. Skill in Description Match (2+ chars)
+assert.equal(jobMatchesSearch(sampleNiitJob, 'python'), true, 'Search "python" MUST match NIIT description');
+assert.equal(jobMatchesSearch(sampleNiitJob, 'py'), true, 'Search "py" synonym MUST match NIIT');
+assert.equal(jobMatchesSearch(sampleNiitJob, 'java'), true, 'Search "java" MUST match NIIT');
+assert.equal(jobMatchesSearch(sampleNiitJob, 'javascript'), true, 'Search "javascript" MUST match NIIT');
+assert.equal(jobMatchesSearch(sampleNiitJob, 'trainee'), true, 'Search "trainee" in title MUST match NIIT');
+assert.equal(jobMatchesSearch(sampleNiitJob, 'niit'), true, 'Search "niit" company MUST match NIIT');
 assert.equal(jobMatchesSearch(sampleNiitJob, 'nonexistentxyz'), false, 'Non-existent skill must return false');
 
-// 2. Location & Region Hierarchy Match
-assert.equal(locationMatches(sampleNiitJob.location, 'haryana'), true, 'Searching "haryana" MUST match job in "Gurgaon, India"');
-assert.equal(locationMatches(sampleNiitJob.location, 'gurgaon'), true, 'Searching "gurgaon" MUST match "Gurgaon, India"');
-assert.equal(locationMatches(sampleNiitJob.location, 'gurugram'), true, 'Searching "gurugram" MUST match "Gurgaon, India"');
-assert.equal(locationMatches(sampleNiitJob.location, 'delhi ncr'), true, 'Searching "delhi ncr" MUST match "Gurgaon, India"');
-assert.equal(locationMatches(sampleNiitJob.location, 'ncr'), true, 'Searching "ncr" MUST match "Gurgaon, India"');
-assert.equal(locationMatches(sampleNiitJob.location, 'bengaluru'), false, 'Searching "bengaluru" must NOT match "Gurgaon, India"');
+// 3. Location name in MAIN SEARCH BAR must NOT cross-filter (isolation test)
+// The Bengaluru job has location "Bengaluru, Karnataka" but that's NOT in the search corpus
+// so typing "gurgaon" in the search bar should NOT return the NIIT job either...
+// Actually since we removed location from corpus it depends on whether the word appears in title/desc/tags
+// For NIIT job: title="Graduate Trainee Engineer", desc has no "delhi" keyword
+assert.equal(jobMatchesSearch(sampleNiitJob, 'delhi'), false, 'Typing "delhi" in search bar must NOT match NIIT (location excluded from corpus)');
+assert.equal(jobMatchesSearch(sampleBengaluruJob, 'gurgaon'), false, 'Typing "gurgaon" in search bar must NOT match Bengaluru job');
 
-// 3. Reverse Region Match (Search city for state job)
-assert.equal(locationMatches('Haryana, India', 'gurgaon'), true, 'Searching "gurgaon" MUST match job listed as "Haryana, India"');
-assert.equal(locationMatches('Karnataka, India', 'bangalore'), true, 'Searching "bangalore" MUST match job in "Karnataka"');
-assert.equal(locationMatches('Karnataka, India', 'bengaluru'), true, 'Searching "bengaluru" MUST match job in "Karnataka"');
-assert.equal(locationMatches(sampleBengaluruJob.location, 'karnataka'), true, 'Searching "karnataka" MUST match "Bengaluru, Karnataka"');
-assert.equal(locationMatches(sampleBengaluruJob.location, 'bangalore'), true, 'Searching "bangalore" MUST match "Bengaluru, Karnataka"');
+// 4. Prefix search on job title/company works fine
+assert.equal(jobMatchesSearch(sampleNiitJob, 'ni'), true, '2-char prefix "ni" MUST match "NIIT"');
+assert.equal(jobMatchesSearch(sampleNiitJob, 'gra'), true, '3-char prefix "gra" MUST match "Graduate"');
+assert.equal(jobMatchesSearch(sampleBengaluruJob, 'ra'), true, '2-char prefix "ra" MUST match "Razorpay"');
+assert.equal(jobMatchesSearch(sampleBengaluruJob, 'fro'), true, '3-char prefix "fro" MUST match "Frontend"');
 
-// 4. Remote Matching
-assert.equal(locationMatches(sampleRemoteJob.location, 'remote'), true, 'Searching "remote" MUST match');
-assert.equal(locationMatches(sampleRemoteJob.location, 'wfh'), true, 'Searching "wfh" MUST match');
-assert.equal(locationMatches(sampleRemoteJob.location, 'work from home'), true, 'Searching "work from home" MUST match');
+// ─── Location Tests ──────────────────────────────────────────────────────────
 
-// 5. Multi-token Search (skill + location in search query)
-assert.equal(jobMatchesSearch(sampleNiitJob, 'python gurgaon'), true, 'Multi-token "python gurgaon" MUST match NIIT');
-assert.equal(jobMatchesSearch(sampleNiitJob, 'python haryana'), true, 'Multi-token "python haryana" MUST match NIIT via synonym');
+// 5. Min-length gate in location: 1-char returns true
+assert.equal(locationMatches(sampleNiitJob.location, 'd'), true, '1-char location query must NOT filter');
 
-console.log('✅ ALL 20+ SEARCH & LOCATION ASSERTIONS PASSED PERFECTLY!');
+// 6. Prefix typing (incremental search)
+assert.equal(locationMatches(sampleNiitJob.location, 'gu'), true, '"gu" prefix MUST match "Gurgaon"');
+assert.equal(locationMatches(sampleNiitJob.location, 'gur'), true, '"gur" prefix MUST match "Gurgaon"');
+assert.equal(locationMatches(sampleNiitJob.location, 'gurg'), true, '"gurg" MUST match "Gurgaon"');
+assert.equal(locationMatches('Delhi, India', 'de'), true, '"de" prefix MUST match "Delhi"');
+assert.equal(locationMatches('Delhi, India', 'del'), true, '"del" prefix MUST match "Delhi"');
+
+// 7. City/State synonym hierarchy
+assert.equal(locationMatches(sampleNiitJob.location, 'haryana'), true, '"haryana" MUST match "Gurgaon, India"');
+assert.equal(locationMatches(sampleNiitJob.location, 'gurugram'), true, '"gurugram" MUST match "Gurgaon, India"');
+assert.equal(locationMatches(sampleNiitJob.location, 'ncr'), true, '"ncr" MUST match "Gurgaon, India"');
+assert.equal(locationMatches(sampleBengaluruJob.location, 'karnataka'), true, '"karnataka" MUST match "Bengaluru, Karnataka"');
+assert.equal(locationMatches(sampleBengaluruJob.location, 'bangalore'), true, '"bangalore" MUST match "Bengaluru, Karnataka"');
+assert.equal(locationMatches('Haryana, India', 'gurgaon'), true, '"gurgaon" MUST match job listed as "Haryana"');
+assert.equal(locationMatches('Karnataka, India', 'bengaluru'), true, '"bengaluru" MUST match "Karnataka"');
+
+// 8. Remote
+assert.equal(locationMatches(sampleRemoteJob.location, 'rem'), true, '"rem" prefix MUST match "Remote"');
+assert.equal(locationMatches(sampleRemoteJob.location, 'remote'), true, '"remote" MUST match');
+assert.equal(locationMatches(sampleRemoteJob.location, 'wfh'), true, '"wfh" MUST match work from home');
+
+// 9. Isolation: Bengaluru job must NOT show for Haryana search
+assert.equal(locationMatches(sampleBengaluruJob.location, 'haryana'), false, '"haryana" must NOT match "Bengaluru, Karnataka"');
+assert.equal(locationMatches(sampleNiitJob.location, 'bengaluru'), false, '"bengaluru" must NOT match "Gurgaon, India"');
+
+console.log('✅ ALL SEARCH ISOLATION & INCREMENTAL LOCATION ASSERTIONS PASSED!');

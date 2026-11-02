@@ -159,36 +159,39 @@ function locationMatches(jobLocation: string | undefined | null, query: string):
   if (!query || !query.trim()) return true;
   if (!jobLocation) return false;
 
+  const q = query.toLowerCase().trim();
+
+  // Require at least 2 chars before applying location filter (prevents single-letter noise)
+  if (q.length < 2) return true;
+
   const locNorm = jobLocation.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-  const qNorm = query.toLowerCase().trim().replace(/[^a-z0-9\s]/g, ' ');
+  const qNorm = q.replace(/[^a-z0-9\s]/g, ' ').trim();
 
-  // 1. Direct substring match
-  if (locNorm.includes(qNorm) || qNorm.includes(locNorm.trim())) {
-    return true;
-  }
+  // 1. Direct substring match (handles prefix typing: "del" → "delhi")
+  if (locNorm.includes(qNorm)) return true;
 
-  // 2. Tokenized match (e.g. "gurgaon haryana" or "bangalore karnataka")
-  const qTokens = qNorm.split(/\s+/).filter(Boolean);
+  // 2. Tokenized query match (e.g. "gurgaon haryana" or "bangalore karnataka")
+  const qTokens = qNorm.split(/\s+/).filter((t) => t.length >= 2);
   if (qTokens.length === 0) return true;
 
   const locTokens = locNorm.split(/\s+/).filter(Boolean);
 
   // Every token in query must be satisfied either directly or via region mappings
+  // Synonym lookup only triggers on exact whole-word tokens (≥3 chars), not partial prefixes
   return qTokens.every((token) => {
-    // Direct match
+    // Direct substring match on location (handles prefix typing)
     if (locNorm.includes(token)) return true;
 
-    // Check query token's mapped regions
-    const mapped = LOCATION_SYNONYMS[token];
-    if (mapped && mapped.some((m) => locNorm.includes(m))) {
-      return true;
-    }
+    // Synonym expansion only for complete-enough tokens (≥3 chars) to avoid false positives
+    if (token.length >= 3) {
+      // Check query token's mapped regions
+      const mapped = LOCATION_SYNONYMS[token];
+      if (mapped && mapped.some((m) => locNorm.includes(m))) return true;
 
-    // Check if any word in the job location maps back to this query token
-    for (const locWord of locTokens) {
-      const locMapped = LOCATION_SYNONYMS[locWord];
-      if (locMapped && locMapped.includes(token)) {
-        return true;
+      // Check if any location word's synonym set contains this query token
+      for (const locWord of locTokens) {
+        const locMapped = LOCATION_SYNONYMS[locWord];
+        if (locMapped && locMapped.some((m) => m === token || m.startsWith(token))) return true;
       }
     }
 
@@ -242,11 +245,18 @@ const SKILL_SYNONYMS: Record<string, string[]> = {
 function jobMatchesSearch(job: JobListing, query: string): boolean {
   if (!query || !query.trim()) return true;
 
+  const q = query.toLowerCase().trim();
+
+  // Require at least 2 chars before filtering (avoids noise on first keystroke)
+  if (q.length < 2) return true;
+
   const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ') : '';
+  // ⚠️ Deliberately excludes job.location — location filtering is handled
+  // by the separate location field. Including it here caused location names
+  // typed in the main search bar to return misleading results.
   const corpus = [
     job.title,
     job.company_name,
-    job.location,
     job.stipend_or_salary || '',
     tagsStr,
     job.description || '',
@@ -255,12 +265,10 @@ function jobMatchesSearch(job: JobListing, query: string): boolean {
     .join(' ')
     .toLowerCase();
 
-  const q = query.toLowerCase().trim();
-
   // If entire query matches in corpus directly
   if (corpus.includes(q)) return true;
 
-  // Tokenized search
+  // Tokenized search: every word must match
   const tokens = q.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
 
@@ -268,17 +276,9 @@ function jobMatchesSearch(job: JobListing, query: string): boolean {
     // Direct token substring
     if (corpus.includes(token)) return true;
 
-    // Check skill synonyms
+    // Skill synonym expansion (only for exact-keyword tokens in our dictionary)
     const skillSyns = SKILL_SYNONYMS[token];
-    if (skillSyns && skillSyns.some((syn) => corpus.includes(syn))) {
-      return true;
-    }
-
-    // Check location synonyms (in case user searches location inside the main search bar)
-    const locSyns = LOCATION_SYNONYMS[token];
-    if (locSyns && locSyns.some((syn) => corpus.includes(syn))) {
-      return true;
-    }
+    if (skillSyns && skillSyns.some((syn) => corpus.includes(syn))) return true;
 
     return false;
   });
