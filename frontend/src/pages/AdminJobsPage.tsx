@@ -29,6 +29,29 @@ function isExpiredRow(deadline: string | null | undefined): boolean {
   return new Date(deadline).getTime() < Date.now();
 }
 
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getRelativeTime(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  const now = new Date().getTime();
+  const past = new Date(dateStr).getTime();
+  const diffSec = Math.max(0, Math.floor((now - past) / 1000));
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth}mo ago`;
+  return `${Math.floor(diffMonth / 12)}y ago`;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = Omit<JobListing, 'id' | 'created_at' | 'updated_at'>;
@@ -403,6 +426,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 
 type AdminJobTab = 'LIVE' | 'EXPIRED' | 'DRAFT' | 'ALL';
+type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
 
 export default function AdminJobsPage() {
   const { user, isAdmin } = useAuth();
@@ -417,6 +441,7 @@ export default function AdminJobsPage() {
   const [saving, setSaving] = useState(false);
   const [purging, setPurging] = useState(false);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('NEWEST');
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ['admin_job_listings'],
@@ -463,14 +488,35 @@ export default function AdminJobsPage() {
     }
   }, [activeTab, liveListings, expiredListings, draftListings, listings]);
 
-  // Filter within current pool
+  // Filter and sort within current pool
   const filtered = useMemo(() => {
-    if (!search.trim()) return currentTabPool;
-    const q = search.trim().toLowerCase();
-    return currentTabPool.filter(
-      (j) => j.title.toLowerCase().includes(q) || j.company_name.toLowerCase().includes(q)
-    );
-  }, [currentTabPool, search]);
+    let list = currentTabPool;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (j) => j.title.toLowerCase().includes(q) || j.company_name.toLowerCase().includes(q)
+      );
+    }
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'OLDEST') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      if (sortBy === 'DEADLINE') {
+        if (!a.deadline && !b.deadline) return 0;
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      }
+      if (sortBy === 'PRIORITY') {
+        if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+        if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      // Default: NEWEST
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [currentTabPool, search, sortBy]);
 
   // Guard: If not an admin, render NotFoundPage so unauthorized users cannot even inspect the UI
   if (!isEffectiveAdmin) {
@@ -498,16 +544,16 @@ export default function AdminJobsPage() {
 
   const handleDelete = async (job: JobListing) => {
     const confirmed = await confirmModal({
-      title: 'Delete Listing',
-      message: `Delete "${job.title}" at ${job.company_name}? This cannot be undone.`,
-      confirmText: 'Delete',
+      title: 'Terminate Job Listing',
+      message: `Are you sure you want to terminate and delete "${job.title}" at ${job.company_name}? This will remove it from all student views immediately.`,
+      confirmText: 'Terminate Listing',
       cancelText: 'Cancel',
       isDanger: true,
     });
     if (!confirmed) return;
     try {
       await jobsService.deleteListing(job.id);
-      toast.success('Listing deleted.');
+      toast.success('Listing terminated successfully.');
       invalidate();
     } catch (err: any) {
       toast.error(err?.message || 'Delete failed.');
@@ -648,9 +694,9 @@ export default function AdminJobsPage() {
               </button>
             </div>
 
-            {/* Actions: Search + Purge button */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:w-60">
+            {/* Actions: Search + Sort + Purge button */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 sm:w-60 min-w-[180px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
                 <input
                   type="text"
@@ -659,6 +705,27 @@ export default function AdminJobsPage() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors"
                 />
+              </div>
+
+              {/* Sort Selector */}
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="admin-jobs-sort" className="text-[11px] font-semibold text-[#868E96] whitespace-nowrap hidden md:inline">
+                  Sort:
+                </label>
+                <div className="relative">
+                  <select
+                    id="admin-jobs-sort"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortBy)}
+                    className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-[#555] cursor-pointer"
+                  >
+                    <option value="NEWEST">Newest First</option>
+                    <option value="OLDEST">Oldest First (Check Expiry)</option>
+                    <option value="DEADLINE">By Deadline</option>
+                    <option value="PRIORITY">Featured / Priority</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
+                </div>
               </div>
 
               {activeTab === 'EXPIRED' && expiredListings.length > 0 && (
@@ -711,9 +778,11 @@ export default function AdminJobsPage() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
+                      <th className="w-14 px-3 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">S.No</th>
                       <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Type</th>
                       <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Title / Company</th>
                       <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Location</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Posted</th>
                       <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Deadline</th>
                       <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Active</th>
                       <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Featured</th>
@@ -721,7 +790,7 @@ export default function AdminJobsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
-                    {filtered.map((job) => {
+                    {filtered.map((job, index) => {
                       const dl = getDeadlineMeta(job.deadline);
                       const expired = isExpiredRow(job.deadline);
                       return (
@@ -731,6 +800,13 @@ export default function AdminJobsPage() {
                             expired ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''
                           }`}
                         >
+                          {/* S.No */}
+                          <td className="w-14 px-3 py-3 text-center whitespace-nowrap">
+                            <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-md text-[11px] font-mono font-bold bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+                              {index + 1}
+                            </span>
+                          </td>
+
                           {/* Type */}
                           <td className="px-4 py-3 whitespace-nowrap">
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
@@ -754,6 +830,18 @@ export default function AdminJobsPage() {
                               <MapPin className="w-3 h-3 shrink-0 text-[#868E96]" />
                               {job.location}
                             </div>
+                          </td>
+
+                          {/* Posted date & relative time */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="text-[11px] font-medium text-[#121417] dark:text-white">
+                              {formatDate(job.created_at)}
+                            </div>
+                            {getRelativeTime(job.created_at) && (
+                              <div className="text-[10px] text-[#868E96]">
+                                {getRelativeTime(job.created_at)}
+                              </div>
+                            )}
                           </td>
 
                           {/* Deadline */}
@@ -808,7 +896,7 @@ export default function AdminJobsPage() {
                               <button
                                 type="button"
                                 onClick={() => setModalJob(job)}
-                                title="Edit"
+                                title="Edit listing details"
                                 className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
@@ -816,8 +904,8 @@ export default function AdminJobsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDelete(job)}
-                                title="Delete"
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-red-600 hover:border-red-300 transition-all"
+                                title="Terminate / Delete listing"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-rose-500/70 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
