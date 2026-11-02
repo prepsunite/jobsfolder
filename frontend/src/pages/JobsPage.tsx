@@ -5,7 +5,7 @@ import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Code, Check, Building2, GraduationCap, ArrowRight,
-  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe, Sparkles
+  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
@@ -928,12 +928,11 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
         {/* MockFolder Placement Preparation Callout */}
         <div className="p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424] relative overflow-hidden shadow-xs">
           <div className="flex items-start gap-3.5 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0">
-              <GraduationCap className="w-5 h-5 stroke-[2] text-[#121417] dark:text-white" />
+            <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 border border-[#FD4A32]/20 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 stroke-[2.2] text-[#FD4A32]" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#495057] dark:text-[#AAAAAA] bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] mb-1">
-                <Sparkles className="w-3 h-3 text-[#868E96]" />
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/20 mb-1">
                 MockFolder Placement Suite
               </div>
               <h4 className="text-base sm:text-lg font-black text-[#121417] dark:text-white leading-tight">
@@ -949,47 +948,47 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4">
             <Link
               to="/aptitude"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:bg-[#F8F9FA] dark:hover:bg-[#202020] hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#121417] dark:group-hover:text-white transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
                   Practice Aptitude
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Topic MCQs &amp; OA Tests
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#121417] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
 
             <Link
               to="/technical"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:bg-[#F8F9FA] dark:hover:bg-[#202020] hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#121417] dark:group-hover:text-white transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
                   Coding Workspace
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Compiler &amp; DSA Bank
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#121417] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
 
             <Link
               to="/experiences"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:bg-[#F8F9FA] dark:hover:bg-[#202020] hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32]/40 dark:hover:border-[#FD4A32]/40 hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#121417] dark:group-hover:text-white transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
                   Interview Archive
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Real Drive Insights
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#121417] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
           </div>
         </div>
