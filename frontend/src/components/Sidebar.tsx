@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { tpoService } from '@/services/tpo.service';
 import {
   Building2,
   BookOpen,
@@ -36,7 +39,22 @@ import {
   Database,
   PanelLeftClose,
   PanelLeftOpen,
+  Sparkles,
 } from 'lucide-react';
+
+function getInitials(name?: string | null, email?: string | null): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.trim().slice(0, 2).toUpperCase();
+  }
+  if (email && email.trim()) {
+    return email.trim().slice(0, 2).toUpperCase();
+  }
+  return 'U';
+}
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -88,6 +106,74 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
   const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(() => location.pathname.startsWith('/technical'));
   const [isInterviewExpanded, setIsInterviewExpanded] = useState(() => location.pathname.startsWith('/interview-prep'));
 
+  // ChatGPT-style Bottom Profile Menu State
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isProfileMenuOpen]);
+
+  // Close profile menu when navigating
+  useEffect(() => {
+    setIsProfileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Live Subscription & Pass Info for User Subtitle
+  const { data: subData } = useQuery({
+    queryKey: ['profile-user-subscription', user?.email, user?.collegeId],
+    queryFn: async () => {
+      if (!user?.email) return { isPro: false, planName: 'Free' };
+      const cleanEmail = user.email.trim().toLowerCase();
+      try {
+        const liveInfo = await tpoService.verifyStudentEntitlementLive(cleanEmail);
+        if (liveInfo?.isEntitled) {
+          return {
+            isPro: true,
+            planName: liveInfo.collegeName ? 'Campus Pro' : 'Campus Pro Pass',
+          };
+        }
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_email', cleanEmail)
+          .eq('status', 'ACTIVE')
+          .gt('expires_at', new Date().toISOString())
+          .not('payment_id', 'ilike', 'B2B_CAMPUS_%')
+          .order('expires_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          return { isPro: true, planName: data.plan_name || 'Pro Pass' };
+        }
+      } catch {}
+      return { isPro: false, planName: 'Free' };
+    },
+    enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const planSubtitle = isAdmin
+    ? 'Administrator'
+    : (role === 'TPO_ADMIN' || isTpoAdmin)
+    ? user?.collegeName ? `${user.collegeName} (TPO)` : 'TPO Coordinator'
+    : subData?.isPro
+    ? (subData.planName || 'Pro Pass')
+    : 'Free';
+
   // Automatically expand corresponding category when route changes
   useEffect(() => {
     if (location.pathname.startsWith('/aptitude')) setIsAptitudeExpanded(true);
@@ -104,7 +190,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'College Settings', href: '/tpo/settings', icon: Settings },
   ];
 
-  // Consumer Student Navigation
+  // Consumer Student Navigation (Pricing & Passes now lives in the ChatGPT-style Profile Menu)
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Mock Exams', href: '/student/exams', icon: GraduationCap, badge: isAdmin ? 'STUDIO' : 'CRT' },
@@ -112,7 +198,6 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
     { name: 'Exam Papers', href: '/questions', icon: BookOpen },
     { name: 'Experiences', href: '/experiences', icon: Layers },
     { name: 'Jobs & Internships', href: '/jobs', icon: Briefcase },
-    { name: 'Pricing & Passes', href: '/pricing', icon: Zap },
   ];
 
   const aptitudeCategories = [
@@ -972,7 +1057,122 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
         </div>
 
         {/* Bottom User Account Section */}
-        <div className={`border-t border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] ${isCollapsed ? 'p-2' : 'p-3'}`}>
+        <div ref={profileMenuRef} className={`relative border-t border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          {/* ChatGPT-style Profile Popover Menu */}
+          {isProfileMenuOpen && (
+            <div
+              className={`absolute z-50 animate-in fade-in zoom-in-95 duration-150 ${
+                isCollapsed
+                  ? 'bottom-2 left-full ml-3 w-64'
+                  : 'bottom-full mb-2 left-2 right-2 w-[calc(100%-1rem)]'
+              } rounded-2xl border border-[#E9ECEF] dark:border-[#2C2C2C] bg-white dark:bg-[#1E1E1E] text-[#121417] dark:text-[#E3E3E3] shadow-2xl p-1.5`}
+            >
+              {/* Header: User Profile preview row */}
+              <Link
+                to="/profile"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-[#2A2A2A] transition-colors group cursor-pointer"
+              >
+                <div
+                  className={`w-9 h-9 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
+                    isAdmin
+                      ? 'bg-purple-600 dark:bg-purple-400'
+                      : (role === 'TPO_ADMIN' || isTpoAdmin)
+                      ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
+                      : 'bg-[#FD4A32]'
+                  }`}
+                >
+                  {getInitials(user?.name, user?.email)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="font-semibold text-xs text-[#121417] dark:text-white block truncate">
+                    {user?.name || 'Workspace Account'}
+                  </span>
+                  <span className="text-[10px] text-neutral-500 dark:text-neutral-400 block truncate">
+                    {user?.email || 'Personal account'}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+
+              <div className="border-t border-[#E9ECEF] dark:border-[#2C2C2C] my-1" />
+
+              {/* Pricing & Passes */}
+              <Link
+                to="/pricing"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#2A2A2A] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
+              >
+                <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className="flex-1">Pricing &amp; Passes</span>
+                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  {subData?.isPro ? 'Pro' : 'Passes'}
+                </span>
+              </Link>
+
+              {/* Profile */}
+              <Link
+                to="/profile"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#2A2A2A] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
+              >
+                <User className="w-4 h-4 text-[#747878] dark:text-[#A6ADBB] shrink-0" />
+                <span>Profile</span>
+              </Link>
+
+              {/* Settings */}
+              <Link
+                to="/profile"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#2A2A2A] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
+              >
+                <Settings className="w-4 h-4 text-[#747878] dark:text-[#A6ADBB] shrink-0" />
+                <span>Settings</span>
+              </Link>
+
+              <div className="border-t border-[#E9ECEF] dark:border-[#2C2C2C] my-1" />
+
+              {/* Help */}
+              <Link
+                to="/contact"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#2A2A2A] transition-colors text-[#121417] dark:text-[#E3E3E3] group cursor-pointer"
+              >
+                <HelpCircle className="w-4 h-4 text-[#747878] dark:text-[#A6ADBB] shrink-0" />
+                <span className="flex-1">Help</span>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+
+              {/* Log out */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer text-left"
+              >
+                <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>Log out</span>
+              </button>
+            </div>
+          )}
+
           {isCollapsed ? (
             <div className="flex flex-col items-center gap-2">
               {role === 'GUEST' ? (
@@ -985,35 +1185,20 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   <User className="w-4 h-4" />
                 </Link>
               ) : (
-                <>
-                  <Link
-                    to="/profile"
-                    onClick={onClose}
-                    title={user?.name || user?.email || 'Profile'}
-                    className={`w-9 h-9 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs hover:opacity-90 transition-opacity ${
-                      isAdmin
-                        ? 'bg-purple-600 dark:bg-purple-400'
-                        : (role === 'TPO_ADMIN' || isTpoAdmin)
-                        ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
-                        : 'bg-[#FD4A32]'
-                    }`}
-                  >
-                    {isAdmin ? (
-                      <KeyRound className="w-4 h-4" />
-                    ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
-                      <Building2 className="w-4 h-4" />
-                    ) : (
-                      <User className="w-4 h-4" />
-                    )}
-                  </Link>
-                  <button
-                    onClick={logout}
-                    title="Sign Out"
-                    className="p-1.5 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                  title={user?.name || user?.email || 'Account Menu'}
+                  className={`w-9 h-9 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer ${
+                    isAdmin
+                      ? 'bg-purple-600 dark:bg-purple-400'
+                      : (role === 'TPO_ADMIN' || isTpoAdmin)
+                      ? 'bg-gradient-to-tr from-[#FD4A32] to-[#FF7A00]'
+                      : 'bg-[#FD4A32]'
+                  }`}
+                >
+                  {getInitials(user?.name, user?.email)}
+                </button>
               )}
 
               {/* Bottom Expand Toggle in Collapsed Mode */}
@@ -1042,10 +1227,18 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               ) : (
-                <div className="flex items-center justify-between p-2 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] w-full">
-                  <Link to="/profile" onClick={onClose} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                  className={`flex items-center justify-between p-2 rounded-xl transition-all w-full text-left cursor-pointer border ${
+                    isProfileMenuOpen
+                      ? 'bg-neutral-100 dark:bg-[#1E1E1E] border-neutral-300 dark:border-[#383838]'
+                      : 'bg-[#F8F9FA] dark:bg-[#0C0C0C] hover:bg-neutral-100 dark:hover:bg-[#161616] border-[#E9ECEF] dark:border-[#242424]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div
-                      className={`w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
+                      className={`w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
                         isAdmin
                           ? 'bg-purple-600 dark:bg-purple-400'
                           : (role === 'TPO_ADMIN' || isTpoAdmin)
@@ -1053,35 +1246,19 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                           : 'bg-[#FD4A32]'
                       }`}
                     >
-                      {isAdmin ? (
-                        <KeyRound className="w-3.5 h-3.5" />
-                      ) : (role === 'TPO_ADMIN' || isTpoAdmin) ? (
-                        <Building2 className="w-3.5 h-3.5" />
-                      ) : (
-                        <User className="w-3.5 h-3.5" />
-                      )}
+                      {getInitials(user?.name, user?.email)}
                     </div>
                     <div className="min-w-0">
                       <span className="font-bold text-xs text-[#121417] dark:text-[#FFFFFF] block truncate">
                         {user?.name || 'Workspace Account'}
                       </span>
                       <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400 block truncate">
-                        {isAdmin
-                          ? 'Administrator'
-                          : (role === 'TPO_ADMIN' || isTpoAdmin)
-                          ? user?.collegeName ? `${user.collegeName} (TPO)` : 'TPO Coordinator'
-                          : (user?.email || 'Active Account')}
+                        {planSubtitle}
                       </span>
                     </div>
-                  </Link>
-                  <button
-                    onClick={logout}
-                    title="Sign Out"
-                    className="p-1 text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors shrink-0 cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                  </div>
+                  <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
               )}
 
               {/* Bottom Collapse Button in Expanded Mode */}
