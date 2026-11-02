@@ -140,7 +140,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
           else onSelect(job);
         }
       }}
-      className={`group relative rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer select-none text-left flex flex-col justify-between ${
+      className={`group relative rounded-2xl p-4 sm:p-5 transition-[border-color,box-shadow] duration-150 cursor-pointer select-none text-left flex flex-col justify-between ${
         // Clean high-contrast card background matching Prepunite style
         'bg-white dark:bg-[#141414] text-[#121417] dark:text-white'
       } ${
@@ -462,8 +462,8 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl shadow-xl overflow-hidden">
-      {/* Sticky Header Top Bar */}
-      <div className="shrink-0 px-6 py-4 bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3 z-10">
+      {/* Sticky Header Top Bar (Solid background to eliminate GPU backdrop-blur scroll lag) */}
+      <div className="shrink-0 px-6 py-4 bg-white dark:bg-[#141414] border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3 z-10">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -514,10 +514,10 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
         </div>
       </div>
 
-      {/* Scrollable Content Body (Generous bottom padding so cards never get cut off) */}
+      {/* Scrollable Content Body (Hardware-accelerated on GPU compositor layer) */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto p-6 pb-20 space-y-6 custom-scrollbar"
+        className="flex-1 min-h-0 overflow-y-auto p-6 pb-20 space-y-6 custom-scrollbar transform-gpu [will-change:scroll-position]"
       >
         {/* Company & Role Hero */}
         <div className="flex items-start gap-4">
@@ -795,11 +795,6 @@ export default function JobsPage() {
 
   const handleSelectJob = useCallback((job: JobListing) => {
     setSelectedJobId(job.id);
-    if (window.innerWidth >= 1024) {
-      setTimeout(() => {
-        splitContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
-    }
   }, []);
 
   // Sync Bookmarks from local & remote store
@@ -1145,14 +1140,14 @@ export default function JobsPage() {
             )}
           </div>
         ) : (
-          <div ref={splitContainerRef} className={`transition-all scroll-mt-6 ${selectedJob ? 'lg:flex lg:gap-6 items-start' : ''}`}>
+          <div ref={splitContainerRef} className={`scroll-mt-4 ${selectedJob ? 'lg:flex lg:gap-6 items-start' : ''}`}>
             {/* Left Column: Job Cards List */}
             <div
-              className={`transition-all ${
+              className={
                 selectedJob
-                  ? 'lg:w-[42%] xl:w-[38%] space-y-3.5 lg:h-[calc(100vh-5rem)] min-h-[580px] overflow-y-auto pr-2 custom-scrollbar'
+                  ? 'lg:w-[42%] xl:w-[38%] space-y-3.5 lg:h-[calc(100vh-2.5rem)] min-h-[580px] overflow-y-auto pr-2 custom-scrollbar transform-gpu [will-change:scroll-position]'
                   : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'
-              }`}
+              }
             >
               {filtered.map((job) => (
                 <JobCard
@@ -1169,7 +1164,7 @@ export default function JobsPage() {
 
             {/* Right Column: Desktop Detail Pane (Independent scroll, Closable) */}
             {selectedJob && (
-              <div className="hidden lg:block lg:w-[58%] xl:w-[62%] lg:h-[calc(100vh-5rem)] min-h-[580px] sticky top-4">
+              <div className="hidden lg:block lg:w-[58%] xl:w-[62%] lg:h-[calc(100vh-2.5rem)] min-h-[580px] sticky top-4">
                 <JobDetailPane
                   job={selectedJob}
                   onClose={() => setSelectedJobId(null)}
