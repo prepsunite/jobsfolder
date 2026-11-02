@@ -4,7 +4,7 @@ import { useSearchParams, Link } from 'react-router';
 import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
-  Share2, Sparkles, Code, Check, Building2, GraduationCap, ArrowRight,
+  Share2, Code, Check, Building2, GraduationCap, ArrowRight,
   CheckCircle2, Flame, Award, Eye, AlertCircle
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
@@ -258,7 +258,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
               e.stopPropagation();
               onClose();
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-400 dark:border-rose-900/60 transition-all shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-400 dark:border-rose-900/60 transition-all shadow-2xs cursor-pointer"
             title="Close details"
           >
             <X className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -271,9 +271,8 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
               e.stopPropagation();
               onSelect(job);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#F8F9FA] dark:bg-[#1E1E1E] hover:bg-[#121417] hover:text-white dark:hover:bg-white dark:hover:text-[#121417] text-[#121417] dark:text-white transition-all border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs group-hover:border-zinc-400"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#F8F9FA] dark:bg-[#1E1E1E] hover:bg-[#121417] hover:text-white dark:hover:bg-white dark:hover:text-[#121417] text-[#121417] dark:text-white transition-all border border-[#E9ECEF] dark:border-[#2A2A2A] shadow-2xs group-hover:border-zinc-400 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
             <span>View Details</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
@@ -449,9 +448,17 @@ interface JobDetailPaneProps {
 }
 
 function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }: JobDetailPaneProps) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
   const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
+
+  // Reset inner scroll whenever a different job is selected
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [job.id]);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl shadow-xl overflow-hidden">
@@ -507,8 +514,11 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
         </div>
       </div>
 
-      {/* Scrollable Content Body with overscroll-contain */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 overscroll-contain">
+      {/* Scrollable Content Body (Generous bottom padding so cards never get cut off) */}
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto p-6 pb-20 space-y-6 custom-scrollbar"
+      >
         {/* Company & Role Hero */}
         <div className="flex items-start gap-4">
           <div className="relative w-16 h-16 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
@@ -665,44 +675,78 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
         </div>
 
         {/* PrepUnite Placement Preparation Callout */}
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 dark:border-emerald-500/30">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-xs">
-              <GraduationCap className="w-5 h-5" />
+        <div className="p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#181818] border border-[#E9ECEF] dark:border-[#2A2A2A] relative overflow-hidden shadow-sm">
+          {/* Subtle accent gradient bar on top */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500" />
+
+          <div className="flex items-start gap-3.5 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 stroke-[2.2]" />
             </div>
-            <div className="flex-1">
-              <h4 className="text-sm font-extrabold text-[#121417] dark:text-white">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 mb-1">
+                PrepUnite Placement Suite
+              </div>
+              <h4 className="text-base sm:text-lg font-black text-[#121417] dark:text-white leading-tight">
                 Preparing for {job.company_name}?
               </h4>
-              <p className="text-xs text-[#495057] dark:text-[#A0AEC0] mt-1">
-                Boost your interview selection chances by practicing simulated company mock tests and topic-wise aptitude questions on PrepUnite.
-              </p>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <Link
-                  to="/aptitude"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors shadow-2xs"
-                >
-                  <span>Practice Aptitude</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-                <Link
-                  to="/technical"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors shadow-2xs"
-                >
-                  <span>Coding Workspace</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-                <Link
-                  to="/experiences"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors shadow-2xs"
-                >
-                  <span>Interview Archive</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
             </div>
           </div>
+
+          <p className="text-xs sm:text-[13px] text-[#495057] dark:text-[#A0AEC0] leading-relaxed">
+            Boost your interview selection chances by practicing simulated company mock tests and topic-wise aptitude questions on PrepUnite.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4">
+            <Link
+              to="/aptitude"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-xs transition-all group"
+            >
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  Practice Aptitude
+                </span>
+                <span className="text-[10px] text-[#868E96] block truncate">
+                  Topic MCQs &amp; OA Tests
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+            </Link>
+
+            <Link
+              to="/technical"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-xs transition-all group"
+            >
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  Coding Workspace
+                </span>
+                <span className="text-[10px] text-[#868E96] block truncate">
+                  Compiler &amp; DSA Bank
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+            </Link>
+
+            <Link
+              to="/experiences"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-xs transition-all group"
+            >
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  Interview Archive
+                </span>
+                <span className="text-[10px] text-[#868E96] block truncate">
+                  Real Drive Insights
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-purple-600 dark:group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+            </Link>
+          </div>
         </div>
+
+        {/* Generous bottom spacer to ensure card never hugs or gets clipped by container bounds */}
+        <div className="h-6" aria-hidden="true" />
       </div>
     </div>
   );
@@ -747,6 +791,16 @@ export default function JobsPage() {
   const [savedOnly, setSavedOnly] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(() => searchParams.get('jobId'));
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => new Set(bookmarkStore.getBookmarkedJobIds()));
+  const splitContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const handleSelectJob = useCallback((job: JobListing) => {
+    setSelectedJobId(job.id);
+    if (window.innerWidth >= 1024) {
+      setTimeout(() => {
+        splitContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }, []);
 
   // Sync Bookmarks from local & remote store
   useEffect(() => {
@@ -1091,12 +1145,12 @@ export default function JobsPage() {
             )}
           </div>
         ) : (
-          <div className={`transition-all ${selectedJob ? 'lg:flex lg:gap-6 items-start' : ''}`}>
+          <div ref={splitContainerRef} className={`transition-all scroll-mt-6 ${selectedJob ? 'lg:flex lg:gap-6 items-start' : ''}`}>
             {/* Left Column: Job Cards List */}
             <div
               className={`transition-all ${
                 selectedJob
-                  ? 'lg:w-[42%] xl:w-[38%] space-y-3.5 h-[calc(100vh-220px)] min-h-[580px] overflow-y-auto pr-2 overscroll-contain custom-scrollbar'
+                  ? 'lg:w-[42%] xl:w-[38%] space-y-3.5 lg:h-[calc(100vh-5rem)] min-h-[580px] overflow-y-auto pr-2 custom-scrollbar'
                   : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'
               }`}
             >
@@ -1105,7 +1159,7 @@ export default function JobsPage() {
                   key={job.id}
                   job={job}
                   isSelected={selectedJob?.id === job.id}
-                  onSelect={(j) => setSelectedJobId(j.id)}
+                  onSelect={handleSelectJob}
                   onClose={() => setSelectedJobId(null)}
                   isBookmarked={bookmarkedIds.has(job.id)}
                   onToggleBookmark={(e) => toggleBookmark(job.id, e)}
@@ -1115,7 +1169,7 @@ export default function JobsPage() {
 
             {/* Right Column: Desktop Detail Pane (Independent scroll, Closable) */}
             {selectedJob && (
-              <div className="hidden lg:block lg:w-[58%] xl:w-[62%] h-[calc(100vh-220px)] min-h-[580px] sticky top-4">
+              <div className="hidden lg:block lg:w-[58%] xl:w-[62%] lg:h-[calc(100vh-5rem)] min-h-[580px] sticky top-4">
                 <JobDetailPane
                   job={selectedJob}
                   onClose={() => setSelectedJobId(null)}
