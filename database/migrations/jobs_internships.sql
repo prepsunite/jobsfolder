@@ -66,9 +66,6 @@ CREATE POLICY "Admins select all job listings"
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
-              'venkat.mukala9@gmail.com',
-              'venkatmukala3@gmail.com',
-              'venkat.mukala3@gmail.com',
               'prepsunite@gmail.com'
             )
           )
@@ -90,9 +87,6 @@ CREATE POLICY "Admins insert job listings"
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
-              'venkat.mukala9@gmail.com',
-              'venkatmukala3@gmail.com',
-              'venkat.mukala3@gmail.com',
               'prepsunite@gmail.com'
             )
           )
@@ -114,9 +108,6 @@ CREATE POLICY "Admins update job listings"
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
-              'venkat.mukala9@gmail.com',
-              'venkatmukala3@gmail.com',
-              'venkat.mukala3@gmail.com',
               'prepsunite@gmail.com'
             )
           )
@@ -134,9 +125,6 @@ CREATE POLICY "Admins update job listings"
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
-              'venkat.mukala9@gmail.com',
-              'venkatmukala3@gmail.com',
-              'venkat.mukala3@gmail.com',
               'prepsunite@gmail.com'
             )
           )
@@ -158,9 +146,6 @@ CREATE POLICY "Admins delete job listings"
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
-              'venkat.mukala9@gmail.com',
-              'venkatmukala3@gmail.com',
-              'venkat.mukala3@gmail.com',
               'prepsunite@gmail.com'
             )
           )

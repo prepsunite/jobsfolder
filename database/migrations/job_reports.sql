@@ -53,9 +53,6 @@ CREATE POLICY "Admins manage job reports"
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
-              'venkat.mukala9@gmail.com',
-              'venkatmukala3@gmail.com',
-              'venkat.mukala3@gmail.com',
               'prepsunite@gmail.com'
             )
           )
