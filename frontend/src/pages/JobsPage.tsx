@@ -345,7 +345,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
         'bg-white dark:bg-[#141414] text-[#121417] dark:text-white'
       } ${
         isSelected
-          ? 'border-2 border-[#FD4A32] dark:border-[#FD4A32] bg-[#FD4A32]/[0.03] dark:bg-[#FD4A32]/[0.06] shadow-md shadow-[#FD4A32]/5'
+          ? 'border-2 border-[#121417] dark:border-white bg-[#F8F9FA] dark:bg-[#1A1A1A] shadow-md'
           : 'border border-[#E9ECEF] dark:border-[#242424] hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-md'
       }`}
     >
@@ -402,7 +402,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
                   <MapPin className="w-3.5 h-3.5 shrink-0 text-[#868E96]" />
                   <span className="truncate">{job.location}</span>
                 </div>
-                <div className="flex items-center gap-0.5 font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                <div className="flex items-center gap-0.5 font-bold text-[#121417] dark:text-white shrink-0">
                   <span className="font-semibold text-xs">₹</span>
                   <span>{job.stipend_or_salary || 'Competitive'}</span>
                 </div>
@@ -600,7 +600,7 @@ function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
               key={idx}
               className="flex items-center gap-2 pt-4 border-t border-[#E9ECEF] dark:border-[#242424] first:pt-0 first:border-0"
             >
-              <span className="w-1.5 h-4 bg-[#FD4A32] rounded-full shrink-0" />
+              <span className="w-1.5 h-4 bg-zinc-700 dark:bg-zinc-300 rounded-full shrink-0" />
               <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#121417] dark:text-white">
                 {block.title}
               </h4>
@@ -616,7 +616,7 @@ function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
                   key={itemIdx}
                   className="flex items-start gap-2.5 text-xs sm:text-[13px] text-[#343A40] dark:text-[#D1D5DB] leading-relaxed"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FD4A32] mt-2 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600 mt-2 shrink-0" />
                   <span className="flex-1">{item}</span>
                 </li>
               ))}
@@ -648,10 +648,13 @@ interface JobDetailPaneProps {
 }
 
 function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }: JobDetailPaneProps) {
+  const { toast } = useToast();
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
+  const [reportOpen, setReportOpen] = React.useState(false);
+  const [reported, setReported] = React.useState(false);
 
   // Reset inner scroll whenever a different job is selected
   React.useEffect(() => {
@@ -662,54 +665,102 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl shadow-xl overflow-hidden">
-      {/* Sticky Header Top Bar (Solid background to eliminate GPU backdrop-blur scroll lag) */}
-      <div className="shrink-0 px-6 py-4 bg-white dark:bg-[#141414] border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3 z-10">
+      {/* Sticky Header Top Bar */}
+      <div className="shrink-0 px-5 py-3.5 bg-white dark:bg-[#141414] border-b border-[#E9ECEF] dark:border-[#242424] flex items-center justify-between gap-3 z-10">
+        {/* Left: deadline badge only (no fake "active" status) */}
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            Active Opportunity
-          </span>
-          {deadline && (
-            <span className={`ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${deadline.color}`}>
+          {deadline ? (
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${deadline.color}`}>
               {deadline.label}
+            </span>
+          ) : (
+            <span className="text-[11px] text-[#868E96]">
+              {relativeTime ? `Posted ${relativeTime}` : 'Job Listing'}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* Share Button */}
+        {/* Right: Report · Share · Bookmark · Close */}
+        <div className="flex items-center gap-1">
+          {/* Report button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setReportOpen((o) => !o)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
+                reported
+                  ? 'text-rose-500 border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20'
+                  : 'text-[#868E96] border-[#E9ECEF] dark:border-[#2A2A2A] hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-900/50 bg-transparent hover:bg-rose-50 dark:hover:bg-rose-950/20'
+              }`}
+              title="Report this listing"
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>{reported ? 'Reported' : 'Report'}</span>
+            </button>
+
+            {/* Report dropdown */}
+            {reportOpen && !reported && (
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <p className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider text-[#868E96] border-b border-[#E9ECEF] dark:border-[#2A2A2A]">
+                  Report this listing
+                </p>
+                {[
+                  'No longer accepting applications',
+                  'Position already filled / closed',
+                  'Listing seems outdated',
+                  'Incorrect or misleading info',
+                  'Broken apply link',
+                ].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => {
+                      setReported(true);
+                      setReportOpen(false);
+                      toast.info(`Feedback noted: "${reason}". Thank you!`);
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 text-xs text-[#343A40] dark:text-[#D1D5DB] hover:bg-[#F8F9FA] dark:hover:bg-[#242424] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Share */}
           <button
             type="button"
             onClick={onShare}
-            className="p-2 rounded-xl text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:bg-[#F1F3F5] dark:hover:bg-[#202020] transition-colors"
+            className="p-2 rounded-xl text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-[#F1F3F5] dark:hover:bg-[#202020] transition-colors"
             title="Share this listing"
           >
             <Share2 className="w-4 h-4" />
           </button>
 
-          {/* Bookmark Button */}
+          {/* Bookmark */}
           <button
             type="button"
             onClick={onToggleBookmark}
             className={`p-2 rounded-xl transition-colors ${
               isBookmarked
                 ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
-                : 'text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:bg-[#F1F3F5] dark:hover:bg-[#202020]'
+                : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-[#F1F3F5] dark:hover:bg-[#202020]'
             }`}
             title={isBookmarked ? 'Saved to bookmarks' : 'Save job'}
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
 
-          {/* Prominent CLOSE BUTTON (X) */}
+          {/* Close */}
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-[#222222] dark:hover:bg-[#2E2E2E] text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-all shadow-xs"
+            className="p-2 rounded-xl bg-[#F1F3F5] hover:bg-[#E9ECEF] dark:bg-[#222222] dark:hover:bg-[#2E2E2E] text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white transition-all"
             title="Close details (Esc)"
             aria-label="Close details"
           >
-            <X className="w-5 h-5 stroke-[2.5]" />
+            <X className="w-4.5 h-4.5 stroke-[2]" />
           </button>
         </div>
       </div>
@@ -738,7 +789,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
             <div className={`w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black ${job.company_logo_url ? 'hidden' : ''}`}>
               <Code className="w-8 h-8 text-[#0EA5E9] stroke-[2.5]" />
             </div>
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#22C55E] rounded-full ring-2 ring-white dark:ring-[#141414]" />
+            {/* Removed fake "online" green dot — we cannot verify listing status */}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -748,7 +799,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
               </h2>
             </div>
             <p className="text-sm font-bold text-[#495057] dark:text-[#BBBBBB] mt-1 flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Building2 className="w-4 h-4 text-[#868E96]" />
               <span>{job.company_name}</span>
               <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -757,19 +808,19 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
             <div className="flex items-center gap-3 text-xs text-[#868E96] dark:text-[#999999] mt-2 flex-wrap">
               <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                <MapPin className="w-3.5 h-3.5" />
                 {job.location}
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <Briefcase className="w-3.5 h-3.5 text-blue-500" />
+                <Briefcase className="w-3.5 h-3.5" />
                 {job.type === 'JOB' ? 'Full-Time Role' : 'Internship'}
               </span>
               {relativeTime && (
                 <>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    <Clock className="w-3.5 h-3.5" />
                     Posted {relativeTime}
                   </span>
                 </>
@@ -784,7 +835,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
             href={job.apply_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-extrabold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-md group"
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-extrabold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#2A2A2A] dark:hover:bg-[#F1F3F5] transition-all shadow-sm group"
           >
             <span>Apply on Official Website</span>
             <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -796,7 +847,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
             className={`flex items-center gap-1.5 py-3 px-4 rounded-xl text-xs font-bold border transition-all ${
               isBookmarked
                 ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                : 'bg-white dark:bg-[#222222] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#333333] hover:border-black dark:hover:border-white'
+                : 'bg-white dark:bg-[#222222] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#333333] hover:border-[#121417] dark:hover:border-white'
             }`}
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
@@ -830,7 +881,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
               <span className="text-[10px] font-bold text-[#868E96] uppercase tracking-wider block mb-1">
                 Compensation
               </span>
-              <p className="text-sm font-extrabold text-[#FD4A32]">
+              <p className="text-sm font-extrabold text-[#121417] dark:text-white">
                 {job.stipend_or_salary || 'Competitive'}
               </p>
             </div>
@@ -876,16 +927,13 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 
         {/* MockFolder Placement Preparation Callout */}
         <div className="p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424] relative overflow-hidden shadow-xs">
-          {/* Top highlight accent stripe in MockFolder orange */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FD4A32] via-[#FF7A00] to-[#FD4A32]" />
-
           <div className="flex items-start gap-3.5 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 border border-[#FD4A32]/20 flex items-center justify-center shrink-0">
-              <GraduationCap className="w-5 h-5 stroke-[2.2] text-[#FD4A32]" />
+            <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 stroke-[2] text-[#121417] dark:text-white" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/20 mb-1">
-                <Sparkles className="w-3 h-3" />
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-[#495057] dark:text-[#AAAAAA] bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] mb-1">
+                <Sparkles className="w-3 h-3 text-[#868E96]" />
                 MockFolder Placement Suite
               </div>
               <h4 className="text-base sm:text-lg font-black text-[#121417] dark:text-white leading-tight">
@@ -901,47 +949,47 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4">
             <Link
               to="/aptitude"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:bg-[#F8F9FA] dark:hover:bg-[#202020] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#121417] dark:group-hover:text-white transition-colors">
                   Practice Aptitude
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Topic MCQs &amp; OA Tests
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#121417] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
 
             <Link
               to="/technical"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:bg-[#F8F9FA] dark:hover:bg-[#202020] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#121417] dark:group-hover:text-white transition-colors">
                   Coding Workspace
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Compiler &amp; DSA Bank
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#121417] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
 
             <Link
               to="/experiences"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#FD4A32] dark:hover:border-[#FD4A32] hover:bg-[#FD4A32]/[0.02] hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:bg-[#F8F9FA] dark:hover:bg-[#202020] hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#121417] dark:group-hover:text-white transition-colors">
                   Interview Archive
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Real Drive Insights
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#121417] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
           </div>
         </div>
@@ -1204,7 +1252,7 @@ export default function JobsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-1">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 shadow-2xs">
-            <Briefcase className="w-5 h-5 text-[#FD4A32] stroke-[2.2]" />
+            <Briefcase className="w-5 h-5 text-[#121417] dark:text-white stroke-[2.2]" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
@@ -1216,10 +1264,9 @@ export default function JobsPage() {
           </div>
         </div>
 
-        {/* Live opportunity counter badge */}
+        {/* Opportunity counter badge */}
         <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[#868E96]">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{listings.length} live opportunities</span>
+          <span>{listings.length} opportunities</span>
         </div>
       </div>
 
@@ -1275,7 +1322,7 @@ export default function JobsPage() {
       {/* ── Popular Tech Hubs Quick Chips ── */}
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
         <span className="text-[11px] font-bold text-[#868E96] shrink-0 mr-1 flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-[#FD4A32]" />
+          <MapPin className="w-3 h-3 text-[#868E96]" />
           Top Hubs:
         </span>
         {POPULAR_LOCATIONS.map((loc) => {
@@ -1412,7 +1459,7 @@ export default function JobsPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#FD4A32] hover:bg-[#FD4A32]/10 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -1462,7 +1509,7 @@ export default function JobsPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-sm"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-sm"
             >
               Retry Connection
             </button>
@@ -1484,7 +1531,7 @@ export default function JobsPage() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-sm"
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-sm"
               >
                 Reset All Filters
               </button>
