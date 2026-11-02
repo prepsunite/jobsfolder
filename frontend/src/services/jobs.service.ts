@@ -128,34 +128,41 @@ export const jobsService = {
     reason: string;
     details?: string;
   }): Promise<JobReport> {
-    const { data: created, error } = await supabase
+    const reportId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('rep_' + Date.now());
+    const nowIso = new Date().toISOString();
+
+    const reportObj: JobReport = {
+      id: reportId,
+      job_id: data.job_id,
+      job_title: data.job_title,
+      company_name: data.company_name,
+      reason: data.reason,
+      details: data.details || null,
+      status: 'OPEN',
+      created_at: nowIso,
+    };
+
+    // Note: Do not chain .select() here. Public candidates have INSERT permissions,
+    // but not SELECT permissions on public.job_reports (admin only).
+    // Pure .insert() succeeds without triggering a RETURNING RLS check.
+    const { error } = await supabase
       .from('job_reports')
       .insert({
+        id: reportId,
         job_id: data.job_id,
         job_title: data.job_title,
         company_name: data.company_name,
         reason: data.reason,
         details: data.details || null,
         status: 'OPEN',
-      })
-      .select()
-      .single();
+      });
 
     if (error) {
-      console.warn('[jobsService.submitJobReport] Supabase insert note:', error.message);
-      // Fallback object so applicant UI doesn't crash if migration is pending
-      return {
-        id: 'rep_' + Date.now(),
-        job_id: data.job_id,
-        job_title: data.job_title,
-        company_name: data.company_name,
-        reason: data.reason,
-        details: data.details || null,
-        status: 'OPEN',
-        created_at: new Date().toISOString(),
-      };
+      console.error('[jobsService.submitJobReport] Supabase insert error:', error.message);
+      throw error;
     }
-    return created as JobReport;
+
+    return reportObj;
   },
 
   /** Fetch all job reports (admin). */

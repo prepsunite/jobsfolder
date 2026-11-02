@@ -1050,17 +1050,6 @@ const SORT_OPTIONS: { label: string; value: JobSortOption }[] = [
   { label: 'Closing Soonest', value: 'CLOSING_SOON' },
 ];
 
-const POPULAR_LOCATIONS = [
-  { label: '🌐 Remote', value: 'Remote' },
-  { label: 'Bengaluru', value: 'Bengaluru' },
-  { label: 'Gurgaon / Haryana', value: 'Haryana' },
-  { label: 'Delhi NCR', value: 'Delhi NCR' },
-  { label: 'Hyderabad', value: 'Hyderabad' },
-  { label: 'Pune', value: 'Pune' },
-  { label: 'Mumbai', value: 'Mumbai' },
-  { label: 'Noida', value: 'Noida' },
-];
-
 export default function JobsPage() {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1257,25 +1246,18 @@ export default function JobsPage() {
 
   return (
     <div className="space-y-4 animate-fadeIn pb-8">
-      {/* ── Page Header: Sleek & Focused ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-1">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 shadow-2xs">
-            <Briefcase className="w-5 h-5 text-[#121417] dark:text-white stroke-[2.2]" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
-              Jobs &amp; Internships
-            </h1>
-            <p className="text-xs text-[#868E96] mt-0.5">
-              Verified campus &amp; off-campus opportunities curated for students
-            </p>
-          </div>
+      {/* ── Page Header: Sleek & Clean ── */}
+      <div className="flex items-center gap-3 mb-1">
+        <div className="w-9 h-9 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0">
+          <Briefcase className="w-4 h-4 text-[#121417] dark:text-white stroke-[2.2]" />
         </div>
-
-        {/* Opportunity counter badge */}
-        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[#868E96]">
-          <span>{listings.length} opportunities</span>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+            Jobs &amp; Internships
+          </h1>
+          <p className="text-xs text-[#868E96] mt-0.5">
+            Verified campus &amp; off-campus opportunities curated for students
+          </p>
         </div>
       </div>
 
@@ -1328,43 +1310,12 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* ── Popular Tech Hubs Quick Chips ── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
-        <span className="text-[11px] font-bold text-[#868E96] shrink-0 mr-1 flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-[#868E96]" />
-          Top Hubs:
-        </span>
-        {POPULAR_LOCATIONS.map((loc) => {
-          const isSelected = filters.location?.toLowerCase().trim() === loc.value.toLowerCase().trim();
-          return (
-            <button
-              key={loc.value}
-              type="button"
-              onClick={() => {
-                setFilters((f) => ({
-                  ...f,
-                  location: isSelected ? '' : loc.value,
-                }));
-              }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border ${
-                isSelected
-                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs font-bold'
-                  : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400 dark:hover:border-zinc-600'
-              }`}
-            >
-              {loc.label}
-              {isSelected && <X className="inline-block w-3 h-3 ml-1 stroke-[2.5]" />}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Tier 2: Horizontal Filter Ribbon (Pills, Dropdowns, Toggles) ── */}
-      <div className="flex items-center justify-between gap-2.5 mb-4 flex-wrap">
-        {/* Left Side: Type segment + Dropdowns + Quick Chips */}
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* ── Tier 2: Single-Row LinkedIn-Style Filter Bar ── */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 pb-1">
+        {/* Horizontal scrollable pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
           {/* Segmented Type Switcher */}
-          <div className="inline-flex items-center p-1 bg-[#F1F3F5] dark:bg-[#1A1A1A] rounded-xl border border-[#E9ECEF] dark:border-[#2A2A2A]">
+          <div className="inline-flex items-center p-0.5 bg-[#F1F3F5] dark:bg-[#1A1A1A] rounded-xl border border-[#E9ECEF] dark:border-[#2A2A2A] shrink-0">
             {TYPE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -1382,13 +1333,13 @@ export default function JobsPage() {
           </div>
 
           {/* Workplace Mode Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={filters.workMode || 'ALL'}
               onChange={(e) => setFilters((f) => ({ ...f, workMode: e.target.value as WorkModeFilter }))}
-              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                 filters.workMode && filters.workMode !== 'ALL'
-                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs'
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs font-bold'
                   : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
               }`}
             >
@@ -1400,13 +1351,13 @@ export default function JobsPage() {
           </div>
 
           {/* Experience Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={filters.expLevel || 'ANY'}
               onChange={(e) => setFilters((f) => ({ ...f, expLevel: e.target.value as JobListingFilters['expLevel'] }))}
-              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                 filters.expLevel && filters.expLevel !== 'ANY'
-                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs'
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs font-bold'
                   : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
               }`}
             >
@@ -1418,13 +1369,13 @@ export default function JobsPage() {
           </div>
 
           {/* Domain / Role Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={filters.tag || 'ALL'}
               onChange={(e) => setFilters((f) => ({ ...f, tag: e.target.value }))}
-              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                 filters.tag && filters.tag !== 'ALL'
-                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs'
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs font-bold'
                   : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
               }`}
             >
@@ -1439,9 +1390,9 @@ export default function JobsPage() {
           <button
             type="button"
             onClick={() => setFilters((f) => ({ ...f, closingSoonOnly: !f.closingSoonOnly }))}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+            className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
               filters.closingSoonOnly
-                ? 'bg-rose-500 text-white border-rose-500 shadow-2xs'
+                ? 'bg-rose-500 text-white border-rose-500 shadow-2xs font-bold'
                 : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-rose-400'
             }`}
           >
@@ -1453,9 +1404,9 @@ export default function JobsPage() {
           <button
             type="button"
             onClick={() => setSavedOnly((s) => !s)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+            className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
               savedOnly
-                ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
+                ? 'bg-amber-500 text-white border-amber-500 shadow-2xs font-bold'
                 : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-amber-400'
             }`}
           >
@@ -1463,12 +1414,12 @@ export default function JobsPage() {
             <span>Saved ({bookmarkedIds.size})</span>
           </button>
 
-          {/* Reset Filters Chip (Visible only when filters active) */}
+          {/* Reset Filters Chip */}
           {hasActiveFilters && (
             <button
               type="button"
               onClick={clearFilters}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
+              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -1477,23 +1428,23 @@ export default function JobsPage() {
         </div>
 
         {/* Right Side: Results Count & Sort Dropdown */}
-        <div className="flex items-center gap-3 ml-auto">
-          <span className="text-xs text-[#868E96] hidden md:inline">
-            <strong className="text-[#121417] dark:text-white font-bold">{filtered.length}</strong> opportunities
+        <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-1 lg:pt-0">
+          <span className="text-xs text-[#868E96]">
+            <strong className="text-[#121417] dark:text-white font-bold">{filtered.length}</strong> {filtered.length === 1 ? 'opportunity' : 'opportunities'}
           </span>
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-[#868E96] whitespace-nowrap">Sort:</span>
+            <span className="text-[11px] font-semibold text-[#868E96] whitespace-nowrap">Sort:</span>
             <div className="relative">
               <select
                 value={filters.sortBy || 'RECOMMENDED'}
                 onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as JobSortOption }))}
-                className="appearance-none pl-3 pr-7 py-1.5 text-xs font-bold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white focus:outline-none cursor-pointer hover:border-zinc-400"
+                className="appearance-none pl-2.5 pr-7 py-1 text-xs font-semibold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white focus:outline-none cursor-pointer hover:border-zinc-400"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
             </div>
           </div>
         </div>

@@ -32,11 +32,7 @@ DROP POLICY IF EXISTS "Admins manage job reports" ON public.job_reports;
 CREATE POLICY "Public insert job reports"
   ON public.job_reports
   FOR INSERT
-  WITH CHECK (
-    char_length(reason) >= 3 AND char_length(reason) <= 500
-    AND char_length(job_title) >= 1
-    AND char_length(company_name) >= 1
-  );
+  WITH CHECK (true);
 
 -- Policy B: Verified admins have full access (SELECT, UPDATE, DELETE)
 CREATE POLICY "Admins manage job reports"
@@ -49,13 +45,18 @@ CREATE POLICY "Admins manage job reports"
         SELECT 1 FROM public.profiles
         WHERE profiles.id = auth.uid()
           AND (
-            LOWER(COALESCE(profiles.role, '')) = 'admin'
+            LOWER(COALESCE(profiles.role, '')) IN ('admin', 'superadmin', 'tpo_admin')
             OR LOWER(COALESCE(profiles.email, '')) IN (
               'mockfolder@gmail.com',
               'venkatmukala9@gmail.com',
               'prepsunite@gmail.com'
             )
           )
+      )
+      OR (auth.jwt() ->> 'email') IN (
+        'mockfolder@gmail.com',
+        'venkatmukala9@gmail.com',
+        'prepsunite@gmail.com'
       )
     )
   );
