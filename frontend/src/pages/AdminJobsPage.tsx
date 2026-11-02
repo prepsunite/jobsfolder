@@ -614,7 +614,19 @@ export default function AdminJobsPage() {
 
   const handleToggleActive = async (job: JobListing) => {
     try {
-      await jobsService.toggleActive(job.id, !job.is_active);
+      const nextActive = !job.is_active;
+      await jobsService.toggleActive(job.id, nextActive);
+      // If deactivating a role that has open reports, auto-resolve all open reports!
+      if (!nextActive && reportsByJobId.has(job.id)) {
+        const closedCount = await jobsService.resolveAllReportsForJob(
+          job.id,
+          'Listing deactivated by admin from listings table'
+        );
+        toast.info(`Listing deactivated and ${closedCount} open report(s) marked resolved.`);
+        invalidateReports();
+      } else {
+        toast.success(nextActive ? 'Listing activated.' : 'Listing deactivated.');
+      }
       invalidate();
     } catch (err: any) {
       toast.error(err?.message || 'Toggle failed.');
@@ -646,6 +658,7 @@ export default function AdminJobsPage() {
       const count = await jobsService.purgeExpiredListings();
       toast.success(`Successfully purged ${count} expired listing(s).`);
       invalidate();
+      invalidateReports();
     } catch (err: any) {
       toast.error(err?.message || 'Purge failed.');
     } finally {
@@ -655,8 +668,15 @@ export default function AdminJobsPage() {
 
   const handleResolveReport = async (report: JobReport) => {
     try {
-      await jobsService.updateJobReportStatus(report.id, 'RESOLVED');
-      toast.success('Report marked as resolved.');
+      const count = await jobsService.resolveAllReportsForJob(
+        report.job_id,
+        'Resolved by admin'
+      );
+      toast.success(
+        count > 1
+          ? `All ${count} open reports for "${report.job_title}" marked as resolved.`
+          : 'Report marked as resolved.'
+      );
       invalidateReports();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to update report.');
@@ -665,8 +685,15 @@ export default function AdminJobsPage() {
 
   const handleDismissReport = async (report: JobReport) => {
     try {
-      await jobsService.updateJobReportStatus(report.id, 'DISMISSED');
-      toast.info('Report dismissed.');
+      const count = await jobsService.dismissAllReportsForJob(
+        report.job_id,
+        'Dismissed by admin (false alarm)'
+      );
+      toast.info(
+        count > 1
+          ? `Dismissed all ${count} reports for "${report.job_title}".`
+          : 'Report dismissed.'
+      );
       invalidateReports();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to dismiss report.');
@@ -676,8 +703,13 @@ export default function AdminJobsPage() {
   const handleDeactivateFromReport = async (report: JobReport) => {
     try {
       await jobsService.toggleActive(report.job_id, false);
-      await jobsService.updateJobReportStatus(report.id, 'RESOLVED', 'Deactivated by admin from report');
-      toast.success(`Listing "${report.job_title}" deactivated and report marked resolved.`);
+      const closedCount = await jobsService.resolveAllReportsForJob(
+        report.job_id,
+        'Deactivated by admin from candidate reports'
+      );
+      toast.success(
+        `Listing "${report.job_title}" deactivated. All ${closedCount || 1} open report(s) marked resolved.`
+      );
       invalidate();
       invalidateReports();
     } catch (err: any) {
@@ -939,6 +971,7 @@ export default function AdminJobsPage() {
                     <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
                       {filteredReports.map((report, index) => {
                         const targetJob = listingsById.get(report.job_id);
+                        const openCount = reportsByJobId.get(report.job_id) || 1;
                         return (
                         <tr
                           key={report.id}
@@ -991,6 +1024,11 @@ export default function AdminJobsPage() {
                                   >
                                     {targetJob.is_active ? 'Live' : 'Deactivated'}
                                   </span>
+                                  {openCount > 1 && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-rose-500 text-white animate-pulse">
+                                      {openCount} open reports
+                                    </span>
+                                  )}
                                 </div>
 
                                 <div className="flex items-center gap-1.5 text-[#868E96] text-[11px] flex-wrap">
@@ -1104,29 +1142,29 @@ export default function AdminJobsPage() {
                                   <button
                                     type="button"
                                     onClick={() => handleDeactivateFromReport(report)}
-                                    title="Deactivate listing and mark resolved"
+                                    title={openCount > 1 ? `Deactivate listing and close all ${openCount} open reports` : 'Deactivate listing and mark resolved'}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 hover:bg-rose-600 hover:text-white transition-all cursor-pointer whitespace-nowrap"
                                   >
                                     <EyeOff className="w-3 h-3" />
-                                    Deactivate Job
+                                    {openCount > 1 ? `Deactivate & Close All (${openCount})` : 'Deactivate Job'}
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleResolveReport(report)}
-                                    title="Mark resolved without taking down job"
+                                    title={openCount > 1 ? `Mark all ${openCount} reports for this listing resolved` : 'Mark resolved without taking down job'}
                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 hover:bg-emerald-600 hover:text-white transition-all cursor-pointer whitespace-nowrap"
                                   >
                                     <CheckCircle2 className="w-3 h-3" />
-                                    Resolve
+                                    {openCount > 1 ? `Resolve All (${openCount})` : 'Resolve'}
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleDismissReport(report)}
-                                    title="Dismiss as invalid / false report"
+                                    title={openCount > 1 ? `Dismiss all ${openCount} reports for this listing as invalid` : 'Dismiss as invalid / false report'}
                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer whitespace-nowrap"
                                   >
                                     <X className="w-3 h-3" />
-                                    Dismiss
+                                    {openCount > 1 ? `Dismiss All (${openCount})` : 'Dismiss'}
                                   </button>
                                 </>
                               )}

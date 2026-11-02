@@ -238,6 +238,48 @@ export const jobsService = {
     if (error) throw error;
   },
 
+  /** Resolve all open reports for a specific job listing (admin bulk action). */
+  async resolveAllReportsForJob(jobId: string, admin_notes?: string): Promise<number> {
+    const updatePayload: Record<string, any> = {
+      status: 'RESOLVED',
+      resolved_at: new Date().toISOString(),
+    };
+    if (admin_notes !== undefined) {
+      updatePayload.admin_notes = admin_notes;
+    }
+
+    const { data, error } = await supabase
+      .from('job_reports')
+      .update(updatePayload)
+      .eq('job_id', jobId)
+      .eq('status', 'OPEN')
+      .select('id');
+
+    if (error) throw error;
+    return (data ?? []).length;
+  },
+
+  /** Dismiss all open reports for a specific job listing (admin bulk action). */
+  async dismissAllReportsForJob(jobId: string, admin_notes?: string): Promise<number> {
+    const updatePayload: Record<string, any> = {
+      status: 'DISMISSED',
+      resolved_at: new Date().toISOString(),
+    };
+    if (admin_notes !== undefined) {
+      updatePayload.admin_notes = admin_notes;
+    }
+
+    const { data, error } = await supabase
+      .from('job_reports')
+      .update(updatePayload)
+      .eq('job_id', jobId)
+      .eq('status', 'OPEN')
+      .select('id');
+
+    if (error) throw error;
+    return (data ?? []).length;
+  },
+
   /** Delete a job report (admin). */
   async deleteJobReport(id: string): Promise<void> {
     const { error } = await supabase
