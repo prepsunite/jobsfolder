@@ -498,7 +498,11 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   const handleToggleVisibility = async (newHiddenStatus: boolean) => {
     const targetId = company?.id || slug;
     try {
-      await companyService.toggleCompanyVisibility(targetId, newHiddenStatus);
+      const ok = await companyService.toggleCompanyVisibility(targetId, newHiddenStatus);
+      if (!ok) {
+        toast.error(`Failed to update company visibility.`);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['company', slug] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });

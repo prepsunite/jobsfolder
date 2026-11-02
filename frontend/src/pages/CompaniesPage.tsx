@@ -65,7 +65,11 @@ export default function CompaniesPage() {
   const handleToggleCompanyVisibility = async (company: Company) => {
     const nextHidden = !company.isHidden;
     try {
-      await companyService.toggleCompanyVisibility(company.id || company.slug, nextHidden);
+      const ok = await companyService.toggleCompanyVisibility(company.id || company.slug, nextHidden);
+      if (!ok) {
+        toast.error(`Failed to update visibility for ${company.name}.`);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['live-companies'] });
       queryClient.invalidateQueries({ queryKey: ['live-all-exams'] });
       toast.success(`Company ${nextHidden ? 'hidden' : 'visible'} successfully.`);

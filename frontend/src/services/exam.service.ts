@@ -38,7 +38,8 @@ export interface ExamVisibilityCheck {
 }
 
 export const parseExamHidden = (e: ExamVisibilityCheck): boolean => {
-  if (e.is_hidden === true || e.isHidden === true) return true;
+  if (typeof e.is_hidden === 'boolean') return e.is_hidden;
+  if (typeof e.isHidden === 'boolean') return e.isHidden;
   if (typeof e.content === 'string' && e.content.includes(HIDDEN_EXAM_MARKER)) return true;
   if (typeof e.badge === 'string' && (e.badge.includes(HIDDEN_EXAM_MARKER) || e.badge.toLowerCase().includes('[draft]') || e.badge.toLowerCase().includes('[hidden]'))) return true;
   return false;
@@ -59,7 +60,8 @@ export const cleanExamBadge = (badge?: string): string => {
 };
 
 const parseCompHidden = (c: CompanyVisibilityCheck): boolean => {
-  if (c.is_hidden === true || c.isHidden === true) return true;
+  if (typeof c.is_hidden === 'boolean') return c.is_hidden;
+  if (typeof c.isHidden === 'boolean') return c.isHidden;
   if (typeof c.about_company === 'string' && c.about_company.includes('<!-- prepunite_hidden:true -->')) return true;
   if (typeof c.description === 'string' && c.description.includes('<!-- prepunite_hidden:true -->')) return true;
   return false;
@@ -322,9 +324,32 @@ export const examService = {
   toggleExamVisibility: async (id: string, isHidden: boolean): Promise<boolean> => {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-    // 1. First attempt to update native is_hidden column
+    // Fetch existing exam to sanitize content and badge simultaneously
+    let fetchQuery = supabase.from('exams').select('id, name, content, badge');
+    fetchQuery = isUuid ? fetchQuery.eq('id', id) : fetchQuery.eq('name', id);
+    const { data: exam, error: fetchErr } = await fetchQuery.maybeSingle();
+
+    if (fetchErr) {
+      console.warn('[examService.toggleExamVisibility] Fetch error:', fetchErr.message);
+    }
+
+    let cleanContent = (exam?.content || '').replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+    let cleanBadge = (exam?.badge || 'Drive').replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+
+    const targetContent = isHidden
+      ? (cleanContent ? `${cleanContent}\n\n${HIDDEN_EXAM_MARKER}` : HIDDEN_EXAM_MARKER)
+      : cleanContent;
+    const targetBadge = isHidden
+      ? `${cleanBadge} ${HIDDEN_EXAM_MARKER}`.trim()
+      : cleanBadge;
+
+    // 1. First attempt to update native is_hidden column AND clean content / badge
     try {
-      let colQuery = supabase.from('exams').update({ is_hidden: isHidden });
+      let colQuery = supabase.from('exams').update({
+        is_hidden: isHidden,
+        content: targetContent,
+        badge: targetBadge,
+      });
       colQuery = isUuid ? colQuery.eq('id', id) : colQuery.eq('name', id);
       const { error: colErr } = await colQuery;
 
@@ -332,8 +357,8 @@ export const examService = {
         auditService.logAction({
           action: isHidden ? 'HIDE_EXAM' : 'UNHIDE_EXAM',
           targetEntity: 'exams',
-          targetId: id,
-          afterData: { is_hidden: isHidden },
+          targetId: exam?.id || id,
+          afterData: { is_hidden: isHidden, name: exam?.name },
         });
         return true;
       }
@@ -341,32 +366,12 @@ export const examService = {
       console.warn('[examService.toggleExamVisibility] Native column note:', e);
     }
 
-    // 2. Resilient fallback: Embed/remove hidden metadata marker in content & badge
+    // 2. Resilient fallback: Embed/remove hidden metadata marker in content & badge if native column failed
     try {
-      let fetchQuery = supabase.from('exams').select('id, name, content, badge');
-      fetchQuery = isUuid ? fetchQuery.eq('id', id) : fetchQuery.eq('name', id);
-      const { data: exam, error: fetchErr } = await fetchQuery.maybeSingle();
-
-      if (fetchErr) {
-        console.warn('[examService.toggleExamVisibility] Fetch error:', fetchErr.message);
-      }
-
       if (exam) {
-        let currentContent = exam.content || '';
-        currentContent = currentContent.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
-        if (isHidden) {
-          currentContent = currentContent ? `${currentContent}\n\n${HIDDEN_EXAM_MARKER}` : HIDDEN_EXAM_MARKER;
-        }
-
-        let currentBadge = exam.badge || 'Drive';
-        currentBadge = currentBadge.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
-        if (isHidden) {
-          currentBadge = `${currentBadge} ${HIDDEN_EXAM_MARKER}`.trim();
-        }
-
         let updQuery = supabase.from('exams').update({
-          content: currentContent,
-          badge: currentBadge,
+          content: targetContent,
+          badge: targetBadge,
         });
         updQuery = isUuid ? updQuery.eq('id', id) : updQuery.eq('name', id);
         const { error: updErr } = await updQuery;

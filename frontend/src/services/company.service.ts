@@ -5,7 +5,8 @@ import { auditService } from '@/services/audit.service';
 const HIDDEN_MARKER = '<!-- prepunite_hidden:true -->';
 
 const parseIsHidden = (c: any): boolean => {
-  if (c.is_hidden === true || c.isHidden === true) return true;
+  if (typeof c.is_hidden === 'boolean') return c.is_hidden;
+  if (typeof c.isHidden === 'boolean') return c.isHidden;
   if (typeof c.about_company === 'string' && c.about_company.includes(HIDDEN_MARKER)) return true;
   if (typeof c.description === 'string' && c.description.includes(HIDDEN_MARKER)) return true;
   return false;
@@ -100,9 +101,25 @@ export const companyService = {
   toggleCompanyVisibility: async (idOrSlug: string, isHidden: boolean): Promise<boolean> => {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
 
-    // 1. First attempt to update native is_hidden column
+    // Fetch existing company to sanitize about_company and description simultaneously
+    let fetchQuery = supabase.from('companies').select('id, slug, about_company, description');
+    fetchQuery = isUuid ? fetchQuery.eq('id', idOrSlug) : fetchQuery.eq('slug', idOrSlug);
+    const { data: comp } = await fetchQuery.maybeSingle();
+
+    const cleanAbout = (comp?.about_company || '').replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+    const cleanDesc = (comp?.description || '').replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
+
+    const targetAbout = isHidden
+      ? (cleanAbout ? `${cleanAbout}\n\n${HIDDEN_MARKER}` : HIDDEN_MARKER)
+      : cleanAbout;
+
+    // 1. First attempt to update native is_hidden column AND clean about_company / description
     try {
-      let colQuery = supabase.from('companies').update({ is_hidden: isHidden });
+      let colQuery = supabase.from('companies').update({
+        is_hidden: isHidden,
+        about_company: targetAbout,
+        description: cleanDesc,
+      });
       colQuery = isUuid ? colQuery.eq('id', idOrSlug) : colQuery.eq('slug', idOrSlug);
       const { error: colErr } = await colQuery;
 
@@ -110,8 +127,8 @@ export const companyService = {
         auditService.logAction({
           action: isHidden ? 'HIDE_COMPANY' : 'UNHIDE_COMPANY',
           targetEntity: 'companies',
-          targetId: idOrSlug,
-          afterData: { is_hidden: isHidden },
+          targetId: comp?.id || idOrSlug,
+          afterData: { is_hidden: isHidden, slug: comp?.slug },
         });
         return true;
       }
@@ -119,20 +136,13 @@ export const companyService = {
       console.warn('[companyService.toggleCompanyVisibility] Native column note:', e);
     }
 
-    // 2. Resilient fallback: Embed/remove hidden metadata tag in about_company
+    // 2. Resilient fallback: Embed/remove hidden metadata tag in about_company if native column failed
     try {
-      let fetchQuery = supabase.from('companies').select('id, slug, about_company');
-      fetchQuery = isUuid ? fetchQuery.eq('id', idOrSlug) : fetchQuery.eq('slug', idOrSlug);
-      const { data: comp } = await fetchQuery.maybeSingle();
-
       if (comp) {
-        let currentAbout = comp.about_company || '';
-        currentAbout = currentAbout.replace(/<!--\s*prepunite_hidden:true\s*-->/g, '').trim();
-        if (isHidden) {
-          currentAbout = currentAbout ? `${currentAbout}\n\n${HIDDEN_MARKER}` : HIDDEN_MARKER;
-        }
-
-        let updQuery = supabase.from('companies').update({ about_company: currentAbout });
+        let updQuery = supabase.from('companies').update({
+          about_company: targetAbout,
+          description: cleanDesc,
+        });
         updQuery = isUuid ? updQuery.eq('id', idOrSlug) : updQuery.eq('slug', idOrSlug);
         const { error: updErr } = await updQuery;
 
