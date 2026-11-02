@@ -23,10 +23,14 @@ export interface JobListing {
 
 export type JobSortOption = 'RECOMMENDED' | 'NEWEST' | 'CLOSING_SOON';
 
+export type WorkModeFilter = 'ALL' | 'REMOTE' | 'HYBRID' | 'ON_SITE';
+
 export interface JobListingFilters {
   type?: JobType | 'ALL';
   location?: string;
+  workMode?: WorkModeFilter;
   expLevel?: 'ANY' | 'FRESHER' | '0-2' | '2-5' | '5+';
+  tag?: string;
   search?: string;
   sortBy?: JobSortOption;
   closingSoonOnly?: boolean;

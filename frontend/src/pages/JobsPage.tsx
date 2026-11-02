@@ -5,12 +5,12 @@ import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Code, Check, Building2, GraduationCap, ArrowRight,
-  CheckCircle2, Flame, Award, Eye, AlertCircle
+  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
 import { useToast } from '@/contexts/ToastContext';
-import type { JobListing, JobListingFilters, JobType, JobSortOption } from '@/types/jobs';
+import type { JobListing, JobListingFilters, JobType, JobSortOption, WorkModeFilter } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -141,7 +141,7 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
         }
       }}
       className={`group relative rounded-2xl p-4 sm:p-5 transition-[border-color,box-shadow] duration-150 cursor-pointer select-none text-left flex flex-col justify-between ${
-        // Clean high-contrast card background matching Prepunite style
+        // Clean high-contrast card background matching MockFolder style
         'bg-white dark:bg-[#141414] text-[#121417] dark:text-white'
       } ${
         isSelected
@@ -674,18 +674,15 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
           <JobDescriptionViewer description={job.description} />
         </div>
 
-        {/* PrepUnite Placement Preparation Callout */}
-        <div className="p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#181818] border border-[#E9ECEF] dark:border-[#2A2A2A] relative overflow-hidden shadow-sm">
-          {/* Subtle accent gradient bar on top */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500" />
-
+        {/* MockFolder Placement Preparation Callout */}
+        <div className="p-6 rounded-2xl bg-[#F8F9FA] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424] relative overflow-hidden shadow-xs">
           <div className="flex items-start gap-3.5 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-              <GraduationCap className="w-5 h-5 stroke-[2.2]" />
+            <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 stroke-[2.2] text-[#FD4A32]" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 mb-1">
-                PrepUnite Placement Suite
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider text-[#FD4A32] bg-[#FD4A32]/10 border border-[#FD4A32]/20 mb-1">
+                MockFolder Placement Suite
               </div>
               <h4 className="text-base sm:text-lg font-black text-[#121417] dark:text-white leading-tight">
                 Preparing for {job.company_name}?
@@ -694,53 +691,53 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
           </div>
 
           <p className="text-xs sm:text-[13px] text-[#495057] dark:text-[#A0AEC0] leading-relaxed">
-            Boost your interview selection chances by practicing simulated company mock tests and topic-wise aptitude questions on PrepUnite.
+            Boost your interview selection chances by practicing simulated company mock tests and topic-wise aptitude questions on MockFolder.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4">
             <Link
               to="/aptitude"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
                   Practice Aptitude
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Topic MCQs &amp; OA Tests
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
 
             <Link
               to="/technical"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
                   Coding Workspace
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Compiler &amp; DSA Bank
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
 
             <Link
               to="/experiences"
-              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-xs transition-all group"
+              className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#202020] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white hover:shadow-xs transition-all group"
             >
               <div className="min-w-0">
-                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                <span className="text-[11px] font-bold text-[#121417] dark:text-white block truncate group-hover:text-[#FD4A32] transition-colors">
                   Interview Archive
                 </span>
                 <span className="text-[10px] text-[#868E96] block truncate">
                   Real Drive Insights
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-purple-600 dark:group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              <ArrowRight className="w-4 h-4 text-[#868E96] group-hover:text-[#FD4A32] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </Link>
           </div>
         </div>
@@ -755,17 +752,35 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
 // ─── Main Page Component ──────────────────────────────────────────────────────
 
 const TYPE_OPTIONS: { label: string; value: 'ALL' | JobType }[] = [
-  { label: 'All Opportunities', value: 'ALL' },
-  { label: 'Full-time Jobs', value: 'JOB' },
+  { label: 'All', value: 'ALL' },
+  { label: 'Full-time', value: 'JOB' },
   { label: 'Internships', value: 'INTERNSHIP' },
 ];
 
+const WORK_MODE_OPTIONS: { label: string; value: WorkModeFilter }[] = [
+  { label: 'Workplace: All', value: 'ALL' },
+  { label: '🌐 Remote Only', value: 'REMOTE' },
+  { label: '🏢 Hybrid', value: 'HYBRID' },
+  { label: '📍 On-site', value: 'ON_SITE' },
+];
+
 const EXP_OPTIONS: { label: string; value: JobListingFilters['expLevel'] }[] = [
-  { label: 'Any Experience', value: 'ANY' },
-  { label: 'Fresher (0 yr)', value: 'FRESHER' },
+  { label: 'Experience: Any', value: 'ANY' },
+  { label: '🎓 Fresher (0 yr)', value: 'FRESHER' },
   { label: '0–2 yrs', value: '0-2' },
   { label: '2–5 yrs', value: '2-5' },
   { label: '5+ yrs', value: '5+' },
+];
+
+const DOMAIN_OPTIONS: { label: string; value: string }[] = [
+  { label: 'Role: All Domains', value: 'ALL' },
+  { label: '💻 Software Engineer', value: 'software' },
+  { label: '🎨 Frontend / Web', value: 'frontend' },
+  { label: '⚙️ Backend / API', value: 'backend' },
+  { label: '⚡ Full Stack', value: 'full' },
+  { label: '📊 Data & AI / ML', value: 'data' },
+  { label: '☁️ Cloud & DevOps', value: 'cloud' },
+  { label: '🧪 QA & Testing', value: 'qa' },
 ];
 
 const SORT_OPTIONS: { label: string; value: JobSortOption }[] = [
@@ -782,7 +797,9 @@ export default function JobsPage() {
   const [filters, setFilters] = useState<JobListingFilters>({
     type: 'ALL',
     location: '',
+    workMode: 'ALL',
     expLevel: 'ANY',
+    tag: 'ALL',
     search: '',
     sortBy: 'RECOMMENDED',
     closingSoonOnly: false,
@@ -873,6 +890,26 @@ export default function JobsPage() {
         if (!job.location.toLowerCase().includes(loc)) return false;
       }
 
+      // Work Mode filter
+      if (filters.workMode && filters.workMode !== 'ALL') {
+        const loc = job.location.toLowerCase();
+        const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ').toLowerCase() : '';
+        const isRemote = loc.includes('remote') || tagsStr.includes('remote');
+        const isHybrid = loc.includes('hybrid') || tagsStr.includes('hybrid');
+
+        if (filters.workMode === 'REMOTE' && !isRemote) return false;
+        if (filters.workMode === 'HYBRID' && !isHybrid) return false;
+        if (filters.workMode === 'ON_SITE' && (isRemote || isHybrid)) return false;
+      }
+
+      // Domain / Tag filter
+      if (filters.tag && filters.tag !== 'ALL') {
+        const target = filters.tag.toLowerCase();
+        const inTags = Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(target));
+        const inTitle = job.title.toLowerCase().includes(target);
+        if (!inTags && !inTitle) return false;
+      }
+
       // Experience filter
       if (!expMatchesFilter(job.experience_min, job.experience_max, filters.expLevel)) return false;
 
@@ -929,9 +966,11 @@ export default function JobsPage() {
 
   const hasActiveFilters =
     filters.type !== 'ALL' ||
-    !!filters.search ||
-    !!filters.location ||
+    Boolean(filters.search?.trim()) ||
+    Boolean(filters.location?.trim()) ||
+    (filters.workMode && filters.workMode !== 'ALL') ||
     (filters.expLevel && filters.expLevel !== 'ANY') ||
+    (filters.tag && filters.tag !== 'ALL') ||
     Boolean(filters.closingSoonOnly) ||
     savedOnly;
 
@@ -939,7 +978,9 @@ export default function JobsPage() {
     setFilters({
       type: 'ALL',
       location: '',
+      workMode: 'ALL',
       expLevel: 'ANY',
+      tag: 'ALL',
       search: '',
       sortBy: 'RECOMMENDED',
       closingSoonOnly: false,
@@ -948,149 +989,218 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-8">
-      {/* Page Header */}
-      <div className="mb-2">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lime-500 to-emerald-600 flex items-center justify-center shadow-sm">
-                <Briefcase className="w-5 h-5 text-white stroke-[2.5]" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-[#121417] dark:text-white tracking-tight">
-                  Jobs &amp; Internships
-                </h1>
-                <p className="text-xs sm:text-sm text-[#495057] dark:text-[#AAAAAA] mt-0.5">
-                  Curated opportunities for placement-ready students — click any role to view complete details.
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Status Stats */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSavedOnly((s) => !s)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                  savedOnly
-                    ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                    : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-black dark:hover:border-white'
-                }`}
-              >
-                <Bookmark className={`w-3.5 h-3.5 ${savedOnly ? 'fill-current' : ''}`} />
-                <span>Saved Jobs ({bookmarkedIds.size})</span>
-              </button>
-            </div>
+    <div className="space-y-4 animate-fadeIn pb-8">
+      {/* ── Page Header: Sleek & Focused ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-1">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 shadow-2xs">
+            <Briefcase className="w-5 h-5 text-[#FD4A32] stroke-[2.2]" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+              Jobs &amp; Internships
+            </h1>
+            <p className="text-xs text-[#868E96] mt-0.5">
+              Verified campus &amp; off-campus opportunities curated for students
+            </p>
           </div>
         </div>
 
-        {/* Filter Controls Bar */}
-        <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-4 mb-6 space-y-3 shadow-xs">
-          {/* Top row: Type toggle + Closing Soon chip + Sort selector */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {TYPE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setFilters((f) => ({ ...f, type: opt.value }))}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                    filters.type === opt.value
-                      ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417] border-[#121417] dark:border-white shadow-xs'
-                      : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+        {/* Live opportunity counter badge */}
+        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[#868E96]">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>{listings.length} live opportunities</span>
+        </div>
+      </div>
 
+      {/* ── Tier 1: Unified Command Search Bar (Indeed / LinkedIn Style) ── */}
+      <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-1 sm:p-1.5 shadow-xs">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center divide-y md:divide-y-0 md:divide-x divide-[#E9ECEF] dark:divide-[#242424]">
+          {/* Primary Search Input: Role / Skill / Company */}
+          <div className="relative flex-1 py-1 px-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#868E96]" />
+            <input
+              type="text"
+              placeholder="Search by job title, skills (React, Python, SDE), or company..."
+              value={filters.search ?? ''}
+              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none"
+            />
+            {filters.search && (
               <button
                 type="button"
-                onClick={() => setFilters((f) => ({ ...f, closingSoonOnly: !f.closingSoonOnly }))}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                  filters.closingSoonOnly
-                    ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
-                    : 'bg-transparent text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-rose-400'
-                }`}
+                onClick={() => setFilters((f) => ({ ...f, search: '' }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
+                title="Clear search"
               >
-                <Flame className="w-3.5 h-3.5" />
-                Closing Soon
+                <X className="w-3.5 h-3.5" />
               </button>
-            </div>
-
-            {/* Sort selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#868E96]">Sort By:</span>
-              <div className="relative">
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#868E96] pointer-events-none" />
-                <select
-                  value={filters.sortBy || 'RECOMMENDED'}
-                  onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as JobSortOption }))}
-                  className="appearance-none pl-3 pr-7 py-1.5 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white font-semibold focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Search + Location + Experience */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
-              <input
-                type="text"
-                placeholder="Search job title, company, or skills..."
-                value={filters.search ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-                className="w-full pl-8 pr-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors"
-              />
-            </div>
-
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
-              <input
-                type="text"
-                placeholder="City, state, or remote..."
-                value={filters.location ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
-                className="w-full pl-8 pr-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors"
-              />
-            </div>
-
-            <div className="relative">
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] pointer-events-none" />
-              <select
-                value={filters.expLevel ?? 'ANY'}
-                onChange={(e) => setFilters((f) => ({ ...f, expLevel: e.target.value as JobListingFilters['expLevel'] }))}
-                className="w-full appearance-none pl-3 pr-8 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-white transition-colors cursor-pointer"
+          {/* Location Input: City / State / Remote */}
+          <div className="relative md:w-72 py-1 px-3">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#868E96]" />
+            <input
+              type="text"
+              placeholder="City, state, or 'Remote'..."
+              value={filters.location ?? ''}
+              onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
+              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none"
+            />
+            {filters.location && (
+              <button
+                type="button"
+                onClick={() => setFilters((f) => ({ ...f, location: '' }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
+                title="Clear location"
               >
-                {EXP_OPTIONS.map((opt) => (
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tier 2: Horizontal Filter Ribbon (Pills, Dropdowns, Toggles) ── */}
+      <div className="flex items-center justify-between gap-2.5 mb-4 flex-wrap">
+        {/* Left Side: Type segment + Dropdowns + Quick Chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Segmented Type Switcher */}
+          <div className="inline-flex items-center p-1 bg-[#F1F3F5] dark:bg-[#1A1A1A] rounded-xl border border-[#E9ECEF] dark:border-[#2A2A2A]">
+            {TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setFilters((f) => ({ ...f, type: opt.value }))}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  filters.type === opt.value
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-2xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Workplace Mode Dropdown */}
+          <div className="relative">
+            <select
+              value={filters.workMode || 'ALL'}
+              onChange={(e) => setFilters((f) => ({ ...f, workMode: e.target.value as WorkModeFilter }))}
+              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                filters.workMode && filters.workMode !== 'ALL'
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs'
+                  : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
+              }`}
+            >
+              {WORK_MODE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
+          </div>
+
+          {/* Experience Dropdown */}
+          <div className="relative">
+            <select
+              value={filters.expLevel || 'ANY'}
+              onChange={(e) => setFilters((f) => ({ ...f, expLevel: e.target.value as JobListingFilters['expLevel'] }))}
+              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                filters.expLevel && filters.expLevel !== 'ANY'
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs'
+                  : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
+              }`}
+            >
+              {EXP_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
+          </div>
+
+          {/* Domain / Role Dropdown */}
+          <div className="relative">
+            <select
+              value={filters.tag || 'ALL'}
+              onChange={(e) => setFilters((f) => ({ ...f, tag: e.target.value }))}
+              className={`appearance-none pl-3 pr-7 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                filters.tag && filters.tag !== 'ALL'
+                  ? 'bg-[#121417] text-white dark:bg-white dark:text-[#121417] border-[#121417] dark:border-white shadow-2xs'
+                  : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
+              }`}
+            >
+              {DOMAIN_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
+          </div>
+
+          {/* Closing Soon Toggle */}
+          <button
+            type="button"
+            onClick={() => setFilters((f) => ({ ...f, closingSoonOnly: !f.closingSoonOnly }))}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              filters.closingSoonOnly
+                ? 'bg-rose-500 text-white border-rose-500 shadow-2xs'
+                : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-rose-400'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5" />
+            <span>Closing Soon</span>
+          </button>
+
+          {/* Saved Jobs Toggle */}
+          <button
+            type="button"
+            onClick={() => setSavedOnly((s) => !s)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              savedOnly
+                ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
+                : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-amber-400'
+            }`}
+          >
+            <Bookmark className={`w-3.5 h-3.5 ${savedOnly ? 'fill-current' : ''}`} />
+            <span>Saved ({bookmarkedIds.size})</span>
+          </button>
+
+          {/* Reset Filters Chip (Visible only when filters active) */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#FD4A32] hover:bg-[#FD4A32]/10 transition-all cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Results Count & Sort Dropdown */}
+        <div className="flex items-center gap-3 ml-auto">
+          <span className="text-xs text-[#868E96] hidden md:inline">
+            <strong className="text-[#121417] dark:text-white font-bold">{filtered.length}</strong> opportunities
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-[#868E96] whitespace-nowrap">Sort:</span>
+            <div className="relative">
+              <select
+                value={filters.sortBy || 'RECOMMENDED'}
+                onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as JobSortOption }))}
+                className="appearance-none pl-3 pr-7 py-1.5 text-xs font-bold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-xl text-[#121417] dark:text-white focus:outline-none cursor-pointer hover:border-zinc-400"
+              >
+                {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
             </div>
           </div>
-
-          {/* Active Filters Clear Bar */}
-          {hasActiveFilters && (
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-xs text-[#868E96]">
-                {filtered.length} opportunity{filtered.length !== 1 ? 'ies' : ''} match your filters
-              </span>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-xs font-semibold text-[#FD4A32] hover:text-[#e0432c] transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-                Reset filters
-              </button>
-            </div>
-          )}
         </div>
+      </div>
 
         {/* Master-Detail Layout (LinkedIn & Indeed Split View) */}
         {isLoading ? (
