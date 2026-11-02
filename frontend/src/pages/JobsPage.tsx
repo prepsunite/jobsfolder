@@ -714,10 +714,20 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
                   <button
                     key={reason}
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setReported(true);
                       setReportOpen(false);
-                      toast.info(`Feedback noted: "${reason}". Thank you!`);
+                      try {
+                        await jobsService.submitJobReport({
+                          job_id: job.id,
+                          job_title: job.title,
+                          company_name: job.company_name,
+                          reason,
+                        });
+                        toast.info(`Feedback sent to admin: "${reason}". Thank you!`);
+                      } catch {
+                        toast.info(`Feedback noted: "${reason}". Thank you!`);
+                      }
                     }}
                     className="w-full text-left px-3.5 py-2.5 text-xs text-[#343A40] dark:text-[#D1D5DB] hover:bg-[#F8F9FA] dark:hover:bg-[#242424] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
                   >

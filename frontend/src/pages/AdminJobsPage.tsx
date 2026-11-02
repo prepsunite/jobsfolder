@@ -3,12 +3,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Edit3, Trash2, Eye, EyeOff, Star, StarOff,
   Briefcase, MapPin, Clock, X, Check, AlertCircle,
-  ExternalLink, ChevronDown, Search, Loader2,
+  ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { jobsService } from '@/services/jobs.service';
-import type { JobListing, JobType } from '@/types/jobs';
+import type { JobListing, JobType, JobReport, JobReportStatus } from '@/types/jobs';
 import { useToast } from '@/contexts/ToastContext';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -425,7 +425,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
 
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 
-type AdminJobTab = 'LIVE' | 'EXPIRED' | 'DRAFT' | 'ALL';
+type AdminJobTab = 'LIVE' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
 type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
 
 export default function AdminJobsPage() {
@@ -442,6 +442,7 @@ export default function AdminJobsPage() {
   const [purging, setPurging] = useState(false);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('NEWEST');
+  const [reportStatusFilter, setReportStatusFilter] = useState<JobReportStatus | 'ALL'>('OPEN');
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ['admin_job_listings'],
@@ -450,9 +451,20 @@ export default function AdminJobsPage() {
     staleTime: 0,
   });
 
+  const { data: reports = [], isLoading: isLoadingReports } = useQuery({
+    queryKey: ['admin_job_reports'],
+    queryFn: () => jobsService.getJobReports('ALL'),
+    enabled: isEffectiveAdmin,
+    staleTime: 10000,
+  });
+
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['admin_job_listings'] });
     queryClient.invalidateQueries({ queryKey: ['job_listings'] });
+  }, [queryClient]);
+
+  const invalidateReports = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['admin_job_reports'] });
   }, [queryClient]);
 
   // Single-pass O(N) partitioning into disjoint sets (Live, Expired, Draft)
@@ -477,6 +489,46 @@ export default function AdminJobsPage() {
 
     return { liveListings: live, expiredListings: expired, draftListings: draft };
   }, [listings]);
+
+  // Reports partitioning
+  const openReports = useMemo(() => reports.filter((r) => r.status === 'OPEN'), [reports]);
+  const resolvedReports = useMemo(() => reports.filter((r) => r.status === 'RESOLVED'), [reports]);
+  const dismissedReports = useMemo(() => reports.filter((r) => r.status === 'DISMISSED'), [reports]);
+  const openReportsCount = openReports.length;
+
+  const reportsByJobId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of openReports) {
+      map.set(r.job_id, (map.get(r.job_id) || 0) + 1);
+    }
+    return map;
+  }, [openReports]);
+
+  const listingsById = useMemo(() => {
+    const map = new Map<string, JobListing>();
+    for (let i = 0; i < listings.length; i++) {
+      map.set(listings[i].id, listings[i]);
+    }
+    return map;
+  }, [listings]);
+
+  // Filtered reports for the REPORTS tab
+  const filteredReports = useMemo(() => {
+    let list = reports;
+    if (reportStatusFilter !== 'ALL') {
+      list = list.filter((r) => r.status === reportStatusFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (r) =>
+          r.job_title.toLowerCase().includes(q) ||
+          r.company_name.toLowerCase().includes(q) ||
+          r.reason.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [reports, reportStatusFilter, search]);
 
   // Select target tab pool
   const currentTabPool = useMemo(() => {
@@ -601,6 +653,57 @@ export default function AdminJobsPage() {
     }
   };
 
+  const handleResolveReport = async (report: JobReport) => {
+    try {
+      await jobsService.updateJobReportStatus(report.id, 'RESOLVED');
+      toast.success('Report marked as resolved.');
+      invalidateReports();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update report.');
+    }
+  };
+
+  const handleDismissReport = async (report: JobReport) => {
+    try {
+      await jobsService.updateJobReportStatus(report.id, 'DISMISSED');
+      toast.info('Report dismissed.');
+      invalidateReports();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to dismiss report.');
+    }
+  };
+
+  const handleDeactivateFromReport = async (report: JobReport) => {
+    try {
+      await jobsService.toggleActive(report.job_id, false);
+      await jobsService.updateJobReportStatus(report.id, 'RESOLVED', 'Deactivated by admin from report');
+      toast.success(`Listing "${report.job_title}" deactivated and report marked resolved.`);
+      invalidate();
+      invalidateReports();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to deactivate listing.');
+    }
+  };
+
+  const handleDeleteReport = async (report: JobReport) => {
+    const confirmed = await confirmModal({
+      title: 'Delete Report',
+      message: 'Permanently remove this report record?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await jobsService.deleteJobReport(report.id);
+      toast.success('Report deleted.');
+      invalidateReports();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete report.');
+    }
+  };
+
   return (
     <>
       {/* Modal */}
@@ -625,6 +728,11 @@ export default function AdminJobsPage() {
                 <h1 className="text-xl font-display font-extrabold text-[#121417] dark:text-white">Jobs Board Admin</h1>
                 <p className="text-xs text-[#868E96]">
                   {liveListings.length} live · {expiredListings.length} expired · {draftListings.length} drafts
+                  {openReportsCount > 0 && (
+                    <span className="text-rose-500 font-bold ml-1">
+                      · {openReportsCount} open report{openReportsCount > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -692,6 +800,24 @@ export default function AdminJobsPage() {
               >
                 All ({listings.length})
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('REPORTS')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'REPORTS'
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                <Flag className={`w-3.5 h-3.5 shrink-0 ${openReportsCount > 0 ? 'text-rose-500' : 'text-[#868E96]'}`} />
+                <span>Reports</span>
+                {openReportsCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
+                    {openReportsCount}
+                  </span>
+                )}
+              </button>
             </div>
 
             {/* Actions: Search + Sort + Purge button */}
@@ -700,33 +826,35 @@ export default function AdminJobsPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
                 <input
                   type="text"
-                  placeholder="Filter listings..."
+                  placeholder={activeTab === 'REPORTS' ? 'Search reports...' : 'Filter listings...'}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors"
                 />
               </div>
 
-              {/* Sort Selector */}
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="admin-jobs-sort" className="text-[11px] font-semibold text-[#868E96] whitespace-nowrap hidden md:inline">
-                  Sort:
-                </label>
-                <div className="relative">
-                  <select
-                    id="admin-jobs-sort"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortBy)}
-                    className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-[#555] cursor-pointer"
-                  >
-                    <option value="NEWEST">Newest First</option>
-                    <option value="OLDEST">Oldest First (Check Expiry)</option>
-                    <option value="DEADLINE">By Deadline</option>
-                    <option value="PRIORITY">Featured / Priority</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
+              {/* Sort Selector (only for listings) */}
+              {activeTab !== 'REPORTS' && (
+                <div className="flex items-center gap-1.5">
+                  <label htmlFor="admin-jobs-sort" className="text-[11px] font-semibold text-[#868E96] whitespace-nowrap hidden md:inline">
+                    Sort:
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="admin-jobs-sort"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortBy)}
+                      className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-[#555] cursor-pointer"
+                    >
+                      <option value="NEWEST">Newest First</option>
+                      <option value="OLDEST">Oldest First (Check Expiry)</option>
+                      <option value="DEADLINE">By Deadline</option>
+                      <option value="PRIORITY">Featured / Priority</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {activeTab === 'EXPIRED' && expiredListings.length > 0 && (
                 <button
@@ -742,62 +870,78 @@ export default function AdminJobsPage() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-16 text-[#868E96]">
-                <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                <span className="text-xs">Loading listings...</span>
+          {/* Reports Moderation View */}
+          {activeTab === 'REPORTS' ? (
+            <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden">
+              {/* Reports status sub-bar */}
+              <div className="px-4 py-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA]/60 dark:bg-[#0C0C0C]/50 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 overflow-x-auto">
+                  {(['OPEN', 'RESOLVED', 'DISMISSED', 'ALL'] as const).map((st) => {
+                    const count =
+                      st === 'OPEN'
+                        ? openReports.length
+                        : st === 'RESOLVED'
+                        ? resolvedReports.length
+                        : st === 'DISMISSED'
+                        ? dismissedReports.length
+                        : reports.length;
+                    const isActive = reportStatusFilter === st;
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setReportStatusFilter(st)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                          isActive
+                            ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417] shadow-xs'
+                            : 'bg-white dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                        }`}
+                      >
+                        {st === 'OPEN' ? 'Open' : st === 'RESOLVED' ? 'Resolved' : st === 'DISMISSED' ? 'Dismissed' : 'All Reports'} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="text-xs text-[#868E96]">
+                  Showing {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
+                </div>
               </div>
-            ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <AlertCircle className="w-10 h-10 text-[#868E96] mb-3" />
-                <p className="text-sm font-semibold text-[#121417] dark:text-white">
-                  {search
-                    ? 'No matching listings found'
-                    : activeTab === 'LIVE'
-                    ? 'No active live listings right now'
-                    : activeTab === 'EXPIRED'
-                    ? 'No expired listings! All drives are current.'
-                    : activeTab === 'DRAFT'
-                    ? 'No drafts currently saved.'
-                    : 'No listings posted yet'}
-                </p>
-                <p className="text-xs text-[#868E96] mt-1 max-w-sm">
-                  {search
-                    ? 'Try clearing your search query.'
-                    : activeTab === 'LIVE'
-                    ? 'Click "Add New Listing" to publish a new role, or activate a draft.'
-                    : activeTab === 'EXPIRED'
-                    ? 'Expired opportunities will appear here once their deadline passes.'
-                    : 'Click "Add New Listing" to create your first opportunity.'}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
-                      <th className="w-14 px-3 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">S.No</th>
-                      <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Type</th>
-                      <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Title / Company</th>
-                      <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Location</th>
-                      <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Posted</th>
-                      <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Deadline</th>
-                      <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Active</th>
-                      <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Featured</th>
-                      <th className="px-4 py-3 text-right font-bold text-[#868E96] uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
-                    {filtered.map((job, index) => {
-                      const dl = getDeadlineMeta(job.deadline);
-                      const expired = isExpiredRow(job.deadline);
-                      return (
+
+              {isLoadingReports ? (
+                <div className="flex items-center justify-center py-16 text-[#868E96]">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span className="text-xs">Loading candidate reports...</span>
+                </div>
+              ) : filteredReports.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-3" />
+                  <p className="text-sm font-semibold text-[#121417] dark:text-white">
+                    {search ? 'No reports matching search query' : 'No reports in this category!'}
+                  </p>
+                  <p className="text-xs text-[#868E96] mt-1 max-w-sm">
+                    {search ? 'Clear your search query to see other reports.' : 'Candidate feedback and broken application links will appear here.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
+                        <th className="w-14 px-3 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">S.No</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Target Listing</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Report Reason</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Details</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Reported</th>
+                        <th className="px-4 py-3 text-right font-bold text-[#868E96] uppercase tracking-wider">Moderation Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
+                      {filteredReports.map((report, index) => (
                         <tr
-                          key={job.id}
+                          key={report.id}
                           className={`transition-colors hover:bg-[#F8F9FA] dark:hover:bg-[#1A1A1A] ${
-                            expired ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''
+                            report.status === 'OPEN' ? 'bg-rose-50/20 dark:bg-rose-950/10' : ''
                           }`}
                         >
                           {/* S.No */}
@@ -807,118 +951,321 @@ export default function AdminJobsPage() {
                             </span>
                           </td>
 
-                          {/* Type */}
+                          {/* Status badge */}
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                              job.type === 'JOB'
-                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                                : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
-                            }`}>
-                              {job.type === 'JOB' ? 'Job' : 'Intern'}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                report.status === 'OPEN'
+                                  ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/50'
+                                  : report.status === 'RESOLVED'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50'
+                                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
+                              }`}
+                            >
+                              {report.status === 'OPEN' && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping mr-0.5" />}
+                              {report.status}
                             </span>
                           </td>
 
-                          {/* Title + company */}
+                          {/* Target listing */}
                           <td className="px-4 py-3">
-                            <div className="font-semibold text-[#121417] dark:text-white max-w-[200px] truncate">{job.title}</div>
-                            <div className="text-[#868E96] text-[11px]">{job.company_name}</div>
+                            <div className="font-semibold text-[#121417] dark:text-white max-w-[240px] truncate">
+                              {report.job_title}
+                            </div>
+                            <div className="text-[#868E96] text-[11px]">{report.company_name}</div>
+                            {listingsById.get(report.job_id)?.apply_url && (
+                              <a
+                                href={listingsById.get(report.job_id)!.apply_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:underline mt-0.5"
+                              >
+                                <span>Verify apply link</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
                           </td>
 
-                          {/* Location */}
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center gap-1 text-[#495057] dark:text-[#AAAAAA]">
-                              <MapPin className="w-3 h-3 shrink-0 text-[#868E96]" />
-                              {job.location}
-                            </div>
+                          {/* Reason */}
+                          <td className="px-4 py-3">
+                            <span className="font-semibold text-[#121417] dark:text-white">
+                              {report.reason}
+                            </span>
                           </td>
 
-                          {/* Posted date & relative time */}
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="text-[11px] font-medium text-[#121417] dark:text-white">
-                              {formatDate(job.created_at)}
-                            </div>
-                            {getRelativeTime(job.created_at) && (
-                              <div className="text-[10px] text-[#868E96]">
-                                {getRelativeTime(job.created_at)}
+                          {/* Details / Admin Notes */}
+                          <td className="px-4 py-3 max-w-[200px]">
+                            {report.details ? (
+                              <p className="text-[11px] text-[#495057] dark:text-[#AAAAAA] line-clamp-2">
+                                {report.details}
+                              </p>
+                            ) : (
+                              <span className="text-[#868E96] text-[11px] italic">No extra notes</span>
+                            )}
+                            {report.admin_notes && (
+                              <div className="mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                Note: {report.admin_notes}
                               </div>
                             )}
                           </td>
 
-                          {/* Deadline */}
-                          <td className={`px-4 py-3 whitespace-nowrap ${dl.cls}`}>
-                            {dl.label}
-                          </td>
-
-                          {/* Active toggle */}
-                          <td className="px-4 py-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleActive(job)}
-                              title={job.is_active ? 'Deactivate' : 'Activate'}
-                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
-                                job.is_active
-                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
-                                  : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96]'
-                              }`}
-                            >
-                              {job.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                            </button>
-                          </td>
-
-                          {/* Featured toggle */}
-                          <td className="px-4 py-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleFeatured(job)}
-                              title={job.is_featured ? 'Unfeature' : 'Feature'}
-                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
-                                job.is_featured
-                                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400'
-                                  : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96]'
-                              }`}
-                            >
-                              {job.is_featured ? <Star className="w-3.5 h-3.5 fill-amber-400" /> : <StarOff className="w-3.5 h-3.5" />}
-                            </button>
+                          {/* Reported date */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="text-[11px] font-medium text-[#121417] dark:text-white">
+                              {formatDate(report.created_at)}
+                            </div>
+                            {getRelativeTime(report.created_at) && (
+                              <div className="text-[10px] text-[#868E96]">
+                                {getRelativeTime(report.created_at)}
+                              </div>
+                            )}
                           </td>
 
                           {/* Actions */}
                           <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <a
-                                href={job.apply_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="Open Apply URL"
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-blue-500 hover:border-blue-300 transition-all"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {report.status === 'OPEN' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeactivateFromReport(report)}
+                                    title="Deactivate listing and mark resolved"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 hover:bg-rose-600 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                                  >
+                                    <EyeOff className="w-3 h-3" />
+                                    Deactivate Job
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResolveReport(report)}
+                                    title="Mark resolved without taking down job"
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 hover:bg-emerald-600 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                                  >
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Resolve
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDismissReport(report)}
+                                    title="Dismiss as invalid / false report"
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer whitespace-nowrap"
+                                  >
+                                    <X className="w-3 h-3" />
+                                    Dismiss
+                                  </button>
+                                </>
+                              )}
                               <button
                                 type="button"
-                                onClick={() => setModalJob(job)}
-                                title="Edit listing details"
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all"
+                                onClick={() => handleDeleteReport(report)}
+                                title="Delete report log entry"
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-rose-500/70 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all cursor-pointer"
                               >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(job)}
-                                title="Terminate / Delete listing"
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-rose-500/70 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-3 h-3" />
                               </button>
                             </div>
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Listings Table */
+            <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-16 text-[#868E96]">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span className="text-xs">Loading listings...</span>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <AlertCircle className="w-10 h-10 text-[#868E96] mb-3" />
+                  <p className="text-sm font-semibold text-[#121417] dark:text-white">
+                    {search
+                      ? 'No matching listings found'
+                      : activeTab === 'LIVE'
+                      ? 'No active live listings right now'
+                      : activeTab === 'EXPIRED'
+                      ? 'No expired listings! All drives are current.'
+                      : activeTab === 'DRAFT'
+                      ? 'No drafts currently saved.'
+                      : 'No listings posted yet'}
+                  </p>
+                  <p className="text-xs text-[#868E96] mt-1 max-w-sm">
+                    {search
+                      ? 'Try clearing your search query.'
+                      : activeTab === 'LIVE'
+                      ? 'Click "Add New Listing" to publish a new role, or activate a draft.'
+                      : activeTab === 'EXPIRED'
+                      ? 'Expired opportunities will appear here once their deadline passes.'
+                      : 'Click "Add New Listing" to create your first opportunity.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
+                        <th className="w-14 px-3 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">S.No</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Title / Company</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Location</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Posted</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Deadline</th>
+                        <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Active</th>
+                        <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Featured</th>
+                        <th className="px-4 py-3 text-right font-bold text-[#868E96] uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
+                      {filtered.map((job, index) => {
+                        const dl = getDeadlineMeta(job.deadline);
+                        const expired = isExpiredRow(job.deadline);
+                        return (
+                          <tr
+                            key={job.id}
+                            className={`transition-colors hover:bg-[#F8F9FA] dark:hover:bg-[#1A1A1A] ${
+                              expired ? 'bg-amber-50/40 dark:bg-amber-900/5' : ''
+                            }`}
+                          >
+                            {/* S.No */}
+                            <td className="w-14 px-3 py-3 text-center whitespace-nowrap">
+                              <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-md text-[11px] font-mono font-bold bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+                                {index + 1}
+                              </span>
+                            </td>
+
+                            {/* Type */}
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                job.type === 'JOB'
+                                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                  : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
+                              }`}>
+                                {job.type === 'JOB' ? 'Job' : 'Intern'}
+                              </span>
+                            </td>
+
+                            {/* Title + company */}
+                            <td className="px-4 py-3">
+                              <div className="font-semibold text-[#121417] dark:text-white max-w-[200px] truncate">{job.title}</div>
+                              <div className="text-[#868E96] text-[11px]">{job.company_name}</div>
+                              {reportsByJobId.has(job.id) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveTab('REPORTS');
+                                    setReportStatusFilter('OPEN');
+                                    setSearch(job.title);
+                                  }}
+                                  className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
+                                  title="Click to view reports for this listing"
+                                >
+                                  <Flag className="w-3 h-3 text-rose-500" />
+                                  <span>{reportsByJobId.get(job.id)} report{reportsByJobId.get(job.id)! > 1 ? 's' : ''}</span>
+                                </button>
+                              )}
+                            </td>
+
+                            {/* Location */}
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-1 text-[#495057] dark:text-[#AAAAAA]">
+                                <MapPin className="w-3 h-3 shrink-0 text-[#868E96]" />
+                                {job.location}
+                              </div>
+                            </td>
+
+                            {/* Posted date & relative time */}
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="text-[11px] font-medium text-[#121417] dark:text-white">
+                                {formatDate(job.created_at)}
+                              </div>
+                              {getRelativeTime(job.created_at) && (
+                                <div className="text-[10px] text-[#868E96]">
+                                  {getRelativeTime(job.created_at)}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Deadline */}
+                            <td className={`px-4 py-3 whitespace-nowrap ${dl.cls}`}>
+                              {dl.label}
+                            </td>
+
+                            {/* Active toggle */}
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleActive(job)}
+                                title={job.is_active ? 'Deactivate' : 'Activate'}
+                                className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
+                                  job.is_active
+                                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
+                                    : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96]'
+                                }`}
+                              >
+                                {job.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                              </button>
+                            </td>
+
+                            {/* Featured toggle */}
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFeatured(job)}
+                                title={job.is_featured ? 'Unfeature' : 'Feature'}
+                                className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
+                                  job.is_featured
+                                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400'
+                                    : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96]'
+                                }`}
+                              >
+                                {job.is_featured ? <Star className="w-3.5 h-3.5 fill-amber-400" /> : <StarOff className="w-3.5 h-3.5" />}
+                              </button>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <a
+                                  href={job.apply_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Open Apply URL"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-blue-500 hover:border-blue-300 transition-all"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => setModalJob(job)}
+                                  title="Edit listing details"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(job)}
+                                  title="Terminate / Delete listing"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-rose-500/70 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

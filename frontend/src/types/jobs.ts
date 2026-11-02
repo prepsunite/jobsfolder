@@ -35,3 +35,18 @@ export interface JobListingFilters {
   sortBy?: JobSortOption;
   closingSoonOnly?: boolean;
 }
+
+export type JobReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
+
+export interface JobReport {
+  id: string;
+  job_id: string;
+  job_title: string;
+  company_name: string;
+  reason: string;
+  details?: string | null;
+  status: JobReportStatus;
+  admin_notes?: string | null;
+  created_at: string;
+  resolved_at?: string | null;
+}

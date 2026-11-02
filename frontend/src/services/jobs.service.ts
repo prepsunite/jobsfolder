@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { JobListing } from '@/types/jobs';
+import type { JobListing, JobReport, JobReportStatus } from '@/types/jobs';
 
 type CreateJobListing = Omit<JobListing, 'id' | 'created_at' | 'updated_at'>;
 
@@ -116,5 +116,96 @@ export const jobsService = {
 
     if (error) throw error;
     return (data ?? []).length;
+  },
+
+  // ─── Job Reports & Community Moderation ───────────────────────────────────
+
+  /** Submit a user report for a job listing (public / candidate). */
+  async submitJobReport(data: {
+    job_id: string;
+    job_title: string;
+    company_name: string;
+    reason: string;
+    details?: string;
+  }): Promise<JobReport> {
+    const { data: created, error } = await supabase
+      .from('job_reports')
+      .insert({
+        job_id: data.job_id,
+        job_title: data.job_title,
+        company_name: data.company_name,
+        reason: data.reason,
+        details: data.details || null,
+        status: 'OPEN',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn('[jobsService.submitJobReport] Supabase insert note:', error.message);
+      // Fallback object so applicant UI doesn't crash if migration is pending
+      return {
+        id: 'rep_' + Date.now(),
+        job_id: data.job_id,
+        job_title: data.job_title,
+        company_name: data.company_name,
+        reason: data.reason,
+        details: data.details || null,
+        status: 'OPEN',
+        created_at: new Date().toISOString(),
+      };
+    }
+    return created as JobReport;
+  },
+
+  /** Fetch all job reports (admin). */
+  async getJobReports(statusFilter?: JobReportStatus | 'ALL'): Promise<JobReport[]> {
+    let query = supabase
+      .from('job_reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (statusFilter && statusFilter !== 'ALL') {
+      query = query.eq('status', statusFilter);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.warn('[jobsService.getJobReports] Note:', error.message);
+      return [];
+    }
+    return (data ?? []) as JobReport[];
+  },
+
+  /** Update job report status (admin). */
+  async updateJobReportStatus(
+    id: string,
+    status: JobReportStatus,
+    admin_notes?: string
+  ): Promise<void> {
+    const updatePayload: Record<string, any> = {
+      status,
+      resolved_at: status !== 'OPEN' ? new Date().toISOString() : null,
+    };
+    if (admin_notes !== undefined) {
+      updatePayload.admin_notes = admin_notes;
+    }
+
+    const { error } = await supabase
+      .from('job_reports')
+      .update(updatePayload)
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  /** Delete a job report (admin). */
+  async deleteJobReport(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('job_reports')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   },
 };
