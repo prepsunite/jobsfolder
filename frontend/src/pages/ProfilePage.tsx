@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useConsent } from '@/contexts/ConsentContext';
 import { supabase } from '@/lib/supabase';
 import { tpoService } from '@/services/tpo.service';
 import {
@@ -12,9 +10,6 @@ import {
   ShieldCheck,
   Sparkles,
   LayoutDashboard,
-  Sun,
-  Moon,
-  Monitor,
   GraduationCap,
   Building2,
   LogOut,
@@ -26,8 +21,6 @@ import {
 
 export default function ProfilePage() {
   const { user, role, isAdmin, isTpoAdmin, logout } = useAuth();
-  const { themeMode, setThemeMode } = useTheme();
-  const { consentStatus, consentTimestamp, consentVersion, withdrawConsent, acceptConsent } = useConsent();
   const { data: subData } = useQuery({
     queryKey: ['profile-user-subscription', user?.email, user?.collegeId],
     queryFn: async () => {
@@ -161,7 +154,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Profile Header Card */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-xl bg-[#FD4A32] text-white flex items-center justify-center font-display font-black text-2xl shadow-sm shrink-0 overflow-hidden">
@@ -209,53 +202,11 @@ export default function ProfilePage() {
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Theme Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
-              <button
-                onClick={() => setThemeMode('light')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
-                  themeMode === 'light'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white'
-                }`}
-                title="Light Mode"
-              >
-                <Sun className="w-3 h-3 text-amber-500" />
-                <span>Light</span>
-              </button>
-              <button
-                onClick={() => setThemeMode('dark')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
-                  themeMode === 'dark'
-                    ? 'bg-[#1C1C1C] text-[#FD4A32] shadow-xs'
-                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white'
-                }`}
-                title="Dark Mode"
-              >
-                <Moon className="w-3 h-3 text-purple-400" />
-                <span>Dark</span>
-              </button>
-              <button
-                onClick={() => setThemeMode('system')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
-                  themeMode === 'system'
-                    ? 'bg-[#FD4A32] text-black shadow-xs'
-                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white'
-                }`}
-                title="System Auto"
-              >
-                <Monitor className="w-3 h-3" />
-                <span>Auto</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Pricing & Passes Membership Card */}
-      <div className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-4">
+      <div className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold shrink-0">
@@ -314,12 +265,12 @@ export default function ProfilePage() {
       )}
 
       {/* Profile Details & Career Goals Form */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-5">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
         <div>
           <h2 className="font-display text-base font-bold text-[#121417] dark:text-white">
             Academic &amp; Placement Target Details
           </h2>
-          <p className="text-xs text-[#868E96] dark:text-[#777777] mt-0.5">
+          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] mt-0.5">
             Personalize your aptitude practice recommendations and placement drives.
           </p>
         </div>
@@ -337,7 +288,7 @@ export default function ProfilePage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
             </div>
@@ -353,7 +304,7 @@ export default function ProfilePage() {
                   value={formData.targetRole}
                   onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
                   placeholder="e.g. Software Engineer / Data Analyst"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
             </div>
@@ -369,7 +320,7 @@ export default function ProfilePage() {
                   value={formData.college}
                   onChange={(e) => setFormData({ ...formData, college: e.target.value })}
                   placeholder="e.g. IIT Madras, BITS Pilani, SRM"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
             </div>
@@ -383,7 +334,7 @@ export default function ProfilePage() {
                 <select
                   value={formData.graduationYear}
                   onChange={(e) => setFormData({ ...formData, graduationYear: e.target.value })}
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 >
                   <option value="2025">Class of 2025</option>
                   <option value="2026">Class of 2026 (Active Drive)</option>
@@ -413,98 +364,8 @@ export default function ProfilePage() {
         </form>
       </div>
 
-      {/* DPDP Act 2023 Consent & Data Rights Section */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="font-display font-bold text-sm text-[#121417] dark:text-white">
-                DPDP Act 2023 Consent &amp; Privacy Rights
-              </span>
-            </div>
-            <p className="text-xs text-[#868E96] dark:text-[#777777]">
-              MockFolder processes your personal data under your explicit, informed consent (DPDP Act 2023 §6).
-            </p>
-          </div>
-
-          <span
-            className={`px-3 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider ${
-              consentStatus === 'accepted'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-            }`}
-          >
-            Status: {consentStatus.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs">
-          <div>
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase block">
-              Policy Version
-            </span>
-            <span className="font-semibold text-[#121417] dark:text-gray-200">
-              v{consentVersion}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase block">
-              Recorded Proof
-            </span>
-            <span className="font-semibold text-[#121417] dark:text-gray-200">
-              {consentTimestamp ? new Date(consentTimestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Session Synchronized'}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#666666] uppercase block">
-              Data Fiduciary
-            </span>
-            <span className="font-semibold text-[#121417] dark:text-gray-200">
-              MockFolder
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-          <Link
-            to="/privacy-policy"
-            className="text-xs text-[#FD4A32] hover:underline font-bold inline-flex items-center gap-1"
-          >
-            <span>Review Full Privacy Notice</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-
-          <div className="flex items-center gap-2">
-            {consentStatus === 'accepted' ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  if (window.confirm('Withdraw consent for non-essential processing? Analytics and progress synchronization will be paused until re-consented.')) {
-                    await withdrawConsent();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#2E2E2E] hover:border-amber-500 text-xs font-display font-bold text-[#868E96] dark:text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
-              >
-                Withdraw Consent
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={async () => {
-                  await acceptConsent();
-                }}
-                className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-display font-bold transition-colors cursor-pointer"
-              >
-                Grant Consent
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Account Security & Sign Out Section */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -512,7 +373,7 @@ export default function ProfilePage() {
               Account Security &amp; Sessions
             </span>
           </div>
-          <p className="text-xs text-[#868E96] dark:text-[#777777]">
+          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
             Authenticated via secure Supabase Google / Email authentication.
           </p>
         </div>

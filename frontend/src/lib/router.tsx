@@ -20,6 +20,7 @@ const InterviewPrepPage = lazy(() => import('@/pages/InterviewPrepPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const StudentExamsPage = lazy(() => import('@/pages/StudentExamsPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 const AdminCollegesPage = lazy(() => import('@/pages/AdminCollegesPage'));
 const AdminBulkImportPage = lazy(() => import('@/pages/AdminBulkImportPage'));
@@ -165,6 +166,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(ProfilePage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/settings',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(SettingsPage)}
           </ProtectedRoute>
         ),
       },

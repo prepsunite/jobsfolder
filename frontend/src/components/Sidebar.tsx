@@ -1100,22 +1100,6 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
               <div className="border-t border-[#E9ECEF] dark:border-[#20252E] my-1" />
 
-              {/* Pricing & Passes */}
-              <Link
-                to="/pricing"
-                onClick={() => {
-                  setIsProfileMenuOpen(false);
-                  onClose?.();
-                }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
-              >
-                <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="flex-1">Pricing &amp; Passes</span>
-                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  {subData?.isPro ? 'Pro' : 'Passes'}
-                </span>
-              </Link>
-
               {/* Profile */}
               <Link
                 to="/profile"
@@ -1131,7 +1115,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
               {/* Settings */}
               <Link
-                to="/profile"
+                to="/settings"
                 onClick={() => {
                   setIsProfileMenuOpen(false);
                   onClose?.();
