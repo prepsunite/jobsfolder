@@ -7,20 +7,20 @@
 
 /* ── Light Mode (Default) ───────────────────────────────── */
 :root {
-  --e-bg:          #FFFFFF;
-  --e-surface:     #F8F9FA;
-  --e-surface-2:   #F1F3F5;
-  --e-border:      #E9ECEF;
-  --e-border-2:    #DEE2E6;
+  --e-bg:          #0A0B0E;
+  --e-surface:     #0F1115;
+  --e-surface-2:   #14171C;
+  --e-border:      #1E232B;
+  --e-border-2:    #252B35;
   --e-text:        #121417;
   --e-text-2:      #495057;
   --e-text-3:      #868E96;
   --e-green:       #FD4A32;
   --e-green-dim:   #E0351D;
   --e-amber:       #D97706;
-  --e-nav-bg:      #FFFFFF;
-  --e-footer-bg:   #F8F9FA;
-  --e-chip-bg:     #F1F3F5;
+  --e-nav-bg:      #0A0B0E;
+  --e-footer-bg:   #07080A;
+  --e-chip-bg:     #14171C;
   --e-cta-text:    #FFFFFF;
   --e-invert-btn-bg: #121417;
   --e-invert-btn-text: #FFFFFF;
@@ -30,20 +30,20 @@
 :where(.dark, .dark *),
 :root.dark,
 html.dark {
-  --e-bg:          #09090D;
-  --e-surface:     #0F0E15;
-  --e-surface-2:   #16151E;
-  --e-border:      #22212C;
-  --e-border-2:    #2A2836;
+  --e-bg:          #0A0B0E;
+  --e-surface:     #0F1115;
+  --e-surface-2:   #14171C;
+  --e-border:      #1E232B;
+  --e-border-2:    #252B35;
   --e-text:        #FFFFFF;
   --e-text-2:      #A1A1AA;
   --e-text-3:      #71717A;
   --e-green:       #FD4A32;
   --e-green-dim:   #E0351D;
   --e-amber:       #F5A623;
-  --e-nav-bg:      #09090D;
-  --e-footer-bg:   #060609;
-  --e-chip-bg:     #16151E;
+  --e-nav-bg:      #0A0B0E;
+  --e-footer-bg:   #07080A;
+  --e-chip-bg:     #14171C;
   --e-cta-text:    #FFFFFF;
   --e-invert-btn-bg: #FFFFFF;
   --e-invert-btn-text: #000000;

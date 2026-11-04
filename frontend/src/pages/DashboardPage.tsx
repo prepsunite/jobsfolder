@@ -517,7 +517,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto">
       {/* Profile Header Card */}
-      <div className="rounded-lg p-5 sm:p-6 border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden transition-colors">
+      <div className="rounded-lg p-5 sm:p-6 border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden transition-colors">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] text-black flex items-center justify-center font-display font-black text-xl overflow-hidden shrink-0">
@@ -552,7 +552,7 @@ export default function DashboardPage() {
 
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 flex-wrap">
             {/* Top Right Compact 3-Pill Theme Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
+            <div className="flex items-center p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12]">
               <button
                 onClick={() => setThemeMode('light')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
@@ -594,7 +594,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap font-sans">
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-center">
                 <span className="text-sm font-display font-extrabold text-[#FD4A32] dark:text-[#FD4A32] block">
                   {bookmarkedExams.length}
                 </span>
@@ -603,7 +603,7 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-center">
                 <span className="text-sm font-display font-extrabold text-amber-500 block">
                   {totalQuestionsCount}
                 </span>
@@ -612,7 +612,7 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-center">
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-center">
                 <span className="text-sm font-display font-extrabold text-purple-500 block">
                   {bookmarkedExperiences.length}
                 </span>
@@ -767,14 +767,14 @@ export default function DashboardPage() {
       />
 
       {/* Navigation Tabs for Profile */}
-      <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#242424] pb-2">
+      <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#1E232B] pb-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setActiveTab('exams')}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'exams'
-                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                ? 'bg-[#121417] text-white dark:bg-[#FD4A32]/15 dark:text-white border border-[#121417] dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)] font-bold'
+                : 'bg-white dark:bg-[#14171C] border border-[#E9ECEF] dark:border-[#1E232B] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:dark:bg-[#181C22]'
             }`}
           >
             <Building2 className={`w-3.5 h-3.5 transition-colors ${activeTab === 'exams' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
@@ -783,10 +783,10 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setActiveTab('questions')}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'questions'
-                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                ? 'bg-[#121417] text-white dark:bg-[#FD4A32]/15 dark:text-white border border-[#121417] dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)] font-bold'
+                : 'bg-white dark:bg-[#14171C] border border-[#E9ECEF] dark:border-[#1E232B] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:dark:bg-[#181C22]'
             }`}
           >
             <BookOpen className={`w-3.5 h-3.5 transition-colors ${activeTab === 'questions' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
@@ -795,10 +795,10 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setActiveTab('experiences')}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'experiences'
-                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                ? 'bg-[#121417] text-white dark:bg-[#FD4A32]/15 dark:text-white border border-[#121417] dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)] font-bold'
+                : 'bg-white dark:bg-[#14171C] border border-[#E9ECEF] dark:border-[#1E232B] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:dark:bg-[#181C22]'
             }`}
           >
             <Layers className={`w-3.5 h-3.5 transition-colors ${activeTab === 'experiences' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
@@ -807,10 +807,10 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all ${
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'jobs'
-                ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                ? 'bg-[#121417] text-white dark:bg-[#FD4A32]/15 dark:text-white border border-[#121417] dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)] font-bold'
+                : 'bg-white dark:bg-[#14171C] border border-[#E9ECEF] dark:border-[#1E232B] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:dark:bg-[#181C22]'
             }`}
           >
             <Briefcase className={`w-3.5 h-3.5 transition-colors ${activeTab === 'jobs' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
@@ -827,12 +827,12 @@ export default function DashboardPage() {
               {bookmarkedExams.map((exam) => (
                 <div
                   key={exam.id}
-                  className="p-5 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
+                  className="p-5 rounded-lg border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-11 h-11 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0">
+                        <div className="w-11 h-11 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#1E232B] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0">
                           {exam.companyLogoUrl ? (
                             <img src={exam.companyLogoUrl} alt={exam.companyName || 'Company'} className="w-full h-full object-contain p-1" />
                           ) : (
@@ -881,7 +881,7 @@ export default function DashboardPage() {
 
                     <Link
                       to={`/companies/${exam.companySlug}/oldpapers?examId=${exam.id}`}
-                      className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
+                      className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
                       title="Open Old Papers Fullscreen Dashboard"
                     >
                       <FileText className="w-3.5 h-3.5 text-[#FD4A32]" />
@@ -893,7 +893,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
+              isDarkMode ? 'bg-[#14171C]/80 border-[#1E232B] shadow-lg' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <BookmarkCheck className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">
@@ -933,11 +933,11 @@ export default function DashboardPage() {
                   <div
                     key={q.id}
                     className={`p-6 rounded-[24px] border transition-all space-y-4 relative shadow-2xs ${
-                      isDarkMode ? 'bg-[#1e1f22] border-[#2b2d31] text-[#e3e3e3]' : 'bg-white border-[#E9ECEF] text-[#121417]'
+                      isDarkMode ? 'bg-[#14171C] border-[#1E232B] text-[#e3e3e3]' : 'bg-white border-[#E9ECEF] text-[#121417]'
                     }`}
                   >
                     {/* Header Row: Topic Badge + Subtopic + Question Number + Difficulty + Action Links */}
-                    <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#2b2d31]">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9ECEF] dark:border-[#1E232B]">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] font-extrabold text-[10px] uppercase tracking-wider border border-[#FD4A32]/20 flex items-center gap-1">
                           <Layers className="w-3 h-3 text-[#FD4A32]" />
@@ -1018,7 +1018,7 @@ export default function DashboardPage() {
                     })()}
 
                     {/* Toggle Explanation Button */}
-                    <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#2b2d31] flex items-center justify-between">
+                    <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B] flex items-center justify-between">
                       <button
                         onClick={() => toggleExplanation(q.id)}
                         className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -1141,7 +1141,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
+              isDarkMode ? 'bg-[#14171C]/80 border-[#1E232B] shadow-lg' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <BookOpen className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">
@@ -1212,7 +1212,7 @@ export default function DashboardPage() {
                   </div>
 
                   {exp.rounds && exp.rounds.length > 0 && (
-                    <div className="relative pl-6 space-y-4 pt-4 border-t border-[#E9ECEF] dark:border-[#2b2d31] before:absolute before:left-2.5 before:top-5 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#FD4A32] before:via-gray-300 dark:before:via-[#333333] before:to-transparent">
+                    <div className="relative pl-6 space-y-4 pt-4 border-t border-[#E9ECEF] dark:border-[#1E232B] before:absolute before:left-2.5 before:top-5 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#FD4A32] before:via-gray-300 dark:before:via-[#333333] before:to-transparent">
                       {exp.rounds.map((rd, idx) => (
                         <div key={idx} className="relative group space-y-1.5">
                           <div className="absolute -left-6 top-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-[#121417] dark:bg-white text-white dark:text-black text-[10px] font-display font-extrabold shadow-sm ring-2 ring-white dark:ring-[#1e1f22]">
@@ -1223,7 +1223,7 @@ export default function DashboardPage() {
                               {rd.roundTitle}
                             </h4>
                           )}
-                          <div className="p-3.5 bg-[#F8F9FA]/70 dark:bg-[#141517]/70 rounded-lg border border-[#E9ECEF] dark:border-[#2b2d31]">
+                          <div className="p-3.5 bg-[#F8F9FA]/70 dark:bg-[#141517]/70 rounded-lg border border-[#E9ECEF] dark:border-[#1E232B]">
                             <ContentRenderer
                               content={rd.details}
                               className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
@@ -1249,7 +1249,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
+              isDarkMode ? 'bg-[#14171C]/80 border-[#1E232B] shadow-lg' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <Layers className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">
@@ -1289,13 +1289,13 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={job.id}
-                    className="p-5 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
+                    className="p-5 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
                   >
                     <div className="space-y-3">
                       {/* Top Header: Logo + Title + Trash button */}
                       <div className="flex items-start justify-between gap-2.5">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-11 h-11 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0 shadow-2xs">
+                          <div className="w-11 h-11 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#1E232B] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0 shadow-2xs">
                             {job.company_logo_url ? (
                               <img
                                 src={job.company_logo_url}
@@ -1375,7 +1375,7 @@ export default function DashboardPage() {
                         href={job.apply_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
+                        className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
                         title="Apply on official company portal"
                       >
                         <span>Apply</span>
@@ -1388,7 +1388,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#1e1f22]/50 border-[#2b2d31]' : 'bg-[#F8F9FA] border-[#E9ECEF]'
+              isDarkMode ? 'bg-[#14171C]/80 border-[#1E232B] shadow-lg' : 'bg-[#F8F9FA] border-[#E9ECEF]'
             }`}>
               <BookmarkCheck className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
               <div className="space-y-1">

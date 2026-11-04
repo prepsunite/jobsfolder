@@ -166,20 +166,20 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
 
   if (isLoading) {
     return (
-      <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-4 sm:p-5 shadow-xs animate-pulse ${className}`}>
+      <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] p-4 sm:p-5 shadow-xs animate-pulse ${className}`}>
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#242424]" />
+            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#1E232B]" />
             <div className="space-y-1">
-              <div className="h-4 w-36 bg-gray-200 dark:bg-[#242424] rounded" />
-              <div className="h-3 w-48 bg-gray-200 dark:bg-[#242424] rounded" />
+              <div className="h-4 w-36 bg-gray-200 dark:bg-[#1E232B] rounded" />
+              <div className="h-3 w-48 bg-gray-200 dark:bg-[#1E232B] rounded" />
             </div>
           </div>
-          <div className="h-8 w-64 bg-gray-200 dark:bg-[#242424] rounded-lg" />
+          <div className="h-8 w-64 bg-gray-200 dark:bg-[#1E232B] rounded-lg" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-20 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424]" />
+            <div key={i} className="h-20 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B]" />
           ))}
         </div>
       </div>
@@ -187,7 +187,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
   }
 
   return (
-    <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] p-4 sm:p-5 shadow-xs transition-all ${className}`}>
+    <div className={`rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] p-4 sm:p-5 shadow-xs transition-all ${className}`}>
       {/* 1. Header Bar: Dynamic Title & Interactive 3-Tab Selector */}
       <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isExpanded ? 'pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]' : ''}`}>
         {/* Dynamic Left Header Info */}
@@ -247,7 +247,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
         <div
           role="tablist"
           aria-label="Student mastery domain analytics"
-          className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] self-start lg:self-auto gap-1"
+          className="flex items-center p-1 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] self-start lg:self-auto gap-1"
         >
           <button
             type="button"
@@ -258,7 +258,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             onClick={() => handleTabClick('aptitude')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               isExpanded && activeTab === 'aptitude'
-                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                ? 'bg-white dark:bg-[#181C22] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#252B35]'
                 : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
             }`}
           >
@@ -280,7 +280,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             onClick={() => handleTabClick('technical')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               isExpanded && activeTab === 'technical'
-                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                ? 'bg-white dark:bg-[#181C22] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#252B35]'
                 : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
             }`}
           >
@@ -302,7 +302,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             onClick={() => handleTabClick('interview')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               isExpanded && activeTab === 'interview'
-                ? 'bg-white dark:bg-[#1F1F1F] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#2D2D2D]'
+                ? 'bg-white dark:bg-[#181C22] text-[#121417] dark:text-white shadow-xs border border-[#E9ECEF] dark:border-[#252B35]'
                 : 'text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white'
             }`}
           >
@@ -344,18 +344,18 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
         >
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Streak:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{streakDays}d</span>
             </div>
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Accuracy:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">
                 {aptAttempted > 0 ? `${accuracyRate}%` : '—'}
               </span>
             </div>
             {aptAttempted > 0 && (
-              <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+              <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
                 <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">1st Try:</span>
                 <span className="font-extrabold text-[#121417] dark:text-white">
                   {firstTryAccuracyRate}%
@@ -367,10 +367,10 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
           {/* 4-Column Metric Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Card 1: Overall Solved Donut */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex items-center gap-3">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex items-center gap-3">
               <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
-                  <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#242424]" strokeWidth={strokeWidth} fill="none" />
+                  <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#1E232B]" strokeWidth={strokeWidth} fill="none" />
                   {easySolved > 0 && (
                     <circle cx="35" cy="35" r={radius} className="stroke-emerald-500 transition-all duration-700 ease-out" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={easyDashOffset} strokeLinecap="round" fill="none" />
                   )}
@@ -404,7 +404,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 2: Easy */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -426,7 +426,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 3: Medium */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
@@ -448,7 +448,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 4: Hard */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
@@ -496,15 +496,15 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
         >
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Prog 150:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{p150Solved}/{p150Total}</span>
             </div>
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Campus DSA:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{dsaSolved}/{dsaTotal}</span>
             </div>
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Technical MCQs:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{mcqSolved}/{mcqTotal}</span>
             </div>
@@ -513,10 +513,10 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
           {/* 4-Column Metric Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Card 1: Overall Coding Solved Donut */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex items-center gap-3">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex items-center gap-3">
               <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
-                  <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#242424]" strokeWidth={strokeWidth} fill="none" />
+                  <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#1E232B]" strokeWidth={strokeWidth} fill="none" />
                   {codingSolved > 0 && (
                     <circle cx="35" cy="35" r={radius} className="stroke-[#FD4A32] transition-all duration-700 ease-out" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={codingDashOffset} strokeLinecap="round" fill="none" />
                   )}
@@ -544,7 +544,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 2: Programming 150 */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5" />
@@ -567,7 +567,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 3: Campus DSA Core */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5" />
@@ -590,7 +590,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 4: Technical MCQs */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <HelpCircle className="w-3.5 h-3.5" />
@@ -639,15 +639,15 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
         >
           {/* Micro badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Core CS:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{coreCsMastered}/{coreCsTotal}</span>
             </div>
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">HR STAR:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{hrMastered}/{hrTotal}</span>
             </div>
-            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] text-xs font-mono">
+            <div className="px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs font-mono">
               <span className="text-[#868E96] dark:text-[#777777] mr-1.5 font-sans text-[11px]">Projects:</span>
               <span className="font-extrabold text-[#121417] dark:text-white">{projMastered}/{projTotal}</span>
             </div>
@@ -656,10 +656,10 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
           {/* 4-Column Metric Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Card 1: Overall Mastered Donut */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex items-center gap-3">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex items-center gap-3">
               <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 70 70">
-                  <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#242424]" strokeWidth={strokeWidth} fill="none" />
+                  <circle cx="35" cy="35" r={radius} className="stroke-[#E9ECEF] dark:stroke-[#1E232B]" strokeWidth={strokeWidth} fill="none" />
                   {intMastered > 0 && (
                     <circle cx="35" cy="35" r={radius} className="stroke-[#FD4A32] dark:stroke-[#FD4A32] transition-all duration-700 ease-out" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={intDashOffset} strokeLinecap="round" fill="none" />
                   )}
@@ -687,7 +687,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 2: Core CS Subjects */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-[#FD4A32] dark:text-[#FD4A32] flex items-center gap-1.5">
                   <Cpu className="w-3.5 h-3.5" />
@@ -710,7 +710,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 3: HR & Behavioral */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <Briefcase className="w-3.5 h-3.5" />
@@ -733,7 +733,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
             </div>
 
             {/* Card 4: Project Defense */}
-            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] flex flex-col justify-between space-y-2">
+            <div className="p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-display font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />

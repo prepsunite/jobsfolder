@@ -236,7 +236,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
       {/* Main Sidebar */}
       <aside
-        className={`bg-[#F8F9FA] dark:bg-[#0F0E15] border-r border-[#E9ECEF] dark:border-[#22212C] flex flex-col justify-between h-screen fixed md:sticky top-0 left-0 shrink-0 z-50 md:z-40 transition-all duration-300 ease-in-out ${
+        className={`bg-[#F8F9FA] dark:bg-[#0F1115] border-r border-[#E9ECEF] dark:border-[#1E232B] flex flex-col justify-between h-screen fixed md:sticky top-0 left-0 shrink-0 z-50 md:z-40 transition-all duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         } ${
           isCollapsed ? 'w-64 md:w-16' : 'w-64 md:w-64'
@@ -262,7 +262,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               <button
                 type="button"
                 onClick={toggleCollapsed}
-                className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer"
+                className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer"
                 title="Expand Sidebar (Ctrl+[)"
                 aria-label="Expand Sidebar"
               >
@@ -298,7 +298,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 <button
                   type="button"
                   onClick={toggleCollapsed}
-                  className="hidden md:flex items-center justify-center p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer"
+                  className="hidden md:flex items-center justify-center p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer"
                   title="Collapse Sidebar (Ctrl+[)"
                   aria-label="Collapse Sidebar"
                 >
@@ -308,7 +308,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 {/* Mobile close button */}
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:bg-black/5 dark:hover:bg-[#1B1A24] md:hidden cursor-pointer"
+                  className="p-1.5 rounded-md text-[#868E96] dark:text-[#555555] hover:bg-black/5 dark:hover:bg-[#181C22] md:hidden cursor-pointer"
                   title="Close Navigation"
                   aria-label="Close Navigation"
                 >
@@ -345,7 +345,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               />
             </div>
           ) : (
-            <div className="p-2 rounded-md bg-white dark:bg-[#16151E] border border-[#E9ECEF] dark:border-[#22212C] text-xs flex items-center justify-between">
+            <div className="p-2 rounded-md bg-white dark:bg-[#14171C] border border-[#E9ECEF] dark:border-[#1E232B] text-xs flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
@@ -393,7 +393,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                         isActive
                           ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400'} transition-transform group-hover:scale-110`} />
@@ -420,7 +420,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         className={`group flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold transition-all ${
                           isActive
                             ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs font-bold dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
@@ -434,7 +434,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </nav>
 
                 {/* College Info & Capacity Badge */}
-                <div className="p-3 rounded-lg bg-white dark:bg-[#16151E] border border-[#E9ECEF] dark:border-[#22212C] space-y-2 text-xs">
+                <div className="p-3 rounded-lg bg-white dark:bg-[#14171C] border border-[#E9ECEF] dark:border-[#1E232B] space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold uppercase text-[#868E96] dark:text-[#555555]">
                       Institutional CRT
@@ -452,7 +452,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </div>
 
                 {/* Support & Platform Links for Placement Officers */}
-                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#22212C] space-y-0.5">
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B] space-y-0.5">
                   <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block px-2.5 mb-1 font-display">
                     Platform &amp; Help
                   </span>
@@ -476,7 +476,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
                 {/* Admin Quick Return for Super Admins */}
                 {isAdmin && (
-                  <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#22212C] space-y-1">
+                  <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B] space-y-1">
                     <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
                       Control Center
                     </span>
@@ -529,7 +529,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all relative ${
                           isActive
                             ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                         }`}
                       >
                         <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
@@ -542,7 +542,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </nav>
 
                 {/* Aptitude Rail Icon */}
-                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#22212C]">
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B]">
                   <Link
                     to="/aptitude/arithmetic-aptitude"
                     onClick={onClose}
@@ -550,7 +550,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                     className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                       location.pathname.startsWith('/aptitude')
                         ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                        : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                        : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                     }`}
                   >
                     <Calculator className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${location.pathname.startsWith('/aptitude') ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
@@ -558,7 +558,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </div>
 
                 {/* Technical & Coding Tracks Rail Icons */}
-                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#22212C] space-y-1">
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B] space-y-1">
                   {technicalTracks.map((item) => {
                     const ItemIcon = item.icon;
                     const isItemActive =
@@ -573,7 +573,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                           isItemActive
                             ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                         }`}
                       >
                         <ItemIcon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isItemActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
@@ -583,7 +583,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </div>
 
                 {/* Interview Prep Categories Rail Icons */}
-                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#22212C] space-y-1">
+                <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B] space-y-1">
                   {interviewCategories.map((item) => {
                     const ItemIcon = item.icon;
                     const isItemActive =
@@ -598,7 +598,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         className={`group flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-xs font-semibold transition-all ${
                           isItemActive
                             ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                         }`}
                       >
                         <ItemIcon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isItemActive ? 'text-[#FD4A32]' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'}`} />
@@ -609,7 +609,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
                 {/* Admin Rail Icons */}
                 {isAdmin && (
-                  <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#22212C] space-y-1">
+                  <div className="pt-2 border-t border-[#E9ECEF] dark:border-[#1E232B] space-y-1">
                     <Link
                       to="/admin"
                       onClick={onClose}
@@ -728,7 +728,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                         className={`group flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                           isActive
                             ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs font-bold dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                            : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
@@ -753,11 +753,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </nav>
 
                 {/* Collapsible Aptitude Categories */}
-                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#22212C]">
+                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#1E232B]">
                   <button
                     type="button"
                     onClick={() => setIsAptitudeExpanded(!isAptitudeExpanded)}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer group font-display uppercase tracking-wider"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer group font-display uppercase tracking-wider"
                   >
                     <span>Aptitude &amp; Reasoning</span>
                     <ChevronDown
@@ -780,7 +780,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isCatActive
                                 ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs font-bold dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                                : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                                : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
@@ -795,11 +795,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </div>
 
                 {/* Collapsible Technical & Coding */}
-                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#22212C]">
+                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#1E232B]">
                   <button
                     type="button"
                     onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer group font-display uppercase tracking-wider"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer group font-display uppercase tracking-wider"
                   >
                     <span>Technical &amp; Coding</span>
                     <ChevronDown
@@ -824,7 +824,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isItemActive
                                 ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs font-bold dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                                : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                                : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
@@ -848,11 +848,11 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 </div>
 
                 {/* Collapsible Interview Preparation */}
-                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#22212C]">
+                <div className="pt-2.5 pb-1 border-t border-[#E9ECEF] dark:border-[#1E232B]">
                   <button
                     type="button"
                     onClick={() => setIsInterviewExpanded(!isInterviewExpanded)}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer group font-display uppercase tracking-wider"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-700 dark:text-neutral-200 hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer group font-display uppercase tracking-wider"
                   >
                     <span>Interview Preparation</span>
                     <ChevronDown
@@ -877,7 +877,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                               isItemActive
                                 ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs font-bold dark:shadow-[0_0_12px_rgba(253,74,50,0.12)]'
-                                : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                                : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
@@ -902,7 +902,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
 
                 {/* Admin Control Panel Section */}
                 {isAdmin && (
-                  <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#22212C] space-y-1">
+                  <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#1E232B] space-y-1">
                     <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block px-2.5 mb-1 font-display">
                       Control Center
                     </span>
@@ -912,7 +912,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname === '/admin'
                           ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -930,7 +930,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/colleges')
                           ? 'bg-black text-white dark:bg-[#FD4A32]/12 dark:text-white border border-black dark:border-[#FD4A32]/35 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.12)] font-bold'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -948,7 +948,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/bulk-import')
                           ? 'bg-purple-900/10 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -966,7 +966,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/technical')
                           ? 'bg-indigo-900/10 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -984,7 +984,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/interview')
                           ? 'bg-teal-900/10 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -1002,7 +1002,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname.startsWith('/admin/jobs')
                           ? 'bg-green-900/10 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -1020,7 +1020,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname === '/student/exams' && (!location.search || location.search.includes('tab=blueprints'))
                           ? 'bg-blue-900/10 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -1038,7 +1038,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                       className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-all ${
                         location.pathname === '/student/exams' && location.search.includes('tab=bank')
                           ? 'bg-emerald-900/10 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#1B1A24] border border-transparent'
+                          : 'text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-[#181C22] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -1057,7 +1057,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
         </div>
 
         {/* Bottom User Account Section */}
-        <div ref={profileMenuRef} className={`relative border-t border-[#E9ECEF] dark:border-[#22212C] bg-white dark:bg-[#141414] ${isCollapsed ? 'p-2' : 'p-3'}`}>
+        <div ref={profileMenuRef} className={`relative border-t border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#141414] ${isCollapsed ? 'p-2' : 'p-3'}`}>
           {/* ChatGPT-style Profile Popover Menu */}
           {isProfileMenuOpen && (
             <div
@@ -1065,7 +1065,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 isCollapsed
                   ? 'bottom-2 left-full ml-3 w-64'
                   : 'bottom-full mb-2 left-2 right-2 w-[calc(100%-1rem)]'
-              } rounded-2xl border border-[#E9ECEF] dark:border-[#2A2938] bg-white dark:bg-[#16151E] text-[#121417] dark:text-[#E3E3E3] shadow-2xl p-1.5`}
+              } rounded-2xl border border-[#E9ECEF] dark:border-[#252B35] bg-white dark:bg-[#14171C] text-[#121417] dark:text-[#E3E3E3] shadow-2xl p-1.5`}
             >
               {/* Header: User Profile preview row */}
               <Link
@@ -1074,7 +1074,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   setIsProfileMenuOpen(false);
                   onClose?.();
                 }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-[#22202E] transition-colors group cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors group cursor-pointer"
               >
                 <div
                   className={`w-9 h-9 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
@@ -1098,7 +1098,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 <ChevronRight className="w-4 h-4 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
               </Link>
 
-              <div className="border-t border-[#E9ECEF] dark:border-[#262534] my-1" />
+              <div className="border-t border-[#E9ECEF] dark:border-[#20252E] my-1" />
 
               {/* Pricing & Passes */}
               <Link
@@ -1107,7 +1107,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   setIsProfileMenuOpen(false);
                   onClose?.();
                 }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#22202E] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
               >
                 <Zap className="w-4 h-4 text-amber-500 shrink-0" />
                 <span className="flex-1">Pricing &amp; Passes</span>
@@ -1123,7 +1123,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   setIsProfileMenuOpen(false);
                   onClose?.();
                 }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#22202E] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
               >
                 <User className="w-4 h-4 text-[#747878] dark:text-[#A6ADBB] shrink-0" />
                 <span>Profile</span>
@@ -1136,13 +1136,13 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   setIsProfileMenuOpen(false);
                   onClose?.();
                 }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#22202E] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer"
               >
                 <Settings className="w-4 h-4 text-[#747878] dark:text-[#A6ADBB] shrink-0" />
                 <span>Settings</span>
               </Link>
 
-              <div className="border-t border-[#E9ECEF] dark:border-[#262534] my-1" />
+              <div className="border-t border-[#E9ECEF] dark:border-[#20252E] my-1" />
 
               {/* Help */}
               <Link
@@ -1151,7 +1151,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   setIsProfileMenuOpen(false);
                   onClose?.();
                 }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#22202E] transition-colors text-[#121417] dark:text-[#E3E3E3] group cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors text-[#121417] dark:text-[#E3E3E3] group cursor-pointer"
               >
                 <HelpCircle className="w-4 h-4 text-[#747878] dark:text-[#A6ADBB] shrink-0" />
                 <span className="flex-1">Help</span>
@@ -1206,7 +1206,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                 type="button"
                 onClick={toggleCollapsed}
                 title="Expand Sidebar (Ctrl+[)"
-                className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer mt-1"
+                className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer mt-1"
                 aria-label="Expand Sidebar"
               >
                 <PanelLeftOpen className="w-4 h-4 text-[#FD4A32]" />
@@ -1231,7 +1231,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
                   type="button"
                   onClick={() => setIsProfileMenuOpen(prev => !prev)}
                   className={`flex items-center justify-between p-2 rounded-xl transition-all w-full text-left cursor-pointer border ${
-                    isProfileMenuOpen ? 'bg-neutral-100 dark:bg-[#1E1D28] border-neutral-300 dark:border-[#323042]' : 'bg-[#F8F9FA] dark:bg-[#16151E] hover:bg-neutral-100 dark:hover:bg-[#1E1C28] border-[#E9ECEF] dark:border-[#22212C]'
+                    isProfileMenuOpen ? 'bg-neutral-100 dark:bg-[#14171C] border-neutral-300 dark:border-[#252B35]' : 'bg-[#F8F9FA] dark:bg-[#14171C] hover:bg-neutral-100 dark:hover:bg-[#181C22] border-[#E9ECEF] dark:border-[#1E232B]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1263,7 +1263,7 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               <button
                 type="button"
                 onClick={toggleCollapsed}
-                className="hidden md:flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs font-semibold text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1B1A24] transition-colors cursor-pointer"
+                className="hidden md:flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs font-semibold text-[#868E96] dark:text-[#777777] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#181C22] transition-colors cursor-pointer"
                 title="Collapse Sidebar (Ctrl+[)"
                 aria-label="Collapse Sidebar"
               >
