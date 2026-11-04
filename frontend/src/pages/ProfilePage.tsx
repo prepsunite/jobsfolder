@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   Calendar,
   ArrowRight,
-  Zap,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -202,39 +201,6 @@ export default function ProfilePage() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Pricing & Passes Membership Card */}
-      <div className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold shrink-0">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-display text-sm font-extrabold text-[#121417] dark:text-white">
-                  Pricing, Passes &amp; Access Tier
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25 uppercase tracking-wider">
-                  {subData?.planName || 'Free Student Tier'}
-                </span>
-              </div>
-              <p className="text-xs text-[#868E96] dark:text-[#777777] mt-0.5">
-                {subData?.isPro
-                  ? `Your account has active full-access passes to solved papers and mock exams.${subData?.expiresAt ? ` Valid until ${new Date(subData.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.` : ''}`
-                  : 'Upgrade to a 24-Hour Day Pass (₹59) or 1-Year Full Access Pass (₹299) for all 50+ company recruitment papers and solutions.'}
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/pricing"
-            className="px-4 py-2.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03e28] text-white text-xs font-display font-extrabold shadow-sm transition-all shrink-0 flex items-center gap-2 group cursor-pointer"
-          >
-            <span>{subData?.isPro ? 'Manage / Upgrade Passes' : 'View Pricing & Passes'}</span>
-            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
         </div>
       </div>
 

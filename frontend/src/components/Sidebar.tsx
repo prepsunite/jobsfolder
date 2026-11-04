@@ -40,6 +40,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  CreditCard,
 } from 'lucide-react';
 
 function getInitials(name?: string | null, email?: string | null): string {
@@ -1099,6 +1100,22 @@ export default function Sidebar({ isOpen = false, onClose, collegeName, collegeC
               </Link>
 
               <div className="border-t border-[#E9ECEF] dark:border-[#20252E] my-1" />
+
+              {/* Pricing & Passes */}
+              <Link
+                to="/pricing"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1C2028] transition-colors text-[#121417] dark:text-[#E3E3E3] cursor-pointer group"
+              >
+                <CreditCard className="w-4 h-4 text-[#FD4A32] shrink-0" />
+                <span className="flex-1">Pricing &amp; Passes</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#FD4A32]/10 dark:bg-[#FD4A32]/20 text-[#FD4A32] border border-[#FD4A32]/30 uppercase tracking-wide">
+                  Passes
+                </span>
+              </Link>
 
               {/* Profile */}
               <Link

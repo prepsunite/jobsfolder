@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -16,7 +16,6 @@ import {
   Receipt,
   ArrowRight,
   CheckCircle2,
-  AlertCircle,
   Clock,
   Zap,
   LogOut,
@@ -24,7 +23,11 @@ import {
   User,
   Sparkles,
   Lock,
+  ChevronRight,
+  Check,
 } from 'lucide-react';
+
+type SettingsTab = 'billing' | 'appearance' | 'privacy' | 'security';
 
 interface BillingRecord {
   id: string;
@@ -38,9 +41,20 @@ interface BillingRecord {
 }
 
 export default function SettingsPage() {
-  const { user, isAdmin, isTpoAdmin, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const { themeMode, setThemeMode } = useTheme();
   const { consentStatus, consentTimestamp, consentVersion, withdrawConsent, acceptConsent } = useConsent();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab') as SettingsTab | null;
+  const activeTab: SettingsTab =
+    rawTab && ['billing', 'appearance', 'privacy', 'security'].includes(rawTab)
+      ? rawTab
+      : 'billing';
+
+  const setTab = (tab: SettingsTab) => {
+    setSearchParams({ tab });
+  };
 
   // TanStack Query: Active Subscription Entitlement
   const { data: subData } = useQuery({
@@ -150,8 +164,43 @@ export default function SettingsPage() {
     }
   };
 
+  const choices: {
+    id: SettingsTab;
+    label: string;
+    caption: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string;
+  }[] = [
+    {
+      id: 'billing',
+      label: 'Billing & Passes',
+      caption: 'Active passes & receipts',
+      icon: CreditCard,
+      badge: isUserPro ? 'Pro Active' : undefined,
+    },
+    {
+      id: 'appearance',
+      label: 'Appearance',
+      caption: 'Light & cold carbon dark',
+      icon: Sun,
+    },
+    {
+      id: 'privacy',
+      label: 'Consent & Privacy',
+      caption: 'DPDP Act 2023 rights',
+      icon: ShieldCheck,
+      badge: consentStatus === 'accepted' ? 'Consented' : 'Withdrawn',
+    },
+    {
+      id: 'security',
+      label: 'Account Security',
+      caption: 'Auth & session logout',
+      icon: Lock,
+    },
+  ];
+
   return (
-    <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto pb-12 font-sans">
+    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto pb-12 font-sans">
       {/* Top Banner & Quick Navigation */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
@@ -188,325 +237,481 @@ export default function SettingsPage() {
               Settings &amp; Preferences
             </h1>
             <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] mt-0.5">
-              Manage your display appearance, past billing purchases, and DPDP Act 2023 privacy rights.
+              Choose a section below to configure your display appearance, past billing purchases, and privacy rights.
             </p>
           </div>
         </div>
       </div>
 
-      {/* SECTION 1: Appearance & Display Theme */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Sun className="w-4 h-4 text-[#FD4A32]" />
-            <h2 className="font-display font-bold text-sm text-[#121417] dark:text-white">
-              Appearance &amp; Theme
-            </h2>
-          </div>
-          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
-            Customize how MockFolder looks on your screen. Choose between clean light contrast or ultra-sleek cold carbon dark mode.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          {/* Light Mode */}
-          <button
-            type="button"
-            onClick={() => setThemeMode('light')}
-            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-              themeMode === 'light'
-                ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
-                : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Sun className="w-5 h-5 text-amber-500" />
-              {themeMode === 'light' && (
-                <CheckCircle2 className="w-4 h-4 text-[#FD4A32]" />
-              )}
-            </div>
-            <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
-              Light Mode
-            </span>
-            <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
-              Crisp daylight contrast
-            </span>
-          </button>
-
-          {/* Dark Mode */}
-          <button
-            type="button"
-            onClick={() => setThemeMode('dark')}
-            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-              themeMode === 'dark'
-                ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
-                : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Moon className="w-5 h-5 text-indigo-400" />
-              {themeMode === 'dark' && (
-                <CheckCircle2 className="w-4 h-4 text-[#FD4A32]" />
-              )}
-            </div>
-            <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
-              Dark Mode (Cold Carbon)
-            </span>
-            <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
-              Obsidian steel &amp; glowing ember
-            </span>
-          </button>
-
-          {/* System Auto */}
-          <button
-            type="button"
-            onClick={() => setThemeMode('system')}
-            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-              themeMode === 'system'
-                ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
-                : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Monitor className="w-5 h-5 text-neutral-400" />
-              {themeMode === 'system' && (
-                <CheckCircle2 className="w-4 h-4 text-[#FD4A32]" />
-              )}
-            </div>
-            <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
-              System Sync
-            </span>
-            <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
-              Follows your OS appearance
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* SECTION 2: Billing & Past Purchases */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-emerald-500" />
-              <h2 className="font-display font-bold text-sm text-[#121417] dark:text-white">
-                Billing &amp; Past Purchases
-              </h2>
-            </div>
-            <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
-              View your active pass memberships and receipt history for all unlocked company exams.
-            </p>
-          </div>
-
-          <Link
-            to="/pricing"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03e28] text-white text-xs font-display font-bold transition-all shadow-xs cursor-pointer shrink-0"
-          >
-            <Zap className="w-3.5 h-3.5" />
-            <span>Pricing &amp; Passes</span>
-          </Link>
-        </div>
-
-        {/* Current Entitlement Summary Card */}
-        <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase tracking-wider block">
-              Active Tier
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-extrabold text-sm text-[#121417] dark:text-white">
-                {subData?.planName || 'Free Student Tier'}
-              </span>
-              {isUserPro ? (
-                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5" /> Active Pro
-                </span>
-              ) : (
-                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  Standard Tier
-                </span>
-              )}
-            </div>
-            {subData?.expiresAt && (
-              <p className="text-[11px] text-[#868E96] dark:text-[#71717A]">
-                Valid until {new Date(subData.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                {' '}({Math.max(0, Math.ceil((new Date(subData.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining)
-              </p>
-            )}
-          </div>
-
-          <Link
-            to="/pricing"
-            className="text-xs text-[#FD4A32] hover:underline font-bold inline-flex items-center gap-1"
-          >
-            <span>{isUserPro ? 'Extend / Upgrade Pass' : 'Unlock Full Access'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {/* Purchase History Records Table / Cards */}
-        <div className="space-y-2 pt-1">
-          <span className="text-[11px] font-bold text-[#121417] dark:text-white uppercase tracking-wider block">
-            Transaction History
-          </span>
-
-          {isPurchasesLoading ? (
-            <div className="p-6 text-center text-xs text-[#868E96] dark:text-[#71717A]">
-              Loading billing records...
-            </div>
-          ) : purchaseHistory.length > 0 ? (
-            <div className="space-y-2">
-              {purchaseHistory.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/60 dark:bg-[#0D0F12]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
+      {/* Choice Selector & Content Area */}
+      <div className="flex flex-col md:flex-row items-start gap-6">
+        {/* Navigation Column */}
+        <div className="w-full md:w-64 shrink-0 space-y-2">
+          {/* Mobile horizontal scrolling pills */}
+          <div className="flex md:hidden overflow-x-auto gap-2 pb-1 no-scrollbar">
+            {choices.map((choice) => {
+              const Icon = choice.icon;
+              const isActive = activeTab === choice.id;
+              return (
+                <button
+                  key={choice.id}
+                  onClick={() => setTab(choice.id)}
+                  type="button"
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-display font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                    isActive
+                      ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-sm'
+                      : 'bg-white dark:bg-[#14171C] text-[#495057] dark:text-[#A1A1AA] border-[#E9ECEF] dark:border-[#1E232B] hover:text-[#121417] dark:hover:text-white'
+                  }`}
                 >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <Receipt className="w-3.5 h-3.5 text-[#FD4A32]" />
-                      <span className="font-bold text-[#121417] dark:text-white">
-                        {item.title}
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{choice.label}</span>
+                  {choice.badge && (
+                    <span
+                      className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/20 text-[#FD4A32]'
+                      }`}
+                    >
+                      {choice.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop vertical choice list */}
+          <div className="hidden md:flex flex-col gap-1.5 p-2 rounded-2xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs">
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#868E96] dark:text-[#71717A]">
+              Navigation
+            </div>
+            {choices.map((choice) => {
+              const Icon = choice.icon;
+              const isActive = activeTab === choice.id;
+              return (
+                <button
+                  key={choice.id}
+                  onClick={() => setTab(choice.id)}
+                  type="button"
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all border cursor-pointer ${
+                    isActive
+                      ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] dark:text-white border-[#FD4A32]/30 dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)]'
+                      : 'border-transparent text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1C2028]'
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      isActive
+                        ? 'bg-[#FD4A32] text-white shadow-xs'
+                        : 'bg-black/5 dark:bg-[#0D0F12] text-[#868E96] dark:text-[#71717A]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-display font-bold text-xs truncate">
+                        {choice.label}
                       </span>
-                      {item.amount && (
-                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                          {item.amount}
+                      {choice.badge && (
+                        <span
+                          className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${
+                            isActive
+                              ? 'bg-[#FD4A32]/20 text-[#FD4A32] dark:text-orange-300 border border-[#FD4A32]/30'
+                              : 'bg-black/5 dark:bg-[#0D0F12] text-[#868E96] dark:text-[#71717A]'
+                          }`}
+                        >
+                          {choice.badge}
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-[#868E96] dark:text-[#71717A] font-mono">
-                      Ref: {item.paymentId || 'B2B/System Entitlement'} • {new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block truncate">
+                      {choice.caption}
+                    </span>
+                  </div>
+                  <ChevronRight
+                    className={`w-4 h-4 shrink-0 transition-transform ${
+                      isActive
+                        ? 'text-[#FD4A32] dark:text-white translate-x-0.5'
+                        : 'text-neutral-400 opacity-40'
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Selected Choice Detail Pane */}
+        <div className="flex-1 min-w-0 w-full space-y-4">
+          {/* CHOICE 1: Billing & Passes */}
+          {activeTab === 'billing' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-emerald-500" />
+                      <h2 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                        Billing &amp; Past Purchases
+                      </h2>
+                    </div>
+                    <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
+                      View your active pass memberships and receipt history for all unlocked company exams.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span
-                      className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                        item.status === 'ACTIVE'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                          : 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border-neutral-500/30'
-                      }`}
-                    >
-                      {item.status}
+                  <Link
+                    to="/pricing"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FD4A32] hover:bg-[#e03e28] text-white text-xs font-display font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Explore Passes</span>
+                  </Link>
+                </div>
+
+                {/* Current Entitlement Summary Card */}
+                <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase tracking-wider block">
+                      Active Tier
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-display font-extrabold text-sm text-[#121417] dark:text-white">
+                        {subData?.planName || 'Free Student Tier'}
+                      </span>
+                      {isUserPro ? (
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5" /> Active Pro
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          Standard Tier
+                        </span>
+                      )}
+                    </div>
+                    {subData?.expiresAt && (
+                      <p className="text-[11px] text-[#868E96] dark:text-[#71717A]">
+                        Valid until {new Date(subData.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {' '}({Math.max(0, Math.ceil((new Date(subData.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining)
+                      </p>
+                    )}
+                  </div>
+
+                  <Link
+                    to="/pricing"
+                    className="text-xs text-[#FD4A32] hover:underline font-bold inline-flex items-center gap-1"
+                  >
+                    <span>{isUserPro ? 'Extend / Upgrade Pass' : 'Unlock Full Access'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                {/* Purchase History Records Table / Cards */}
+                <div className="space-y-3 pt-2">
+                  <span className="text-[11px] font-bold text-[#121417] dark:text-white uppercase tracking-wider block">
+                    Transaction History
+                  </span>
+
+                  {isPurchasesLoading ? (
+                    <div className="p-8 text-center text-xs text-[#868E96] dark:text-[#71717A]">
+                      Loading billing records...
+                    </div>
+                  ) : purchaseHistory.length > 0 ? (
+                    <div className="space-y-2">
+                      {purchaseHistory.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/60 dark:bg-[#0D0F12]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <Receipt className="w-3.5 h-3.5 text-[#FD4A32]" />
+                              <span className="font-bold text-[#121417] dark:text-white">
+                                {item.title}
+                              </span>
+                              {item.amount && (
+                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                  {item.amount}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#868E96] dark:text-[#71717A] font-mono">
+                              Ref: {item.paymentId || 'B2B/System Entitlement'} • {new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <span
+                              className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                item.status === 'ACTIVE'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                  : 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border-neutral-500/30'
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/40 dark:bg-[#0D0F12]/40 space-y-2">
+                      <Clock className="w-6 h-6 text-[#868E96] dark:text-[#71717A] mx-auto opacity-60" />
+                      <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
+                        No past retail purchases recorded on this account yet.
+                      </p>
+                      <Link
+                        to="/pricing"
+                        className="text-xs font-bold text-[#FD4A32] hover:underline inline-block"
+                      >
+                        Explore 24h &amp; 1-Year Recruitment Passes →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CHOICE 2: Appearance & Theme */}
+          {activeTab === 'appearance' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Sun className="w-5 h-5 text-[#FD4A32]" />
+                    <h2 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                      Appearance &amp; Theme
+                    </h2>
+                  </div>
+                  <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
+                    Customize how Prepunite looks on your screen. Choose between clean light contrast, ultra-sleek cold carbon dark mode, or automatic system sync.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  {/* Light Mode */}
+                  <button
+                    type="button"
+                    onClick={() => setThemeMode('light')}
+                    className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                      themeMode === 'light'
+                        ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
+                        : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <Sun className="w-5 h-5 text-amber-500" />
+                      {themeMode === 'light' && (
+                        <CheckCircle2 className="w-4 h-4 text-[#FD4A32]" />
+                      )}
+                    </div>
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
+                      Light Mode
+                    </span>
+                    <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
+                      Crisp daylight contrast
+                    </span>
+                  </button>
+
+                  {/* Dark Mode */}
+                  <button
+                    type="button"
+                    onClick={() => setThemeMode('dark')}
+                    className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                      themeMode === 'dark'
+                        ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
+                        : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <Moon className="w-5 h-5 text-indigo-400" />
+                      {themeMode === 'dark' && (
+                        <CheckCircle2 className="w-4 h-4 text-[#FD4A32]" />
+                      )}
+                    </div>
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
+                      Dark Mode (Cold Carbon)
+                    </span>
+                    <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
+                      Obsidian steel &amp; glowing ember
+                    </span>
+                  </button>
+
+                  {/* System Auto */}
+                  <button
+                    type="button"
+                    onClick={() => setThemeMode('system')}
+                    className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                      themeMode === 'system'
+                        ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
+                        : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <Monitor className="w-5 h-5 text-neutral-400" />
+                      {themeMode === 'system' && (
+                        <CheckCircle2 className="w-4 h-4 text-[#FD4A32]" />
+                      )}
+                    </div>
+                    <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
+                      System Sync
+                    </span>
+                    <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
+                      Follows your OS appearance
+                    </span>
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/70 dark:bg-[#0D0F12]/70 text-xs text-[#868E96] dark:text-[#888888] flex items-center gap-2.5">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>
+                    Current active theme is <strong className="text-[#121417] dark:text-white capitalize">{themeMode}</strong>. Theme preference is automatically persisted across browser sessions.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CHOICE 3: Consent & Privacy */}
+          {activeTab === 'privacy' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      <h2 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                        DPDP Act 2023 Consent &amp; Privacy Rights
+                      </h2>
+                    </div>
+                    <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
+                      MockFolder processes personal learning records under your explicit, informed consent pursuant to Digital Personal Data Protection Act 2023 §6.
+                    </p>
+                  </div>
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider shrink-0 ${
+                      consentStatus === 'accepted'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                    }`}
+                  >
+                    Status: {consentStatus.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
+                      Policy Version
+                    </span>
+                    <span className="font-semibold text-[#121417] dark:text-white">
+                      v{consentVersion}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
+                      Recorded Proof
+                    </span>
+                    <span className="font-semibold text-[#121417] dark:text-white">
+                      {consentTimestamp
+                        ? new Date(consentTimestamp).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'Session Synchronized'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
+                      Data Fiduciary
+                    </span>
+                    <span className="font-semibold text-[#121417] dark:text-white">
+                      MockFolder / Prepunite
                     </span>
                   </div>
                 </div>
-              ))}
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+                  <Link
+                    to="/privacy-policy"
+                    className="text-xs text-[#FD4A32] hover:underline font-bold inline-flex items-center gap-1"
+                  >
+                    <span>Review Full Privacy Policy &amp; Data Rights</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={isUpdatingConsent}
+                    onClick={handleToggleConsent}
+                    className={`px-4 py-2 rounded-lg text-xs font-display font-bold transition-colors cursor-pointer ${
+                      consentStatus === 'accepted'
+                        ? 'border border-[#E9ECEF] dark:border-[#252B35] text-[#868E96] dark:text-gray-400 hover:text-amber-500 hover:border-amber-500/50'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                    }`}
+                  >
+                    {consentStatus === 'accepted' ? 'Withdraw Consent' : 'Grant Consent'}
+                  </button>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="p-6 text-center rounded-lg border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/40 dark:bg-[#0D0F12]/40 space-y-2">
-              <Clock className="w-6 h-6 text-[#868E96] dark:text-[#71717A] mx-auto opacity-60" />
-              <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
-                No past retail purchases recorded on this account yet.
-              </p>
-              <Link
-                to="/pricing"
-                className="text-xs font-bold text-[#FD4A32] hover:underline inline-block"
-              >
-                Explore 24h &amp; 1-Year Recruitment Passes →
-              </Link>
+          )}
+
+          {/* CHOICE 4: Account Security */}
+          {activeTab === 'security' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-5 h-5 text-emerald-500" />
+                    <h2 className="font-display font-bold text-base text-[#121417] dark:text-white">
+                      Account Security &amp; Sessions
+                    </h2>
+                  </div>
+                  <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
+                    Authenticated session and credential management.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] space-y-2 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-[#868E96] dark:text-[#71717A]">Logged In As:</span>
+                    <strong className="text-[#121417] dark:text-white font-mono">{user?.email || 'Authenticated User'}</strong>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-[#868E96] dark:text-[#71717A]">Encryption Protocol:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">Supabase AES-256 JWT TLS 1.3</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-[#868E96] dark:text-[#71717A]">Account Status:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">Active &amp; Verified</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-xs text-[#868E96] dark:text-[#71717A]">
+                    Terminate active session from this device.
+                  </p>
+
+                  <button
+                    onClick={logout}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-xs font-display font-bold transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-      </div>
-
-      {/* SECTION 3: DPDP Act 2023 Consent & Privacy Rights */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="font-display font-bold text-sm text-[#121417] dark:text-white">
-                DPDP Act 2023 Consent &amp; Privacy Rights
-              </h2>
-            </div>
-            <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
-              MockFolder processes personal learning records under your explicit, informed consent pursuant to Digital Personal Data Protection Act 2023 §6.
-            </p>
-          </div>
-
-          <span
-            className={`px-3 py-1 rounded-full text-[10px] font-display font-black uppercase tracking-wider ${
-              consentStatus === 'accepted'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-            }`}
-          >
-            Status: {consentStatus.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs">
-          <div>
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
-              Policy Version
-            </span>
-            <span className="font-semibold text-[#121417] dark:text-white">
-              v{consentVersion}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
-              Recorded Proof
-            </span>
-            <span className="font-semibold text-[#121417] dark:text-white">
-              {consentTimestamp ? new Date(consentTimestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Session Synchronized'}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
-              Data Fiduciary
-            </span>
-            <span className="font-semibold text-[#121417] dark:text-white">
-              MockFolder
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-          <Link
-            to="/privacy-policy"
-            className="text-xs text-[#FD4A32] hover:underline font-bold inline-flex items-center gap-1"
-          >
-            <span>Review Full Privacy Policy &amp; Data Rights</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-
-          <button
-            type="button"
-            disabled={isUpdatingConsent}
-            onClick={handleToggleConsent}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-display font-bold transition-colors cursor-pointer ${
-              consentStatus === 'accepted'
-                ? 'border border-[#E9ECEF] dark:border-[#252B35] text-[#868E96] dark:text-gray-400 hover:text-amber-500 hover:border-amber-500/50'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-            }`}
-          >
-            {consentStatus === 'accepted' ? 'Withdraw Consent' : 'Grant Consent'}
-          </button>
-        </div>
-      </div>
-
-      {/* SECTION 4: Account Security & Sign Out */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-emerald-500" />
-            <h2 className="font-display font-bold text-sm text-[#121417] dark:text-white">
-              Account Security &amp; Sessions
-            </h2>
-          </div>
-          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
-            Authenticated as <strong className="text-[#121417] dark:text-white">{user?.email}</strong> via Supabase 256-bit encrypted authentication.
-          </p>
-        </div>
-
-        <button
-          onClick={logout}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-rose-300 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-display font-bold transition-colors cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Sign Out</span>
-        </button>
       </div>
     </div>
   );
