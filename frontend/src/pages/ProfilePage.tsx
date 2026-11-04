@@ -153,7 +153,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Profile Header Card */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-xl bg-[#FD4A32] text-white flex items-center justify-center font-display font-black text-2xl shadow-sm shrink-0 overflow-hidden">
@@ -231,7 +231,7 @@ export default function ProfilePage() {
       )}
 
       {/* Profile Details & Career Goals Form */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs space-y-5">
         <div>
           <h2 className="font-display text-base font-bold text-[#121417] dark:text-white">
             Academic &amp; Placement Target Details
@@ -254,7 +254,7 @@ export default function ProfilePage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
             </div>
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                   value={formData.targetRole}
                   onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
                   placeholder="e.g. Software Engineer / Data Analyst"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
             </div>
@@ -286,7 +286,7 @@ export default function ProfilePage() {
                   value={formData.college}
                   onChange={(e) => setFormData({ ...formData, college: e.target.value })}
                   placeholder="e.g. IIT Madras, BITS Pilani, SRM"
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 />
               </div>
             </div>
@@ -300,7 +300,7 @@ export default function ProfilePage() {
                 <select
                   value={formData.graduationYear}
                   onChange={(e) => setFormData({ ...formData, graduationYear: e.target.value })}
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-xs text-[#121417] dark:text-white focus:outline-none focus:border-[#FD4A32]"
                 >
                   <option value="2025">Class of 2025</option>
                   <option value="2026">Class of 2026 (Active Drive)</option>
@@ -331,7 +331,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Account Security & Sign Out Section */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />

@@ -227,7 +227,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Settings Header */}
-      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs">
+      <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/25 flex items-center justify-center font-bold shrink-0">
             <Settings className="w-6 h-6 text-[#FD4A32]" />
@@ -260,7 +260,7 @@ export default function SettingsPage() {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-display font-bold whitespace-nowrap transition-all border cursor-pointer ${
                     isActive
                       ? 'bg-[#FD4A32] text-white border-[#FD4A32] shadow-sm'
-                      : 'bg-white dark:bg-[#14171C] text-[#495057] dark:text-[#A1A1AA] border-[#E9ECEF] dark:border-[#1E232B] hover:text-[#121417] dark:hover:text-white'
+                      : 'bg-white dark:bg-[#0D0E12] text-[#495057] dark:text-[#A1A1AA] border-[#E9ECEF] dark:border-[#17181F] hover:text-[#121417] dark:hover:text-white'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -282,7 +282,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Desktop vertical choice list */}
-          <div className="hidden md:flex flex-col gap-1.5 p-2 rounded-2xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs">
+          <div className="hidden md:flex flex-col gap-1.5 p-2 rounded-2xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs">
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#868E96] dark:text-[#71717A]">
               Navigation
             </div>
@@ -297,14 +297,14 @@ export default function SettingsPage() {
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all border cursor-pointer ${
                     isActive
                       ? 'bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 text-[#FD4A32] dark:text-white border-[#FD4A32]/30 dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)]'
-                      : 'border-transparent text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1C2028]'
+                      : 'border-transparent text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#13141A]'
                   }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                       isActive
                         ? 'bg-[#FD4A32] text-white shadow-xs'
-                        : 'bg-black/5 dark:bg-[#0D0F12] text-[#868E96] dark:text-[#71717A]'
+                        : 'bg-black/5 dark:bg-[#07080A] text-[#868E96] dark:text-[#71717A]'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -319,7 +319,7 @@ export default function SettingsPage() {
                           className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${
                             isActive
                               ? 'bg-[#FD4A32]/20 text-[#FD4A32] dark:text-orange-300 border border-[#FD4A32]/30'
-                              : 'bg-black/5 dark:bg-[#0D0F12] text-[#868E96] dark:text-[#71717A]'
+                              : 'bg-black/5 dark:bg-[#07080A] text-[#868E96] dark:text-[#71717A]'
                           }`}
                         >
                           {choice.badge}
@@ -348,7 +348,7 @@ export default function SettingsPage() {
           {/* CHOICE 1: Billing & Passes */}
           {activeTab === 'billing' && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs space-y-5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -372,7 +372,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Current Entitlement Summary Card */}
-                <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#07080A] border border-[#E9ECEF] dark:border-[#17181F] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase tracking-wider block">
                       Active Tier
@@ -423,7 +423,7 @@ export default function SettingsPage() {
                       {purchaseHistory.map((item) => (
                         <div
                           key={item.id}
-                          className="p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/60 dark:bg-[#0D0F12]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
+                          className="p-3.5 rounded-lg border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA]/60 dark:bg-[#07080A]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
                         >
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ export default function SettingsPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="p-8 text-center rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/40 dark:bg-[#0D0F12]/40 space-y-2">
+                    <div className="p-8 text-center rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA]/40 dark:bg-[#07080A]/40 space-y-2">
                       <Clock className="w-6 h-6 text-[#868E96] dark:text-[#71717A] mx-auto opacity-60" />
                       <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
                         No past retail purchases recorded on this account yet.
@@ -478,7 +478,7 @@ export default function SettingsPage() {
           {/* CHOICE 2: Appearance & Theme */}
           {activeTab === 'appearance' && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs space-y-5">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Sun className="w-5 h-5 text-[#FD4A32]" />
@@ -487,7 +487,7 @@ export default function SettingsPage() {
                     </h2>
                   </div>
                   <p className="text-xs text-[#868E96] dark:text-[#A1A1AA]">
-                    Customize how Prepunite looks on your screen. Choose between clean light contrast, ultra-sleek cold carbon dark mode, or automatic system sync.
+                    Customize how Prepunite looks on your screen. Choose between clean light contrast, pitch-dark obsidian mode (#000000), or automatic system sync.
                   </p>
                 </div>
 
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                     className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                       themeMode === 'light'
                         ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
-                        : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
+                        : 'border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] hover:border-[#FD4A32]/40'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                     className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                       themeMode === 'dark'
                         ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
-                        : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
+                        : 'border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] hover:border-[#FD4A32]/40'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -533,10 +533,10 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <span className="font-display font-bold text-xs text-[#121417] dark:text-white block">
-                      Dark Mode (Cold Carbon)
+                      Dark Mode (Pitch Obsidian)
                     </span>
                     <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block mt-0.5">
-                      Obsidian steel &amp; glowing ember
+                      Pure pitch dark &amp; glowing ember
                     </span>
                   </button>
 
@@ -547,7 +547,7 @@ export default function SettingsPage() {
                     className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                       themeMode === 'system'
                         ? 'border-[#FD4A32] bg-[#FD4A32]/5 ring-1 ring-[#FD4A32]'
-                        : 'border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA] dark:bg-[#0D0F12] hover:border-[#FD4A32]/40'
+                        : 'border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] hover:border-[#FD4A32]/40'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -565,7 +565,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-[#F8F9FA]/70 dark:bg-[#0D0F12]/70 text-xs text-[#868E96] dark:text-[#888888] flex items-center gap-2.5">
+                <div className="p-3.5 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA]/70 dark:bg-[#07080A]/70 text-xs text-[#868E96] dark:text-[#888888] flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>
                     Current active theme is <strong className="text-[#121417] dark:text-white capitalize">{themeMode}</strong>. Theme preference is automatically persisted across browser sessions.
@@ -578,7 +578,7 @@ export default function SettingsPage() {
           {/* CHOICE 3: Consent & Privacy */}
           {activeTab === 'privacy' && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs space-y-5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -603,7 +603,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#07080A] border border-[#E9ECEF] dark:border-[#17181F] text-xs">
                   <div>
                     <span className="text-[10px] font-bold text-[#868E96] dark:text-[#71717A] uppercase block">
                       Policy Version
@@ -667,7 +667,7 @@ export default function SettingsPage() {
           {/* CHOICE 4: Account Security */}
           {activeTab === 'security' && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#1E232B] bg-white dark:bg-[#14171C] shadow-xs space-y-5">
+              <div className="p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs space-y-5">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Lock className="w-5 h-5 text-emerald-500" />
@@ -680,7 +680,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0F12] border border-[#E9ECEF] dark:border-[#1E232B] space-y-2 text-xs">
+                <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#07080A] border border-[#E9ECEF] dark:border-[#17181F] space-y-2 text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span className="text-[#868E96] dark:text-[#71717A]">Logged In As:</span>
                     <strong className="text-[#121417] dark:text-white font-mono">{user?.email || 'Authenticated User'}</strong>
