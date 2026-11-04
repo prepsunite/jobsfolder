@@ -76,7 +76,7 @@ export default function RootLayout() {
 
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
+      <div className="min-h-screen bg-white dark:bg-[#08080A] text-[#121417] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
         <ScrollRestoration />
         <ConsentBanner />
 
@@ -253,11 +253,11 @@ export default function RootLayout() {
 
   // INTERNAL APP WORKSPACE LAYOUT (WITH RESPONSIVE SIDEBAR)
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF] flex flex-col md:flex-row font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[#08080A] text-[#121417] dark:text-[#FFFFFF] flex flex-col md:flex-row font-sans selection:bg-[#FD4A32] selection:text-white transition-colors">
       <ScrollRestoration />
       <ConsentBanner />
       {/* Mobile Workspace Top Header Bar (< md) */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] sticky top-0 z-30">
+      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E9ECEF] dark:border-[#1F1F24] bg-[#F8F9FA] dark:bg-[#0E0E12] sticky top-0 z-30">
         <button
           onClick={() => setSidebarOpen(true)}
           className="p-1.5 -ml-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-[#121417] dark:text-white cursor-pointer"
@@ -285,10 +285,10 @@ export default function RootLayout() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Workspace Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0C0C0C]">
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#08080A]">
         {/* Top Admin Header Bar when Admin is Logged In */}
         {isAdmin && (
-          <div className="bg-[#121417] dark:bg-[#141414] text-white py-2 px-6 border-b border-[#242424] text-xs font-semibold flex items-center justify-between gap-4 shadow-sm sticky top-0 z-30">
+          <div className="bg-[#121417] dark:bg-[#0E0E12] text-white py-2 px-6 border-b border-[#242424] dark:border-[#1F1F24] text-xs font-semibold flex items-center justify-between gap-4 shadow-sm sticky top-0 z-30">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span className="font-display font-bold uppercase tracking-wider text-[10px]">
@@ -336,7 +336,7 @@ export default function RootLayout() {
           <Outlet />
         </main>
         
-        <footer className="border-t border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C] py-4 px-8 text-xs text-[#868E96] dark:text-[#555555] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
+        <footer className="border-t border-[#E9ECEF] dark:border-[#1F1F24] bg-[#F8F9FA] dark:bg-[#0E0E12] py-4 px-8 text-xs text-[#868E96] dark:text-[#555555] flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
           <p>© 2026 MockFolder · Placement Intelligence Operating System.</p>
           <div className="flex flex-wrap items-center gap-4 font-semibold text-[#495057] dark:text-[#999999]">
             <Link to="/about" className="hover:text-[#FD4A32] dark:hover:text-[#FD4A32]">About Us</Link>

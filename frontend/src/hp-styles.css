@@ -30,20 +30,20 @@
 :where(.dark, .dark *),
 :root.dark,
 html.dark {
-  --e-bg:          #0C0C0C;
-  --e-surface:     #141414;
-  --e-surface-2:   #1C1C1C;
-  --e-border:      #242424;
-  --e-border-2:    #2E2E2E;
+  --e-bg:          #08080A;
+  --e-surface:     #0E0E12;
+  --e-surface-2:   #141418;
+  --e-border:      #1F1F24;
+  --e-border-2:    #26262E;
   --e-text:        #FFFFFF;
-  --e-text-2:      #999999;
-  --e-text-3:      #555555;
+  --e-text-2:      #A1A1AA;
+  --e-text-3:      #71717A;
   --e-green:       #FD4A32;
   --e-green-dim:   #E0351D;
   --e-amber:       #F5A623;
-  --e-nav-bg:      #0C0C0C;
-  --e-footer-bg:   #080808;
-  --e-chip-bg:     #1C1C1C;
+  --e-nav-bg:      #08080A;
+  --e-footer-bg:   #050507;
+  --e-chip-bg:     #141418;
   --e-cta-text:    #FFFFFF;
   --e-invert-btn-bg: #FFFFFF;
   --e-invert-btn-text: #000000;
@@ -170,9 +170,9 @@ html.dark .pub-nav-link:hover {
 html.dark .pub-nav-link.active {
   color: #FFFFFF !important;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: rgba(253, 74, 50, 0.12);
+  border-color: rgba(253, 74, 50, 0.35);
+  box-shadow: 0 0 12px rgba(253, 74, 50, 0.12);
 }
 .pub-nav-right { display: flex; align-items: center; gap: 0.5rem; }
 .pub-nav-theme-btn {

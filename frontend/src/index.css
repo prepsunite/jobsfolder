@@ -15,7 +15,7 @@
   
   --color-on-surface: #121417;
   --color-on-surface-variant: #495057;
-  --color-inverse-surface: #0C0C0C;
+  --color-inverse-surface: #08080A;
   --color-inverse-on-surface: #FFFFFF;
 
   --color-outline: #868E96;
@@ -53,8 +53,8 @@
   --color-primary-500: #E0351D;
   --color-primary-600: #1C1C1C;
   --color-primary-700: #141414;
-  --color-primary-800: #0C0C0C;
-  --color-primary-900: #080808;
+  --color-primary-800: #0E0E12;
+  --color-primary-900: #08080A;
   --color-primary-950: #000000;
 
   --color-surface-50: #FFFFFF;
@@ -65,8 +65,8 @@
   --color-surface-500: #868E96;
   --color-surface-600: #495057;
   --color-surface-700: #1C1C1C;
-  --color-surface-800: #141414;
-  --color-surface-900: #0C0C0C;
+  --color-surface-800: #141418;
+  --color-surface-900: #08080A;
   --color-surface-950: #000000;
 
   /* ===== Typography (Heathgreen/Cabinet Grotesk architectural style) ===== */
@@ -87,7 +87,7 @@
 html,
 body {
   font-family: var(--font-sans);
-  @apply bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-[#FFFFFF];
+  @apply bg-white dark:bg-[#08080A] text-[#121417] dark:text-[#FFFFFF];
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Hide default browser scrollbar while preserving smooth scrolling */
