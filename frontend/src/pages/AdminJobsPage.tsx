@@ -89,12 +89,13 @@ const COMPANY_PRESETS = [
 
 interface JobFormModalProps {
   initial?: JobListing | null;
+  currentSno?: number;
   onClose: () => void;
-  onSave: (data: FormState, id?: string) => Promise<void>;
+  onSave: (data: FormState, id?: string, relistAsNew?: boolean) => Promise<void>;
   saving: boolean;
 }
 
-function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
+function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormModalProps) {
   const [form, setForm] = useState<FormState>(() =>
     initial
       ? {
@@ -117,6 +118,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
       : EMPTY_FORM
   );
 
+  const [relistAsNew, setRelistAsNew] = useState(false);
   const [tagsInput, setTagsInput] = useState(() =>
     initial ? initial.tags.join(', ') : ''
   );
@@ -138,7 +140,7 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
       deadline: form.deadline || null,
       experience_max: form.experience_max == null || (form.experience_max as any) === '' ? null : Number(form.experience_max),
     };
-    await onSave(payload, initial?.id);
+    await onSave(payload, initial?.id, relistAsNew);
   };
 
   const inputCls = "w-full px-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors";
@@ -399,6 +401,36 @@ function JobFormModal({ initial, onClose, onSave, saving }: JobFormModalProps) {
             </div>
           </div>
 
+          {/* Optional Re-post as New Listing */}
+          {initial?.id && (
+            <div className="p-3 rounded-xl border border-[#E9ECEF] dark:border-[#2A2A2A] bg-[#F8F9FA] dark:bg-[#1A1A1A] flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#121417] dark:text-white">
+                    Re-post as Brand New Listing
+                  </span>
+                  {currentSno && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
+                      Current #{currentSno}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-[#868E96] block">
+                  Leave unchecked to keep #{currentSno} for daily audits. Check only if renewing a closed drive for a fresh cycle.
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={relistAsNew}
+                  onChange={(e) => setRelistAsNew(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-neutral-300 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FD4A32]" />
+              </label>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
@@ -441,7 +473,8 @@ export default function AdminJobsPage() {
   const [saving, setSaving] = useState(false);
   const [purging, setPurging] = useState(false);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<SortBy>('NEWEST');
+  const [sortBy, setSortBy] = useState<SortBy>('OLDEST');
+  const [auditingId, setAuditingId] = useState<string | null>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<JobReportStatus | 'ALL'>('OPEN');
 
   const { data: listings = [], isLoading } = useQuery({
@@ -540,6 +573,21 @@ export default function AdminJobsPage() {
     }
   }, [activeTab, liveListings, expiredListings, draftListings, listings]);
 
+  // Stable S.No (Age Rank) Map:
+  // Sort the current tab pool chronologically from oldest (created_at ASC) to newest.
+  // #1 = Oldest active listing in the pool (highest priority for daily audit)
+  // #N = Newest listing in the pool
+  const ageRankMap = useMemo(() => {
+    const sortedByAge = [...currentTabPool].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const map = new Map<string, number>();
+    sortedByAge.forEach((job, idx) => {
+      map.set(job.id, idx + 1);
+    });
+    return map;
+  }, [currentTabPool]);
+
   // Filter and sort within current pool
   const filtered = useMemo(() => {
     let list = currentTabPool;
@@ -575,12 +623,20 @@ export default function AdminJobsPage() {
     return <NotFoundPage />;
   }
 
-  const handleSave = async (data: Omit<JobListing, 'id' | 'created_at' | 'updated_at'>, id?: string) => {
+  const handleSave = async (
+    data: Omit<JobListing, 'id' | 'created_at' | 'updated_at'>,
+    id?: string,
+    relistAsNew?: boolean
+  ) => {
     setSaving(true);
     try {
       if (id) {
-        await jobsService.updateListing(id, data);
-        toast.success('Listing updated successfully.');
+        const updatePayload: any = { ...data };
+        if (relistAsNew) {
+          updatePayload.created_at = new Date().toISOString();
+        }
+        await jobsService.updateListing(id, updatePayload);
+        toast.success(relistAsNew ? 'Listing re-posted as brand new!' : 'Listing updated successfully.');
       } else {
         await jobsService.createListing(data);
         toast.success('New listing created.');
@@ -591,6 +647,20 @@ export default function AdminJobsPage() {
       toast.error(err?.message || 'Something went wrong.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleMarkAudited = async (job: JobListing) => {
+    setAuditingId(job.id);
+    try {
+      await jobsService.markAudited(job.id);
+      const sno = ageRankMap.get(job.id);
+      toast.success(`Listing #${sno ?? ''} (${job.company_name}) marked audited active.`);
+      invalidate();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not update audit status.');
+    } finally {
+      setAuditingId(null);
     }
   };
 
@@ -742,6 +812,7 @@ export default function AdminJobsPage() {
       {modalJob !== null && (
         <JobFormModal
           initial={modalJob === 'new' ? null : modalJob}
+          currentSno={modalJob && modalJob !== 'new' ? ageRankMap.get(modalJob.id) : undefined}
           onClose={() => setModalJob(null)}
           onSave={handleSave}
           saving={saving}
@@ -878,8 +949,8 @@ export default function AdminJobsPage() {
                       onChange={(e) => setSortBy(e.target.value as SortBy)}
                       className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] dark:focus:border-[#555] cursor-pointer"
                     >
-                      <option value="NEWEST">Newest First</option>
-                      <option value="OLDEST">Oldest First (Check Expiry)</option>
+                      <option value="OLDEST">Oldest First (Daily Audit #1 → #N)</option>
+                      <option value="NEWEST">Newest First (#N → #1)</option>
                       <option value="DEADLINE">By Deadline</option>
                       <option value="PRIORITY">Featured / Priority</option>
                     </select>
@@ -1223,11 +1294,11 @@ export default function AdminJobsPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA] dark:bg-[#0C0C0C]">
-                        <th className="w-14 px-3 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">S.No</th>
+                        <th className="w-16 px-3 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">S.No</th>
                         <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Type</th>
                         <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Title / Company</th>
                         <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Location</th>
-                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Posted</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Posted / Audit</th>
                         <th className="px-4 py-3 text-left font-bold text-[#868E96] uppercase tracking-wider">Deadline</th>
                         <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Active</th>
                         <th className="px-4 py-3 text-center font-bold text-[#868E96] uppercase tracking-wider">Featured</th>
@@ -1238,6 +1309,11 @@ export default function AdminJobsPage() {
                       {filtered.map((job, index) => {
                         const dl = getDeadlineMeta(job.deadline);
                         const expired = isExpiredRow(job.deadline);
+                        const sno = ageRankMap.get(job.id) ?? (index + 1);
+                        const isAuditedToday = Boolean(
+                          job.updated_at &&
+                          (Date.now() - new Date(job.updated_at).getTime()) < (1000 * 60 * 60 * 24)
+                        );
                         return (
                           <tr
                             key={job.id}
@@ -1246,10 +1322,28 @@ export default function AdminJobsPage() {
                             }`}
                           >
                             {/* S.No */}
-                            <td className="w-14 px-3 py-3 text-center whitespace-nowrap">
-                              <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-md text-[11px] font-mono font-bold bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#2A2A2A]">
-                                {index + 1}
-                              </span>
+                            <td className="w-16 px-3 py-3 text-center whitespace-nowrap">
+                              <div className="flex flex-col items-center justify-center gap-0.5">
+                                <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-1.5 rounded-md text-[11px] font-mono font-bold border transition-colors ${
+                                  sno === 1
+                                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40 shadow-2xs ring-1 ring-amber-500/20'
+                                    : sno === currentTabPool.length && currentTabPool.length > 1
+                                    ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30'
+                                    : 'bg-[#F1F3F5] dark:bg-[#1E1E1E] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A]'
+                                }`}>
+                                  #{sno}
+                                </span>
+                                {sno === 1 && (
+                                  <span className="text-[8px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                                    Oldest
+                                  </span>
+                                )}
+                                {sno === currentTabPool.length && currentTabPool.length > 1 && (
+                                  <span className="text-[8px] font-black uppercase tracking-wider text-blue-500 dark:text-blue-400">
+                                    Newest
+                                  </span>
+                                )}
+                              </div>
                             </td>
 
                             {/* Type */}
@@ -1292,16 +1386,22 @@ export default function AdminJobsPage() {
                               </div>
                             </td>
 
-                            {/* Posted date & relative time */}
+                            {/* Posted date & relative time / Audit status */}
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="text-[11px] font-medium text-[#121417] dark:text-white">
                                 {formatDate(job.created_at)}
                               </div>
-                              {getRelativeTime(job.created_at) && (
-                                <div className="text-[10px] text-[#868E96]">
-                                  {getRelativeTime(job.created_at)}
-                                </div>
-                              )}
+                              <div className="mt-0.5">
+                                {isAuditedToday ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    <CheckCircle2 className="w-2.5 h-2.5" /> Checked today
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-[#868E96]">
+                                    {getRelativeTime(job.created_at)}
+                                  </span>
+                                )}
+                              </div>
                             </td>
 
                             {/* Deadline */}
@@ -1348,16 +1448,33 @@ export default function AdminJobsPage() {
                                   href={job.apply_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  title="Open Apply URL"
-                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-blue-500 hover:border-blue-300 transition-all"
+                                  title="Open Apply URL in new tab"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-blue-500 hover:border-blue-300 transition-all cursor-pointer"
                                 >
                                   <ExternalLink className="w-3.5 h-3.5" />
                                 </a>
                                 <button
                                   type="button"
+                                  onClick={() => handleMarkAudited(job)}
+                                  disabled={auditingId === job.id}
+                                  title={isAuditedToday ? `Audited today! Click to re-confirm` : `Mark #${sno} audited active (verified today)`}
+                                  className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all cursor-pointer ${
+                                    isAuditedToday
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400'
+                                      : 'border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300'
+                                  }`}
+                                >
+                                  {auditingId === job.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => setModalJob(job)}
                                   title="Edit listing details"
-                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all cursor-pointer"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </button>
@@ -1365,7 +1482,7 @@ export default function AdminJobsPage() {
                                   type="button"
                                   onClick={() => handleDelete(job)}
                                   title="Terminate / Delete listing"
-                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-rose-500/70 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] text-rose-500/70 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>

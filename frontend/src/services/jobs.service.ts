@@ -56,6 +56,19 @@ export const jobsService = {
     return updated as JobListing;
   },
 
+  /** Quick-audit a listing (touches updated_at to current timestamp). */
+  async markAudited(id: string): Promise<JobListing> {
+    const { data: updated, error } = await supabase
+      .from('job_listings')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return updated as JobListing;
+  },
+
   /** Delete a listing by id. */
   async deleteListing(id: string): Promise<void> {
     const { error } = await supabase
