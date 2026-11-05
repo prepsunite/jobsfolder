@@ -63,29 +63,9 @@ import type { ProgrammingProblem, TechnicalMcq, TechnicalMcqProgress, ProblemLev
 import { useToast } from '@/contexts/ToastContext';
 import AdSpaceSlot from '@/components/AdSpaceSlot';
 import { useSubscription } from '@/hooks/useSubscription';
+import { getTechnicalTopicIcon, ALL_ADMIN_ICONS } from '@/utils/topicIcons';
 
-const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
-  Code2,
-  Terminal,
-  Hash,
-  Shuffle,
-  Layers,
-  Sliders,
-  Grid,
-  Type,
-  Sparkles,
-  Cpu,
-  Search,
-  Binary,
-  BookOpen,
-  Folder,
-  Zap,
-  GitMerge,
-  Brain,
-  Database,
-  Network,
-  Server,
-};
+const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = ALL_ADMIN_ICONS;
 
 export default function TechnicalHubPage() {
   const { isAdmin, user } = useAuth();
@@ -2231,7 +2211,7 @@ export default function TechnicalHubPage() {
               </div>
             ) : (
               filteredTopics.map(topic => {
-                const TopicIcon = TOPIC_ICON_MAP[topic.icon_name || topic.iconName] || Code2;
+                const TopicIcon = getTechnicalTopicIcon(topic.id, topic.icon_name || topic.iconName);
                 const liveCount = liveCountMap[topic.id] ?? 0;
                 let countText = `${liveCount} Items`;
                 let solvedCount = 0;

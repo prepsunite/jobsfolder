@@ -8,8 +8,14 @@ import { dataStore } from '@/services/dataStore';
 import { resolveTopicSlug, expandTopicAliases } from '@/services/topicMap';
 import AptitudeStatsWidget from '@/components/AptitudeStatsWidget';
 import { useToast } from '@/contexts/ToastContext';
+import { getAptitudeTopicIcon, ALL_ADMIN_ICONS } from '@/utils/topicIcons';
 import {
-  Folder,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Edit2,
+  Trash2,
+  Search,
   Calculator,
   BarChart3,
   Brain,
@@ -17,51 +23,6 @@ import {
   MessageSquare,
   Compass,
   Terminal,
-  Search,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Edit2,
-  Trash2,
-  BookOpen,
-  PieChart,
-  Activity,
-  Layers,
-  HelpCircle,
-  Hash,
-  Sparkles,
-  Zap,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  Calendar,
-  Dices,
-  Users,
-  UserCheck,
-  CreditCard,
-  Square,
-  Box,
-  Timer,
-  Percent,
-  Scale,
-  Coins,
-  Droplets,
-  Train,
-  Ship,
-  FlaskConical,
-  Trophy,
-  Table,
-  Grid,
-  Code,
-  CheckSquare,
-  CheckCircle2,
-  Tag,
-  Sliders,
-  Shapes,
-  Shuffle,
-  Binary,
-  Lightbulb,
-  Puzzle,
 } from 'lucide-react';
 
 export interface AptitudeTopic {
@@ -75,173 +36,12 @@ export interface AptitudeTopic {
   is_hidden?: boolean;
 }
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  Folder,
-  Calculator,
-  BarChart3,
-  Brain,
-  GitMerge,
-  MessageSquare,
-  Compass,
-  Terminal,
-  Search,
-  BookOpen,
-  PieChart,
-  Activity,
-  Layers,
-  HelpCircle,
-  Hash,
-  Sparkles,
-  Zap,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  Calendar,
-  Dices,
-  Users,
-  UserCheck,
-  CreditCard,
-  Square,
-  Box,
-  Timer,
-  Percent,
-  Scale,
-  Coins,
-  Droplets,
-  Train,
-  Ship,
-  FlaskConical,
-  Trophy,
-  Table,
-  Grid,
-  Code,
-  CheckSquare,
-  CheckCircle2,
-  Tag,
-  Sliders,
-  Shapes,
-  Shuffle,
-  Binary,
-  Lightbulb,
-  Puzzle,
-};
-
-const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
-  // Arithmetic Aptitude
-  'numbers': Hash,
-  'problems-on-numbers': Hash,
-  'hcf-lcm': Layers,
-  'decimal-fraction': Percent,
-  'simplification': Calculator,
-  'square-cube-root': Square,
-  'percentage': Percent,
-  'profit-and-loss': TrendingUp,
-  'ratio-and-proportion': Scale,
-  'partnership': Users,
-  'chain-rule': GitMerge,
-  'time-and-work': Activity,
-  'pipes-and-cistern': Droplets,
-  'time-and-distance': Timer,
-  'problems-on-trains': Train,
-  'boats-and-streams': Ship,
-  'alligation-or-mixture': FlaskConical,
-  'simple-interest': Coins,
-  'compound-interest': TrendingUp,
-  'stocks-and-shares': BarChart3,
-  'true-discount': CreditCard,
-  'bankers-discount': CreditCard,
-  'height-and-distance': Compass,
-  'area': Square,
-  'volume-and-surface-area': Box,
-  'races-and-games': Trophy,
-  'permutation-and-combination': Shuffle,
-  'probability': Dices,
-  'average': TrendingDown,
-  'problems-on-ages': UserCheck,
-  'calendar': Calendar,
-  'clock': Clock,
-  'odd-man-out-and-series': Sparkles,
-  'surds-and-indices': Binary,
-  'logarithm': Binary,
-
-  // Data Interpretation
-  'table-charts': Table,
-  'bar-charts': BarChart3,
-  'pie-charts': PieChart,
-  'line-charts': TrendingUp,
-  'caselet-di': Square,
-  'radar-web-charts': Compass,
-  'scatter-bubble-charts': Activity,
-  'scatter-plots': Activity,
-
-  // Logical Reasoning
-  'number-series': Hash,
-  'letter-and-symbol-series': Binary,
-  'verbal-classification': Tag,
-  'analogies': Shuffle,
-  'matching-definitions': BookOpen,
-  'verbal-reasoning': Brain,
-  'logical-games': Puzzle,
-  'statement-and-assumption': MessageSquare,
-  'statement-and-conclusion': CheckCircle2,
-  'cause-and-effect': GitMerge,
-  'essential-part': Puzzle,
-  'artificial-language': Code,
-  'making-judgments': Scale,
-  'logical-problems': HelpCircle,
-  'analyzing-arguments': Lightbulb,
-  'course-of-action': Compass,
-  'theme-detection': Search,
-  'statement-and-argument': MessageSquare,
-  'logical-deduction': Brain,
-  'logical-sequence-of-words': Layers,
-  'syllogisms': Brain,
-  'blood-relations': Users,
-  'cubes-and-dice': Box,
-  'seating-arrangement': Grid,
-  'direction-sense': Compass,
-
-  // Verbal Ability
-  'reading-comprehension': BookOpen,
-  'spotting-errors': CheckSquare,
-  'synonyms': Tag,
-  'antonyms': Shuffle,
-  'spellings': CheckSquare,
-  'ordering-of-words': Layers,
-  'sentence-improvement': Sparkles,
-  'ordering-of-sentences': Layers,
-  'cloze-test': Sliders,
-
-  // Nonverbal Reasoning
-  'pattern-completion': Sparkles,
-  'mirror-images': Compass,
-  'paper-folding': Square,
-  'embedded-images': Eye,
-  'shape-construction': Shapes,
-};
-
 export const getIcon = (iconName?: string) => {
-  if (!iconName) return Folder;
-  return ICON_MAP[iconName] || Folder;
+  if (!iconName) return ALL_ADMIN_ICONS.Calculator;
+  return ALL_ADMIN_ICONS[iconName] || ALL_ADMIN_ICONS.Calculator;
 };
 
-const getTopicIcon = (topicId: string, iconName?: string): React.ComponentType<any> => {
-  if (TOPIC_ICON_MAP[topicId]) {
-    return TOPIC_ICON_MAP[topicId];
-  }
-
-  if (iconName && ICON_MAP[iconName] && iconName !== 'Folder') {
-    return ICON_MAP[iconName];
-  }
-
-  for (const [key, icon] of Object.entries(TOPIC_ICON_MAP)) {
-    if (topicId.includes(key) || key.includes(topicId)) {
-      return icon;
-    }
-  }
-
-  return Folder;
-};
+const getTopicIcon = getAptitudeTopicIcon;
 
 export default function AptitudePage() {
   const { categorySlug = 'arithmetic-aptitude' } = useParams<{ categorySlug: string }>();

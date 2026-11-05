@@ -45,25 +45,9 @@ import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/typ
 import { useToast } from '@/contexts/ToastContext';
 import AdSpaceSlot from '@/components/AdSpaceSlot';
 import { useSubscription } from '@/hooks/useSubscription';
+import { getInterviewTopicIcon, ALL_ADMIN_ICONS } from '@/utils/topicIcons';
 
-const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = {
-  Database,
-  Table,
-  Layers,
-  Cpu,
-  Network,
-  UserCheck,
-  Award,
-  Users,
-  HelpCircle,
-  Zap,
-  ShieldCheck,
-  BookOpen,
-  MessageSquareQuote,
-  Coffee,
-  Terminal,
-  Code,
-};
+const TOPIC_ICON_MAP: Record<string, React.ComponentType<any>> = ALL_ADMIN_ICONS;
 
 export default function InterviewPrepPage() {
   const { isAdmin, user } = useAuth();
@@ -1325,7 +1309,7 @@ export default function InterviewPrepPage() {
               </div>
             ) : (
               filteredTopics.map(topic => {
-                const TopicIcon = TOPIC_ICON_MAP[topic.icon_name || topic.iconName] || BookOpen;
+                const TopicIcon = getInterviewTopicIcon(topic.id, topic.icon_name || topic.iconName);
                 const topicQuestions = currentQuestions.filter(q => q.topicId === topic.id);
                 const masteredInTopic = topicQuestions.filter(q => q.mastered).length;
                 const liveCount = liveCountMap[topic.id] ?? topicQuestions.length;
