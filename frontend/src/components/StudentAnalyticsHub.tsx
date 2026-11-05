@@ -16,6 +16,7 @@ import {
   Briefcase,
   CheckCircle2,
   ArrowRight,
+  BarChart3,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -191,7 +192,7 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
       <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isExpanded ? 'pb-3 mb-4 border-b border-[#E9ECEF] dark:border-[#222222]' : ''}`}>
         {/* Dynamic Left Header Info */}
         <div className="flex items-center gap-2.5">
-          {isExpanded && (
+          {isExpanded ? (
             <>
               {activeTab === 'aptitude' && (
                 <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
@@ -209,6 +210,10 @@ export const StudentAnalyticsHub: React.FC<StudentAnalyticsHubProps> = ({
                 </div>
               )}
             </>
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center shrink-0">
+              <BarChart3 className="w-4 h-4 text-[#FD4A32]" />
+            </div>
           )}
 
           <div>
