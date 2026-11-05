@@ -18,7 +18,6 @@ import { useToast } from '@/contexts/ToastContext';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
 import type { JobListing } from '@/types/jobs';
 import {
-  User,
   BookmarkCheck,
   Building2,
   FileText,
@@ -27,12 +26,8 @@ import {
   CheckCircle2,
   Layers,
   BookOpen,
-  Sun,
-  Moon,
-  Monitor,
   Folder,
   ArrowRight,
-  Sparkles,
   ShieldCheck,
   AlertTriangle,
   Clock,
@@ -48,7 +43,7 @@ export default function DashboardPage() {
   const { user, role, isTpoAdmin, isAdmin } = useAuth();
 
   const queryClient = useQueryClient();
-  const { theme, themeMode, setThemeMode } = useTheme();
+  const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<'jobs' | 'exams' | 'questions' | 'experiences'>('jobs');
@@ -516,124 +511,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto">
-      {/* Profile Header Card */}
-      <div className="rounded-lg p-5 sm:p-6 border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden transition-colors">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] text-black flex items-center justify-center font-display font-black text-xl overflow-hidden shrink-0">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-6 h-6" />
-              )}
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
-                  {user?.name || 'Student Dashboard'}
-                </h1>
-                {isUserPro ? (
-                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 flex items-center gap-1 uppercase tracking-wider">
-                    <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span>Pro Pass</span>
-                  </span>
-                ) : (
-                  <span className="text-[9px] font-display font-bold px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] border border-[#FD4A32]/20 uppercase tracking-wider">
-                    Free Tier
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans">
-                {user?.email || 'Logged in Student'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 flex-wrap">
-            {/* Top Right Compact 3-Pill Theme Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A]">
-              <button
-                onClick={() => setThemeMode('light')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
-                  themeMode === 'light'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                }`}
-                title="Switch to Light Mode"
-              >
-                <Sun className="w-3 h-3 text-amber-500" />
-                <span>Light</span>
-              </button>
-
-              <button
-                onClick={() => setThemeMode('dark')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
-                  themeMode === 'dark'
-                    ? 'bg-[#1C1C1C] text-[#FD4A32] shadow-xs'
-                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                }`}
-                title="Switch to Dark Mode"
-              >
-                <Moon className="w-3 h-3 text-purple-400" />
-                <span>Dark</span>
-              </button>
-
-              <button
-                onClick={() => setThemeMode('system')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-display font-bold uppercase tracking-wider transition-all ${
-                  themeMode === 'system'
-                    ? 'bg-[#FD4A32] dark:bg-[#FD4A32] text-black shadow-xs'
-                    : 'text-[#868E96] dark:text-[#555555] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
-                }`}
-                title="Sync with System Theme"
-              >
-                <Monitor className="w-3 h-3" />
-                <span>Auto</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap font-sans">
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-center">
-                <span className="text-sm font-display font-extrabold text-[#FD4A32] dark:text-[#FD4A32] block">
-                  {bookmarkedJobs.length}
-                </span>
-                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
-                  Jobs
-                </span>
-              </div>
-
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-center">
-                <span className="text-sm font-display font-extrabold text-blue-500 block">
-                  {bookmarkedExams.length}
-                </span>
-                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
-                  Drives
-                </span>
-              </div>
-
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-center">
-                <span className="text-sm font-display font-extrabold text-amber-500 block">
-                  {totalQuestionsCount}
-                </span>
-                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
-                  Questions
-                </span>
-              </div>
-
-              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-center">
-                <span className="text-sm font-display font-extrabold text-purple-500 block">
-                  {bookmarkedExperiences.length}
-                </span>
-                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
-                  Transcripts
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 🏛️ Mock Placement Drives Gateway Widget */}
       {(enrolledCollege || campusExams.length > 0) && (
         <div className="rounded-2xl p-5 sm:p-6 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/40 via-white to-orange-50/10 dark:from-[#1a1311] dark:via-[#141414] dark:to-[#121417] shadow-sm relative overflow-hidden space-y-4">
