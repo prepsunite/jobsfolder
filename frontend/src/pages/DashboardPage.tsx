@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const { theme, themeMode, setThemeMode } = useTheme();
   const isDarkMode = theme === 'dark';
 
-  const [activeTab, setActiveTab] = useState<'exams' | 'questions' | 'experiences' | 'jobs'>('exams');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'exams' | 'questions' | 'experiences'>('jobs');
   const [revealedExpl, setRevealedExpl] = useState<Record<string, boolean>>({});
   const [visibleQuestionsCount, setVisibleQuestionsCount] = useState(20);
   const [visibleExperiencesCount, setVisibleExperiencesCount] = useState(20);
@@ -596,6 +596,15 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 flex-wrap font-sans">
               <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-center">
                 <span className="text-sm font-display font-extrabold text-[#FD4A32] dark:text-[#FD4A32] block">
+                  {bookmarkedJobs.length}
+                </span>
+                <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
+                  Jobs
+                </span>
+              </div>
+
+              <div className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-center">
+                <span className="text-sm font-display font-extrabold text-blue-500 block">
                   {bookmarkedExams.length}
                 </span>
                 <span className="text-[9px] font-bold text-[#868E96] dark:text-[#555555] uppercase tracking-wider block">
@@ -770,6 +779,18 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between border-b border-[#E9ECEF] dark:border-[#17181F] pb-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <button
+            onClick={() => setActiveTab('jobs')}
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === 'jobs'
+                ? 'bg-[#121417] text-white dark:bg-[#FD4A32]/15 dark:text-white border border-[#121417] dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)] font-bold'
+                : 'bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:dark:bg-[#13141A]'
+            }`}
+          >
+            <Briefcase className={`w-3.5 h-3.5 transition-colors ${activeTab === 'jobs' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
+            <span>Saved Jobs ({bookmarkedJobs.length})</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('exams')}
             className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'exams'
@@ -804,20 +825,146 @@ export default function DashboardPage() {
             <Layers className={`w-3.5 h-3.5 transition-colors ${activeTab === 'experiences' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
             <span>Saved Transcripts ({bookmarkedExperiences.length})</span>
           </button>
-
-          <button
-            onClick={() => setActiveTab('jobs')}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              activeTab === 'jobs'
-                ? 'bg-[#121417] text-white dark:bg-[#FD4A32]/15 dark:text-white border border-[#121417] dark:border-[#FD4A32]/40 shadow-xs dark:shadow-[0_0_12px_rgba(253,74,50,0.15)] font-bold'
-                : 'bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:dark:bg-[#13141A]'
-            }`}
-          >
-            <Briefcase className={`w-3.5 h-3.5 transition-colors ${activeTab === 'jobs' ? 'text-[#FD4A32]' : 'text-[#868E96] group-hover:text-[#FD4A32]'}`} />
-            <span>Saved Jobs ({bookmarkedJobs.length})</span>
-          </button>
         </div>
       </div>
+
+      {/* Tab Content: Saved Jobs */}
+      {activeTab === 'jobs' && (
+        <div className="space-y-4">
+          {bookmarkedJobs.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {bookmarkedJobs.map((job) => {
+                const deadline = job.deadline ? new Date(job.deadline) : null;
+                const isExpired = deadline ? deadline.getTime() < Date.now() : false;
+                const diffDays = deadline
+                  ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                  : null;
+
+                return (
+                  <div
+                    key={job.id}
+                    className="p-5 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      {/* Top Header: Logo + Title + Trash button */}
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-11 h-11 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#17181F] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0 shadow-2xs">
+                            {job.company_logo_url ? (
+                              <img
+                                src={job.company_logo_url}
+                                alt={job.company_name}
+                                className="w-full h-full object-contain p-1"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              (job.company_name || 'J').charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[11px] font-display font-bold text-[#868E96] dark:text-[#555555] block truncate">
+                              {job.company_name}
+                            </span>
+                            <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] truncate leading-tight">
+                              {job.title}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveJobBookmark(job.id)}
+                          className="p-1.5 text-[#868E96] dark:text-[#555555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors shrink-0 cursor-pointer"
+                          title="Remove from saved jobs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Metadata Badges */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                          {job.type === 'JOB' ? 'Full-Time' : 'Internship'}
+                        </span>
+
+                        <span className="bg-[#F1F3F5] dark:bg-[#202020] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[9px] font-display font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                          <MapPin className="w-2.5 h-2.5 text-rose-500" />
+                          <span>{job.location}</span>
+                        </span>
+
+                        {job.stipend_or_salary && (
+                          <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-display font-bold px-2 py-0.5 rounded">
+                            {job.stipend_or_salary}
+                          </span>
+                        )}
+
+                        {deadline && (
+                          <span
+                            className={`text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
+                              isExpired
+                                ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                                : diffDays !== null && diffDays <= 3
+                                ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse'
+                                : 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20'
+                            }`}
+                          >
+                            {isExpired ? 'Expired' : `${diffDays}d left`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Buttons */}
+                    <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
+                      <Link
+                        to={`/jobs?jobId=${job.id}`}
+                        className="flex-1 py-1.5 px-3 bg-[#121417] hover:bg-[#FD4A32] dark:bg-white dark:hover:bg-[#FD4A32] text-white dark:text-black font-display font-bold rounded-md text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
+                      >
+                        View Details
+                      </Link>
+
+                      <a
+                        href={job.apply_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
+                        title="Apply on official company portal"
+                      >
+                        <span>Apply</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-[#FD4A32]" />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
+              isDarkMode ? 'bg-[#0D0E12]/80 border-[#17181F] shadow-lg' : 'bg-[#F8F9FA] border-[#E9ECEF]'
+            }`}>
+              <BookmarkCheck className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
+              <div className="space-y-1">
+                <h3 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3]">
+                  No Saved Jobs Yet
+                </h3>
+                <p className="text-xs text-[#747878] dark:text-[#a6adbb] max-w-md mx-auto leading-relaxed">
+                  Explore verified full-time roles and internships, and click the bookmark button on any opening to save it here for quick access.
+                </p>
+              </div>
+
+              <Link
+                to="/jobs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-display font-bold uppercase tracking-wider bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
+              >
+                <span>Browse Jobs Board</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tab Content: Bookmarked Exams */}
       {activeTab === 'exams' && (
@@ -1268,144 +1415,6 @@ export default function DashboardPage() {
                 <Layers className="w-4 h-4" />
                 <span>Browse Interview Experiences</span>
                 <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab Content: Saved Jobs */}
-      {activeTab === 'jobs' && (
-        <div className="space-y-4">
-          {bookmarkedJobs.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {bookmarkedJobs.map((job) => {
-                const deadline = job.deadline ? new Date(job.deadline) : null;
-                const isExpired = deadline ? deadline.getTime() < Date.now() : false;
-                const diffDays = deadline
-                  ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                  : null;
-
-                return (
-                  <div
-                    key={job.id}
-                    className="p-5 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] hover:border-[#121417] dark:hover:border-[#383838] transition-all duration-200 hover:shadow-sm space-y-3.5 flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      {/* Top Header: Logo + Title + Trash button */}
-                      <div className="flex items-start justify-between gap-2.5">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-11 h-11 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#17181F] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0 shadow-2xs">
-                            {job.company_logo_url ? (
-                              <img
-                                src={job.company_logo_url}
-                                alt={job.company_name}
-                                className="w-full h-full object-contain p-1"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            ) : (
-                              (job.company_name || 'J').charAt(0)
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[11px] font-display font-bold text-[#868E96] dark:text-[#555555] block truncate">
-                              {job.company_name}
-                            </span>
-                            <h3 className="font-display font-bold text-sm text-[#121417] dark:text-[#FFFFFF] truncate leading-tight">
-                              {job.title}
-                            </h3>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveJobBookmark(job.id)}
-                          className="p-1.5 text-[#868E96] dark:text-[#555555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors shrink-0 cursor-pointer"
-                          title="Remove from saved jobs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {/* Metadata Badges */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[9px] font-display font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                          {job.type === 'JOB' ? 'Full-Time' : 'Internship'}
-                        </span>
-
-                        <span className="bg-[#F1F3F5] dark:bg-[#202020] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2E2E2E] text-[9px] font-display font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                          <MapPin className="w-2.5 h-2.5 text-rose-500" />
-                          <span>{job.location}</span>
-                        </span>
-
-                        {job.stipend_or_salary && (
-                          <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-display font-bold px-2 py-0.5 rounded">
-                            {job.stipend_or_salary}
-                          </span>
-                        )}
-
-                        {deadline && (
-                          <span
-                            className={`text-[9px] font-display font-bold px-2 py-0.5 rounded border ${
-                              isExpired
-                                ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
-                                : diffDays !== null && diffDays <= 3
-                                ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse'
-                                : 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20'
-                            }`}
-                          >
-                            {isExpired ? 'Expired' : `${diffDays}d left`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bottom Action Buttons */}
-                    <div className="pt-3 border-t border-[#E9ECEF] dark:border-[#242424] flex items-center gap-2">
-                      <Link
-                        to={`/jobs?jobId=${job.id}`}
-                        className="flex-1 py-1.5 px-3 bg-[#121417] hover:bg-[#FD4A32] dark:bg-white dark:hover:bg-[#FD4A32] text-white dark:text-black font-display font-bold rounded-md text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
-                      >
-                        View Details
-                      </Link>
-
-                      <a
-                        href={job.apply_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
-                        title="Apply on official company portal"
-                      >
-                        <span>Apply</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-[#FD4A32]" />
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className={`p-12 text-center rounded-[28px] border space-y-4 ${
-              isDarkMode ? 'bg-[#0D0E12]/80 border-[#17181F] shadow-lg' : 'bg-[#F8F9FA] border-[#E9ECEF]'
-            }`}>
-              <BookmarkCheck className="w-12 h-12 text-[#747878] dark:text-[#a6adbb] mx-auto opacity-50" />
-              <div className="space-y-1">
-                <h3 className="font-bold text-base text-[#1f1b17] dark:text-[#e3e3e3]">
-                  No Saved Jobs Yet
-                </h3>
-                <p className="text-xs text-[#747878] dark:text-[#a6adbb] max-w-md mx-auto leading-relaxed">
-                  Explore verified full-time roles and internships, and click the bookmark button on any opening to save it here for quick access.
-                </p>
-              </div>
-
-              <Link
-                to="/jobs"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-display font-bold uppercase tracking-wider bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
-              >
-                <span>Browse Jobs Board</span>
-                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
