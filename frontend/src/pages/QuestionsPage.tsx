@@ -5,7 +5,7 @@ import type { ExamWithCompany } from '@/services/exam.service';
 import { examService } from '@/services/exam.service';
 import { companyService } from '@/services/company.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Search, Plus, XCircle, Building2 } from 'lucide-react';
+import { BookOpen, Search, Plus, X, XCircle, Building2 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -107,18 +107,19 @@ export default function QuestionsPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
-        <div className="space-y-0.5">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[9px] font-display font-bold uppercase tracking-wider">
-            <BookOpen className="w-3 h-3" />
-            <span>Official Papers Archive</span>
+      {/* ── Tier 1: Page Header & Admin Actions ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+              Exam Papers &amp; Recruitment Drives
+            </h1>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+              {exams.length}
+            </span>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
-            Exam Papers & Recruitment Drives
-          </h1>
-          <p className="text-[#868E96] dark:text-[#555555] text-xs font-sans">
-            Direct access to official previous year placement papers, round patterns, and study archives.
+          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] font-sans mt-0.5">
+            Direct access to official previous year placement papers, round patterns, and study archives
           </p>
         </div>
 
@@ -126,26 +127,34 @@ export default function QuestionsPage() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowAddExamModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#121417] dark:bg-white text-white dark:text-black font-display font-bold text-xs uppercase tracking-wider rounded-md shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider rounded-lg shadow-xs transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Add Exam</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Controls & Search Bar */}
-      <div className="space-y-4">
-        <div className="relative flex-1 w-full max-w-lg">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
+      {/* ── Tier 2: Unified Compact Toolbar ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
           <input
             type="text"
-            placeholder="Search TCS NQT, Accenture ASE, Infosys, Amazon..."
+            placeholder="Search TCS NQT, Accenture, Amazon..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#555555] focus:outline-none transition-colors font-sans"
+            className="w-full bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] focus:border-[#FD4A32] dark:focus:border-[#FD4A32]/60 rounded-lg pl-9 pr-8 py-1.5 text-xs text-[#121417] dark:text-white placeholder-[#868E96] dark:placeholder-[#71717A] focus:outline-none transition-colors font-sans"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
 

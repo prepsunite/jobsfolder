@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CompanyCard from '@/components/CompanyCard';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
-import { Search, Building2, SlidersHorizontal, Plus, XCircle, EyeOff } from 'lucide-react';
+import { Search, Building2, SlidersHorizontal, Plus, X, XCircle, EyeOff } from 'lucide-react';
 import type { Company } from '@/types/company';
 import LogoLoader from '@/components/LogoLoader';
 import { likeStore } from '@/services/stores/likeStore';
@@ -137,15 +137,18 @@ export default function CompaniesPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* Clean Compact Search & Admin Action Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#242424]">
+      {/* ── Tier 1: Page Header & Admin Actions ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight">
-              Companies Directory ({companies.length})
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+              Companies Directory
             </h1>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+              {companies.length}
+            </span>
             {isAdmin && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 ml-1">
                 <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
                   Admin CRUD
                 </span>
@@ -158,40 +161,47 @@ export default function CompaniesPage() {
               </div>
             )}
           </div>
-          <p className="text-xs text-[#868E96] dark:text-[#555555] font-sans mt-0.5">
-            Explore recruitment drives, previous year papers, and hiring patterns.
+          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] font-sans mt-0.5">
+            Explore recruitment drives, previous year papers, and hiring patterns
           </p>
         </div>
 
-        {/* Compact Search Bar & Controls */}
-        <div className="flex items-center gap-2.5 w-full md:w-auto">
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#555555]" />
-            <input
-              type="text"
-              placeholder="Search TCS, Accenture, Amazon..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] focus:border-[#121417] dark:focus:border-[#444444] rounded-md pl-9 pr-3 py-1.5 text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#555555] focus:outline-none transition-colors font-sans"
-            />
-          </div>
-
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] hover:border-[#121417] dark:hover:border-[#444444] text-[#121417] dark:text-[#FFFFFF] rounded-md text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0">
-            <SlidersHorizontal className="w-3 h-3 text-[#FD4A32] dark:text-[#FD4A32]" />
-            <span>Filters</span>
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#FD4A32] hover:bg-[#E0351D] text-black rounded-lg text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all shrink-0 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Add Company</span>
           </button>
+        )}
+      </div>
 
-          {/* ADMIN INLINE "+ ADD COMPANY" BUTTON */}
-          {isAdmin && (
+      {/* ── Tier 2: Unified Compact Toolbar ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
+          <input
+            type="text"
+            placeholder="Search TCS, Accenture, Amazon..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] focus:border-[#FD4A32] dark:focus:border-[#FD4A32]/60 rounded-lg pl-9 pr-8 py-1.5 text-xs text-[#121417] dark:text-white placeholder-[#868E96] dark:placeholder-[#71717A] focus:outline-none transition-colors font-sans"
+          />
+          {searchTerm && (
             <button
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-md text-xs font-display font-bold uppercase tracking-wider shadow-sm transition-all shrink-0"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Company</span>
+              <X className="w-3 h-3" />
             </button>
           )}
         </div>
+
+        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] hover:border-[#FD4A32] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white rounded-lg text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer">
+          <SlidersHorizontal className="w-3 h-3 text-[#FD4A32]" />
+          <span>Filters</span>
+        </button>
       </div>
 
       {/* Grid Content */}

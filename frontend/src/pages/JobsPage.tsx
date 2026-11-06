@@ -5,7 +5,7 @@ import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Code, Check, Building2, GraduationCap, ArrowRight,
-  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe
+  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe, RotateCcw
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
@@ -1259,34 +1259,46 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn pb-8">
-      {/* ── Page Header: Sleek & Clean ── */}
-      <div className="flex items-center gap-3 mb-1">
-        <div className="w-9 h-9 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0">
-          <Briefcase className="w-4 h-4 text-[#121417] dark:text-white stroke-[2.2]" />
-        </div>
+    <div className="space-y-5 animate-fadeIn pb-8">
+      {/* ── Tier 1: Page Header & Status ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
-            Jobs &amp; Internships
-          </h1>
-          <p className="text-xs text-[#868E96] mt-0.5">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+              Jobs &amp; Internships
+            </h1>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+              {filtered.length}
+            </span>
+          </div>
+          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] font-sans mt-0.5">
             Verified campus &amp; off-campus opportunities curated for students
           </p>
         </div>
+
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider hover:bg-[#FD4A32]/20 transition-all cursor-pointer shrink-0"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Filters</span>
+          </button>
+        )}
       </div>
 
-      {/* ── Tier 1: Unified Command Search Bar (Indeed / LinkedIn Style) ── */}
-      <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-1 sm:p-1.5 shadow-xs">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center divide-y md:divide-y-0 md:divide-x divide-[#E9ECEF] dark:divide-[#242424]">
+      {/* ── Tier 2: Unified Command Search Bar (Constrained Max-Width) ── */}
+      <div className="bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] rounded-xl p-1 sm:p-1.5 shadow-2xs max-w-2xl">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center divide-y md:divide-y-0 md:divide-x divide-[#E9ECEF] dark:divide-[#17181F]">
           {/* Primary Search Input: Role / Skill / Company */}
           <div className="relative flex-1 py-1 px-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#868E96]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
             <input
               type="text"
-              placeholder="Search by job title, skills (React, Python, SDE), or company..."
+              placeholder="Search by job title, skills (React, Python), or company..."
               value={filters.search ?? ''}
               onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none"
+              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] dark:placeholder:text-[#71717A] focus:outline-none"
             />
             {filters.search && (
               <button
@@ -1301,14 +1313,14 @@ export default function JobsPage() {
           </div>
 
           {/* Location Input: City / State / Remote */}
-          <div className="relative md:w-72 py-1 px-3">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#868E96]" />
+          <div className="relative md:w-64 py-1 px-3">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
             <input
               type="text"
-              placeholder="City, state, or 'Remote'..."
+              placeholder="City or 'Remote'..."
               value={filters.location ?? ''}
               onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
-              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none"
+              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] dark:placeholder:text-[#71717A] focus:outline-none"
             />
             {filters.location && (
               <button

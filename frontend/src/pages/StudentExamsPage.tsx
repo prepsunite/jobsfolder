@@ -316,30 +316,27 @@ export default function StudentExamsPage() {
 
   const renderStudentExamsContent = () => (
     <div className="space-y-8 animate-fadeIn">
-      {/* ── TOP BREADCRUMB & HEADER ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-[#242424]">
+      {/* ── Tier 1: Page Header & Pass Status ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-            <Link to="/dashboard" className="hover:text-[#FD4A32] transition-colors">
-              Dashboard
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900 dark:text-white">Campus Mock Assessments</span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+              Placement Mock Drives
+            </h1>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+              {campusExams.length}
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <GraduationCap className="w-7 h-7 text-[#FD4A32]" />
-            <span>Placement Mock Drives</span>
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Standardized campus recruitment tests, company-specific mock papers, and proctored CRT assessments.
+          <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] font-sans mt-0.5">
+            Standardized campus recruitment tests, company-specific mock papers, and proctored CRT assessments
           </p>
         </div>
 
         {/* Action / Pro Pass Status */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {isUserPro ? (
-            <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-2 text-xs font-bold shadow-xs">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <div className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-2 text-xs font-bold shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               <span>
                 Campus Pro Pass Active
                 {subData?.expiresAt
@@ -350,35 +347,35 @@ export default function StudentExamsPage() {
           ) : (
             <Link
               to="/pricing"
-              className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 flex items-center gap-2 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-xs"
+              className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 flex items-center gap-2 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-2xs"
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Upgrade Pass for Unlimited Drives</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Upgrade Pass</span>
             </Link>
           )}
 
           {isAdmin && (
             <button
               onClick={() => setIsCreatePublicModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-display font-bold uppercase tracking-wider shadow-md shadow-blue-500/25 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-              title="Commission an open national mock assessment accessible to any candidate nationwide"
+              className="px-3 py-1.5 rounded-lg bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+              title="Commission an open national mock assessment"
             >
-              <Globe className="w-3.5 h-3.5 text-blue-200" />
+              <Globe className="w-3.5 h-3.5" />
               <span>Create Open Mock Exam</span>
             </button>
           )}
 
           <button
             onClick={() => setIsGenerateModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-linear-to-r from-[#FD4A32] to-[#FF6B4A] hover:from-[#e03f29] hover:to-[#FD4A32] text-white text-xs font-display font-bold uppercase tracking-wider shadow-md shadow-[#FD4A32]/25 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="px-3 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Generate Blueprint Exam</span>
           </button>
 
           <button
             onClick={() => refetchExams()}
-            className="p-2 rounded-xl border border-gray-200 dark:border-[#2c2e33] bg-white dark:bg-[#141414] text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-[#FD4A32]/40 transition-colors text-xs font-bold"
+            className="p-1.5 rounded-lg border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#FD4A32]/40 transition-colors cursor-pointer"
             title="Refresh drives"
           >
             <RotateCcw className="w-4 h-4" />
@@ -685,7 +682,7 @@ export default function StudentExamsPage() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search assessment or company..."
-              className="w-full pl-9 pr-8 py-1.5 rounded-xl border border-gray-200 dark:border-[#27292e] bg-white dark:bg-[#18191c] text-xs text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-[#FD4A32]"
+              className="w-full pl-9 pr-8 py-1.5 rounded-lg border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] text-xs text-[#121417] dark:text-white placeholder-[#868E96] dark:placeholder-[#71717A] focus:outline-none focus:border-[#FD4A32] dark:focus:border-[#FD4A32]/60 transition-colors"
             />
             {searchQuery && (
               <button
