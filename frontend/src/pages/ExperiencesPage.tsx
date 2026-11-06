@@ -13,10 +13,10 @@ import {
   Layers,
   Search,
   PlusCircle,
-  Loader2,
+  FileText,
+  MessageSquareQuote,
   Edit3,
   Trash2,
-  CheckCircle2,
   Bookmark,
   BookmarkCheck,
   ThumbsUp,
@@ -274,50 +274,57 @@ export default function ExperiencesPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12">
-      {/* Header Banner */}
-      <div className="rounded-lg p-6 sm:p-8 border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#121417] dark:text-[#FFFFFF] shadow-xs relative overflow-hidden">
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#FD4A32]/10 text-[#FD4A32] dark:bg-[#FD4A32]/10 dark:text-[#FD4A32] text-[10px] font-display font-bold uppercase tracking-wider">
-            <Layers className="w-3.5 h-3.5" />
-            <span>Real Student Interviews</span>
+      {/* Sleek Compact Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 border border-[#FD4A32]/25 text-[#FD4A32] flex items-center justify-center shrink-0 shadow-2xs">
+            <MessageSquareQuote className="w-5 h-5 text-[#FD4A32]" />
           </div>
-
-          <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Interview Experiences & Transcripts
-          </h1>
-
-          <p className="text-sm text-[#868E96] dark:text-[#555555] font-sans leading-relaxed">
-            Real placement drive transcripts and round-by-round interview experiences from placed students across top tech companies.
-          </p>
-
-          <div className="pt-2 flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#FD4A32] dark:bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Share Your Experience</span>
-            </button>
-            <Link
-              to="/experiences/submit"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-[#E9ECEF] dark:border-[#242424] text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-[#FFFFFF] hover:bg-[#F8F9FA] dark:hover:bg-[#0C0C0C] transition-colors"
-            >
-              Full Form Submission
-            </Link>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
+                Interview Experiences &amp; Transcripts
+              </h1>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20 uppercase tracking-wider">
+                Real Student Interviews
+              </span>
+            </div>
+            <p className="text-xs text-[#868E96] dark:text-[#A1A1AA] font-sans mt-0.5">
+              Real placement drive transcripts and round-by-round interview experiences from placed students across top tech companies.
+            </p>
           </div>
+        </div>
+
+        {/* Action CTAs */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FD4A32] hover:bg-[#E0351D] text-black font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+          >
+            <PlusCircle className="w-4 h-4 stroke-[2.5]" />
+            <span>Share Experience</span>
+          </button>
+          <Link
+            to="/experiences/submit"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] text-xs font-display font-bold uppercase tracking-wider text-[#121417] dark:text-[#E4E4E7] hover:border-[#FD4A32] hover:text-[#FD4A32] dark:hover:text-[#FD4A32] transition-colors"
+            title="Open comprehensive multi-round submission form"
+          >
+            <FileText className="w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
+            <span>Full Form</span>
+          </Link>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
       <div className="space-y-3">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-[#868E96] dark:text-[#555555]" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-[#868E96] dark:text-[#71717A]" />
           <input
             type="text"
             placeholder="Search experiences by company, role, or student name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#555555] focus:outline-none focus:border-[#121417] dark:focus:border-[#444444]"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] text-xs text-[#121417] dark:text-[#FFFFFF] placeholder-[#868E96] dark:placeholder-[#71717A] focus:outline-none focus:border-[#FD4A32] dark:focus:border-[#FD4A32]/60 transition-colors"
           />
         </div>
 
@@ -325,7 +332,7 @@ export default function ExperiencesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           {/* Verdict Filter */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-display font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider mr-1">
+            <span className="text-[10px] font-display font-bold text-[#868E96] dark:text-[#71717A] uppercase tracking-wider mr-1">
               Result:
             </span>
             {(['ALL', 'SELECTED', 'REJECTED'] as const).map((v) => (
@@ -335,7 +342,7 @@ export default function ExperiencesPage() {
                 className={`px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   verdictFilter === v
                     ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                    : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+                    : 'bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white'
                 }`}
               >
                 {v === 'ALL' ? 'All Results' : v === 'SELECTED' ? 'Offered / Selected' : 'Not Selected'}
@@ -345,7 +352,7 @@ export default function ExperiencesPage() {
 
           {/* Drive Type Filter */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-display font-bold text-[#868E96] dark:text-[#777777] uppercase tracking-wider mr-1">
+            <span className="text-[10px] font-display font-bold text-[#868E96] dark:text-[#71717A] uppercase tracking-wider mr-1">
               Drive:
             </span>
             {(['ALL', 'ON_CAMPUS', 'OFF_CAMPUS', 'POOL_CAMPUS'] as const).map((d) => (
@@ -355,7 +362,7 @@ export default function ExperiencesPage() {
                 className={`px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   driveTypeFilter === d
                     ? 'bg-[#121417] dark:bg-white text-white dark:text-black shadow-xs'
-                    : 'bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] text-[#868E96] dark:text-[#666666] hover:text-[#121417] dark:hover:text-white'
+                    : 'bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] text-[#868E96] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white'
                 }`}
               >
                 {d === 'ALL' ? 'All Drives' : d === 'ON_CAMPUS' ? 'On-Campus' : d === 'OFF_CAMPUS' ? 'Off-Campus' : 'Pool Campus'}
@@ -371,7 +378,7 @@ export default function ExperiencesPage() {
           <LogoLoader size="md" />
         </div>
       ) : filteredExperiences.length === 0 ? (
-        <div className="p-12 text-center rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] text-[#868E96] dark:text-[#555555] space-y-2">
+        <div className="p-12 text-center rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] text-[#868E96] dark:text-[#71717A] space-y-2">
           <p className="text-sm font-semibold">No interview experiences found.</p>
           <p className="text-xs">Try adjusting your filters or be the first to submit a transcript!</p>
         </div>
@@ -392,16 +399,16 @@ export default function ExperiencesPage() {
             return (
               <div
                 key={exp.id}
-                className="p-5 sm:p-6 rounded-lg border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-4 hover:border-[#121417] dark:hover:border-[#383838] transition-all"
+                className="p-5 sm:p-6 rounded-xl border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] shadow-xs space-y-4 hover:border-[#121417] dark:hover:border-[#262733] transition-all"
               >
                 {/* Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E9ECEF] dark:border-[#242424] pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E9ECEF] dark:border-[#17181F] pb-3">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-display font-extrabold text-base text-[#121417] dark:text-[#FFFFFF]">
                         {exp.companyName}
                       </span>
-                      <span className="text-xs text-[#868E96] dark:text-[#555555]">•</span>
+                      <span className="text-xs text-[#868E96] dark:text-[#71717A]">•</span>
                       <span className="text-xs font-semibold text-[#121417] dark:text-[#FFFFFF]">
                         {exp.role}
                       </span>
@@ -411,7 +418,7 @@ export default function ExperiencesPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-[#868E96] dark:text-[#555555] mt-0.5">
+                    <p className="text-[11px] text-[#868E96] dark:text-[#71717A] mt-0.5">
                       Shared by <strong className="text-[#121417] dark:text-[#FFFFFF]">{exp.studentName}</strong>
                       {exp.college ? ` (${exp.college})` : ''}
                     </p>
@@ -433,7 +440,7 @@ export default function ExperiencesPage() {
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-display font-bold transition-all cursor-pointer ${
                         isUpvoted
                           ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-2xs'
-                          : 'border-[#E9ECEF] dark:border-[#242424] text-[#868E96] hover:text-amber-600 hover:border-amber-500/30'
+                          : 'border-[#E9ECEF] dark:border-[#17181F] text-[#868E96] hover:text-amber-600 hover:border-amber-500/30'
                       }`}
                       title={isUpvoted ? 'You marked this as helpful' : 'Mark this experience as helpful'}
                     >
@@ -447,7 +454,7 @@ export default function ExperiencesPage() {
                       className={`p-1.5 rounded-md border transition-colors cursor-pointer ${
                         isBookmarked
                           ? 'border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32]'
-                          : 'border-[#E9ECEF] dark:border-[#242424] text-[#868E96] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
+                          : 'border-[#E9ECEF] dark:border-[#17181F] text-[#868E96] hover:text-[#121417] dark:hover:text-[#FFFFFF]'
                       }`}
                       title={isBookmarked ? 'Remove from dashboard bookmarks' : 'Save experience to dashboard'}
                     >
@@ -463,14 +470,14 @@ export default function ExperiencesPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setEditingExp(exp)}
-                          className="p-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer"
+                          className="p-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer"
                           title="Edit experience"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => (isPendingAuthor && !isAdmin ? handleRetract(exp.id) : handleDelete(exp.id))}
-                          className="p-1.5 rounded-md border border-[#E9ECEF] dark:border-[#242424] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 cursor-pointer"
+                          className="p-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 cursor-pointer"
                           title={isPendingAuthor && !isAdmin ? 'Retract submission' : 'Delete experience'}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -506,7 +513,7 @@ export default function ExperiencesPage() {
                       {exp.rounds.map((rd, rIdx) => (
                         <div key={rIdx} className="relative group">
                           {/* Step Number Dot / Badge */}
-                          <div className="absolute -left-6 sm:-left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#121417] dark:bg-white text-white dark:text-black text-[11px] font-display font-extrabold shadow-sm ring-4 ring-white dark:ring-[#141414] group-hover:scale-110 transition-transform">
+                          <div className="absolute -left-6 sm:-left-8 top-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#121417] dark:bg-white text-white dark:text-black text-[11px] font-display font-extrabold shadow-sm ring-4 ring-white dark:ring-[#0D0E12] group-hover:scale-110 transition-transform">
                             {rIdx + 1}
                           </div>
 
@@ -519,7 +526,7 @@ export default function ExperiencesPage() {
                                 </h4>
                               </div>
                             )}
-                            <div className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed bg-[#F8F9FA]/70 dark:bg-[#181818]/70 p-4 rounded-lg border border-[#E9ECEF] dark:border-[#262626]">
+                            <div className="text-xs font-sans text-gray-700 dark:text-gray-300 leading-relaxed bg-[#F8F9FA]/70 dark:bg-[#12131A] p-4 rounded-lg border border-[#E9ECEF] dark:border-[#1B1D26]">
                               <ContentRenderer
                                 content={rd.details}
                                 className="text-xs font-sans text-[#121417] dark:text-[#FFFFFF]"
