@@ -509,6 +509,7 @@ export default function AdminJobsPage() {
   const [visibleLeadsCount, setVisibleLeadsCount] = useState<number>(50);
   const [addingLeadId, setAddingLeadId] = useState<string | null>(null);
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+  const [showCuratedBackup, setShowCuratedBackup] = useState<boolean>(false);
   const [customLeads, setCustomLeads] = useState<ScrapedJobLead[] | null>(() => {
     try {
       const cached = localStorage.getItem('prepunite_admin_job_leads');
@@ -665,15 +666,21 @@ export default function AdminJobsPage() {
     return list;
   }, [reports, reportStatusFilter, search]);
 
-  // Leads pipeline: Database leads scraped by bot come first, followed by custom/curated
+  // Leads pipeline: Exclusively live bot findings from database by default
   const activeLeadsPool = useMemo<ScrapedJobLead[]>(() => {
-    const base = customLeads && customLeads.length > 0 ? customLeads : curatedJobLeads;
-    if (dbLeads.length === 0) return base;
-
-    const dbUrls = new Set(dbLeads.map((d) => (d.apply_url || '').toLowerCase().trim()));
-    const remainingBase = base.filter((b) => !dbUrls.has((b.apply_url || '').toLowerCase().trim()));
-    return [...dbLeads, ...remainingBase];
-  }, [dbLeads, customLeads]);
+    if (customLeads && customLeads.length > 0) {
+      const dbUrls = new Set(dbLeads.map((d) => (d.apply_url || '').toLowerCase().trim()));
+      const remainingCustom = customLeads.filter((b) => !dbUrls.has((b.apply_url || '').toLowerCase().trim()));
+      return [...dbLeads, ...remainingCustom];
+    }
+    if (showCuratedBackup) {
+      const dbUrls = new Set(dbLeads.map((d) => (d.apply_url || '').toLowerCase().trim()));
+      const remainingCurated = curatedJobLeads.filter((b) => !dbUrls.has((b.apply_url || '').toLowerCase().trim()));
+      return [...dbLeads, ...remainingCurated];
+    }
+    // Only live scraped bot findings from database
+    return dbLeads;
+  }, [dbLeads, customLeads, showCuratedBackup]);
 
   const listedUrlSet = useMemo(() => {
     const set = new Set<string>();
@@ -1427,13 +1434,13 @@ export default function AdminJobsPage() {
                 <div className="mb-3 pb-3 border-b border-[#E9ECEF] dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-bold text-[#121417] dark:text-white flex items-center gap-2">
-                      <span>🇮🇳 India Tech & 🏠 Remote WFH Leads</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        Class of 2024 / 2025 / 2026 / 2027
+                      <span>🤖 Scraped Bot Leads Inbox</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                        {dbLeads.length} In Queue
                       </span>
                     </h3>
                     <p className="text-xs text-[#868E96] mt-0.5">
-                      Filtered for Indian freshers & campus drives, plus 100% permanent remote work-from-home jobs & virtual internships globally. Overseas permanent onsite roles are excluded.
+                      Streamed directly from your JobSpy automated scraper. Filtered for Indian freshers & 100% remote WFH jobs.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1605,19 +1612,38 @@ export default function AdminJobsPage() {
               {/* Leads Table Card */}
               <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden shadow-xs">
                 {filteredLeads.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <AlertCircle className="w-10 h-10 text-[#868E96] mb-3" />
-                    <h3 className="text-sm font-bold text-[#121417] dark:text-white mb-1">No Leads Matching Filters</h3>
-                    <p className="text-xs text-[#868E96] max-w-sm mb-4">
-                      Try clearing your search query, switching categories, or unticking "Unlisted Only".
+                  <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3">
+                      <Sparkles className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#121417] dark:text-white mb-1">
+                      {dbLeads.length === 0 ? 'No Bot Leads in Queue' : 'No Leads Matching Filters'}
+                    </h3>
+                    <p className="text-xs text-[#868E96] max-w-md mb-4">
+                      {dbLeads.length === 0
+                        ? 'All scraped bot findings have been reviewed and published! Run "python scraper.py" in prepunite-jobspy to stream fresh requisitions directly here.'
+                        : 'Try clearing your search query or switching categories.'}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('ALL'); setHideListed(false); setSearch(''); }}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all cursor-pointer"
-                    >
-                      Reset Filters
-                    </button>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {dbLeads.length === 0 && !showCuratedBackup && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCuratedBackup(true)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white transition-all cursor-pointer"
+                        >
+                          View Curated Directory Backup
+                        </button>
+                      )}
+                      {(leadCategory !== 'ALL' || search || hideListed) && (
+                        <button
+                          type="button"
+                          onClick={() => { setLeadCategory('ALL'); setHideListed(false); setSearch(''); }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all cursor-pointer"
+                        >
+                          Reset Filters
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
