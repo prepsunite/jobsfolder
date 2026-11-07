@@ -4,7 +4,8 @@ import {
   Plus, Edit3, Trash2, Eye, EyeOff, Star, StarOff,
   Briefcase, MapPin, Clock, X, Check, AlertCircle,
   ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2,
-  Sparkles, Upload, Zap, Send, Layers, Copy, ShieldCheck
+  Sparkles, Upload, Zap, Send, Layers, Copy, ShieldCheck,
+  ChevronRight, Award, Flame, GraduationCap, Globe, InboxIcon, CreditCard, Building2
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -881,6 +882,154 @@ export default function AdminJobsPage() {
     return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
   }, [listings]);
 
+  // Lead Section Choice Navigation (Settings-style Master-Detail Layout)
+  const leadChoices = useMemo<
+    Array<{
+      id: LeadCategoryFilter;
+      label: string;
+      caption: string;
+      icon: React.ComponentType<{ className?: string }>;
+      badge: number | string;
+      badgeStyle?: string;
+      sectionTitle: string;
+      sectionSubtitle: string;
+    }>
+  >(
+    () => [
+      {
+        id: 'ALL',
+        label: 'All Leads Queue',
+        caption: 'Full unreviewed candidate pool',
+        icon: InboxIcon,
+        badge: activeLeadsPool.length,
+        sectionTitle: 'All Ingested Leads',
+        sectionSubtitle: 'Full unprocessed candidate pipeline across all hiring categories.',
+      },
+      {
+        id: 'BOT_LEADS',
+        label: 'Scraped Bot Stream',
+        caption: 'Live automated JobSpy findings',
+        icon: Sparkles,
+        badge: dbLeads.length,
+        badgeStyle: 'bg-[#FD4A32]/15 text-[#FD4A32] border border-[#FD4A32]/30',
+        sectionTitle: 'Automated Bot Stream',
+        sectionSubtitle: 'Fresh off-campus drives captured by the JobSpy background harvester.',
+      },
+      {
+        id: 'NEEDS_DESC',
+        label: 'Needs Real JD',
+        caption: 'Using template; paste official text',
+        icon: AlertCircle,
+        badge: needsDescCount,
+        badgeStyle: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30',
+        sectionTitle: 'Description Quality Audit',
+        sectionSubtitle: 'Leads with auto-generated summaries that need official employer job descriptions.',
+      },
+      {
+        id: 'JOB_BOARD_URL',
+        label: 'Job Board Links',
+        caption: 'Points to LinkedIn/Glassdoor; add ATS',
+        icon: ExternalLink,
+        badge: jobBoardCount,
+        badgeStyle: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30',
+        sectionTitle: 'Application Portal Verification',
+        sectionSubtitle: 'Redirects currently pointing to third-party boards. Upgrade to direct career portals if available.',
+      },
+      {
+        id: 'MISSING_LOGO',
+        label: 'Logo Review',
+        caption: 'Letter monogram active; custom logo',
+        icon: Building2,
+        badge: missingLogoCount,
+        badgeStyle: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-500/30',
+        sectionTitle: 'Logo Visual Review',
+        sectionSubtitle: 'Companies displaying fallback letter monograms. Add official PNG/SVG favicon URLs if desired.',
+      },
+      {
+        id: 'READY',
+        label: 'Verified & Ready',
+        caption: 'Official JD, direct ATS & logo ready',
+        icon: ShieldCheck,
+        badge: readyCount,
+        badgeStyle: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30',
+        sectionTitle: 'Production Ready Openings',
+        sectionSubtitle: '100% verified drives with authentic descriptions, direct career links, and company logos.',
+      },
+      {
+        id: 'PRODUCT_GIANTS',
+        label: 'Product Giants & MNCs',
+        caption: 'Google, Amazon, Microsoft, Qualcomm...',
+        icon: Award,
+        badge: productGiantsCount,
+        sectionTitle: 'Product Giants & Global MNCs',
+        sectionSubtitle: 'High-paying, tier-1 engineering drives with premier compensation.',
+      },
+      {
+        id: 'UNICORNS',
+        label: 'High-Growth Unicorns',
+        caption: 'Swiggy, Zepto, Razorpay, Meesho...',
+        icon: Flame,
+        badge: unicornsCount,
+        sectionTitle: 'Top Indian Unicorns & Startups',
+        sectionSubtitle: 'Fast-moving tech companies hiring early-career developers with high growth trajectory.',
+      },
+      {
+        id: 'IT_SERVICES',
+        label: 'IT Services & Drives',
+        caption: 'TCS, Infosys, Wipro, Accenture...',
+        icon: Briefcase,
+        badge: itServicesCount,
+        sectionTitle: 'Mass IT Recruitment Drives',
+        sectionSubtitle: 'High-volume off-campus drives across enterprise technology services.',
+      },
+      {
+        id: 'FINTECH',
+        label: 'FinTech & Quant',
+        caption: 'Goldman Sachs, Morgan Stanley, Amex...',
+        icon: CreditCard,
+        badge: finTechCount,
+        sectionTitle: 'FinTech, Banking & Trading',
+        sectionSubtitle: 'High-frequency trading, investment banking, and fintech engineering openings.',
+      },
+      {
+        id: 'INTERNSHIPS',
+        label: 'Internships Only',
+        caption: 'Summer/Winter & graduate trainees',
+        icon: GraduationCap,
+        badge: internshipsCount,
+        sectionTitle: 'College Internships & Trainee Programs',
+        sectionSubtitle: 'Pre-final and final year internships and technical apprenticeship roles.',
+      },
+      {
+        id: 'REMOTE_WFH',
+        label: 'Remote WFH Only',
+        caption: '100% work from home pan-India',
+        icon: Globe,
+        badge: remoteLeadsCount,
+        sectionTitle: '100% Remote Engineering Roles',
+        sectionSubtitle: 'Work-from-anywhere positions allowing freshers to work remotely.',
+      },
+    ],
+    [
+      activeLeadsPool.length,
+      dbLeads.length,
+      needsDescCount,
+      jobBoardCount,
+      missingLogoCount,
+      readyCount,
+      productGiantsCount,
+      unicornsCount,
+      itServicesCount,
+      finTechCount,
+      internshipsCount,
+      remoteLeadsCount,
+    ]
+  );
+
+  const currentLeadChoice = useMemo(() => {
+    return leadChoices.find((c) => c.id === leadCategory) || leadChoices[0];
+  }, [leadChoices, leadCategory]);
+
   const filteredLeads = useMemo(() => {
     let list = activeLeadsPool;
 
@@ -1740,315 +1889,169 @@ export default function AdminJobsPage() {
             </div>
           </div>
 
-          {/* Leads Intelligence & Ingestion Panel */}
+          {/* Leads Intelligence & Ingestion Panel: Two-Column Master-Detail Command Center */}
           {activeTab === 'LEADS' ? (
-            <div className="space-y-4">
-              {/* Category Filter Chips Bar */}
-              <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-3 sm:p-4 shadow-xs">
-                <div className="mb-3 pb-3 border-b border-[#E9ECEF] dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-[#121417] dark:text-white flex items-center gap-2">
-                      <span>🤖 Scraped Bot Leads Inbox</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
-                        {dbLeads.length} In Queue
-                      </span>
-                    </h3>
-                    <p className="text-xs text-[#868E96] mt-0.5">
-                      Streamed directly from your JobSpy automated scraper. Filtered for Indian freshers & 100% remote WFH jobs.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none bg-[#F8F9FA] dark:bg-[#1E1E1E] px-2.5 py-1.5 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A]">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+              {/* Left Column: Settings-style Category Navigation Sidebar */}
+              <div className="w-full lg:w-80 shrink-0 space-y-3">
+                {/* Master Action Card */}
+                <div className="p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#FD4A32]/10 flex items-center justify-center text-[#FD4A32]">
+                        <Zap className="w-4 h-4 fill-[#FD4A32]" />
+                      </div>
+                      <div>
+                        <h3 className="font-display font-extrabold text-xs text-[#121417] dark:text-white uppercase tracking-wider">
+                          Leads Engine
+                        </h3>
+                        <p className="text-[10px] text-[#868E96]">
+                          {dbLeads.length} in queue ({activeLeadsPool.length} total)
+                        </p>
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none bg-[#F8F9FA] dark:bg-[#1A1A1A] px-2 py-1 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A]">
                       <input
                         type="checkbox"
                         checked={hideListed}
                         onChange={(e) => setHideListed(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#2A2A2A] text-[#FD4A32] focus:ring-0 cursor-pointer"
+                        className="w-3.5 h-3.5 rounded text-[#FD4A32] focus:ring-0 cursor-pointer"
                       />
-                      <span>Unlisted ({unlistedLeadsCount})</span>
+                      <span>Unlisted</span>
                     </label>
-
-                    {unlistedLeadsCount > 0 && (
-                      <button
-                        type="button"
-                        disabled={isBulkProcessing}
-                        onClick={() => handleBulkQuickAdd()}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FD4A32] hover:bg-[#E03E28] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                        title="Publish all unlisted leads directly into live listings"
-                      >
-                        {isBulkProcessing ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Publishing ({bulkProgress.current}/{bulkProgress.total})...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-3.5 h-3.5 fill-white" />
-                            <span>Publish All Leads ({unlistedLeadsCount})</span>
-                          </>
-                        )}
-                      </button>
-                    )}
                   </div>
-                </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('ALL'); setVisibleLeadsCount(50); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'ALL'
-                        ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417]'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    All Drives ({activeLeadsPool.length})
-                  </button>
-
-                  {dbLeads.length > 0 && (
+                  {unlistedLeadsCount > 0 && (
                     <button
                       type="button"
-                      onClick={() => { setLeadCategory('BOT_LEADS'); setVisibleLeadsCount(50); }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'BOT_LEADS'
-                          ? 'bg-[#FD4A32] text-white shadow-xs'
-                          : 'bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] hover:bg-[#FD4A32]/20 border border-[#FD4A32]/30'
-                      }`}
+                      disabled={isBulkProcessing}
+                      onClick={() => handleBulkQuickAdd()}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg text-xs font-bold bg-[#FD4A32] hover:bg-[#E03E28] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                      title="Publish all unlisted leads directly into live listings"
                     >
-                      <Sparkles className="w-3 h-3" />
-                      <span>🤖 Scraped Bot Findings</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                        {dbLeads.length}
-                      </span>
+                      {isBulkProcessing ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Publishing ({bulkProgress.current}/{bulkProgress.total})...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-3.5 h-3.5 fill-white" />
+                          <span>Publish All Leads ({unlistedLeadsCount})</span>
+                        </>
+                      )}
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('NEEDS_DESC'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'NEEDS_DESC'
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30'
-                    }`}
-                    title="Filter leads using the auto-generated fallback description that need real company responsibilities"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>⚠️ Needs Real JD</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {needsDescCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('JOB_BOARD_URL'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'JOB_BOARD_URL'
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/30'
-                    }`}
-                    title="Filter leads pointing to LinkedIn/Glassdoor instead of direct company career portals"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>🔗 Job Board Links</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {jobBoardCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('MISSING_LOGO'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'MISSING_LOGO'
-                        ? 'bg-purple-600 text-white shadow-xs'
-                        : 'bg-purple-500/10 text-purple-700 dark:text-purple-400 hover:bg-purple-500/20 border border-purple-500/30'
-                    }`}
-                    title="Filter leads with no custom logo image"
-                  >
-                    <span>🖼️ No Logo</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {missingLogoCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('READY'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'READY'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
-                    }`}
-                    title="Filter leads that have official JD, direct portal, and logo ready"
-                  >
-                    <ShieldCheck className="w-3 h-3" />
-                    <span>✅ 100% Ready</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {readyCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('INDIA_ONLY'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'INDIA_ONLY'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🇮🇳 India Tech Drives</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {indiaLeadsCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('REMOTE_WFH'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'REMOTE_WFH'
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🏠 Remote WFH (USA & Global)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {remoteLeadsCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('PRODUCT_GIANTS'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'PRODUCT_GIANTS'
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🔥 Tier-1 Product (18–35+ LPA)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {productGiantsCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('UNICORNS'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'UNICORNS'
-                        ? 'bg-amber-500 text-black shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🦄 Unicorns & Startups (10–25 LPA)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {unicornsCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('IT_SERVICES'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'IT_SERVICES'
-                        ? 'bg-teal-600 text-white shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🏢 IT Services Mass Hiring (3.5–9 LPA)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {itServicesCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('FINTECH'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'FINTECH'
-                        ? 'bg-purple-600 text-white shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🏦 FinTech & Quant (14–50 LPA)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {finTechCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('INTERNSHIPS'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'INTERNSHIPS'
-                        ? 'bg-rose-600 text-white shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>🎓 Internships (India & Remote)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {internshipsCount}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setLeadCategory('JOBS'); setVisibleLeadsCount(50); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      leadCategory === 'JOBS'
-                        ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 shadow-xs'
-                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                    }`}
-                  >
-                    <span>💼 Full-Time Only</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                      {jobsCount}
-                    </span>
-                  </button>
                 </div>
 
-                {selectedLeadIds.size > 0 && (
-                  <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-2.5 animate-in fade-in duration-200">
-                    <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400">
-                      <CheckCircle2 className="w-4 h-4 text-amber-500" />
-                      <span>{selectedLeadIds.size} lead{selectedLeadIds.size > 1 ? 's' : ''} selected</span>
-                    </div>
+                {/* The Choice Navigation Card (Exact SettingsPage visual style) */}
+                <div className="p-2 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs space-y-1">
+                  {leadChoices.map((choice) => {
+                    const Icon = choice.icon;
+                    const isActive = leadCategory === choice.id;
+                    return (
+                      <button
+                        key={choice.id}
+                        type="button"
+                        onClick={() => {
+                          setLeadCategory(choice.id);
+                          setVisibleLeadsCount(50);
+                        }}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all border cursor-pointer ${
+                          isActive
+                            ? 'bg-black/5 dark:bg-[#1A1A1A] border-[#FD4A32] dark:border-[#FD4A32] text-[#121417] dark:text-white shadow-xs'
+                            : 'border-transparent text-[#495057] dark:text-[#A1A1AA] hover:text-[#121417] dark:hover:text-white hover:bg-black/5 dark:hover:bg-[#1A1A1A]'
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            isActive
+                              ? 'bg-[#FD4A32] text-white shadow-xs'
+                              : 'bg-black/5 dark:bg-[#07080A] text-[#868E96] dark:text-[#71717A]'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-display font-bold text-xs truncate">
+                              {choice.label}
+                            </span>
+                            <span
+                              className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${
+                                choice.badgeStyle
+                                  ? choice.badgeStyle
+                                  : isActive
+                                  ? 'bg-[#FD4A32]/20 text-[#FD4A32] dark:text-orange-300 border border-[#FD4A32]/30'
+                                  : 'bg-black/5 dark:bg-[#07080A] text-[#868E96] dark:text-[#71717A]'
+                              }`}
+                            >
+                              {choice.badge}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-[#868E96] dark:text-[#71717A] block truncate">
+                            {choice.caption}
+                          </span>
+                        </div>
+                        <ChevronRight
+                          className={`w-4 h-4 shrink-0 transition-transform ${
+                            isActive
+                              ? 'text-[#FD4A32] dark:text-white translate-x-0.5'
+                              : 'text-neutral-400 opacity-40'
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Column: Lead Category Workspace & Table */}
+              <div className="flex-1 min-w-0 w-full space-y-4">
+                {/* Active Section Header Card */}
+                <div className="p-4 rounded-xl border border-[#E9ECEF] dark:border-[#242424] bg-white dark:bg-[#141414] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
+                      <currentLeadChoice.icon className="w-4 h-4 text-[#FD4A32]" />
+                      <h2 className="font-display font-bold text-sm text-[#121417] dark:text-white">
+                        {currentLeadChoice.sectionTitle}
+                      </h2>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[#121417] dark:text-white border border-zinc-200 dark:border-zinc-700">
+                        {filteredLeads.length} leads
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#868E96]">
+                      {currentLeadChoice.sectionSubtitle}
+                    </p>
+                  </div>
+
+                  {/* Batch Selection Action Bar if leads selected */}
+                  {selectedLeadIds.size > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-[#121417] dark:text-white">
+                        {selectedLeadIds.size} selected
+                      </span>
                       <button
                         type="button"
                         disabled={isBulkProcessing}
                         onClick={() => handleBulkQuickAdd(Array.from(selectedLeadIds))}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
                       >
-                        <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span>Quick Add Selected ({selectedLeadIds.size})</span>
+                        Quick Add Selected
                       </button>
                       <button
                         type="button"
                         disabled={isBulkProcessing}
                         onClick={() => handleBulkDismiss(Array.from(selectedLeadIds))}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
                       >
-                        <Trash2 className="w-3 h-3" />
-                        <span>Dismiss ({selectedLeadIds.size})</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedLeadIds(new Set())}
-                        className="px-2 py-1 text-xs text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
-                      >
-                        Deselect
+                        Dismiss Selected
                       </button>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Leads Table Card */}
+                  )}
+                </div>
+{/* Leads Table Card */}
               <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden shadow-xs">
                 {filteredLeads.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center px-4">
@@ -2362,6 +2365,7 @@ export default function AdminJobsPage() {
                   </div>
                 )}
               </div>
+            </div>
             </div>
           ) : activeTab === 'REPORTS' ? (
             <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden">
