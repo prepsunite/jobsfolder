@@ -474,7 +474,14 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
 
 type AdminJobTab = 'LIVE' | 'LEADS' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
 type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
-type LeadCategoryFilter = 'ALL' | 'FRESH' | 'INDIA' | 'SPEEDY' | 'JOBS' | 'INTERNSHIPS' | 'REMOTE';
+type LeadCategoryFilter =
+  | 'ALL'
+  | 'PRODUCT_GIANTS'
+  | 'UNICORNS'
+  | 'IT_SERVICES'
+  | 'FINTECH'
+  | 'INTERNSHIPS'
+  | 'JOBS';
 
 export default function AdminJobsPage() {
   const { user, isAdmin } = useAuth();
@@ -619,24 +626,36 @@ export default function AdminJobsPage() {
     [listedUrlSet]
   );
 
-  const { freshLeadsCount, indiaLeadsCount, speedyLeadsCount, unlistedLeadsCount } = useMemo(() => {
-    let fresh = 0;
-    let india = 0;
-    let speedy = 0;
+  const { productGiantsCount, unicornsCount, itServicesCount, finTechCount, internshipsCount, unlistedLeadsCount } = useMemo(() => {
+    let giants = 0;
+    let unicorns = 0;
+    let it = 0;
+    let fintech = 0;
+    let interns = 0;
     let unlisted = 0;
 
     for (let i = 0; i < activeLeadsPool.length; i++) {
-      const lead = activeLeadsPool[i];
-      if (parseAgeDays(lead.age) <= 3) fresh++;
-      if (lead.source.includes('India') || /india|bangalore|hyderabad|pune/i.test(lead.location)) india++;
-      if (lead.source.includes('SpeedyApply')) speedy++;
-      if (!isLeadListed(lead)) unlisted++;
+      const l = activeLeadsPool[i];
+      const comp = l.company_name.toLowerCase();
+      if (/google|microsoft|amazon|adobe|salesforce|atlassian|qualcomm|nvidia|intel|amd|uber|servicenow|oracle|cisco|apple|broadcom|intuit|autodesk|sap/i.test(comp)) {
+        giants++;
+      } else if (/razorpay|cred|groww|meesho|zepto|swiggy|inmobi|postman|hasura|harness|dream11|phonepe|ola|oyo|delhivery|urban company|nykaa|zerodha|pine labs|upstox|sharechat|bharatpe|blinkit|dailyhunt|pocket fm|devrev|glean|sarvam|krutrim|yellow|gupshup|druva|browserstack|freshworks|zoho|lenskart|ather|juspay|cashfree|setu|slice|jupiter|fi money|niyo|policybazaar|acko|digit|khatabook|porter|zetwerk|moglix|udaan|licious|blackbuck/i.test(comp)) {
+        unicorns++;
+      } else if (/tcs|infosys|wipro|accenture|cognizant|capgemini|hcltech|tech mahindra|ltimindtree|hexaware|persistent|mphasis|kpit|tata elxsi|globallogic|ltts|happiest minds|coforge|birlasoft|cgi|dxc|thoughtworks|nagarro|epam|zensar|cyient|sonata/i.test(comp) || l.source.includes('IT Services')) {
+        it++;
+      } else if (/morgan stanley|goldman sachs|jpmorgan|citibank|hsbc|barclays|deutsche bank|standard chartered|ubs|nomura|fidelity|d\.e\. shaw|tower research|optiver|citadel|wells fargo|american express|visa|mastercard|capital one|bajaj finserv|hdfc|icici|kotak|societe generale/i.test(comp) || l.source.includes('FinTech')) {
+        fintech++;
+      }
+      if (l.type === 'INTERNSHIP') interns++;
+      if (!isLeadListed(l)) unlisted++;
     }
 
     return {
-      freshLeadsCount: fresh,
-      indiaLeadsCount: india,
-      speedyLeadsCount: speedy,
+      productGiantsCount: giants,
+      unicornsCount: unicorns,
+      itServicesCount: it,
+      finTechCount: fintech,
+      internshipsCount: interns,
       unlistedLeadsCount: unlisted,
     };
   }, [activeLeadsPool, isLeadListed]);
@@ -648,22 +667,35 @@ export default function AdminJobsPage() {
       list = list.filter((l) => !isLeadListed(l));
     }
 
-    if (leadCategory === 'FRESH') {
-      list = list.filter((l) => parseAgeDays(l.age) <= 3);
-    } else if (leadCategory === 'INDIA') {
-      list = list.filter(
-        (l) => l.source.includes('India') || /india|bangalore|hyderabad|pune|delhi|mumbai/i.test(l.location)
+    if (leadCategory === 'PRODUCT_GIANTS') {
+      list = list.filter((l) =>
+        l.source.includes('Product Giant') ||
+        l.tags.includes('Product Giant') ||
+        /google|microsoft|amazon|adobe|salesforce|atlassian|qualcomm|nvidia|intel|amd|uber|servicenow|oracle|cisco|apple|broadcom|intuit|autodesk|sap/i.test(l.company_name)
       );
-    } else if (leadCategory === 'SPEEDY') {
-      list = list.filter((l) => l.source.includes('SpeedyApply'));
-    } else if (leadCategory === 'JOBS') {
-      list = list.filter((l) => l.type === 'JOB');
+    } else if (leadCategory === 'UNICORNS') {
+      list = list.filter((l) =>
+        l.source.includes('Unicorn') ||
+        l.tags.includes('Unicorn') ||
+        /razorpay|cred|groww|meesho|zepto|swiggy|inmobi|postman|hasura|harness|dream11|phonepe|ola|oyo|delhivery|urban company|nykaa|zerodha|pine labs|upstox|sharechat|bharatpe|blinkit|dailyhunt|pocket fm|devrev|glean|sarvam|krutrim|yellow|gupshup|druva|browserstack|freshworks|zoho|lenskart|ather|juspay|cashfree|setu|slice|jupiter|fi money|niyo|policybazaar|acko|digit|khatabook|porter|zetwerk|moglix|udaan|licious|blackbuck/i.test(l.company_name)
+      );
+    } else if (leadCategory === 'IT_SERVICES') {
+      list = list.filter((l) =>
+        l.source.includes('IT Services') ||
+        l.tags.includes('IT Services') ||
+        l.tags.includes('Mass Recruiter') ||
+        /tcs|infosys|wipro|accenture|cognizant|capgemini|hcltech|tech mahindra|ltimindtree|hexaware|persistent|mphasis|kpit|tata elxsi|globallogic|ltts|happiest minds|coforge|birlasoft|cgi|dxc|thoughtworks|nagarro|epam|zensar|cyient|sonata/i.test(l.company_name)
+      );
+    } else if (leadCategory === 'FINTECH') {
+      list = list.filter((l) =>
+        l.source.includes('FinTech') ||
+        l.tags.includes('FinTech') ||
+        /morgan stanley|goldman sachs|jpmorgan|citibank|hsbc|barclays|deutsche bank|standard chartered|ubs|nomura|fidelity|d\.e\. shaw|tower research|optiver|citadel|wells fargo|american express|visa|mastercard|capital one|bajaj finserv|hdfc|icici|kotak|societe generale/i.test(l.company_name)
+      );
     } else if (leadCategory === 'INTERNSHIPS') {
       list = list.filter((l) => l.type === 'INTERNSHIP');
-    } else if (leadCategory === 'REMOTE') {
-      list = list.filter(
-        (l) => /remote/i.test(l.location) || l.source.includes('Jobicy') || l.source.includes('Arbeitnow')
-      );
+    } else if (leadCategory === 'JOBS') {
+      list = list.filter((l) => l.type === 'JOB');
     }
 
     if (search.trim()) {
@@ -1043,7 +1075,7 @@ export default function AdminJobsPage() {
               <div>
                 <h1 className="text-xl font-display font-extrabold text-[#121417] dark:text-white">Jobs Board Admin</h1>
                 <p className="text-xs text-[#868E96]">
-                  {liveListings.length} live · {activeLeadsPool.length} leads · {expiredListings.length} expired · {draftListings.length} drafts
+                  {liveListings.length} live · {activeLeadsPool.length} India leads · {expiredListings.length} expired · {draftListings.length} drafts
                   {openReportsCount > 0 && (
                     <span className="text-rose-500 font-bold ml-1">
                       · {openReportsCount} open report{openReportsCount > 1 ? 's' : ''}
@@ -1089,10 +1121,10 @@ export default function AdminJobsPage() {
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>Leads ({activeLeadsPool.length})</span>
-                {freshLeadsCount > 0 && (
+                <span>🇮🇳 India Leads ({activeLeadsPool.length})</span>
+                {unlistedLeadsCount > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                    {freshLeadsCount} Fresh
+                    {unlistedLeadsCount} New
                   </span>
                 )}
               </button>
@@ -1246,104 +1278,19 @@ export default function AdminJobsPage() {
             <div className="space-y-4">
               {/* Category Filter Chips Bar */}
               <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-3 sm:p-4 shadow-xs">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('ALL'); setVisibleLeadsCount(50); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'ALL'
-                          ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417]'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      All Leads ({activeLeadsPool.length})
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('FRESH'); setVisibleLeadsCount(50); }}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'FRESH'
-                          ? 'bg-amber-500 text-black shadow-xs'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      <span>🔥 Ultra-Fresh (0–3d)</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                        {freshLeadsCount}
+                <div className="mb-3 pb-3 border-b border-[#E9ECEF] dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-[#121417] dark:text-white flex items-center gap-2">
+                      <span>🇮🇳 India Tech Campus & Fresher Drives</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        Class of 2024 / 2025 / 2026 / 2027
                       </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('INDIA'); setVisibleLeadsCount(50); }}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'INDIA'
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      <span>🇮🇳 India Drives (10–35 LPA)</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                        {indiaLeadsCount}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('SPEEDY'); setVisibleLeadsCount(50); }}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'SPEEDY'
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      <span>⭐ Top Tech College SWE</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
-                        {speedyLeadsCount}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('JOBS'); setVisibleLeadsCount(50); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'JOBS'
-                          ? 'bg-purple-600 text-white shadow-xs'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      Full-Time (0–1 YOE)
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('INTERNSHIPS'); setVisibleLeadsCount(50); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'INTERNSHIPS'
-                          ? 'bg-teal-600 text-white shadow-xs'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      Internships
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { setLeadCategory('REMOTE'); setVisibleLeadsCount(50); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        leadCategory === 'REMOTE'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
-                      }`}
-                    >
-                      Remote / Global
-                    </button>
+                    </h3>
+                    <p className="text-xs text-[#868E96] mt-0.5">
+                      Verified direct portals across Tier-1 Product Giants, Unicorns, and IT Mass Recruiters with authentic LPA salary benchmarks.
+                    </p>
                   </div>
-
-                  {/* Toggle: Hide Already Listed */}
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2">
                     <label className="flex items-center gap-2 text-xs font-semibold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none">
                       <input
                         type="checkbox"
@@ -1354,6 +1301,107 @@ export default function AdminJobsPage() {
                       <span>Unlisted Only ({unlistedLeadsCount})</span>
                     </label>
                   </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('ALL'); setVisibleLeadsCount(50); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'ALL'
+                        ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417]'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    All India Drives ({activeLeadsPool.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('PRODUCT_GIANTS'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'PRODUCT_GIANTS'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🔥 Tier-1 Product (18–35+ LPA)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {productGiantsCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('UNICORNS'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'UNICORNS'
+                        ? 'bg-amber-500 text-black shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🦄 Unicorns & Startups (10–25 LPA)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {unicornsCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('IT_SERVICES'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'IT_SERVICES'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🏢 IT Services Mass Hiring (3.5–9 LPA)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {itServicesCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('FINTECH'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'FINTECH'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🏦 FinTech & Quant (14–50 LPA)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {finTechCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('INTERNSHIPS'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'INTERNSHIPS'
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🎓 Campus Internships</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {internshipsCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('JOBS'); setVisibleLeadsCount(50); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'JOBS'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    Full-Time Only
+                  </button>
                 </div>
               </div>
 
