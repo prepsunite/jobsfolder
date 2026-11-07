@@ -4,7 +4,7 @@ import {
   Plus, Edit3, Trash2, Eye, EyeOff, Star, StarOff,
   Briefcase, MapPin, Clock, X, Check, AlertCircle,
   ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2,
-  Sparkles, Upload, Zap
+  Sparkles, Upload, Zap, Send, Layers, Copy, ShieldCheck
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -15,6 +15,7 @@ import { curatedJobLeads } from '@/constants/curatedJobLeads';
 import ContentRenderer from '@/components/ContentRenderer';
 import { prepareJobDescriptionMarkdown, generateStructuredJobDescription } from '@/utils/jobDescription';
 import CompanyLogo from '@/components/CompanyLogo';
+import { auditJobRecord, getJobCohortLabel, generateCohortTelegramBroadcast } from '@/utils/jobAudit';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -192,6 +193,34 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Quality Audit Checklist Banner */}
+          {(() => {
+            const audit = auditJobRecord(form);
+            if (audit.missingItems.length > 0) {
+              return (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs font-bold">
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>Readiness & Quality Checklist ({audit.readinessScore}%):</span>
+                  </div>
+                  <ul className="text-[11px] list-disc list-inside space-y-1 pl-1 text-amber-700 dark:text-amber-300/90">
+                    {audit.missingItems.map((item) => (
+                      <li key={item.key}>
+                        <strong>{item.label}:</strong> {item.description}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
+            return (
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 flex items-center gap-2 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>100% Verified Quality! Official description, direct portal, and logo present.</span>
+              </div>
+            );
+          })()}
+
           {/* Title + Company */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -527,6 +556,10 @@ type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
 type LeadCategoryFilter =
   | 'ALL'
   | 'BOT_LEADS'
+  | 'NEEDS_DESC'
+  | 'JOB_BOARD_URL'
+  | 'MISSING_LOGO'
+  | 'READY'
   | 'INDIA_ONLY'
   | 'REMOTE_WFH'
   | 'PRODUCT_GIANTS'
@@ -553,7 +586,8 @@ export default function AdminJobsPage() {
   const [auditingId, setAuditingId] = useState<string | null>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<JobReportStatus | 'ALL'>('OPEN');
 
-  // Leads tab states
+  // Leads & Cohort states
+  const [selectedCohort, setSelectedCohort] = useState<string>('ALL');
   const [leadCategory, setLeadCategory] = useState<LeadCategoryFilter>('ALL');
   const [hideListed, setHideListed] = useState<boolean>(false);
   const [visibleLeadsCount, setVisibleLeadsCount] = useState<number>(50);
@@ -676,6 +710,7 @@ export default function AdminJobsPage() {
         batch_eligibility: 'Class of 2024 / 2025 / 2026 / 2027',
         tags: j.tags || [],
         isDbLead: true,
+        created_at: j.created_at,
       }));
   }, [listings]);
 
@@ -768,6 +803,10 @@ export default function AdminJobsPage() {
     internshipsCount,
     jobsCount,
     unlistedLeadsCount,
+    needsDescCount,
+    jobBoardCount,
+    missingLogoCount,
+    readyCount,
   } = useMemo(() => {
     let india = 0;
     let remote = 0;
@@ -778,9 +817,18 @@ export default function AdminJobsPage() {
     let interns = 0;
     let jobs = 0;
     let unlisted = 0;
+    let nd = 0;
+    let jb = 0;
+    let ml = 0;
+    let rd = 0;
 
     for (let i = 0; i < activeLeadsPool.length; i++) {
       const l = activeLeadsPool[i];
+      const audit = auditJobRecord(l);
+      if (audit.isFallbackDescription) nd++;
+      if (audit.isJobBoard) jb++;
+      if (!audit.hasLogo) ml++;
+      if (audit.isReadyForPublish && !audit.isFallbackDescription && !audit.isJobBoard) rd++;
       const comp = l.company_name.toLowerCase();
       const loc = (l.location || '').toLowerCase();
       const tags = l.tags || [];
@@ -816,17 +864,46 @@ export default function AdminJobsPage() {
       internshipsCount: interns,
       jobsCount: jobs,
       unlistedLeadsCount: unlisted,
+      needsDescCount: nd,
+      jobBoardCount: jb,
+      missingLogoCount: ml,
+      readyCount: rd,
     };
   }, [activeLeadsPool, isLeadListed]);
 
+  // Cohort Groupings
+  const availableCohorts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (let i = 0; i < listings.length; i++) {
+      const cohort = getJobCohortLabel(listings[i]);
+      map.set(cohort, (map.get(cohort) || 0) + 1);
+    }
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  }, [listings]);
+
   const filteredLeads = useMemo(() => {
     let list = activeLeadsPool;
+
+    if (selectedCohort !== 'ALL') {
+      list = list.filter((l) => getJobCohortLabel(l) === selectedCohort);
+    }
 
     if (hideListed) {
       list = list.filter((l) => !isLeadListed(l));
     }
 
-    if (leadCategory === 'BOT_LEADS') {
+    if (leadCategory === 'NEEDS_DESC') {
+      list = list.filter((l) => auditJobRecord(l).isFallbackDescription);
+    } else if (leadCategory === 'JOB_BOARD_URL') {
+      list = list.filter((l) => auditJobRecord(l).isJobBoard);
+    } else if (leadCategory === 'MISSING_LOGO') {
+      list = list.filter((l) => !auditJobRecord(l).hasLogo);
+    } else if (leadCategory === 'READY') {
+      list = list.filter((l) => {
+        const a = auditJobRecord(l);
+        return a.isReadyForPublish && !a.isFallbackDescription && !a.isJobBoard;
+      });
+    } else if (leadCategory === 'BOT_LEADS') {
       list = list.filter((l) => l.isDbLead || l.tags.includes('LEAD') || l.source.includes('JobSpy'));
     } else if (leadCategory === 'INDIA_ONLY') {
       list = list.filter((l) =>
@@ -885,7 +962,7 @@ export default function AdminJobsPage() {
     }
 
     return list;
-  }, [activeLeadsPool, hideListed, leadCategory, search, isLeadListed]);
+  }, [activeLeadsPool, hideListed, leadCategory, search, isLeadListed, selectedCohort]);
 
   // Select target tab pool
   const currentTabPool = useMemo(() => {
@@ -916,6 +993,11 @@ export default function AdminJobsPage() {
   // Filter and sort within current pool
   const filtered = useMemo(() => {
     let list = currentTabPool;
+
+    if (selectedCohort !== 'ALL') {
+      list = list.filter((j) => getJobCohortLabel(j) === selectedCohort);
+    }
+
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -941,7 +1023,7 @@ export default function AdminJobsPage() {
       // Default: NEWEST
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [currentTabPool, search, sortBy]);
+  }, [currentTabPool, search, sortBy, selectedCohort]);
 
   // Guard: If not an admin, render NotFoundPage so unauthorized users cannot even inspect the UI
   if (!isEffectiveAdmin) {
@@ -1188,6 +1270,18 @@ export default function AdminJobsPage() {
     } finally {
       setIsBulkProcessing(false);
     }
+  };
+
+  const handleCopyCohortBroadcast = () => {
+    const cohortJobs = activeTab === 'LEADS' ? filteredLeads : filtered;
+    if (!cohortJobs.length) {
+      toast.error('No jobs found in the selected cohort or filter to broadcast.');
+      return;
+    }
+    const cohortTitle = selectedCohort === 'ALL' ? 'Latest Job Openings' : selectedCohort;
+    const text = generateCohortTelegramBroadcast(cohortTitle, cohortJobs);
+    navigator.clipboard.writeText(text);
+    toast.success(`Copied Telegram broadcast for ${cohortJobs.length} job(s) in ${cohortTitle}!`);
   };
 
 
@@ -1547,6 +1641,37 @@ export default function AdminJobsPage() {
                 />
               </div>
 
+              {/* Cohort Selector (Daily Batches) */}
+              <div className="relative">
+                <select
+                  aria-label="Filter by daily cohort"
+                  value={selectedCohort}
+                  onChange={(e) => setSelectedCohort(e.target.value)}
+                  className="appearance-none pl-7 pr-8 py-1.5 text-xs font-bold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] cursor-pointer shadow-xs"
+                  title="Filter by daily cohort / drop date"
+                >
+                  <option value="ALL">All Cohorts ({listings.length})</option>
+                  {availableCohorts.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name} ({c.count})
+                    </option>
+                  ))}
+                </select>
+                <Layers className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#FD4A32]" />
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
+              </div>
+
+              {/* Copy Telegram Broadcast Button */}
+              <button
+                type="button"
+                onClick={handleCopyCohortBroadcast}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                title="1-Click copy formatted Telegram channel broadcast for this cohort"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Telegram Broadcast</span>
+              </button>
+
               {/* Import JSON button when on LEADS tab */}
               {activeTab === 'LEADS' && (
                 <div className="flex items-center gap-2">
@@ -1697,6 +1822,73 @@ export default function AdminJobsPage() {
                       </span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('NEEDS_DESC'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'NEEDS_DESC'
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30'
+                    }`}
+                    title="Filter leads using the auto-generated fallback description that need real company responsibilities"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>⚠️ Needs Real JD</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {needsDescCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('JOB_BOARD_URL'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'JOB_BOARD_URL'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/30'
+                    }`}
+                    title="Filter leads pointing to LinkedIn/Glassdoor instead of direct company career portals"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>🔗 Job Board Links</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {jobBoardCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('MISSING_LOGO'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'MISSING_LOGO'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-purple-500/10 text-purple-700 dark:text-purple-400 hover:bg-purple-500/20 border border-purple-500/30'
+                    }`}
+                    title="Filter leads with no custom logo image"
+                  >
+                    <span>🖼️ No Logo</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {missingLogoCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('READY'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'READY'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
+                    }`}
+                    title="Filter leads that have official JD, direct portal, and logo ready"
+                  >
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>✅ 100% Ready</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {readyCount}
+                    </span>
+                  </button>
 
                   <button
                     type="button"
@@ -1983,6 +2175,53 @@ export default function AdminJobsPage() {
                                     }`}>
                                       {lead.type}
                                     </span>
+                                    {(() => {
+                                      const audit = auditJobRecord(lead);
+                                      return (
+                                        <>
+                                          {audit.isFallbackDescription ? (
+                                            <span
+                                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30"
+                                              title="Uses auto-generated template. Click 'Review & Edit' to paste official employer JD."
+                                            >
+                                              ⚠️ Template JD
+                                            </span>
+                                          ) : (
+                                            <span
+                                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                                              title="Contains original employer description"
+                                            >
+                                              ✓ Official JD
+                                            </span>
+                                          )}
+
+                                          {audit.isJobBoard ? (
+                                            <span
+                                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                                              title="Points to LinkedIn/Glassdoor. Consider pasting direct career portal link."
+                                            >
+                                              🔗 Job Board
+                                            </span>
+                                          ) : audit.isDirectAts ? (
+                                            <span
+                                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30"
+                                              title="Direct company ATS portal"
+                                            >
+                                              ✓ Direct ATS
+                                            </span>
+                                          ) : null}
+
+                                          {!audit.hasLogo && (
+                                            <span
+                                              className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
+                                              title="No custom logo; letter monogram used"
+                                            >
+                                              Monogram
+                                            </span>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                     {lead.tags.includes('Remote WFH') && (
                                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                                         🏠 Remote WFH

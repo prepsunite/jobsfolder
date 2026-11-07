@@ -66,5 +66,6 @@ export interface ScrapedJobLead {
   batch_eligibility?: string;
   tags: string[];
   isDbLead?: boolean;
+  created_at?: string;
 }
 
