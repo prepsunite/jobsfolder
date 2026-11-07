@@ -2,6245 +2,3945 @@ import type { ScrapedJobLead } from '@/types/jobs';
 
 export const curatedJobLeads: ScrapedJobLead[] = [
   {
-    "id": "ind_top_google",
-    "company_name": "Google",
-    "title": "SWE Intern / New Grad",
-    "type": "INTERNSHIP",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹18-35 LPA",
-    "apply_url": "https://careers.google.com/students/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_microsoft",
-    "company_name": "Microsoft",
-    "title": "SDE Intern / Graduate",
-    "type": "INTERNSHIP",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹18-32 LPA",
-    "apply_url": "https://careers.microsoft.com/us/en/studentjobs",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_amazon",
-    "company_name": "Amazon",
-    "title": "SDE-1 / Intern",
-    "type": "INTERNSHIP",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹16-28 LPA",
-    "apply_url": "https://www.amazon.jobs/en/teams/internships-for-students",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_adobe",
-    "company_name": "Adobe",
-    "title": "Off-campus coding test",
+    "id": "live_82b99ea7a399c1b0",
+    "company_name": "PVblink Technology Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "Embedded Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹16-24 LPA",
-    "apply_url": "https://www.adobe.com/careers/university.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "India",
+    "stipend_or_salary": "INR 25,000 - 45,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319106173",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Product Giant",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_top_salesforce",
+    "id": "live_187c336a8a040c9b",
+    "company_name": "Young Minds Technology Solutions Pvt Ltd",
+    "company_logo_url": "https://media.glassdoor.com/sql/1714304/young-minds-technology-solutions-squarelogo-1535083744838.png",
+    "title": "Software Tester",
+    "type": "JOB",
+    "location": "Tirupati, India",
+    "stipend_or_salary": "INR 15,000 - 15,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319198024",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_7ab2355f6fa1b760",
+    "company_name": "P S Associates",
+    "company_logo_url": null,
+    "title": "Support Handholding Engineer",
+    "type": "JOB",
+    "location": "Uttar Bastar Kanker, India",
+    "stipend_or_salary": "INR 20,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319159056",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_c2ae72bf03de6d69",
+    "company_name": "Xenbrix Technologies Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Embedded System Engineer",
+    "type": "JOB",
+    "location": "M\u0101velikara, India",
+    "stipend_or_salary": "INR 10,000 - 10,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319866989",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_779b1942adec7976",
+    "company_name": "P S Associates",
+    "company_logo_url": null,
+    "title": "Support Handholding Engineer",
+    "type": "JOB",
+    "location": "Bil\u0101spur, India",
+    "stipend_or_salary": "INR 20,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319146933",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_1b2d55ef0817c88a",
+    "company_name": "ASCENT E-DIGIT SOLUTIONS PVT LTD",
+    "company_logo_url": "https://media.glassdoor.com/sql/4382388/ascent-e-digit-solutions-squarelogo-1627380733305.png",
+    "title": "Field Desktop Technician",
+    "type": "JOB",
+    "location": "Chennai, India",
+    "stipend_or_salary": "INR 15,000 - 25,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319930779",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_cb897a9dd8fa969c",
+    "company_name": "IBO Infotech Pvt Ltd",
+    "company_logo_url": null,
+    "title": "TECHNICAL SUPPORT CUM SALES",
+    "type": "JOB",
+    "location": "Cochin, India",
+    "stipend_or_salary": "INR 10,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319937344",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_e0ef7d8a815bf4bd",
+    "company_name": "Nexora Technologies Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "AI Engineer \u2013 Fresher",
+    "type": "JOB",
+    "location": "Bhopal, India",
+    "stipend_or_salary": "INR 10,000 - 15,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317962736",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_5edfba966450c91e",
+    "company_name": "App Innovation Technologies",
+    "company_logo_url": "https://media.glassdoor.com/sql/2443318/app-innovation-technologies-squarelogo-1646220438892.png",
+    "title": "AI/ML Engineer",
+    "type": "JOB",
+    "location": "Coimbatore, India",
+    "stipend_or_salary": "INR 250,000 - 300,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317996507",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_415e9cfadbd1c74e",
+    "company_name": "Freshers JobSolution",
+    "company_logo_url": null,
+    "title": "AI Engineer",
+    "type": "JOB",
+    "location": "Bhopal, India",
+    "stipend_or_salary": "INR 10,000 - 79,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317968395",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_60342d64b439497f",
+    "company_name": "AXENTRA OS",
+    "company_logo_url": null,
+    "title": "Full Stack Developer \u2013 Fresher Program",
+    "type": "JOB",
+    "location": "India",
+    "stipend_or_salary": "INR 6,500 - 6,500",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317923844",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_0d6ffbaaa9c96da6",
+    "company_name": "inspirisys",
+    "company_logo_url": null,
+    "title": "Desktop Support Engineer",
+    "type": "JOB",
+    "location": "His\u0101r, India",
+    "stipend_or_salary": "INR 15,500 - 15,501",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317907616",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_0a0c01060cabb51a",
+    "company_name": "BETSOL",
+    "company_logo_url": "https://media.glassdoor.com/sql/730260/betsol-squarelogo-1567010636160.png",
+    "title": "Technical Support Engineer",
+    "type": "JOB",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 350,000 - 431,250",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317072020",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_83faea61ef7fe443",
+    "company_name": "Hawk Aerospace Private Limited",
+    "company_logo_url": null,
+    "title": "Software Engineer \u2013 Drone Systems",
+    "type": "JOB",
+    "location": "Mumbai, India",
+    "stipend_or_salary": "INR 1,200,000 - 1,500,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316562936",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_0944ab46634aff56",
+    "company_name": "QualityKiosk Technologies",
+    "company_logo_url": "https://media.glassdoor.com/sql/368093/qualitykiosk-squareLogo-1652696268325.png",
+    "title": "Trainee Test Engineer",
+    "type": "JOB",
+    "location": "Jaipur, India",
+    "stipend_or_salary": "INR 200,000 - 620,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316510803",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_0869969e9ab40910",
+    "company_name": "Aghanya Info Solution Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Desktop Support Engineer",
+    "type": "JOB",
+    "location": "India",
+    "stipend_or_salary": "INR 10,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316486121",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_09ae43e4fea0099b",
+    "company_name": "Technexo Solutions",
+    "company_logo_url": null,
+    "title": "CCTV Technician",
+    "type": "JOB",
+    "location": "Chennai, India",
+    "stipend_or_salary": "INR 15,000 - 30,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316536438",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_8628af7729d93099",
+    "company_name": "ASCENT E-DIGIT SOLUTIONS PVT LTD",
+    "company_logo_url": null,
+    "title": "Field Desktop Technician",
+    "type": "JOB",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 15,000 - 25,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=bd2a97d1714ae8e4",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_c849ccafdcd35fca",
+    "company_name": "Xenbrix Technologies Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Embedded System Engineer",
+    "type": "JOB",
+    "location": "KL, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://in.indeed.com/viewjob?jk=c551324c7aaf1c82",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_1c461156582c9946",
+    "company_name": "IBO Infotech Pvt Ltd",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/f9d5d6c434b37d5a2f338db1ab249f64",
+    "title": "TECHNICAL SUPPORT CUM SALES",
+    "type": "JOB",
+    "location": "KL, India",
+    "stipend_or_salary": "INR 10,000 - 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=78b4d1f724481194",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_3c3c70b2e5ea0224",
+    "company_name": "Young Minds Technology Solutions Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Software Tester",
+    "type": "JOB",
+    "location": "AP, India",
+    "stipend_or_salary": "INR 15,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=59dac6d97eb4df42",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_d7bfab888088bddf",
+    "company_name": "PVblink Technology Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "Embedded Software Engineer",
+    "type": "JOB",
+    "location": "GJ, India",
+    "stipend_or_salary": "INR 25,000 - 45,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=d94f0b72ca6ac861",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_0987c9b3a2224817",
+    "company_name": "P S Associates",
+    "company_logo_url": null,
+    "title": "Support Handholding Engineer",
+    "type": "JOB",
+    "location": "CT, India",
+    "stipend_or_salary": "INR 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=9ec00a6352d1e5e9",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_e7023b367b1ba666",
+    "company_name": "P S Associates",
+    "company_logo_url": null,
+    "title": "Support Handholding Engineer",
+    "type": "JOB",
+    "location": "CT, India",
+    "stipend_or_salary": "INR 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=aee1fe25d5db4854",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_59fc86b7bd3d29a7",
+    "company_name": "Freshers JobSolution",
+    "company_logo_url": null,
+    "title": "AI Engineer",
+    "type": "JOB",
+    "location": "MP, India",
+    "stipend_or_salary": "INR 10,000 - 79,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=ea44131f2def9462",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_fc2357a0cf009ed2",
+    "company_name": "AltissAdvance Technologies Private Limited",
+    "company_logo_url": null,
+    "title": "Full Stack Developer \u2013 Fresher Program",
+    "type": "JOB",
+    "location": "MH, India",
+    "stipend_or_salary": "INR 6,500 - 6,500",
+    "apply_url": "https://in.indeed.com/viewjob?jk=537eb353dc5a1e73",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_11313efc32e17dca",
+    "company_name": "Nexora Technologies",
+    "company_logo_url": null,
+    "title": "AI Engineer \u2013 Fresher",
+    "type": "JOB",
+    "location": "MP, India",
+    "stipend_or_salary": "INR 10,000 - 15,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=c17065e96f51233a",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_0f7ad29fc689f7cd",
+    "company_name": "App Innovation Technologies",
+    "company_logo_url": null,
+    "title": "AI/ML Engineer",
+    "type": "JOB",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 250,000 - 300,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=380b078ac67861ec",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_1fb221b3e5f1d54b",
+    "company_name": "inspiriSYS",
+    "company_logo_url": null,
+    "title": "Desktop Support Engineer",
+    "type": "JOB",
+    "location": "HR, India",
+    "stipend_or_salary": "INR 15,500 - 15,501",
+    "apply_url": "https://in.indeed.com/viewjob?jk=585bfedabb97b050",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_21c989e69438b4eb",
+    "company_name": "Hawk Aerospace Private Limited",
+    "company_logo_url": null,
+    "title": "Software Engineer \u2013 Drone Systems",
+    "type": "JOB",
+    "location": "MH, India",
+    "stipend_or_salary": "INR 1,200,000 - 1,500,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=7c647e52db9331ee",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_850b7ccb09576e01",
+    "company_name": "Betsol",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/474a4eecd8b6d0e160c26fda33d92c03",
+    "title": "Technical Support Engineer",
+    "type": "JOB",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://jobs.smartrecruiters.com/Betsol/744000159698659-technical-support-engineer",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_f03f59922bda58d7",
+    "company_name": "QualityKiosk",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/b1e736f82d37d12d50526ccedbefd5a6",
+    "title": "Trainee Test Engineer",
+    "type": "JOB",
+    "location": "RJ, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers-qualitykiosk.peoplestrong.com/job/detail/R-0046556-01",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_b50be9c6f8b9edb0",
+    "company_name": "Technexo Solutions",
+    "company_logo_url": null,
+    "title": "CCTV Technician",
+    "type": "JOB",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 15,000 - 30,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=2c58aaa9a5c4e8c5",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_826c09d01d5fdb93",
+    "company_name": "Aghanya Info Solution Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Desktop Support Engineer",
+    "type": "JOB",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 10,000 - 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=64768363ad960ce2",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
+    ]
+  },
+  {
+    "id": "live_2ad20341cb4b60ed",
+    "company_name": "Joblet-AI",
+    "company_logo_url": null,
+    "title": "Fullstack Software Engineer (Remote)",
+    "type": "JOB",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487385465",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_7822afa7b62c2539",
     "company_name": "Salesforce",
-    "title": "Graduate / Intern",
-    "type": "INTERNSHIP",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹18-28 LPA",
-    "apply_url": "https://www.salesforce.com/company/careers/futureforce/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_atlassian",
-    "company_name": "Atlassian",
-    "title": "SDE Graduate",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹25-35 LPA",
-    "apply_url": "https://www.atlassian.com/company/careers/graduates",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_qualcomm",
-    "company_name": "Qualcomm",
-    "title": "ECE / Embedded SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.qualcomm.com/company/careers/students-and-new-grads",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_nvidia",
-    "company_name": "NVIDIA",
-    "title": "AI/System Software",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹18-30 LPA",
-    "apply_url": "https://www.nvidia.com/en-us/about-nvidia/careers/university-recruiting/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_intel",
-    "company_name": "Intel",
-    "title": "Hardware + Software",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.intel.com/content/www/us/en/jobs/locations/india/students.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_amd",
-    "company_name": "AMD",
-    "title": "ECE/SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.amd.com/en/corporate/careers/university-relations.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_uber",
-    "company_name": "Uber",
-    "title": "DSA coding test",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹25-38 LPA",
-    "apply_url": "https://www.uber.com/us/en/careers/teams/university-talent/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_servicenow",
-    "company_name": "ServiceNow",
-    "title": "Cloud Platform SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://www.servicenow.com/company/jobs/early-career.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_oracle",
-    "company_name": "Oracle",
-    "title": "Member of Technical Staff",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.oracle.com/corporate/careers/students-grads/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_cisco",
-    "company_name": "Cisco",
-    "title": "Network / Software",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.cisco.com/c/en/us/about/careers/working-at-cisco/students-and-new-graduates.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_apple",
-    "company_name": "Apple",
-    "title": "Embedded / Systems",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹20-35 LPA",
-    "apply_url": "https://www.apple.com/careers/in/students.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_broadcomvmware",
-    "company_name": "Broadcom (VMware)",
-    "title": "Systems Engineering",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://careers.broadcom.com/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_intuit",
-    "company_name": "Intuit",
-    "title": "Full-Stack SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹18-25 LPA",
-    "apply_url": "https://www.intuit.com/careers/early-careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_autodesk",
-    "company_name": "Autodesk",
-    "title": "Backend / Frontend",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.autodesk.com/careers/students-and-recent-grads",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_sap",
-    "company_name": "SAP",
-    "title": "Cloud Developer",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.sap.com/about/careers/students-graduates.html",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_ibm",
-    "company_name": "IBM",
-    "title": "Associate Engineer",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.ibm.com/careers/us-en/search/?level=Entry%20Level",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_delltechnologies",
-    "company_name": "Dell Technologies",
-    "title": "Infrastructure SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://jobs.dell.com/students",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_hp",
-    "company_name": "HP",
-    "title": "Full-Stack Software",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://jobs.hp.com/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_expediagroup",
-    "company_name": "Expedia Group",
-    "title": "SDE-1 / Intern",
-    "type": "INTERNSHIP",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹14-20 LPA",
-    "apply_url": "https://www.expediagroup.com/careers/early-careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_paypal",
-    "company_name": "PayPal",
-    "title": "Backend Engineering",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://www.paypal.com/us/webapps/mpp/jobs/students",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_netapp",
-    "company_name": "NetApp",
-    "title": "Storage / Backend",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://careers.netapp.com/university",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_razorpay",
-    "company_name": "Razorpay",
-    "title": "Backend / Full-Stack",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://jobs.lever.co/razorpay",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_cred",
-    "company_name": "CRED",
-    "title": "Backend at scale",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹16-24 LPA",
-    "apply_url": "https://careers.cred.club/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_groww",
-    "company_name": "Groww",
-    "title": "Backend / Data",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://groww.in/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_meesho",
-    "company_name": "Meesho",
-    "title": "Scale Backend / Python",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-16 LPA",
-    "apply_url": "https://careers.meesho.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_zepto",
-    "company_name": "Zepto",
-    "title": "Microservices",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.zepto.co.in/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_swiggy",
-    "company_name": "Swiggy",
-    "title": "Real-time systems",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹14-20 LPA",
-    "apply_url": "https://careers.swiggy.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_inmobi",
-    "company_name": "InMobi",
-    "title": "High-throughput data",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://careers.inmobi.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_postman",
-    "company_name": "Postman",
-    "title": "API platform SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹16-25 LPA",
-    "apply_url": "https://www.postman.com/company/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_hasura",
-    "company_name": "Hasura",
-    "title": "GraphQL / Postgres",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://hasura.io/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_harness",
-    "company_name": "Harness",
-    "title": "DevOps / CI-CD",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹14-20 LPA",
-    "apply_url": "https://harness.io/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_dream11",
-    "company_name": "Dream11",
-    "title": "High-concurrency DB",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://www.dreamsports.group/sports-tech-careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_phonepe",
-    "company_name": "PhonePe",
-    "title": "Backend / Infrastructure",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹14-22 LPA",
-    "apply_url": "https://www.phonepe.com/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_ola",
-    "company_name": "Ola",
-    "title": "Full-Stack / Embedded",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.ola.in/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_oyo",
-    "company_name": "OYO",
-    "title": "React / Java backend",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://careers.oyorooms.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_delhivery",
-    "company_name": "Delhivery",
-    "title": "Logistics / Mapping",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://www.delhivery.com/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_urbancompany",
-    "company_name": "Urban Company",
-    "title": "Full-Stack Node/React",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://careers.urbancompany.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_nykaa",
-    "company_name": "Nykaa",
-    "title": "Frontend React SDE-1",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://careers.nykaa.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_zerodha",
-    "company_name": "Zerodha",
-    "title": "Python / Go developer",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://careers.zerodha.tech/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_pinelabs",
-    "company_name": "Pine Labs",
-    "title": "FinTech Backend",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://www.pinelabs.com/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_upstox",
-    "company_name": "Upstox",
-    "title": "Trading Backend",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://upstox.com/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_sharechat",
-    "company_name": "ShareChat",
-    "title": "Real-time microservices",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹14-22 LPA",
-    "apply_url": "https://careers.sharechat.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_bharatpe",
-    "company_name": "BharatPe",
-    "title": "Payment systems",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://bharatpe.com/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_blinkit",
-    "company_name": "Blinkit",
-    "title": "Async pipelines",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://blinkit.com/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_dailyhunt",
-    "company_name": "Dailyhunt",
-    "title": "Scale backend",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.verse.in/careers.html",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_pocketfm",
-    "company_name": "Pocket FM",
-    "title": "Content delivery",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.pocketfm.com/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_devrev",
-    "company_name": "DevRev",
-    "title": "AI/Search SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://devrev.ai/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_glean",
-    "company_name": "Glean",
-    "title": "Search & Indexing",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹20-30 LPA",
-    "apply_url": "https://www.glean.com/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_sarvamai",
-    "company_name": "Sarvam AI",
-    "title": "LLM App Developer",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹15-25 LPA",
-    "apply_url": "https://www.sarvam.ai/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_krutrim",
-    "company_name": "Krutrim",
-    "title": "AI Platform Engineer",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://olakrutrim.com/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_yellowai",
-    "company_name": "Yellow.ai",
-    "title": "Conversational AI",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹8-14 LPA",
-    "apply_url": "https://yellow.ai/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_gupshup",
-    "company_name": "Gupshup",
-    "title": "Messaging platform SDE",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.gupshup.io/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_druva",
-    "company_name": "Druva",
-    "title": "Cloud infrastructure",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.druva.com/about/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_browserstack",
-    "company_name": "BrowserStack",
-    "title": "Automated testing",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://www.browserstack.com/careers",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_freshworks",
-    "company_name": "Freshworks",
-    "title": "SaaS Full-Stack",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.freshworks.com/company/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_zoho",
-    "company_name": "Zoho",
-    "title": "SDE (No marks filter)",
-    "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
-    "stipend_or_salary": "₹7-12 LPA",
-    "apply_url": "https://www.zoho.com/careers/",
-    "source": "India Tech Portal (Unicorn)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Unicorn",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_leadsquared",
-    "company_name": "LeadSquared",
-    "title": "SaaS Backend",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.leadsquared.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_chargebee",
-    "company_name": "Chargebee",
-    "title": "Billing microservices",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.chargebee.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_wingify",
-    "company_name": "Wingify",
-    "title": "React frontend",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://wingify.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_clevertap",
-    "company_name": "CleverTap",
-    "title": "Real-time notifications",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹12-16 LPA",
-    "apply_url": "https://clevertap.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_webengage",
-    "company_name": "WebEngage",
-    "title": "Campaign dispatch",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://webengage.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_whatfix",
-    "company_name": "Whatfix",
-    "title": "React integrations",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://whatfix.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_darwinbox",
-    "company_name": "Darwinbox",
-    "title": "Enterprise SaaS",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://darwinbox.com/careers.php",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_highradius",
-    "company_name": "HighRadius",
-    "title": "FinTech SaaS",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.highradius.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_amagi",
-    "company_name": "Amagi",
-    "title": "Cloud video processing",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://www.amagi.com/company/careers",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_icertis",
-    "company_name": "Icertis",
-    "title": "Enterprise SaaS",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://www.icertis.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_fractalanalytics",
-    "company_name": "Fractal Analytics",
-    "title": "AI/ML pipeline",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://fractal.ai/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_musigma",
-    "company_name": "Mu Sigma",
-    "title": "Decision sciences",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹7-10 LPA",
-    "apply_url": "https://www.mu-sigma.com/careers",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_innovaccer",
-    "company_name": "Innovaccer",
-    "title": "Healthcare data",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹10-15 LPA",
-    "apply_url": "https://innovaccer.com/careers",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_sprinklr",
-    "company_name": "Sprinklr",
-    "title": "Social data platform",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹15-24 LPA",
-    "apply_url": "https://www.sprinklr.com/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_cohesity",
-    "company_name": "Cohesity",
-    "title": "Storage & Backend",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://www.cohesity.com/company/careers/",
-    "source": "India Tech Portal (Product Giant)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "Product Giant",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_morganstanley",
-    "company_name": "Morgan Stanley",
-    "title": "Technology Analyst",
-    "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://www.morganstanley.com/about-us/careers",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "FinTech",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_goldmansachs",
-    "company_name": "Goldman Sachs",
-    "title": "New Analyst Program",
-    "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹18-25 LPA",
-    "apply_url": "https://www.goldmansachs.com/careers/index.html",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "FinTech",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_jpmorganchase",
-    "company_name": "JPMorgan Chase",
-    "title": "Code for Good",
-    "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹14-16 LPA",
-    "apply_url": "https://careers.jpmorgan.com/US/en/students",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
-    "tags": [
-      "FinTech",
-      "India",
-      "Fresher 2025/2026"
-    ]
-  },
-  {
-    "id": "ind_top_citibank",
-    "company_name": "Citibank",
-    "title": "Tech Graduate Analyst",
+    "company_logo_url": null,
+    "title": "Software Engineering AMTS",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-16 LPA",
-    "apply_url": "https://jobs.citi.com/students",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488436329",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_hsbc",
-    "company_name": "HSBC",
+    "id": "live_9d8db37c41cf3176",
+    "company_name": "Microsoft",
+    "company_logo_url": null,
     "title": "Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.hsbc.com/careers/students-and-graduates",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488180184",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_barclays",
-    "company_name": "Barclays",
-    "title": "Tech Graduate",
+    "id": "live_ae7869cdc4d853df",
+    "company_name": "SAVA INFO SYSTEMS PVT LTD",
+    "company_logo_url": null,
+    "title": "JavaScript Developer (0-3 Years) | Full-Time, On-Site | New Ranip - Ahmedabad",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-15 LPA",
-    "apply_url": "https://search.jobs.barclays/early-careers",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Ahmedabad, Gujarat, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486213162",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_deutschebank",
-    "company_name": "Deutsche Bank",
-    "title": "Graduate SDE",
+    "id": "live_95a838403479e6f0",
+    "company_name": "SalesForce-ad",
+    "company_logo_url": null,
+    "title": "Software Engineering AMTS",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-16 LPA",
-    "apply_url": "https://careers.db.com/students-graduates/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488412991",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_standardchartered",
-    "company_name": "Standard Chartered",
-    "title": "Graduate Programme",
+    "id": "live_0c16f776affba524",
+    "company_name": "Secfix",
+    "company_logo_url": null,
+    "title": "Backend Engineer \u2013 GTM Engineering (Fresh grad, India)",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.sc.com/en/careers/early-careers/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488432838",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_ubs",
-    "company_name": "UBS",
-    "title": "Tech Graduate",
+    "id": "live_352377c35962429c",
+    "company_name": "Amazon",
+    "company_logo_url": null,
+    "title": "Software Development Engineer I",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-16 LPA",
-    "apply_url": "https://www.ubs.com/global/en/careers/students-graduates.html",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4480108672",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_nomura",
-    "company_name": "Nomura",
-    "title": "Global Tech Analyst",
+    "id": "live_3c337447ce120c99",
+    "company_name": "Arctic Wolf",
+    "company_logo_url": null,
+    "title": "Developer 1",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://www.nomura.com/careers/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486982158",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_fidelity",
-    "company_name": "Fidelity",
-    "title": "Graduate SDE",
+    "id": "live_00ac5be91e66f0d0",
+    "company_name": "Ares Management",
+    "company_logo_url": null,
+    "title": "Analyst, Full Stack Developer (Credit Technology)",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹10-14 LPA",
-    "apply_url": "https://jobs.fidelity.com/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Mumbai Metropolitan Region",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486239431",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_deshaw",
-    "company_name": "D.E. Shaw",
-    "title": "Systems Developer",
+    "id": "live_117c53259a08015c",
+    "company_name": "Google",
+    "company_logo_url": null,
+    "title": "Software Engineer, Payments",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹25-40 LPA",
-    "apply_url": "https://www.deshaw.com/careers",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487317365",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_towerresearch",
-    "company_name": "Tower Research",
-    "title": "Quant Developer",
+    "id": "live_933a0e2b54f1cafa",
+    "company_name": "Zebra Technologies",
+    "company_logo_url": null,
+    "title": "Software Engineer, Professional I",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹30-50 LPA",
-    "apply_url": "https://www.towerresearch.com/careers",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486231132",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_optiver",
-    "company_name": "Optiver",
-    "title": "Graduate SDE",
+    "id": "live_ba0bbb501125aa8f",
+    "company_name": "Zebra Technologies",
+    "company_logo_url": null,
+    "title": "Software Engineer, I",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹35-60 LPA",
-    "apply_url": "https://www.optiver.com/join-us/jobs/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Pune Division, Maharashtra, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485868307",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_citadelsecurities",
-    "company_name": "Citadel Securities",
-    "title": "Elite SDE / Systems",
+    "id": "live_03d06022c4e7e67c",
+    "company_name": "WonderBiz Technologies Pvt.",
+    "company_logo_url": null,
+    "title": "Software Developer-Freshers",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹40-70 LPA",
-    "apply_url": "https://www.citadelsecurities.com/careers/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Thane, Maharashtra, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485828053",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_wellsfargo",
-    "company_name": "Wells Fargo",
-    "title": "Tech Associate",
+    "id": "live_5fe9d05622bf0b9d",
+    "company_name": "Konrad",
+    "company_logo_url": null,
+    "title": "MERN developer",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-16 LPA",
-    "apply_url": "https://www.wellsfargojobs.com/en/early-careers/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Gurgaon, Haryana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485844459",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_americanexpress",
-    "company_name": "American Express",
-    "title": "Tech Campus Graduate",
+    "id": "live_4964a041b507545a",
+    "company_name": "AutoSec NextGen Systems",
+    "company_logo_url": null,
+    "title": "Hiring: Python Developer (Trainee / Junior Developer)",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://careers.americanexpress.com/students/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Madurai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486580289",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_visa",
-    "company_name": "Visa",
-    "title": "Graduate SDE",
+    "id": "live_9994a7730daeb1db",
+    "company_name": "emagine",
+    "company_logo_url": null,
+    "title": "React Developer",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹15-22 LPA",
-    "apply_url": "https://www.visa.co.in/careers/students.html",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486770595",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_mastercard",
-    "company_name": "Mastercard",
-    "title": "Associate SDE",
+    "id": "live_a6b06ba14d3343c0",
+    "company_name": "Capgemini",
+    "company_logo_url": null,
+    "title": "FBS Agile Dev Team Member I - Guidewire",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹12-18 LPA",
-    "apply_url": "https://careers.mastercard.com/us/en/students-graduates",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Pune Division, Maharashtra, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4475182803",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_capitalone",
-    "company_name": "Capital One",
-    "title": "SEP Program",
+    "id": "live_a3435542d8fddcf1",
+    "company_name": "Capgemini",
+    "company_logo_url": null,
+    "title": "FBS Agile Dev Team Member I - Guidewire",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹18-25 LPA",
-    "apply_url": "https://www.capitalonecareers.com/students",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4475180962",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_bajajfinserv",
-    "company_name": "Bajaj Finserv",
-    "title": "FinTech Backend",
+    "id": "live_acb942a05432bb7f",
+    "company_name": "Nationwide",
+    "company_logo_url": null,
+    "title": "Engineer, Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://www.bajajfinserv.in/careers",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486517579",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_hdfcbank",
-    "company_name": "HDFC Bank",
-    "title": "Digital Banking SDE",
+    "id": "live_c4ea258c92f69689",
+    "company_name": "Accenture in India",
+    "company_logo_url": null,
+    "title": "AI/ML Computational Science Associate",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹6-10 LPA",
-    "apply_url": "https://careers.hdfcbank.com/careers/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4466379738",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_top_icicibank",
-    "company_name": "ICICI Bank",
-    "title": "Tech Developer",
+    "id": "live_f96bfc45b89b5311",
+    "company_name": "TalentHop",
+    "company_logo_url": null,
+    "title": "Software Engineer, New Grad | Remote - Full-time",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹6-10 LPA",
-    "apply_url": "https://www.icicicareers.com/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "USA",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486217504",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_d5287529b5cfd4ed",
+    "company_name": "Mechelonic Welders Private LTD",
+    "company_logo_url": "https://media.glassdoor.com/sql/2389377/mechelonic-squarelogo-1583751164189.png",
+    "title": "Graduate Engineering Trainee- Bangalore with 2 years agreement",
+    "type": "JOB",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 400,000 - 4,500,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319154919",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_2a5a68623c818f36",
+    "company_name": "Mahindra Last Mile Mobility Limited",
+    "company_logo_url": "https://media.glassdoor.com/sql/38682/mahindra-squareLogo-1736336113491.png",
+    "title": "Graduate Apprentice Trainee",
+    "type": "JOB",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319044319",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_3570ed1aa7942521",
+    "company_name": "GE HEALTHCARE",
+    "company_logo_url": "https://media.glassdoor.com/sql/4112/ge-healthcare-squareLogo-1672756178493.png",
+    "title": "Graduate Engineer Trainee",
+    "type": "JOB",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 263,000 - 375,750",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319373057",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_530a5215d4cdd672",
+    "company_name": "Ingersoll Rand",
+    "company_logo_url": "https://media.glassdoor.com/sql/3248638/ingersoll-rand-squarelogo-1583094693738.png",
+    "title": "Graduate Engineer Trainee",
+    "type": "JOB",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 537,500 - 842,500",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319734465",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_4c7157a20db79383",
+    "company_name": "SS EDUTECH",
+    "company_logo_url": null,
+    "title": "GET (Graduate Engineer Trainee)",
+    "type": "JOB",
+    "location": "India",
+    "stipend_or_salary": "INR 200,000 - 400,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319968630",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_697a14536099530a",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee (GET)",
+    "type": "JOB",
+    "location": "Palladam, India",
+    "stipend_or_salary": "INR 23,000 - 23,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319161453",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_f5c0dd080449969c",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee (Production)",
+    "type": "JOB",
+    "location": "Palladam, India",
+    "stipend_or_salary": "INR 20,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319093611",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_eb4c214e5254734d",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "Chemical Engineer Trainee (GET)",
+    "type": "JOB",
+    "location": "Palladam, India",
+    "stipend_or_salary": "INR 23,000 - 23,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319158649",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_2d5f5476de2cc794",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "GET (Graduate Engineer Trainee) - Chemical/mechanical engineering",
+    "type": "JOB",
+    "location": "Palladam, India",
+    "stipend_or_salary": "INR 20,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319157944",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_b2ecc482a254d707",
+    "company_name": "Lucy Electric",
+    "company_logo_url": "https://media.glassdoor.com/sql/452304/lucy-group-squarelogo-1580451733666.png",
+    "title": "Graduate Engineer Trainee",
+    "type": "JOB",
+    "location": "H\u0101lol, India",
+    "stipend_or_salary": "INR 141,600 - 195,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317797758",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_a30b782a350add5f",
+    "company_name": "National Westminster Bank PLC",
+    "company_logo_url": "https://media.glassdoor.com/sql/10222/natwest-group-squareLogo-1697033291539.png",
+    "title": "AI ML Trainee | 6-Month Fixed-Term Contract | 2025/2026 Graduates",
+    "type": "JOB",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 802,250 - 1,040,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318108062",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_4bf890240a00d856",
+    "company_name": "Nordex SE",
+    "company_logo_url": "https://media.glassdoor.com/sql/15303/nordex-squarelogo-1599817724158.png",
+    "title": "Graduate Engineer Trainee - Process Engineering",
+    "type": "JOB",
+    "location": "Chennai, India",
+    "stipend_or_salary": "INR 513,000 - 1,000,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318863442",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
+    ]
+  },
+  {
+    "id": "live_f157725ab3f859d5",
+    "company_name": "John Crane",
+    "company_logo_url": "https://media.glassdoor.com/sql/38799/smiths-medical-asd-squarelogo-1435081412231.png",
+    "title": "Graduate Apprentice Trainee",
+    "type": "JOB",
+    "location": "Pune, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317815528",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_top_kotakmahindra",
-    "company_name": "Kotak Mahindra",
-    "title": "Digital SDE-1",
+    "id": "live_97acb84173f8f28a",
+    "company_name": "Audaxbridge Global Advisors LLP",
+    "company_logo_url": null,
+    "title": "Junior Mechanical & CAD Design Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹6-10 LPA",
-    "apply_url": "https://www.kotak.com/en/about-us/careers.html",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Delhi, India",
+    "stipend_or_salary": "INR 600,000 - 700,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317739119",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_top_societegenerale",
-    "company_name": "Societe Generale",
-    "title": "Associate SDE",
+    "id": "live_0c9f3e31da2f0e65",
+    "company_name": "IVlogix Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Mumbai / Hyderabad",
-    "stipend_or_salary": "₹8-12 LPA",
-    "apply_url": "https://careers.societegenerale.com/",
-    "source": "India Tech Portal (FinTech)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2025, 2026, 2027",
+    "location": "Pune, India",
+    "stipend_or_salary": "INR 240,000 - 260,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317559912",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "FinTech",
       "India",
-      "Fresher 2025/2026"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_it_tcstataconsultancyservices",
-    "company_name": "TCS (Tata Consultancy Services)",
-    "title": "TCS NQT — Ninja & Digital Software Engineer",
+    "id": "live_75512c960dfd87c9",
+    "company_name": "Xylem",
+    "company_logo_url": "https://media.glassdoor.com/sql/494852/xylem-squareLogo-1671173665419.png",
+    "title": "Mechancial Engineer_Graduate Engineering Trainee",
     "type": "JOB",
-    "location": "Pan-India (Bengaluru, Hyderabad, Pune, Chennai, Noida, Kolkata)",
-    "stipend_or_salary": "₹3.6–9.0 LPA",
-    "apply_url": "https://ibegin.tcs.com/iBegin/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, India",
+    "stipend_or_salary": "INR 353,924 - 990,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316964521",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "Java",
-      "Python",
-      "Aptitude",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_it_infosys",
-    "company_name": "Infosys",
-    "title": "Systems Engineer & Specialist Programmer (InfyTQ / Springboard)",
+    "id": "live_84cbb743015a1c47",
+    "company_name": "GE HEALTHCARE",
+    "company_logo_url": "https://media.glassdoor.com/sql/4112/ge-healthcare-squareLogo-1672756178493.png",
+    "title": "Trainee Engineer",
     "type": "JOB",
-    "location": "Bengaluru, Mysuru, Hyderabad, Pune, Chennai, Chandigarh",
-    "stipend_or_salary": "₹3.6–9.5 LPA",
-    "apply_url": "https://career.infosys.com/joblist",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 263,000 - 375,750",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316535329",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "DSA",
-      "Full Stack",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_it_wipro",
-    "company_name": "Wipro",
-    "title": "Project Engineer — Elite National Talent Hunt (NTH)",
+    "id": "live_9fbbc765680a2134",
+    "company_name": "VBB Infra Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "GET (Graduate Engineer Trainee) - Electrical Engineering",
     "type": "JOB",
-    "location": "Bengaluru, Hyderabad, Pune, Chennai, NCR, Kolkata",
-    "stipend_or_salary": "₹3.5–6.5 LPA",
-    "apply_url": "https://careers.wipro.com/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Raipur, India",
+    "stipend_or_salary": "INR 15,000 - 18,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317647756",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "Cloud",
-      "Java",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_it_accentureindia",
-    "company_name": "Accenture India",
-    "title": "Associate Software Engineer (ASE) & Advanced ASE",
+    "id": "live_3edb2e7b8221626d",
+    "company_name": "Sujan Industries",
+    "company_logo_url": "https://media.glassdoor.com/sql/4411051/sujan-industries-squarelogo-1627032461044.png",
+    "title": "GET (Graduate Engineer Trainee)",
     "type": "JOB",
-    "location": "Bengaluru, Hyderabad, Pune, Chennai, Mumbai, Gurgaon, Kolkata",
-    "stipend_or_salary": "₹4.5–6.5 LPA",
-    "apply_url": "https://indiacampus.accenture.com/myzone/accenture/1/jobs",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Hos\u016br, India",
+    "stipend_or_salary": "INR 15,000 - 20,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317469397",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "Associate Engineer",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_it_cognizant",
-    "company_name": "Cognizant",
-    "title": "GenC, GenC Elevate & GenC Next Programmer",
+    "id": "live_8b2dc302fdb93f9f",
+    "company_name": "RIVIKOK Consultancy",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee (GET) \u2013 Mechanical Engineering",
     "type": "JOB",
-    "location": "Chennai, Bengaluru, Hyderabad, Pune, Coimbatore, Kolkata",
-    "stipend_or_salary": "₹4.0–6.75 LPA",
-    "apply_url": "https://careers.cognizant.com/global/en/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "INR 15,000 - 18,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316620106",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "GenC Next",
-      "DSA",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_it_capgeminiindia",
-    "company_name": "Capgemini India",
-    "title": "Capgemini Exceller — Senior Analyst / Software Engineer",
+    "id": "live_ae78b2fbe6272887",
+    "company_name": "Ingersoll-Rand",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/76e15a2bdac7359779bbc6938ab55bee",
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Pune, Bengaluru, Mumbai, Hyderabad, Chennai, Noida",
-    "stipend_or_salary": "₹4.0–7.5 LPA",
-    "apply_url": "https://www.capgemini.com/in-en/careers/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.irco.com/job/Bangalore-Graduate-Engineer-Trainee-KA-560-029/1442232900/",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "Exceller",
-      "Software",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_hcltech",
-    "company_name": "HCLTech",
-    "title": "Graduate Engineer Trainee (GET) — Software & Cloud",
+    "id": "live_806d45d727e1b4d9",
+    "company_name": "Joshi Jampala Engineering Pvt. Ltd",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee - Sales & Marketing",
     "type": "JOB",
-    "location": "Noida, Bengaluru, Chennai, Hyderabad, Lucknow, Nagpur",
-    "stipend_or_salary": "₹3.6–6.0 LPA",
-    "apply_url": "https://www.hcltech.com/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "MH, India",
+    "stipend_or_salary": "INR 16,000 - 35,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=37a3ce360eb4bc96",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Cloud",
-      "Infrastructure",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_techmahindra",
-    "company_name": "Tech Mahindra",
-    "title": "Associate Software Engineer & SuperCoder Track",
+    "id": "live_8dc9acc300411628",
+    "company_name": "Joshi Jampala Engineering Pvt. Ltd",
+    "company_logo_url": null,
+    "title": "Design Engineer",
     "type": "JOB",
-    "location": "Pune, Hyderabad, Bengaluru, Chennai, Noida, Mumbai",
-    "stipend_or_salary": "₹3.5–5.5 LPA",
-    "apply_url": "https://careers.techmahindra.com/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "MH, India",
+    "stipend_or_salary": "INR 20,000 - 30,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=3d8b47bc37cddc7c",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Mass Recruiter",
-      "Telecom",
-      "Full Stack",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_ltimindtree",
-    "company_name": "LTIMindtree",
-    "title": "Ignite Graduate Engineer Trainee",
+    "id": "live_d25e5fbfb00d5c98",
+    "company_name": "GE HealthCare",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/0319a8fc3b79fe8ed6f689ff5f1478c1",
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Mumbai, Bengaluru, Pune, Chennai, Hyderabad",
-    "stipend_or_salary": "₹4.0–6.5 LPA",
-    "apply_url": "https://www.ltimindtree.com/careers/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.gehealthcare.com/global/en/job/GEVGHLGLOBALR4048826EXTERNALENGLOBAL/Graduate-Engineer-Trainee?utm_source=indeed&utm_medium=phenom-feeds",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Cloud",
-      "Full Stack",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_hexawaretechnologies",
-    "company_name": "Hexaware Technologies",
-    "title": "Premier Graduate Engineer Trainee (PGET)",
+    "id": "live_7e37cdefa5b40cfc",
+    "company_name": "Nordex Group",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/27a6cc7fe38be4d8896e8756bc9b91c9",
+    "title": "Graduate Engineer Trainee - Process Engineering",
     "type": "JOB",
-    "location": "Chennai, Mumbai, Pune, Bengaluru, Noida",
-    "stipend_or_salary": "₹4.0–6.0 LPA",
-    "apply_url": "https://hexaware.com/careers/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://jobs.nordex-online.com/job/Chennai-Graduate-Engineer-Trainee-Process-Engineering-TN-601103/1454977633/",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Automation",
-      "Cloud",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_persistentsystems",
-    "company_name": "Persistent Systems",
-    "title": "Software Engineer Trainee",
+    "id": "live_daba8a2c5e3c0d4c",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "GET (Graduate Engineer Trainee) - Chemical/mechanical engineering",
     "type": "JOB",
-    "location": "Pune, Bengaluru, Hyderabad, Goa, Nagpur",
-    "stipend_or_salary": "₹4.5–7.0 LPA",
-    "apply_url": "https://www.persistent.com/careers/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 20,000 - 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=c22249f3085eebaa",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "IT Services",
-      "Product Engineering",
-      "Java",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_zohocorporation",
-    "company_name": "Zoho Corporation",
-    "title": "Software Developer (No College/Marks Cutoff)",
+    "id": "live_7c524e52c388d50e",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee (Production)",
     "type": "JOB",
-    "location": "Chennai, Tenkasi, Salem, Coimbatore, Tirunelveli",
-    "stipend_or_salary": "₹7.0–12.0 LPA",
-    "apply_url": "https://careers.zohocorp.com/jobs/careers",
-    "source": "Indian Tech Product Giant",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2024, 2025, 2026",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 20,000 - 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=746935c3af53d032",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Product",
-      "SaaS",
-      "Problem Solving",
-      "C/C++",
-      "Java",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_thoughtworksindia",
-    "company_name": "Thoughtworks India",
-    "title": "Graduate Software Developer (Grad Tech Program)",
+    "id": "live_acf85116c7eb4443",
+    "company_name": "Mahindra & Mahindra Ltd",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/48f98a7ba93496c883f61ef2c0044742",
+    "title": "Graduate Apprentice Trainee",
     "type": "JOB",
-    "location": "Bengaluru, Hyderabad, Pune, Chennai, Gurgaon, Coimbatore",
-    "stipend_or_salary": "₹8.5–11.0 LPA",
-    "apply_url": "https://www.thoughtworks.com/careers/jobs",
-    "source": "Premium Tech Consultancy",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://jobs.mahindracareers.com/job/Bangalore-Graduate-Apprentice-Trainee-BLR/1448420900/",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Agile",
-      "TDD",
-      "Full Stack",
-      "Clean Code",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_it_epamsystemsindia",
-    "company_name": "EPAM Systems India",
-    "title": "Junior Software Engineer (EPAM UpSkill / Freshers)",
+    "id": "live_2637f557b5de5730",
+    "company_name": "Mechelonic Welders Pvt Ltd",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/4990cde7dbf1d858a40f64c3bebd0a05",
+    "title": "Graduate Engineering Trainee- Bangalore with 2 years agreement",
     "type": "JOB",
-    "location": "Hyderabad, Bengaluru, Pune, Gurugram, Chennai",
-    "stipend_or_salary": "₹6.0–8.0 LPA",
-    "apply_url": "https://www.epam.com/careers",
-    "source": "Digital Product Engineering",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "INR 400,000 - 4,500,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=b659343260ac0a86",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Java",
-      "JavaScript",
-      "Cloud",
-      "Product Engineering",
-      "India"
+      "India",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_ibmindia",
-    "company_name": "IBM India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_93e853e8186b2067",
+    "company_name": "Lucy Electric",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/dfc2528013178799fe9026c600accc41",
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.ibm.com/in-en/careers/search?field_keyword_18[0]=Entry%20Level&field_keyword_18[1]=Internship&field_keyword_05[0]=India&sort=dcdate_desc",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "GJ, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.lucygroup.com/en/job/26194",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_stripeindia",
-    "company_name": "Stripe India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_9fc68d2ac1225059",
+    "company_name": "IVLogix Pvt Ltd",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://stripe.com/in/jobs",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "MH, India",
+    "stipend_or_salary": "INR 240,000 - 260,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=7823c5c2e1c2f868",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_globallogic",
-    "company_name": "GlobalLogic",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b7a887d96b1c0286",
+    "company_name": "NatWest Group",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/f2407e68ab1b6fa5bae5fd5074cf5d57",
+    "title": "AI ML Trainee | 6-Month Fixed-Term Contract | 2025/2026 Graduates",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.globallogic.com/career-search-page/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://jobs.natwestgroup.com/jobs/18441066-ai-ml-trainee-6-month-fixed-term-contract-2025-slash-2026-graduates",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_johnsoncontrols",
-    "company_name": "Johnson Controls",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_14a016ab0a75f5c6",
+    "company_name": "VBB INFRA PVT. LTD.",
+    "company_logo_url": null,
+    "title": "GET (Graduate Engineer Trainee) - Electrical Engineering",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.johnsoncontrols.com/job-search",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "CT, India",
+    "stipend_or_salary": "INR 15,000 - 18,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=8892bdea1e18819f",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_zoho",
-    "company_name": "Zoho",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_0948a8f0de819dd1",
+    "company_name": "Indovance",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/53cac96f18402b3e33635f276b832abb",
+    "title": "Trainee Design Engineer - Civil Land Survey",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.zohocorp.com/jobs/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "UP, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://indovance.zohorecruit.com/recruit/PortalDetail.na?iframe=true&digest=U1ZDkKww6bmqP0VtD96HsXGAUnkE7bVo.a85bxdBEmQ-&jobid=490406000046819073&widgetid=490406000000072311&embedsource=CareerSite",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_nikeindia",
-    "company_name": "Nike India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_f8037fc33ffa0e8b",
+    "company_name": "Sujan Industries",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/bfa3ae522d30ecc12769ef0a905b19df",
+    "title": "GET (Graduate Engineer Trainee)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.nike.com/jobs?location_name=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 15,000 - 20,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=af0bc8cb8303d517",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_bpindia",
-    "company_name": "BP India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_eddde51e01b92480",
+    "company_name": "Xylem",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/9d1025d8b32f66bd3f86b6052b295444",
+    "title": "Mechancial Engineer_Graduate Engineering Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.bp.com/listing?production_bp_jobs%5BrefinementList%5D%5Blocation_list%5D%5B0%5D=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://xylem.wd5.myworkdayjobs.com/en-US/xylem-careers/job/Chennai-10th-Floor/Mechancial-Engineer-Graduate-Engineering-Trainee_R51256-1",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_questglobal",
-    "company_name": "Quest Global",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_24793acfc5d17c39",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee (GET)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.quest-global.com/global/en/search-results",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 23,000 - 23,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=08202d81cf7794fc",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_tcs",
-    "company_name": "TCS",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_2a5de92d16652f32",
+    "company_name": "GE HealthCare",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/0319a8fc3b79fe8ed6f689ff5f1478c1",
+    "title": "Trainee Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://ibegin.tcs.com/iBegin/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.gehealthcare.com/global/en/job/GEVGHLGLOBALR4048609EXTERNALENGLOBAL/Trainee-Engineer?utm_source=indeed&utm_medium=phenom-feeds",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_infosys",
-    "company_name": "Infosys",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_8d04380591ae7375",
+    "company_name": "RIVIKOK Consultancy",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee (GET) \u2013 Mechanical Engineering",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://career.infosys.com/joblist",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 15,000 - 18,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=c6b2688220adfcb4",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_wipro",
-    "company_name": "Wipro",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_dedb44ee063a2f59",
+    "company_name": "Stalwarts Servicios",
+    "company_logo_url": null,
+    "title": "Chemical Engineer Trainee (GET)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.wipro.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 23,000 - 23,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=f6e1605911fffe9d",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_hcltech",
-    "company_name": "HCLTech",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_dcbdb9735c867b80",
+    "company_name": "Nordex Group",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee - Process Engineering",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.hcltech.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488100758",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_techmahindra",
-    "company_name": "Tech Mahindra",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_4f95cb60f212e28d",
+    "company_name": "Vertiv",
+    "company_logo_url": null,
+    "title": "Diploma Engineer Trainee - Electrical (2026 passout)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.techmahindra.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4471627041",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_ltimindtree",
-    "company_name": "LTIMindtree",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_359bedd1f858b83a",
+    "company_name": "CERATIZIT INDIA",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee - Design",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.ltimindtree.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486968093",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_mphasis",
-    "company_name": "Mphasis",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_d4c6169c85a2b2a5",
+    "company_name": "Vertiv",
+    "company_logo_url": null,
+    "title": "Diploma Engineer Trainee - (2026 passout)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.mphasis.com/home/careers.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4471678748",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_hexaware",
-    "company_name": "Hexaware",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_43633f65657b2774",
+    "company_name": "GE HealthCare",
+    "company_logo_url": null,
+    "title": "Information Technology Development Program",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://hexaware.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488176604",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_persistentsystems",
-    "company_name": "Persistent Systems",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_07830cb1068b975e",
+    "company_name": "CERATIZIT INDIA",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee- Design",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.persistent.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486967159",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_coforge",
-    "company_name": "Coforge",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e64c3b635d2c3537",
+    "company_name": "GE HealthCare",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.coforge.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488172765",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_kpittechnologies",
-    "company_name": "KPIT Technologies",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a7d0066a34226e5e",
+    "company_name": "Deutsche Bahn",
+    "company_logo_url": null,
+    "title": "Graduate Engineer - Telecom - Design Center India (f/m/d)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.kpit.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4462750323",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_zensartechnologies",
-    "company_name": "Zensar Technologies",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_01d6bc2f1015ce1a",
+    "company_name": "Forbes Marshall",
+    "company_logo_url": null,
+    "title": "Graduate Trainee Engineer (GTE) \u2013 Control Valve",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.zensar.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Pune District, Maharashtra, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485591593",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_cyient",
-    "company_name": "Cyient",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b2bb277d184e76da",
+    "company_name": "Lucy Group Ltd",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.cyient.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Halol, Gujarat, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485804608",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_birlasoft",
-    "company_name": "Birlasoft",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e1199029b563d505",
+    "company_name": "Welspun World",
+    "company_logo_url": null,
+    "title": "SBAPL_GET",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.birlasoft.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Kalol, Gujarat, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486594849",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_mastechdigital",
-    "company_name": "Mastech Digital",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_c59ae609e00467e3",
+    "company_name": "Ingersoll Rand",
+    "company_logo_url": null,
+    "title": "Graduate Engineer Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.mastechdigital.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Greater Kolkata Area",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4479554240",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_sonatasoftware",
-    "company_name": "Sonata Software",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_2e5b239417b6d1fb",
+    "company_name": "Trelleborg Sealing Solutions",
+    "company_logo_url": null,
+    "title": "Trainee Design Engineer, Ahmedabad GUJ",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.sonata-software.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Greater Ahmedabad Area",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4448986591",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_sasken",
-    "company_name": "Sasken",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b91e8c9d65199dba",
+    "company_name": "Rockwell Automation",
+    "company_logo_url": null,
+    "title": "Leadership Development Program - Integrated Supply Chain",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.sasken.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4479811412",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_firstsource",
-    "company_name": "Firstsource",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_69475680bc74d185",
+    "company_name": "Xylem",
+    "company_logo_url": null,
+    "title": "Mechancial Engineer_Graduate Engineering Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.firstsource.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Greater Chennai Area",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487273186",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_cognizant",
-    "company_name": "Cognizant",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_1d1b67db41c2e230",
+    "company_name": "Infineon Technologies",
+    "company_logo_url": null,
+    "title": "Young Graduate Trainee",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.cognizant.com/global/en",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru East, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4479032702",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_accentureindia",
-    "company_name": "Accenture India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_71ef7102f7a6c355",
+    "company_name": "IES Ltd.",
+    "company_logo_url": null,
+    "title": "Building Performance Graduate TBH66",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.accenture.com/in-en/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Pune Division, Maharashtra, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485079257",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_thoughtworks",
-    "company_name": "ThoughtWorks",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_645fe90afcf14f6f",
+    "company_name": "Infineon Technologies",
+    "company_logo_url": null,
+    "title": "Trainee Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.thoughtworks.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487241932",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_epamsystems",
-    "company_name": "EPAM Systems",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_877b4099b1e79467",
+    "company_name": "Cushman & Wakefield",
+    "company_logo_url": null,
+    "title": "EIC Apprentice - Project Development Services, Gurgaon",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.epam.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Gurgaon, Haryana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4479004251",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_nagarro",
-    "company_name": "Nagarro",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e466059935c58af7",
+    "company_name": "Submer",
+    "company_logo_url": null,
+    "title": "Junior Electrical Engineer ( Data Centre)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.nagarro.com/en/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Greater Kolkata Area",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4452607932",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_a6a0bd49fc8ff984",
+    "company_name": "MediNex Workforce",
+    "company_logo_url": null,
+    "title": "FULL STACK DEVELOPER INTERN (REACT, NODE.JS, MONGODB)",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487606004",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_ed62156c6948d929",
+    "company_name": "Vortenza Systems",
+    "company_logo_url": null,
+    "title": "FULLSTACK WEB DEVELOPMENT INTERN",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487395448",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_3a993056dc339b9c",
+    "company_name": "Jobs4PanIndia",
+    "company_logo_url": null,
+    "title": "Back End Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487396733",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_081fbd959e21e5ad",
+    "company_name": "ThinkNovaa",
+    "company_logo_url": null,
+    "title": "Full Stack Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487393201",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_c41d7e4acdd893b6",
+    "company_name": "Ideactra",
+    "company_logo_url": null,
+    "title": "Java Software Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487383965",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_8c06931f8d40bb37",
+    "company_name": "Zenithbyte",
+    "company_logo_url": null,
+    "title": "PYTHON DEVELOPMENT INTERN",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488499596",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_da8e9ec8d0c99985",
+    "company_name": "Dexter's Tech",
+    "company_logo_url": null,
+    "title": "FULLSTACK WEB DEVELOPMENT INTERN",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488703168",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_ff41a71972299d00",
+    "company_name": "ThinkNovaa",
+    "company_logo_url": null,
+    "title": "Backend Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487374913",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_3645e02ff4911fb2",
+    "company_name": "Dexterz Technology",
+    "company_logo_url": null,
+    "title": "Full Stack Web Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487387918",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_08d44f9ffdc586d8",
+    "company_name": "WebBoost Solutions by UM",
+    "company_logo_url": null,
+    "title": "MERN STACK DEVELOPMENT INTERN",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488498510",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_0467a2430352061f",
+    "company_name": "Devryxa",
+    "company_logo_url": null,
+    "title": "FULLSTACK WEB DEVELOPMENT INTERN",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487397269",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Internship",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_nisum",
-    "company_name": "Nisum",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b731891556e757e6",
+    "company_name": "Dexterz Technology",
+    "company_logo_url": null,
+    "title": "Full Stack Web Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.nisum.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487381560",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_tataelxsi",
-    "company_name": "Tata Elxsi",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_6c089093e9ed8e15",
+    "company_name": "Zetheta Algorithms Private Limited",
+    "company_logo_url": null,
+    "title": "Full Stack Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.tataelxsi.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486973084",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Fresher 2024/2025",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_7461f270f6bdd261",
+    "company_name": "Skillzen Loop",
+    "company_logo_url": null,
+    "title": "Software Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485844485",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_2c679a8832f4d725",
+    "company_name": "ZeroForg",
+    "company_logo_url": null,
+    "title": "Backend intern",
+    "type": "INTERNSHIP",
+    "location": "Delhi, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486574678",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_9bb3004db9e502a8",
+    "company_name": "Kodo",
+    "company_logo_url": null,
+    "title": "Backend Intern",
+    "type": "INTERNSHIP",
+    "location": "Mumbai Metropolitan Region",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486756301",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_bf2d00957e790ad1",
+    "company_name": "Skillzen Loop",
+    "company_logo_url": null,
+    "title": "Java Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4485846437",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_187f203da2981918",
+    "company_name": "SOLO Network",
+    "company_logo_url": null,
+    "title": "Backend Developer Intern",
+    "type": "INTERNSHIP",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486988780",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_5828d63f538506c1",
+    "company_name": "Honeywell Aerospace",
+    "company_logo_url": null,
+    "title": "Intern Bachelors Software Eng",
+    "type": "INTERNSHIP",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487595422",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
+    "tags": [
+      "India",
+      "Internship",
+      "Linkedin"
+    ]
+  },
+  {
+    "id": "live_ec2469a26f5bc38a",
+    "company_name": "Honeywell Aerospace",
+    "company_logo_url": null,
+    "title": "Intern Bachelors Software Eng",
+    "type": "INTERNSHIP",
+    "location": "Madurai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487240416",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Internship",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_3iinfotech",
-    "company_name": "3i Infotech",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_6f436f114ef2c515",
+    "company_name": "Clinisys",
+    "company_logo_url": "https://media.glassdoor.com/sql/766937/clinisys-squareLogo-1711547978821.png",
+    "title": "Associate Support Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.3i-infotech.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Calcutta, India",
+    "stipend_or_salary": "INR 717,500 - 900,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319048904",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_mphasisfreshers",
-    "company_name": "Mphasis Freshers",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e89633123b41ad5e",
+    "company_name": "Zelis",
+    "company_logo_url": "https://media.glassdoor.com/sql/1342526/zelis-squareLogo-1633107790335.png",
+    "title": "Endpoint Management Specialist",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.mphasis.com/home/careers/freshers.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318404426",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_amazonindia",
-    "company_name": "Amazon India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_f0c3b79ca2337497",
+    "company_name": "TriNet",
+    "company_logo_url": "https://media.glassdoor.com/sql/5494/trinet-squareLogo-1680727779642.png",
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.amazon.jobs/en/locations/india",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Hyder\u0101b\u0101d, India",
+    "stipend_or_salary": "INR 660,000 - 845,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317976425",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_microsoftindia",
-    "company_name": "Microsoft India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a29e5140acd0e6b8",
+    "company_name": "BetterWorks",
+    "company_logo_url": "https://media.glassdoor.com/sql/948469/betterworks-squareLogo-1651096573256.png",
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.microsoft.com/v2/global/en/locations/india.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 200,000 - 800,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318418782",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_meta",
-    "company_name": "Meta",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_95787ea79c81e1fa",
+    "company_name": "Infor",
+    "company_logo_url": "https://media.glassdoor.com/sql/15375/infor-squareLogo-1637686006774.png",
+    "title": "Software Engineer, Associate",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.metacareers.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Hyder\u0101b\u0101d, India",
+    "stipend_or_salary": "INR 600,000 - 787,500",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318004599",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_apple",
-    "company_name": "Apple",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_1c1e56ba0b0b476c",
+    "company_name": "World Bank Group",
+    "company_logo_url": "https://media.glassdoor.com/sql/41195/the-world-bank-squarelogo-1592317516050.png",
+    "title": "E T Consultant (Associate Software Engineer)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.apple.com/en-us/search?location=india-IND",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, India",
+    "stipend_or_salary": "INR 600,000 - 960,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318339236",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_sapindia",
-    "company_name": "SAP India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_bb0ae559c12e1674",
+    "company_name": "London Stock Exchange Group",
+    "company_logo_url": "https://media.glassdoor.com/sql/11860/lseg-london-stock-exchange-group-squareLogo-1788432324220.png",
+    "title": "Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.sap.com/search/?q=&locationsearch=india",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 500,000 - 1,000,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318017366",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_oracleindia",
-    "company_name": "Oracle India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_805c7255cdcf92cc",
+    "company_name": "Conduent Business Services India LLP",
+    "company_logo_url": "https://media.glassdoor.com/sql/1492856/conduent-squarelogo-1565121692893.png",
+    "title": "IT Testing Engineer I",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.oracle.com/jobs/#en/sites/jobsearch/jobs?location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Andhra Pradesh, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318507737",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_salesforceindia",
-    "company_name": "Salesforce India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_7b1675b55a31f2ae",
+    "company_name": "EPAM Systems, Inc.",
+    "company_logo_url": "https://media.glassdoor.com/sql/15544/epam-systems-squareLogo-1706902742511.png",
+    "title": "Software Engineer in Testing - Guidewire",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site?locationCountry=in",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, India",
+    "stipend_or_salary": "INR 330,000 - 945,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317847747",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_adobeindia",
-    "company_name": "Adobe India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e1cb9342b2e3d26c",
+    "company_name": "Riskonnect Inc",
+    "company_logo_url": "https://media.glassdoor.com/sql/717528/riskonnect-squarelogo-1570125584816.png",
+    "title": "Associate System Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.adobe.com/us/en/search-results?qcountry=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 600,000 - 900,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318241167",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_ciscoindia",
-    "company_name": "Cisco India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_88072ab728751063",
+    "company_name": "Conduent Business Services India LLP",
+    "company_logo_url": "https://media.glassdoor.com/sql/1492856/conduent-squarelogo-1565121692893.png",
+    "title": "IT Testing Engineer II",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.cisco.com/jobs/SearchJobs/india",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Andhra Pradesh, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318507733",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_intelindia",
-    "company_name": "Intel India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_63e4b52266e20437",
+    "company_name": "Riskonnect Inc.",
+    "company_logo_url": "https://media.glassdoor.com/sql/717528/riskonnect-squarelogo-1570125584816.png",
+    "title": "Associate System Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.intel.com/en/search#q=&t=Jobs&ac=30543",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 600,000 - 900,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318024452",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_qualcommindia",
-    "company_name": "Qualcomm India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b0695e2f7eaffeb3",
+    "company_name": "The Cigna Group",
+    "company_logo_url": "https://media.glassdoor.com/sql/119/the-cigna-group-squareLogo-1709234457787.png",
+    "title": "Automation Engineer Associate Analyst - Cigna Healthcare",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.qualcomm.com/careers/search?location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Delhi, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317879927",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_texasinstrumentsindia",
-    "company_name": "Texas Instruments India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_f74f937035758bba",
+    "company_name": "BlackRock Investments",
+    "company_logo_url": "https://media.glassdoor.com/sql/9331/blackrock-squarelogo-1548775106070.png",
+    "title": "Data Engineer, Aladdin Data, Associate",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.ti.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Mumbai, India",
+    "stipend_or_salary": "INR 850,000 - 1,000,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010318031907",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_samsungrdindia",
-    "company_name": "Samsung R&D India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_27eec4ba4a15fc5c",
+    "company_name": "Capgemini",
+    "company_logo_url": "https://media.glassdoor.com/sql/3803/capgemini-squareLogo-1761658128846.png",
+    "title": "Associate Software Engineer",
     "type": "JOB",
     "location": "Noida, India",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.samsungcareers.com/global/ind/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "stipend_or_salary": "INR 400,000 - 612,500",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316517640",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_paypalindia",
-    "company_name": "PayPal India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_9762469ac9209509",
+    "company_name": "Nice",
+    "company_logo_url": "https://media.glassdoor.com/sql/5674/nice-squareLogo-1748943796500.png",
+    "title": "Associate Technical Support Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.pypl.com/jobs/search?location_code=IND",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Pune, India",
+    "stipend_or_salary": "INR 500,000 - 700,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316474454",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_mastercardindia",
-    "company_name": "Mastercard India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b4c549cbd66b781b",
+    "company_name": "IQVIA",
+    "company_logo_url": "https://media.glassdoor.com/sql/8347/iqvia-squareLogo-1631146794136.png",
+    "title": "Software Engineer - Node",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.mastercard.com/us/en/search-results?qcountry=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 600,000 - 956,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316647485",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_visaindia",
-    "company_name": "Visa India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a627a4d719d14747",
+    "company_name": "Amazon.com",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/3e9d43f5c277de169808abdcaf49ba2c",
+    "title": "Software Development Engineer III, Associate Experience, Amazon Customer Service",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://corporate.visa.com/en/jobs/search.html?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TS, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.amazon.jobs/jobs/10580411/software-development-engineer-iii-associate-experience-amazon-customer-service?cmpid=DA_INAD200785B",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_goldmansachsindia",
-    "company_name": "Goldman Sachs India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_f24662bf5af33478",
+    "company_name": "Amazon.com",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/3e9d43f5c277de169808abdcaf49ba2c",
+    "title": "Software Development Engineer, DSP Tech",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://higher.gs.com/roles?country=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TS, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.amazon.jobs/jobs/10597850/software-development-engineer-dsp-tech?cmpid=DA_INAD200785B",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_jpmorganindia",
-    "company_name": "JPMorgan India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_62edfcbc2e5039e5",
+    "company_name": "Full Creative",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/2b6b5308cb24c6de1c48b8897c103b94",
+    "title": "Client Services - Walk-in- Bangalore",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/jobs?keyword=&lastSelectedFacet=LOCATIONS&selectedLocationsFacet=300000000272214",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://fullcreative.recruitee.com/o/client-services-walk-in-bangalore-3?source=Indeed",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_morganstanleyindia",
-    "company_name": "Morgan Stanley India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e66258df9cdcea66",
+    "company_name": "Infor",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/ffa469a8e594a73e1ae8f47b9190e33f",
+    "title": "Software Engineer, Associate",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.morganstanley.com/people-opportunities/students-graduates/programs/technology",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TS, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.infor.com/postings/51c57cdc-ea25-4ed4-a9aa-20a24e911770?utm_medium=job_board&utm_source=indeed",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_deutschebankindia",
-    "company_name": "Deutsche Bank India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_0dc97e10ecd26073",
+    "company_name": "betterworks",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/3451367227a237b42127fadc048f12fa",
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.db.com/india/en/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://app.trinethire.com/companies/294644-betterworks-systems-inc/jobs/126239-associate-software-engineer",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_barclaysindia",
-    "company_name": "Barclays India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_c224835578d76d0f",
+    "company_name": "TriNet",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/a5d7a1d078ebcf5e2197f32c1c56ebb5",
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Chennai, India",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://search.jobs.barclays/search-results?qcountry=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TS, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://jobs.trinet.com/careers/job/44997978?utm_source=indeed&domain=trinet.com",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_hsbcindia",
-    "company_name": "HSBC India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_f1caec926c623cb3",
+    "company_name": "World Bank Group",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/15904acf80cb296da69093f8945e7e58",
+    "title": "E T Consultant (Associate Software Engineer)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.hsbc.com/careers/jobs-and-internships/search-and-apply?jobsCountries=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://worldbankgroup.csod.com/ux/ats/careersite/1/home/requisition/39234?c=worldbankgroup",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_citiindia",
-    "company_name": "Citi India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a8fbcfef7d344e83",
+    "company_name": "Charles Schwab",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/6dd9a4298e3ef6e3fde293a9e36ce752",
+    "title": "Associate - Software Development & Engineering- .NET",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.citi.com/search-jobs/India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TS, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.schwabjobs.com/job/hyderabad/associate-software-development-and-engineering-net/33995/102897490000",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_wellsfargoindia",
-    "company_name": "Wells Fargo India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_5a5c5342461928c5",
+    "company_name": "Zelis Healthcare",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/50cf9439cc2a9fd19381875b56d679bc",
+    "title": "Endpoint Management Specialist",
     "type": "JOB",
-    "location": "Chennai, India",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.wellsfargojobs.com/en/jobs/search/?q=&country=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TS, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.zelis.com/us/en/job/JR111948",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_bnymellonindia",
-    "company_name": "BNY Mellon India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_fc1083b3ef68726b",
+    "company_name": "Conduent",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/1a421bf7af338112118a601c50cf239f",
+    "title": "App Dev & Support Engineer I",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://bnymellon.eightfold.ai/careers?location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://click.appcast.io/t/Jgf1jr_DRn9p-h_TmJGV2ujaCpAHZTEKIpGUBCq9kN8=",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_blackrockindia",
-    "company_name": "BlackRock India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a8e4a93d057bf85d",
+    "company_name": "Capgemini",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/8df3e7301fa4f88e3d67e927be1689b2",
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.blackrock.com/jobs/search?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "UP, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.capgemini.com/jobs/574786-en_GB_SAPBTP/",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_fidelityindia",
-    "company_name": "Fidelity India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_9309f796d91a4a84",
+    "company_name": "Persistent Systems",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/2c0b523fb0ae6f66f0f011fba4994cb5",
+    "title": "AI/ML Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.fidelity.com/search-jobs/India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "MH, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.persistent.com/jobview/programmer-dev-india-pune-202609301819593",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_eyindia",
-    "company_name": "EY India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e32e186a59603cc6",
+    "company_name": "IQVIA",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/03e043400efdf1e7d2f66b4d0a67997e",
+    "title": "Software Engineer - Node",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.ey.com/en_in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://tnl2.jometer.com/v2/job?jx=5v7ym4a005fbec83f277007b08ff5a01cfbe0C4AJUBIAAABQ&jz=561wkaf86d3c0236d707d33a92602bea9c692C4AMABTEAAAQAAAAABSA&source=APPLICANT_SOURCE-3-2017",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_deloitteindia",
-    "company_name": "Deloitte India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_6bc4390fc8e85a10",
+    "company_name": "Photon",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/4aa6cf8582dae94e91d8bf97770bbf32",
+    "title": "Performance Testing - Jmeter - CHN",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://apply.deloitte.com/careers/SearchJobs/?885=%5B302173%5D&885_format=523&listFilterMode=1",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "AP, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://fa-ertb-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_2/requisitions/preview/27438",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_kpmgindia",
-    "company_name": "KPMG India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_287b5e8e7651e1ce",
+    "company_name": "NiCE",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/63670479b0386b9f54e57baa4222f352",
+    "title": "Associate Technical Support Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.kpmg.com/india/en",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "MH, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://boards.eu.greenhouse.io/nice/jobs/5013067101?gh_jid=5013067101",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_pwcindia",
-    "company_name": "PwC India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_ea551888ef0a9c79",
+    "company_name": "Surepass Technologies",
+    "company_logo_url": null,
+    "title": "Associate Frontend Engineer (React / Next.js)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.pwc.in/careers.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Delhi, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488180203",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_mckinseyindia",
-    "company_name": "McKinsey India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_39ddf35bf563357f",
+    "company_name": "Honeywell Technologies",
+    "company_logo_url": null,
+    "title": "Software Engr I",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.mckinsey.com/careers/search-jobs#/?country=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488110077",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_bcgindia",
-    "company_name": "BCG India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_7afbb0bf8f25d95d",
+    "company_name": "Amazon",
+    "company_logo_url": null,
+    "title": "Software Development Engineer -I, IESP Merchant Tech",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.bcg.com/locations/asia-pacific/india",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4462000599",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_uber",
-    "company_name": "Uber",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_414c4700ec78394e",
+    "company_name": "Goldman Sachs",
+    "company_logo_url": null,
+    "title": "The Core Engineering - KYC Model Eng - Associate - Bengaluru",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.uber.com/us/en/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486571752",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_linkedin",
-    "company_name": "LinkedIn",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_98a5a8b41573efa3",
+    "company_name": "TriNet",
+    "company_logo_url": null,
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.linkedin.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487759177",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_bookingcom",
-    "company_name": "Booking.com",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_2e426c3723d2948a",
+    "company_name": "Cargill",
+    "company_logo_url": null,
+    "title": "Associate Developer, Process Automation",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.booking.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4477029067",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_expedia",
-    "company_name": "Expedia",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_7c29bab597347ad7",
+    "company_name": "Qualcomm",
+    "company_logo_url": null,
+    "title": "Associate Engineer - RF SW",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://lifeatexpedia.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Greater Hyderabad Area",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486759864",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_workdayindia",
-    "company_name": "Workday India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_82f99cbbf6f49fdc",
+    "company_name": "Bain & Company",
+    "company_logo_url": null,
+    "title": "Associate- Back end Engineer(PEG)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://workday.wd5.myworkdayjobs.com/Workday/jobs?q=india",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Gurugram, Haryana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4467173734",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_servicenow",
-    "company_name": "ServiceNow",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_36d27f4fb74e6c65",
+    "company_name": "Park Place Technologies",
+    "company_logo_url": null,
+    "title": "Associate Software Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.servicenow.com/careers/jobs?location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4479110158",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_vmwareindia",
-    "company_name": "VMware India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_9ec54124cadc20d7",
+    "company_name": "Goldman Sachs",
+    "company_logo_url": null,
+    "title": "GBM - Public Dept-Bengaluru-Associate-Software Engineering",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.vmware.com/main/jobs?stretchUnit=MILES&stretch=10&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486376455",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_redhat",
-    "company_name": "Red Hat",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_cfcfd62a57399188",
+    "company_name": "NCR Voyix",
+    "company_logo_url": null,
+    "title": "Software Engineer - .NET Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.redhat.com/en/jobs/search?location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487271097",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_nutanixindia",
-    "company_name": "Nutanix India",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_357f63185983374e",
+    "company_name": "Wonder Worth Solutions",
+    "company_logo_url": null,
+    "title": "L1 \u2013 Junior Software Developer ( THE BUILDER )",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.jobvite.com/nutanix/search?q=&l=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Vellore, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487276562",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_zscaler",
-    "company_name": "Zscaler",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b95a04724b1845f3",
+    "company_name": "Mohawk Valley Community College",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/c31c7b3679cf4165ab02ecd98b75f7e2",
+    "title": "Software/Platform Engineer - Grant-Funded (PT)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.zscaler.com/careers/open-positions?location=india",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Utica, NY, USA",
+    "stipend_or_salary": "USD 75 - 75",
+    "apply_url": "https://mvcc.csod.com/ux/ats/careersite/1/home/requisition/1873?c=mvcc",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_paloaltonetworksindia",
-    "company_name": "Palo Alto Networks India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.paloaltonetworks.com/jobs/search?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_junipernetworksindia",
-    "company_name": "Juniper Networks India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.juniper.net/jobs/search?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_netappindia",
-    "company_name": "NetApp India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.netapp.com/jobs/search?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_micronindia",
-    "company_name": "Micron India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://micron.eightfold.ai/careers?location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_appliedmaterialsindia",
-    "company_name": "Applied Materials India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.appliedmaterials.com/careers/search?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_siemensindia",
-    "company_name": "Siemens India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.siemens.com/careers?query=&filters%5BcountryCode%5D%5B%5D=IN",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_boschindia",
-    "company_name": "Bosch India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.bosch-career.in/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_abbindia",
-    "company_name": "ABB India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.abb/global/en/india-jobs",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_schlumbergerslb",
-    "company_name": "Schlumberger / SLB",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.slb.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_geindia",
-    "company_name": "GE India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.gecareers.com/global/en/search-results?qcountry=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_emersonindia",
-    "company_name": "Emerson India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://hczw.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/jobs?keyword=&lastSelectedFacet=LOCATION_COUNTRY&selectedLocationCountryFacet=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_amadeusindia",
-    "company_name": "Amadeus India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.amadeus.com/en/search#q=&t=Jobs&ac=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_teradataindia",
-    "company_name": "Teradata India",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.teradata.com/jobs/search?q=&location=India",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_splunk",
-    "company_name": "Splunk",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.splunk.com/en_us/careers.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_snowflake",
-    "company_name": "Snowflake",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.snowflake.com/us/en",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_databricks",
-    "company_name": "Databricks",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.databricks.com/company/careers/open-positions",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_confluent",
-    "company_name": "Confluent",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.confluent.io/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_mongodb",
-    "company_name": "MongoDB",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.mongodb.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_elastic",
-    "company_name": "Elastic",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.elastic.co/about/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_newrelic",
-    "company_name": "New Relic",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://newrelic.com/about/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_dynatrace",
-    "company_name": "Dynatrace",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jobs.dynatrace.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_freshworks",
-    "company_name": "Freshworks",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.freshworks.com/company/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_sprinklr",
-    "company_name": "Sprinklr",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.sprinklr.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_browserstack",
-    "company_name": "BrowserStack",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.browserstack.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_postman",
-    "company_name": "Postman",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.postman.com/company/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_inmobi",
-    "company_name": "InMobi",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.inmobi.com/company/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_clevertap",
-    "company_name": "CleverTap",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://clevertap.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_moengage",
-    "company_name": "MoEngage",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.moengage.com/about/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_chargebee",
-    "company_name": "Chargebee",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.chargebee.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_hasura",
-    "company_name": "Hasura",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://hasura.io/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_darwinbox",
-    "company_name": "Darwinbox",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://darwinbox.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_leadsquared",
-    "company_name": "Leadsquared",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.leadsquared.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_webengage",
-    "company_name": "WebEngage",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://webengage.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_icertis",
-    "company_name": "Icertis",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.icertis.com/company/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_flipkart",
-    "company_name": "Flipkart",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.flipkartcareers.com/#!/joblist",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_myntra",
-    "company_name": "Myntra",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.myntra.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_meesho",
-    "company_name": "Meesho",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://meesho.io/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_nykaa",
-    "company_name": "Nykaa",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.nykaa.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_swiggy",
-    "company_name": "Swiggy",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://bytes.swiggy.com/swiggy-careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_zomato",
-    "company_name": "Zomato",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.zomato.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_olacabs",
-    "company_name": "Ola Cabs",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://ola.engineering/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_rapido",
-    "company_name": "Rapido",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://rapido.bike/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_urbancompany",
-    "company_name": "Urban Company",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_30aaaf4c528f2670",
+    "company_name": "R & R Integrated Solutions.",
+    "company_logo_url": null,
+    "title": "Revit \u2013 Low Voltage Systems Designer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.urbancompany.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Remote, USA",
+    "stipend_or_salary": "USD 65,000 - 80,000",
+    "apply_url": "https://www.indeed.com/viewjob?jk=202a006e901707e2",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_oyo",
-    "company_name": "OYO",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.oyorooms.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_makemytrip",
-    "company_name": "MakeMyTrip",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.makemytrip.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_ixigo",
-    "company_name": "Ixigo",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.ixigo.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_cars24",
-    "company_name": "Cars24",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.cars24.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_cardekho",
-    "company_name": "CarDekho",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.cardekho.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_spinny",
-    "company_name": "Spinny",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.spinny.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_delhivery",
-    "company_name": "Delhivery",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.delhivery.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_shiprocket",
-    "company_name": "Shiprocket",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.shiprocket.in/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_razorpay",
-    "company_name": "Razorpay",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://razorpay.com/jobs/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_phonepe",
-    "company_name": "PhonePe",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.phonepe.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_paytm",
-    "company_name": "Paytm",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.paytm.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_cred",
-    "company_name": "CRED",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.cred.club/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_bharatpe",
-    "company_name": "BharatPe",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.bharatpe.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_zepto",
-    "company_name": "Zepto",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.zeptonow.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_groww",
-    "company_name": "Groww",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://groww.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_zerodha",
-    "company_name": "Zerodha",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://zerodha.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_upstox",
-    "company_name": "Upstox",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://upstox.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_smallcase",
-    "company_name": "Smallcase",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://smallcase.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_angelone",
-    "company_name": "Angel One",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.angelone.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_kreditbee",
-    "company_name": "KreditBee",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.kreditbee.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_slice",
-    "company_name": "Slice",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.sliceit.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_jupitermoney",
-    "company_name": "Jupiter Money",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_5bff70b22e98e788",
+    "company_name": "Cisive",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/eb12b293532e4dde7dafda72cdc16223",
+    "title": "Associate Software Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://jupiter.money/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Easton, MD, USA",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://cisive.wd108.myworkdayjobs.com/Cisive/job/Headquarters-MD/Associate-Software-Developer_JR100449-1",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_fimoney",
-    "company_name": "Fi Money",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://fi.money/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_niyo",
-    "company_name": "Niyo",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.niyo.co/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_policybazaar",
-    "company_name": "PolicyBazaar",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://careers.policybazaar.com/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_acko",
-    "company_name": "Acko",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.acko.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_digitinsurance",
-    "company_name": "Digit Insurance",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.godigit.com/about-digit/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_lendingkart",
-    "company_name": "Lendingkart",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.lendingkart.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_byjus",
-    "company_name": "BYJU'S",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://byjus.com/jobs/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_unacademy",
-    "company_name": "Unacademy",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://unacademy.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_physicswallah",
-    "company_name": "Physics Wallah",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.pw.live/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_upgrad",
-    "company_name": "upGrad",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.upgrad.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_vedantu",
-    "company_name": "Vedantu",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.vedantu.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_classplus",
-    "company_name": "Classplus",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.classplus.co/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_practo",
-    "company_name": "Practo",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.practo.com/company/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_pharmeasy",
-    "company_name": "PharmEasy",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://pharmeasy.in/blog/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_healthkart",
-    "company_name": "Healthkart",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.healthkart.com/jobs",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_plum",
-    "company_name": "Plum",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.plumhq.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_khatabook",
-    "company_name": "Khatabook",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://khatabook.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_okcredit",
-    "company_name": "OkCredit",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://okcredit.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "ind_nexus_moglix",
-    "company_name": "Moglix",
-    "title": "Software Engineer / Graduate Trainee",
-    "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.moglix.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_zetwerk",
-    "company_name": "Zetwerk",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_050e1cc74bb1d781",
+    "company_name": "Keenfinity",
+    "company_logo_url": null,
+    "title": "Sales Solution Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.zetwerk.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Lancaster, PA, USA",
+    "stipend_or_salary": "USD 90,000 - 150,000",
+    "apply_url": "https://jobs.smartrecruiters.com/Keenfinity/744000159964218-sales-solution-engineer-",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_porter",
-    "company_name": "Porter",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_39a607dca42632ef",
+    "company_name": "SPT Labtech",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/7c921eb1efdc17470e1fd9cf47f07b7b",
+    "title": "Field Application Scientist",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://porter.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Seattle, WA, USA",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://apply.workable.com/j/309E66F256",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_dunzo",
-    "company_name": "Dunzo",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_5ab8b8461f1be601",
+    "company_name": "CircleCI",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/68b995fdd269ee73f6545cdb5ab4b2ae",
+    "title": "Staff Software Engineer, Delivery Engineering",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.dunzo.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Remote, USA",
+    "stipend_or_salary": "USD 195,000 - 265,000",
+    "apply_url": "https://grnh.se/cmi6ausk2us",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_instashop",
-    "company_name": "InstaShop",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_73dbfc1c5c8f1fe1",
+    "company_name": "ClearOne Advantage",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/8f96d273e6074ad1dfb638d1460218b5",
+    "title": "System Administrator",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.instashop.com.eg/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Phoenix, AZ, USA",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://clearoneadvantage.breezy.hr/p/c34c2eb8bc18-system-administrator?source=indeed",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_pepperfry",
-    "company_name": "Pepperfry",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_eb98f2a0d22e14fa",
+    "company_name": "E Tech Group",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/cfd9d00432579edf0f0162dbd03edba1",
+    "title": "IT/OT Controls Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.pepperfry.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Raleigh, NC, USA",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://grnh.se/okn699u34us",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_lenskart",
-    "company_name": "Lenskart",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_71b530668648ee24",
+    "company_name": "Conceps Media Works",
+    "company_logo_url": null,
+    "title": "Junior / Mid-Level Full Stack Developer (NestJS)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.lenskart.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Coimbatore, India",
+    "stipend_or_salary": "INR 25,000 - 30,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319046202",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_boatlifestyle",
-    "company_name": "Boat Lifestyle",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_30a7d919f6b70e56",
+    "company_name": "Arting Digital Private Limited",
+    "company_logo_url": null,
+    "title": "Junior / Associate Databricks Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.boat-lifestyle.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "nan",
+    "stipend_or_salary": "INR 12 - 12",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010319652439",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_noise",
-    "company_name": "Noise",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_fa31cb4149b96c9d",
+    "company_name": "Karyanest Solutions LLP",
+    "company_logo_url": null,
+    "title": "Jr. Java Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.gonoise.com/pages/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Lucknow, India",
+    "stipend_or_salary": "INR 12,000 - 15,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010317574668",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_boatportronics",
-    "company_name": "boAt & Portronics",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_592f3b60efa02478",
+    "company_name": "CNV Labs India Pvt. Ltd",
+    "company_logo_url": null,
+    "title": "Jr. ERP PHP Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://portronics.com/pages/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Noida, India",
+    "stipend_or_salary": "INR 12,000 - 25,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316760405",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_atherenergy",
-    "company_name": "Ather Energy",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_3821f9bc26ff9dea",
+    "company_name": "NTT Ltd",
+    "company_logo_url": "https://media.glassdoor.com/sql/7649/ntt-data-squareLogo-1711347206855.png",
+    "title": "Software Development Advisor",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.atherenergy.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, India",
+    "stipend_or_salary": "INR 540,000 - 1,000,000",
+    "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010316556241",
+    "source": "Glassdoor (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Glassdoor"
     ]
   },
   {
-    "id": "ind_nexus_olaelectric",
-    "company_name": "Ola Electric",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b41715f6dcdb6fae",
+    "company_name": "Conceps Media Works",
+    "company_logo_url": null,
+    "title": "Junior / Mid-Level Full Stack Developer (NestJS)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://olaelectric.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "TN, India",
+    "stipend_or_salary": "INR 25,000 - 30,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=2e115bfa44ad9412",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_rivigo",
-    "company_name": "Rivigo",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_67995571b06c40e1",
+    "company_name": "Arting Digital Private Limited",
+    "company_logo_url": null,
+    "title": "Junior / Associate Databricks Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.rivigo.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Remote, India",
+    "stipend_or_salary": "INR 12 - 12",
+    "apply_url": "https://artingdigital.zohorecruit.in/jobs/Careers/107457000078398833/Junior-Associate-Databricks-Developer?source=Indeed",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_blackbuck",
-    "company_name": "BlackBuck",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_16b9a905a15583a8",
+    "company_name": "Karyanest Solutions LLP",
+    "company_logo_url": null,
+    "title": "Jr. Java Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.blackbuck.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "UP, India",
+    "stipend_or_salary": "INR 12,000 - 15,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=11d901e75222c16b",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_udaan",
-    "company_name": "Udaan",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_53a88f66629aca6a",
+    "company_name": "NTT DATA",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/a598a8409d24c2c493ede9bbbe334c46",
+    "title": "Software Development Advisor",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://udaan.com/careers.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "KA, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://careers.nttdata.com/global/en/job/394861",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_licious",
-    "company_name": "Licious",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_854d68e30475a11a",
+    "company_name": "CNV Labs India Pvt. Ltd",
+    "company_logo_url": null,
+    "title": "Jr. ERP PHP Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.licious.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "UP, India",
+    "stipend_or_salary": "INR 12,000 - 25,000",
+    "apply_url": "https://in.indeed.com/viewjob?jk=a9df10fd42401147",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_countrydelight",
-    "company_name": "Country Delight",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_d081db7fa508e75f",
+    "company_name": "Data Eminence",
+    "company_logo_url": null,
+    "title": "Python Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://countrydelight.in/career",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487377475",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_ninjacart",
-    "company_name": "Ninjacart",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_24bc8dc3682ac293",
+    "company_name": "Data Eminence",
+    "company_logo_url": null,
+    "title": "React Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://ninjacart.in/careers.html",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487391224",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_dehaat",
-    "company_name": "Dehaat",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_27adfe2992cfbd77",
+    "company_name": "CAREERBLOC ~",
+    "company_logo_url": null,
+    "title": "AI LLM Frontend Developer (React /nextjs )",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.dehaat.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487389837",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-07",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_sarvamai",
-    "company_name": "Sarvam AI",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_4b90eb042deb8a54",
+    "company_name": "techolution",
+    "company_logo_url": null,
+    "title": "Associate MERN Engineer- Remote Work",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.sarvam.ai/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486935472",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_krutrim",
-    "company_name": "Krutrim",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_e4dd0fac0f56ed05",
+    "company_name": "Secfix",
+    "company_logo_url": null,
+    "title": "GTM Engineer (Fresh grad, India)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://krutrim.ai/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4488430863",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_agnikulcosmos",
-    "company_name": "Agnikul Cosmos",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_01ea570b3fd336ce",
+    "company_name": "Sophos",
+    "company_logo_url": null,
+    "title": "Software Engineer 1 (Java Developer)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.agnikul.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487346252",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_skyrootaerospace",
-    "company_name": "Skyroot Aerospace",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_6c7857d4f7a57c79",
+    "company_name": "IBM",
+    "company_logo_url": null,
+    "title": "Software Developer - Confluent",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://skyroot.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4477393973",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_pixxel",
-    "company_name": "Pixxel",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_06fc54440a1329bd",
+    "company_name": "Accendra Health",
+    "company_logo_url": null,
+    "title": "Junior ServiceNow Developer-2",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.pixxel.space/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4432336133",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_tartansense",
-    "company_name": "TartanSense",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_17fcad1c8430a335",
+    "company_name": "RecruitBots AI",
+    "company_logo_url": null,
+    "title": "AI Automation Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.tartansense.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487315578",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_sigmoid",
-    "company_name": "Sigmoid",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_4d5a52510abf31fd",
+    "company_name": "Recro",
+    "company_logo_url": null,
+    "title": "Javascript Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.sigmoid.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486593975",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_musigma",
-    "company_name": "Mu Sigma",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_6deba41c046d94ad",
+    "company_name": "techolution",
+    "company_logo_url": null,
+    "title": "AI Python Developer / Python AI Engineer - Immediate Joiners Needed",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.mu-sigma.com/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486051641",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_fractalanalytics",
-    "company_name": "Fractal Analytics",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_ec8c3950f4e1c4c3",
+    "company_name": "Kassavirtanen Oy",
+    "company_logo_url": null,
+    "title": "React Front end developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://fractal.ai/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Chennai, Tamil Nadu, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487780259",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_latentviewanalytics",
-    "company_name": "LatentView Analytics",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_eb4e2205796c9ef3",
+    "company_name": "TransUnion",
+    "company_logo_url": null,
+    "title": "Associate Developer, SQL and UNIX operating system",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.latentview.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Hyderabad, Telangana, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486598630",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_tigeranalytics",
-    "company_name": "Tiger Analytics",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_35282184212f55e4",
+    "company_name": "IQVIA",
+    "company_logo_url": null,
+    "title": "Software Engineer - React",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.tigeranalytics.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486508482",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_juspay",
-    "company_name": "Juspay",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a9e315bf9fbea614",
+    "company_name": "Cummins India",
+    "company_logo_url": null,
+    "title": "AI Engineer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://juspay.in/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Pune Division, Maharashtra, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486357854",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_cashfreepayments",
-    "company_name": "Cashfree Payments",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_83c35c5e6886ca96",
+    "company_name": "IQVIA",
+    "company_logo_url": null,
+    "title": "Software Engineer - Node",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://www.cashfree.com/careers/",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Bengaluru, Karnataka, India",
+    "stipend_or_salary": "Competitive / Market standard",
+    "apply_url": "https://www.linkedin.com/jobs/view/4486518321",
+    "source": "Linkedin (Live Verified)",
+    "age": "2026-11-04",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "India",
-      "Tech Careers",
-      "Engineering"
+      "Fresher 2024/2025",
+      "Linkedin"
     ]
   },
   {
-    "id": "ind_nexus_openfinancial",
-    "company_name": "Open Financial",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_a64b63a4a8aeaaa5",
+    "company_name": "American Oncology Network",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/9335212561c7e3372a79f0e909b64661",
+    "title": "Junior Web Developer",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://open.money/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
+    "location": "Fort Myers, FL, USA",
+    "stipend_or_salary": "USD 21 - 36",
+    "apply_url": "https://aoncology.wd12.myworkdayjobs.com/Aoncology_Careers/job/United-States/Junior-Web-Developer_JR7361",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "ind_nexus_setu",
-    "company_name": "Setu",
-    "title": "Software Engineer / Graduate Trainee",
+    "id": "live_b8ff8c36586b2650",
+    "company_name": "The Home Depot",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/0b8960c68e5701f4a990dedad687d150",
+    "title": "Staff Software Engineer, Supply Chain Warehouse Execution Systems (Remote)",
     "type": "JOB",
-    "location": "Bengaluru / Hyderabad / Pune / Gurugram",
-    "stipend_or_salary": "₹8.0–16.0 LPA",
-    "apply_url": "https://setu.co/careers",
-    "source": "Indian Tech Company Career Portal",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "India",
-      "Tech Careers",
-      "Engineering"
-    ]
-  },
-  {
-    "id": "speedy_pinterest_0",
-    "company_name": "Pinterest",
-    "title": "Software Engineer Intern 2027 - USA",
-    "type": "INTERNSHIP",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": "$52/hr",
-    "apply_url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838577",
-    "source": "SpeedyApply (College SWE)",
-    "age": "36d",
-    "batch_eligibility": "2025, 2026",
+    "location": "Atlanta, GA, USA",
+    "stipend_or_salary": "USD 120,000 - 190,000",
+    "apply_url": "https://homedepot.contacthr.com/154168301",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-06",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Remote WFH"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "simplify_ng_caci_0",
-    "company_name": "CACI",
+    "id": "live_d3626f17b2440f44",
+    "company_name": "CACI International",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/e4dcd4da65abaf6711596d59ae4ba500",
     "title": "Junior Software Developer",
     "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://caci.wd1.myworkdayjobs.com/external/job/Remote-Any-State/Junior-Software-Developer_334685?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "2d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_shadowdragon_1",
-    "company_name": "ShadowDragon",
-    "title": "Junior AI/Machine Learning Engineer",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://ats.rippling.com/shadowdragon/jobs/69df1efd-5f05-4a79-9432-30925eb6db3c?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "2d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "AI/ML",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_quora_2",
-    "company_name": "Quora",
-    "title": "Full Stack Software Engineer New Grad",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/quora/5494e6a1-a973-46af-b9f3-57208eb91b52/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "17d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Full Stack",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_affirm_3",
-    "company_name": "Affirm",
-    "title": "Software Engineer 1 - Fullstack - Search",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/8017342003?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "22d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Full Stack",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng__4",
-    "company_name": "↳",
-    "title": "Software Engineer 1 - Fullstack - Search",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/8017340003?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "22d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Full Stack",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_spruceid_5",
-    "company_name": "SpruceID",
-    "title": "Full-Stack Software Engineer New Grad",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/spruceid/3d182b7f-482e-45b2-8668-f04f0b5fda8e/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_pinterest_6",
-    "company_name": "Pinterest",
-    "title": "University Grad Software Engineer",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838591&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_harbor_7",
-    "company_name": "Harbor",
-    "title": "Junior Developer - Finance Systems",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/harborglobal/jobs/5238900007?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_affirm_8",
-    "company_name": "Affirm",
-    "title": "Software Engineer 1 - Frontend - Upfunnel",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/7985907003?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Frontend",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_realm_9",
-    "company_name": "Realm",
-    "title": "Software Engineer New Grad",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/realmalliance/56d8b433-31ad-43a2-997e-b8538f5f2c9f/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "7mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_n1_10",
-    "company_name": "N1",
-    "title": "New Grad Software Engineer - Backend Rust",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/n1/a3e25c84-0846-454a-b2fc-a356c2a713bd/application?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "7mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Backend",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_elementsolutions_11",
-    "company_name": "Element Solutions",
-    "title": "Junior Data Engineer",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.lever.co/elementsolutions/88f248fb-459a-4d4e-8f6a-80e1671bf86e/apply?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "4d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_affirm_12",
-    "company_name": "Affirm",
-    "title": "Analyst – Early Career - Full Stack",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/8039471003?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "16d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Full Stack",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_quora_13",
-    "company_name": "Quora",
-    "title": "Machine Learning Engineer New Grad",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/quora/40659fe7-545e-4b08-b6d7-2567b18b9ed3/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "22d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "AI/ML",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_ng_quora_14",
-    "company_name": "Quora",
-    "title": "Software Engineer New Grad - Machine Learning Platform",
-    "type": "JOB",
-    "location": "Remote WFH (USA / Global)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/quora/cf34f80e-fe5c-454d-bc9a-4c59993ffda0/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "AI/ML",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "simplify_int_leidos_0",
-    "company_name": "Leidos",
-    "title": "Software Engineering & AI Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://leidos.wd5.myworkdayjobs.com/External/job/6314-RemoteTeleworker-US/Software-Engineering---AI-Intern_R-00196220?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "3d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "AI/ML",
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_zillow_1",
-    "company_name": "Zillow",
-    "title": "Software Development Engineer Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://zillow.wd5.myworkdayjobs.com/en-US/Zillow_Group_External/job/Seattle-WA-2nd-Ave/Software-Development-Engineer---Intern_P751630?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "17d",
-    "batch_eligibility": "2025, 2026",
+    "location": "Remote, USA",
+    "stipend_or_salary": "USD 53,100 - 106,300",
+    "apply_url": "https://searchcareers.caci.com/careers/job/1443154384500",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
       "Remote WFH",
-      "Internship"
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "simplify_int_oneethos_2",
-    "company_name": "OneEthos",
-    "title": "Research and Development Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/oneethos/jobs/4459193009?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "17d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_amplify_3",
-    "company_name": "Amplify",
-    "title": "Software Engineer Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/amplify/855d22a3-f15e-49f6-854c-29e505653efa/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "18d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_sailpoint_4",
-    "company_name": "SailPoint",
-    "title": "Software Engineer Intern - Platform Engines",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://sailpoint.wd1.myworkdayjobs.com/en-US/SailPoint/job/Remote-United-Kingdom/Software-Engineer-Intern---Platform-Engines_R014164?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_cadencesolutions_5",
-    "company_name": "Cadence Solutions",
-    "title": "Software Engineer Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/solutions/jobs/4711210006?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_pinterest_6",
-    "company_name": "Pinterest",
-    "title": "Software Engineer Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838577&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_caci_7",
-    "company_name": "CACI",
-    "title": "Software Engineer Intern - Summer 2027",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://caci.wd1.myworkdayjobs.com/external/job/437-DENVER-CO/Cleared-Software-Engineer-Intern---Summer-2027_331999?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_oneethos_8",
-    "company_name": "OneEthos",
-    "title": "Product Management Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/oneethos/jobs/4459298009?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "16d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_amplify_9",
-    "company_name": "Amplify",
-    "title": "Product Management Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/amplify/c95f690f-28af-42b1-8847-5dcf14c1155e/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "18d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_cadencesolutions_10",
-    "company_name": "Cadence Solutions",
-    "title": "Product Management Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/solutions/jobs/4715294006?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_jmsmucker_11",
-    "company_name": "J.M. Smucker",
-    "title": "Data Science Intern 🎓",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://smucker.wd5.myworkdayjobs.com/US_External_Careers/job/Working-Remote-USA/Data-Science-Intern--Summer-2027_116118?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "2d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_caresource_12",
-    "company_name": "CareSource",
-    "title": "Data Analyst Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Data-Analyst_R14356?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "2d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int__13",
-    "company_name": "↳",
-    "title": "Configuration and Automation Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Configuration-and-Automation_R14185?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "2d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "QA",
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_vizient_14",
-    "company_name": "Vizient",
-    "title": "Pharmacy Aggregation Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://vizient.wd1.myworkdayjobs.com/Vizient_Careers/job/Irving-TX-75062-Vizient-Corporate-HQ/XMLNAME-2027-Summer-Internship---Pharmacy-Aggregation_35995R-1?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "3d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_amgen_15",
-    "company_name": "Amgen",
-    "title": "Graduate Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://amgen.wd1.myworkdayjobs.com/careers/job/United-States---Remote/Grad-Intern---R-D-TSRS-Data-Sciences-Operations---Analytic--Summer-2027-_R-260585?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "3d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_caresource_16",
-    "company_name": "CareSource",
-    "title": "Data Science Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Data-Science-Intern_R14306?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "4d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_molinahealthcare_17",
-    "company_name": "Molina Healthcare",
-    "title": "Electronic Data Interchange Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://hckd.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/2040156?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "7d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int__18",
-    "company_name": "↳",
-    "title": "Customer Experience & Analytics Intern - Undergraduate",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://hckd.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/2040169?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "7d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int__19",
-    "company_name": "↳",
-    "title": "Full Stack AI Development Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Full-Stack-AI-Development-Intern-1_R14181?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "9d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Full Stack",
-      "AI/ML",
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_amplify_20",
-    "company_name": "Amplify",
-    "title": "AI Scientist Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/amplify/bb45b7f6-dd7e-40e5-84e6-52e21650a7b8/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "18d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "AI/ML",
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int__21",
-    "company_name": "↳",
-    "title": "Data Analytics Intern",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://jobs.ashbyhq.com/amplify/7b859cc1-1354-43c5-bbd4-0571e85f7c51/application?embed=true&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "18d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_centurylink_22",
-    "company_name": "CenturyLink",
-    "title": "Data Internship - Analytics & Decision Science",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://internaljobs.centurylink.com/job/Remote-Data,-Analytics-&-Decision-Science-Summer-2027-Internship-Pathway/1440961600/?ats=successfactors&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "21d",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_datacor_23",
-    "company_name": "Datacor",
-    "title": "Data Science Intern - Summer 2027 - Program 🎓",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://job-boards.greenhouse.io/datacor/jobs/5242412007?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "simplify_int_nvidia_24",
-    "company_name": "NVIDIA",
-    "title": "PhD Research Intern - Generalist Embodied Agents Research 🎓",
-    "type": "INTERNSHIP",
-    "location": "Remote Internship (Worldwide)",
-    "stipend_or_salary": null,
-    "apply_url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/PhD-Research-Intern--Generalist-Embodied-Agents-Research---2027_JR2025103?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "1mo",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH",
-      "Internship"
-    ]
-  },
-  {
-    "id": "jobicy_vonage_0",
-    "company_name": "Vonage",
-    "title": "Senior Software Engineer",
+    "id": "live_373274d981a0e7b0",
+    "company_name": "Academian",
+    "company_logo_url": null,
+    "title": "Mid-Level Full Stack Developer",
     "type": "JOB",
-    "location": "Remote WFH (Poland)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/158781-senior-software-engineer-21",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
+    "location": "Remote, USA",
+    "stipend_or_salary": "USD 50,000 - 70,000",
+    "apply_url": "https://www.indeed.com/viewjob?jk=a2b87e42b4a02deb",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Remote WFH"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "jobicy_serverobotics_1",
-    "company_name": "Serve Robotics",
-    "title": "Sr. Embedded Software Engineer, Robotics Platform",
+    "id": "live_3f00d84fcab292f1",
+    "company_name": "AECOM",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/ed95399cc8e0c3808fca1e013a71ad28",
+    "title": "Cority Developer",
     "type": "JOB",
-    "location": "Remote WFH (Canada,  USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/154777-sr-embedded-software-engineer-robotics-platform",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
+    "location": "Boston, MA, USA",
+    "stipend_or_salary": "USD 105,000 - 145,000",
+    "apply_url": "https://jobs.smartrecruiters.com/AECOM2/744000159975128-cority-developer",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Remote WFH"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   },
   {
-    "id": "jobicy_grafanalabs_2",
-    "company_name": "Grafana Labs",
-    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | UK | Remote",
+    "id": "live_7cc902dcd29ca439",
+    "company_name": "Koniag Government Services",
+    "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/0e5c7cb9852644643625dd9cac9cea27",
+    "title": "Okta SME (Remote)",
     "type": "JOB",
-    "location": "Remote WFH (Germany,  Ireland,  Spain,  UK)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159444-staff-software-engineer-opentelemetry-python-instrumentation-uk-remote",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
+    "location": "Chantilly, VA, USA",
+    "stipend_or_salary": "USD 180,000 - 191,000",
+    "apply_url": "https://jobs.dayforcehcm.com/en-US/kgs/CANDIDATEPORTAL/jobs/10455",
+    "source": "Indeed (Live Verified)",
+    "age": "2026-11-05",
+    "batch_eligibility": "Class of 2024, 2025, 2026, 2027",
     "tags": [
-      "Python",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_canonical_3",
-    "company_name": "Canonical",
-    "title": "Senior Juju Software Engineer (Go)",
-    "type": "JOB",
-    "location": "Remote WFH (EMEA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159443-senior-juju-software-engineer-go",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_grafanalabs_4",
-    "company_name": "Grafana Labs",
-    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | Spain | Remote",
-    "type": "JOB",
-    "location": "Remote WFH (Spain)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159441-staff-software-engineer-opentelemetry-python-instrumentation-spain-remote",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Python",
-      "AI/ML",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_grafanalabs_5",
-    "company_name": "Grafana Labs",
-    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | Ireland | Remote",
-    "type": "JOB",
-    "location": "Remote WFH (Germany,  Ireland,  Spain,  UK)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159437-staff-software-engineer-opentelemetry-python-instrumentation-ireland-remote",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Python",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_grafanalabs_6",
-    "company_name": "Grafana Labs",
-    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | Germany | Remote",
-    "type": "JOB",
-    "location": "Remote WFH (Germany,  Ireland,  Spain,  UK)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159433-staff-software-engineer-opentelemetry-python-instrumentation-germany-remote",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Python",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_nebius_7",
-    "company_name": "Nebius",
-    "title": "Software Engineer in Network Infrastructure",
-    "type": "JOB",
-    "location": "Remote WFH (Europe)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159423-software-engineer-in-network-infrastructure-2",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_klaviyo_8",
-    "company_name": "Klaviyo",
-    "title": "Software Engineer II (Mobile Developer - Android/Kotlin)",
-    "type": "JOB",
-    "location": "Remote WFH (USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159403-software-engineer-ii-mobile-developer-android-kotlin",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_customerio_9",
-    "company_name": "Customer.io",
-    "title": "Staff Software Engineer, Backend",
-    "type": "JOB",
-    "location": "Remote WFH (LATAM,  Canada,  USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159342-staff-software-engineer-backend",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Backend",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_customerio_10",
-    "company_name": "Customer.io",
-    "title": "Senior Software Engineer - Backend Platform",
-    "type": "JOB",
-    "location": "Remote WFH (LATAM,  Canada,  USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159329-senior-software-engineer-backend-platform",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Backend",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_housecallpro_11",
-    "company_name": "Housecall Pro",
-    "title": "Senior iOS Software Engineer - Brazil",
-    "type": "JOB",
-    "location": "Remote WFH (Brazil)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/159323-senior-ios-software-engineer-brazil",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_eightsleep_12",
-    "company_name": "Eight Sleep",
-    "title": "Senior Backend Engineer",
-    "type": "JOB",
-    "location": "Remote WFH (Canada,  USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/154740-senior-backend-engineer-9",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Backend",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_centralreach_13",
-    "company_name": "CentralReach",
-    "title": "Sr. Software Engineer",
-    "type": "JOB",
-    "location": "Remote WFH (USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/154718-sr-software-engineer-4",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_mozilla_14",
-    "company_name": "Mozilla",
-    "title": "Contract Staff Software Engineer - Performance Graphics (C++,Rust, WebGL)",
-    "type": "JOB",
-    "location": "Remote WFH (Canada)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/154693-contract-staff-software-engineer-performance-graphics-crust-webgl",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "C++",
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_mozilla_15",
-    "company_name": "Mozilla",
-    "title": "Contract Staff Software Engineer-FireFox Layout",
-    "type": "JOB",
-    "location": "Remote WFH (Canada)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/154690-contract-staff-software-engineer-firefox-layout",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_eightsleep_16",
-    "company_name": "Eight Sleep",
-    "title": "Senior Software Engineer - Mobile (Android)",
-    "type": "JOB",
-    "location": "Remote WFH (USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/154745-senior-software-engineer-mobile-android",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_canonical_17",
-    "company_name": "Canonical",
-    "title": "C, Golang Software Engineer working on dqlite, a Raft extension for SQLite",
-    "type": "JOB",
-    "location": "Remote WFH (EMEA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/150128-c-golang-software-engineer-working-on-dqlite-a-raft-extension-for-sqlite",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_canonical_18",
-    "company_name": "Canonical",
-    "title": "Senior Software Engineer - MAAS",
-    "type": "JOB",
-    "location": "Remote WFH (EMEA,  LATAM,  Canada,  USA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/150127-senior-software-engineer-maas",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Remote WFH"
-    ]
-  },
-  {
-    "id": "jobicy_canonical_19",
-    "company_name": "Canonical",
-    "title": "Senior Software Engineer (Backend)",
-    "type": "JOB",
-    "location": "Remote WFH (EMEA)",
-    "stipend_or_salary": "Competitive / USD",
-    "apply_url": "https://jobicy.com/jobs/150125-senior-software-engineer-backend",
-    "source": "Jobicy (Remote Engineering)",
-    "age": "Recent",
-    "batch_eligibility": "2025, 2026",
-    "tags": [
-      "Backend",
-      "Remote WFH"
+      "Remote WFH",
+      "Fresher 2024/2025",
+      "Indeed"
     ]
   }
 ];

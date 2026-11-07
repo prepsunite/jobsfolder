@@ -125,8 +125,8 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
           description: initial.description ?? '',
           apply_url: initial.apply_url,
           deadline: initial.deadline ? initial.deadline.slice(0, 16) : null,
-          tags: initial.tags,
-          is_active: initial.is_active,
+          tags: initial.tags?.filter((t) => t !== 'LEAD') || [],
+          is_active: initial.tags?.includes('LEAD') ? true : initial.is_active,
           is_featured: initial.is_featured,
           sort_order: initial.sort_order,
         }
@@ -135,7 +135,7 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
 
   const [relistAsNew, setRelistAsNew] = useState(false);
   const [tagsInput, setTagsInput] = useState(() =>
-    initial ? initial.tags.join(', ') : ''
+    initial ? initial.tags.filter((t) => t !== 'LEAD').join(', ') : ''
   );
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -476,6 +476,7 @@ type AdminJobTab = 'LIVE' | 'LEADS' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
 type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
 type LeadCategoryFilter =
   | 'ALL'
+  | 'BOT_LEADS'
   | 'INDIA_ONLY'
   | 'REMOTE_WFH'
   | 'PRODUCT_GIANTS'
@@ -507,6 +508,7 @@ export default function AdminJobsPage() {
   const [hideListed, setHideListed] = useState<boolean>(false);
   const [visibleLeadsCount, setVisibleLeadsCount] = useState<number>(50);
   const [addingLeadId, setAddingLeadId] = useState<string | null>(null);
+  const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [customLeads, setCustomLeads] = useState<ScrapedJobLead[] | null>(() => {
     try {
       const cached = localStorage.getItem('prepunite_admin_job_leads');
@@ -585,9 +587,12 @@ export default function AdminJobsPage() {
     for (let i = 0; i < listings.length; i++) {
       const job = listings[i];
       const isPastDeadline = Boolean(job.deadline && new Date(job.deadline).getTime() < nowMs);
+      const isBotLead = Boolean(job.tags?.includes('LEAD') && !job.is_active);
 
       if (isPastDeadline) {
         expired.push(job);
+      } else if (isBotLead) {
+        // Unverified bot lead: routed to Leads tab instead of cluttering drafts
       } else if (!job.is_active) {
         draft.push(job);
       } else {
@@ -596,6 +601,28 @@ export default function AdminJobsPage() {
     }
 
     return { liveListings: live, expiredListings: expired, draftListings: draft };
+  }, [listings]);
+
+  // Extract all unverified bot leads stored in Supabase
+  const dbLeads = useMemo<ScrapedJobLead[]>(() => {
+    return listings
+      .filter((j) => !j.is_active && j.tags?.includes('LEAD'))
+      .map((j) => ({
+        id: j.id,
+        company_name: j.company_name,
+        company_logo_url: j.company_logo_url,
+        title: j.title,
+        type: j.type,
+        location: j.location,
+        stipend_or_salary: j.stipend_or_salary,
+        description: j.description,
+        apply_url: j.apply_url,
+        source: j.tags?.find((t) => t.startsWith('JobSpy')) || 'JobSpy Bot (Live)',
+        age: 'Just now',
+        batch_eligibility: 'Class of 2024 / 2025 / 2026 / 2027',
+        tags: j.tags || [],
+        isDbLead: true,
+      }));
   }, [listings]);
 
   // Reports partitioning
@@ -638,18 +665,25 @@ export default function AdminJobsPage() {
     return list;
   }, [reports, reportStatusFilter, search]);
 
-  // Leads pipeline and state logic
+  // Leads pipeline: Database leads scraped by bot come first, followed by custom/curated
   const activeLeadsPool = useMemo<ScrapedJobLead[]>(() => {
-    return customLeads && customLeads.length > 0 ? customLeads : curatedJobLeads;
-  }, [customLeads]);
+    const base = customLeads && customLeads.length > 0 ? customLeads : curatedJobLeads;
+    if (dbLeads.length === 0) return base;
+
+    const dbUrls = new Set(dbLeads.map((d) => (d.apply_url || '').toLowerCase().trim()));
+    const remainingBase = base.filter((b) => !dbUrls.has((b.apply_url || '').toLowerCase().trim()));
+    return [...dbLeads, ...remainingBase];
+  }, [dbLeads, customLeads]);
 
   const listedUrlSet = useMemo(() => {
     const set = new Set<string>();
     for (let i = 0; i < listings.length; i++) {
       const l = listings[i];
-      if (l.apply_url) set.add(l.apply_url.toLowerCase().trim());
-      if (l.company_name && l.title) {
-        set.add(`${l.company_name.toLowerCase().trim()}|${l.title.toLowerCase().trim()}`);
+      if (l.is_active) {
+        if (l.apply_url) set.add(l.apply_url.toLowerCase().trim());
+        if (l.company_name && l.title) {
+          set.add(`${l.company_name.toLowerCase().trim()}|${l.title.toLowerCase().trim()}`);
+        }
       }
     }
     return set;
@@ -732,7 +766,9 @@ export default function AdminJobsPage() {
       list = list.filter((l) => !isLeadListed(l));
     }
 
-    if (leadCategory === 'INDIA_ONLY') {
+    if (leadCategory === 'BOT_LEADS') {
+      list = list.filter((l) => l.isDbLead || l.tags.includes('LEAD') || l.source.includes('JobSpy'));
+    } else if (leadCategory === 'INDIA_ONLY') {
       list = list.filter((l) =>
         l.tags.includes('India') ||
         /india|bengaluru|bangalore|hyderabad|pune|mumbai|chennai|noida|gurugram|delhi/i.test(l.location) ||
@@ -882,23 +918,33 @@ export default function AdminJobsPage() {
   const handleQuickAddLead = async (lead: ScrapedJobLead) => {
     setAddingLeadId(lead.id);
     try {
-      await jobsService.createListing({
-        title: lead.title,
-        company_name: lead.company_name,
-        company_logo_url: lead.company_logo_url || null,
-        type: lead.type,
-        location: lead.location || 'Remote',
-        experience_min: 0,
-        experience_max: 1,
-        stipend_or_salary: lead.stipend_or_salary || null,
-        description: `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
-        apply_url: lead.apply_url,
-        deadline: null,
-        tags: lead.tags || [],
-        is_active: true,
-        is_featured: false,
-        sort_order: 0,
-      });
+      if (lead.isDbLead) {
+        // Unverified bot lead already in DB: activate and strip LEAD tag
+        await jobsService.updateListing(lead.id, {
+          is_active: true,
+          tags: (lead.tags || []).filter((t) => t !== 'LEAD'),
+        });
+      } else {
+        await jobsService.createListing({
+          title: lead.title,
+          company_name: lead.company_name,
+          company_logo_url: lead.company_logo_url || null,
+          type: lead.type,
+          location: lead.location || 'Remote',
+          experience_min: 0,
+          experience_max: 1,
+          stipend_or_salary: lead.stipend_or_salary || null,
+          description:
+            lead.description ||
+            `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+          apply_url: lead.apply_url,
+          deadline: null,
+          tags: (lead.tags || []).filter((t) => t !== 'LEAD'),
+          is_active: true,
+          is_featured: false,
+          sort_order: 0,
+        });
+      }
       toast.success(`Published ${lead.company_name} to live listings!`);
       invalidate();
     } catch (err: any) {
@@ -910,7 +956,7 @@ export default function AdminJobsPage() {
 
   const handleReviewLead = (lead: ScrapedJobLead) => {
     setModalJob({
-      id: '',
+      id: lead.isDbLead ? lead.id : '',
       title: lead.title,
       company_name: lead.company_name,
       company_logo_url: lead.company_logo_url || '',
@@ -919,16 +965,33 @@ export default function AdminJobsPage() {
       experience_min: 0,
       experience_max: 1,
       stipend_or_salary: lead.stipend_or_salary || '',
-      description: `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+      description:
+        lead.description ||
+        `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
       apply_url: lead.apply_url,
       deadline: null,
-      tags: lead.tags || [],
+      tags: (lead.tags || []).filter((t) => t !== 'LEAD'),
       is_active: true,
       is_featured: false,
       sort_order: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
+  };
+
+  const handleDismissLead = async (lead: ScrapedJobLead) => {
+    if (!lead.isDbLead) return;
+    if (!window.confirm(`Dismiss and remove lead "${lead.title} at ${lead.company_name}" from database?`)) return;
+    setDeletingLeadId(lead.id);
+    try {
+      await jobsService.deleteListing(lead.id);
+      toast.success(`Dismissed lead from ${lead.company_name}`);
+      invalidate();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to dismiss lead.');
+    } finally {
+      setDeletingLeadId(null);
+    }
   };
 
 
@@ -1199,8 +1262,13 @@ export default function AdminJobsPage() {
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>🇮🇳 India & 🏠 Remote Leads ({activeLeadsPool.length})</span>
-                {unlistedLeadsCount > 0 && (
+                <span>Leads ({activeLeadsPool.length})</span>
+                {dbLeads.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-[#FD4A32] text-white">
+                    🤖 {dbLeads.length} Bot
+                  </span>
+                )}
+                {unlistedLeadsCount > 0 && dbLeads.length === 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400">
                     {unlistedLeadsCount} New
                   </span>
@@ -1394,6 +1462,24 @@ export default function AdminJobsPage() {
                     All Drives ({activeLeadsPool.length})
                   </button>
 
+                  {dbLeads.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('BOT_LEADS'); setVisibleLeadsCount(50); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'BOT_LEADS'
+                          ? 'bg-[#FD4A32] text-white shadow-xs'
+                          : 'bg-[#FD4A32]/10 text-[#FD4A32] dark:text-[#FD4A32] hover:bg-[#FD4A32]/20 border border-[#FD4A32]/30'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>🤖 Scraped Bot Findings</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                        {dbLeads.length}
+                      </span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => { setLeadCategory('INDIA_ONLY'); setVisibleLeadsCount(50); }}
@@ -1580,8 +1666,13 @@ export default function AdminJobsPage() {
                                         </span>
                                       )}
                                     </div>
-                                    <div className="text-[10px] text-[#868E96]">
-                                      {lead.source}
+                                    <div className="text-[10px] text-[#868E96] flex items-center gap-1.5 mt-0.5">
+                                      {lead.isDbLead && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#FD4A32]/10 text-[#FD4A32] border border-[#FD4A32]/20">
+                                          🤖 Scraped Bot Lead
+                                        </span>
+                                      )}
+                                      <span>{lead.source}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -1665,6 +1756,21 @@ export default function AdminJobsPage() {
                                     </button>
                                   ) : (
                                     <>
+                                      {lead.isDbLead && (
+                                        <button
+                                          type="button"
+                                          disabled={deletingLeadId === lead.id}
+                                          onClick={() => handleDismissLead(lead)}
+                                          title="Dismiss and delete lead from database"
+                                          className="p-1 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+                                        >
+                                          {deletingLeadId === lead.id ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          )}
+                                        </button>
+                                      )}
                                       <button
                                         type="button"
                                         onClick={() => handleReviewLead(lead)}

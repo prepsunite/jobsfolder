@@ -59,10 +59,12 @@ export interface ScrapedJobLead {
   type: JobType;
   location: string;
   stipend_or_salary?: string | null;
+  description?: string | null;
   apply_url: string;
   source: string;
   age: string;
   batch_eligibility?: string;
   tags: string[];
+  isDbLead?: boolean;
 }
 
