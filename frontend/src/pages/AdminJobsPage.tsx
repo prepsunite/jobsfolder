@@ -539,6 +539,42 @@ export default function AdminJobsPage() {
     queryClient.invalidateQueries({ queryKey: ['admin_job_reports'] });
   }, [queryClient]);
 
+  // Handle 1-click pre-fill from Telegram alert button URL (e.g. ?add_company=...&add_title=...)
+  React.useEffect(() => {
+    if (!isEffectiveAdmin) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const company = params.get('add_company') || params.get('company');
+      const title = params.get('add_title') || params.get('title');
+      const applyUrl = params.get('add_url') || params.get('url');
+      if (company && title && applyUrl) {
+        setModalJob({
+          id: '',
+          title,
+          company_name: company,
+          company_logo_url: '',
+          type: (params.get('add_type') || params.get('type') || 'JOB').toUpperCase() as JobType,
+          location: params.get('add_location') || params.get('location') || 'Pan-India',
+          experience_min: 0,
+          experience_max: 1,
+          stipend_or_salary: params.get('add_salary') || params.get('salary') || '',
+          description: `Verified campus & early career opening at ${company}.\nApply directly through official ATS portal.`,
+          apply_url: applyUrl,
+          deadline: null,
+          tags: ['Freshers', 'India', 'Telegram'],
+          is_active: true,
+          is_featured: false,
+          sort_order: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        toast.info(`Pre-filled listing from Telegram for ${company}!`);
+      }
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }, [isEffectiveAdmin, toast]);
+
   // Single-pass O(N) partitioning into disjoint sets (Live, Expired, Draft)
   const { liveListings, expiredListings, draftListings } = useMemo(() => {
     const nowMs = Date.now();
@@ -894,6 +930,7 @@ export default function AdminJobsPage() {
       updated_at: new Date().toISOString(),
     });
   };
+
 
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
