@@ -12,6 +12,8 @@ import { jobsService } from '@/services/jobs.service';
 import type { JobListing, JobType, JobReport, JobReportStatus, ScrapedJobLead } from '@/types/jobs';
 import { useToast } from '@/contexts/ToastContext';
 import { curatedJobLeads } from '@/constants/curatedJobLeads';
+import ContentRenderer from '@/components/ContentRenderer';
+import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -134,6 +136,7 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
   );
 
   const [relistAsNew, setRelistAsNew] = useState(false);
+  const [descTab, setDescTab] = useState<'EDIT' | 'PREVIEW'>('EDIT');
   const [tagsInput, setTagsInput] = useState(() =>
     initial ? initial.tags.filter((t) => t !== 'LEAD').join(', ') : ''
   );
@@ -344,14 +347,49 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
 
           {/* Description */}
           <div>
-            <label className={labelCls}>Description</label>
-            <textarea
-              rows={3}
-              value={form.description ?? ''}
-              onChange={(e) => set('description', e.target.value)}
-              placeholder="Eligibility, batch eligibility, skills, selection process..."
-              className={`${inputCls} resize-y`}
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className={labelCls}>Description</label>
+              <div className="flex items-center gap-1 text-[10px] bg-[#F8F9FA] dark:bg-[#1A1A1A] p-0.5 rounded-md border border-[#E9ECEF] dark:border-[#2A2A2A]">
+                <button
+                  type="button"
+                  onClick={() => setDescTab('EDIT')}
+                  className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                    descTab === 'EDIT'
+                      ? 'bg-white dark:bg-[#252525] text-[#121417] dark:text-white shadow-xs'
+                      : 'text-[#868E96]'
+                  }`}
+                >
+                  Edit Markdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDescTab('PREVIEW')}
+                  className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                    descTab === 'PREVIEW'
+                      ? 'bg-white dark:bg-[#252525] text-[#121417] dark:text-white shadow-xs'
+                      : 'text-[#868E96]'
+                  }`}
+                >
+                  Live Preview
+                </button>
+              </div>
+            </div>
+            {descTab === 'EDIT' ? (
+              <textarea
+                rows={5}
+                value={form.description ?? ''}
+                onChange={(e) => set('description', e.target.value)}
+                placeholder="Eligibility, batch eligibility, skills, selection process..."
+                className={`${inputCls} resize-y font-mono`}
+              />
+            ) : (
+              <div className="p-3.5 bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg max-h-60 overflow-y-auto">
+                <ContentRenderer
+                  content={prepareJobDescriptionMarkdown(form.description ?? '')}
+                  emptyText="No description to preview."
+                />
+              </div>
+            )}
           </div>
 
           {/* Tags */}

@@ -10,6 +10,8 @@ import {
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
 import { useToast } from '@/contexts/ToastContext';
+import ContentRenderer from '@/components/ContentRenderer';
+import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
 import type { JobListing, JobListingFilters, JobType, JobSortOption, WorkModeFilter } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -489,7 +491,11 @@ interface JobDescriptionViewerProps {
 }
 
 function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
-  if (!description || description.trim().length === 0) {
+  const formattedMarkdown = useMemo(() => {
+    return prepareJobDescriptionMarkdown(description);
+  }, [description]);
+
+  if (!formattedMarkdown || formattedMarkdown.trim().length === 0) {
     return (
       <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#242424]">
         <p className="text-xs text-[#868E96] italic">
@@ -499,140 +505,12 @@ function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
     );
   }
 
-  // Split lines, trim, and filter empties
-  const rawLines = description.split('\n').map((l) => l.trim()).filter(Boolean);
-
-  const isHeading = (line: string): boolean => {
-    // Ends with a colon (e.g., "Educational Qualification:" or "Responsibilities:")
-    if (/^[A-Za-z0-9\s&/'-]+:$/.test(line)) return true;
-
-    const lower = line.toLowerCase().replace(/[:\-–]/g, '').trim();
-    const commonHeadings = [
-      'about the role', 'about the job', 'about the company', 'about niit',
-      'role overview', 'job overview', 'position summary', 'job summary',
-      'educational qualification', 'educational qualifications', 'education',
-      'academic qualification', 'academic qualifications', 'eligibility',
-      'eligibility criteria', 'experience', 'work experience', 'experience required',
-      'responsibilities', 'key responsibilities', 'roles & responsibilities',
-      'roles and responsibilities', 'what you will do', 'what you\'ll do',
-      'day to day responsibilities', 'requirements', 'minimum requirements',
-      'basic qualifications', 'preferred qualifications', 'skills required',
-      'technical skills', 'key skills', 'competencies', 'core competencies',
-      'what we are looking for', 'who you are', 'who should apply',
-      'benefits', 'perks', 'perks & benefits', 'perks and benefits',
-      'selection process', 'interview process', 'location', 'work mode',
-      'stipend and perks', 'compensation and benefits',
-    ];
-
-    if (commonHeadings.includes(lower)) return true;
-
-    // Short line (<= 40 chars) written in ALL CAPS with no trailing period
-    if (line.length <= 40 && !line.endsWith('.') && line.toUpperCase() === line && /[A-Z]{3,}/.test(line)) {
-      return true;
-    }
-
-    return false;
-  };
-
-  const isBulletItem = (line: string): boolean => {
-    // Explicit bullet or number prefixes
-    if (/^([•\-\*›▪▫–\+]|\d+[\.\)]|\([a-zA-Z0-9]+\))\s+/.test(line)) return true;
-
-    // Typical responsibilities or qualifications sentences starting with action verbs or requirement terms
-    const lower = line.toLowerCase();
-    const actionVerbs = [
-      'participate', 'debug', 'test', 'stay', 'contribute', 'develop', 'design',
-      'implement', 'build', 'collaborate', 'maintain', 'create', 'work', 'ensure',
-      'lead', 'analyze', 'support', 'write', 'assist', 'manage', 'understand',
-      'coordinate', 'perform', 'review', 'execute', 'monitor', 'optimize',
-      'troubleshoot', 'deploy', 'automate', 'architect', 'research',
-    ];
-    const firstWord = lower.split(/[\s,]+/)[0];
-    if (firstWord && actionVerbs.includes(firstWord)) return true;
-
-    if (/^(0|1|2|3|4|5|bachelor|master|b\.tech|b\.e|m\.tech|mca|degree|strong|basic|good|excellent|proven|hands-on|knowledge|proficiency|experience|familiarity|understanding|ability|must have|should have|responsible for)\b/i.test(line)) {
-      return true;
-    }
-
-    return false;
-  };
-
-  const cleanBullet = (line: string): string => {
-    return line.replace(/^([•\-\*›▪▫–\+]|\d+[\.\)]|\([a-zA-Z0-9]+\))\s*/, '').trim();
-  };
-
-  interface Block {
-    type: 'heading' | 'list' | 'paragraph';
-    title?: string;
-    items?: string[];
-    text?: string;
-  }
-
-  const blocks: Block[] = [];
-  let currentList: string[] = [];
-
-  const flushList = () => {
-    if (currentList.length > 0) {
-      blocks.push({ type: 'list', items: [...currentList] });
-      currentList = [];
-    }
-  };
-
-  for (const line of rawLines) {
-    if (isHeading(line)) {
-      flushList();
-      blocks.push({ type: 'heading', title: line.replace(/[:]+$/, '') });
-    } else if (isBulletItem(line)) {
-      currentList.push(cleanBullet(line));
-    } else {
-      flushList();
-      blocks.push({ type: 'paragraph', text: line });
-    }
-  }
-  flushList();
-
   return (
-    <div className="p-5 rounded-2xl bg-[#FDFDFD] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424] space-y-4">
-      {blocks.map((block, idx) => {
-        if (block.type === 'heading') {
-          return (
-            <div
-              key={idx}
-              className="flex items-center gap-2 pt-4 border-t border-[#E9ECEF] dark:border-[#242424] first:pt-0 first:border-0"
-            >
-              <span className="w-1.5 h-4 bg-zinc-700 dark:bg-zinc-300 rounded-full shrink-0" />
-              <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#121417] dark:text-white">
-                {block.title}
-              </h4>
-            </div>
-          );
-        }
-
-        if (block.type === 'list' && block.items) {
-          return (
-            <ul key={idx} className="space-y-2.5 pl-1">
-              {block.items.map((item, itemIdx) => (
-                <li
-                  key={itemIdx}
-                  className="flex items-start gap-2.5 text-xs sm:text-[13px] text-[#343A40] dark:text-[#D1D5DB] leading-relaxed"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600 mt-2 shrink-0" />
-                  <span className="flex-1">{item}</span>
-                </li>
-              ))}
-            </ul>
-          );
-        }
-
-        return (
-          <p
-            key={idx}
-            className="text-xs sm:text-[13px] text-[#495057] dark:text-[#CCCCCC] leading-relaxed"
-          >
-            {block.text}
-          </p>
-        );
-      })}
+    <div className="p-5 sm:p-6 rounded-2xl bg-[#FDFDFD] dark:bg-[#161616] border border-[#E9ECEF] dark:border-[#242424]">
+      <ContentRenderer
+        content={formattedMarkdown}
+        className="text-xs sm:text-[13px] leading-relaxed prose-h3:text-sm sm:prose-h3:text-base prose-h3:font-extrabold prose-h3:text-[#121417] dark:prose-h3:text-white prose-h3:border-b prose-h3:border-[#E9ECEF] dark:prose-h3:border-[#242424] prose-h3:pb-2 prose-h3:pt-4 first:prose-h3:pt-0 prose-h4:text-xs sm:prose-h4:text-sm prose-h4:font-bold prose-h4:text-[#FD4A32] dark:prose-h4:text-[#FD4A32] prose-h4:mt-4 prose-h4:mb-1.5 prose-p:my-2 prose-p:text-[#495057] dark:prose-p:text-[#CCCCCC] prose-p:leading-relaxed prose-ul:my-2 prose-ul:space-y-1.5 prose-li:text-[#343A40] dark:prose-li:text-[#D1D5DB] prose-li:leading-relaxed prose-strong:font-bold prose-strong:text-[#121417] dark:prose-strong:text-white"
+      />
     </div>
   );
 }
