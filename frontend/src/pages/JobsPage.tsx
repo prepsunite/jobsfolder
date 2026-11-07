@@ -12,6 +12,7 @@ import { bookmarkStore } from '@/services/stores/bookmarkStore';
 import { useToast } from '@/contexts/ToastContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
+import CompanyLogo from '@/components/CompanyLogo';
 import type { JobListing, JobListingFilters, JobType, JobSortOption, WorkModeFilter } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -355,27 +356,13 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
         {/* Top Header Row: Logo + Info + Bookmark button */}
         <div className="flex items-start gap-3 justify-between">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            {/* Logo container: full space occupation, no double borders */}
-            <div className="relative w-12 h-12 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-              {job.company_logo_url ? (
-                <img
-                  src={job.company_logo_url}
-                  alt={job.company_name}
-                  className="w-full h-full object-contain p-0.5"
-                  onError={(e) => {
-                    const t = e.currentTarget as HTMLImageElement;
-                    t.style.display = 'none';
-                    const fallback = t.nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div
-                className={`w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black ${job.company_logo_url ? 'hidden' : ''}`}
-              >
-                <Code className="w-5 h-5 text-[#0EA5E9] stroke-[2.5]" />
-              </div>
-
+            {/* Logo container: full space occupation with branded fallback */}
+            <div className="relative shrink-0">
+              <CompanyLogo
+                logoUrl={job.company_logo_url}
+                companyName={job.company_name}
+                size="md"
+              />
               {/* Green online/active dot */}
               <span className="absolute top-1 right-1 w-2 h-2 bg-[#22C55E] rounded-full ring-2 ring-white dark:ring-[#141414]" />
             </div>
@@ -692,25 +679,11 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
       >
         {/* Company & Role Hero */}
         <div className="flex items-start gap-4">
-          <div className="relative w-16 h-16 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-            {job.company_logo_url ? (
-              <img
-                src={job.company_logo_url}
-                alt={job.company_name}
-                className="w-full h-full object-contain p-0.5"
-                onError={(e) => {
-                  const t = e.currentTarget as HTMLImageElement;
-                  t.style.display = 'none';
-                  const fallback = t.nextElementSibling as HTMLElement | null;
-                  if (fallback) fallback.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div className={`w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black ${job.company_logo_url ? 'hidden' : ''}`}>
-              <Code className="w-8 h-8 text-[#0EA5E9] stroke-[2.5]" />
-            </div>
-            {/* Removed fake "online" green dot — we cannot verify listing status */}
-          </div>
+          <CompanyLogo
+            logoUrl={job.company_logo_url}
+            companyName={job.company_name}
+            size="lg"
+          />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">

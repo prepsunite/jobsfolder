@@ -14,6 +14,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { curatedJobLeads } from '@/constants/curatedJobLeads';
 import ContentRenderer from '@/components/ContentRenderer';
 import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
+import CompanyLogo from '@/components/CompanyLogo';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -249,13 +250,11 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
                 placeholder="https://... (PNG/SVG/favicon URL)"
                 className={`${inputCls} flex-1`}
               />
-              {form.company_logo_url && (
-                <img
-                  src={form.company_logo_url}
-                  alt="preview"
-                  className="w-10 h-10 rounded-lg object-contain border border-[#E9ECEF] dark:border-[#2A2A2A] p-1 bg-white dark:bg-[#1A1A1A] shrink-0"
-                />
-              )}
+              <CompanyLogo
+                logoUrl={form.company_logo_url}
+                companyName={form.company_name || 'Company'}
+                size="sm"
+              />
             </div>
           </div>
 
@@ -1631,14 +1630,14 @@ export default function AdminJobsPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none bg-[#F8F9FA] dark:bg-[#1E1E1E] px-2.5 py-1.5 rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A]">
                       <input
                         type="checkbox"
                         checked={hideListed}
                         onChange={(e) => setHideListed(e.target.checked)}
                         className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#2A2A2A] text-[#FD4A32] focus:ring-0 cursor-pointer"
                       />
-                      <span>Unlisted Only ({unlistedLeadsCount})</span>
+                      <span>Unlisted ({unlistedLeadsCount})</span>
                     </label>
 
                     {unlistedLeadsCount > 0 && (
@@ -1646,18 +1645,18 @@ export default function AdminJobsPage() {
                         type="button"
                         disabled={isBulkProcessing}
                         onClick={() => handleBulkQuickAdd()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FD4A32] hover:bg-[#E03E28] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
                         title="Publish all unlisted leads directly into live listings"
                       >
                         {isBulkProcessing ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Adding Leads ({bulkProgress.current}/{bulkProgress.total})...</span>
+                            <span>Publishing ({bulkProgress.current}/{bulkProgress.total})...</span>
                           </>
                         ) : (
                           <>
-                            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                            <span>Quick Add All ({unlistedLeadsCount})</span>
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>Publish All Leads ({unlistedLeadsCount})</span>
                           </>
                         )}
                       </button>
@@ -1942,24 +1941,11 @@ export default function AdminJobsPage() {
 
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-2.5">
-                                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center font-bold text-xs text-[#121417] dark:text-white shrink-0 overflow-hidden">
-                                    {lead.company_logo_url ? (
-                                      <img
-                                        src={lead.company_logo_url}
-                                        alt=""
-                                        className="w-5 h-5 object-contain"
-                                        onError={(e) => {
-                                          const target = e.currentTarget;
-                                          target.style.display = 'none';
-                                          const fallback = target.nextElementSibling as HTMLElement | null;
-                                          if (fallback) fallback.style.display = 'flex';
-                                        }}
-                                      />
-                                    ) : null}
-                                    <span className={`text-xs font-bold text-[#121417] dark:text-white ${lead.company_logo_url ? 'hidden' : 'flex'}`}>
-                                      {lead.company_name.slice(0, 1).toUpperCase()}
-                                    </span>
-                                  </div>
+                                  <CompanyLogo
+                                    logoUrl={lead.company_logo_url}
+                                    companyName={lead.company_name}
+                                    size="sm"
+                                  />
                                   <div>
                                     <div className="font-bold text-[#121417] dark:text-white flex items-center gap-1.5">
                                       <span>{lead.company_name}</span>
@@ -2521,24 +2507,11 @@ export default function AdminJobsPage() {
                             {/* Title + company */}
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center font-bold text-xs text-[#121417] dark:text-white shrink-0 overflow-hidden">
-                                  {job.company_logo_url ? (
-                                    <img
-                                      src={job.company_logo_url}
-                                      alt=""
-                                      className="w-5 h-5 object-contain"
-                                      onError={(e) => {
-                                        const target = e.currentTarget;
-                                        target.style.display = 'none';
-                                        const fallback = target.nextElementSibling as HTMLElement | null;
-                                        if (fallback) fallback.style.display = 'flex';
-                                      }}
-                                    />
-                                  ) : null}
-                                  <span className={`text-xs font-bold text-[#121417] dark:text-white ${job.company_logo_url ? 'hidden' : 'flex'}`}>
-                                    {job.company_name.slice(0, 1).toUpperCase()}
-                                  </span>
-                                </div>
+                                <CompanyLogo
+                                  logoUrl={job.company_logo_url}
+                                  companyName={job.company_name}
+                                  size="sm"
+                                />
                                 <div className="min-w-0">
                                   <div className="font-semibold text-[#121417] dark:text-white max-w-[200px] truncate">{job.title}</div>
                                   <div className="text-[#868E96] text-[11px] truncate">{job.company_name}</div>
