@@ -22,6 +22,7 @@ This document outlines the exact infrastructure and paid upgrades required as st
 | **12** | **Aptitude & Technical MCQ Paper Audit** | **$0 (Audit)** | Content expansion | Cross-checks parsing, option keys, and explanations across all non-coding tabs |
 | **13** | **Programming 150 Core Sheet Cross-Linking** | **$0 (Code)** | Placement prep flow | Seamless bidirectional linkage between company papers and the Top 150 sheet |
 | **14** | **TPO Real-Time Analytics & Auto-Proctoring** | **$0 (Code)** | Campus drive onboarding | Tab-switch penalty locks, auto-termination at drive cutoff, and Tier 1-3 clustering |
+| **15** | **Universal Daily Streak & Dopamine Hub (Profile Header)** | **$0 (Code)** | Next profile & engagement cycle | Unifies Aptitude, Coding, Interview & Exam practice into a 7-day flame tracker in Profile (see root `future.md`) |
 
 ---
 

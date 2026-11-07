@@ -458,3 +458,145 @@ export function evaluateQuestionSchema(q) {
 ---
 
 *Note: For the full infrastructure and scaling roadmap (Compiler scaling, Hetzner, Supabase Pro, Judge0), refer to `docs/future.md`.*
+
+---
+
+## 🔥 Universal Daily Practice Streak & Dopamine Gamification Engine
+
+### 1. Summary & Status
+* **Status**: 📋 **SPECIFIED & READY FOR IMPLEMENTATION**
+* **Target UI Location**: `/profile` ([`frontend/src/pages/ProfilePage.tsx`](file:///d:/Side%20projects/Prepunite/frontend/src/pages/ProfilePage.tsx)), mounted on the right side of the main student profile header card.
+* **Core Purpose**: Drive student retention and daily habit formation by rewarding consistency across all placement prep activities (Aptitude, Coding DSA, Interview Prep, and Old Papers) with high-octane visual dopamine feedback (Flame counter, 7-day micro-calendar, and streak protection badges).
+
+---
+
+### 2. The 4 Behavioral Psychology & Gamification Rules (Duolingo & LeetCode Model)
+
+| Rule | How It Works in Prepunite | Behavioral Impact |
+|---|---|---|
+| **1. The Universal Practice Rule** | **Any** genuine learning activity increments/protects the daily streak: answering an **Aptitude** MCQ, submitting an accepted **Coding** problem, marking an **Interview** question as Mastered, or attempting an **Old Paper** / Mock Exam. | Removes artificial boundaries. Students focusing on DSA on Tuesday and Aptitude on Wednesday maintain their continuous streak without friction. |
+| **2. Instant Visual Dopamine Hit** | On the first learning action of each calendar day, trigger an immediate celebration: flame ignites from ember to vibrant fire, accompanied by an energetic toast: *"🔥 Streak Extended to X Days!"*. | Closes the habit loop (Cue → Action → Reward) with immediate reinforcement. |
+| **3. 7-Day Micro Calendar (`M T W T F S S`)** | Displays 7 visual day tokens representing the current Monday–Sunday week. Practiced days glow orange with checkmarks; today has an active ring; future days remain subtle. | Exploits the "Don't Break the Chain" effect (Seinfeld method). Students hate seeing an empty circle mid-week. |
+| **4. The "Yesterday Grace Window"** | Streaks are computed in the student's **local timezone** (`YYYY-MM-DD`). If a user practiced yesterday, their streak remains active today with a motivating prompt: *"🔥 4 Days · Practice today to reach 5!"*. | Eliminates midnight UTC skew and prevents rage-quitting from premature streak resets before the day ends. |
+
+---
+
+### 3. Architecture & Universal Activity Ledger
+
+```mermaid
+flowchart TD
+    subgraph Activities ["Universal Practice Triggers"]
+        A["Aptitude MCQ Solved\n(progressService.recordAttempt)"]
+        B["Coding Problem Accepted\n(technicalService.markProblemSolved)"]
+        C["Interview Question Mastered\n(interviewService.toggleQuestionMastered)"]
+        D["Mock Exam / Old Paper Attempted\n(examService / student_exam_attempts)"]
+    end
+
+    subgraph Service ["Centralized streakService"]
+        L["streakService.recordDailyActivity(userEmail)"]
+        CALC["Calculate currentStreak, longestStreak,\nisPracticedToday, weeklyActivity[7]"]
+    end
+
+    subgraph Storage ["Dual Persistence Ledger"]
+        LS["localStorage: prepunite_user_activity_dates_${email}"]
+        DB["Supabase table: user_daily_streaks\n(Background Sync)"]
+    end
+
+    subgraph ReactiveUI ["Live Dopamine UI"]
+        EV["window.dispatchEvent('prepunite_streak_updated')"]
+        UI1["Profile Header Streak Card (/profile)"]
+        UI2["Learning Dashboard Glow (/dashboard)"]
+    end
+
+    A --> L
+    B --> L
+    C --> L
+    D --> L
+    L --> CALC
+    CALC --> LS
+    CALC --> DB
+    CALC --> EV
+    EV --> UI1
+    EV --> UI2
+```
+
+---
+
+### 4. Relevant File Directories & Integration Points
+
+| Component / Service | File Path | Integration Responsibility |
+|---|---|---|
+| **Central Streak Engine** | `frontend/src/services/streak.service.ts` | **NEW**: Centralized ledger tracking dates, streaks, local timezone normalization, week calculations, and broadcast events. |
+| **Profile Page (Hero UI)** | `frontend/src/pages/ProfilePage.tsx` | Embeds the Streak Hub on the right side of the main profile header card (`lines ~156–205`). |
+| **Aptitude Practice** | `frontend/src/services/progress.service.ts` | Invokes `streakService.recordDailyActivity` upon verified answer submission in `recordAttempt`. |
+| **Technical Coding** | `frontend/src/services/technical.service.ts` | Invokes `streakService.recordDailyActivity` upon accepted code submission in `markProblemSolved`. |
+| **Interview Preparation** | `frontend/src/services/interview.service.ts` | Invokes `streakService.recordDailyActivity` when marking question mastered in `toggleQuestionMastered`. |
+| **Mock Exams / Old Papers** | `frontend/src/pages/MockExamTestPage.tsx` | Invokes `streakService.recordDailyActivity` when submitting an exam or section attempt. |
+| **Database Ledger** | Supabase table: `user_daily_streaks` | Stores `user_email`, `current_streak`, `longest_streak`, `last_active_date`, and `activity_dates` (JSONB). |
+
+---
+
+### 5. UI Blueprint: Profile Header Streak Hub
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  [ AVATAR ]  Venkat Mukala   [ Admin Privileges ]     │   🔥 7 DAYS STREAK     [ Streak Protected ✓ ]  │
+│              venkatmukala9@gmail.com                  │                                                │
+│              Joined Batch of 2026                     │   M   T   W   T   F   S   S                    │
+│                                                       │  (✓) (✓) (✓) (✓) (✓) (●) (○)   Best: 14 Days   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Visual Token Specifications:
+- **Canvas / Container**: `#0D0E12` obsidian background with `#17181F` hairline border and subtle orange ambient glow (`rgba(253, 74, 50, 0.08)`).
+- **Flame Accent**: Linear gradient `from-[#FD4A32] to-[#FF8A00]` with drop-shadow glow.
+- **Protected State**: `bg-emerald-500/10 text-emerald-400 border-emerald-500/20` badge `Streak Protected ✓`.
+- **Pending Today State**: `bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse` badge `Practice to extend! ⚡`.
+- **7-Day Tokens**:
+  - `Completed`: `#FD4A32` background with white checkmark `Check` (w-2.5 h-2.5).
+  - `Today (Pending)`: Dark pill with pulsing `#FD4A32` ring (`ring-1 ring-[#FD4A32]`).
+  - `Upcoming / Rest`: `#1A1B23` muted pill with `#71717A` day initial.
+
+---
+
+### 6. TypeScript Interface & Data Models
+
+```typescript
+export interface DailyStreakState {
+  currentStreak: number;
+  longestStreak: number;
+  isPracticedToday: boolean;
+  lastActiveDate: string | null; // YYYY-MM-DD
+  totalActiveDays: number;
+  weeklyDays: {
+    dayName: 'M' | 'T' | 'W' | 'T' | 'F' | 'S' | 'S';
+    dateStr: string; // YYYY-MM-DD
+    isCompleted: boolean;
+    isToday: boolean;
+    isFuture: boolean;
+  }[];
+}
+```
+
+---
+
+### 7. Step-by-Step Implementation Checklist
+
+1. [ ] **Build `streak.service.ts`**:
+   - Implement timezone-safe local date formatting (`formatLocalDate`).
+   - Implement `calculateStreak(dateSet)` supporting consecutive days with yesterday-grace logic.
+   - Implement `getWeeklyActivity(dateSet)` returning Monday through Sunday statuses.
+   - Implement event emitter `dispatchStreakUpdate()`.
+2. [ ] **Connect Universal Learning Triggers**:
+   - Call `streakService.recordDailyActivity()` in `progressService.recordAttempt`.
+   - Call `streakService.recordDailyActivity()` in `technicalService.markProblemSolved`.
+   - Call `streakService.recordDailyActivity()` in `interviewService.toggleQuestionMastered`.
+   - Call `streakService.recordDailyActivity()` in `MockExamTestPage.tsx` submit handler.
+3. [ ] **Mount Streak Hub in `ProfilePage.tsx`**:
+   - Add responsive right-hand column in the main profile header card.
+   - Subscribe to `prepunite_streak_updated` window event for instant zero-reload updates.
+4. [ ] **Database Migration (Supabase)**:
+   - Create `user_daily_streaks` table with RLS policy allowing authenticated user upsert and read.
+5. [ ] **Run Verification Hierarchy**:
+   - Execute `npm --prefix frontend run build` (`tsc -b && vite build`).
+   - Run `npx --prefix frontend oxlint --quiet`.
