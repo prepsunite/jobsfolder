@@ -69,6 +69,19 @@ function getRelativeTime(dateStr?: string | null): string {
   return `${Math.floor(diffMonth / 12)}y ago`;
 }
 
+const SCRAPER_NOISE_TAGS = new Set([
+  'lead', 'indeed', 'linkedin', 'glassdoor', 'jobboard', 'jobspy', 'jobicy',
+  'freshers', 'fresher', '0-1 yoe', '0-1', '0-2 yoe', '1-2 yoe',
+  'remote wfh', 'remote', 'india', 'pan-india', 'telegram', 'product giant',
+  'unicorn', 'it services', 'mass recruiter', 'fintech', 'imported feed',
+  'active now', 'recent', 'off-campus', 'on-campus',
+]);
+
+function cleanLeadTags(tags?: string[] | null): string[] {
+  if (!tags || !Array.isArray(tags)) return [];
+  return tags.filter((t) => !SCRAPER_NOISE_TAGS.has(t.trim().toLowerCase()));
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = Omit<JobListing, 'id' | 'created_at' | 'updated_at'>;
@@ -127,7 +140,7 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
           description: initial.description ?? '',
           apply_url: initial.apply_url,
           deadline: initial.deadline ? initial.deadline.slice(0, 16) : null,
-          tags: initial.tags?.filter((t) => t !== 'LEAD') || [],
+          tags: cleanLeadTags(initial.tags),
           is_active: initial.tags?.includes('LEAD') ? true : initial.is_active,
           is_featured: initial.is_featured,
           sort_order: initial.sort_order,
@@ -138,7 +151,7 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
   const [relistAsNew, setRelistAsNew] = useState(false);
   const [descTab, setDescTab] = useState<'EDIT' | 'PREVIEW'>('EDIT');
   const [tagsInput, setTagsInput] = useState(() =>
-    initial ? initial.tags.filter((t) => t !== 'LEAD').join(', ') : ''
+    initial ? cleanLeadTags(initial.tags).join(', ') : ''
   );
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -964,10 +977,10 @@ export default function AdminJobsPage() {
     setAddingLeadId(lead.id);
     try {
       if (lead.isDbLead) {
-        // Unverified bot lead already in DB: activate and strip LEAD tag
+        // Unverified bot lead already in DB: activate and strip LEAD + scraper noise tags
         await jobsService.updateListing(lead.id, {
           is_active: true,
-          tags: (lead.tags || []).filter((t) => t !== 'LEAD'),
+          tags: cleanLeadTags(lead.tags),
         });
       } else {
         await jobsService.createListing({
@@ -984,7 +997,7 @@ export default function AdminJobsPage() {
             `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
           apply_url: lead.apply_url,
           deadline: null,
-          tags: (lead.tags || []).filter((t) => t !== 'LEAD'),
+          tags: cleanLeadTags(lead.tags),
           is_active: true,
           is_featured: false,
           sort_order: 0,
@@ -1015,7 +1028,7 @@ export default function AdminJobsPage() {
         `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
       apply_url: lead.apply_url,
       deadline: null,
-      tags: (lead.tags || []).filter((t) => t !== 'LEAD'),
+      tags: cleanLeadTags(lead.tags),
       is_active: true,
       is_featured: false,
       sort_order: 0,

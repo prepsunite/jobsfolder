@@ -534,6 +534,24 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
   const [reportOpen, setReportOpen] = React.useState(false);
   const [reported, setReported] = React.useState(() => jobsService.hasReportedJob(job.id));
 
+  const EXCLUDED_TAGS = useMemo(
+    () =>
+      new Set([
+        'indeed', 'linkedin', 'glassdoor', 'jobboard', 'jobspy', 'jobicy',
+        'freshers', 'fresher', '0-1 yoe', '0-1', '0-2 yoe', '1-2 yoe',
+        'remote wfh', 'remote', 'india', 'pan-india', 'lead', 'telegram',
+        'product giant', 'unicorn', 'it services', 'mass recruiter', 'fintech',
+        'imported feed', 'active now', 'recent', 'off-campus', 'on-campus',
+        'fresher 2024/2025', 'fresher 2025/2026', 'class of 2024 / 2025 / 2026 / 2027',
+      ]),
+    []
+  );
+
+  const displaySkills = useMemo(() => {
+    if (!job.tags || !Array.isArray(job.tags)) return [];
+    return job.tags.filter((t) => !EXCLUDED_TAGS.has(t.trim().toLowerCase()));
+  }, [job.tags, EXCLUDED_TAGS]);
+
   // Sync reported status whenever a different job is selected
   React.useEffect(() => {
     setReported(jobsService.hasReportedJob(job.id));
@@ -800,13 +818,13 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
         </div>
 
         {/* Tags & Skills */}
-        {job.tags && job.tags.length > 0 && (
+        {displaySkills.length > 0 && (
           <div>
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#868E96] mb-2.5">
               Target Skills &amp; Keywords
             </h3>
             <div className="flex flex-wrap gap-1.5">
-              {job.tags.map((tag) => (
+              {displaySkills.map((tag) => (
                 <span
                   key={tag}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#F1F3F5] dark:bg-[#202020] text-[#121417] dark:text-[#E0E0E0] border border-[#E9ECEF] dark:border-[#2E2E2E]"
