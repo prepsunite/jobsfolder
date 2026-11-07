@@ -3,13 +3,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Edit3, Trash2, Eye, EyeOff, Star, StarOff,
   Briefcase, MapPin, Clock, X, Check, AlertCircle,
-  ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2
+  ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2,
+  Sparkles, Upload
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { jobsService } from '@/services/jobs.service';
-import type { JobListing, JobType, JobReport, JobReportStatus } from '@/types/jobs';
+import type { JobListing, JobType, JobReport, JobReportStatus, ScrapedJobLead } from '@/types/jobs';
 import { useToast } from '@/contexts/ToastContext';
+import { curatedJobLeads } from '@/constants/curatedJobLeads';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -27,6 +29,19 @@ function getDeadlineMeta(deadline: string | null | undefined): { label: string; 
 function isExpiredRow(deadline: string | null | undefined): boolean {
   if (!deadline) return false;
   return new Date(deadline).getTime() < Date.now();
+}
+
+function parseAgeDays(ageStr?: string | null): number {
+  if (!ageStr) return 999;
+  const str = String(ageStr).trim().toLowerCase();
+  if (str === 'today' || str === '0d' || str === 'active now') return 0;
+  const dMatch = str.match(/^(\d+)\s*d$/i);
+  if (dMatch) return parseInt(dMatch[1], 10);
+  const wMatch = str.match(/^(\d+)\s*w$/i);
+  if (wMatch) return parseInt(wMatch[1], 10) * 7;
+  const mMatch = str.match(/^(\d+)\s*mo$/i);
+  if (mMatch) return parseInt(mMatch[1], 10) * 30;
+  return 999;
 }
 
 function formatDate(dateStr?: string | null): string {
@@ -140,7 +155,7 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
       deadline: form.deadline || null,
       experience_max: form.experience_max == null || (form.experience_max as any) === '' ? null : Number(form.experience_max),
     };
-    await onSave(payload, initial?.id, relistAsNew);
+    await onSave(payload, initial?.id || undefined, relistAsNew);
   };
 
   const inputCls = "w-full px-3 py-2 text-xs bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors";
@@ -152,7 +167,7 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
         {/* Modal Header */}
         <div className="sticky top-0 bg-white dark:bg-[#141414] border-b border-[#E9ECEF] dark:border-[#242424] px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-sm font-display font-extrabold text-[#121417] dark:text-white">
-            {initial ? 'Edit Listing' : 'New Listing'}
+            {initial && initial.id ? 'Edit Listing' : initial ? 'New Listing (From Lead)' : 'New Listing'}
           </h2>
           <button type="button" onClick={onClose} className="text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-colors">
             <X className="w-5 h-5" />
@@ -457,8 +472,9 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
 
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 
-type AdminJobTab = 'LIVE' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
+type AdminJobTab = 'LIVE' | 'LEADS' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
 type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
+type LeadCategoryFilter = 'ALL' | 'FRESH' | 'INDIA' | 'SPEEDY' | 'JOBS' | 'INTERNSHIPS' | 'REMOTE';
 
 export default function AdminJobsPage() {
   const { user, isAdmin } = useAuth();
@@ -476,6 +492,20 @@ export default function AdminJobsPage() {
   const [sortBy, setSortBy] = useState<SortBy>('OLDEST');
   const [auditingId, setAuditingId] = useState<string | null>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<JobReportStatus | 'ALL'>('OPEN');
+
+  // Leads tab states
+  const [leadCategory, setLeadCategory] = useState<LeadCategoryFilter>('ALL');
+  const [hideListed, setHideListed] = useState<boolean>(false);
+  const [visibleLeadsCount, setVisibleLeadsCount] = useState<number>(50);
+  const [addingLeadId, setAddingLeadId] = useState<string | null>(null);
+  const [customLeads, setCustomLeads] = useState<ScrapedJobLead[] | null>(() => {
+    try {
+      const cached = localStorage.getItem('prepunite_admin_job_leads');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ['admin_job_listings'],
@@ -563,12 +593,102 @@ export default function AdminJobsPage() {
     return list;
   }, [reports, reportStatusFilter, search]);
 
+  // Leads pipeline and state logic
+  const activeLeadsPool = useMemo<ScrapedJobLead[]>(() => {
+    return customLeads && customLeads.length > 0 ? customLeads : curatedJobLeads;
+  }, [customLeads]);
+
+  const listedUrlSet = useMemo(() => {
+    const set = new Set<string>();
+    for (let i = 0; i < listings.length; i++) {
+      const l = listings[i];
+      if (l.apply_url) set.add(l.apply_url.toLowerCase().trim());
+      if (l.company_name && l.title) {
+        set.add(`${l.company_name.toLowerCase().trim()}|${l.title.toLowerCase().trim()}`);
+      }
+    }
+    return set;
+  }, [listings]);
+
+  const isLeadListed = useCallback(
+    (lead: ScrapedJobLead) => {
+      const urlKey = (lead.apply_url || '').toLowerCase().trim();
+      const nameKey = `${(lead.company_name || '').toLowerCase().trim()}|${(lead.title || '').toLowerCase().trim()}`;
+      return listedUrlSet.has(urlKey) || listedUrlSet.has(nameKey);
+    },
+    [listedUrlSet]
+  );
+
+  const { freshLeadsCount, indiaLeadsCount, speedyLeadsCount, unlistedLeadsCount } = useMemo(() => {
+    let fresh = 0;
+    let india = 0;
+    let speedy = 0;
+    let unlisted = 0;
+
+    for (let i = 0; i < activeLeadsPool.length; i++) {
+      const lead = activeLeadsPool[i];
+      if (parseAgeDays(lead.age) <= 3) fresh++;
+      if (lead.source.includes('India') || /india|bangalore|hyderabad|pune/i.test(lead.location)) india++;
+      if (lead.source.includes('SpeedyApply')) speedy++;
+      if (!isLeadListed(lead)) unlisted++;
+    }
+
+    return {
+      freshLeadsCount: fresh,
+      indiaLeadsCount: india,
+      speedyLeadsCount: speedy,
+      unlistedLeadsCount: unlisted,
+    };
+  }, [activeLeadsPool, isLeadListed]);
+
+  const filteredLeads = useMemo(() => {
+    let list = activeLeadsPool;
+
+    if (hideListed) {
+      list = list.filter((l) => !isLeadListed(l));
+    }
+
+    if (leadCategory === 'FRESH') {
+      list = list.filter((l) => parseAgeDays(l.age) <= 3);
+    } else if (leadCategory === 'INDIA') {
+      list = list.filter(
+        (l) => l.source.includes('India') || /india|bangalore|hyderabad|pune|delhi|mumbai/i.test(l.location)
+      );
+    } else if (leadCategory === 'SPEEDY') {
+      list = list.filter((l) => l.source.includes('SpeedyApply'));
+    } else if (leadCategory === 'JOBS') {
+      list = list.filter((l) => l.type === 'JOB');
+    } else if (leadCategory === 'INTERNSHIPS') {
+      list = list.filter((l) => l.type === 'INTERNSHIP');
+    } else if (leadCategory === 'REMOTE') {
+      list = list.filter(
+        (l) => /remote/i.test(l.location) || l.source.includes('Jobicy') || l.source.includes('Arbeitnow')
+      );
+    }
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (l) =>
+          l.title.toLowerCase().includes(q) ||
+          l.company_name.toLowerCase().includes(q) ||
+          l.location.toLowerCase().includes(q) ||
+          (l.stipend_or_salary && l.stipend_or_salary.toLowerCase().includes(q)) ||
+          l.tags.some((t) => t.toLowerCase().includes(q)) ||
+          l.source.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [activeLeadsPool, hideListed, leadCategory, search, isLeadListed]);
+
   // Select target tab pool
   const currentTabPool = useMemo(() => {
     switch (activeTab) {
       case 'LIVE': return liveListings;
       case 'EXPIRED': return expiredListings;
       case 'DRAFT': return draftListings;
+      case 'LEADS': return [];
       case 'ALL': default: return listings;
     }
   }, [activeTab, liveListings, expiredListings, draftListings, listings]);
@@ -630,7 +750,7 @@ export default function AdminJobsPage() {
   ) => {
     setSaving(true);
     try {
-      if (id) {
+      if (id && id.trim()) {
         const updatePayload: any = { ...data };
         if (relistAsNew) {
           updatePayload.created_at = new Date().toISOString();
@@ -648,6 +768,99 @@ export default function AdminJobsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleQuickAddLead = async (lead: ScrapedJobLead) => {
+    setAddingLeadId(lead.id);
+    try {
+      await jobsService.createListing({
+        title: lead.title,
+        company_name: lead.company_name,
+        company_logo_url: lead.company_logo_url || null,
+        type: lead.type,
+        location: lead.location || 'Remote',
+        experience_min: 0,
+        experience_max: 1,
+        stipend_or_salary: lead.stipend_or_salary || null,
+        description: `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+        apply_url: lead.apply_url,
+        deadline: null,
+        tags: lead.tags || [],
+        is_active: true,
+        is_featured: false,
+        sort_order: 0,
+      });
+      toast.success(`Published ${lead.company_name} to live listings!`);
+      invalidate();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to add lead.');
+    } finally {
+      setAddingLeadId(null);
+    }
+  };
+
+  const handleReviewLead = (lead: ScrapedJobLead) => {
+    setModalJob({
+      id: '',
+      title: lead.title,
+      company_name: lead.company_name,
+      company_logo_url: lead.company_logo_url || '',
+      type: lead.type,
+      location: lead.location || 'Remote',
+      experience_min: 0,
+      experience_max: 1,
+      stipend_or_salary: lead.stipend_or_salary || '',
+      description: `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+      apply_url: lead.apply_url,
+      deadline: null,
+      tags: lead.tags || [],
+      is_active: true,
+      is_featured: false,
+      sort_order: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  };
+
+  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const validated: ScrapedJobLead[] = parsed.map((item, idx) => ({
+            id: item.id || `custom_${idx}_${(item.company_name || '').replace(/\W+/g, '')}`,
+            company_name: item.company_name || 'Unknown',
+            company_logo_url: item.company_logo_url || null,
+            title: item.title || 'Software Engineer',
+            type: item.type === 'INTERNSHIP' ? 'INTERNSHIP' : 'JOB',
+            location: item.location || 'Remote',
+            stipend_or_salary: item.stipend_or_salary || null,
+            apply_url: item.apply_url || '',
+            source: item.source || 'Imported Feed',
+            age: item.age || 'Recent',
+            batch_eligibility: item.batch_eligibility || '2025, 2026',
+            tags: Array.isArray(item.tags) ? item.tags : [],
+          }));
+          setCustomLeads(validated);
+          localStorage.setItem('prepunite_admin_job_leads', JSON.stringify(validated));
+          toast.success(`Loaded ${validated.length} leads from JSON!`);
+        } else {
+          toast.error('Invalid JSON structure: array of job objects expected.');
+        }
+      } catch (err: any) {
+        toast.error(`JSON parse failed: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleResetLeads = () => {
+    setCustomLeads(null);
+    localStorage.removeItem('prepunite_admin_job_leads');
+    toast.success('Reset leads pool to default curated harvester dataset.');
   };
 
   const handleMarkAudited = async (job: JobListing) => {
@@ -830,7 +1043,7 @@ export default function AdminJobsPage() {
               <div>
                 <h1 className="text-xl font-display font-extrabold text-[#121417] dark:text-white">Jobs Board Admin</h1>
                 <p className="text-xs text-[#868E96]">
-                  {liveListings.length} live · {expiredListings.length} expired · {draftListings.length} drafts
+                  {liveListings.length} live · {activeLeadsPool.length} leads · {expiredListings.length} expired · {draftListings.length} drafts
                   {openReportsCount > 0 && (
                     <span className="text-rose-500 font-bold ml-1">
                       · {openReportsCount} open report{openReportsCount > 1 ? 's' : ''}
@@ -864,6 +1077,24 @@ export default function AdminJobsPage() {
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 Live ({liveListings.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('LEADS')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'LEADS'
+                    ? 'bg-white dark:bg-[#0C0C0C] text-[#121417] dark:text-white shadow-xs'
+                    : 'text-[#868E96] hover:text-[#121417] dark:hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Leads ({activeLeadsPool.length})</span>
+                {freshLeadsCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                    {freshLeadsCount} Fresh
+                  </span>
+                )}
               </button>
 
               <button
@@ -923,21 +1154,58 @@ export default function AdminJobsPage() {
               </button>
             </div>
 
-            {/* Actions: Search + Sort + Purge button */}
+            {/* Actions: Search + Sort + Purge / Import */}
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 sm:w-60 min-w-[180px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
                 <input
                   type="text"
-                  placeholder={activeTab === 'REPORTS' ? 'Search reports...' : 'Filter listings...'}
+                  placeholder={
+                    activeTab === 'REPORTS'
+                      ? 'Search reports...'
+                      : activeTab === 'LEADS'
+                      ? 'Search leads by company, title, skill...'
+                      : 'Filter listings...'
+                  }
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white placeholder:text-[#868E96] focus:outline-none focus:border-[#121417] dark:focus:border-[#555] transition-colors"
                 />
               </div>
 
+              {/* Import JSON button when on LEADS tab */}
+              {activeTab === 'LEADS' && (
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="leads-json-upload"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg border border-[#E9ECEF] dark:border-[#2A2A2A] bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] hover:text-[#121417] dark:hover:text-white hover:border-[#121417] dark:hover:border-white transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    title="Upload newly scraped job_leads_raw.json to refresh the pool"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span>Import JSON</span>
+                    <input
+                      id="leads-json-upload"
+                      type="file"
+                      accept=".json"
+                      className="hidden"
+                      onChange={handleImportJson}
+                    />
+                  </label>
+
+                  {customLeads && (
+                    <button
+                      type="button"
+                      onClick={handleResetLeads}
+                      className="px-2 py-1.5 text-[11px] font-semibold text-rose-500 hover:text-rose-600 underline cursor-pointer whitespace-nowrap"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Sort Selector (only for listings) */}
-              {activeTab !== 'REPORTS' && (
+              {activeTab !== 'REPORTS' && activeTab !== 'LEADS' && (
                 <div className="flex items-center gap-1.5">
                   <label htmlFor="admin-jobs-sort" className="text-[11px] font-semibold text-[#868E96] whitespace-nowrap hidden md:inline">
                     Sort:
@@ -973,8 +1241,328 @@ export default function AdminJobsPage() {
             </div>
           </div>
 
-          {/* Reports Moderation View */}
-          {activeTab === 'REPORTS' ? (
+          {/* Leads Intelligence & Ingestion Panel */}
+          {activeTab === 'LEADS' ? (
+            <div className="space-y-4">
+              {/* Category Filter Chips Bar */}
+              <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl p-3 sm:p-4 shadow-xs">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('ALL'); setVisibleLeadsCount(50); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'ALL'
+                          ? 'bg-[#121417] dark:bg-white text-white dark:text-[#121417]'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      All Leads ({activeLeadsPool.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('FRESH'); setVisibleLeadsCount(50); }}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'FRESH'
+                          ? 'bg-amber-500 text-black shadow-xs'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      <span>🔥 Ultra-Fresh (0–3d)</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                        {freshLeadsCount}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('INDIA'); setVisibleLeadsCount(50); }}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'INDIA'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      <span>🇮🇳 India Drives (10–35 LPA)</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                        {indiaLeadsCount}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('SPEEDY'); setVisibleLeadsCount(50); }}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'SPEEDY'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      <span>⭐ Top Tech College SWE</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                        {speedyLeadsCount}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('JOBS'); setVisibleLeadsCount(50); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'JOBS'
+                          ? 'bg-purple-600 text-white shadow-xs'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      Full-Time (0–1 YOE)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('INTERNSHIPS'); setVisibleLeadsCount(50); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'INTERNSHIPS'
+                          ? 'bg-teal-600 text-white shadow-xs'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      Internships
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('REMOTE'); setVisibleLeadsCount(50); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        leadCategory === 'REMOTE'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                      }`}
+                    >
+                      Remote / Global
+                    </button>
+                  </div>
+
+                  {/* Toggle: Hide Already Listed */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={hideListed}
+                        onChange={(e) => setHideListed(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#2A2A2A] text-[#FD4A32] focus:ring-0 cursor-pointer"
+                      />
+                      <span>Unlisted Only ({unlistedLeadsCount})</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Leads Table Card */}
+              <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden shadow-xs">
+                {filteredLeads.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <AlertCircle className="w-10 h-10 text-[#868E96] mb-3" />
+                    <h3 className="text-sm font-bold text-[#121417] dark:text-white mb-1">No Leads Matching Filters</h3>
+                    <p className="text-xs text-[#868E96] max-w-sm mb-4">
+                      Try clearing your search query, switching categories, or unticking "Unlisted Only".
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setLeadCategory('ALL'); setHideListed(false); setSearch(''); }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA]/70 dark:bg-[#0C0C0C]/60 text-[10px] font-bold uppercase tracking-wider text-[#868E96]">
+                          <th className="py-3 px-4 w-12">#</th>
+                          <th className="py-3 px-4">Company & Source</th>
+                          <th className="py-3 px-4">Role Title & Type</th>
+                          <th className="py-3 px-4">Location & Salary</th>
+                          <th className="py-3 px-4">Freshness</th>
+                          <th className="py-3 px-4 text-center">Verify Link</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E9ECEF] dark:divide-[#242424]">
+                        {filteredLeads.slice(0, visibleLeadsCount).map((lead, idx) => {
+                          const isListed = isLeadListed(lead);
+                          const isUltraFresh = parseAgeDays(lead.age) <= 3;
+                          return (
+                            <tr
+                              key={lead.id}
+                              className={`hover:bg-[#F8F9FA] dark:hover:bg-[#1A1A1A]/60 transition-colors ${
+                                isListed ? 'opacity-70 bg-zinc-50/50 dark:bg-zinc-950/20' : ''
+                              }`}
+                            >
+                              <td className="py-3 px-4 text-[11px] text-[#868E96] font-mono">
+                                {idx + 1}
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center font-bold text-xs text-[#121417] dark:text-white shrink-0">
+                                    {lead.company_logo_url ? (
+                                      <img src={lead.company_logo_url} alt="" className="w-5 h-5 object-contain" />
+                                    ) : (
+                                      lead.company_name.slice(0, 1).toUpperCase()
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-[#121417] dark:text-white flex items-center gap-1.5">
+                                      <span>{lead.company_name}</span>
+                                      {isListed && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                          <Check className="w-2.5 h-2.5" /> Listed
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[10px] text-[#868E96]">
+                                      {lead.source}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <div>
+                                  <div className="font-semibold text-[#121417] dark:text-white max-w-[320px] truncate" title={lead.title}>
+                                    {lead.title}
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold ${
+                                      lead.type === 'JOB'
+                                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                    }`}>
+                                      {lead.type}
+                                    </span>
+                                    {lead.tags.slice(0, 2).map((t) => (
+                                      <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[#F8F9FA] dark:bg-[#202020] text-[#495057] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <div>
+                                  <div className="flex items-center gap-1 text-[11px] text-[#495057] dark:text-[#AAAAAA] max-w-[200px] truncate" title={lead.location}>
+                                    <MapPin className="w-3 h-3 text-[#868E96] shrink-0" />
+                                    <span>{lead.location}</span>
+                                  </div>
+                                  <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                    {lead.stipend_or_salary || 'Competitive / Undisclosed'}
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  isUltraFresh
+                                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                                    : 'bg-zinc-100 dark:bg-zinc-800 text-[#868E96]'
+                                }`}>
+                                  {isUltraFresh && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+                                  {lead.age}
+                                </span>
+                              </td>
+
+                              <td className="py-3 px-4 text-center">
+                                <a
+                                  href={lead.apply_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] text-blue-600 dark:text-blue-400 hover:border-blue-500 hover:bg-blue-500/10 transition-all cursor-pointer whitespace-nowrap"
+                                  title="Open official ATS / university portal in new tab"
+                                >
+                                  <span>Verify Portal</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </td>
+
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {isListed ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSearch(lead.company_name);
+                                        setActiveTab('LIVE');
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer whitespace-nowrap"
+                                    >
+                                      View Live
+                                    </button>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleReviewLead(lead)}
+                                        title="Pre-fill and review in editor modal"
+                                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#F8F9FA] dark:bg-[#1F1F1F] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-[#121417] dark:hover:border-white transition-all cursor-pointer whitespace-nowrap"
+                                      >
+                                        Review & Edit
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={addingLeadId === lead.id}
+                                        onClick={() => handleQuickAddLead(lead)}
+                                        title="1-Click publish directly into live job listings"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer whitespace-nowrap disabled:opacity-50"
+                                      >
+                                        {addingLeadId === lead.id ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Plus className="w-3 h-3" />
+                                        )}
+                                        <span>Quick Add</span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Pagination Footer */}
+                {filteredLeads.length > visibleLeadsCount && (
+                  <div className="p-4 border-t border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA]/40 dark:bg-[#0C0C0C]/40 flex items-center justify-between">
+                    <span className="text-xs text-[#868E96]">
+                      Showing <span className="font-bold text-[#121417] dark:text-white">{Math.min(visibleLeadsCount, filteredLeads.length)}</span> of{' '}
+                      <span className="font-bold text-[#121417] dark:text-white">{filteredLeads.length}</span> matching leads
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVisibleLeadsCount((prev) => prev + 50)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#121417] dark:text-white hover:border-[#121417] dark:hover:border-white transition-all cursor-pointer"
+                      >
+                        Load 50 More
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVisibleLeadsCount(filteredLeads.length)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-all cursor-pointer"
+                      >
+                        Show All ({filteredLeads.length})
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : activeTab === 'REPORTS' ? (
             <div className="bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-xl overflow-hidden">
               {/* Reports status sub-bar */}
               <div className="px-4 py-3 border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA]/60 dark:bg-[#0C0C0C]/50 flex flex-wrap items-center justify-between gap-3">

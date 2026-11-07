@@ -50,3 +50,19 @@ export interface JobReport {
   created_at: string;
   resolved_at?: string | null;
 }
+
+export interface ScrapedJobLead {
+  id: string;
+  company_name: string;
+  company_logo_url?: string | null;
+  title: string;
+  type: JobType;
+  location: string;
+  stipend_or_salary?: string | null;
+  apply_url: string;
+  source: string;
+  age: string;
+  batch_eligibility?: string;
+  tags: string[];
+}
+
