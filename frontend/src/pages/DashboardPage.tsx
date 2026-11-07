@@ -931,11 +931,10 @@ export default function DashboardPage() {
 
               <Link
                 to="/companies"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-display font-bold uppercase tracking-wider bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
               >
-                <Building2 className="w-4 h-4" />
-                <span>Browse Companies & Exams</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>Browse Companies &amp; Exams</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
@@ -1179,11 +1178,10 @@ export default function DashboardPage() {
 
               <Link
                 to="/aptitude/arithmetic-aptitude"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-display font-bold uppercase tracking-wider bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
               >
-                <BookOpen className="w-4 h-4" />
-                <span>Explore Aptitude Practice Topics</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>Explore Practice Topics</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
@@ -1287,11 +1285,10 @@ export default function DashboardPage() {
 
               <Link
                 to="/experiences"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FD4A32] hover:bg-[#D62F18] text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-display font-bold uppercase tracking-wider bg-[#121417] dark:bg-white text-white dark:text-black hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs"
               >
-                <Layers className="w-4 h-4" />
                 <span>Browse Interview Experiences</span>
-                <ChevronRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
