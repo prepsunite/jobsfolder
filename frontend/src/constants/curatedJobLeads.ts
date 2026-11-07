@@ -434,11 +434,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://jobs.lever.co/razorpay",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -451,11 +451,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹16-24 LPA",
     "apply_url": "https://careers.cred.club/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -468,11 +468,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://groww.in/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -485,11 +485,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-16 LPA",
     "apply_url": "https://careers.meesho.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -502,11 +502,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://www.zepto.co.in/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -519,11 +519,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹14-20 LPA",
     "apply_url": "https://careers.swiggy.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -536,11 +536,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://careers.inmobi.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -553,11 +553,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹16-25 LPA",
     "apply_url": "https://www.postman.com/company/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -570,11 +570,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹15-22 LPA",
     "apply_url": "https://hasura.io/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -587,11 +587,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹14-20 LPA",
     "apply_url": "https://harness.io/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -604,11 +604,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹15-22 LPA",
     "apply_url": "https://www.dreamsports.group/sports-tech-careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -621,11 +621,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹14-22 LPA",
     "apply_url": "https://www.phonepe.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -638,11 +638,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://www.ola.in/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -655,11 +655,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://careers.oyorooms.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -672,11 +672,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://www.delhivery.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -689,11 +689,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://careers.urbancompany.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -706,11 +706,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://careers.nykaa.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -723,11 +723,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://careers.zerodha.tech/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -740,11 +740,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://www.pinelabs.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -757,11 +757,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://upstox.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -774,11 +774,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹14-22 LPA",
     "apply_url": "https://careers.sharechat.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -791,11 +791,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://bharatpe.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -808,11 +808,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://blinkit.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -825,11 +825,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://www.verse.in/careers.html",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -842,11 +842,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://www.pocketfm.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -859,11 +859,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹15-22 LPA",
     "apply_url": "https://devrev.ai/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -876,11 +876,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹20-30 LPA",
     "apply_url": "https://www.glean.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -893,11 +893,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹15-25 LPA",
     "apply_url": "https://www.sarvam.ai/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -910,11 +910,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://olakrutrim.com/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -927,11 +927,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹8-14 LPA",
     "apply_url": "https://yellow.ai/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -944,11 +944,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://www.gupshup.io/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -961,11 +961,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://www.druva.com/about/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -978,11 +978,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://www.browserstack.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -995,11 +995,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://www.freshworks.com/company/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1012,11 +1012,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Gurugram / Mumbai / Pune",
     "stipend_or_salary": "₹7-12 LPA",
     "apply_url": "https://www.zoho.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Unicorn)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Unicorn",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1026,14 +1026,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "LeadSquared",
     "title": "SaaS Backend",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://www.leadsquared.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1043,14 +1043,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Chargebee",
     "title": "Billing microservices",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://www.chargebee.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1060,14 +1060,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Wingify",
     "title": "React frontend",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://wingify.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1077,14 +1077,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "CleverTap",
     "title": "Real-time notifications",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹12-16 LPA",
     "apply_url": "https://clevertap.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1094,14 +1094,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "WebEngage",
     "title": "Campaign dispatch",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://webengage.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1111,14 +1111,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Whatfix",
     "title": "React integrations",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://whatfix.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1128,14 +1128,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Darwinbox",
     "title": "Enterprise SaaS",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://darwinbox.com/careers.php",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1145,14 +1145,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "HighRadius",
     "title": "FinTech SaaS",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://www.highradius.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1162,14 +1162,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Amagi",
     "title": "Cloud video processing",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://www.amagi.com/company/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1179,14 +1179,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Icertis",
     "title": "Enterprise SaaS",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://www.icertis.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1196,14 +1196,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Fractal Analytics",
     "title": "AI/ML pipeline",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://fractal.ai/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1213,14 +1213,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Mu Sigma",
     "title": "Decision sciences",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹7-10 LPA",
     "apply_url": "https://www.mu-sigma.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1230,14 +1230,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Innovaccer",
     "title": "Healthcare data",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹10-15 LPA",
     "apply_url": "https://innovaccer.com/careers",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1247,14 +1247,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Sprinklr",
     "title": "Social data platform",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹15-24 LPA",
     "apply_url": "https://www.sprinklr.com/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1264,14 +1264,14 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "company_name": "Cohesity",
     "title": "Storage & Backend",
     "type": "JOB",
-    "location": "Bengaluru / Gurugram / Mumbai / Pune",
+    "location": "Bengaluru / Hyderabad / Pune / Remote (India)",
     "stipend_or_salary": "₹15-22 LPA",
     "apply_url": "https://www.cohesity.com/company/careers/",
-    "source": "India Tech Portal (Unicorn & Startup)",
+    "source": "India Tech Portal (Product Giant)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "Unicorn & Startup",
+      "Product Giant",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1284,11 +1284,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹15-22 LPA",
     "apply_url": "https://www.morganstanley.com/about-us/careers",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1301,11 +1301,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹18-25 LPA",
     "apply_url": "https://www.goldmansachs.com/careers/index.html",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1318,11 +1318,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹14-16 LPA",
     "apply_url": "https://careers.jpmorgan.com/US/en/students",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1335,11 +1335,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-16 LPA",
     "apply_url": "https://jobs.citi.com/students",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1352,11 +1352,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://www.hsbc.com/careers/students-and-graduates",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1369,11 +1369,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-15 LPA",
     "apply_url": "https://search.jobs.barclays/early-careers",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1386,11 +1386,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-16 LPA",
     "apply_url": "https://careers.db.com/students-graduates/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1403,11 +1403,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://www.sc.com/en/careers/early-careers/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1420,11 +1420,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-16 LPA",
     "apply_url": "https://www.ubs.com/global/en/careers/students-graduates.html",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1437,11 +1437,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://www.nomura.com/careers/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1454,11 +1454,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹10-14 LPA",
     "apply_url": "https://jobs.fidelity.com/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1471,11 +1471,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹25-40 LPA",
     "apply_url": "https://www.deshaw.com/careers",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1488,11 +1488,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹30-50 LPA",
     "apply_url": "https://www.towerresearch.com/careers",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1505,11 +1505,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹35-60 LPA",
     "apply_url": "https://www.optiver.com/join-us/jobs/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1522,11 +1522,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹40-70 LPA",
     "apply_url": "https://www.citadelsecurities.com/careers/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1539,11 +1539,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-16 LPA",
     "apply_url": "https://www.wellsfargojobs.com/en/early-careers/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1556,11 +1556,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://careers.americanexpress.com/students/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1573,11 +1573,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹15-22 LPA",
     "apply_url": "https://www.visa.co.in/careers/students.html",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1590,11 +1590,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹12-18 LPA",
     "apply_url": "https://careers.mastercard.com/us/en/students-graduates",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1607,11 +1607,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹18-25 LPA",
     "apply_url": "https://www.capitalonecareers.com/students",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1624,11 +1624,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://www.bajajfinserv.in/careers",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1641,11 +1641,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹6-10 LPA",
     "apply_url": "https://careers.hdfcbank.com/careers/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1658,11 +1658,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹6-10 LPA",
     "apply_url": "https://www.icicicareers.com/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1675,11 +1675,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹6-10 LPA",
     "apply_url": "https://www.kotak.com/en/about-us/careers.html",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1692,11 +1692,11 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "location": "Bengaluru / Mumbai / Hyderabad",
     "stipend_or_salary": "₹8-12 LPA",
     "apply_url": "https://careers.societegenerale.com/",
-    "source": "India Tech Portal (FinTech & Quant)",
+    "source": "India Tech Portal (FinTech)",
     "age": "Active Now",
     "batch_eligibility": "Class of 2025, 2026, 2027",
     "tags": [
-      "FinTech & Quant",
+      "FinTech",
       "India",
       "Fresher 2025/2026"
     ]
@@ -1717,7 +1717,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "Mass Recruiter",
       "Java",
       "Python",
-      "Aptitude"
+      "Aptitude",
+      "India"
     ]
   },
   {
@@ -1735,7 +1736,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "IT Services",
       "Mass Recruiter",
       "DSA",
-      "Full Stack"
+      "Full Stack",
+      "India"
     ]
   },
   {
@@ -1753,7 +1755,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "IT Services",
       "Mass Recruiter",
       "Cloud",
-      "Java"
+      "Java",
+      "India"
     ]
   },
   {
@@ -1770,7 +1773,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "tags": [
       "IT Services",
       "Mass Recruiter",
-      "Associate Engineer"
+      "Associate Engineer",
+      "India"
     ]
   },
   {
@@ -1788,7 +1792,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "IT Services",
       "Mass Recruiter",
       "GenC Next",
-      "DSA"
+      "DSA",
+      "India"
     ]
   },
   {
@@ -1806,7 +1811,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "IT Services",
       "Mass Recruiter",
       "Exceller",
-      "Software"
+      "Software",
+      "India"
     ]
   },
   {
@@ -1823,7 +1829,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "tags": [
       "IT Services",
       "Cloud",
-      "Infrastructure"
+      "Infrastructure",
+      "India"
     ]
   },
   {
@@ -1841,7 +1848,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "IT Services",
       "Mass Recruiter",
       "Telecom",
-      "Full Stack"
+      "Full Stack",
+      "India"
     ]
   },
   {
@@ -1858,7 +1866,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "tags": [
       "IT Services",
       "Cloud",
-      "Full Stack"
+      "Full Stack",
+      "India"
     ]
   },
   {
@@ -1875,7 +1884,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "tags": [
       "IT Services",
       "Automation",
-      "Cloud"
+      "Cloud",
+      "India"
     ]
   },
   {
@@ -1892,7 +1902,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "tags": [
       "IT Services",
       "Product Engineering",
-      "Java"
+      "Java",
+      "India"
     ]
   },
   {
@@ -1911,176 +1922,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "SaaS",
       "Problem Solving",
       "C/C++",
-      "Java"
-    ]
-  },
-  {
-    "id": "ind_it_mphasis",
-    "company_name": "Mphasis",
-    "title": "Associate Software Engineer Trainee",
-    "type": "JOB",
-    "location": "Bengaluru, Pune, Chennai, Hyderabad, Mumbai",
-    "stipend_or_salary": "₹3.5–5.0 LPA",
-    "apply_url": "https://www.mphasis.com/home/careers.html",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "IT Services",
-      "FinTech",
-      "Java"
-    ]
-  },
-  {
-    "id": "ind_it_kpittechnologies",
-    "company_name": "KPIT Technologies",
-    "title": "PGET Software Engineer — Automotive Embedded / C++",
-    "type": "JOB",
-    "location": "Pune, Bengaluru, Kochi",
-    "stipend_or_salary": "₹4.0–6.0 LPA",
-    "apply_url": "https://www.kpit.com/careers/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Embedded",
-      "C++",
-      "Automotive",
-      "Autonomous"
-    ]
-  },
-  {
-    "id": "ind_it_tataelxsi",
-    "company_name": "Tata Elxsi",
-    "title": "Engineer Trainee — Embedded & Digital Software",
-    "type": "JOB",
-    "location": "Bengaluru, Thiruvananthapuram, Pune, Chennai",
-    "stipend_or_salary": "₹3.5–5.5 LPA",
-    "apply_url": "https://www.tataelxsi.com/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Embedded",
-      "AI",
-      "Digital Software"
-    ]
-  },
-  {
-    "id": "ind_it_globallogicindia",
-    "company_name": "GlobalLogic India",
-    "title": "Associate Software Engineer (Hitachi Group)",
-    "type": "JOB",
-    "location": "Noida, Gurugram, Bengaluru, Hyderabad, Nagpur",
-    "stipend_or_salary": "₹4.5–6.5 LPA",
-    "apply_url": "https://www.globallogic.com/career-search-page/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Product Engineering",
-      "Full Stack",
-      "Cloud"
-    ]
-  },
-  {
-    "id": "ind_it_lttechnologyservicesltts",
-    "company_name": "L&T Technology Services (LTTS)",
-    "title": "Graduate Engineer Trainee (GET)",
-    "type": "JOB",
-    "location": "Bengaluru, Vadodara, Mysuru, Mumbai, Chennai",
-    "stipend_or_salary": "₹4.0–6.0 LPA",
-    "apply_url": "https://www.ltts.com/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Engineering Tech",
-      "Embedded",
-      "IoT"
-    ]
-  },
-  {
-    "id": "ind_it_happiestmindstechnologies",
-    "company_name": "Happiest Minds Technologies",
-    "title": "Junior Software Engineer Trainee",
-    "type": "JOB",
-    "location": "Bengaluru, Pune, Noida",
-    "stipend_or_salary": "₹4.0–6.0 LPA",
-    "apply_url": "https://www.happiestminds.com/careers/",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Digital",
-      "Agile",
-      "Cloud"
-    ]
-  },
-  {
-    "id": "ind_it_coforge",
-    "company_name": "Coforge",
-    "title": "Graduate Trainee — Cloud & Application Development",
-    "type": "JOB",
-    "location": "Greater Noida, Bengaluru, Hyderabad, Pune",
-    "stipend_or_salary": "₹4.0–5.5 LPA",
-    "apply_url": "https://www.coforge.com/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "IT Services",
-      "Cloud",
-      "Java"
-    ]
-  },
-  {
-    "id": "ind_it_birlasoft",
-    "company_name": "Birlasoft",
-    "title": "Associate Software Engineer Trainee",
-    "type": "JOB",
-    "location": "Pune, Noida, Bengaluru, Hyderabad",
-    "stipend_or_salary": "₹3.6–4.5 LPA",
-    "apply_url": "https://www.birlasoft.com/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "IT Services",
-      "Enterprise App"
-    ]
-  },
-  {
-    "id": "ind_it_cgiindia",
-    "company_name": "CGI India",
-    "title": "Associate Software Engineer",
-    "type": "JOB",
-    "location": "Bengaluru, Hyderabad, Chennai, Mumbai",
-    "stipend_or_salary": "₹3.8–5.5 LPA",
-    "apply_url": "https://www.cgi.com/india/en-in/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "IT Consulting",
       "Java",
-      "Python"
-    ]
-  },
-  {
-    "id": "ind_it_dxctechnologyindia",
-    "company_name": "DXC Technology India",
-    "title": "Associate Professional Software Engineer",
-    "type": "JOB",
-    "location": "Bengaluru, Chennai, Hyderabad, Noida",
-    "stipend_or_salary": "₹3.6–4.5 LPA",
-    "apply_url": "https://dxc.com/in/en/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "IT Services",
-      "Application Support"
+      "India"
     ]
   },
   {
@@ -2098,23 +1941,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "Agile",
       "TDD",
       "Full Stack",
-      "Clean Code"
-    ]
-  },
-  {
-    "id": "ind_it_nagarro",
-    "company_name": "Nagarro",
-    "title": "Associate Software Engineer — Freshers Drive",
-    "type": "JOB",
-    "location": "Gurugram, Bengaluru, Jaipur, Pune, Hyderabad",
-    "stipend_or_salary": "₹4.5–6.0 LPA",
-    "apply_url": "https://www.nagarro.com/en/careers",
-    "source": "IT Services Mass Hiring Drive",
-    "age": "Active Now",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Digital Engineering",
-      "Full Stack"
+      "Clean Code",
+      "India"
     ]
   },
   {
@@ -2132,7 +1960,8 @@ export const curatedJobLeads: ScrapedJobLead[] = [
       "Java",
       "JavaScript",
       "Cloud",
-      "Product Engineering"
+      "Product Engineering",
+      "India"
     ]
   },
   {
@@ -5451,276 +5280,967 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     ]
   },
   {
-    "id": "ind_live_cookgroup_320",
-    "company_name": "Cook Group",
-    "title": "Software Engineer 1 - Full-Stack",
-    "type": "JOB",
-    "location": "Indianapolis, IN, West Lafayette, IN, Bloomington, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://americas-cookmedical.icims.com/jobs/20446/job?mobile=true&needsRedirect=false&utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "1d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "id": "speedy_pinterest_0",
+    "company_name": "Pinterest",
+    "title": "Software Engineer Intern 2027 - USA",
+    "type": "INTERNSHIP",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": "$52/hr",
+    "apply_url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838577",
+    "source": "SpeedyApply (College SWE)",
+    "age": "36d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Software Engineering",
-      "India"
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_crowe_321",
-    "company_name": "Crowe",
-    "title": "Machine Learning Software Engineer 1",
+    "id": "simplify_ng_caci_0",
+    "company_name": "CACI",
+    "title": "Junior Software Developer",
     "type": "JOB",
-    "location": "36 locationsLexington, KY, Boston, MA, Indianapolis, IN, Houston, TX, Louisville, KY, Knoxville, TN, Nashville, TN, Washington, DC, SF, Austin, TX, Cleveland, OH, LA, Tampa, FL, San Jose, CA, Livingston, NJ, Grand Rapids, MI, Miami, FL, Dallas, TX, The Woodlands, TX, Plano, TX, Boca Raton, FL, Chicago, IL, Tallahassee, FL, Charlotte, NC, Oakbrook Terrace, IL, Burlington, VT, Sacramento, CA, Columbus, OH, Hartford, CT, Springfield, IL, NYC, Denver, CO, Fort Wayne, IN, South Bend, IN, Sarasota, FL, Costa Mesa, CA",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://crowe.wd12.myworkdayjobs.com/en-US/external_careers/job/Chicago-IL-USA/Machine-Learning-Software-Engineer-1_R-71006?utm_source=Simplify&ref=Simplify",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://caci.wd1.myworkdayjobs.com/external/job/Remote-Any-State/Junior-Software-Developer_334685?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "2mo",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "2d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_shadowdragon_1",
+    "company_name": "ShadowDragon",
+    "title": "Junior AI/Machine Learning Engineer",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://ats.rippling.com/shadowdragon/jobs/69df1efd-5f05-4a79-9432-30925eb6db3c?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "2d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
       "AI/ML",
-      "India"
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_salesforce_322",
-    "company_name": "Salesforce",
-    "title": "Software Engineer College Grad",
+    "id": "simplify_ng_quora_2",
+    "company_name": "Quora",
+    "title": "Full Stack Software Engineer New Grad",
     "type": "JOB",
-    "location": "6 locationsPalo Alto, CA, Seattle, WA, Indianapolis, IN, SF, Dallas, TX, Bellevue, WA",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site/job/California---San-Francisco/Software-Engineering-AMTS--College-Grad-_JR355250-1?utm_source=Simplify&ref=Simplify",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/quora/5494e6a1-a973-46af-b9f3-57208eb91b52/application?embed=true&utm_source=Simplify&ref=Simplify",
     "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "3mo",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Freshers",
-      "India"
-    ]
-  },
-  {
-    "id": "ind_live_meyerdistributing_323",
-    "company_name": "Meyer Distributing",
-    "title": "Junior Full Stack Developer",
-    "type": "JOB",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://recruiting.paylocity.com/Recruiting/Jobs/Details/4121413?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "6mo",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "17d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
       "Full Stack",
-      "India"
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_v2x_324",
-    "company_name": "V2X",
-    "title": "Embedded Firmware Engineer 1",
+    "id": "simplify_ng_affirm_3",
+    "company_name": "Affirm",
+    "title": "Software Engineer 1 - Fullstack - Search",
     "type": "JOB",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://careers.gov2x.com/jobs/62490?icims=1&utm_source=Simplify&ref=Simplify",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/8017342003?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (New Grad 0-1 YOE)",
-    "age": "2mo",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "22d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Software Engineering",
-      "India"
+      "Full Stack",
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_highmarkhealth_325",
-    "company_name": "Highmark Health",
-    "title": "Software Engineer Graduate Intern",
-    "type": "INTERNSHIP",
-    "location": "50 locationsNew Mexico, Washington, Kansas, Pennsylvania, North Dakota, Oregon, Delaware, Iowa, California, Washington, DC, Vermont, Wyoming, Connecticut, Texas, Montana, Florida, New Hampshire, Nevada, South Carolina, South Dakota, Georgia, Arizona, Mississippi, Tennessee, Virginia, Arkansas, Minnesota, Colorado, Nebraska, Rhode Island, Utah, Kentucky, West Virginia, NYC, Maryland, Hawaii, Wisconsin, Maine, Massachusetts, North Carolina, Oklahoma, Ohio, New Jersey, Indiana, Louisiana, Alaska, Michigan, Illinois, Alabama, Idaho",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://highmarkhealth.wd1.myworkdayjobs.com/highmark/job/PA-Working-at-Home---Pennsylvania/Summer-2027-Software-Engineer-enGen-Graduate-Intern_J289845?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "12d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "id": "simplify_ng__4",
+    "company_name": "↳",
+    "title": "Software Engineer 1 - Fullstack - Search",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/8017340003?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "22d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Full Stack",
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_elanco_326",
-    "company_name": "Elanco",
-    "title": "Pet Health Sales Excellence Intern - AI Innovation & Enablement",
-    "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://elanco.wd5.myworkdayjobs.com/en-US/External_Career/job/Indianapolis-IN/US-Pet-Health-Sales-Excellence-Intern---AI-Innovation---Enablement--Summer-2027-_R0027467?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "29d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "id": "simplify_ng_spruceid_5",
+    "company_name": "SpruceID",
+    "title": "Full-Stack Software Engineer New Grad",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/spruceid/3d182b7f-482e-45b2-8668-f04f0b5fda8e/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_pinterest_6",
+    "company_name": "Pinterest",
+    "title": "University Grad Software Engineer",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838591&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_harbor_7",
+    "company_name": "Harbor",
+    "title": "Junior Developer - Finance Systems",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/harborglobal/jobs/5238900007?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_affirm_8",
+    "company_name": "Affirm",
+    "title": "Software Engineer 1 - Frontend - Upfunnel",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/7985907003?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Frontend",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_realm_9",
+    "company_name": "Realm",
+    "title": "Software Engineer New Grad",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/realmalliance/56d8b433-31ad-43a2-997e-b8538f5f2c9f/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "7mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_n1_10",
+    "company_name": "N1",
+    "title": "New Grad Software Engineer - Backend Rust",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/n1/a3e25c84-0846-454a-b2fc-a356c2a713bd/application?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "7mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Backend",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_elementsolutions_11",
+    "company_name": "Element Solutions",
+    "title": "Junior Data Engineer",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.lever.co/elementsolutions/88f248fb-459a-4d4e-8f6a-80e1671bf86e/apply?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "4d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_affirm_12",
+    "company_name": "Affirm",
+    "title": "Analyst – Early Career - Full Stack",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/affirm/jobs/8039471003?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "16d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Full Stack",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "simplify_ng_quora_13",
+    "company_name": "Quora",
+    "title": "Machine Learning Engineer New Grad",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/quora/40659fe7-545e-4b08-b6d7-2567b18b9ed3/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "22d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
       "AI/ML",
-      "Internship",
-      "India"
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_highmarkhealth_327",
-    "company_name": "Highmark Health",
-    "title": "Clinical and Population Health Graduate Intern",
-    "type": "INTERNSHIP",
-    "location": "50 locationsNew Mexico, Washington, Kansas, Pennsylvania, North Dakota, Oregon, Delaware, Iowa, California, Washington, DC, Vermont, Wyoming, Connecticut, Texas, Montana, Florida, New Hampshire, Nevada, South Carolina, South Dakota, Georgia, Arizona, Mississippi, Tennessee, Virginia, Arkansas, Minnesota, Colorado, Nebraska, Rhode Island, Utah, Kentucky, West Virginia, NYC, Maryland, Hawaii, Wisconsin, Maine, Massachusetts, North Carolina, Oklahoma, Ohio, New Jersey, Indiana, Louisiana, Alaska, Michigan, Illinois, Alabama, Idaho",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://highmarkhealth.wd1.myworkdayjobs.com/highmark/job/PA-Working-at-Home---Pennsylvania/Summer-2027-Clinical-and-Population-Health-Graduate-Intern_J288011?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "9d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "id": "simplify_ng_quora_14",
+    "company_name": "Quora",
+    "title": "Software Engineer New Grad - Machine Learning Platform",
+    "type": "JOB",
+    "location": "Remote WFH (USA / Global)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/quora/cf34f80e-fe5c-454d-bc9a-4c59993ffda0/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (New Grad 0-1 YOE)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "AI/ML",
+      "Remote WFH"
     ]
   },
   {
-    "id": "ind_live_federalhomeloanbankofindianapolis_328",
-    "company_name": "Federal Home Loan Bank of Indianapolis",
-    "title": "MPP Data Analytics Intern",
+    "id": "simplify_int_leidos_0",
+    "company_name": "Leidos",
+    "title": "Software Engineering & AI Intern",
     "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://fhlbi.wd1.myworkdayjobs.com/FHLBI_Careers/job/Indianapolis/MPP-Data-Analytics-Intern_R641?utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://leidos.wd5.myworkdayjobs.com/External/job/6314-RemoteTeleworker-US/Software-Engineering---AI-Intern_R-00196220?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
-    "age": "10d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "3d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "AI/ML",
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_highmarkhealth_329",
-    "company_name": "Highmark Health",
-    "title": "Enterprise Master Data Management Analyst Graduate Intern 🎓",
+    "id": "simplify_int_zillow_1",
+    "company_name": "Zillow",
+    "title": "Software Development Engineer Intern",
     "type": "INTERNSHIP",
-    "location": "51 locationsNew Mexico, Washington, Kansas, Pennsylvania, North Dakota, Oregon, Delaware, Iowa, California, Washington, DC, Vermont, Wyoming, Connecticut, Texas, Montana, Florida, New Hampshire, Nevada, South Carolina, South Dakota, Georgia, Arizona, Mississippi, Tennessee, Virginia, Arkansas, Minnesota, Colorado, Nebraska, Rhode Island, Utah, Kentucky, West Virginia, NYC, Maryland, Hawaii, Wisconsin, Maine, Massachusetts, North Carolina, Oklahoma, Missouri, Ohio, New Jersey, Indiana, Louisiana, Alaska, Michigan, Illinois, Alabama, Idaho",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://highmarkhealth.wd1.myworkdayjobs.com/highmark/job/PA-Working-at-Home---Pennsylvania/Summer-2027-Enterprise-Master-Data-Management-Analyst-Graduate-Intern_J289856?utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://zillow.wd5.myworkdayjobs.com/en-US/Zillow_Group_External/job/Seattle-WA-2nd-Ave/Software-Development-Engineer---Intern_P751630?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
-    "age": "12d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "17d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_federalhomeloanbankofindianapolis_330",
-    "company_name": "Federal Home Loan Bank of Indianapolis",
-    "title": "Business Intelligence Intern",
+    "id": "simplify_int_oneethos_2",
+    "company_name": "OneEthos",
+    "title": "Research and Development Intern",
     "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://fhlbi.wd1.myworkdayjobs.com/FHLBI_Careers/job/Indianapolis/Business-Intelligence-Intern_R637?utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/oneethos/jobs/4459193009?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
-    "age": "12d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "17d",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_highmarkhealth_331",
-    "company_name": "Highmark Health",
-    "title": "Evaluation Analytics Graduate Intern",
+    "id": "simplify_int_amplify_3",
+    "company_name": "Amplify",
+    "title": "Software Engineer Intern",
     "type": "INTERNSHIP",
-    "location": "51 locationsNew Mexico, Washington, Kansas, Pennsylvania, North Dakota, Oregon, Delaware, Iowa, California, Washington, DC, Vermont, Wyoming, Connecticut, Texas, Montana, Florida, New Hampshire, Nevada, South Carolina, South Dakota, Georgia, Arizona, Mississippi, Tennessee, Virginia, Arkansas, Minnesota, Colorado, Nebraska, Rhode Island, Utah, Kentucky, West Virginia, NYC, Maryland, Hawaii, Wisconsin, Maine, Massachusetts, North Carolina, Oklahoma, Missouri, Ohio, New Jersey, Indiana, Louisiana, Alaska, Michigan, Illinois, Alabama, Idaho",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://highmarkhealth.wd1.myworkdayjobs.com/highmark/job/PA-Working-at-Home---Pennsylvania/Summer-2027-Evaluation-Analytics-Graduate-Intern_J288013?utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/amplify/855d22a3-f15e-49f6-854c-29e505653efa/application?embed=true&utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
     "age": "18d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_highmarkhealth_332",
-    "company_name": "Highmark Health",
-    "title": "Reimbursement Analyst Intern",
+    "id": "simplify_int_sailpoint_4",
+    "company_name": "SailPoint",
+    "title": "Software Engineer Intern - Platform Engines",
     "type": "INTERNSHIP",
-    "location": "51 locationsNew Mexico, Washington, Kansas, Pennsylvania, North Dakota, Oregon, Delaware, Iowa, California, Washington, DC, Vermont, Wyoming, Connecticut, Texas, Montana, Florida, New Hampshire, Nevada, South Carolina, South Dakota, Georgia, Arizona, Mississippi, Tennessee, Virginia, Arkansas, Minnesota, Colorado, Nebraska, Rhode Island, Utah, Kentucky, West Virginia, NYC, Maryland, Hawaii, Wisconsin, Maine, Massachusetts, North Carolina, Oklahoma, Missouri, Ohio, New Jersey, Indiana, Louisiana, Alaska, Michigan, Illinois, Alabama, Idaho",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://highmarkhealth.wd1.myworkdayjobs.com/highmark/job/PA-Working-at-Home---Pennsylvania/Summer-2027-Reimbursement-Analyst-Undergraduate-Intern_J287154?utm_source=Simplify&ref=Simplify",
-    "source": "Simplify (Summer Internships)",
-    "age": "19d",
-    "batch_eligibility": "2025, 2026 Batch",
-    "tags": [
-      "Internship",
-      "India"
-    ]
-  },
-  {
-    "id": "ind_live_v2x_333",
-    "company_name": "V2X",
-    "title": "Artificial Intelligence Intern",
-    "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://careers.gov2x.com/jobs/62843?icims=1&utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://sailpoint.wd1.myworkdayjobs.com/en-US/SailPoint/job/Remote-United-Kingdom/Software-Engineer-Intern---Platform-Engines_R014164?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
     "age": "1mo",
-    "batch_eligibility": "2025, 2026 Batch",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_barnesthornburg_334",
-    "company_name": "Barnes & Thornburg",
-    "title": "Information Technology Data Intern",
+    "id": "simplify_int_cadencesolutions_5",
+    "company_name": "Cadence Solutions",
+    "title": "Software Engineer Intern",
     "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://jobs.ashbyhq.com/barnes/1881dbc0-846e-4805-968f-4e27d663f7b0/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/solutions/jobs/4711210006?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
     "age": "1mo",
-    "batch_eligibility": "2025, 2026 Batch",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_federalhomeloanbankofindianapolis_335",
-    "company_name": "Federal Home Loan Bank of Indianapolis",
-    "title": "Model Risk Intern",
+    "id": "simplify_int_pinterest_6",
+    "company_name": "Pinterest",
+    "title": "Software Engineer Intern",
     "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://fhlbi.wd1.myworkdayjobs.com/FHLBI_Careers/job/Indianapolis/Model-Risk-Intern_R636?utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838577&utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
-    "age": "12d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
     ]
   },
   {
-    "id": "ind_live_v2x_336",
-    "company_name": "V2X",
-    "title": "Electrical Engineer Intern",
+    "id": "simplify_int_caci_7",
+    "company_name": "CACI",
+    "title": "Software Engineer Intern - Summer 2027",
     "type": "INTERNSHIP",
-    "location": "Indianapolis, IN",
-    "stipend_or_salary": "Competitive / Undisclosed",
-    "apply_url": "https://careers.gov2x.com/jobs/63854?icims=1&utm_source=Simplify&ref=Simplify",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://caci.wd1.myworkdayjobs.com/external/job/437-DENVER-CO/Cleared-Software-Engineer-Intern---Summer-2027_331999?utm_source=Simplify&ref=Simplify",
     "source": "Simplify (Summer Internships)",
-    "age": "8d",
-    "batch_eligibility": "2025, 2026 Batch",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
     "tags": [
-      "Internship",
-      "India"
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_oneethos_8",
+    "company_name": "OneEthos",
+    "title": "Product Management Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/oneethos/jobs/4459298009?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "16d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_amplify_9",
+    "company_name": "Amplify",
+    "title": "Product Management Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/amplify/c95f690f-28af-42b1-8847-5dcf14c1155e/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "18d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_cadencesolutions_10",
+    "company_name": "Cadence Solutions",
+    "title": "Product Management Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/solutions/jobs/4715294006?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_jmsmucker_11",
+    "company_name": "J.M. Smucker",
+    "title": "Data Science Intern 🎓",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://smucker.wd5.myworkdayjobs.com/US_External_Careers/job/Working-Remote-USA/Data-Science-Intern--Summer-2027_116118?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "2d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_caresource_12",
+    "company_name": "CareSource",
+    "title": "Data Analyst Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Data-Analyst_R14356?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "2d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int__13",
+    "company_name": "↳",
+    "title": "Configuration and Automation Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Configuration-and-Automation_R14185?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "2d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "QA",
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_vizient_14",
+    "company_name": "Vizient",
+    "title": "Pharmacy Aggregation Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://vizient.wd1.myworkdayjobs.com/Vizient_Careers/job/Irving-TX-75062-Vizient-Corporate-HQ/XMLNAME-2027-Summer-Internship---Pharmacy-Aggregation_35995R-1?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "3d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_amgen_15",
+    "company_name": "Amgen",
+    "title": "Graduate Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://amgen.wd1.myworkdayjobs.com/careers/job/United-States---Remote/Grad-Intern---R-D-TSRS-Data-Sciences-Operations---Analytic--Summer-2027-_R-260585?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "3d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_caresource_16",
+    "company_name": "CareSource",
+    "title": "Data Science Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Data-Science-Intern_R14306?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "4d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_molinahealthcare_17",
+    "company_name": "Molina Healthcare",
+    "title": "Electronic Data Interchange Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://hckd.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/2040156?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "7d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int__18",
+    "company_name": "↳",
+    "title": "Customer Experience & Analytics Intern - Undergraduate",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://hckd.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/2040169?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "7d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int__19",
+    "company_name": "↳",
+    "title": "Full Stack AI Development Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://caresource.wd1.myworkdayjobs.com/caresource/job/Remote/XMLNAME-2027-Summer-Internship-Program---Full-Stack-AI-Development-Intern-1_R14181?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "9d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Full Stack",
+      "AI/ML",
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_amplify_20",
+    "company_name": "Amplify",
+    "title": "AI Scientist Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/amplify/bb45b7f6-dd7e-40e5-84e6-52e21650a7b8/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "18d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "AI/ML",
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int__21",
+    "company_name": "↳",
+    "title": "Data Analytics Intern",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://jobs.ashbyhq.com/amplify/7b859cc1-1354-43c5-bbd4-0571e85f7c51/application?embed=true&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "18d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_centurylink_22",
+    "company_name": "CenturyLink",
+    "title": "Data Internship - Analytics & Decision Science",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://internaljobs.centurylink.com/job/Remote-Data,-Analytics-&-Decision-Science-Summer-2027-Internship-Pathway/1440961600/?ats=successfactors&utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "21d",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_datacor_23",
+    "company_name": "Datacor",
+    "title": "Data Science Intern - Summer 2027 - Program 🎓",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://job-boards.greenhouse.io/datacor/jobs/5242412007?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "simplify_int_nvidia_24",
+    "company_name": "NVIDIA",
+    "title": "PhD Research Intern - Generalist Embodied Agents Research 🎓",
+    "type": "INTERNSHIP",
+    "location": "Remote Internship (Worldwide)",
+    "stipend_or_salary": null,
+    "apply_url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/PhD-Research-Intern--Generalist-Embodied-Agents-Research---2027_JR2025103?utm_source=Simplify&ref=Simplify",
+    "source": "Simplify (Summer Internships)",
+    "age": "1mo",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH",
+      "Internship"
+    ]
+  },
+  {
+    "id": "jobicy_vonage_0",
+    "company_name": "Vonage",
+    "title": "Senior Software Engineer",
+    "type": "JOB",
+    "location": "Remote WFH (Poland)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/158781-senior-software-engineer-21",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_serverobotics_1",
+    "company_name": "Serve Robotics",
+    "title": "Sr. Embedded Software Engineer, Robotics Platform",
+    "type": "JOB",
+    "location": "Remote WFH (Canada,  USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/154777-sr-embedded-software-engineer-robotics-platform",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_grafanalabs_2",
+    "company_name": "Grafana Labs",
+    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | UK | Remote",
+    "type": "JOB",
+    "location": "Remote WFH (Germany,  Ireland,  Spain,  UK)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159444-staff-software-engineer-opentelemetry-python-instrumentation-uk-remote",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Python",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_canonical_3",
+    "company_name": "Canonical",
+    "title": "Senior Juju Software Engineer (Go)",
+    "type": "JOB",
+    "location": "Remote WFH (EMEA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159443-senior-juju-software-engineer-go",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_grafanalabs_4",
+    "company_name": "Grafana Labs",
+    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | Spain | Remote",
+    "type": "JOB",
+    "location": "Remote WFH (Spain)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159441-staff-software-engineer-opentelemetry-python-instrumentation-spain-remote",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Python",
+      "AI/ML",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_grafanalabs_5",
+    "company_name": "Grafana Labs",
+    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | Ireland | Remote",
+    "type": "JOB",
+    "location": "Remote WFH (Germany,  Ireland,  Spain,  UK)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159437-staff-software-engineer-opentelemetry-python-instrumentation-ireland-remote",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Python",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_grafanalabs_6",
+    "company_name": "Grafana Labs",
+    "title": "Staff Software Engineer - OpenTelemetry Python instrumentation | Germany | Remote",
+    "type": "JOB",
+    "location": "Remote WFH (Germany,  Ireland,  Spain,  UK)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159433-staff-software-engineer-opentelemetry-python-instrumentation-germany-remote",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Python",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_nebius_7",
+    "company_name": "Nebius",
+    "title": "Software Engineer in Network Infrastructure",
+    "type": "JOB",
+    "location": "Remote WFH (Europe)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159423-software-engineer-in-network-infrastructure-2",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_klaviyo_8",
+    "company_name": "Klaviyo",
+    "title": "Software Engineer II (Mobile Developer - Android/Kotlin)",
+    "type": "JOB",
+    "location": "Remote WFH (USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159403-software-engineer-ii-mobile-developer-android-kotlin",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_customerio_9",
+    "company_name": "Customer.io",
+    "title": "Staff Software Engineer, Backend",
+    "type": "JOB",
+    "location": "Remote WFH (LATAM,  Canada,  USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159342-staff-software-engineer-backend",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Backend",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_customerio_10",
+    "company_name": "Customer.io",
+    "title": "Senior Software Engineer - Backend Platform",
+    "type": "JOB",
+    "location": "Remote WFH (LATAM,  Canada,  USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159329-senior-software-engineer-backend-platform",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Backend",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_housecallpro_11",
+    "company_name": "Housecall Pro",
+    "title": "Senior iOS Software Engineer - Brazil",
+    "type": "JOB",
+    "location": "Remote WFH (Brazil)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/159323-senior-ios-software-engineer-brazil",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_eightsleep_12",
+    "company_name": "Eight Sleep",
+    "title": "Senior Backend Engineer",
+    "type": "JOB",
+    "location": "Remote WFH (Canada,  USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/154740-senior-backend-engineer-9",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Backend",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_centralreach_13",
+    "company_name": "CentralReach",
+    "title": "Sr. Software Engineer",
+    "type": "JOB",
+    "location": "Remote WFH (USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/154718-sr-software-engineer-4",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_mozilla_14",
+    "company_name": "Mozilla",
+    "title": "Contract Staff Software Engineer - Performance Graphics (C++,Rust, WebGL)",
+    "type": "JOB",
+    "location": "Remote WFH (Canada)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/154693-contract-staff-software-engineer-performance-graphics-crust-webgl",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "C++",
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_mozilla_15",
+    "company_name": "Mozilla",
+    "title": "Contract Staff Software Engineer-FireFox Layout",
+    "type": "JOB",
+    "location": "Remote WFH (Canada)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/154690-contract-staff-software-engineer-firefox-layout",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_eightsleep_16",
+    "company_name": "Eight Sleep",
+    "title": "Senior Software Engineer - Mobile (Android)",
+    "type": "JOB",
+    "location": "Remote WFH (USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/154745-senior-software-engineer-mobile-android",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_canonical_17",
+    "company_name": "Canonical",
+    "title": "C, Golang Software Engineer working on dqlite, a Raft extension for SQLite",
+    "type": "JOB",
+    "location": "Remote WFH (EMEA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/150128-c-golang-software-engineer-working-on-dqlite-a-raft-extension-for-sqlite",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_canonical_18",
+    "company_name": "Canonical",
+    "title": "Senior Software Engineer - MAAS",
+    "type": "JOB",
+    "location": "Remote WFH (EMEA,  LATAM,  Canada,  USA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/150127-senior-software-engineer-maas",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Remote WFH"
+    ]
+  },
+  {
+    "id": "jobicy_canonical_19",
+    "company_name": "Canonical",
+    "title": "Senior Software Engineer (Backend)",
+    "type": "JOB",
+    "location": "Remote WFH (EMEA)",
+    "stipend_or_salary": "Competitive / USD",
+    "apply_url": "https://jobicy.com/jobs/150125-senior-software-engineer-backend",
+    "source": "Jobicy (Remote Engineering)",
+    "age": "Recent",
+    "batch_eligibility": "2025, 2026",
+    "tags": [
+      "Backend",
+      "Remote WFH"
     ]
   }
 ];

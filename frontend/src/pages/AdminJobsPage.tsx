@@ -476,6 +476,8 @@ type AdminJobTab = 'LIVE' | 'LEADS' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
 type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
 type LeadCategoryFilter =
   | 'ALL'
+  | 'INDIA_ONLY'
+  | 'REMOTE_WFH'
   | 'PRODUCT_GIANTS'
   | 'UNICORNS'
   | 'IT_SERVICES'
@@ -626,17 +628,39 @@ export default function AdminJobsPage() {
     [listedUrlSet]
   );
 
-  const { productGiantsCount, unicornsCount, itServicesCount, finTechCount, internshipsCount, unlistedLeadsCount } = useMemo(() => {
+  const {
+    indiaLeadsCount,
+    remoteLeadsCount,
+    productGiantsCount,
+    unicornsCount,
+    itServicesCount,
+    finTechCount,
+    internshipsCount,
+    jobsCount,
+    unlistedLeadsCount,
+  } = useMemo(() => {
+    let india = 0;
+    let remote = 0;
     let giants = 0;
     let unicorns = 0;
     let it = 0;
     let fintech = 0;
     let interns = 0;
+    let jobs = 0;
     let unlisted = 0;
 
     for (let i = 0; i < activeLeadsPool.length; i++) {
       const l = activeLeadsPool[i];
       const comp = l.company_name.toLowerCase();
+      const loc = (l.location || '').toLowerCase();
+      const tags = l.tags || [];
+
+      const isInd = tags.includes('India') || /india|bengaluru|bangalore|hyderabad|pune|mumbai|chennai|delhi|gurugram|gurgaon|noida|kolkata|ahmedabad|kochi|indore/i.test(loc) || l.source.includes('India');
+      const isRem = tags.includes('Remote WFH') || /remote/i.test(loc) || /remote/i.test(l.title);
+
+      if (isInd) india++;
+      if (isRem && !isInd) remote++;
+
       if (/google|microsoft|amazon|adobe|salesforce|atlassian|qualcomm|nvidia|intel|amd|uber|servicenow|oracle|cisco|apple|broadcom|intuit|autodesk|sap/i.test(comp)) {
         giants++;
       } else if (/razorpay|cred|groww|meesho|zepto|swiggy|inmobi|postman|hasura|harness|dream11|phonepe|ola|oyo|delhivery|urban company|nykaa|zerodha|pine labs|upstox|sharechat|bharatpe|blinkit|dailyhunt|pocket fm|devrev|glean|sarvam|krutrim|yellow|gupshup|druva|browserstack|freshworks|zoho|lenskart|ather|juspay|cashfree|setu|slice|jupiter|fi money|niyo|policybazaar|acko|digit|khatabook|porter|zetwerk|moglix|udaan|licious|blackbuck/i.test(comp)) {
@@ -646,16 +670,21 @@ export default function AdminJobsPage() {
       } else if (/morgan stanley|goldman sachs|jpmorgan|citibank|hsbc|barclays|deutsche bank|standard chartered|ubs|nomura|fidelity|d\.e\. shaw|tower research|optiver|citadel|wells fargo|american express|visa|mastercard|capital one|bajaj finserv|hdfc|icici|kotak|societe generale/i.test(comp) || l.source.includes('FinTech')) {
         fintech++;
       }
+
       if (l.type === 'INTERNSHIP') interns++;
+      if (l.type === 'JOB') jobs++;
       if (!isLeadListed(l)) unlisted++;
     }
 
     return {
+      indiaLeadsCount: india,
+      remoteLeadsCount: remote,
       productGiantsCount: giants,
       unicornsCount: unicorns,
       itServicesCount: it,
       finTechCount: fintech,
       internshipsCount: interns,
+      jobsCount: jobs,
       unlistedLeadsCount: unlisted,
     };
   }, [activeLeadsPool, isLeadListed]);
@@ -667,7 +696,19 @@ export default function AdminJobsPage() {
       list = list.filter((l) => !isLeadListed(l));
     }
 
-    if (leadCategory === 'PRODUCT_GIANTS') {
+    if (leadCategory === 'INDIA_ONLY') {
+      list = list.filter((l) =>
+        l.tags.includes('India') ||
+        /india|bengaluru|bangalore|hyderabad|pune|mumbai|chennai|noida|gurugram|delhi/i.test(l.location) ||
+        l.source.includes('India')
+      );
+    } else if (leadCategory === 'REMOTE_WFH') {
+      list = list.filter((l) =>
+        l.tags.includes('Remote WFH') ||
+        /remote/i.test(l.location) ||
+        /remote/i.test(l.title)
+      );
+    } else if (leadCategory === 'PRODUCT_GIANTS') {
       list = list.filter((l) =>
         l.source.includes('Product Giant') ||
         l.tags.includes('Product Giant') ||
@@ -1075,7 +1116,7 @@ export default function AdminJobsPage() {
               <div>
                 <h1 className="text-xl font-display font-extrabold text-[#121417] dark:text-white">Jobs Board Admin</h1>
                 <p className="text-xs text-[#868E96]">
-                  {liveListings.length} live · {activeLeadsPool.length} India leads · {expiredListings.length} expired · {draftListings.length} drafts
+                  {liveListings.length} live · {activeLeadsPool.length} India & Remote leads · {expiredListings.length} expired · {draftListings.length} drafts
                   {openReportsCount > 0 && (
                     <span className="text-rose-500 font-bold ml-1">
                       · {openReportsCount} open report{openReportsCount > 1 ? 's' : ''}
@@ -1121,7 +1162,7 @@ export default function AdminJobsPage() {
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>🇮🇳 India Leads ({activeLeadsPool.length})</span>
+                <span>🇮🇳 India & 🏠 Remote Leads ({activeLeadsPool.length})</span>
                 {unlistedLeadsCount > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400">
                     {unlistedLeadsCount} New
@@ -1281,13 +1322,13 @@ export default function AdminJobsPage() {
                 <div className="mb-3 pb-3 border-b border-[#E9ECEF] dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-bold text-[#121417] dark:text-white flex items-center gap-2">
-                      <span>🇮🇳 India Tech Campus & Fresher Drives</span>
+                      <span>🇮🇳 India Tech & 🏠 Remote WFH Leads</span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         Class of 2024 / 2025 / 2026 / 2027
                       </span>
                     </h3>
                     <p className="text-xs text-[#868E96] mt-0.5">
-                      Verified direct portals across Tier-1 Product Giants, Unicorns, and IT Mass Recruiters with authentic LPA salary benchmarks.
+                      Filtered for Indian freshers & campus drives, plus 100% permanent remote work-from-home jobs & virtual internships globally. Overseas permanent onsite roles are excluded.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1313,7 +1354,37 @@ export default function AdminJobsPage() {
                         : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
                     }`}
                   >
-                    All India Drives ({activeLeadsPool.length})
+                    All Drives ({activeLeadsPool.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('INDIA_ONLY'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'INDIA_ONLY'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🇮🇳 India Tech Drives</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {indiaLeadsCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setLeadCategory('REMOTE_WFH'); setVisibleLeadsCount(50); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      leadCategory === 'REMOTE_WFH'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
+                    }`}
+                  >
+                    <span>🏠 Remote WFH (USA & Global)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {remoteLeadsCount}
+                    </span>
                   </button>
 
                   <button
@@ -1321,7 +1392,7 @@ export default function AdminJobsPage() {
                     onClick={() => { setLeadCategory('PRODUCT_GIANTS'); setVisibleLeadsCount(50); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       leadCategory === 'PRODUCT_GIANTS'
-                        ? 'bg-blue-600 text-white shadow-xs'
+                        ? 'bg-indigo-600 text-white shadow-xs'
                         : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
                     }`}
                   >
@@ -1351,7 +1422,7 @@ export default function AdminJobsPage() {
                     onClick={() => { setLeadCategory('IT_SERVICES'); setVisibleLeadsCount(50); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       leadCategory === 'IT_SERVICES'
-                        ? 'bg-emerald-600 text-white shadow-xs'
+                        ? 'bg-teal-600 text-white shadow-xs'
                         : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
                     }`}
                   >
@@ -1381,11 +1452,11 @@ export default function AdminJobsPage() {
                     onClick={() => { setLeadCategory('INTERNSHIPS'); setVisibleLeadsCount(50); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       leadCategory === 'INTERNSHIPS'
-                        ? 'bg-teal-600 text-white shadow-xs'
+                        ? 'bg-rose-600 text-white shadow-xs'
                         : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
                     }`}
                   >
-                    <span>🎓 Campus Internships</span>
+                    <span>🎓 Internships (India & Remote)</span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
                       {internshipsCount}
                     </span>
@@ -1394,13 +1465,16 @@ export default function AdminJobsPage() {
                   <button
                     type="button"
                     onClick={() => { setLeadCategory('JOBS'); setVisibleLeadsCount(50); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       leadCategory === 'JOBS'
-                        ? 'bg-indigo-600 text-white shadow-xs'
+                        ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 shadow-xs'
                         : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-[#E9ECEF] dark:border-[#2A2A2A]'
                     }`}
                   >
-                    Full-Time Only
+                    <span>💼 Full-Time Only</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 font-extrabold">
+                      {jobsCount}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1489,7 +1563,12 @@ export default function AdminJobsPage() {
                                     }`}>
                                       {lead.type}
                                     </span>
-                                    {lead.tags.slice(0, 2).map((t) => (
+                                    {lead.tags.includes('Remote WFH') && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                        🏠 Remote WFH
+                                      </span>
+                                    )}
+                                    {lead.tags.filter((t) => t !== 'Remote WFH').slice(0, 2).map((t) => (
                                       <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[#F8F9FA] dark:bg-[#202020] text-[#495057] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#2A2A2A]">
                                         {t}
                                       </span>
