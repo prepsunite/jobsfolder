@@ -78,6 +78,28 @@ function formatExperience(min: number, max?: number | null): string {
   return `${min}–${max} yrs`;
 }
 
+function getApplyButtonLabel(url: string | undefined): string {
+  if (!url) return 'Apply Now';
+  const lower = url.toLowerCase();
+  if (lower.includes('linkedin.com')) return 'Apply on LinkedIn';
+  if (lower.includes('glassdoor.')) return 'Apply on Glassdoor';
+  if (lower.includes('indeed.')) return 'Apply on Indeed';
+  if (lower.includes('naukri.com')) return 'Apply on Naukri';
+  if (
+    lower.includes('greenhouse.io') ||
+    lower.includes('lever.co') ||
+    lower.includes('workday.com') ||
+    lower.includes('myworkdayjobs.com') ||
+    lower.includes('smartrecruiters.com') ||
+    lower.includes('ashbyhq.com') ||
+    lower.includes('bamboohr.com') ||
+    lower.includes('rippling.com')
+  ) {
+    return 'Apply on Company Portal';
+  }
+  return 'Apply Now';
+}
+
 function expMatchesFilter(min: number, max: number | null | undefined, level: JobListingFilters['expLevel']): boolean {
   if (!level || level === 'ANY') return true;
   if (level === 'FRESHER') return min === 0 && (!max || max === 0);
@@ -486,7 +508,7 @@ function JobDescriptionViewer({ description }: JobDescriptionViewerProps) {
     return (
       <div className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#242424]">
         <p className="text-xs text-[#868E96] italic">
-          No formal description provided. Click &quot;Apply on Official Website&quot; above to view comprehensive job responsibilities, eligibility requirements, and interview rounds.
+          No formal description provided. Click &quot;Apply Now&quot; above to view comprehensive job responsibilities, eligibility requirements, and interview rounds.
         </p>
       </div>
     );
@@ -730,7 +752,7 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-extrabold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#2A2A2A] dark:hover:bg-[#F1F3F5] transition-all shadow-sm group"
           >
-            <span>Apply on Official Website</span>
+            <span>{getApplyButtonLabel(job.apply_url)}</span>
             <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
 

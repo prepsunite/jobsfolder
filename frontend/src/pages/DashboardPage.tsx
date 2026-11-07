@@ -807,7 +807,7 @@ export default function DashboardPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 rounded-md border border-[#E9ECEF] dark:border-[#17181F] bg-[#F8F9FA] dark:bg-[#07080A] text-[#121417] dark:text-[#FFFFFF] text-xs font-display font-bold uppercase tracking-wider transition-colors flex items-center gap-1 hover:border-[#FD4A32] group"
-                        title="Apply on official company portal"
+                        title="Apply now"
                       >
                         <span>Apply</span>
                         <ExternalLink className="w-3.5 h-3.5 text-[#FD4A32]" />
