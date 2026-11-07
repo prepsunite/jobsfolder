@@ -4,7 +4,7 @@ import {
   Plus, Edit3, Trash2, Eye, EyeOff, Star, StarOff,
   Briefcase, MapPin, Clock, X, Check, AlertCircle,
   ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2,
-  Sparkles, Upload
+  Sparkles, Upload, Zap
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -560,6 +560,9 @@ export default function AdminJobsPage() {
   const [visibleLeadsCount, setVisibleLeadsCount] = useState<number>(50);
   const [addingLeadId, setAddingLeadId] = useState<string | null>(null);
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [showCuratedBackup, setShowCuratedBackup] = useState<boolean>(false);
   const [customLeads, setCustomLeads] = useState<ScrapedJobLead[] | null>(() => {
     try {
@@ -1052,6 +1055,139 @@ export default function AdminJobsPage() {
     }
   };
 
+  const handleToggleSelect = (id: string) => {
+    setSelectedLeadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = (visibleLeads: ScrapedJobLead[]) => {
+    const unlisted = visibleLeads.filter((l) => !isLeadListed(l));
+    const allSelected = unlisted.length > 0 && unlisted.every((l) => selectedLeadIds.has(l.id));
+    setSelectedLeadIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        unlisted.forEach((l) => next.delete(l.id));
+      } else {
+        unlisted.forEach((l) => next.add(l.id));
+      }
+      return next;
+    });
+  };
+
+  const handleBulkQuickAdd = async (targetIds?: string[]) => {
+    let candidates: ScrapedJobLead[] = [];
+    if (targetIds && targetIds.length > 0) {
+      const idSet = new Set(targetIds);
+      candidates = activeLeadsPool.filter((l) => idSet.has(l.id) && !isLeadListed(l));
+    } else {
+      candidates = filteredLeads.filter((l) => !isLeadListed(l));
+    }
+
+    if (!candidates.length) {
+      toast.error('No unlisted leads selected or available to add.');
+      return;
+    }
+
+    const confirmMsg = targetIds
+      ? `Quick Add ${candidates.length} selected lead(s) to live job listings?`
+      : `Quick Add all ${candidates.length} unlisted lead(s) to live job listings?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsBulkProcessing(true);
+    setBulkProgress({ current: 0, total: candidates.length });
+
+    try {
+      const dbLeadsToActivate = candidates.filter((l) => l.isDbLead);
+      const nonDbLeadsToCreate = candidates.filter((l) => !l.isDbLead);
+
+      let processed = 0;
+
+      // Batch update DB leads in chunks of 20
+      for (let i = 0; i < dbLeadsToActivate.length; i += 20) {
+        const chunk = dbLeadsToActivate.slice(i, i + 20);
+        await Promise.all(
+          chunk.map((lead) =>
+            jobsService.updateListing(lead.id, {
+              is_active: true,
+              tags: cleanLeadTags(lead.tags),
+            })
+          )
+        );
+        processed += chunk.length;
+        setBulkProgress({ current: processed, total: candidates.length });
+      }
+
+      // Batch create non-DB leads if any
+      for (let i = 0; i < nonDbLeadsToCreate.length; i += 10) {
+        const chunk = nonDbLeadsToCreate.slice(i, i + 10);
+        await Promise.all(
+          chunk.map((lead) =>
+            jobsService.createListing({
+              title: lead.title,
+              company_name: lead.company_name,
+              company_logo_url: lead.company_logo_url || null,
+              type: lead.type,
+              location: lead.location || 'Remote',
+              experience_min: 0,
+              experience_max: 1,
+              stipend_or_salary: lead.stipend_or_salary || null,
+              description:
+                lead.description ||
+                `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+              apply_url: lead.apply_url,
+              deadline: null,
+              tags: cleanLeadTags(lead.tags),
+              is_active: true,
+              is_featured: false,
+              sort_order: 0,
+            })
+          )
+        );
+        processed += chunk.length;
+        setBulkProgress({ current: processed, total: candidates.length });
+      }
+
+      toast.success(`🎉 Published ${processed} leads to live job listings!`);
+      setSelectedLeadIds(new Set());
+      invalidate();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to bulk publish leads.');
+    } finally {
+      setIsBulkProcessing(false);
+      setBulkProgress({ current: 0, total: 0 });
+    }
+  };
+
+  const handleBulkDismiss = async (targetIds: string[]) => {
+    if (!targetIds.length) return;
+    if (!window.confirm(`Dismiss and remove ${targetIds.length} lead(s) from database?`)) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const dbIds = targetIds.filter((id) => activeLeadsPool.find((l) => l.id === id)?.isDbLead);
+      if (dbIds.length > 0) {
+        await jobsService.purgeListingsByIds(dbIds);
+      }
+      if (customLeads) {
+        const idSet = new Set(targetIds);
+        const updated = customLeads.filter((l) => !idSet.has(l.id));
+        setCustomLeads(updated.length ? updated : null);
+      }
+      toast.success(`Dismissed ${targetIds.length} lead(s)`);
+      setSelectedLeadIds(new Set());
+      invalidate();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to dismiss leads.');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
 
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1494,7 +1630,7 @@ export default function AdminJobsPage() {
                       Streamed directly from your JobSpy automated scraper. Filtered for Indian freshers & 100% remote WFH jobs.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <label className="flex items-center gap-2 text-xs font-semibold text-[#495057] dark:text-[#AAAAAA] cursor-pointer select-none">
                       <input
                         type="checkbox"
@@ -1504,6 +1640,28 @@ export default function AdminJobsPage() {
                       />
                       <span>Unlisted Only ({unlistedLeadsCount})</span>
                     </label>
+
+                    {unlistedLeadsCount > 0 && (
+                      <button
+                        type="button"
+                        disabled={isBulkProcessing}
+                        onClick={() => handleBulkQuickAdd()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                        title="Publish all unlisted leads directly into live listings"
+                      >
+                        {isBulkProcessing ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Adding Leads ({bulkProgress.current}/{bulkProgress.total})...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                            <span>Quick Add All ({unlistedLeadsCount})</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1658,6 +1816,42 @@ export default function AdminJobsPage() {
                     </span>
                   </button>
                 </div>
+
+                {selectedLeadIds.size > 0 && (
+                  <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-2.5 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400">
+                      <CheckCircle2 className="w-4 h-4 text-amber-500" />
+                      <span>{selectedLeadIds.size} lead{selectedLeadIds.size > 1 ? 's' : ''} selected</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isBulkProcessing}
+                        onClick={() => handleBulkQuickAdd(Array.from(selectedLeadIds))}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                      >
+                        <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
+                        <span>Quick Add Selected ({selectedLeadIds.size})</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBulkProcessing}
+                        onClick={() => handleBulkDismiss(Array.from(selectedLeadIds))}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Dismiss ({selectedLeadIds.size})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLeadIds(new Set())}
+                        className="px-2 py-1 text-xs text-[#868E96] hover:text-[#121417] dark:hover:text-white transition-colors cursor-pointer"
+                      >
+                        Deselect
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Leads Table Card */}
@@ -1701,7 +1895,18 @@ export default function AdminJobsPage() {
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="border-b border-[#E9ECEF] dark:border-[#242424] bg-[#F8F9FA]/70 dark:bg-[#0C0C0C]/60 text-[10px] font-bold uppercase tracking-wider text-[#868E96]">
-                          <th className="py-3 px-4 w-12">#</th>
+                          <th className="py-3 px-3 w-10 text-center">
+                            <input
+                              type="checkbox"
+                              aria-label="Select all visible unlisted leads"
+                              checked={
+                                filteredLeads.slice(0, visibleLeadsCount).filter((l) => !isLeadListed(l)).length > 0 &&
+                                filteredLeads.slice(0, visibleLeadsCount).filter((l) => !isLeadListed(l)).every((l) => selectedLeadIds.has(l.id))
+                              }
+                              onChange={() => handleToggleSelectAll(filteredLeads.slice(0, visibleLeadsCount))}
+                              className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#2A2A2A] text-[#FD4A32] focus:ring-0 cursor-pointer"
+                            />
+                          </th>
                           <th className="py-3 px-4">Company & Source</th>
                           <th className="py-3 px-4">Role Title & Type</th>
                           <th className="py-3 px-4">Location & Salary</th>
@@ -1721,8 +1926,18 @@ export default function AdminJobsPage() {
                                 isListed ? 'opacity-70 bg-zinc-50/50 dark:bg-zinc-950/20' : ''
                               }`}
                             >
-                              <td className="py-3 px-4 text-[11px] text-[#868E96] font-mono">
-                                {idx + 1}
+                              <td className="py-3 px-3 text-center">
+                                {isListed ? (
+                                  <span className="text-[11px] text-[#868E96] font-mono">{idx + 1}</span>
+                                ) : (
+                                  <input
+                                    type="checkbox"
+                                    aria-label={`Select ${lead.title} at ${lead.company_name}`}
+                                    checked={selectedLeadIds.has(lead.id)}
+                                    onChange={() => handleToggleSelect(lead.id)}
+                                    className="w-3.5 h-3.5 rounded border-[#E9ECEF] dark:border-[#2A2A2A] text-[#FD4A32] focus:ring-0 cursor-pointer"
+                                  />
+                                )}
                               </td>
 
                               <td className="py-3 px-4">
