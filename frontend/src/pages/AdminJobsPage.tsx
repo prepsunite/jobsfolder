@@ -13,7 +13,7 @@ import type { JobListing, JobType, JobReport, JobReportStatus, ScrapedJobLead } 
 import { useToast } from '@/contexts/ToastContext';
 import { curatedJobLeads } from '@/constants/curatedJobLeads';
 import ContentRenderer from '@/components/ContentRenderer';
-import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
+import { prepareJobDescriptionMarkdown, generateStructuredJobDescription } from '@/utils/jobDescription';
 import CompanyLogo from '@/components/CompanyLogo';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -995,8 +995,9 @@ export default function AdminJobsPage() {
           experience_max: 1,
           stipend_or_salary: lead.stipend_or_salary || null,
           description:
-            lead.description ||
-            `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+            lead.description && lead.description.length > 100 && !lead.description.startsWith('Verified ')
+              ? lead.description
+              : generateStructuredJobDescription(lead.company_name, lead.title, lead.type, lead.location, lead.tags),
           apply_url: lead.apply_url,
           deadline: null,
           tags: cleanLeadTags(lead.tags),
@@ -1026,8 +1027,9 @@ export default function AdminJobsPage() {
       experience_max: 1,
       stipend_or_salary: lead.stipend_or_salary || '',
       description:
-        lead.description ||
-        `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+        lead.description && lead.description.length > 100 && !lead.description.startsWith('Verified ')
+          ? lead.description
+          : generateStructuredJobDescription(lead.company_name, lead.title, lead.type, lead.location, lead.tags),
       apply_url: lead.apply_url,
       deadline: null,
       tags: cleanLeadTags(lead.tags),
@@ -1136,8 +1138,9 @@ export default function AdminJobsPage() {
               experience_max: 1,
               stipend_or_salary: lead.stipend_or_salary || null,
               description:
-                lead.description ||
-                `Verified campus & early career opening at ${lead.company_name}.\nEligibility: ${lead.batch_eligibility || '2025/2026 Batch'}.\nSource: ${lead.source}.\nApply directly through official company ATS portal.`,
+                lead.description && lead.description.length > 100 && !lead.description.startsWith('Verified ')
+                  ? lead.description
+                  : generateStructuredJobDescription(lead.company_name, lead.title, lead.type, lead.location, lead.tags),
               apply_url: lead.apply_url,
               deadline: null,
               tags: cleanLeadTags(lead.tags),

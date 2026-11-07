@@ -131,3 +131,36 @@ export function prepareJobDescriptionMarkdown(raw?: string | null): string {
 
   return result.join('\n');
 }
+
+export function generateStructuredJobDescription(
+  companyName: string,
+  title: string,
+  type: string = 'JOB',
+  location: string = 'India / Remote',
+  tags?: string[]
+): string {
+  const isIntern = type.toUpperCase() === 'INTERNSHIP' || /intern/i.test(title);
+  const typeLabel = isIntern ? 'internship opportunity' : 'full-time engineering opening';
+  const cleanSkills = (tags || []).filter(
+    (t) => !['lead', 'indeed', 'glassdoor', 'linkedin', 'jobspy'].includes(t.toLowerCase())
+  );
+  const skillsText = cleanSkills.length
+    ? cleanSkills.slice(0, 5).join(', ')
+    : 'core programming fundamentals, problem solving, and modern developer tools';
+
+  return `### About the Opportunity
+**${companyName}** is actively hiring for a **${title}** (${typeLabel}) based in **${location || 'India / Remote'}**. This role is designed for ambitious engineering graduates and early-career developers looking to build production-grade software solutions in a collaborative team.
+
+### What You Will Do
+- Collaborate with engineering peers and mentors to design, build, and test software features.
+- Write clean, well-documented, and performant code following modern development standards.
+- Troubleshoot, debug, and optimize application performance across development and staging environments.
+- Participate in agile sprints, daily standups, technical design discussions, and code reviews.
+
+### Qualifications & Key Skills
+- Foundational expertise or hands-on project exposure in **${skillsText}**.
+- Strong grasp of Object-Oriented Programming (OOP), Data Structures, and basic software lifecycle principles.
+- Ability to self-start, learn new frameworks rapidly, and solve technical challenges methodically.
+- **Target Candidates:** Class of 2024 / 2025 / 2026 / 2027 graduates (B.Tech / B.E / BCA / MCA / B.Sc) and entry-level professionals (0–1 YOE).
+`;
+}
