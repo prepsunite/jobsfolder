@@ -1727,12 +1727,23 @@ export default function AdminJobsPage() {
 
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-2.5">
-                                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center font-bold text-xs text-[#121417] dark:text-white shrink-0">
+                                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center font-bold text-xs text-[#121417] dark:text-white shrink-0 overflow-hidden">
                                     {lead.company_logo_url ? (
-                                      <img src={lead.company_logo_url} alt="" className="w-5 h-5 object-contain" />
-                                    ) : (
-                                      lead.company_name.slice(0, 1).toUpperCase()
-                                    )}
+                                      <img
+                                        src={lead.company_logo_url}
+                                        alt=""
+                                        className="w-5 h-5 object-contain"
+                                        onError={(e) => {
+                                          const target = e.currentTarget;
+                                          target.style.display = 'none';
+                                          const fallback = target.nextElementSibling as HTMLElement | null;
+                                          if (fallback) fallback.style.display = 'flex';
+                                        }}
+                                      />
+                                    ) : null}
+                                    <span className={`text-xs font-bold text-[#121417] dark:text-white ${lead.company_logo_url ? 'hidden' : 'flex'}`}>
+                                      {lead.company_name.slice(0, 1).toUpperCase()}
+                                    </span>
                                   </div>
                                   <div>
                                     <div className="font-bold text-[#121417] dark:text-white flex items-center gap-1.5">
@@ -2294,8 +2305,30 @@ export default function AdminJobsPage() {
 
                             {/* Title + company */}
                             <td className="px-4 py-3">
-                              <div className="font-semibold text-[#121417] dark:text-white max-w-[200px] truncate">{job.title}</div>
-                              <div className="text-[#868E96] text-[11px]">{job.company_name}</div>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-[#E9ECEF] dark:border-[#2A2A2A] flex items-center justify-center font-bold text-xs text-[#121417] dark:text-white shrink-0 overflow-hidden">
+                                  {job.company_logo_url ? (
+                                    <img
+                                      src={job.company_logo_url}
+                                      alt=""
+                                      className="w-5 h-5 object-contain"
+                                      onError={(e) => {
+                                        const target = e.currentTarget;
+                                        target.style.display = 'none';
+                                        const fallback = target.nextElementSibling as HTMLElement | null;
+                                        if (fallback) fallback.style.display = 'flex';
+                                      }}
+                                    />
+                                  ) : null}
+                                  <span className={`text-xs font-bold text-[#121417] dark:text-white ${job.company_logo_url ? 'hidden' : 'flex'}`}>
+                                    {job.company_name.slice(0, 1).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-semibold text-[#121417] dark:text-white max-w-[200px] truncate">{job.title}</div>
+                                  <div className="text-[#868E96] text-[11px] truncate">{job.company_name}</div>
+                                </div>
+                              </div>
                               {reportsByJobId.has(job.id) && (
                                 <button
                                   type="button"
