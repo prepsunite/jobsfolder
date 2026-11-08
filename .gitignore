@@ -37,3 +37,7 @@ logs
 # Scraper output dumps
 scripts/output/*.json
 
+# Scratch workspace scripts
+scratch/
+
+

@@ -58,6 +58,9 @@ export interface ScrapedJobLead {
   title: string;
   type: JobType;
   location: string;
+  experience_min?: number;
+  experience_max?: number | null;
+  experience_label?: string | null;
   stipend_or_salary?: string | null;
   description?: string | null;
   apply_url: string;

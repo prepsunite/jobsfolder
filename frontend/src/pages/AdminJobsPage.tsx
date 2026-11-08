@@ -17,6 +17,7 @@ import ContentRenderer from '@/components/ContentRenderer';
 import { prepareJobDescriptionMarkdown, generateStructuredJobDescription } from '@/utils/jobDescription';
 import CompanyLogo from '@/components/CompanyLogo';
 import { auditJobRecord, getJobCohortLabel, generateCohortTelegramBroadcast } from '@/utils/jobAudit';
+import { verifyFresherEligibility } from '@/utils/jobExperience';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,25 @@ const SCRAPER_NOISE_TAGS = new Set([
 function cleanLeadTags(tags?: string[] | null): string[] {
   if (!tags || !Array.isArray(tags)) return [];
   return tags.filter((t) => !SCRAPER_NOISE_TAGS.has(t.trim().toLowerCase()));
+}
+
+export function normalizeCompanyKey(c?: string | null): string {
+  if (!c) return '';
+  return c
+    .toLowerCase()
+    .replace(/\b(technologies|technology|private limited|pvt ltd|pvt\. ltd\.|ltd|limited|inc|corporation|corp|llp|services|systems|consulting|solutions|in india|india)\b/gi, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+}
+
+export function normalizeTitleKey(t?: string | null): string {
+  if (!t) return '';
+  return t
+    .toLowerCase()
+    .replace(/[()[\]\-–—|/]/g, ' ')
+    .replace(/\b(full[- ]time|fresher|freshers|batch|class\s+of\s+\d+|202[4-7]|graduates?|hiring)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -557,6 +577,8 @@ type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
 type LeadCategoryFilter =
   | 'ALL'
   | 'BOT_LEADS'
+  | 'FRESHER_ONLY'
+  | 'NON_FRESHER'
   | 'NEEDS_DESC'
   | 'JOB_BOARD_URL'
   | 'MISSING_LOGO'
@@ -597,7 +619,7 @@ export default function AdminJobsPage() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
-  const [showCuratedBackup, setShowCuratedBackup] = useState<boolean>(false);
+  const [showCuratedBackup, setShowCuratedBackup] = useState<boolean>(true);
   const [customLeads, setCustomLeads] = useState<ScrapedJobLead[] | null>(() => {
     try {
       const cached = localStorage.getItem('prepunite_admin_job_leads');
@@ -703,6 +725,8 @@ export default function AdminJobsPage() {
         title: j.title,
         type: j.type,
         location: j.location,
+        experience_min: j.experience_min,
+        experience_max: j.experience_max,
         stipend_or_salary: j.stipend_or_salary,
         description: j.description,
         apply_url: j.apply_url,
@@ -755,20 +779,39 @@ export default function AdminJobsPage() {
     return list;
   }, [reports, reportStatusFilter, search]);
 
-  // Leads pipeline: Exclusively live bot findings from database by default
+  // Leads pipeline: Semantic deduplication guaranteeing zero duplicate leads in Admin Panel
   const activeLeadsPool = useMemo<ScrapedJobLead[]>(() => {
+    let rawPool: ScrapedJobLead[] = [];
     if (customLeads && customLeads.length > 0) {
-      const dbUrls = new Set(dbLeads.map((d) => (d.apply_url || '').toLowerCase().trim()));
-      const remainingCustom = customLeads.filter((b) => !dbUrls.has((b.apply_url || '').toLowerCase().trim()));
-      return [...dbLeads, ...remainingCustom];
+      const dbKeys = new Set(dbLeads.map((d) => `${normalizeCompanyKey(d.company_name)}@@${normalizeTitleKey(d.title)}`));
+      const remainingCustom = customLeads.filter((b) => !dbKeys.has(`${normalizeCompanyKey(b.company_name)}@@${normalizeTitleKey(b.title)}`));
+      rawPool = [...dbLeads, ...remainingCustom];
+    } else if (showCuratedBackup) {
+      const dbKeys = new Set(dbLeads.map((d) => `${normalizeCompanyKey(d.company_name)}@@${normalizeTitleKey(d.title)}`));
+      const remainingCurated = curatedJobLeads.filter((b) => !dbKeys.has(`${normalizeCompanyKey(b.company_name)}@@${normalizeTitleKey(b.title)}`));
+      rawPool = [...dbLeads, ...remainingCurated];
+    } else {
+      rawPool = dbLeads;
     }
-    if (showCuratedBackup) {
-      const dbUrls = new Set(dbLeads.map((d) => (d.apply_url || '').toLowerCase().trim()));
-      const remainingCurated = curatedJobLeads.filter((b) => !dbUrls.has((b.apply_url || '').toLowerCase().trim()));
-      return [...dbLeads, ...remainingCurated];
+
+    // In-memory semantic deduplication (preferring direct ATS portal if duplicates exist)
+    const seenSemantic = new Set<string>();
+    const seenUrls = new Set<string>();
+    const deduplicated: ScrapedJobLead[] = [];
+
+    for (const lead of rawPool) {
+      const semKey = `${normalizeCompanyKey(lead.company_name)}@@${normalizeTitleKey(lead.title)}`;
+      const urlKey = (lead.apply_url || '').trim().toLowerCase();
+
+      if (seenSemantic.has(semKey)) continue;
+      if (urlKey && seenUrls.has(urlKey)) continue;
+
+      seenSemantic.add(semKey);
+      if (urlKey) seenUrls.add(urlKey);
+      deduplicated.push(lead);
     }
-    // Only live scraped bot findings from database
-    return dbLeads;
+
+    return deduplicated;
   }, [dbLeads, customLeads, showCuratedBackup]);
 
   const listedUrlSet = useMemo(() => {
@@ -779,6 +822,7 @@ export default function AdminJobsPage() {
         if (l.apply_url) set.add(l.apply_url.toLowerCase().trim());
         if (l.company_name && l.title) {
           set.add(`${l.company_name.toLowerCase().trim()}|${l.title.toLowerCase().trim()}`);
+          set.add(`${normalizeCompanyKey(l.company_name)}@@${normalizeTitleKey(l.title)}`);
         }
       }
     }
@@ -788,8 +832,9 @@ export default function AdminJobsPage() {
   const isLeadListed = useCallback(
     (lead: ScrapedJobLead) => {
       const urlKey = (lead.apply_url || '').toLowerCase().trim();
-      const nameKey = `${(lead.company_name || '').toLowerCase().trim()}|${(lead.title || '').toLowerCase().trim()}`;
-      return listedUrlSet.has(urlKey) || listedUrlSet.has(nameKey);
+      const rawKey = `${(lead.company_name || '').toLowerCase().trim()}|${(lead.title || '').toLowerCase().trim()}`;
+      const semKey = `${normalizeCompanyKey(lead.company_name)}@@${normalizeTitleKey(lead.title)}`;
+      return listedUrlSet.has(urlKey) || listedUrlSet.has(rawKey) || listedUrlSet.has(semKey);
     },
     [listedUrlSet]
   );
@@ -808,6 +853,8 @@ export default function AdminJobsPage() {
     jobBoardCount,
     missingLogoCount,
     readyCount,
+    nonFresherCount,
+    fresherVerifiedCount,
   } = useMemo(() => {
     let india = 0;
     let remote = 0;
@@ -822,6 +869,8 @@ export default function AdminJobsPage() {
     let jb = 0;
     let ml = 0;
     let rd = 0;
+    let nonFresher = 0;
+    let fresherVer = 0;
 
     for (let i = 0; i < activeLeadsPool.length; i++) {
       const l = activeLeadsPool[i];
@@ -830,6 +879,10 @@ export default function AdminJobsPage() {
       if (audit.isJobBoard) jb++;
       if (!audit.hasLogo) ml++;
       if (audit.isReadyForPublish && !audit.isFallbackDescription && !audit.isJobBoard) rd++;
+
+      const fCheck = verifyFresherEligibility(l);
+      if (!fCheck.isFresher) nonFresher++;
+      else fresherVer++;
       const comp = l.company_name.toLowerCase();
       const loc = (l.location || '').toLowerCase();
       const tags = l.tags || [];
@@ -869,6 +922,8 @@ export default function AdminJobsPage() {
       jobBoardCount: jb,
       missingLogoCount: ml,
       readyCount: rd,
+      nonFresherCount: nonFresher,
+      fresherVerifiedCount: fresherVer,
     };
   }, [activeLeadsPool, isLeadListed]);
 
@@ -904,6 +959,26 @@ export default function AdminJobsPage() {
         badge: activeLeadsPool.length,
         sectionTitle: 'All Ingested Leads',
         sectionSubtitle: 'Full unprocessed candidate pipeline across all hiring categories.',
+      },
+      {
+        id: 'FRESHER_ONLY',
+        label: 'Verified Freshers (0-1 YOE)',
+        caption: 'Strictly 0 to 1 year of experience',
+        icon: GraduationCap,
+        badge: fresherVerifiedCount,
+        badgeStyle: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30',
+        sectionTitle: 'Verified Fresher Roles (0–1 YOE)',
+        sectionSubtitle: 'Only positions confirmed strictly for 0 or 1 year of experience.',
+      },
+      {
+        id: 'NON_FRESHER',
+        label: '🚨 Non-Fresher (2+ YOE)',
+        caption: 'Requires 2+, 3+, 5+ YOE; flagged for discard',
+        icon: AlertCircle,
+        badge: nonFresherCount,
+        badgeStyle: nonFresherCount > 0 ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-black' : undefined,
+        sectionTitle: 'Non-Fresher Roles Requiring >= 2 YOE',
+        sectionSubtitle: 'Roles requiring 2+, 3+, or senior track record. One-click purge to keep board 100% fresher.',
       },
       {
         id: 'BOT_LEADS',
@@ -1013,6 +1088,8 @@ export default function AdminJobsPage() {
     [
       activeLeadsPool.length,
       dbLeads.length,
+      fresherVerifiedCount,
+      nonFresherCount,
       needsDescCount,
       jobBoardCount,
       missingLogoCount,
@@ -1041,7 +1118,11 @@ export default function AdminJobsPage() {
       list = list.filter((l) => !isLeadListed(l));
     }
 
-    if (leadCategory === 'NEEDS_DESC') {
+    if (leadCategory === 'FRESHER_ONLY') {
+      list = list.filter((l) => verifyFresherEligibility(l).isFresher);
+    } else if (leadCategory === 'NON_FRESHER') {
+      list = list.filter((l) => !verifyFresherEligibility(l).isFresher);
+    } else if (leadCategory === 'NEEDS_DESC') {
       list = list.filter((l) => auditJobRecord(l).isFallbackDescription);
     } else if (leadCategory === 'JOB_BOARD_URL') {
       list = list.filter((l) => auditJobRecord(l).isJobBoard);
@@ -1207,6 +1288,15 @@ export default function AdminJobsPage() {
   };
 
   const handleQuickAddLead = async (lead: ScrapedJobLead) => {
+    const fCheck = verifyFresherEligibility(lead);
+    if (!fCheck.isFresher) {
+      toast.error(`Blocked "${lead.title}": Requires ${fCheck.minYears}+ YOE. Prepunite is strictly for 0–1 YOE freshers.`);
+      return;
+    }
+    if (isLeadListed(lead)) {
+      toast.info(`"${lead.company_name} - ${lead.title}" is already published and live on the public site!`);
+      return;
+    }
     setAddingLeadId(lead.id);
     try {
       if (lead.isDbLead) {
@@ -1222,8 +1312,8 @@ export default function AdminJobsPage() {
           company_logo_url: lead.company_logo_url || null,
           type: lead.type,
           location: lead.location || 'Remote',
-          experience_min: 0,
-          experience_max: 1,
+          experience_min: lead.experience_min ?? 0,
+          experience_max: lead.experience_max ?? 1,
           stipend_or_salary: lead.stipend_or_salary || null,
           description:
             lead.description && lead.description.length > 100 && !lead.description.startsWith('Verified ')
@@ -1254,8 +1344,8 @@ export default function AdminJobsPage() {
       company_logo_url: lead.company_logo_url || '',
       type: lead.type,
       location: lead.location || 'Remote',
-      experience_min: 0,
-      experience_max: 1,
+      experience_min: lead.experience_min ?? 0,
+      experience_max: lead.experience_max ?? 1,
       stipend_or_salary: lead.stipend_or_salary || '',
       description:
         lead.description && lead.description.length > 100 && !lead.description.startsWith('Verified ')
@@ -1319,10 +1409,19 @@ export default function AdminJobsPage() {
       candidates = filteredLeads.filter((l) => !isLeadListed(l));
     }
 
-    if (!candidates.length) {
-      toast.error('No unlisted leads selected or available to add.');
+    // Strict Fresher Invariant Gate
+    const eligibleCandidates = candidates.filter((l) => verifyFresherEligibility(l).isFresher);
+    const rejectedCount = candidates.length - eligibleCandidates.length;
+
+    if (rejectedCount > 0) {
+      toast.error(`Filtered out ${rejectedCount} non-fresher lead(s) requiring >= 2 YOE.`);
+    }
+
+    if (!eligibleCandidates.length) {
+      toast.error('No eligible 0–1 YOE leads available to publish.');
       return;
     }
+    candidates = eligibleCandidates;
 
     const confirmMsg = targetIds
       ? `Quick Add ${candidates.length} selected lead(s) to live job listings?`
@@ -1365,8 +1464,8 @@ export default function AdminJobsPage() {
               company_logo_url: lead.company_logo_url || null,
               type: lead.type,
               location: lead.location || 'Remote',
-              experience_min: 0,
-              experience_max: 1,
+              experience_min: lead.experience_min ?? 0,
+              experience_max: lead.experience_max ?? 1,
               stipend_or_salary: lead.stipend_or_salary || null,
               description:
                 lead.description && lead.description.length > 100 && !lead.description.startsWith('Verified ')
@@ -2026,6 +2125,20 @@ export default function AdminJobsPage() {
                     </p>
                   </div>
 
+                  {/* Quick Purge button for Non-Fresher category */}
+                  {leadCategory === 'NON_FRESHER' && filteredLeads.length > 0 && selectedLeadIds.size === 0 && (
+                    <button
+                      type="button"
+                      disabled={isBulkProcessing}
+                      onClick={() => handleBulkDismiss(filteredLeads.map((l) => l.id))}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      title="Purge all detected non-fresher roles from database"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Discard All {filteredLeads.length} Non-Freshers</span>
+                    </button>
+                  )}
+
                   {/* Batch Selection Action Bar if leads selected */}
                   {selectedLeadIds.size > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
@@ -2179,6 +2292,24 @@ export default function AdminJobsPage() {
                                       {lead.type}
                                     </span>
                                     {(() => {
+                                      const fCheck = verifyFresherEligibility(lead);
+                                      if (!fCheck.isFresher) {
+                                        return (
+                                          <span
+                                            className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                                            title={fCheck.flagReason || 'Requires 2+ or 3+ YOE'}
+                                          >
+                                            🚨 {fCheck.minYears}+ YOE Non-Fresher
+                                          </span>
+                                        );
+                                      }
+                                      return (
+                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                          🎯 0-1 YOE
+                                        </span>
+                                      );
+                                    })()}
+                                    {(() => {
                                       const audit = auditJobRecord(lead);
                                       return (
                                         <>
@@ -2313,20 +2444,36 @@ export default function AdminJobsPage() {
                                       >
                                         Review & Edit
                                       </button>
-                                      <button
-                                        type="button"
-                                        disabled={addingLeadId === lead.id}
-                                        onClick={() => handleQuickAddLead(lead)}
-                                        title="1-Click publish directly into live job listings"
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer whitespace-nowrap disabled:opacity-50"
-                                      >
-                                        {addingLeadId === lead.id ? (
-                                          <Loader2 className="w-3 h-3 animate-spin" />
-                                        ) : (
-                                          <Plus className="w-3 h-3" />
-                                        )}
-                                        <span>Quick Add</span>
-                                      </button>
+                                      {(() => {
+                                        const fCheck = verifyFresherEligibility(lead);
+                                        if (!fCheck.isFresher) {
+                                          return (
+                                            <span
+                                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 whitespace-nowrap"
+                                              title={fCheck.flagReason || 'Requires >= 2 YOE'}
+                                            >
+                                              <AlertCircle className="w-3 h-3 text-rose-500" />
+                                              <span>{fCheck.minYears}+ YOE (Non-Fresher)</span>
+                                            </span>
+                                          );
+                                        }
+                                        return (
+                                          <button
+                                            type="button"
+                                            disabled={addingLeadId === lead.id}
+                                            onClick={() => handleQuickAddLead(lead)}
+                                            title="1-Click publish directly into live job listings"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#FD4A32] dark:hover:bg-[#FD4A32] dark:hover:text-white transition-all shadow-xs cursor-pointer whitespace-nowrap disabled:opacity-50"
+                                          >
+                                            {addingLeadId === lead.id ? (
+                                              <Loader2 className="w-3 h-3 animate-spin" />
+                                            ) : (
+                                              <Plus className="w-3 h-3" />
+                                            )}
+                                            <span>Quick Add</span>
+                                          </button>
+                                        );
+                                      })()}
                                     </>
                                   )}
                                 </div>

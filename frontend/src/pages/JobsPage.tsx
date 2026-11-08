@@ -13,6 +13,7 @@ import { useToast } from '@/contexts/ToastContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
 import CompanyLogo from '@/components/CompanyLogo';
+import { verifyFresherEligibility } from '@/utils/jobExperience';
 import type { JobListing, JobListingFilters, JobType, JobSortOption, WorkModeFilter } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -100,12 +101,30 @@ function getApplyButtonLabel(url: string | undefined): string {
   return 'Apply Now';
 }
 
-function expMatchesFilter(min: number, max: number | null | undefined, level: JobListingFilters['expLevel']): boolean {
+function expMatchesFilter(
+  min: number,
+  max: number | null | undefined,
+  level: JobListingFilters['expLevel'],
+  jobTitle?: string,
+  jobDesc?: string | null
+): boolean {
+  // 1. Dual-Layer Text & Seniority Shield: Reject any job requiring >= 2 YOE or with senior title
+  if (jobTitle) {
+    const check = verifyFresherEligibility({
+      title: jobTitle,
+      description: jobDesc,
+      experience_min: min,
+      experience_max: max,
+    });
+    if (!check.isFresher) return false;
+  }
+
+  // 2. Strict Fresher Rule: Prepunite listings must be <= 1 YOE
+  if (min > 1) return false;
+
   if (!level || level === 'ANY') return true;
   if (level === 'FRESHER') return min === 0 && (!max || max === 0);
-  if (level === '0-2') return min <= 2 && (!max || max <= 2 || min <= 2);
-  if (level === '2-5') return (min >= 2 && min <= 5) || (max != null && max >= 2 && max <= 5);
-  if (level === '5+') return min >= 5 || (max != null && max >= 5);
+  if (level === '0-2') return min <= 1 && (!max || max <= 1);
   return true;
 }
 
@@ -343,7 +362,22 @@ interface JobCardProps {
 }
 
 function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBookmark }: JobCardProps) {
-  const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
+  const expCheck = useMemo(
+    () =>
+      verifyFresherEligibility({
+        title: job.title,
+        description: job.description,
+        experience_min: job.experience_min,
+        experience_max: job.experience_max,
+      }),
+    [job.title, job.description, job.experience_min, job.experience_max]
+  );
+  const expLabel = useMemo(() => {
+    if (!expCheck.isFresher && expCheck.minYears >= 2) {
+      return `${expCheck.minYears}+ yrs`;
+    }
+    return formatExperience(expCheck.minYears, expCheck.maxYears);
+  }, [expCheck]);
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
 
@@ -537,7 +571,22 @@ interface JobDetailPaneProps {
 function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare }: JobDetailPaneProps) {
   const { toast } = useToast();
   const scrollRef = React.useRef<HTMLDivElement>(null);
-  const expLabel = useMemo(() => formatExperience(job.experience_min, job.experience_max), [job.experience_min, job.experience_max]);
+  const expCheck = useMemo(
+    () =>
+      verifyFresherEligibility({
+        title: job.title,
+        description: job.description,
+        experience_min: job.experience_min,
+        experience_max: job.experience_max,
+      }),
+    [job.title, job.description, job.experience_min, job.experience_max]
+  );
+  const expLabel = useMemo(() => {
+    if (!expCheck.isFresher && expCheck.minYears >= 2) {
+      return `${expCheck.minYears}+ yrs`;
+    }
+    return formatExperience(expCheck.minYears, expCheck.maxYears);
+  }, [expCheck]);
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
   const [reportOpen, setReportOpen] = React.useState(false);
@@ -931,11 +980,9 @@ const WORK_MODE_OPTIONS: { label: string; value: WorkModeFilter }[] = [
 ];
 
 const EXP_OPTIONS: { label: string; value: JobListingFilters['expLevel'] }[] = [
-  { label: 'Experience: Any', value: 'ANY' },
-  { label: '🎓 Fresher (0 yr)', value: 'FRESHER' },
-  { label: '0–2 yrs', value: '0-2' },
-  { label: '2–5 yrs', value: '2-5' },
-  { label: '5+ yrs', value: '5+' },
+  { label: 'Experience: All Freshers (0–1 yr)', value: 'ANY' },
+  { label: '🎓 Fresher Only (0 yr / College Grads)', value: 'FRESHER' },
+  { label: '🌱 0–1 yr Early Career', value: '0-2' },
 ];
 
 const DOMAIN_OPTIONS: { label: string; value: string }[] = [
@@ -1072,7 +1119,7 @@ export default function JobsPage() {
       }
 
       // Experience filter
-      if (!expMatchesFilter(job.experience_min, job.experience_max, filters.expLevel)) return false;
+      if (!expMatchesFilter(job.experience_min, job.experience_max, filters.expLevel, job.title, job.description)) return false;
 
       return true;
     });
