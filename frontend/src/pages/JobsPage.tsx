@@ -1,21 +1,22 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, Link } from 'react-router';
 import {
   MapPin, Briefcase, Star, Search, X, ChevronDown, ChevronRight,
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Code, Check, Building2, GraduationCap, ArrowRight,
-  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe, RotateCcw
+  CheckCircle2, Flame, Award, Eye, AlertCircle, Globe, RotateCcw,
+  ThumbsUp, ThumbsDown, ShieldCheck
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
 import { useToast } from '@/contexts/ToastContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import ContentRenderer from '@/components/ContentRenderer';
 import { prepareJobDescriptionMarkdown } from '@/utils/jobDescription';
 import CompanyLogo from '@/components/CompanyLogo';
 import { verifyFresherEligibility } from '@/utils/jobExperience';
-import type { JobListing, JobListingFilters, JobType, JobSortOption, WorkModeFilter } from '@/types/jobs';
+import type { JobListing, JobListingFilters, JobType, JobSortOption, WorkModeFilter, AdminJobVote } from '@/types/jobs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -351,6 +352,57 @@ function JobCardSkeleton() {
   );
 }
 
+// ─── Admin-Only Triage Controls (Thumbs Up = Keep, Thumbs Down = Delete Queue) ──
+
+interface AdminVoteControlsProps {
+  vote?: AdminJobVote | null;
+  onVote: (vote: AdminJobVote, e: React.MouseEvent) => void;
+  compact?: boolean;
+}
+
+function AdminVoteControls({ vote, onVote, compact = false }: AdminVoteControlsProps) {
+  return (
+    <div
+      className="inline-flex items-center gap-1 shrink-0"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={(e) => onVote('UP', e)}
+        aria-label="Admin keep listing (Thumbs Up)"
+        title={vote === 'UP' ? 'Marked Keep — stays up until changed to Thumbs Down' : 'Thumbs Up — Mark to keep'}
+        className={`inline-flex items-center justify-center gap-1 rounded-full border transition-all cursor-pointer ${
+          compact ? 'w-7 h-7' : 'px-2.5 py-1.5 text-[11px] font-bold'
+        } ${
+          vote === 'UP'
+            ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+            : 'bg-[#F8F9FA] dark:bg-[#1E1E1E] text-[#6C757D] dark:text-[#999999] border-[#E9ECEF] dark:border-[#2A2A2A] hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+        }`}
+      >
+        <ThumbsUp className="w-3.5 h-3.5" />
+        {!compact && <span>{vote === 'UP' ? 'Kept' : 'Keep'}</span>}
+      </button>
+
+      <button
+        type="button"
+        onClick={(e) => onVote('DOWN', e)}
+        aria-label="Admin flag for deletion (Thumbs Down)"
+        title={vote === 'DOWN' ? 'Flagged for Deletion — click Thumbs Up to keep instead' : 'Thumbs Down — Flag to delete'}
+        className={`inline-flex items-center justify-center gap-1 rounded-full border transition-all cursor-pointer ${
+          compact ? 'w-7 h-7' : 'px-2.5 py-1.5 text-[11px] font-bold'
+        } ${
+          vote === 'DOWN'
+            ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
+            : 'bg-[#F8F9FA] dark:bg-[#1E1E1E] text-[#6C757D] dark:text-[#999999] border-[#E9ECEF] dark:border-[#2A2A2A] hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30'
+        }`}
+      >
+        <ThumbsDown className="w-3.5 h-3.5" />
+        {!compact && <span>{vote === 'DOWN' ? 'Flagged' : 'Flag'}</span>}
+      </button>
+    </div>
+  );
+}
+
 // ─── Job Card ─────────────────────────────────────────────────────────────────
 
 interface JobCardProps {
@@ -360,9 +412,22 @@ interface JobCardProps {
   onClose: () => void;
   isBookmarked: boolean;
   onToggleBookmark: (e: React.MouseEvent) => void;
+  isAdminView?: boolean;
+  adminVote?: AdminJobVote | null;
+  onAdminVote?: (vote: AdminJobVote, e: React.MouseEvent) => void;
 }
 
-function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBookmark }: JobCardProps) {
+function JobCard({
+  job,
+  isSelected,
+  onSelect,
+  onClose,
+  isBookmarked,
+  onToggleBookmark,
+  isAdminView = false,
+  adminVote = null,
+  onAdminVote,
+}: JobCardProps) {
   const expCheck = useMemo(
     () =>
       verifyFresherEligibility({
@@ -407,6 +472,10 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
       } ${
         isSelected
           ? 'border-2 border-[#121417] dark:border-white bg-[#F8F9FA] dark:bg-[#1A1A1A] shadow-md'
+          : isAdminView && adminVote === 'DOWN'
+          ? 'border border-rose-300 dark:border-rose-800/80 ring-1 ring-rose-500/20 hover:shadow-md'
+          : isAdminView && adminVote === 'UP'
+          ? 'border border-emerald-200 dark:border-emerald-900/60 hover:shadow-md'
           : 'border border-[#E9ECEF] dark:border-[#242424] hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-md'
       }`}
     >
@@ -457,20 +526,25 @@ function JobCard({ job, isSelected, onSelect, onClose, isBookmarked, onToggleBoo
             </div>
           </div>
 
-          {/* Top-Right Bookmark Button */}
-          <button
-            type="button"
-            onClick={onToggleBookmark}
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
-            title={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
-            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-              isBookmarked
-                ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
-                : 'bg-[#F1F3F5] hover:bg-[#E9ECEF] dark:bg-[#202020] dark:hover:bg-[#2A2A2A] text-[#495057] dark:text-[#AAAAAA]'
-            }`}
-          >
-            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-current text-amber-500' : ''}`} />
-          </button>
+          {/* Top-Right Controls: Admin Triage Votes (Admin Only) + Bookmark */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isAdminView && onAdminVote && (
+              <AdminVoteControls vote={adminVote} onVote={onAdminVote} compact />
+            )}
+            <button
+              type="button"
+              onClick={onToggleBookmark}
+              aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
+              title={isBookmarked ? 'Remove bookmark' : 'Bookmark job'}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                isBookmarked
+                  ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                  : 'bg-[#F1F3F5] hover:bg-[#E9ECEF] dark:bg-[#202020] dark:hover:bg-[#2A2A2A] text-[#495057] dark:text-[#AAAAAA]'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-current text-amber-500' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Subtle Divider Line */}
@@ -569,9 +643,22 @@ interface JobDetailPaneProps {
   onToggleBookmark: () => void;
   onShare: () => void;
   onApply: () => void;
+  isAdminView?: boolean;
+  adminVote?: AdminJobVote | null;
+  onAdminVote?: (vote: AdminJobVote, e: React.MouseEvent) => void;
 }
 
-function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare, onApply }: JobDetailPaneProps) {
+function JobDetailPane({
+  job,
+  onClose,
+  isBookmarked,
+  onToggleBookmark,
+  onShare,
+  onApply,
+  isAdminView = false,
+  adminVote = null,
+  onAdminVote,
+}: JobDetailPaneProps) {
   const { toast } = useToast();
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const expCheck = useMemo(
@@ -643,8 +730,13 @@ function JobDetailPane({ job, onClose, isBookmarked, onToggleBookmark, onShare, 
           )}
         </div>
 
-        {/* Right: Report · Share · Bookmark · Close */}
-        <div className="flex items-center gap-1">
+        {/* Right: Admin Triage Votes (Admin Only) · Report · Share · Bookmark · Close */}
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {isAdminView && onAdminVote && (
+            <div className="mr-1 pr-1.5 border-r border-[#E9ECEF] dark:border-[#242424]">
+              <AdminVoteControls vote={adminVote} onVote={onAdminVote} />
+            </div>
+          )}
           {/* Report button (Spam-proof: single submission per client) */}
           <div className="relative">
             {reported ? (
@@ -1126,7 +1218,9 @@ function JobAuthModal({ isOpen, onClose, job, action, onGoogleSignIn, isLoading 
 
 export default function JobsPage() {
   const { toast } = useToast();
-  const { user, isAuthenticated, signInWithGoogle } = useAuth();
+  const { user, isAdmin, isAuthenticated, signInWithGoogle } = useAuth();
+  const queryClient = useQueryClient();
+  const isEffectiveAdmin = Boolean(isAuthenticated && (isAdmin || isSuperAdminEmail(user?.email)));
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Filters State
@@ -1175,6 +1269,75 @@ export default function JobsPage() {
     queryFn: () => jobsService.getActiveListings(),
     staleTime: 5 * 60 * 1000,
   });
+
+  // Admin-Only Triage Reviews (never fetched or exposed to students/guests)
+  const [adminReviewFilter, setAdminReviewFilter] = useState<'ALL' | 'UNREVIEWED' | 'UP' | 'DOWN'>('ALL');
+  const { data: adminVotes = {} } = useQuery({
+    queryKey: ['job_admin_reviews'],
+    queryFn: () => jobsService.getAdminReviews(),
+    enabled: isEffectiveAdmin,
+    staleTime: 60 * 1000,
+  });
+
+  const adminVoteMutation = useMutation({
+    mutationFn: async ({ jobId, vote }: { jobId: string; vote: AdminJobVote }) => {
+      await jobsService.setAdminReview(jobId, vote, user?.email);
+      return { jobId, vote };
+    },
+    onMutate: async ({ jobId, vote }) => {
+      await queryClient.cancelQueries({ queryKey: ['job_admin_reviews'] });
+      const previousVotes = queryClient.getQueryData<Record<string, AdminJobVote>>(['job_admin_reviews']) || {};
+      queryClient.setQueryData<Record<string, AdminJobVote>>(['job_admin_reviews'], {
+        ...previousVotes,
+        [jobId]: vote,
+      });
+      return { previousVotes };
+    },
+    onError: (err: any, _vars, context) => {
+      if (context?.previousVotes) {
+        queryClient.setQueryData(['job_admin_reviews'], context.previousVotes);
+      }
+      toast.error(err?.message || 'Failed to save admin vote.');
+    },
+    onSuccess: ({ vote }) => {
+      toast.success(
+        vote === 'UP'
+          ? 'Marked 👍 Keep (stays up until changed to Thumbs Down)'
+          : 'Marked 👎 Flagged for deletion'
+      );
+      queryClient.invalidateQueries({ queryKey: ['job_admin_reviews'] });
+    },
+  });
+
+  const handleAdminVote = useCallback(
+    (jobId: string, vote: AdminJobVote, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      if (!isEffectiveAdmin) return;
+      // Keep Thumbs Up persistent until explicitly changed to Thumbs Down (and vice versa)
+      if (adminVotes[jobId] === vote) {
+        toast.info(vote === 'UP' ? 'Already marked 👍 Keep' : 'Already flagged 👎 for deletion');
+        return;
+      }
+      adminVoteMutation.mutate({ jobId, vote });
+    },
+    [isEffectiveAdmin, adminVotes, adminVoteMutation, toast]
+  );
+
+  const adminReviewCounts = useMemo(() => {
+    if (!isEffectiveAdmin) return { up: 0, down: 0, unreviewed: 0 };
+    const nowMs = Date.now();
+    const active = listings.filter((j) => j.is_active && (!j.deadline || new Date(j.deadline).getTime() >= nowMs));
+    let up = 0;
+    let down = 0;
+    let unreviewed = 0;
+    for (const j of active) {
+      const v = adminVotes[j.id];
+      if (v === 'UP') up += 1;
+      else if (v === 'DOWN') down += 1;
+      else unreviewed += 1;
+    }
+    return { up, down, unreviewed };
+  }, [isEffectiveAdmin, listings, adminVotes]);
 
   // Keep URL param in sync with selectedJobId
   useEffect(() => {
@@ -1251,6 +1414,14 @@ export default function JobsPage() {
       // Experience filter
       if (!expMatchesFilter(job.experience_min, job.experience_max, filters.expLevel, job.title, job.description)) return false;
 
+      // Admin triage filter (Admin-only)
+      if (isEffectiveAdmin && adminReviewFilter !== 'ALL') {
+        const vote = adminVotes[job.id];
+        if (adminReviewFilter === 'UNREVIEWED' && vote) return false;
+        if (adminReviewFilter === 'UP' && vote !== 'UP') return false;
+        if (adminReviewFilter === 'DOWN' && vote !== 'DOWN') return false;
+      }
+
       return true;
     });
 
@@ -1270,7 +1441,7 @@ export default function JobsPage() {
       if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [listings, filters, savedOnly, bookmarkedIds]);
+  }, [listings, filters, savedOnly, bookmarkedIds, isEffectiveAdmin, adminReviewFilter, adminVotes]);
 
   // Selected Job Object
   const selectedJob = useMemo(() => {
@@ -1400,7 +1571,8 @@ export default function JobsPage() {
     (filters.expLevel && filters.expLevel !== 'ANY') ||
     (filters.tag && filters.tag !== 'ALL') ||
     Boolean(filters.closingSoonOnly) ||
-    savedOnly;
+    savedOnly ||
+    (isEffectiveAdmin && adminReviewFilter !== 'ALL');
 
   const clearFilters = () => {
     setFilters({
@@ -1414,6 +1586,7 @@ export default function JobsPage() {
       closingSoonOnly: false,
     });
     setSavedOnly(false);
+    setAdminReviewFilter('ALL');
   };
 
   return (
@@ -1634,6 +1807,51 @@ export default function JobsPage() {
         </div>
       </div>
 
+        {/* Admin-Only Quick Audit Bar (Strictly hidden from students & guests) */}
+        {isEffectiveAdmin && (
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-[#F8F9FA] dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#242424]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-display font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Admin Triage
+              </span>
+              {(
+                [
+                  { id: 'ALL', label: 'All' },
+                  { id: 'UNREVIEWED', label: `Unreviewed (${adminReviewCounts.unreviewed})` },
+                  { id: 'UP', label: `👍 Keep (${adminReviewCounts.up})` },
+                  { id: 'DOWN', label: `👎 Delete Queue (${adminReviewCounts.down})` },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setAdminReviewFilter(tab.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    adminReviewFilter === tab.id
+                      ? tab.id === 'DOWN'
+                        ? 'bg-rose-500 text-white shadow-2xs'
+                        : tab.id === 'UP'
+                        ? 'bg-emerald-500 text-white shadow-2xs'
+                        : 'bg-[#121417] dark:bg-white text-white dark:text-[#121417] shadow-2xs'
+                      : 'bg-white dark:bg-[#161616] text-[#495057] dark:text-[#AAAAAA] border border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <Link
+              to="/admin/jobs"
+              className="text-[11px] font-bold text-[#FD4A32] hover:underline flex items-center gap-1"
+            >
+              <span>Manage &amp; Delete in Admin Console</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        )}
+
         {/* Master-Detail Layout (LinkedIn & Indeed Split View) */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1701,6 +1919,9 @@ export default function JobsPage() {
                   onClose={() => setSelectedJobId(null)}
                   isBookmarked={bookmarkedIds.has(job.id)}
                   onToggleBookmark={(e) => toggleBookmark(job.id, e)}
+                  isAdminView={isEffectiveAdmin}
+                  adminVote={isEffectiveAdmin ? adminVotes[job.id] ?? null : null}
+                  onAdminVote={isEffectiveAdmin ? (vote, e) => handleAdminVote(job.id, vote, e) : undefined}
                 />
               ))}
             </div>
@@ -1715,6 +1936,9 @@ export default function JobsPage() {
                   onToggleBookmark={() => toggleBookmark(selectedJob.id)}
                   onShare={() => shareJob(selectedJob)}
                   onApply={() => handleApply(selectedJob)}
+                  isAdminView={isEffectiveAdmin}
+                  adminVote={isEffectiveAdmin ? adminVotes[selectedJob.id] ?? null : null}
+                  onAdminVote={isEffectiveAdmin ? (vote, e) => handleAdminVote(selectedJob.id, vote, e) : undefined}
                 />
               </div>
             )}
@@ -1730,6 +1954,9 @@ export default function JobsPage() {
                     onToggleBookmark={() => toggleBookmark(selectedJob.id)}
                     onShare={() => shareJob(selectedJob)}
                     onApply={() => handleApply(selectedJob)}
+                    isAdminView={isEffectiveAdmin}
+                    adminVote={isEffectiveAdmin ? adminVotes[selectedJob.id] ?? null : null}
+                    onAdminVote={isEffectiveAdmin ? (vote, e) => handleAdminVote(selectedJob.id, vote, e) : undefined}
                   />
                 </div>
               </div>

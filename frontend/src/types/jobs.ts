@@ -38,6 +38,16 @@ export interface JobListingFilters {
 
 export type JobReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 
+export type AdminJobVote = 'UP' | 'DOWN';
+
+export interface JobAdminReview {
+  job_id: string;
+  vote: AdminJobVote;
+  updated_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface JobReport {
   id: string;
   job_id: string;

@@ -23,13 +23,15 @@ async function getRawBody(readable) {
   return Buffer.concat(chunks);
 }
 
+const cleanEnv = (val) => (val ? String(val).trim().replace(/^["']|["']$/g, '').trim() : '');
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).send('Method not allowed');
   }
 
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const webhookSecret = cleanEnv(process.env.RAZORPAY_WEBHOOK_SECRET);
     const signature = req.headers['x-razorpay-signature'];
 
     if (!webhookSecret) {
@@ -75,8 +77,8 @@ export default async function handler(req, res) {
     const eventId = event?.event_id || event?.id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     // Initialize Supabase Admin Client
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = cleanEnv(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+    const supabaseServiceKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY);
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('[api/webhook] Supabase service role credentials missing.');
@@ -112,7 +114,8 @@ export default async function handler(req, res) {
       if (payment) {
         const orderId = payment.order_id;
         const paymentId = payment.id;
-        const userEmail = (payment.email || payment.notes?.userEmail || '').toLowerCase().trim();
+        // Prefer verified account email locked in order notes over Razorpay checkout billing/UPI email
+        const userEmail = (payment.notes?.userEmail || payment.email || '').toLowerCase().trim();
 
         if (orderId && userEmail) {
           // Attempt authoritative fulfillment via RPC [P0-01, P1-02]

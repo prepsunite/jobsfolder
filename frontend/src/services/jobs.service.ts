@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { JobListing, JobReport, JobReportStatus } from '@/types/jobs';
+import type { JobListing, JobReport, JobReportStatus, AdminJobVote } from '@/types/jobs';
 
 type CreateJobListing = Omit<JobListing, 'id' | 'created_at' | 'updated_at'>;
 
@@ -299,6 +299,63 @@ export const jobsService = {
       .from('job_reports')
       .delete()
       .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  // ─── Admin-Only Job Triage Votes (Thumbs Up / Down) ────────────────────────
+
+  /** Fetch all admin triage votes (admin RLS protected; returns empty map if migration pending). */
+  async getAdminReviews(): Promise<Record<string, AdminJobVote>> {
+    const { data, error } = await supabase
+      .from('job_admin_reviews')
+      .select('job_id, vote');
+
+    if (error) {
+      console.warn('[jobsService.getAdminReviews] Note:', error.message);
+      return {};
+    }
+
+    const map: Record<string, AdminJobVote> = {};
+    for (const row of data ?? []) {
+      if (row?.job_id && (row.vote === 'UP' || row.vote === 'DOWN')) {
+        map[row.job_id] = row.vote;
+      }
+    }
+    return map;
+  },
+
+  /** Persist or update an admin thumbs-up / thumbs-down decision for a job listing. */
+  async setAdminReview(
+    jobId: string,
+    vote: AdminJobVote,
+    adminEmail?: string | null
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('job_admin_reviews')
+      .upsert(
+        {
+          job_id: jobId,
+          vote,
+          updated_by: adminEmail ?? null,
+        },
+        { onConflict: 'job_id' }
+      );
+
+    if (error) {
+      if (error.code === 'PGRST205' || error.code === '42P01') {
+        throw new Error('Admin review table not migrated yet. Run database/migrations/job_admin_reviews.sql in Supabase.');
+      }
+      throw error;
+    }
+  },
+
+  /** Clear an admin triage vote back to unreviewed (admin). */
+  async clearAdminReview(jobId: string): Promise<void> {
+    const { error } = await supabase
+      .from('job_admin_reviews')
+      .delete()
+      .eq('job_id', jobId);
 
     if (error) throw error;
   },

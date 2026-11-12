@@ -5,7 +5,8 @@ import {
   Briefcase, MapPin, Clock, X, Check, AlertCircle,
   ExternalLink, ChevronDown, Search, Loader2, Flag, CheckCircle2,
   Sparkles, Upload, Zap, Send, Layers, Copy, ShieldCheck,
-  ChevronRight, Award, Flame, GraduationCap, Globe, InboxIcon, CreditCard, Building2
+  ChevronRight, Award, Flame, GraduationCap, Globe, InboxIcon, CreditCard, Building2,
+  ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import { useAuth, isSuperAdminEmail } from '@/contexts/AuthContext';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -643,9 +644,17 @@ export default function AdminJobsPage() {
     staleTime: 10000,
   });
 
+  const { data: adminVotes = {} } = useQuery({
+    queryKey: ['job_admin_reviews'],
+    queryFn: () => jobsService.getAdminReviews(),
+    enabled: isEffectiveAdmin,
+    staleTime: 10000,
+  });
+
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['admin_job_listings'] });
     queryClient.invalidateQueries({ queryKey: ['job_listings'] });
+    queryClient.invalidateQueries({ queryKey: ['job_admin_reviews'] });
   }, [queryClient]);
 
   const invalidateReports = useCallback(() => {
@@ -713,6 +722,11 @@ export default function AdminJobsPage() {
 
     return { liveListings: live, expiredListings: expired, draftListings: draft };
   }, [listings]);
+
+  const flaggedDeleteIds = useMemo(
+    () => listings.filter((j) => adminVotes[j.id] === 'DOWN').map((j) => j.id),
+    [listings, adminVotes]
+  );
 
   // Extract all unverified bot leads stored in Supabase
   const dbLeads = useMemo<ScrapedJobLead[]>(() => {
@@ -1636,6 +1650,30 @@ export default function AdminJobsPage() {
     }
   };
 
+  const handlePurgeFlagged = async () => {
+    if (flaggedDeleteIds.length === 0) return;
+    const confirmed = await confirmModal({
+      title: 'Delete All 👎 Flagged Listings',
+      message: `Permanently delete ${flaggedDeleteIds.length} job listing(s) marked Thumbs Down (👎) from the database? This cannot be undone.`,
+      confirmText: `Delete ${flaggedDeleteIds.length} Flagged Job(s)`,
+      cancelText: 'Cancel',
+      isDanger: true,
+    });
+    if (!confirmed) return;
+
+    setPurging(true);
+    try {
+      const count = await jobsService.purgeListingsByIds(flaggedDeleteIds);
+      toast.success(`Deleted ${count} 👎 flagged job listing(s).`);
+      invalidate();
+      invalidateReports();
+    } catch (err: any) {
+      toast.error(err?.message || 'Delete flagged purge failed.');
+    } finally {
+      setPurging(false);
+    }
+  };
+
   const handlePurgeExpired = async () => {
     if (expiredListings.length === 0) return;
     const confirmed = await confirmModal({
@@ -1972,6 +2010,19 @@ export default function AdminJobsPage() {
                     <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
                   </div>
                 </div>
+              )}
+
+              {activeTab !== 'LEADS' && activeTab !== 'REPORTS' && flaggedDeleteIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePurgeFlagged}
+                  disabled={purging}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-600 hover:text-white transition-all shadow-xs cursor-pointer whitespace-nowrap disabled:opacity-50"
+                  title="Delete all listings marked Thumbs Down on /jobs"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                  {purging ? 'Deleting...' : `Delete 👎 Flagged (${flaggedDeleteIds.length})`}
+                </button>
               )}
 
               {activeTab === 'EXPIRED' && expiredListings.length > 0 && (
@@ -2910,21 +2961,35 @@ export default function AdminJobsPage() {
                                   <div className="text-[#868E96] text-[11px] truncate">{job.company_name}</div>
                                 </div>
                               </div>
-                              {reportsByJobId.has(job.id) && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveTab('REPORTS');
-                                    setReportStatusFilter('OPEN');
-                                    setSearch(job.title);
-                                  }}
-                                  className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
-                                  title="Click to view reports for this listing"
-                                >
-                                  <Flag className="w-3 h-3 text-rose-500" />
-                                  <span>{reportsByJobId.get(job.id)} report{reportsByJobId.get(job.id)! > 1 ? 's' : ''}</span>
-                                </button>
-                              )}
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                {adminVotes[job.id] === 'UP' && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
+                                    <ThumbsUp className="w-2.5 h-2.5" />
+                                    <span>Keep</span>
+                                  </span>
+                                )}
+                                {adminVotes[job.id] === 'DOWN' && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+                                    <ThumbsDown className="w-2.5 h-2.5" />
+                                    <span>Delete Flag</span>
+                                  </span>
+                                )}
+                                {reportsByJobId.has(job.id) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveTab('REPORTS');
+                                      setReportStatusFilter('OPEN');
+                                      setSearch(job.title);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
+                                    title="Click to view reports for this listing"
+                                  >
+                                    <Flag className="w-3 h-3 text-rose-500" />
+                                    <span>{reportsByJobId.get(job.id)} report{reportsByJobId.get(job.id)! > 1 ? 's' : ''}</span>
+                                  </button>
+                                )}
+                              </div>
                             </td>
 
                             {/* Location */}
