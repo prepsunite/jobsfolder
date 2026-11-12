@@ -1165,15 +1165,39 @@ export default function AdminJobsPage() {
     };
   }, [activeLeadsPool, isLeadListed]);
 
-  // Cohort Groupings
+  // Cohort Groupings: strictly scoped to the active tab pool so cleared cohorts vanish immediately
+  const cohortSourcePool = useMemo(() => {
+    switch (activeTab) {
+      case 'LIVE': return liveListings;
+      case 'EXPIRED': return expiredListings;
+      case 'DRAFT': return draftListings;
+      case 'LEADS': return activeLeadsPool;
+      case 'ALL':
+      case 'REPORTS':
+      default:
+        return listings;
+    }
+  }, [activeTab, liveListings, expiredListings, draftListings, activeLeadsPool, listings]);
+
   const availableCohorts = useMemo(() => {
     const map = new Map<string, number>();
-    for (let i = 0; i < listings.length; i++) {
-      const cohort = getJobCohortLabel(listings[i]);
+    for (let i = 0; i < cohortSourcePool.length; i++) {
+      const cohort = getJobCohortLabel(cohortSourcePool[i]);
       map.set(cohort, (map.get(cohort) || 0) + 1);
     }
     return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
-  }, [listings]);
+  }, [cohortSourcePool]);
+
+  // Automatically reset selectedCohort to 'ALL' once all listings in that cohort are deleted/cleared
+  React.useEffect(() => {
+    if (
+      selectedCohort !== 'ALL' &&
+      !isLoading &&
+      !availableCohorts.some((c) => c.name === selectedCohort)
+    ) {
+      setSelectedCohort('ALL');
+    }
+  }, [selectedCohort, availableCohorts, isLoading]);
 
   // Lead Section Choice Navigation (Settings-style Master-Detail Layout)
   const leadChoices = useMemo<
@@ -1939,6 +1963,10 @@ export default function AdminJobsPage() {
     setPurging(true);
     try {
       const count = await jobsService.purgeListingsByIds(targetIds);
+      const deletedSet = new Set(targetIds);
+      queryClient.setQueryData<JobListing[]>(['admin_job_listings'], (old) =>
+        (old ?? []).filter((j) => !deletedSet.has(j.id))
+      );
       const sparedUps =
         adminVoteFilter !== 'UP' && !includeUpVotesInBulkDelete
           ? bulkDeleteBreakdown.upIds.length
@@ -2258,7 +2286,7 @@ export default function AdminJobsPage() {
                   className="appearance-none pl-7 pr-8 py-1.5 text-xs font-bold bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-lg text-[#121417] dark:text-white focus:outline-none focus:border-[#121417] cursor-pointer shadow-xs"
                   title="Filter by daily cohort / drop date"
                 >
-                  <option value="ALL">All Cohorts ({listings.length})</option>
+                  <option value="ALL">All Cohorts ({cohortSourcePool.length})</option>
                   {availableCohorts.map((c) => (
                     <option key={c.name} value={c.name}>
                       {c.name} ({c.count})
