@@ -575,6 +575,227 @@ function JobFormModal({ initial, currentSno, onClose, onSave, saving }: JobFormM
 
 type AdminJobTab = 'LIVE' | 'LEADS' | 'EXPIRED' | 'DRAFT' | 'REPORTS' | 'ALL';
 type SortBy = 'NEWEST' | 'OLDEST' | 'PRIORITY' | 'DEADLINE';
+type AdminVoteFilter = 'ALL' | 'UNREVIEWED' | 'UP' | 'DOWN';
+
+interface BulkDeleteScopeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  activeTab: AdminJobTab;
+  selectedCohort: string;
+  adminVoteFilter: AdminVoteFilter;
+  searchQuery: string;
+  breakdown: {
+    totalCount: number;
+    upIds: string[];
+    downIds: string[];
+    unreviewedIds: string[];
+    nonUpIds: string[];
+  };
+  includeUpVotes: boolean;
+  onChangeIncludeUpVotes: (next: boolean) => void;
+  onConfirm: () => Promise<void>;
+  isDeleting: boolean;
+}
+
+function BulkDeleteScopeModal({
+  isOpen,
+  onClose,
+  activeTab,
+  selectedCohort,
+  adminVoteFilter,
+  searchQuery,
+  breakdown,
+  includeUpVotes,
+  onChangeIncludeUpVotes,
+  onConfirm,
+  isDeleting,
+}: BulkDeleteScopeModalProps) {
+  if (!isOpen) return null;
+
+  const hasProtectedUps = breakdown.upIds.length > 0 && adminVoteFilter !== 'UP';
+  const effectiveTargetCount =
+    adminVoteFilter === 'UP' || includeUpVotes
+      ? breakdown.totalCount
+      : breakdown.nonUpIds.length;
+  const sparedUpCount = hasProtectedUps && !includeUpVotes ? breakdown.upIds.length : 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#242424] rounded-2xl p-6 shadow-2xl space-y-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-base sm:text-lg font-extrabold text-[#121417] dark:text-white">
+                Delete Filtered Listings
+              </h3>
+              <p className="text-xs text-[#868E96]">
+                Strictly scoped to your active selection — nothing outside this filter is touched.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="p-1.5 rounded-lg text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Exact Active Filter Scope Badges */}
+        <div className="p-3.5 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#242424] space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#868E96]">
+            Active Filter Scope
+          </div>
+          <div className="flex flex-wrap gap-1.5 text-xs">
+            <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] font-bold text-[#121417] dark:text-white">
+              Tab: {activeTab}
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] font-bold text-[#121417] dark:text-white">
+              Cohort: {selectedCohort === 'ALL' ? 'All Cohorts' : selectedCohort}
+            </span>
+            {adminVoteFilter !== 'ALL' && (
+              <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] font-bold text-[#121417] dark:text-white">
+                Vote: {adminVoteFilter}
+              </span>
+            )}
+            {searchQuery.trim() && (
+              <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#141414] border border-[#E9ECEF] dark:border-[#2A2A2A] font-bold text-[#121417] dark:text-white">
+                Search: &ldquo;{searchQuery.trim()}&rdquo;
+              </span>
+            )}
+          </div>
+
+          {/* Vote Breakdown */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#E9ECEF] dark:border-[#242424] text-center">
+            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                {breakdown.upIds.length}
+              </div>
+              <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                👍 Kept
+              </div>
+            </div>
+            <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+              <div className="text-sm font-black text-rose-600 dark:text-rose-400">
+                {breakdown.downIds.length}
+              </div>
+              <div className="text-[10px] font-bold text-rose-700 dark:text-rose-300">
+                👎 Flagged
+              </div>
+            </div>
+            <div className="p-2 rounded-lg bg-zinc-500/10 border border-zinc-500/20">
+              <div className="text-sm font-black text-[#121417] dark:text-white">
+                {breakdown.unreviewedIds.length}
+              </div>
+              <div className="text-[10px] font-bold text-[#6C757D] dark:text-[#AAAAAA]">
+                Unreviewed
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Option A vs Kill 👍 Up Ones Too */}
+        {hasProtectedUps && (
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#868E96]">
+              Choose what to do with the {breakdown.upIds.length} 👍 Kept listing(s):
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onChangeIncludeUpVotes(false)}
+              className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                !includeUpVotes
+                  ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30'
+                  : 'border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-zinc-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-extrabold text-[#121417] dark:text-white">
+                  🛡️ Keep 👍 Approved Jobs Safe (Recommended)
+                </span>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  Delete {breakdown.nonUpIds.length} · Spare {breakdown.upIds.length}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#6C757D] dark:text-[#AAAAAA] mt-1">
+                Deletes only unreviewed and 👎 flagged items in this filter. All 👍 kept listings stay untouched.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onChangeIncludeUpVotes(true)}
+              className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                includeUpVotes
+                  ? 'border-rose-500 bg-rose-500/10 ring-1 ring-rose-500/30'
+                  : 'border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-rose-300'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400">
+                  ⚠️ Delete 👍 Kept Ones Too (Kill Everything in Filter)
+                </span>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                  Delete All {breakdown.totalCount}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#6C757D] dark:text-[#AAAAAA] mt-1">
+                Permanently deletes ALL {breakdown.totalCount} matching listings, including the {breakdown.upIds.length} marked 👍 Kept.
+              </p>
+            </button>
+          </div>
+        )}
+
+        {/* Action Footer */}
+        <div className="flex items-center justify-end gap-2.5 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="px-4 py-2 rounded-xl text-xs font-bold border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#495057] dark:text-[#CCCCCC] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting || effectiveTargetCount === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Deleting...</span>
+              </>
+            ) : effectiveTargetCount === 0 ? (
+              <span>All {breakdown.upIds.length} Protected — Pick &ldquo;Delete 👍 Kept Too&rdquo;</span>
+            ) : (
+              <>
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>
+                  Delete {effectiveTargetCount} Job{effectiveTargetCount === 1 ? '' : 's'}
+                  {sparedUpCount > 0 ? ` (Keep ${sparedUpCount} 👍)` : ''}
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 type LeadCategoryFilter =
   | 'ALL'
   | 'BOT_LEADS'
@@ -609,6 +830,9 @@ export default function AdminJobsPage() {
   const [sortBy, setSortBy] = useState<SortBy>('OLDEST');
   const [auditingId, setAuditingId] = useState<string | null>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<JobReportStatus | 'ALL'>('OPEN');
+  const [adminVoteFilter, setAdminVoteFilter] = useState<AdminVoteFilter>('ALL');
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [includeUpVotesInBulkDelete, setIncludeUpVotesInBulkDelete] = useState(false);
 
   // Leads & Cohort states
   const [selectedCohort, setSelectedCohort] = useState<string>('ALL');
@@ -1249,6 +1473,16 @@ export default function AdminJobsPage() {
       );
     }
 
+    if (adminVoteFilter !== 'ALL') {
+      list = list.filter((j) => {
+        const vote = adminVotes[j.id];
+        if (adminVoteFilter === 'UNREVIEWED') return !vote;
+        if (adminVoteFilter === 'UP') return vote === 'UP';
+        if (adminVoteFilter === 'DOWN') return vote === 'DOWN';
+        return true;
+      });
+    }
+
     return [...list].sort((a, b) => {
       if (sortBy === 'OLDEST') {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -1267,7 +1501,44 @@ export default function AdminJobsPage() {
       // Default: NEWEST
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [currentTabPool, search, sortBy, selectedCohort]);
+  }, [currentTabPool, search, sortBy, selectedCohort, adminVoteFilter, adminVotes]);
+
+  const hasNarrowingListingFilter =
+    selectedCohort !== 'ALL' ||
+    Boolean(search.trim()) ||
+    adminVoteFilter !== 'ALL' ||
+    activeTab === 'EXPIRED' ||
+    activeTab === 'DRAFT';
+
+  const bulkDeleteBreakdown = useMemo(() => {
+    const upIds: string[] = [];
+    const downIds: string[] = [];
+    const unreviewedIds: string[] = [];
+    for (const j of filtered) {
+      const vote = adminVotes[j.id];
+      if (vote === 'UP') upIds.push(j.id);
+      else if (vote === 'DOWN') downIds.push(j.id);
+      else unreviewedIds.push(j.id);
+    }
+    return {
+      totalCount: filtered.length,
+      upIds,
+      downIds,
+      unreviewedIds,
+      nonUpIds: [...downIds, ...unreviewedIds],
+    };
+  }, [filtered, adminVotes]);
+
+  const bulkLeadDeleteTargets = useMemo(() => {
+    const dbLeadIds = filteredLeads.filter((l) => l.isDbLead).map((l) => l.id);
+    const customLeadIds = customLeads
+      ? filteredLeads.filter((l) => !l.isDbLead && customLeads.some((c) => c.id === l.id)).map((l) => l.id)
+      : [];
+    return {
+      totalFiltered: filteredLeads.length,
+      deletableIds: [...dbLeadIds, ...customLeadIds],
+    };
+  }, [filteredLeads, customLeads]);
 
   // Guard: If not an admin, render NotFoundPage so unauthorized users cannot even inspect the UI
   if (!isEffectiveAdmin) {
@@ -1650,6 +1921,43 @@ export default function AdminJobsPage() {
     }
   };
 
+  const handleOpenBulkDeleteModal = () => {
+    if (filtered.length === 0) return;
+    // Default safely to Option A (protect 👍 Kept) unless Admin explicitly filtered to 👍 Kept
+    setIncludeUpVotesInBulkDelete(adminVoteFilter === 'UP');
+    setBulkDeleteModalOpen(true);
+  };
+
+  const handleExecuteBulkDelete = async () => {
+    const targetIds =
+      adminVoteFilter === 'UP' || includeUpVotesInBulkDelete
+        ? filtered.map((j) => j.id)
+        : bulkDeleteBreakdown.nonUpIds;
+
+    if (targetIds.length === 0) return;
+
+    setPurging(true);
+    try {
+      const count = await jobsService.purgeListingsByIds(targetIds);
+      const sparedUps =
+        adminVoteFilter !== 'UP' && !includeUpVotesInBulkDelete
+          ? bulkDeleteBreakdown.upIds.length
+          : 0;
+      toast.success(
+        sparedUps > 0
+          ? `Deleted ${count} job(s). Kept ${sparedUps} 👍 approved job(s) safe!`
+          : `Deleted ${count} job(s) matching current filter.`
+      );
+      setBulkDeleteModalOpen(false);
+      invalidate();
+      invalidateReports();
+    } catch (err: any) {
+      toast.error(err?.message || 'Bulk filtered delete failed.');
+    } finally {
+      setPurging(false);
+    }
+  };
+
   const handlePurgeFlagged = async () => {
     if (flaggedDeleteIds.length === 0) return;
     const confirmed = await confirmModal({
@@ -1780,6 +2088,20 @@ export default function AdminJobsPage() {
           saving={saving}
         />
       )}
+
+      <BulkDeleteScopeModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => !purging && setBulkDeleteModalOpen(false)}
+        activeTab={activeTab}
+        selectedCohort={selectedCohort}
+        adminVoteFilter={adminVoteFilter}
+        searchQuery={search}
+        breakdown={bulkDeleteBreakdown}
+        includeUpVotes={includeUpVotesInBulkDelete}
+        onChangeIncludeUpVotes={setIncludeUpVotesInBulkDelete}
+        onConfirm={handleExecuteBulkDelete}
+        isDeleting={purging}
+      />
 
       <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0C0C0C]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -1989,6 +2311,31 @@ export default function AdminJobsPage() {
                 </div>
               )}
 
+              {/* Admin Vote Filter (only for listings) */}
+              {activeTab !== 'REPORTS' && activeTab !== 'LEADS' && (
+                <div className="relative">
+                  <select
+                    aria-label="Filter by admin review vote"
+                    value={adminVoteFilter}
+                    onChange={(e) => setAdminVoteFilter(e.target.value as AdminVoteFilter)}
+                    className={`appearance-none pl-3 pr-8 py-1.5 text-xs font-bold border rounded-lg focus:outline-none cursor-pointer shadow-xs ${
+                      adminVoteFilter === 'DOWN'
+                        ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                        : adminVoteFilter === 'UP'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-white dark:bg-[#141414] border-[#E9ECEF] dark:border-[#242424] text-[#121417] dark:text-white focus:border-[#121417] dark:focus:border-[#555]'
+                    }`}
+                    title="Filter listings by your 👍 / 👎 triage vote"
+                  >
+                    <option value="ALL">All Votes</option>
+                    <option value="UNREVIEWED">Unreviewed</option>
+                    <option value="UP">👍 Kept Only</option>
+                    <option value="DOWN">👎 Flagged Only</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96]" />
+                </div>
+              )}
+
               {/* Sort Selector (only for listings) */}
               {activeTab !== 'REPORTS' && activeTab !== 'LEADS' && (
                 <div className="flex items-center gap-1.5">
@@ -2011,6 +2358,50 @@ export default function AdminJobsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Scoped Delete Filtered / Cohort Button (with Option A protect 👍 + Kill 👍 toggle) */}
+              {activeTab !== 'LEADS' && activeTab !== 'REPORTS' && filtered.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleOpenBulkDeleteModal}
+                  disabled={!hasNarrowingListingFilter || purging}
+                  title={
+                    hasNarrowingListingFilter
+                      ? 'Bulk delete listings matching active tab, cohort, vote filter, or search'
+                      : 'Safety Lock: Select a Cohort, Search, Vote Filter, Drafts, or Expired tab before bulk deleting'
+                  }
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all shadow-xs whitespace-nowrap ${
+                    hasNarrowingListingFilter
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600 cursor-pointer disabled:opacity-50'
+                      : 'bg-[#F8F9FA] dark:bg-[#1A1A1A] text-[#868E96] border-[#E9ECEF] dark:border-[#2A2A2A] opacity-60 cursor-not-allowed'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>
+                    {!hasNarrowingListingFilter
+                      ? 'Pick Cohort / Filter to Delete'
+                      : selectedCohort !== 'ALL' && !search.trim() && adminVoteFilter === 'ALL'
+                      ? `Delete Cohort (${filtered.length})`
+                      : `Delete Filtered (${filtered.length})`}
+                  </span>
+                </button>
+              )}
+
+              {/* Leads Scoped Delete Filtered Button */}
+              {activeTab === 'LEADS' &&
+                (selectedCohort !== 'ALL' || leadCategory !== 'ALL' || Boolean(search.trim()) || hideListed) &&
+                bulkLeadDeleteTargets.deletableIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkDismiss(bulkLeadDeleteTargets.deletableIds)}
+                    disabled={isBulkProcessing}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 transition-all shadow-xs cursor-pointer whitespace-nowrap disabled:opacity-50"
+                    title="Delete all bot/imported leads matching active cohort, category, and search"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Filtered Leads ({bulkLeadDeleteTargets.deletableIds.length})</span>
+                  </button>
+                )}
 
               {activeTab !== 'LEADS' && activeTab !== 'REPORTS' && flaggedDeleteIds.length > 0 && (
                 <button

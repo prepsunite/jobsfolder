@@ -78,6 +78,7 @@ export interface ScrapedJobLead {
   age: string;
   batch_eligibility?: string;
   tags: string[];
+  sem_key?: string | null;
   isDbLead?: boolean;
   created_at?: string;
 }
