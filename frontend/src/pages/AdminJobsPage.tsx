@@ -844,7 +844,7 @@ export default function AdminJobsPage() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
-  const [showCuratedBackup, setShowCuratedBackup] = useState<boolean>(true);
+  const [showCuratedBackup, setShowCuratedBackup] = useState<boolean>(false);
   const [customLeads, setCustomLeads] = useState<ScrapedJobLead[] | null>(() => {
     try {
       const cached = localStorage.getItem('prepunite_admin_job_leads');
@@ -1143,7 +1143,7 @@ export default function AdminJobsPage() {
 
       if (l.type === 'INTERNSHIP') interns++;
       if (l.type === 'JOB') jobs++;
-      if (!isLeadListed(l)) unlisted++;
+      if (!isLeadListed(l) && fCheck.isFresher) unlisted++;
     }
 
     return {
@@ -2510,6 +2510,16 @@ export default function AdminJobsPage() {
                           <span>Publish All Leads ({unlistedLeadsCount})</span>
                         </>
                       )}
+                    </button>
+                  )}
+
+                  {showCuratedBackup && !customLeads && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCuratedBackup(false)}
+                      className="w-full py-1.5 rounded-lg text-[11px] font-semibold text-[#868E96] hover:text-[#121417] dark:hover:text-white border border-dashed border-[#E9ECEF] dark:border-[#2A2A2A] transition-colors cursor-pointer"
+                    >
+                      Hide Static Curated Backup
                     </button>
                   )}
                 </div>
