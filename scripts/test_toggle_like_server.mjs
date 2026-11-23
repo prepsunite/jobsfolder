@@ -80,11 +80,12 @@ async function testToggleLike() {
 
   // 3. Testing Company Like in user_bookmarks
   console.log('\n3. Testing Company Like in user_bookmarks...');
+  const testUser = `anon_client_test_${Date.now()}@mockfolder.com`;
   const companySlug = 'tcs-test-slug';
   const { data: bm, error: bmErr } = await supabaseAdmin.from('user_bookmarks').insert({
     item_type: 'company_like',
     item_id: companySlug,
-    user_email: 'anon_client_test@mockfolder.com',
+    user_email: testUser,
   }).select('*').single();
 
   if (bmErr) throw bmErr;

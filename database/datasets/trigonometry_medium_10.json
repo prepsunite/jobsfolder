@@ -1,0 +1,547 @@
+[
+  {
+    "id": "49f8cdc5-8938-9fac-ef05-077d45f93ac6",
+    "question_number": 11,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sec θ + tan θ = 3, what is the value of sin θ?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "3/5"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "4/5"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "1/3"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "2/3"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "4/5",
+    "structured_explanation": {
+      "given": [
+        "sec θ + tan θ = 3"
+      ],
+      "steps": [
+        "Use conjugate identity: (sec θ + tan θ)(sec θ − tan θ) = sec² θ − tan² θ = 1.",
+        "Therefore, sec θ − tan θ = 1/3.",
+        "Add the two equations: 2sec θ = 3 + 1/3 = 10/3 ⇒ sec θ = 5/3.",
+        "Since sec θ = 5/3, cos θ = 3/5.",
+        "Compute sin θ = √(1 − cos² θ) = √(1 − 9/25) = √(16/25) = 4/5."
+      ],
+      "shortcut": "If sec θ + tan θ = k, sin θ = (k² − 1) / (k² + 1) = (9 − 1) / (9 + 1) = 8/10 = 4/5.",
+      "formulaUsed": [
+        "sec² θ − tan² θ = 1",
+        "sin θ = (k² − 1) / (k² + 1)"
+      ],
+      "finalAnswer": "4/5"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "8f99733c-5985-4b8e-e9ba-3a79bf3317bc",
+    "question_number": 12,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Find the value of sin² 5° + sin² 10° + sin² 15° + ... + sin² 85° + sin² 90°.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "8.5"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "9"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "9.5"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "10"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "9.5",
+    "structured_explanation": {
+      "given": [
+        "Series: sin² 5° + sin² 10° + ... + sin² 85° + sin² 90°"
+      ],
+      "steps": [
+        "Number of terms from 5° to 85° with step 5°: n = (85 − 5)/5 + 1 = 17 terms.",
+        "Pair complementary angles: sin² 5° + sin² 85° = sin² 5° + cos² 5° = 1. There are 8 such pairs, contributing 8 × 1 = 8.",
+        "The unpaired middle term is sin² 45° = (1/√2)² = 1/2 = 0.5.",
+        "The last standalone term is sin² 90° = 1² = 1.",
+        "Sum = 8 + 0.5 + 1 = 9.5."
+      ],
+      "shortcut": "Total = (Number of complementary pairs) + sin² 45° + sin² 90° = 8 + 0.5 + 1 = 9.5.",
+      "formulaUsed": [
+        "sin(90° − θ) = cos θ",
+        "sin² θ + cos² θ = 1",
+        "sin 45° = 1/√2",
+        "sin 90° = 1"
+      ],
+      "finalAnswer": "9.5"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "43872571-e2ab-a22e-f8cb-5ddb41abcd2b",
+    "question_number": 13,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If 3sin θ + 4cos θ = 5, what is the value of 3cos θ − 4sin θ?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "-1"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "5"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "0",
+    "structured_explanation": {
+      "given": [
+        "3sin θ + 4cos θ = 5"
+      ],
+      "steps": [
+        "Let x = 3cos θ − 4sin θ.",
+        "Square both expressions: (3sin θ + 4cos θ)² + (3cos θ − 4sin θ)².",
+        "Expand: [9sin² θ + 16cos² θ + 24sin θ cos θ] + [9cos² θ + 16sin² θ − 24sin θ cos θ].",
+        "Combine terms: 25(sin² θ + cos² θ) = 25.",
+        "Substitute values: 5² + x² = 25 ⇒ 25 + x² = 25 ⇒ x² = 0 ⇒ x = 0."
+      ],
+      "shortcut": "Formula: If a sin θ + b cos θ = c, then a cos θ − b sin θ = ±√(a² + b² − c²) = ±√(9 + 16 − 25) = 0.",
+      "formulaUsed": [
+        "(a sin θ + b cos θ)² + (a cos θ − b sin θ)² = a² + b²"
+      ],
+      "finalAnswer": "0"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "1b375822-6272-d50b-9d7a-a835f395ba5e",
+    "question_number": 14,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If tan θ + cot θ = 2, where 0° < θ < 90°, find the value of tan⁵ θ + cot⁵ θ.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "4"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "32"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "2",
+    "structured_explanation": {
+      "given": [
+        "tan θ + cot θ = 2",
+        "0° < θ < 90°"
+      ],
+      "steps": [
+        "Since cot θ = 1 / tan θ, let x = tan θ.",
+        "Equation becomes: x + 1/x = 2 ⇒ x² − 2x + 1 = 0 ⇒ (x − 1)² = 0 ⇒ x = 1.",
+        "Therefore, tan θ = 1 (which means θ = 45°) and cot θ = 1.",
+        "Evaluate expression: tan⁵ θ + cot⁵ θ = 1⁵ + 1⁵ = 1 + 1 = 2."
+      ],
+      "shortcut": "If x + 1/x = 2, then x = 1 always. Thus xⁿ + 1/xⁿ = 1ⁿ + 1ⁿ = 2 for any integer power n.",
+      "formulaUsed": [
+        "cot θ = 1 / tan θ",
+        "(x − 1)² = x² − 2x + 1"
+      ],
+      "finalAnswer": "2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "4ffd1384-17c5-9575-f52c-735a8e21ee83",
+    "question_number": 15,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Simplify the expression for acute angle θ: √((1 + sin θ) / (1 − sin θ)) + √((1 − sin θ) / (1 + sin θ)).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "2tan θ"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2sec θ"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2cos θ"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "2cosec θ"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "2sec θ",
+    "structured_explanation": {
+      "given": [
+        "Expression: √((1 + sin θ)/(1 − sin θ)) + √((1 − sin θ)/(1 + sin θ))"
+      ],
+      "steps": [
+        "Rationalize inside the first radical: multiply numerator and denominator by (1 + sin θ): √((1 + sin θ)² / (1 − sin² θ)) = (1 + sin θ) / cos θ = sec θ + tan θ.",
+        "Similarly for second radical: multiply by (1 − sin θ): √((1 − sin θ)² / (1 − sin² θ)) = (1 − sin θ) / cos θ = sec θ − tan θ.",
+        "Add both simplified parts: (sec θ + tan θ) + (sec θ − tan θ) = 2sec θ."
+      ],
+      "shortcut": "Take common denominator: [(1 + sin θ) + (1 − sin θ)] / √(1 − sin² θ) = 2 / cos θ = 2sec θ.",
+      "formulaUsed": [
+        "1 − sin² θ = cos² θ",
+        "sec θ = 1 / cos θ",
+        "tan θ = sin θ / cos θ"
+      ],
+      "finalAnswer": "2sec θ"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "0d998778-6cab-947c-fd37-9d2afeaccf08",
+    "question_number": 16,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If cosec θ − cot θ = 1/4, find the value of cosec θ.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "17/8"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "15/8"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "8/17"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "4/17"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "17/8",
+    "structured_explanation": {
+      "given": [
+        "cosec θ − cot θ = 1/4"
+      ],
+      "steps": [
+        "Recall identity: cosec² θ − cot² θ = 1 ⇒ (cosec θ − cot θ)(cosec θ + cot θ) = 1.",
+        "Substitute given: (1/4)(cosec θ + cot θ) = 1 ⇒ cosec θ + cot θ = 4.",
+        "Add the two equations: 2cosec θ = 4 + 1/4 = 17/4.",
+        "Divide by 2: cosec θ = 17/8."
+      ],
+      "shortcut": "cosec θ = (k + 1/k)/2. Here k = 4, so (4 + 0.25)/2 = 4.25 / 2 = 17/8.",
+      "formulaUsed": [
+        "cosec² θ − cot² θ = 1"
+      ],
+      "finalAnswer": "17/8"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "28707788-c4db-59c2-ae00-0447dd541273",
+    "question_number": 17,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate the expression: (1 + cot θ − cosec θ)(1 + tan θ + sec θ).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "-1"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "0"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "2",
+    "structured_explanation": {
+      "given": [
+        "Expression: (1 + cot θ − cosec θ)(1 + tan θ + sec θ)"
+      ],
+      "steps": [
+        "Express in terms of sin θ and cos θ: [1 + cos θ/sin θ − 1/sin θ] × [1 + sin θ/cos θ + 1/cos θ].",
+        "Combine over common denominators: [(sin θ + cos θ − 1) / sin θ] × [(cos θ + sin θ + 1) / cos θ].",
+        "Numerator is of form (a − 1)(a + 1) where a = (sin θ + cos θ): a² − 1 = (sin θ + cos θ)² − 1 = (sin² θ + cos² θ + 2sin θ cos θ) − 1 = 1 + 2sin θ cos θ − 1 = 2sin θ cos θ.",
+        "Denominator is sin θ cos θ.",
+        "Fraction simplifies to: (2sin θ cos θ) / (sin θ cos θ) = 2."
+      ],
+      "shortcut": "Put θ = 45°: (1 + 1 − √2)(1 + 1 + √2) = (2 − √2)(2 + √2) = 4 − 2 = 2.",
+      "formulaUsed": [
+        "(a + b)(a − b) = a² − b²",
+        "sin² θ + cos² θ = 1"
+      ],
+      "finalAnswer": "2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "50e74b16-e417-520c-1f39-d535524ccd6e",
+    "question_number": 18,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "What is the maximum value of the expression: 8sin θ + 15cos θ + 7?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "22"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "24"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "30"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "15"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "24",
+    "structured_explanation": {
+      "given": [
+        "Expression: 8sin θ + 15cos θ + 7"
+      ],
+      "steps": [
+        "Recall the standard range for a sin θ + b cos θ: [−√(a² + b²), +√(a² + b²)].",
+        "Here a = 8 and b = 15.",
+        "Calculate amplitude: √(8² + 15²) = √(64 + 225) = √289 = 17.",
+        "Maximum value of (8sin θ + 15cos θ) is +17.",
+        "Add the constant term 7: Max = 17 + 7 = 24."
+      ],
+      "shortcut": "Max = √(8² + 15²) + 7 = 17 + 7 = 24.",
+      "formulaUsed": [
+        "Max(a sin θ + b cos θ) = √(a² + b²)"
+      ],
+      "finalAnswer": "24"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "d75e7bf0-4b77-1c7a-f6b8-f7d5a567bfec",
+    "question_number": 19,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin θ + cos θ = √2 cos θ, what is the value of cos θ − sin θ?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "√2 sin θ"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "-√2 cos θ"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "√2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "2sin θ"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "√2 sin θ",
+    "structured_explanation": {
+      "given": [
+        "sin θ + cos θ = √2 cos θ"
+      ],
+      "steps": [
+        "Rearrange given: sin θ = √2 cos θ − cos θ = (√2 − 1)cos θ.",
+        "Express cos θ in terms of sin θ by rationalizing: cos θ = sin θ / (√2 − 1) = (√2 + 1)sin θ.",
+        "Calculate cos θ − sin θ: (√2 + 1)sin θ − sin θ = √2 sin θ."
+      ],
+      "shortcut": "Using (sin θ + cos θ)² + (cos θ − sin θ)² = 2: 2cos² θ + x² = 2 ⇒ x² = 2(1 − cos² θ) = 2sin² θ ⇒ x = √2 sin θ.",
+      "formulaUsed": [
+        "(A + B)² + (A − B)² = 2(A² + B²)",
+        "1 − cos² θ = sin² θ"
+      ],
+      "finalAnswer": "√2 sin θ"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "1d900508-3fe9-f93d-2270-69064c8c903c",
+    "question_number": 20,
+    "difficulty": "MEDIUM",
+    "difficulty_level": 2,
+    "difficultyLevel": 2,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If x = r sin A cos B, y = r sin A sin B, and z = r cos A, what is the value of x² + y² + z²?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "r"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "r²"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "r³"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "2r²"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "r²",
+    "structured_explanation": {
+      "given": [
+        "x = r sin A cos B",
+        "y = r sin A sin B",
+        "z = r cos A"
+      ],
+      "steps": [
+        "Calculate x² + y²: r² sin² A cos² B + r² sin² A sin² B = r² sin² A (cos² B + sin² B).",
+        "Apply identity cos² B + sin² B = 1: x² + y² = r² sin² A.",
+        "Add z²: x² + y² + z² = r² sin² A + r² cos² A = r² (sin² A + cos² A).",
+        "Apply identity sin² A + cos² A = 1: x² + y² + z² = r²."
+      ],
+      "shortcut": "Standard 3D spherical coordinate identity: x² + y² + z² = r².",
+      "formulaUsed": [
+        "sin² θ + cos² θ = 1"
+      ],
+      "finalAnswer": "r²"
+    },
+    "is_hidden": false
+  }
+]

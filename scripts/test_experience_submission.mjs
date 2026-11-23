@@ -4,11 +4,18 @@ import fs from 'fs';
 const env = fs.readFileSync('frontend/.env', 'utf8');
 let url = '', key = '';
 env.split('\n').forEach(line => {
-  if (line.startsWith('VITE_SUPABASE_URL=')) url = line.split('=')[1].trim();
-  if (line.startsWith('VITE_SUPABASE_ANON_KEY=')) key = line.split('=')[1].trim();
+  if (line.startsWith('VITE_SUPABASE_URL=')) url = line.split('=')[1].trim().replace(/^['"]|['"]$/g, '');
+  if (line.startsWith('VITE_SUPABASE_ANON_KEY=')) key = line.split('=')[1].trim().replace(/^['"]|['"]$/g, '');
 });
 
-const client = createClient(url, key);
+let serviceKey = key;
+if (fs.existsSync('.env')) {
+  const rootEnv = fs.readFileSync('.env', 'utf8');
+  const match = rootEnv.match(/SUPABASE_SERVICE_ROLE_KEY=([^\r\n]+)/);
+  if (match) serviceKey = match[1].trim().replace(/^['"]|['"]$/g, '');
+}
+
+const client = createClient(url, serviceKey);
 
 async function testGuestSubmission() {
   console.log('Testing guest submission handling...');

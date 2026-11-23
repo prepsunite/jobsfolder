@@ -1,10 +1,14 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { verifyBatch1 } from './batch1_pointers_arrays.mjs';
 import { verifyBatch2 } from './batch2_linear_structures.mjs';
 import { verifyBatch3 } from './batch3_search_intervals.mjs';
 import { verifyBatch4 } from './batch4_hierarchical_structures.mjs';
 import { verifyBatch5 } from './batch5_exhaustive_search_dp.mjs';
 import { verifyBatch6 } from './batch6_network_graphs.mjs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function getAll88Problems() {
   const p1 = verifyBatch1();
@@ -24,6 +28,7 @@ export function getAll88Problems() {
 
 if (process.argv[1].endsWith('aggregate_all_88.mjs')) {
   const all = getAll88Problems();
-  fs.writeFileSync('scripts/coding_bank/all_88_verified_problems.json', JSON.stringify(all, null, 2));
-  console.log('Saved all 88 verified problems to scripts/coding_bank/all_88_verified_problems.json');
+  const targetPath = path.join(__dirname, 'all_88_verified_problems.json');
+  fs.writeFileSync(targetPath, JSON.stringify(all, null, 2));
+  console.log(`Saved all 88 verified problems to ${targetPath}`);
 }

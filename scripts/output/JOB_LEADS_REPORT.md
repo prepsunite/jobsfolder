@@ -1,11 +1,11 @@
 # 🇮🇳 & 🏠 Prepunite Job Leads Intelligence Report
 
-> **Generated At:** 7/11/2026, 12:34:25 pm  
-> **Total Verified Leads:** `370`  
+> **Generated At:** 10/11/2026, 3:38:12 pm  
+> **Total Verified Leads:** `365`  
 > **🇮🇳 India Openings (Freshers & Campus):** `309`  
-> **🏠 Remote WFH Openings (USA & Worldwide):** `61`  
-> **🎓 Internships (India & Remote):** `31`  
-> **💼 Full-Time Jobs (Freshers / 0 YOE):** `339`  
+> **🏠 Remote WFH Openings (USA & Worldwide):** `56`  
+> **🎓 Internships (India & Remote):** `27`  
+> **💼 Full-Time Jobs (Freshers / 0 YOE):** `338`  
 > **❌ Overseas Permanent Onsite Jobs Deleted:** `3,000+` *(100% eliminated)*  
 
 ## 📋 Policy Adherence Summary

@@ -1,6 +1,12 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const data = JSON.parse(fs.readFileSync('scripts/coding_bank/all_88_verified_problems.json', 'utf8'));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const jsonPath = path.join(__dirname, 'all_88_verified_problems.json');
+const outputPath = path.resolve(__dirname, '../../frontend/src/services/campusDsaRoadmapEnriched.ts');
+
+const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
 let tsContent = `/**
  * Auto-generated Placement-Enriched Dataset for 88 Campus DSA Problems
@@ -35,5 +41,5 @@ for (const p of data) {
 
 tsContent += '};\n';
 
-fs.writeFileSync('frontend/src/services/campusDsaRoadmapEnriched.ts', tsContent);
-console.log(`Successfully generated frontend/src/services/campusDsaRoadmapEnriched.ts (${data.length} problems, ${data.reduce((acc, p) => acc + p.testCases.length, 0)} test cases)`);
+fs.writeFileSync(outputPath, tsContent);
+console.log(`Successfully generated ${outputPath} (${data.length} problems, ${data.reduce((acc, p) => acc + p.testCases.length, 0)} test cases)`);

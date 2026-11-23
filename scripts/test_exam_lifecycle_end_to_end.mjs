@@ -13,7 +13,16 @@ envText.split('\n').forEach(line => {
   if (idx > 0) env[line.substring(0, idx).trim()] = line.substring(idx + 1).trim().replace(/^['"]|['"]$/g, '');
 });
 
-const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+if (fs.existsSync('.env')) {
+  const rootEnv = fs.readFileSync('.env', 'utf8');
+  rootEnv.split('\n').forEach(line => {
+    const idx = line.indexOf('=');
+    if (idx > 0) env[line.substring(0, idx).trim()] = line.substring(idx + 1).trim().replace(/^['"]|['"]$/g, '');
+  });
+}
+
+const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(env.VITE_SUPABASE_URL, supabaseKey);
 
 function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
@@ -146,6 +155,9 @@ async function runEndToEndVerification() {
       .select()
       .single();
 
+    if (backupErr) {
+      console.log('DEBUG backupErr:', backupErr);
+    }
     assert(!backupErr && cloudBackup?.id, 'Cross-device cloud exam backup committed to Supabase', `Backup ID: ${cloudBackup?.id}`);
 
     // Verify retrieval of cloud backup

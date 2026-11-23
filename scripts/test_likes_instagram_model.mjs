@@ -1,13 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
 
-const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+let url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+let serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+let anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+if ((!url || !serviceKey) && fs.existsSync('frontend/.env')) {
+  const fenv = fs.readFileSync('frontend/.env', 'utf8');
+  const urlMatch = fenv.match(/VITE_SUPABASE_URL=([^\r\n]+)/);
+  const anonMatch = fenv.match(/VITE_SUPABASE_ANON_KEY=([^\r\n]+)/);
+  if (urlMatch) url = urlMatch[1].trim().replace(/^['"]|['"]$/g, '');
+  if (anonMatch) anonKey = anonMatch[1].trim().replace(/^['"]|['"]$/g, '');
+}
+
+if ((!serviceKey) && fs.existsSync('.env')) {
+  const envContent = fs.readFileSync('.env', 'utf8');
+  const match = envContent.match(/SUPABASE_SERVICE_ROLE_KEY=([^\r\n]+)/);
+  if (match) serviceKey = match[1].trim().replace(/^['"]|['"]$/g, '');
+}
 
 if (!url || !serviceKey) {
   console.error('Missing Supabase credentials');
   process.exit(1);
 }
+
+process.env.SUPABASE_URL = url;
+process.env.SUPABASE_SERVICE_ROLE_KEY = serviceKey;
+process.env.VITE_SUPABASE_URL = url;
+process.env.VITE_SUPABASE_ANON_KEY = anonKey;
 
 const supabaseAdmin = createClient(url, serviceKey);
 
@@ -152,7 +172,29 @@ async function runTests() {
   // TEST 3: EXPERIENCE LIKES (HELPFUL BUTTON ACROSS USERS)
   // ========================================================
   console.log('\n[3] Testing Experience Upvotes in PostgreSQL...');
-  const { data: testExp } = await supabaseAdmin.from('experiences').select('id, company_name, upvotes').limit(1).single();
+  // Create an isolated PENDING experience so trigger invariants permit like testing
+  const { data: testExp, error: createExpErr } = await supabaseAdmin
+    .from('experiences')
+    .insert({
+      company_slug: 'instagram-test-co',
+      company_name: 'Instagram Test Co',
+      role_title: 'Software Engineer',
+      student_name: 'Test Student',
+      college: 'Apex Engineering College',
+      year: 2026,
+      difficulty: 'MEDIUM',
+      verdict: 'SELECTED',
+      status: 'PENDING',
+      upvotes: 10,
+      is_deleted: false,
+    })
+    .select('id, company_name, upvotes, status')
+    .single();
+
+  if (createExpErr || !testExp) {
+    throw new Error('Failed to create test experience: ' + (createExpErr?.message || 'unknown'));
+  }
+
   const initialExpUpvotes = testExp.upvotes || 0;
   console.log(`Experience "${testExp.company_name}" initial helpful count: ${initialExpUpvotes}`);
 
@@ -192,6 +234,9 @@ async function runTests() {
   if (expUnlikeRes.data.upvotes !== initialExpUpvotes) {
     throw new Error(`Expected ${initialExpUpvotes}, got ${expUnlikeRes.data.upvotes}`);
   }
+
+  // Clean up temporary test experience
+  await supabaseAdmin.from('experiences').delete().eq('id', testExp.id);
   console.log('✓ Experience Likes Multi-User Verification PASSED!');
 
   console.log('\n========================================');

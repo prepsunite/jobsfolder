@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { CAMPUS_DSA_EXAM_PROBLEMS, getCampusDsaExamProblem, isProblemTestable, enrichCodingProblemForExam } from '../frontend/src/services/campusDsaExamDataset.js';
+import { CAMPUS_DSA_EXAM_PROBLEMS, getCampusDsaExamProblem, isProblemTestable, enrichCodingProblemForExam } from '../frontend/src/services/campusDsaExamDataset.ts';
 
 console.log('======================================================');
 console.log('COMPREHENSIVE TEST: ALL CAMPUS DSA PROBLEMS INTEGRITY');

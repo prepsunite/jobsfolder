@@ -1,7 +1,7 @@
 # 🇮🇳 Prepunite India Fresher & 0-Experience Job Leads Intelligence Digest
 
 > **Focus:** 100% India-Based Campus Hiring, Off-Campus Drives & Early Careers
-> **Total Verified Indian Leads:** `337`
+> **Total Verified Indian Leads:** `320`
 > **Locations:** Bengaluru, Hyderabad, Pune, Chennai, Gurugram, Noida, Mumbai, Remote India
 > **Pay Range:** ₹3.5 LPA (IT Services) up to ₹45+ LPA (Product & Quant)
 
