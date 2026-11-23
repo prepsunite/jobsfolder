@@ -1,0 +1,759 @@
+[
+  {
+    "id": "0dddac67-020a-2278-ad65-c626b5b3f4a6",
+    "question_number": 1,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If tan θ = 4/3 and θ is an acute angle, what is the value of sin θ + cos θ?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "7/5"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "5/7"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "6/5"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "8/5"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "7/5",
+    "structured_explanation": {
+      "given": [
+        "tan θ = 4/3",
+        "θ is an acute angle"
+      ],
+      "steps": [
+        "Recall definition: tan θ = Perpendicular / Base = 4/3.",
+        "Calculate Hypotenuse using Pythagoras theorem: H = √(4² + 3²) = √(16 + 9) = √25 = 5.",
+        "Determine sin θ and cos θ: sin θ = 4/5 and cos θ = 3/5.",
+        "Compute sum: sin θ + cos θ = 4/5 + 3/5 = 7/5."
+      ],
+      "shortcut": "For a 3-4-5 right triangle: sin θ + cos θ = (P + B) / H = (4 + 3) / 5 = 7/5.",
+      "formulaUsed": [
+        "tan θ = P / B",
+        "H = √(P² + B²)",
+        "sin θ = P / H",
+        "cos θ = B / H"
+      ],
+      "finalAnswer": "7/5"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "2f0892d8-3442-e095-1270-9b03b263dcf2",
+    "question_number": 2,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate the expression: 7sec² θ − 7tan² θ + 5.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "7"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "12"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "14"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "12",
+    "structured_explanation": {
+      "given": [
+        "Expression: 7sec² θ − 7tan² θ + 5"
+      ],
+      "steps": [
+        "Factor out 7 from the first two terms: 7(sec² θ − tan² θ) + 5.",
+        "Apply the standard trigonometric identity: sec² θ − tan² θ = 1.",
+        "Substitute: 7(1) + 5 = 7 + 5 = 12."
+      ],
+      "shortcut": "sec² θ − tan² θ is always 1, so 7(1) + 5 = 12.",
+      "formulaUsed": [
+        "sec² θ − tan² θ = 1"
+      ],
+      "finalAnswer": "12"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "e7a19fd6-a47d-92c4-897b-18355f83aa30",
+    "question_number": 3,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Find the value of (sin 37° / cos 53°) + (tan 24° / cot 66°).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "4"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "2",
+    "structured_explanation": {
+      "given": [
+        "Expression: (sin 37° / cos 53°) + (tan 24° / cot 66°)"
+      ],
+      "steps": [
+        "Apply complementary angle identity: sin(90° − θ) = cos θ.",
+        "Thus, sin 37° = sin(90° − 53°) = cos 53°, giving sin 37° / cos 53° = 1.",
+        "Similarly, tan 24° = tan(90° − 66°) = cot 66°, giving tan 24° / cot 66° = 1.",
+        "Sum = 1 + 1 = 2."
+      ],
+      "shortcut": "Angles adding up to 90°: sin A / cos B = 1 and tan A / cot B = 1 when A + B = 90°. Result = 1 + 1 = 2.",
+      "formulaUsed": [
+        "sin(90° − θ) = cos θ",
+        "tan(90° − θ) = cot θ"
+      ],
+      "finalAnswer": "2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "7ec87e88-ec85-1a8a-d0cd-78f39a6e6053",
+    "question_number": 4,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "What is the value of sin² 30° + cos² 60° + tan² 45°?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "3/2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "5/4"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "3/2",
+    "structured_explanation": {
+      "given": [
+        "Expression: sin² 30° + cos² 60° + tan² 45°"
+      ],
+      "steps": [
+        "Substitute standard angle values: sin 30° = 1/2, cos 60° = 1/2, tan 45° = 1.",
+        "Square each value: (1/2)² = 1/4, (1/2)² = 1/4, 1² = 1.",
+        "Add the terms: 1/4 + 1/4 + 1 = 2/4 + 1 = 1/2 + 1 = 3/2."
+      ],
+      "shortcut": "sin 30° = cos 60° = 0.5. (0.25 + 0.25) + 1 = 1.5 = 3/2.",
+      "formulaUsed": [
+        "sin 30° = 1/2",
+        "cos 60° = 1/2",
+        "tan 45° = 1"
+      ],
+      "finalAnswer": "3/2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "62c7ecd3-1b1f-9e9f-a2b7-c98f69ebc289",
+    "question_number": 5,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If cos θ = 5/13 and θ is acute, what is the value of cosec θ?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "12/13"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "13/5"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "13/12"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "5/12"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "13/12",
+    "structured_explanation": {
+      "given": [
+        "cos θ = 5/13",
+        "θ is acute"
+      ],
+      "steps": [
+        "Recall cos θ = Base / Hypotenuse = 5/13.",
+        "Find Perpendicular using Pythagorean triplet (5, 12, 13): P = √(13² − 5²) = √(169 − 25) = √144 = 12.",
+        "Calculate cosec θ: cosec θ = Hypotenuse / Perpendicular = 13/12."
+      ],
+      "shortcut": "Triplet is 5-12-13. cosec θ = H/P = 13/12.",
+      "formulaUsed": [
+        "cos θ = B / H",
+        "P = √(H² − B²)",
+        "cosec θ = H / P"
+      ],
+      "finalAnswer": "13/12"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "90a9d1cc-aa6c-0667-a5bc-448da9a82b1e",
+    "question_number": 6,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Simplify the expression: (1 − cos² θ)(1 + cot² θ).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "sin² θ"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "tan² θ"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "1",
+    "structured_explanation": {
+      "given": [
+        "Expression: (1 − cos² θ)(1 + cot² θ)"
+      ],
+      "steps": [
+        "Use Pythagorean identity: 1 − cos² θ = sin² θ.",
+        "Use identity: 1 + cot² θ = cosec² θ.",
+        "Substitute: sin² θ × cosec² θ.",
+        "Since cosec² θ = 1 / sin² θ: sin² θ × (1 / sin² θ) = 1."
+      ],
+      "shortcut": "sin² θ × cosec² θ = 1 directly by reciprocal identity.",
+      "formulaUsed": [
+        "sin² θ + cos² θ = 1",
+        "1 + cot² θ = cosec² θ",
+        "cosec θ = 1 / sin θ"
+      ],
+      "finalAnswer": "1"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "b905b903-2395-ac86-e228-5a71d21e8550",
+    "question_number": 7,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate: tan 10° × tan 20° × tan 70° × tan 80°.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1/2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "1"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "2"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "1",
+    "structured_explanation": {
+      "given": [
+        "Expression: tan 10° × tan 20° × tan 70° × tan 80°"
+      ],
+      "steps": [
+        "Pair terms whose angles sum to 90°: (tan 10° × tan 80°) × (tan 20° × tan 70°).",
+        "Convert using complementary angles: tan 80° = tan(90° − 10°) = cot 10°.",
+        "Since tan θ × cot θ = 1, tan 10° × cot 10° = 1.",
+        "Similarly, tan 20° × tan 70° = tan 20° × cot 20° = 1.",
+        "Total product = 1 × 1 = 1."
+      ],
+      "shortcut": "tan A × tan B = 1 whenever A + B = 90°. Here (10+80=90) and (20+70=90), so product = 1 × 1 = 1.",
+      "formulaUsed": [
+        "tan(90° − θ) = cot θ",
+        "tan θ × cot θ = 1"
+      ],
+      "finalAnswer": "1"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "016f0013-c43e-de31-e24e-8ba9534ad53c",
+    "question_number": 8,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If 5tan θ = 4, then find the value of (5sin θ − 3cos θ) / (5sin θ + 2cos θ).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1/6"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1/4"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2/3"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "1/2"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "1/6",
+    "structured_explanation": {
+      "given": [
+        "5tan θ = 4 ⇒ tan θ = 4/5"
+      ],
+      "steps": [
+        "Divide numerator and denominator of the fraction by cos θ: [(5sin θ / cos θ) − 3] / [(5sin θ / cos θ) + 2].",
+        "Substitute sin θ / cos θ = tan θ: (5tan θ − 3) / (5tan θ + 2).",
+        "Substitute given 5tan θ = 4: (4 − 3) / (4 + 2) = 1 / 6."
+      ],
+      "shortcut": "Replace sin θ with 4 and cos θ with 5: (5×4 − 3×5) / (5×4 + 2×5) = (20 − 15) / (20 + 10) = 5 / 30 = 1/6.",
+      "formulaUsed": [
+        "tan θ = sin θ / cos θ"
+      ],
+      "finalAnswer": "1/6"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "915e06d2-13bb-0728-e692-45d689a98f58",
+    "question_number": 9,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin θ = 3/5, calculate the value of (1 − tan² θ) / (1 + tan² θ).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "16/25"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "7/25"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "24/25"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "9/25"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "7/25",
+    "structured_explanation": {
+      "given": [
+        "sin θ = 3/5"
+      ],
+      "steps": [
+        "Method 1 (Formula): Recall that (1 − tan² θ) / (1 + tan² θ) = cos 2θ = 1 − 2sin² θ.",
+        "Substitute sin θ = 3/5: 1 − 2(3/5)² = 1 − 2(9/25) = 1 − 18/25 = 7/25.",
+        "Method 2 (Geometry): P = 3, H = 5 ⇒ B = 4 ⇒ tan θ = 3/4.",
+        "[1 − (3/4)²] / [1 + (3/4)²] = [1 − 9/16] / [1 + 9/16] = (7/16) / (25/16) = 7/25."
+      ],
+      "shortcut": "Identity: (1 − tan² θ)/(1 + tan² θ) = cos 2θ = 1 − 2sin² θ = 1 − 18/25 = 7/25.",
+      "formulaUsed": [
+        "cos 2θ = (1 − tan² θ) / (1 + tan² θ) = 1 − 2sin² θ"
+      ],
+      "finalAnswer": "7/25"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "6d1ee1ad-6017-5fdd-1d84-68cfbfdb2332",
+    "question_number": 10,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If √3 tan(2θ − 15°) = 1, where (2θ − 15°) is an acute angle, find the value of θ.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "15°"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "30°"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "22.5°"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "45°"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "22.5°",
+    "structured_explanation": {
+      "given": [
+        "√3 tan(2θ − 15°) = 1"
+      ],
+      "steps": [
+        "Divide both sides by √3: tan(2θ − 15°) = 1 / √3.",
+        "Recognize standard value: tan 30° = 1 / √3.",
+        "Equate angles: 2θ − 15° = 30°.",
+        "Solve for θ: 2θ = 45° ⇒ θ = 22.5°."
+      ],
+      "shortcut": "tan X = 1/√3 ⇒ X = 30°. Then 2θ − 15 = 30 ⇒ 2θ = 45 ⇒ θ = 22.5°.",
+      "formulaUsed": [
+        "tan 30° = 1 / √3"
+      ],
+      "finalAnswer": "22.5°"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "e1465713-f7de-10db-efb6-1dc383a304af",
+    "question_number": 31,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin 3θ = cos(θ − 6°), where 3θ and (θ − 6°) are acute angles, find the value of θ.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "18°"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "24°"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "26°"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "30°"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "24°",
+    "structured_explanation": {
+      "given": [
+        "sin 3θ = cos(θ − 6°)",
+        "3θ and (θ − 6°) are acute"
+      ],
+      "steps": [
+        "Apply complementary angle identity: sin 3θ = cos(90° − 3θ).",
+        "Equate the cosine arguments: 90° − 3θ = θ − 6°.",
+        "Collect terms: 90° + 6° = θ + 3θ ⇒ 4θ = 96°.",
+        "Divide by 4: θ = 24°."
+      ],
+      "shortcut": "If sin A = cos B, then A + B = 90°. Here 3θ + (θ − 6°) = 90° ⇒ 4θ = 96° ⇒ θ = 24°.",
+      "formulaUsed": [
+        "sin A = cos B ⇔ A + B = 90°"
+      ],
+      "finalAnswer": "24°"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "ae7bef7a-bc44-2bb6-2016-81b96eeefecd",
+    "question_number": 32,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin θ = 1/√2 and θ is an acute angle, find the value of 3tan² θ − 2cos² θ.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "3"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "5/2"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "2",
+    "structured_explanation": {
+      "given": [
+        "sin θ = 1/√2",
+        "θ is acute"
+      ],
+      "steps": [
+        "Recognize standard angle: sin θ = 1/√2 ⇒ θ = 45°.",
+        "Find trigonometric ratios: tan 45° = 1 and cos 45° = 1/√2.",
+        "Calculate squares: tan² 45° = 1² = 1, and cos² 45° = (1/√2)² = 1/2.",
+        "Substitute into expression: 3(1) − 2(1/2) = 3 − 1 = 2."
+      ],
+      "shortcut": "θ = 45°. Expression = 3(1) − 2(0.5) = 3 − 1 = 2.",
+      "formulaUsed": [
+        "sin 45° = 1/√2",
+        "tan 45° = 1",
+        "cos 45° = 1/√2"
+      ],
+      "finalAnswer": "2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "048b852b-a4c1-3260-7109-7f4537b5eeb4",
+    "question_number": 33,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "What is the value of the product: cos 1° × cos 2° × cos 3° × ... × cos 179°?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "-1"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "0"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "1/2"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "0",
+    "structured_explanation": {
+      "given": [
+        "Product: cos 1° × cos 2° × ... × cos 179°"
+      ],
+      "steps": [
+        "Notice that the sequence of consecutive integer degrees from 1° to 179° includes the term cos 90°.",
+        "Recall standard value: cos 90° = 0.",
+        "Any finite product containing a factor of 0 evaluates strictly to 0: Product = (...) × 0 × (...) = 0."
+      ],
+      "shortcut": "cos 90° = 0 is a factor, so the whole product vanishes to 0.",
+      "formulaUsed": [
+        "cos 90° = 0"
+      ],
+      "finalAnswer": "0"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "7e2f387f-d255-3c0b-3bd2-5b1d66794082",
+    "question_number": 34,
+    "difficulty": "EASY",
+    "difficulty_level": 1,
+    "difficultyLevel": 1,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate: (3sin 20° / cos 70°) − (2cos 55° / sin 35°).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "0"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "5"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "-1"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "1",
+    "structured_explanation": {
+      "given": [
+        "Expression: (3sin 20° / cos 70°) − (2cos 55° / sin 35°)"
+      ],
+      "steps": [
+        "Convert using complementary angles: sin 20° = cos(90° − 20°) = cos 70°.",
+        "First fraction becomes: 3(cos 70° / cos 70°) = 3(1) = 3.",
+        "Similarly, cos 55° = sin(90° − 55°) = sin 35°.",
+        "Second fraction becomes: 2(sin 35° / sin 35°) = 2(1) = 2.",
+        "Subtract: 3 − 2 = 1."
+      ],
+      "shortcut": "Complementary fractions each equal 1: 3(1) − 2(1) = 1.",
+      "formulaUsed": [
+        "sin(90° − θ) = cos θ",
+        "cos(90° − θ) = sin θ"
+      ],
+      "finalAnswer": "1"
+    },
+    "is_hidden": false
+  }
+]

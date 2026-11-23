@@ -13,7 +13,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function seed() {
-  const filePath = path.resolve('database/datasets/trigonometry_all_30.json');
+  const filePath = path.resolve('database/datasets/trigonometry_all_50.json');
   const rawData = fs.readFileSync(filePath, 'utf-8');
   const questions = JSON.parse(rawData);
 

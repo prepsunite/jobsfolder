@@ -6,10 +6,14 @@ const files = [
   { name: 'trigonometry_easy_10.json', expectedCount: 10, expectedDiff: 'EASY', expectedLevel: 1 },
   { name: 'trigonometry_medium_10.json', expectedCount: 10, expectedDiff: 'MEDIUM', expectedLevel: 2 },
   { name: 'trigonometry_hard_10.json', expectedCount: 10, expectedDiff: 'HARD', expectedLevel: 3 },
-  { name: 'trigonometry_all_30.json', expectedCount: 30, expectedDiff: null, expectedLevel: null }
+  { name: 'trigonometry_easy_14.json', expectedCount: 14, expectedDiff: 'EASY', expectedLevel: 1 },
+  { name: 'trigonometry_medium_20.json', expectedCount: 20, expectedDiff: 'MEDIUM', expectedLevel: 2 },
+  { name: 'trigonometry_hard_16.json', expectedCount: 16, expectedDiff: 'HARD', expectedLevel: 3 },
+  { name: 'trigonometry_remaining_20.json', expectedCount: 20, expectedDiff: null, expectedLevel: null },
+  { name: 'trigonometry_all_50.json', expectedCount: 50, expectedDiff: null, expectedLevel: null }
 ];
 
-console.log('--- RUNNING TRIGONOMETRY DATASET INTEGRITY TESTS ---');
+console.log('--- RUNNING ALL 50 TRIGONOMETRY DATASET INTEGRITY TESTS ---');
 
 let totalTests = 0;
 let passedTests = 0;

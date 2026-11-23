@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-const easyQuestions = [
+// 1. Initial 10 Easy Questions
+const easyQuestionsPart1 = [
   {
     question_number: 1,
     difficulty: 'EASY',
@@ -322,7 +323,8 @@ const easyQuestions = [
   }
 ];
 
-const mediumQuestions = [
+// 2. Initial 10 Medium Questions
+const mediumQuestionsPart1 = [
   {
     question_number: 11,
     difficulty: 'MEDIUM',
@@ -648,7 +650,8 @@ const mediumQuestions = [
   }
 ];
 
-const hardQuestions = [
+// 3. Initial 10 Hard Questions
+const hardQuestionsPart1 = [
   {
     question_number: 21,
     difficulty: 'HARD',
@@ -983,31 +986,718 @@ const hardQuestions = [
   }
 ];
 
-// Assign stable deterministic UUIDs based on namespace
+// 4. The other 20 questions (Q31 to Q50): 4 Easy, 10 Medium, 6 Hard
+const remaining20Questions = [
+  // 4 Easy questions (completing 14 Easy total)
+  {
+    question_number: 31,
+    difficulty: 'EASY',
+    difficulty_level: 1,
+    difficultyLevel: 1,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If sin 3θ = cos(θ − 6°), where 3θ and (θ − 6°) are acute angles, find the value of θ.',
+    options: [
+      { id: 'A', key: 'A', text: '18°' },
+      { id: 'B', key: 'B', text: '24°' },
+      { id: 'C', key: 'C', text: '26°' },
+      { id: 'D', key: 'D', text: '30°' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '24°',
+    structured_explanation: {
+      given: ['sin 3θ = cos(θ − 6°)', '3θ and (θ − 6°) are acute'],
+      steps: [
+        'Apply complementary angle identity: sin 3θ = cos(90° − 3θ).',
+        'Equate the cosine arguments: 90° − 3θ = θ − 6°.',
+        'Collect terms: 90° + 6° = θ + 3θ ⇒ 4θ = 96°.',
+        'Divide by 4: θ = 24°.'
+      ],
+      shortcut: 'If sin A = cos B, then A + B = 90°. Here 3θ + (θ − 6°) = 90° ⇒ 4θ = 96° ⇒ θ = 24°.',
+      formulaUsed: ['sin A = cos B ⇔ A + B = 90°'],
+      finalAnswer: '24°'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 32,
+    difficulty: 'EASY',
+    difficulty_level: 1,
+    difficultyLevel: 1,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If sin θ = 1/√2 and θ is an acute angle, find the value of 3tan² θ − 2cos² θ.',
+    options: [
+      { id: 'A', key: 'A', text: '1' },
+      { id: 'B', key: 'B', text: '2' },
+      { id: 'C', key: 'C', text: '3' },
+      { id: 'D', key: 'D', text: '5/2' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '2',
+    structured_explanation: {
+      given: ['sin θ = 1/√2', 'θ is acute'],
+      steps: [
+        'Recognize standard angle: sin θ = 1/√2 ⇒ θ = 45°.',
+        'Find trigonometric ratios: tan 45° = 1 and cos 45° = 1/√2.',
+        'Calculate squares: tan² 45° = 1² = 1, and cos² 45° = (1/√2)² = 1/2.',
+        'Substitute into expression: 3(1) − 2(1/2) = 3 − 1 = 2.'
+      ],
+      shortcut: 'θ = 45°. Expression = 3(1) − 2(0.5) = 3 − 1 = 2.',
+      formulaUsed: ['sin 45° = 1/√2', 'tan 45° = 1', 'cos 45° = 1/√2'],
+      finalAnswer: '2'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 33,
+    difficulty: 'EASY',
+    difficulty_level: 1,
+    difficultyLevel: 1,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'What is the value of the product: cos 1° × cos 2° × cos 3° × ... × cos 179°?',
+    options: [
+      { id: 'A', key: 'A', text: '1' },
+      { id: 'B', key: 'B', text: '-1' },
+      { id: 'C', key: 'C', text: '0' },
+      { id: 'D', key: 'D', text: '1/2' }
+    ],
+    correct_answer: 2,
+    correctAnswer: 'C',
+    explanation: '0',
+    structured_explanation: {
+      given: ['Product: cos 1° × cos 2° × ... × cos 179°'],
+      steps: [
+        'Notice that the sequence of consecutive integer degrees from 1° to 179° includes the term cos 90°.',
+        'Recall standard value: cos 90° = 0.',
+        'Any finite product containing a factor of 0 evaluates strictly to 0: Product = (...) × 0 × (...) = 0.'
+      ],
+      shortcut: 'cos 90° = 0 is a factor, so the whole product vanishes to 0.',
+      formulaUsed: ['cos 90° = 0'],
+      finalAnswer: '0'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 34,
+    difficulty: 'EASY',
+    difficulty_level: 1,
+    difficultyLevel: 1,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'Evaluate: (3sin 20° / cos 70°) − (2cos 55° / sin 35°).',
+    options: [
+      { id: 'A', key: 'A', text: '1' },
+      { id: 'B', key: 'B', text: '0' },
+      { id: 'C', key: 'C', text: '5' },
+      { id: 'D', key: 'D', text: '-1' }
+    ],
+    correct_answer: 0,
+    correctAnswer: 'A',
+    explanation: '1',
+    structured_explanation: {
+      given: ['Expression: (3sin 20° / cos 70°) − (2cos 55° / sin 35°)'],
+      steps: [
+        'Convert using complementary angles: sin 20° = cos(90° − 20°) = cos 70°.',
+        'First fraction becomes: 3(cos 70° / cos 70°) = 3(1) = 3.',
+        'Similarly, cos 55° = sin(90° − 55°) = sin 35°.',
+        'Second fraction becomes: 2(sin 35° / sin 35°) = 2(1) = 2.',
+        'Subtract: 3 − 2 = 1.'
+      ],
+      shortcut: 'Complementary fractions each equal 1: 3(1) − 2(1) = 1.',
+      formulaUsed: ['sin(90° − θ) = cos θ', 'cos(90° − θ) = sin θ'],
+      finalAnswer: '1'
+    },
+    is_hidden: false
+  },
+
+  // 10 Medium questions (completing 20 Medium total)
+  {
+    question_number: 35,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If tan θ + cot θ = 2, then what is the value of 2sin θ cos θ?',
+    options: [
+      { id: 'A', key: 'A', text: '1/2' },
+      { id: 'B', key: 'B', text: '1' },
+      { id: 'C', key: 'C', text: '2' },
+      { id: 'D', key: 'D', text: '√2' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '1',
+    structured_explanation: {
+      given: ['tan θ + cot θ = 2'],
+      steps: [
+        'Since tan θ + 1/tan θ = 2, we have (tan θ − 1)² = 0 ⇒ tan θ = 1.',
+        'For acute θ, tan θ = 1 implies θ = 45°.',
+        'Compute 2sin θ cos θ = 2sin 45° cos 45° = 2(1/√2)(1/√2) = 2(1/2) = 1.',
+        'Alternatively, 2sin θ cos θ = sin 2θ = sin 90° = 1.'
+      ],
+      shortcut: 'tan θ + cot θ = 2 ⇒ θ = 45°. sin 2θ = sin 90° = 1.',
+      formulaUsed: ['2sin θ cos θ = sin 2θ', 'tan 45° = 1'],
+      finalAnswer: '1'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 36,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If 2sin² θ + 3cos θ = 3 and 0° < θ < 90°, find the value of θ.',
+    options: [
+      { id: 'A', key: 'A', text: '30°' },
+      { id: 'B', key: 'B', text: '45°' },
+      { id: 'C', key: 'C', text: '60°' },
+      { id: 'D', key: 'D', text: '75°' }
+    ],
+    correct_answer: 2,
+    correctAnswer: 'C',
+    explanation: '60°',
+    structured_explanation: {
+      given: ['2sin² θ + 3cos θ = 3', '0° < θ < 90°'],
+      steps: [
+        'Express sin² θ in terms of cos θ: sin² θ = 1 − cos² θ.',
+        'Substitute: 2(1 − cos² θ) + 3cos θ = 3 ⇒ 2 − 2cos² θ + 3cos θ = 3.',
+        'Rearrange into quadratic form: 2cos² θ − 3cos θ + 1 = 0.',
+        'Factor: (2cos θ − 1)(cos θ − 1) = 0.',
+        'Since 0° < θ < 90°, cos θ ≠ 1. Hence, 2cos θ = 1 ⇒ cos θ = 1/2.',
+        'Therefore, θ = 60°.'
+      ],
+      shortcut: 'Test options: at θ = 60°, 2(√3/2)² + 3(1/2) = 2(3/4) + 3/2 = 3/2 + 3/2 = 3. Verified immediately.',
+      formulaUsed: ['sin² θ + cos² θ = 1', 'cos 60° = 1/2'],
+      finalAnswer: '60°'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 37,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If [cos θ / (1 − sin θ)] + [cos θ / (1 + sin θ)] = 4 for an acute angle θ, find θ.',
+    options: [
+      { id: 'A', key: 'A', text: '30°' },
+      { id: 'B', key: 'B', text: '45°' },
+      { id: 'C', key: 'C', text: '60°' },
+      { id: 'D', key: 'D', text: '90°' }
+    ],
+    correct_answer: 2,
+    correctAnswer: 'C',
+    explanation: '60°',
+    structured_explanation: {
+      given: ['[cos θ / (1 − sin θ)] + [cos θ / (1 + sin θ)] = 4'],
+      steps: [
+        'Take common denominator: cos θ [(1 + sin θ) + (1 − sin θ)] / [(1 − sin θ)(1 + sin θ)].',
+        'Numerator simplifies to: cos θ (2) = 2cos θ.',
+        'Denominator simplifies to: 1 − sin² θ = cos² θ.',
+        'Expression reduces to: 2cos θ / cos² θ = 2 / cos θ = 2sec θ.',
+        'Set equal to 4: 2sec θ = 4 ⇒ sec θ = 2 ⇒ cos θ = 1/2.',
+        'For acute angle θ: θ = 60°.'
+      ],
+      shortcut: 'LHS = 2sec θ. 2sec θ = 4 ⇒ sec θ = 2 ⇒ θ = 60°.',
+      formulaUsed: ['(1 − sin θ)(1 + sin θ) = cos² θ', 'sec θ = 1 / cos θ'],
+      finalAnswer: '60°'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 38,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'What is the maximum value of the expression sin² θ + cos⁴ θ for all real values of θ?',
+    options: [
+      { id: 'A', key: 'A', text: '1' },
+      { id: 'B', key: 'B', text: '3/4' },
+      { id: 'C', key: 'C', text: '2' },
+      { id: 'D', key: 'D', text: '1/2' }
+    ],
+    correct_answer: 0,
+    correctAnswer: 'A',
+    explanation: '1',
+    structured_explanation: {
+      given: ['Expression: sin² θ + cos⁴ θ'],
+      steps: [
+        'Replace sin² θ with 1 − cos² θ: (1 − cos² θ) + cos⁴ θ.',
+        'Let u = cos² θ, where 0 ≤ u ≤ 1. The expression is f(u) = u² − u + 1.',
+        'Complete the square: f(u) = (u − 1/2)² + 3/4.',
+        'At the boundary u = 1 (when θ = 0°): f(1) = 1² − 1 + 1 = 1.',
+        'At the boundary u = 0 (when θ = 90°): f(0) = 0 − 0 + 1 = 1.',
+        'At the vertex u = 1/2: f(1/2) = 3/4 (which is the minimum value).',
+        'Hence, the maximum value is 1.'
+      ],
+      shortcut: 'Since cos⁴ θ ≤ cos² θ, sin² θ + cos⁴ θ ≤ sin² θ + cos² θ = 1. Attained when cos θ = 1 (θ = 0°).',
+      formulaUsed: ['sin² θ = 1 − cos² θ'],
+      finalAnswer: '1'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 39,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'Which of the following is identically equal to sec⁴ θ − sec² θ?',
+    options: [
+      { id: 'A', key: 'A', text: 'tan⁴ θ − tan² θ' },
+      { id: 'B', key: 'B', text: 'tan⁴ θ + tan² θ' },
+      { id: 'C', key: 'C', text: 'tan² θ − tan⁴ θ' },
+      { id: 'D', key: 'D', text: '1 + tan⁴ θ' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: 'tan⁴ θ + tan² θ',
+    structured_explanation: {
+      given: ['Expression: sec⁴ θ − sec² θ'],
+      steps: [
+        'Factor out sec² θ: sec² θ (sec² θ − 1).',
+        'Recall fundamental identity: sec² θ − 1 = tan² θ, and sec² θ = 1 + tan² θ.',
+        'Substitute both: (1 + tan² θ) × tan² θ.',
+        'Expand the product: tan² θ + tan⁴ θ = tan⁴ θ + tan² θ.'
+      ],
+      shortcut: 'sec⁴ θ − sec² θ = sec² θ (tan² θ) = (1 + tan² θ)tan² θ = tan⁴ θ + tan² θ.',
+      formulaUsed: ['sec² θ − tan² θ = 1'],
+      finalAnswer: 'tan⁴ θ + tan² θ'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 40,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If sin θ − cos θ = 1/5 and θ is acute, what is the value of sin θ + cos θ?',
+    options: [
+      { id: 'A', key: 'A', text: '7/5' },
+      { id: 'B', key: 'B', text: '6/5' },
+      { id: 'C', key: 'C', text: '4/5' },
+      { id: 'D', key: 'D', text: '8/5' }
+    ],
+    correct_answer: 0,
+    correctAnswer: 'A',
+    explanation: '7/5',
+    structured_explanation: {
+      given: ['sin θ − cos θ = 1/5', 'θ is acute'],
+      steps: [
+        'Use identity: (sin θ + cos θ)² + (sin θ − cos θ)² = 2(sin² θ + cos² θ) = 2(1) = 2.',
+        'Substitute the given difference: (sin θ + cos θ)² + (1/5)² = 2.',
+        '(sin θ + cos θ)² + 1/25 = 2.',
+        '(sin θ + cos θ)² = 2 − 1/25 = 49/25.',
+        'Since θ is acute, sin θ + cos θ > 0: sin θ + cos θ = √(49/25) = 7/5.'
+      ],
+      shortcut: '(sin θ + cos θ)² = 2 − (sin θ − cos θ)² = 2 − 1/25 = 49/25 ⇒ 7/5.',
+      formulaUsed: ['(A + B)² + (A − B)² = 2(A² + B²)'],
+      finalAnswer: '7/5'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 41,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'Find the value of log₁₀(tan 1°) + log₁₀(tan 2°) + log₁₀(tan 3°) + ... + log₁₀(tan 89°).',
+    options: [
+      { id: 'A', key: 'A', text: '1' },
+      { id: 'B', key: 'B', text: '0' },
+      { id: 'C', key: 'C', text: '89' },
+      { id: 'D', key: 'D', text: '-1' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '0',
+    structured_explanation: {
+      given: ['Sum: log₁₀(tan 1°) + log₁₀(tan 2°) + ... + log₁₀(tan 89°)'],
+      steps: [
+        'Using logarithmic property log(a) + log(b) = log(ab), rewrite as a single logarithm of product: log₁₀(tan 1° × tan 2° × ... × tan 89°).',
+        'Pair terms: tan 1° × tan 89° = tan 1° × cot 1° = 1, tan 2° × tan 88° = 1, ..., tan 44° × tan 46° = 1.',
+        'The middle term is tan 45° = 1.',
+        'Thus, the product inside is strictly 1: log₁₀(1).',
+        'Since log₁₀(1) = 0, the sum equals 0.'
+      ],
+      shortcut: 'Product of tangents from 1° to 89° is 1. log(1) = 0.',
+      formulaUsed: ['log(xy) = log(x) + log(y)', 'tan(90° − θ) = cot θ', 'log₁₀(1) = 0'],
+      finalAnswer: '0'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 42,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'Simplify: (tan θ + sec θ − 1) / (tan θ − sec θ + 1).',
+    options: [
+      { id: 'A', key: 'A', text: 'sec θ + tan θ' },
+      { id: 'B', key: 'B', text: 'sec θ − tan θ' },
+      { id: 'C', key: 'C', text: 'cos θ − sin θ' },
+      { id: 'D', key: 'D', text: '1 / (sec θ + tan θ)' }
+    ],
+    correct_answer: 0,
+    correctAnswer: 'A',
+    explanation: 'sec θ + tan θ',
+    structured_explanation: {
+      given: ['Expression: (tan θ + sec θ − 1) / (tan θ − sec θ + 1)'],
+      steps: [
+        'In the numerator, replace 1 with (sec² θ − tan² θ) = (sec θ − tan θ)(sec θ + tan θ).',
+        'Numerator = (sec θ + tan θ) − (sec θ − tan θ)(sec θ + tan θ).',
+        'Factor out (sec θ + tan θ): (sec θ + tan θ)[1 − (sec θ − tan θ)] = (sec θ + tan θ)(1 − sec θ + tan θ).',
+        'Notice that the denominator is (tan θ − sec θ + 1) = (1 − sec θ + tan θ).',
+        'Cancel the identical common factor: Result = sec θ + tan θ.'
+      ],
+      shortcut: 'Standard identity: (tan θ + sec θ − 1)/(tan θ − sec θ + 1) = sec θ + tan θ = (1 + sin θ)/cos θ.',
+      formulaUsed: ['sec² θ − tan² θ = 1 = (sec θ − tan θ)(sec θ + tan θ)'],
+      finalAnswer: 'sec θ + tan θ'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 43,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'What is the minimum value of 5cos θ + 12sin θ − 3?',
+    options: [
+      { id: 'A', key: 'A', text: '-13' },
+      { id: 'B', key: 'B', text: '-16' },
+      { id: 'C', key: 'C', text: '-10' },
+      { id: 'D', key: 'D', text: '10' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '-16',
+    structured_explanation: {
+      given: ['Expression: 5cos θ + 12sin θ − 3'],
+      steps: [
+        'Recall range of a cos θ + b sin θ is [−√(a² + b²), +√(a² + b²)].',
+        'Here a = 5 and b = 12.',
+        'Calculate amplitude: √(5² + 12²) = √(25 + 144) = √169 = 13.',
+        'Minimum value of (5cos θ + 12sin θ) is −13.',
+        'Subtract the constant 3: Minimum = −13 − 3 = −16.'
+      ],
+      shortcut: 'Min = −√(5² + 12²) − 3 = −13 − 3 = −16.',
+      formulaUsed: ['Min(a cos θ + b sin θ) = −√(a² + b²)'],
+      finalAnswer: '-16'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 44,
+    difficulty: 'MEDIUM',
+    difficulty_level: 2,
+    difficultyLevel: 2,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If tan θ = 1/2, what is the value of (2sin θ cos θ) / (cos² θ − sin² θ)?',
+    options: [
+      { id: 'A', key: 'A', text: '3/4' },
+      { id: 'B', key: 'B', text: '4/3' },
+      { id: 'C', key: 'C', text: '1' },
+      { id: 'D', key: 'D', text: '5/4' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '4/3',
+    structured_explanation: {
+      given: ['tan θ = 1/2'],
+      steps: [
+        'Divide numerator and denominator by cos² θ: [2(sin θ / cos θ)] / [1 − (sin² θ / cos² θ)].',
+        'Express in terms of tan θ: 2tan θ / (1 − tan² θ) = tan 2θ.',
+        'Substitute tan θ = 1/2: 2(1/2) / [1 − (1/2)²] = 1 / [1 − 1/4] = 1 / (3/4) = 4/3.'
+      ],
+      shortcut: 'tan 2θ = 2tan θ / (1 − tan² θ) = 2(0.5) / (1 − 0.25) = 1 / 0.75 = 4/3.',
+      formulaUsed: ['tan 2θ = 2tan θ / (1 − tan² θ)'],
+      finalAnswer: '4/3'
+    },
+    is_hidden: false
+  },
+
+  // 6 Hard questions (completing 16 Hard total)
+  {
+    question_number: 45,
+    difficulty: 'HARD',
+    difficulty_level: 3,
+    difficultyLevel: 3,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If a cos³ θ + 3a cos θ sin² θ = m and a sin³ θ + 3a cos² θ sin θ = n, find the value of (m + n)^(2/3) + (m − n)^(2/3).',
+    options: [
+      { id: 'A', key: 'A', text: '2a^(2/3)' },
+      { id: 'B', key: 'B', text: 'a^(2/3)' },
+      { id: 'C', key: 'C', text: '2a^(1/3)' },
+      { id: 'D', key: 'D', text: 'a²' }
+    ],
+    correct_answer: 0,
+    correctAnswer: 'A',
+    explanation: '2a^(2/3)',
+    structured_explanation: {
+      given: [
+        'm = a cos³ θ + 3a cos θ sin² θ',
+        'n = a sin³ θ + 3a cos² θ sin θ'
+      ],
+      steps: [
+        'Add equations: m + n = a(cos³ θ + 3cos² θ sin θ + 3cos θ sin² θ + sin³ θ) = a(cos θ + sin θ)³.',
+        'Raise to power 2/3: (m + n)^(2/3) = a^(2/3)(cos θ + sin θ)².',
+        'Subtract equations: m − n = a(cos³ θ − 3cos² θ sin θ + 3cos θ sin² θ − sin³ θ) = a(cos θ − sin θ)³.',
+        'Raise to power 2/3: (m − n)^(2/3) = a^(2/3)(cos θ − sin θ)².',
+        'Sum the two terms: a^(2/3) [(cos θ + sin θ)² + (cos θ − sin θ)²] = a^(2/3) [2(cos² θ + sin² θ)] = 2a^(2/3).'
+      ],
+      shortcut: 'Binomial cube form: (m+n)^(2/3) + (m-n)^(2/3) = a^(2/3) × 2(sin² θ + cos² θ) = 2a^(2/3).',
+      formulaUsed: ['(x + y)³ = x³ + 3x²y + 3xy² + y³', '(x − y)³ = x³ − 3x²y + 3xy² − y³', '(A+B)² + (A-B)² = 2(A²+B²)'],
+      finalAnswer: '2a^(2/3)'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 46,
+    difficulty: 'HARD',
+    difficulty_level: 3,
+    difficultyLevel: 3,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'What is the minimum value of (sin θ + cosec θ)² + (cos θ + sec θ)² for all real values of θ where defined?',
+    options: [
+      { id: 'A', key: 'A', text: '7' },
+      { id: 'B', key: 'B', text: '8' },
+      { id: 'C', key: 'C', text: '9' },
+      { id: 'D', key: 'D', text: '11' }
+    ],
+    correct_answer: 2,
+    correctAnswer: 'C',
+    explanation: '9',
+    structured_explanation: {
+      given: ['Expression: (sin θ + cosec θ)² + (cos θ + sec θ)²'],
+      steps: [
+        'Expand both squares: [sin² θ + cosec² θ + 2sin θ cosec θ] + [cos² θ + sec² θ + 2cos θ sec θ].',
+        'Since sin θ cosec θ = 1 and cos θ sec θ = 1: sin² θ + cosec² θ + 2 + cos² θ + sec² θ + 2.',
+        'Combine (sin² θ + cos² θ) = 1: 1 + 4 + cosec² θ + sec² θ = 5 + cosec² θ + sec² θ.',
+        'Convert to tan and cot: cosec² θ = 1 + cot² θ, sec² θ = 1 + tan² θ: 5 + 1 + cot² θ + 1 + tan² θ = 7 + tan² θ + cot² θ.',
+        'By AM-GM inequality, tan² θ + cot² θ ≥ 2√(tan² θ × cot² θ) = 2.',
+        'Minimum value = 7 + 2 = 9.'
+      ],
+      shortcut: 'Min = 7 + 2√(tan² θ × cot² θ) = 7 + 2 = 9 (at θ = 45°).',
+      formulaUsed: ['cosec² θ = 1 + cot² θ', 'sec² θ = 1 + tan² θ', 'AM-GM: a + b ≥ 2√ab'],
+      finalAnswer: '9'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 47,
+    difficulty: 'HARD',
+    difficulty_level: 3,
+    difficultyLevel: 3,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If sec θ + tan θ = x, what is the value of (x² − 1) / (x² + 1)?',
+    options: [
+      { id: 'A', key: 'A', text: 'cos θ' },
+      { id: 'B', key: 'B', text: 'sin θ' },
+      { id: 'C', key: 'C', text: 'tan θ' },
+      { id: 'D', key: 'D', text: 'cot θ' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: 'sin θ',
+    structured_explanation: {
+      given: ['sec θ + tan θ = x'],
+      steps: [
+        'Since sec² θ − tan² θ = 1, we have sec θ − tan θ = 1/x.',
+        'Subtracting the two equations: 2tan θ = x − 1/x = (x² − 1) / x ⇒ tan θ = (x² − 1) / (2x).',
+        'Adding the two equations: 2sec θ = x + 1/x = (x² + 1) / x ⇒ sec θ = (x² + 1) / (2x).',
+        'Compute ratio tan θ / sec θ: [(x² − 1) / (2x)] / [(x² + 1) / (2x)] = (x² − 1) / (x² + 1).',
+        'Since tan θ / sec θ = (sin θ / cos θ) / (1 / cos θ) = sin θ, the result is sin θ.'
+      ],
+      shortcut: 'tan θ / sec θ = sin θ. (x − 1/x)/(x + 1/x) = (x² − 1)/(x² + 1) = sin θ.',
+      formulaUsed: ['sec² θ − tan² θ = 1', 'sin θ = tan θ / sec θ'],
+      finalAnswer: 'sin θ'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 48,
+    difficulty: 'HARD',
+    difficulty_level: 3,
+    difficultyLevel: 3,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'Evaluate the product: sin 10° × sin 50° × sin 70°.',
+    options: [
+      { id: 'A', key: 'A', text: '1/4' },
+      { id: 'B', key: 'B', text: '1/8' },
+      { id: 'C', key: 'C', text: '1/16' },
+      { id: 'D', key: 'D', text: '3/16' }
+    ],
+    correct_answer: 1,
+    correctAnswer: 'B',
+    explanation: '1/8',
+    structured_explanation: {
+      given: ['Product: sin 10° × sin 50° × sin 70°'],
+      steps: [
+        'Recall trigonometric product identity: sin θ × sin(60° − θ) × sin(60° + θ) = (1/4) sin 3θ.',
+        'Let θ = 10°: then 60° − θ = 50° and 60° + θ = 70°.',
+        'Apply identity: sin 10° × sin 50° × sin 70° = (1/4) sin(3 × 10°) = (1/4) sin 30°.',
+        'Substitute standard value sin 30° = 1/2: (1/4) × (1/2) = 1/8.'
+      ],
+      shortcut: 'sin θ sin(60−θ) sin(60+θ) = (1/4)sin 3θ. For θ = 10°, (1/4)sin 30° = 1/8.',
+      formulaUsed: ['sin θ sin(60° − θ) sin(60° + θ) = (1/4)sin 3θ', 'sin 30° = 1/2'],
+      finalAnswer: '1/8'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 49,
+    difficulty: 'HARD',
+    difficulty_level: 3,
+    difficultyLevel: 3,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If cos α + cos β + cos γ = 0 and sin α + sin β + sin γ = 0, what is the value of cos(α − β) + cos(β − γ) + cos(γ − α)?',
+    options: [
+      { id: 'A', key: 'A', text: '0' },
+      { id: 'B', key: 'B', text: '3/2' },
+      { id: 'C', key: 'C', text: '-3/2' },
+      { id: 'D', key: 'D', text: '-1' }
+    ],
+    correct_answer: 2,
+    correctAnswer: 'C',
+    explanation: '-3/2',
+    structured_explanation: {
+      given: [
+        'cos α + cos β + cos γ = 0',
+        'sin α + sin β + sin γ = 0'
+      ],
+      steps: [
+        'Square both given equations and add them: (cos α + cos β + cos γ)² + (sin α + sin β + sin γ)² = 0² + 0² = 0.',
+        'Expand the left-hand side: (cos² α + cos² β + cos² γ + sin² α + sin² β + sin² γ) + 2(cos α cos β + sin α sin β + cos β cos γ + sin β sin γ + cos γ cos α + sin γ sin α) = 0.',
+        'Group Pythagorean sums: (cos² α + sin² α) + (cos² β + sin² β) + (cos² γ + sin² γ) = 1 + 1 + 1 = 3.',
+        'Apply angle subtraction cosine identity cos(A − B) = cos A cos B + sin A sin B: 3 + 2[cos(α − β) + cos(β − γ) + cos(γ − α)] = 0.',
+        'Solve for the sum: 2[cos(α − β) + cos(β − γ) + cos(γ − α)] = −3 ⇒ Sum = −3/2.'
+      ],
+      shortcut: 'Vector / complex sum of 3 unit vectors adding to 0: |u + v + w|² = 0 ⇒ 3 + 2S = 0 ⇒ S = −3/2.',
+      formulaUsed: ['cos(A − B) = cos A cos B + sin A sin B', 'cos² θ + sin² θ = 1'],
+      finalAnswer: '-3/2'
+    },
+    is_hidden: false
+  },
+  {
+    question_number: 50,
+    difficulty: 'HARD',
+    difficulty_level: 3,
+    difficultyLevel: 3,
+    topic_id: 'trigonometry',
+    topicId: 'trigonometry',
+    company_slug: 'general',
+    statement: 'If sin θ and cos θ are the roots of the quadratic equation ax² − bx + c = 0, which of the following relationships must hold true?',
+    options: [
+      { id: 'A', key: 'A', text: 'a² − b² + 2ac = 0' },
+      { id: 'B', key: 'B', text: 'a² + b² − 2ac = 0' },
+      { id: 'C', key: 'C', text: 'b² − a² + 2ac = 0' },
+      { id: 'D', key: 'D', text: 'a² + b² + 2ac = 0' }
+    ],
+    correct_answer: 0,
+    correctAnswer: 'A',
+    explanation: 'a² − b² + 2ac = 0',
+    structured_explanation: {
+      given: ['sin θ and cos θ are roots of ax² − bx + c = 0'],
+      steps: [
+        'By Vieta\'s formulas: Sum of roots = sin θ + cos θ = b/a.',
+        'Product of roots = sin θ cos θ = c/a.',
+        'Square the sum of roots: (sin θ + cos θ)² = sin² θ + cos² θ + 2sin θ cos θ = 1 + 2(c/a) = (a + 2c) / a.',
+        'Equate to (b/a)²: b² / a² = (a + 2c) / a.',
+        'Multiply both sides by a²: b² = a(a + 2c) = a² + 2ac.',
+        'Rearrange: a² − b² + 2ac = 0.'
+      ],
+      shortcut: '(Sum)² = 1 + 2(Product) ⇒ (b/a)² = 1 + 2c/a ⇒ b² = a² + 2ac ⇒ a² − b² + 2ac = 0.',
+      formulaUsed: ['Vieta\'s formulas', '(sin θ + cos θ)² = 1 + 2sin θ cos θ'],
+      finalAnswer: 'a² − b² + 2ac = 0'
+    },
+    is_hidden: false
+  }
+];
+
+// Helper to assign stable deterministic UUIDs based on question number & difficulty
 function assignUuids(list) {
-  return list.map((item, idx) => ({
+  return list.map((item) => ({
     id: crypto.createHash('md5').update(`trigonometry-${item.question_number}-${item.difficulty}`).digest('hex').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5'),
     ...item
   }));
 }
 
-const enrichedEasy = assignUuids(easyQuestions);
-const enrichedMedium = assignUuids(mediumQuestions);
-const enrichedHard = assignUuids(hardQuestions);
-const enrichedAll = [...enrichedEasy, ...enrichedMedium, ...enrichedHard];
+const enrichedEasyPart1 = assignUuids(easyQuestionsPart1);
+const enrichedMediumPart1 = assignUuids(mediumQuestionsPart1);
+const enrichedHardPart1 = assignUuids(hardQuestionsPart1);
+const enrichedRemaining20 = assignUuids(remaining20Questions);
+
+// Partition all 50 questions cleanly
+const all50Questions = [
+  ...enrichedEasyPart1,
+  ...enrichedMediumPart1,
+  ...enrichedHardPart1,
+  ...enrichedRemaining20
+].sort((a, b) => a.question_number - b.question_number);
+
+const allEasy14 = all50Questions.filter(q => q.difficulty === 'EASY');
+const allMedium20 = all50Questions.filter(q => q.difficulty === 'MEDIUM');
+const allHard16 = all50Questions.filter(q => q.difficulty === 'HARD');
 
 const outDir = path.resolve('database/datasets');
 if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-fs.writeFileSync(path.join(outDir, 'trigonometry_easy_10.json'), JSON.stringify(enrichedEasy, null, 2), 'utf-8');
-fs.writeFileSync(path.join(outDir, 'trigonometry_medium_10.json'), JSON.stringify(enrichedMedium, null, 2), 'utf-8');
-fs.writeFileSync(path.join(outDir, 'trigonometry_hard_10.json'), JSON.stringify(enrichedHard, null, 2), 'utf-8');
-fs.writeFileSync(path.join(outDir, 'trigonometry_all_30.json'), JSON.stringify(enrichedAll, null, 2), 'utf-8');
+// Write the files
+fs.writeFileSync(path.join(outDir, 'trigonometry_all_50.json'), JSON.stringify(all50Questions, null, 2), 'utf-8');
+fs.writeFileSync(path.join(outDir, 'trigonometry_remaining_20.json'), JSON.stringify(enrichedRemaining20, null, 2), 'utf-8');
+fs.writeFileSync(path.join(outDir, 'trigonometry_easy_14.json'), JSON.stringify(allEasy14, null, 2), 'utf-8');
+fs.writeFileSync(path.join(outDir, 'trigonometry_medium_20.json'), JSON.stringify(allMedium20, null, 2), 'utf-8');
+fs.writeFileSync(path.join(outDir, 'trigonometry_hard_16.json'), JSON.stringify(allHard16, null, 2), 'utf-8');
 
-console.log('Successfully generated JSON files:');
-console.log('1. database/datasets/trigonometry_easy_10.json (10 questions)');
-console.log('2. database/datasets/trigonometry_medium_10.json (10 questions)');
-console.log('3. database/datasets/trigonometry_hard_10.json (10 questions)');
-console.log('4. database/datasets/trigonometry_all_30.json (30 questions)');
+console.log('Successfully generated all 50 Trigonometry questions:');
+console.log(`- Total Questions: ${all50Questions.length}`);
+console.log(`- Easy Questions: ${allEasy14.length}`);
+console.log(`- Medium Questions: ${allMedium20.length}`);
+console.log(`- Hard Questions: ${allHard16.length}`);
+console.log(`- Remaining 20 Questions (Q31-Q50): ${enrichedRemaining20.length}`);

@@ -1,0 +1,892 @@
+[
+  {
+    "id": "2c501fd8-ddad-fb43-fa27-f0dc014328ed",
+    "question_number": 21,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin θ + cos θ = p, what is the value of sin⁶ θ + cos⁶ θ in terms of p?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "[4 − 3(p² − 1)²] / 4"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "[4 + 3(p² − 1)²] / 4"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "1 − 3(p − 1)²/2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "(3p² − 2) / 4"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "[4 − 3(p² − 1)²] / 4",
+    "structured_explanation": {
+      "given": [
+        "sin θ + cos θ = p"
+      ],
+      "steps": [
+        "Square both sides: (sin θ + cos θ)² = p² ⇒ sin² θ + cos² θ + 2sin θ cos θ = p² ⇒ 1 + 2sin θ cos θ = p².",
+        "Thus, sin θ cos θ = (p² − 1) / 2.",
+        "Express sin⁶ θ + cos⁶ θ as (sin² θ)³ + (cos² θ)³ using a³ + b³ = (a + b)(a² − ab + b²): (sin² θ + cos² θ)(sin⁴ θ − sin² θ cos² θ + cos⁴ θ).",
+        "Since sin² θ + cos² θ = 1 and sin⁴ θ + cos⁴ θ = (sin² θ + cos² θ)² − 2sin² θ cos² θ = 1 − 2sin² θ cos² θ:",
+        "sin⁶ θ + cos⁶ θ = 1 − 3sin² θ cos² θ.",
+        "Substitute sin θ cos θ: 1 − 3[(p² − 1)/2]² = 1 − 3(p² − 1)² / 4 = [4 − 3(p² − 1)²] / 4."
+      ],
+      "shortcut": "Formula: sin⁶ θ + cos⁶ θ = 1 − 3sin² θ cos² θ = 1 − 3[(p² − 1)/2]² = [4 − 3(p² − 1)²] / 4.",
+      "formulaUsed": [
+        "(a + b)² = a² + 2ab + b²",
+        "a³ + b³ = (a+b)³ − 3ab(a+b)",
+        "sin² θ + cos² θ = 1"
+      ],
+      "finalAnswer": "[4 − 3(p² − 1)²] / 4"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "d9b4af76-daa7-2a7f-6e9a-d218d8b29144",
+    "question_number": 22,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "What is the minimum value of 4sec² θ + 9cosec² θ for 0 < θ < π/2?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "25"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "24"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "13"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "36"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "25",
+    "structured_explanation": {
+      "given": [
+        "Expression: 4sec² θ + 9cosec² θ",
+        "0 < θ < π/2"
+      ],
+      "steps": [
+        "Convert sec² θ to 1 + tan² θ and cosec² θ to 1 + cot² θ: 4(1 + tan² θ) + 9(1 + cot² θ) = 4 + 4tan² θ + 9 + 9cot² θ = 13 + 4tan² θ + 9cot² θ.",
+        "By AM-GM inequality on 4tan² θ and 9cot² θ: (4tan² θ + 9cot² θ)/2 ≥ √(4tan² θ × 9cot² θ) = √(36) = 6.",
+        "Thus, 4tan² θ + 9cot² θ ≥ 2 × 6 = 12.",
+        "Minimum total value = 13 + 12 = 25."
+      ],
+      "shortcut": "Formula for min value of a sec² θ + b cosec² θ is (√a + √b)² = (√4 + √9)² = (2 + 3)² = 25.",
+      "formulaUsed": [
+        "sec² θ = 1 + tan² θ",
+        "cosec² θ = 1 + cot² θ",
+        "Min(a sec² θ + b cosec² θ) = (√a + √b)²"
+      ],
+      "finalAnswer": "25"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "821ed6ef-2d85-560d-1030-509e2eaf0155",
+    "question_number": 23,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin θ + sin² θ = 1, find the value of cos¹² θ + 3cos¹⁰ θ + 3cos⁸ θ + cos⁶ θ − 1.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "-1"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "0",
+    "structured_explanation": {
+      "given": [
+        "sin θ + sin² θ = 1"
+      ],
+      "steps": [
+        "From the given condition: sin θ = 1 − sin² θ = cos² θ.",
+        "Notice that cos¹² θ + 3cos¹⁰ θ + 3cos⁸ θ + cos⁶ θ is of the binomial expansion form (a + b)³ = a³ + 3a²b + 3ab² + b³ where a = cos⁴ θ and b = cos² θ.",
+        "Thus, the first four terms equal (cos⁴ θ + cos² θ)³.",
+        "Substitute cos² θ = sin θ: cos⁴ θ = sin² θ.",
+        "Hence, cos⁴ θ + cos² θ = sin² θ + sin θ = 1.",
+        "Value = 1³ − 1 = 1 − 1 = 0."
+      ],
+      "shortcut": "cos¹² θ + 3cos¹⁰ θ + 3cos⁸ θ + cos⁶ θ = (cos⁴ θ + cos² θ)³ = (sin² θ + sin θ)³ = 1³ = 1. Therefore 1 − 1 = 0.",
+      "formulaUsed": [
+        "1 − sin² θ = cos² θ",
+        "(a + b)³ = a³ + 3a²b + 3ab² + b³"
+      ],
+      "finalAnswer": "0"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "b14a41d4-9ec5-f921-69a0-c4187cc0c8c5",
+    "question_number": 24,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate the product: cos 20° × cos 40° × cos 80°.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1/4"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1/8"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "1/16"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "3/8"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "1/8",
+    "structured_explanation": {
+      "given": [
+        "Product: cos 20° × cos 40° × cos 80°"
+      ],
+      "steps": [
+        "Recall the standard product formula: cos θ × cos(60° − θ) × cos(60° + θ) = (1/4) cos 3θ.",
+        "Let θ = 20°: then 60° − θ = 40° and 60° + θ = 80°.",
+        "Apply the identity: cos 20° × cos 40° × cos 80° = (1/4) cos(3 × 20°) = (1/4) cos 60°.",
+        "Substitute cos 60° = 1/2: (1/4) × (1/2) = 1/8."
+      ],
+      "shortcut": "cos θ cos(60−θ) cos(60+θ) = (1/4)cos(3θ). At θ=20°, (1/4)cos(60°) = 1/8.",
+      "formulaUsed": [
+        "cos θ cos(60° − θ) cos(60° + θ) = (1/4)cos 3θ",
+        "cos 60° = 1/2"
+      ],
+      "finalAnswer": "1/8"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "12f9d116-bd9d-6567-ed95-9b1264217ee0",
+    "question_number": 25,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If tan θ + sin θ = m and tan θ − sin θ = n, which of the following relations is correct?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "m² − n² = 4√mn"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "m² + n² = 4mn"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "m² − n² = 2√mn"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "(m² − n²)/2 = 4mn"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "m² − n² = 4√mn",
+    "structured_explanation": {
+      "given": [
+        "tan θ + sin θ = m",
+        "tan θ − sin θ = n"
+      ],
+      "steps": [
+        "Compute m² − n²: (m + n)(m − n) = (2tan θ)(2sin θ) = 4tan θ sin θ.",
+        "Now evaluate 4√mn: mn = (tan θ + sin θ)(tan θ − sin θ) = tan² θ − sin² θ.",
+        "Factor: tan² θ − sin² θ = (sin² θ / cos² θ) − sin² θ = sin² θ (1/cos² θ − 1) = sin² θ (sec² θ − 1) = sin² θ tan² θ.",
+        "Take square root: √mn = √(sin² θ tan² θ) = sin θ tan θ.",
+        "Multiply by 4: 4√mn = 4sin θ tan θ.",
+        "Since both sides equal 4sin θ tan θ, we have m² − n² = 4√mn."
+      ],
+      "shortcut": "Direct competitive identity: (tan θ + sin θ)² − (tan θ − sin θ)² = 4tan θ sin θ = 4√(tan² θ − sin² θ) = 4√mn.",
+      "formulaUsed": [
+        "(a+b)(a−b) = a² − b²",
+        "tan² θ − sin² θ = tan² θ sin² θ"
+      ],
+      "finalAnswer": "m² − n² = 4√mn"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "36bf1b00-de41-2116-74d9-ce9d8090c08e",
+    "question_number": 26,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Simplify the trigonometric expression: (sin A / (1 + cos A)) + ((1 + cos A) / sin A).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "2sec A"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2cosec A"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2tan A"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "2sin A"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "2cosec A",
+    "structured_explanation": {
+      "given": [
+        "Expression: (sin A / (1 + cos A)) + ((1 + cos A) / sin A)"
+      ],
+      "steps": [
+        "Find a common denominator: [sin² A + (1 + cos A)²] / [sin A (1 + cos A)].",
+        "Expand numerator: sin² A + 1 + 2cos A + cos² A.",
+        "Group Pythagorean terms: (sin² A + cos² A) + 1 + 2cos A = 1 + 1 + 2cos A = 2 + 2cos A = 2(1 + cos A).",
+        "Substitute back into fraction: 2(1 + cos A) / [sin A (1 + cos A)].",
+        "Cancel (1 + cos A): 2 / sin A = 2cosec A."
+      ],
+      "shortcut": "Put A = 90°: (1/(1+0)) + ((1+0)/1) = 1 + 1 = 2. Among options, 2cosec 90° = 2(1) = 2.",
+      "formulaUsed": [
+        "sin² A + cos² A = 1",
+        "cosec A = 1 / sin A"
+      ],
+      "finalAnswer": "2cosec A"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "914d2e22-66a1-dcca-1e02-faf2b2d94b5e",
+    "question_number": 27,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "In any acute-angled triangle ABC, if tan A + tan B + tan C = k, what is the value of tan A × tan B × tan C?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "k"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "k/3"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "k²"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "1"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "k",
+    "structured_explanation": {
+      "given": [
+        "In △ABC, A + B + C = 180°",
+        "tan A + tan B + tan C = k"
+      ],
+      "steps": [
+        "In any triangle, A + B = 180° − C.",
+        "Take tangent of both sides: tan(A + B) = tan(180° − C) = −tan C.",
+        "Use angle sum formula: (tan A + tan B) / (1 − tan A tan B) = −tan C.",
+        "Cross-multiply: tan A + tan B = −tan C (1 − tan A tan B) = −tan C + tan A tan B tan C.",
+        "Rearrange: tan A + tan B + tan C = tan A tan B tan C.",
+        "Since tan A + tan B + tan C = k, the product is also k."
+      ],
+      "shortcut": "In any triangle, tan A + tan B + tan C = tan A tan B tan C is an unconditional identity. Therefore Product = Sum = k.",
+      "formulaUsed": [
+        "tan(A + B) = (tan A + tan B) / (1 − tan A tan B)",
+        "tan(180° − θ) = −tan θ"
+      ],
+      "finalAnswer": "k"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "cdfbbcd6-f29e-58bd-7a68-4fcb636477fa",
+    "question_number": 28,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If A + B = 45°, find the value of (1 + tan A)(1 + tan B).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "4"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "1/2"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "2",
+    "structured_explanation": {
+      "given": [
+        "A + B = 45°"
+      ],
+      "steps": [
+        "Apply tangent: tan(A + B) = tan 45° = 1.",
+        "Use addition formula: (tan A + tan B) / (1 − tan A tan B) = 1.",
+        "Cross-multiply: tan A + tan B = 1 − tan A tan B.",
+        "Rearrange: tan A + tan B + tan A tan B = 1.",
+        "Add 1 to both sides: 1 + tan A + tan B + tan A tan B = 1 + 1 = 2.",
+        "Factor left-hand side: (1 + tan A)(1 + tan B) = 2."
+      ],
+      "shortcut": "Let A = 45° and B = 0° (sum = 45°): (1 + tan 45°)(1 + tan 0°) = (1 + 1)(1 + 0) = 2 × 1 = 2.",
+      "formulaUsed": [
+        "tan(A + B) = (tan A + tan B) / (1 − tan A tan B)"
+      ],
+      "finalAnswer": "2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "98c3732a-f1cb-133a-f8c8-f615d9b55c7e",
+    "question_number": 29,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If cos θ + sec θ = √3, what is the value of cos³ θ + sec³ θ?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "3√3"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "√3"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "1"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "0",
+    "structured_explanation": {
+      "given": [
+        "cos θ + sec θ = √3"
+      ],
+      "steps": [
+        "Notice sec θ = 1 / cos θ. Let x = cos θ, so x + 1/x = √3.",
+        "Recall algebraic identity: x³ + 1/x³ = (x + 1/x)³ − 3(x + 1/x).",
+        "Substitute x + 1/x = √3: (√3)³ − 3(√3).",
+        "Compute: (√3)³ = 3√3.",
+        "Difference: 3√3 − 3√3 = 0."
+      ],
+      "shortcut": "If x + 1/x = √3, then x³ + 1/x³ = (√3)³ − 3√3 = 3√3 − 3√3 = 0 (and x⁶ = −1).",
+      "formulaUsed": [
+        "sec θ = 1 / cos θ",
+        "a³ + b³ = (a + b)³ − 3ab(a + b)"
+      ],
+      "finalAnswer": "0"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "36eb6f3a-a59e-a296-7092-4b2ded0f195a",
+    "question_number": 30,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate the expression: 1 / (1 + sin² θ) + 1 / (1 + cosec² θ).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "sin² θ"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "cosec² θ"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "1",
+    "structured_explanation": {
+      "given": [
+        "Expression: 1 / (1 + sin² θ) + 1 / (1 + cosec² θ)"
+      ],
+      "steps": [
+        "Express cosec² θ as 1 / sin² θ in the second term: 1 / (1 + 1/sin² θ).",
+        "Simplify second term: 1 / ((sin² θ + 1) / sin² θ) = sin² θ / (sin² θ + 1).",
+        "Both terms now have the identical denominator (1 + sin² θ).",
+        "Combine: (1 + sin² θ) / (1 + sin² θ) = 1."
+      ],
+      "shortcut": "Put θ = 90°: 1/(1+1) + 1/(1+1) = 1/2 + 1/2 = 1.",
+      "formulaUsed": [
+        "cosec θ = 1 / sin θ"
+      ],
+      "finalAnswer": "1"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "4987b91b-1ad9-5eca-bfaa-607d8613d83a",
+    "question_number": 45,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If a cos³ θ + 3a cos θ sin² θ = m and a sin³ θ + 3a cos² θ sin θ = n, find the value of (m + n)^(2/3) + (m − n)^(2/3).",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "2a^(2/3)"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "a^(2/3)"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "2a^(1/3)"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "a²"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "2a^(2/3)",
+    "structured_explanation": {
+      "given": [
+        "m = a cos³ θ + 3a cos θ sin² θ",
+        "n = a sin³ θ + 3a cos² θ sin θ"
+      ],
+      "steps": [
+        "Add equations: m + n = a(cos³ θ + 3cos² θ sin θ + 3cos θ sin² θ + sin³ θ) = a(cos θ + sin θ)³.",
+        "Raise to power 2/3: (m + n)^(2/3) = a^(2/3)(cos θ + sin θ)².",
+        "Subtract equations: m − n = a(cos³ θ − 3cos² θ sin θ + 3cos θ sin² θ − sin³ θ) = a(cos θ − sin θ)³.",
+        "Raise to power 2/3: (m − n)^(2/3) = a^(2/3)(cos θ − sin θ)².",
+        "Sum the two terms: a^(2/3) [(cos θ + sin θ)² + (cos θ − sin θ)²] = a^(2/3) [2(cos² θ + sin² θ)] = 2a^(2/3)."
+      ],
+      "shortcut": "Binomial cube form: (m+n)^(2/3) + (m-n)^(2/3) = a^(2/3) × 2(sin² θ + cos² θ) = 2a^(2/3).",
+      "formulaUsed": [
+        "(x + y)³ = x³ + 3x²y + 3xy² + y³",
+        "(x − y)³ = x³ − 3x²y + 3xy² − y³",
+        "(A+B)² + (A-B)² = 2(A²+B²)"
+      ],
+      "finalAnswer": "2a^(2/3)"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "dd6db7bc-6186-ed07-e06f-1a3dabfc6c6a",
+    "question_number": 46,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "What is the minimum value of (sin θ + cosec θ)² + (cos θ + sec θ)² for all real values of θ where defined?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "7"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "8"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "9"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "11"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "9",
+    "structured_explanation": {
+      "given": [
+        "Expression: (sin θ + cosec θ)² + (cos θ + sec θ)²"
+      ],
+      "steps": [
+        "Expand both squares: [sin² θ + cosec² θ + 2sin θ cosec θ] + [cos² θ + sec² θ + 2cos θ sec θ].",
+        "Since sin θ cosec θ = 1 and cos θ sec θ = 1: sin² θ + cosec² θ + 2 + cos² θ + sec² θ + 2.",
+        "Combine (sin² θ + cos² θ) = 1: 1 + 4 + cosec² θ + sec² θ = 5 + cosec² θ + sec² θ.",
+        "Convert to tan and cot: cosec² θ = 1 + cot² θ, sec² θ = 1 + tan² θ: 5 + 1 + cot² θ + 1 + tan² θ = 7 + tan² θ + cot² θ.",
+        "By AM-GM inequality, tan² θ + cot² θ ≥ 2√(tan² θ × cot² θ) = 2.",
+        "Minimum value = 7 + 2 = 9."
+      ],
+      "shortcut": "Min = 7 + 2√(tan² θ × cot² θ) = 7 + 2 = 9 (at θ = 45°).",
+      "formulaUsed": [
+        "cosec² θ = 1 + cot² θ",
+        "sec² θ = 1 + tan² θ",
+        "AM-GM: a + b ≥ 2√ab"
+      ],
+      "finalAnswer": "9"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "e4bd8e5c-4612-098a-d28f-36c036169791",
+    "question_number": 47,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sec θ + tan θ = x, what is the value of (x² − 1) / (x² + 1)?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "cos θ"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "sin θ"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "tan θ"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "cot θ"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "sin θ",
+    "structured_explanation": {
+      "given": [
+        "sec θ + tan θ = x"
+      ],
+      "steps": [
+        "Since sec² θ − tan² θ = 1, we have sec θ − tan θ = 1/x.",
+        "Subtracting the two equations: 2tan θ = x − 1/x = (x² − 1) / x ⇒ tan θ = (x² − 1) / (2x).",
+        "Adding the two equations: 2sec θ = x + 1/x = (x² + 1) / x ⇒ sec θ = (x² + 1) / (2x).",
+        "Compute ratio tan θ / sec θ: [(x² − 1) / (2x)] / [(x² + 1) / (2x)] = (x² − 1) / (x² + 1).",
+        "Since tan θ / sec θ = (sin θ / cos θ) / (1 / cos θ) = sin θ, the result is sin θ."
+      ],
+      "shortcut": "tan θ / sec θ = sin θ. (x − 1/x)/(x + 1/x) = (x² − 1)/(x² + 1) = sin θ.",
+      "formulaUsed": [
+        "sec² θ − tan² θ = 1",
+        "sin θ = tan θ / sec θ"
+      ],
+      "finalAnswer": "sin θ"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "1fa70c0e-7d70-9662-4b06-9f93d18c5df9",
+    "question_number": 48,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "Evaluate the product: sin 10° × sin 50° × sin 70°.",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "1/4"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "1/8"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "1/16"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "3/16"
+      }
+    ],
+    "correct_answer": 1,
+    "correctAnswer": "B",
+    "explanation": "1/8",
+    "structured_explanation": {
+      "given": [
+        "Product: sin 10° × sin 50° × sin 70°"
+      ],
+      "steps": [
+        "Recall trigonometric product identity: sin θ × sin(60° − θ) × sin(60° + θ) = (1/4) sin 3θ.",
+        "Let θ = 10°: then 60° − θ = 50° and 60° + θ = 70°.",
+        "Apply identity: sin 10° × sin 50° × sin 70° = (1/4) sin(3 × 10°) = (1/4) sin 30°.",
+        "Substitute standard value sin 30° = 1/2: (1/4) × (1/2) = 1/8."
+      ],
+      "shortcut": "sin θ sin(60−θ) sin(60+θ) = (1/4)sin 3θ. For θ = 10°, (1/4)sin 30° = 1/8.",
+      "formulaUsed": [
+        "sin θ sin(60° − θ) sin(60° + θ) = (1/4)sin 3θ",
+        "sin 30° = 1/2"
+      ],
+      "finalAnswer": "1/8"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "c737cb81-3ff7-dc9a-658e-e2a9239eb988",
+    "question_number": 49,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If cos α + cos β + cos γ = 0 and sin α + sin β + sin γ = 0, what is the value of cos(α − β) + cos(β − γ) + cos(γ − α)?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "3/2"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "-3/2"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "-1"
+      }
+    ],
+    "correct_answer": 2,
+    "correctAnswer": "C",
+    "explanation": "-3/2",
+    "structured_explanation": {
+      "given": [
+        "cos α + cos β + cos γ = 0",
+        "sin α + sin β + sin γ = 0"
+      ],
+      "steps": [
+        "Square both given equations and add them: (cos α + cos β + cos γ)² + (sin α + sin β + sin γ)² = 0² + 0² = 0.",
+        "Expand the left-hand side: (cos² α + cos² β + cos² γ + sin² α + sin² β + sin² γ) + 2(cos α cos β + sin α sin β + cos β cos γ + sin β sin γ + cos γ cos α + sin γ sin α) = 0.",
+        "Group Pythagorean sums: (cos² α + sin² α) + (cos² β + sin² β) + (cos² γ + sin² γ) = 1 + 1 + 1 = 3.",
+        "Apply angle subtraction cosine identity cos(A − B) = cos A cos B + sin A sin B: 3 + 2[cos(α − β) + cos(β − γ) + cos(γ − α)] = 0.",
+        "Solve for the sum: 2[cos(α − β) + cos(β − γ) + cos(γ − α)] = −3 ⇒ Sum = −3/2."
+      ],
+      "shortcut": "Vector / complex sum of 3 unit vectors adding to 0: |u + v + w|² = 0 ⇒ 3 + 2S = 0 ⇒ S = −3/2.",
+      "formulaUsed": [
+        "cos(A − B) = cos A cos B + sin A sin B",
+        "cos² θ + sin² θ = 1"
+      ],
+      "finalAnswer": "-3/2"
+    },
+    "is_hidden": false
+  },
+  {
+    "id": "06f8391b-1ffc-6ed5-f782-e43f840a6279",
+    "question_number": 50,
+    "difficulty": "HARD",
+    "difficulty_level": 3,
+    "difficultyLevel": 3,
+    "topic_id": "trigonometry",
+    "topicId": "trigonometry",
+    "company_slug": "general",
+    "statement": "If sin θ and cos θ are the roots of the quadratic equation ax² − bx + c = 0, which of the following relationships must hold true?",
+    "options": [
+      {
+        "id": "A",
+        "key": "A",
+        "text": "a² − b² + 2ac = 0"
+      },
+      {
+        "id": "B",
+        "key": "B",
+        "text": "a² + b² − 2ac = 0"
+      },
+      {
+        "id": "C",
+        "key": "C",
+        "text": "b² − a² + 2ac = 0"
+      },
+      {
+        "id": "D",
+        "key": "D",
+        "text": "a² + b² + 2ac = 0"
+      }
+    ],
+    "correct_answer": 0,
+    "correctAnswer": "A",
+    "explanation": "a² − b² + 2ac = 0",
+    "structured_explanation": {
+      "given": [
+        "sin θ and cos θ are roots of ax² − bx + c = 0"
+      ],
+      "steps": [
+        "By Vieta's formulas: Sum of roots = sin θ + cos θ = b/a.",
+        "Product of roots = sin θ cos θ = c/a.",
+        "Square the sum of roots: (sin θ + cos θ)² = sin² θ + cos² θ + 2sin θ cos θ = 1 + 2(c/a) = (a + 2c) / a.",
+        "Equate to (b/a)²: b² / a² = (a + 2c) / a.",
+        "Multiply both sides by a²: b² = a(a + 2c) = a² + 2ac.",
+        "Rearrange: a² − b² + 2ac = 0."
+      ],
+      "shortcut": "(Sum)² = 1 + 2(Product) ⇒ (b/a)² = 1 + 2c/a ⇒ b² = a² + 2ac ⇒ a² − b² + 2ac = 0.",
+      "formulaUsed": [
+        "Vieta's formulas",
+        "(sin θ + cos θ)² = 1 + 2sin θ cos θ"
+      ],
+      "finalAnswer": "a² − b² + 2ac = 0"
+    },
+    "is_hidden": false
+  }
+]
