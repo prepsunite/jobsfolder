@@ -20,6 +20,7 @@ export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibil
 
   const [isLiked, setIsLiked] = useState(() => likeStore.isCompanyLiked(company.slug));
   const [likeCount, setLikeCount] = useState(() => likeStore.getCompanyLikeCount(company.slug));
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     setIsLiked(likeStore.isCompanyLiked(company.slug));
@@ -101,18 +102,25 @@ export default function CompanyCard({ company, onEdit, onDelete, onToggleVisibil
             <span>Draft / Hidden</span>
           </div>
         )}
-        {company.logoUrl ? (
+        {company.logoUrl && !imgError ? (
           <img
             src={company.logoUrl}
             alt={company.name}
             loading="lazy"
             decoding="async"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth <= 16 && img.naturalHeight <= 16) {
+                setImgError(true);
+              }
+            }}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-200 p-3">
-            <div className="w-12 h-12 rounded-md bg-[#FD4A32]/10 dark:bg-[#FD4A32]/10 border border-[#FD4A32]/20 text-[#FD4A32] flex items-center justify-center font-display text-2xl font-black">
-              {company.name.charAt(0)}
+            <div className="w-12 h-12 rounded-md bg-white dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display text-2xl font-black shadow-2xs">
+              {company.name.charAt(0).toUpperCase()}
             </div>
             <span className="font-display text-sm font-extrabold text-[#121417] dark:text-[#FFFFFF] tracking-tight text-center">
               {company.name}

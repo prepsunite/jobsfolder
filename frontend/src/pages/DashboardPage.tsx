@@ -17,6 +17,7 @@ import { normalizeMathText } from '@/utils/questionParser';
 import { useToast } from '@/contexts/ToastContext';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
 import type { JobListing } from '@/types/jobs';
+import CompanyLogo from '@/components/CompanyLogo';
 import {
   BookmarkCheck,
   Building2,
@@ -726,20 +727,11 @@ export default function DashboardPage() {
                       {/* Top Header: Logo + Title + Trash button */}
                       <div className="flex items-start justify-between gap-2.5">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-11 h-11 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#17181F] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0 shadow-2xs">
-                            {job.company_logo_url ? (
-                              <img
-                                src={job.company_logo_url}
-                                alt={job.company_name}
-                                className="w-full h-full object-contain p-1"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            ) : (
-                              (job.company_name || 'J').charAt(0)
-                            )}
-                          </div>
+                          <CompanyLogo
+                            logoUrl={job.company_logo_url}
+                            companyName={job.company_name}
+                            size="md"
+                          />
                           <div className="min-w-0 flex-1">
                             <span className="text-[11px] font-display font-bold text-[#868E96] dark:text-[#555555] block truncate">
                               {job.company_name}
@@ -856,13 +848,11 @@ export default function DashboardPage() {
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-11 h-11 rounded-md bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#17181F] text-[#121417] dark:text-[#FFFFFF] flex items-center justify-center font-display font-extrabold text-sm overflow-hidden shrink-0">
-                          {exam.companyLogoUrl ? (
-                            <img src={exam.companyLogoUrl} alt={exam.companyName || 'Company'} className="w-full h-full object-contain p-1" />
-                          ) : (
-                            (exam.companyName || 'C').charAt(0)
-                          )}
-                        </div>
+                        <CompanyLogo
+                          logoUrl={exam.companyLogoUrl}
+                          companyName={exam.companyName || 'Company'}
+                          size="md"
+                        />
                         <div className="min-w-0">
                           <span className="text-[11px] font-display font-bold text-[#868E96] dark:text-[#555555] block truncate">
                             {exam.companyName || 'Company Drive'}
