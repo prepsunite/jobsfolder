@@ -1605,9 +1605,9 @@ export default function JobsPage() {
 
   return (
     <div className="space-y-5 animate-fadeIn pb-8">
-      {/* ── Tier 1: Page Header & Status ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
-        <div>
+      {/* ── Tier 1: Page Header & Unified Command Search Bar ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
+        <div className="shrink-0">
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
               Jobs &amp; Internships
@@ -1621,63 +1621,66 @@ export default function JobsPage() {
           </p>
         </div>
 
-        {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider hover:bg-[#FD4A32]/20 transition-all cursor-pointer shrink-0"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Filters</span>
-          </button>
-        )}
-      </div>
+        {/* Search Bar & Optional Reset on Right */}
+        <div className="flex items-center gap-2.5 w-full lg:w-auto lg:max-w-xl xl:max-w-2xl flex-1 lg:justify-end">
+          <div className="w-full bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] rounded-xl p-1 sm:p-1.5 shadow-2xs">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center divide-y sm:divide-y-0 sm:divide-x divide-[#E9ECEF] dark:divide-[#17181F]">
+              {/* Primary Search Input: Role / Skill / Company */}
+              <div className="relative flex-1 py-1 px-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
+                <input
+                  type="text"
+                  placeholder="Search by job title, skills (React, Python), or company..."
+                  value={filters.search ?? ''}
+                  onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+                  className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] dark:placeholder:text-[#71717A] focus:outline-none"
+                />
+                {filters.search && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters((f) => ({ ...f, search: '' }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
 
-      {/* ── Tier 2: Unified Command Search Bar (Constrained Max-Width) ── */}
-      <div className="bg-white dark:bg-[#0D0E12] border border-[#E9ECEF] dark:border-[#17181F] rounded-xl p-1 sm:p-1.5 shadow-2xs max-w-2xl">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center divide-y md:divide-y-0 md:divide-x divide-[#E9ECEF] dark:divide-[#17181F]">
-          {/* Primary Search Input: Role / Skill / Company */}
-          <div className="relative flex-1 py-1 px-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
-            <input
-              type="text"
-              placeholder="Search by job title, skills (React, Python), or company..."
-              value={filters.search ?? ''}
-              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] dark:placeholder:text-[#71717A] focus:outline-none"
-            />
-            {filters.search && (
-              <button
-                type="button"
-                onClick={() => setFilters((f) => ({ ...f, search: '' }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
-                title="Clear search"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+              {/* Location Input: City / State / Remote */}
+              <div className="relative sm:w-48 md:w-56 py-1 px-3">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
+                <input
+                  type="text"
+                  placeholder="City or 'Remote'..."
+                  value={filters.location ?? ''}
+                  onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
+                  className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] dark:placeholder:text-[#71717A] focus:outline-none"
+                />
+                {filters.location && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters((f) => ({ ...f, location: '' }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
+                    title="Clear location"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Location Input: City / State / Remote */}
-          <div className="relative md:w-64 py-1 px-3">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#868E96] dark:text-[#71717A]" />
-            <input
-              type="text"
-              placeholder="City or 'Remote'..."
-              value={filters.location ?? ''}
-              onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
-              className="w-full pl-7 pr-7 py-1 text-xs sm:text-sm bg-transparent text-[#121417] dark:text-white placeholder:text-[#868E96] dark:placeholder:text-[#71717A] focus:outline-none"
-            />
-            {filters.location && (
-              <button
-                type="button"
-                onClick={() => setFilters((f) => ({ ...f, location: '' }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868E96] hover:text-[#121417] dark:hover:text-white cursor-pointer"
-                title="Clear location"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#FD4A32]/30 bg-[#FD4A32]/10 text-[#FD4A32] text-xs font-display font-bold uppercase tracking-wider hover:bg-[#FD4A32]/20 transition-all cursor-pointer shrink-0"
+              title="Reset all filters"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
+          )}
         </div>
       </div>
 
