@@ -125,7 +125,9 @@ function expMatchesFilter(
   if (min > 1) return false;
 
   if (!level || level === 'ANY') return true;
-  if (level === 'FRESHER') return min === 0 && (!max || max === 0);
+  // FRESHER: 0 YOE requirement (open to absolute college grads / 0 yrs)
+  if (level === 'FRESHER') return min === 0;
+  // 0-2 (0-1 yr Early Career): Open to candidates with up to 1 year of experience
   if (level === '0-2') return min <= 1 && (!max || max <= 1);
   return true;
 }
@@ -133,70 +135,94 @@ function expMatchesFilter(
 // ─── Location & Geographic Intelligence ──────────────────────────────────────
 
 const LOCATION_SYNONYMS: Record<string, string[]> = {
-  haryana: ['gurgaon', 'gurugram', 'faridabad', 'panchkula', 'manesar', 'sonipat', 'rohtak', 'karnal', 'haryana', 'ncr', 'delhi ncr'],
-  gurgaon: ['gurgaon', 'gurugram', 'haryana', 'ncr', 'delhi ncr', 'manesar'],
-  gurugram: ['gurgaon', 'gurugram', 'haryana', 'ncr', 'delhi ncr', 'manesar'],
-  manesar: ['manesar', 'gurgaon', 'gurugram', 'haryana', 'ncr'],
-  faridabad: ['faridabad', 'haryana', 'ncr', 'delhi ncr'],
-  panchkula: ['panchkula', 'haryana', 'chandigarh'],
+  karnataka: ['bengaluru', 'bangalore', 'mysore', 'mysuru', 'hubli', 'mangalore', 'mangaluru', 'karnataka', 'blr', 'ka'],
+  bengaluru: ['bengaluru', 'bangalore', 'karnataka', 'blr', 'ka'],
+  bangalore: ['bengaluru', 'bangalore', 'karnataka', 'blr', 'ka'],
+  blr: ['bengaluru', 'bangalore', 'karnataka', 'ka'],
+  ka: ['bengaluru', 'bangalore', 'karnataka', 'blr', 'ka', 'mysore'],
+  mysore: ['mysore', 'mysuru', 'karnataka', 'ka'],
 
-  delhi: ['delhi', 'new delhi', 'ncr', 'delhi ncr', 'noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad'],
-  'new delhi': ['delhi', 'new delhi', 'ncr', 'delhi ncr'],
-  ncr: ['delhi', 'new delhi', 'noida', 'greater noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad', 'haryana', 'uttar pradesh'],
+  haryana: ['gurgaon', 'gurugram', 'faridabad', 'panchkula', 'manesar', 'sonipat', 'rohtak', 'karnal', 'haryana', 'ncr', 'delhi ncr', 'hr'],
+  gurgaon: ['gurgaon', 'gurugram', 'haryana', 'ncr', 'delhi ncr', 'manesar', 'hr'],
+  gurugram: ['gurgaon', 'gurugram', 'haryana', 'ncr', 'delhi ncr', 'manesar', 'hr'],
+  manesar: ['manesar', 'gurgaon', 'gurugram', 'haryana', 'ncr', 'hr'],
+  faridabad: ['faridabad', 'haryana', 'ncr', 'delhi ncr', 'hr'],
+  panchkula: ['panchkula', 'haryana', 'chandigarh', 'hr'],
+  hr: ['gurgaon', 'gurugram', 'faridabad', 'panchkula', 'manesar', 'sonipat', 'haryana', 'ncr', 'delhi ncr', 'hr'],
+
+  delhi: ['delhi', 'new delhi', 'ncr', 'delhi ncr', 'noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad', 'dl'],
+  'new delhi': ['delhi', 'new delhi', 'ncr', 'delhi ncr', 'dl'],
+  ncr: ['delhi', 'new delhi', 'noida', 'greater noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad', 'haryana', 'uttar pradesh', 'delhi ncr'],
   'delhi ncr': ['delhi', 'new delhi', 'noida', 'greater noida', 'gurgaon', 'gurugram', 'faridabad', 'ghaziabad', 'haryana', 'uttar pradesh'],
+  dl: ['delhi', 'new delhi', 'ncr', 'delhi ncr', 'dl'],
 
   noida: ['noida', 'greater noida', 'uttar pradesh', 'up', 'ncr', 'delhi ncr', 'ghaziabad'],
   'greater noida': ['noida', 'greater noida', 'uttar pradesh', 'up', 'ncr', 'delhi ncr'],
   'uttar pradesh': ['noida', 'greater noida', 'lucknow', 'kanpur', 'ghaziabad', 'varanasi', 'agra', 'up'],
-  up: ['noida', 'greater noida', 'lucknow', 'kanpur', 'ghaziabad', 'uttar pradesh'],
+  up: ['noida', 'greater noida', 'lucknow', 'kanpur', 'ghaziabad', 'uttar pradesh', 'up', 'ncr'],
   lucknow: ['lucknow', 'uttar pradesh', 'up'],
   kanpur: ['kanpur', 'uttar pradesh', 'up'],
-  ghaziabad: ['ghaziabad', 'noida', 'delhi', 'ncr', 'uttar pradesh'],
-
-  karnataka: ['bengaluru', 'bangalore', 'mysore', 'mysuru', 'hubli', 'mangalore', 'mangaluru', 'karnataka', 'blr'],
-  bengaluru: ['bengaluru', 'bangalore', 'karnataka', 'blr'],
-  bangalore: ['bengaluru', 'bangalore', 'karnataka', 'blr'],
-  blr: ['bengaluru', 'bangalore', 'karnataka'],
-  mysore: ['mysore', 'mysuru', 'karnataka'],
+  ghaziabad: ['ghaziabad', 'noida', 'delhi', 'ncr', 'uttar pradesh', 'up'],
 
   maharashtra: ['mumbai', 'pune', 'navi mumbai', 'thane', 'nagpur', 'nashik', 'maharashtra', 'mh'],
-  mumbai: ['mumbai', 'navi mumbai', 'thane', 'maharashtra', 'bombay'],
-  'navi mumbai': ['mumbai', 'navi mumbai', 'thane', 'maharashtra'],
-  thane: ['mumbai', 'navi mumbai', 'thane', 'maharashtra'],
-  pune: ['pune', 'hinjewadi', 'maharashtra'],
-  nagpur: ['nagpur', 'maharashtra'],
+  mumbai: ['mumbai', 'navi mumbai', 'thane', 'maharashtra', 'bombay', 'mh'],
+  'navi mumbai': ['mumbai', 'navi mumbai', 'thane', 'maharashtra', 'mh'],
+  thane: ['mumbai', 'navi mumbai', 'thane', 'maharashtra', 'mh'],
+  pune: ['pune', 'hinjewadi', 'maharashtra', 'mh'],
+  nagpur: ['nagpur', 'maharashtra', 'mh'],
+  mh: ['mumbai', 'pune', 'navi mumbai', 'thane', 'nagpur', 'nashik', 'maharashtra', 'mh'],
 
-  telangana: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd'],
-  hyderabad: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd'],
-  secunderabad: ['hyderabad', 'secunderabad', 'telangana'],
-  cyberabad: ['hyderabad', 'cyberabad', 'telangana'],
-  hyd: ['hyderabad', 'secunderabad', 'telangana'],
+  telangana: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd', 'ts'],
+  hyderabad: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd', 'ts'],
+  secunderabad: ['hyderabad', 'secunderabad', 'telangana', 'hyd', 'ts'],
+  cyberabad: ['hyderabad', 'cyberabad', 'telangana', 'hyd', 'ts'],
+  hyd: ['hyderabad', 'secunderabad', 'cyberabad', 'telangana', 'ts', 'hyd'],
+  ts: ['hyderabad', 'secunderabad', 'cyberabad', 'hitec city', 'telangana', 'hyd', 'ts'],
 
-  'tamil nadu': ['chennai', 'coimbatore', 'madurai', 'trichy', 'tamil nadu', 'tn'],
-  tn: ['chennai', 'coimbatore', 'tamil nadu'],
+  'andhra pradesh': ['visakhapatnam', 'vizag', 'vijayawada', 'guntur', 'tirupati', 'andhra pradesh', 'ap'],
+  ap: ['visakhapatnam', 'vizag', 'vijayawada', 'guntur', 'tirupati', 'andhra pradesh', 'ap'],
+  vizag: ['visakhapatnam', 'vizag', 'andhra pradesh', 'ap'],
+  visakhapatnam: ['visakhapatnam', 'vizag', 'andhra pradesh', 'ap'],
+  vijayawada: ['vijayawada', 'andhra pradesh', 'ap'],
+
+  'tamil nadu': ['chennai', 'coimbatore', 'madurai', 'trichy', 'salem', 'tamil nadu', 'tn'],
+  tn: ['chennai', 'coimbatore', 'madurai', 'trichy', 'tamil nadu', 'tn'],
   chennai: ['chennai', 'tamil nadu', 'tn', 'madras'],
   coimbatore: ['coimbatore', 'tamil nadu', 'tn'],
 
   'west bengal': ['kolkata', 'calcutta', 'howrah', 'west bengal', 'wb'],
-  wb: ['kolkata', 'west bengal'],
-  kolkata: ['kolkata', 'calcutta', 'howrah', 'west bengal'],
+  wb: ['kolkata', 'calcutta', 'howrah', 'west bengal', 'wb'],
+  kolkata: ['kolkata', 'calcutta', 'howrah', 'west bengal', 'wb'],
 
-  gujarat: ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'baroda', 'gift city', 'gujarat'],
-  ahmedabad: ['ahmedabad', 'gandhinagar', 'gujarat'],
-  gandhinagar: ['ahmedabad', 'gandhinagar', 'gift city', 'gujarat'],
+  gujarat: ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'baroda', 'gift city', 'gujarat', 'gj'],
+  gj: ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'baroda', 'gujarat', 'gj'],
+  ahmedabad: ['ahmedabad', 'gandhinagar', 'gujarat', 'gj'],
+  gandhinagar: ['ahmedabad', 'gandhinagar', 'gift city', 'gujarat', 'gj'],
 
-  kerala: ['kochi', 'cochin', 'thiruvananthapuram', 'trivandrum', 'kozhikode', 'calicut', 'kerala'],
-  kochi: ['kochi', 'cochin', 'kerala'],
-  trivandrum: ['thiruvananthapuram', 'trivandrum', 'kerala'],
+  kerala: ['kochi', 'cochin', 'thiruvananthapuram', 'trivandrum', 'kozhikode', 'calicut', 'kerala', 'kl'],
+  kl: ['kochi', 'cochin', 'thiruvananthapuram', 'trivandrum', 'kerala', 'kl'],
+  kochi: ['kochi', 'cochin', 'kerala', 'kl'],
+  trivandrum: ['thiruvananthapuram', 'trivandrum', 'kerala', 'kl'],
 
-  rajasthan: ['jaipur', 'jodhpur', 'udaipur', 'rajasthan'],
-  jaipur: ['jaipur', 'rajasthan'],
+  rajasthan: ['jaipur', 'jodhpur', 'udaipur', 'rajasthan', 'rj'],
+  rj: ['jaipur', 'jodhpur', 'udaipur', 'rajasthan', 'rj'],
+  jaipur: ['jaipur', 'rajasthan', 'rj'],
 
-  punjab: ['mohali', 'chandigarh', 'ludhiana', 'amritsar', 'punjab'],
-  chandigarh: ['chandigarh', 'mohali', 'panchkula', 'punjab', 'haryana'],
-  mohali: ['mohali', 'chandigarh', 'punjab'],
+  punjab: ['mohali', 'chandigarh', 'ludhiana', 'amritsar', 'punjab', 'pb'],
+  pb: ['mohali', 'chandigarh', 'ludhiana', 'amritsar', 'punjab', 'pb'],
+  chandigarh: ['chandigarh', 'mohali', 'panchkula', 'punjab', 'haryana', 'pb', 'hr'],
+  mohali: ['mohali', 'chandigarh', 'punjab', 'pb'],
 
-  remote: ['remote', 'work from home', 'wfh', 'pan-india', 'pan india', 'anywhere', 'virtual'],
+  'madhya pradesh': ['indore', 'bhopal', 'gwalior', 'jabalpur', 'madhya pradesh', 'mp'],
+  mp: ['indore', 'bhopal', 'gwalior', 'jabalpur', 'madhya pradesh', 'mp'],
+  indore: ['indore', 'bhopal', 'madhya pradesh', 'mp'],
+  bhopal: ['bhopal', 'indore', 'madhya pradesh', 'mp'],
+
+  odisha: ['bhubaneswar', 'cuttack', 'odisha', 'orissa', 'od'],
+  od: ['bhubaneswar', 'cuttack', 'odisha', 'orissa', 'od'],
+  bhubaneswar: ['bhubaneswar', 'cuttack', 'odisha', 'od'],
+
+  remote: ['remote', 'work from home', 'wfh', 'pan-india', 'pan india', 'anywhere', 'virtual', 'home'],
   wfh: ['remote', 'work from home', 'wfh', 'pan-india', 'anywhere'],
   'work from home': ['remote', 'work from home', 'wfh', 'pan-india'],
 };
@@ -205,43 +231,46 @@ function locationMatches(jobLocation: string | undefined | null, query: string):
   if (!query || !query.trim()) return true;
   if (!jobLocation) return false;
 
-  const q = query.toLowerCase().trim();
-
+  const rawQ = query.trim().toLowerCase();
   // Require at least 2 chars before applying location filter (prevents single-letter noise)
-  if (q.length < 2) return true;
+  if (rawQ.length < 2) return true;
 
   const locNorm = jobLocation.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-  const qNorm = q.replace(/[^a-z0-9\s]/g, ' ').trim();
-
-  // 1. Direct substring match (handles prefix typing: "del" → "delhi")
-  if (locNorm.includes(qNorm)) return true;
-
-  // 2. Tokenized query match (e.g. "gurgaon haryana" or "bangalore karnataka")
-  const qTokens = qNorm.split(/\s+/).filter((t) => t.length >= 2);
-  if (qTokens.length === 0) return true;
-
   const locTokens = locNorm.split(/\s+/).filter(Boolean);
 
-  // Every token in query must be satisfied either directly or via region mappings
-  // Synonym lookup only triggers on exact whole-word tokens (≥3 chars), not partial prefixes
-  return qTokens.every((token) => {
-    // Direct substring match on location (handles prefix typing)
-    if (locNorm.includes(token)) return true;
+  // If query contains comma or slash separated alternatives (e.g. "Bangalore, Hyderabad" or "Delhi / NCR"):
+  const phrases = rawQ
+    .split(/[,|/]+/)
+    .map((p) => p.replace(/[^a-z0-9\s]/g, ' ').trim())
+    .filter(Boolean);
 
-    // Synonym expansion only for complete-enough tokens (≥3 chars) to avoid false positives
-    if (token.length >= 3) {
-      // Check query token's mapped regions
+  if (phrases.length === 0) return true;
+
+  // If ANY comma-separated phrase matches, the job matches (OR condition across locations)
+  return phrases.some((phrase) => {
+    // 1. Direct substring match (handles prefix typing: "del" → "delhi", "beng" → "bengaluru")
+    if (locNorm.includes(phrase)) return true;
+
+    const qTokens = phrase.split(/\s+/).filter((t) => t.length >= 2);
+    if (qTokens.length === 0) return true;
+
+    // 2. Tokenized query match
+    return qTokens.every((token) => {
+      // Direct substring match on location
+      if (locNorm.includes(token)) return true;
+
+      // Check query token's mapped regions (e.g. "bangalore" -> ['bengaluru', 'karnataka', 'blr', 'ka'])
       const mapped = LOCATION_SYNONYMS[token];
-      if (mapped && mapped.some((m) => locNorm.includes(m))) return true;
+      if (mapped && mapped.some((m) => locNorm.includes(m) || locTokens.includes(m))) return true;
 
-      // Check if any location word's synonym set contains this query token
+      // Check if any location word's synonym set contains this query token (e.g. job has "ka" -> ['karnataka', 'bengaluru'])
       for (const locWord of locTokens) {
         const locMapped = LOCATION_SYNONYMS[locWord];
         if (locMapped && locMapped.some((m) => m === token || m.startsWith(token))) return true;
       }
-    }
 
-    return false;
+      return false;
+    });
   });
 }
 
@@ -279,55 +308,130 @@ const SKILL_SYNONYMS: Record<string, string[]> = {
   ai: ['ai', 'artificial intelligence', 'ml', 'machine learning', 'llm', 'genai', 'nlp'],
   ml: ['machine learning', 'ml', 'deep learning', 'data science', 'ai'],
   data: ['data', 'data science', 'data analytics', 'data engineer', 'analyst', 'sql', 'python'],
-  qa: ['qa', 'quality assurance', 'testing', 'tester', 'automation', 'selenium', 'cypress', 'playwright', 'manual testing'],
+  qa: ['qa', 'quality assurance', 'testing', 'tester', 'automation', 'selenium', 'cypress', 'playwright', 'manual testing', 'sdet'],
   sde: ['sde', 'software engineer', 'software development engineer', 'developer', 'programmer'],
   frontend: ['frontend', 'front-end', 'ui', 'ux', 'web developer', 'react', 'vue', 'angular', 'javascript'],
   backend: ['backend', 'back-end', 'server', 'api', 'microservices', 'node', 'java', 'golang', 'python', 'spring'],
   fullstack: ['fullstack', 'full-stack', 'full stack', 'mern', 'mean'],
   dsa: ['dsa', 'data structures', 'algorithms', 'problem solving', 'leetcode'],
   fresher: ['fresher', 'freshers', 'entry level', 'graduate', '0-1', 'intern', 'trainee', 'campus'],
+  sales: ['sales', 'business development', 'bde', 'inside sales'],
+  hr: ['hr', 'human resources', 'recruitment', 'talent acquisition'],
+  marketing: ['marketing', 'seo', 'sem', 'content', 'growth'],
+  mobile: ['mobile', 'android', 'ios', 'flutter', 'react native', 'swift', 'kotlin'],
+  android: ['android', 'kotlin', 'mobile'],
+  ios: ['ios', 'swift', 'mobile'],
+  flutter: ['flutter', 'dart', 'mobile'],
+  golang: ['golang', 'go'],
+  go: ['golang', 'go'],
 };
+
+function normalizeSearchText(text: string): string {
+  if (!text) return '';
+  return text.toLowerCase().replace(/[''’]/g, '');
+}
 
 function jobMatchesSearch(job: JobListing, query: string): boolean {
   if (!query || !query.trim()) return true;
 
-  const q = query.toLowerCase().trim();
-
+  const rawQ = query.trim().toLowerCase();
   // Require at least 2 chars before filtering (avoids noise on first keystroke)
-  if (q.length < 2) return true;
+  if (rawQ.length < 2) return true;
 
   const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ') : '';
-  // ⚠️ Deliberately excludes job.location — location filtering is handled
-  // by the separate location field. Including it here caused location names
-  // typed in the main search bar to return misleading results.
-  const corpus = [
+  const rawCorpus = [
     job.title,
     job.company_name,
     job.stipend_or_salary || '',
     tagsStr,
     job.description || '',
     job.type === 'JOB' ? 'full-time full time job' : 'internship intern',
-  ]
-    .join(' ')
-    .toLowerCase();
+  ].join(' ');
 
-  // If entire query matches in corpus directly
-  if (corpus.includes(q)) return true;
+  const corpus = normalizeSearchText(rawCorpus);
 
-  // Tokenized search: every word must match
-  const tokens = q.split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return true;
+  // If query contains comma or pipe separated skill/keyword list (e.g. "React, Python" or "Frontend | Backend"):
+  const phrases = rawQ
+    .split(/[,|]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 
-  return tokens.every((token) => {
-    // Direct token substring
-    if (corpus.includes(token)) return true;
+  if (phrases.length === 0) return true;
 
-    // Skill synonym expansion (only for exact-keyword tokens in our dictionary)
-    const skillSyns = SKILL_SYNONYMS[token];
-    if (skillSyns && skillSyns.some((syn) => corpus.includes(syn))) return true;
+  // If ANY comma-separated phrase matches, the job matches (OR semantics across comma-separated terms)
+  return phrases.some((phrase) => {
+    const normPhrase = normalizeSearchText(phrase);
+    if (corpus.includes(normPhrase)) return true;
 
-    return false;
+    // Tokens inside phrase must all match (AND semantics for multi-word phrase like 'Software Engineer')
+    const tokens = normPhrase.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return true;
+
+    return tokens.every((token) => {
+      // Direct token substring
+      if (corpus.includes(token)) return true;
+
+      // Skill synonym expansion (only for exact-keyword tokens in our dictionary)
+      const skillSyns = SKILL_SYNONYMS[token];
+      if (skillSyns && skillSyns.some((syn) => corpus.includes(normalizeSearchText(syn)))) return true;
+
+      return false;
+    });
   });
+}
+
+// ─── Domain & Workplace Mode Intelligence ─────────────────────────────────────
+
+const DOMAIN_KEYWORDS: Record<string, string[]> = {
+  software: ['software', 'sde', 'developer', 'engineer', 'programming', 'programmer', 'development', 'coder', 'swe'],
+  frontend: ['frontend', 'front-end', 'ui', 'ux', 'web', 'react', 'vue', 'angular', 'javascript', 'html', 'css'],
+  backend: ['backend', 'back-end', 'api', 'server', 'microservices', 'node', 'express', 'django', 'fastapi', 'spring', 'java', 'golang', 'sql', 'database'],
+  full: ['fullstack', 'full-stack', 'full stack', 'mern', 'mean'],
+  data: ['data', 'ai', 'ml', 'machine learning', 'deep learning', 'analyst', 'analytics', 'data science', 'llm', 'genai', 'nlp', 'computer vision', 'bi'],
+  cloud: ['cloud', 'devops', 'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'k8s', 'terraform', 'ci/cd', 'sre', 'infrastructure'],
+  qa: ['qa', 'test', 'testing', 'tester', 'quality assurance', 'automation', 'selenium', 'cypress', 'playwright', 'sdet'],
+};
+
+function jobMatchesDomain(job: JobListing, domainTag: string | undefined): boolean {
+  if (!domainTag || domainTag === 'ALL') return true;
+  const target = domainTag.toLowerCase();
+  const keywords = DOMAIN_KEYWORDS[target] || [target];
+
+  const titleLower = (job.title || '').toLowerCase();
+  const tagsLower = Array.isArray(job.tags) ? job.tags.map((t) => t.toLowerCase()) : [];
+  const tagsStr = tagsLower.join(' ');
+
+  if (titleLower.includes(target) || tagsStr.includes(target)) return true;
+  return keywords.some((kw) => titleLower.includes(kw) || tagsLower.some((t) => t.includes(kw)));
+}
+
+function jobMatchesWorkMode(job: JobListing, workMode: WorkModeFilter | undefined): boolean {
+  if (!workMode || workMode === 'ALL') return true;
+
+  const loc = (job.location || '').toLowerCase();
+  const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ').toLowerCase() : '';
+  const desc = (job.description || '').toLowerCase();
+
+  const isHybrid =
+    loc.includes('hybrid') ||
+    tagsStr.includes('hybrid') ||
+    desc.includes('hybrid remote') ||
+    desc.includes('hybrid model') ||
+    desc.includes('work location: hybrid');
+
+  const isRemote =
+    (loc.includes('remote') ||
+      loc.includes('wfh') ||
+      loc.includes('work from home') ||
+      tagsStr.includes('remote') ||
+      tagsStr.includes('wfh')) &&
+    !isHybrid;
+
+  if (workMode === 'REMOTE') return isRemote;
+  if (workMode === 'HYBRID') return isHybrid;
+  if (workMode === 'ON_SITE') return !isRemote && !isHybrid;
+
+  return true;
 }
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -1237,17 +1341,17 @@ export default function JobsPage() {
   const isEffectiveAdmin = Boolean(isAuthenticated && (isAdmin || isSuperAdminEmail(user?.email)));
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Filters State
-  const [filters, setFilters] = useState<JobListingFilters>({
-    type: 'ALL',
-    location: '',
-    workMode: 'ALL',
-    expLevel: 'ANY',
-    tag: 'ALL',
-    search: '',
-    sortBy: 'RECOMMENDED',
-    closingSoonOnly: false,
-  });
+  // Filters State (initialized with URL query params)
+  const [filters, setFilters] = useState<JobListingFilters>(() => ({
+    type: (searchParams.get('type') as JobType | 'ALL') || 'ALL',
+    location: searchParams.get('location') || '',
+    workMode: (searchParams.get('workMode') as WorkModeFilter) || 'ALL',
+    expLevel: (searchParams.get('expLevel') as JobListingFilters['expLevel']) || 'ANY',
+    tag: searchParams.get('tag') || 'ALL',
+    search: searchParams.get('search') || '',
+    sortBy: (searchParams.get('sortBy') as JobSortOption) || 'RECOMMENDED',
+    closingSoonOnly: searchParams.get('closingSoon') === 'true',
+  }));
 
   const [savedOnly, setSavedOnly] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(() => searchParams.get('jobId'));
@@ -1406,23 +1510,13 @@ export default function JobsPage() {
       }
 
       // Work Mode filter
-      if (filters.workMode && filters.workMode !== 'ALL') {
-        const loc = job.location.toLowerCase();
-        const tagsStr = Array.isArray(job.tags) ? job.tags.join(' ').toLowerCase() : '';
-        const isRemote = loc.includes('remote') || tagsStr.includes('remote');
-        const isHybrid = loc.includes('hybrid') || tagsStr.includes('hybrid');
-
-        if (filters.workMode === 'REMOTE' && !isRemote) return false;
-        if (filters.workMode === 'HYBRID' && !isHybrid) return false;
-        if (filters.workMode === 'ON_SITE' && (isRemote || isHybrid)) return false;
+      if (!jobMatchesWorkMode(job, filters.workMode)) {
+        return false;
       }
 
       // Domain / Tag filter
-      if (filters.tag && filters.tag !== 'ALL') {
-        const target = filters.tag.toLowerCase();
-        const inTags = Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(target));
-        const inTitle = job.title.toLowerCase().includes(target);
-        if (!inTags && !inTitle) return false;
+      if (!jobMatchesDomain(job, filters.tag)) {
+        return false;
       }
 
       // Experience filter
