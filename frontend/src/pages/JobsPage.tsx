@@ -888,27 +888,41 @@ function JobDetailPane({
           </div>
         </div>
 
-        {/* Primary Action Buttons Bar */}
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+        {/* Primary Action Buttons Bar: Option A ([Share] [Apply Now] [Save]) */}
+        <div className="flex items-center gap-2 sm:gap-3 p-3.5 sm:p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#1A1A1A] border border-[#E9ECEF] dark:border-[#2A2A2A]">
+          {/* 1. Share Action */}
+          <button
+            type="button"
+            onClick={onShare}
+            className="flex items-center justify-center gap-1.5 py-3 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-[#222222] text-[#495057] dark:text-[#CCCCCC] border border-[#E9ECEF] dark:border-[#333333] hover:border-[#121417] dark:hover:border-white hover:text-[#121417] dark:hover:text-white transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
+            title="Share this listing"
+          >
+            <Share2 className="w-4 h-4 shrink-0 text-[#868E96]" />
+            <span>Share</span>
+          </button>
+
+          {/* 2. Apply Now Action (Primary Hero) */}
           <button
             type="button"
             onClick={onApply}
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-extrabold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#2A2A2A] dark:hover:bg-[#F1F3F5] transition-all shadow-sm group cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-extrabold bg-[#121417] dark:bg-white text-white dark:text-[#121417] hover:bg-[#2A2A2A] dark:hover:bg-[#F1F3F5] transition-all shadow-sm group active:scale-[0.99] cursor-pointer min-w-0"
           >
-            <span>{getApplyButtonLabel(job.apply_url)}</span>
-            <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <span className="truncate">{getApplyButtonLabel(job.apply_url)}</span>
+            <ExternalLink className="w-4 h-4 shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </button>
 
+          {/* 3. Save / Bookmark Action */}
           <button
             type="button"
             onClick={onToggleBookmark}
-            className={`flex items-center gap-1.5 py-3 px-4 rounded-xl text-xs font-bold border transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-3 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold border transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0 ${
               isBookmarked
                 ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                : 'bg-white dark:bg-[#222222] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#333333] hover:border-[#121417] dark:hover:border-white'
+                : 'bg-white dark:bg-[#222222] text-[#495057] dark:text-[#CCCCCC] border-[#E9ECEF] dark:border-[#333333] hover:border-[#121417] dark:hover:border-white hover:text-[#121417] dark:hover:text-white'
             }`}
+            title={isBookmarked ? 'Saved to bookmarks' : 'Save job'}
           >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+            <Bookmark className={`w-4 h-4 shrink-0 ${isBookmarked ? 'fill-current' : ''}`} />
             <span>{isBookmarked ? 'Saved' : 'Save'}</span>
           </button>
         </div>
