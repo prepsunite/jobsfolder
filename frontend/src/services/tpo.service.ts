@@ -1556,11 +1556,13 @@ export const tpoService = {
     try {
       const { data, error } = await supabase
         .from('colleges')
-        .select('id, name, code, slug, logo_url, city, state, contract_status, max_licenses, valid_until, status, is_deleted, created_at, updated_at')
-        .eq('is_deleted', false)
+        .select('id, name, code, slug, logo_url, city, state, contract_status, max_licenses, valid_until, is_deleted, created_at, updated_at')
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .order('name', { ascending: true });
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        console.warn('[tpoService.getAllColleges] Supabase query error:', error.message);
+      } else if (data && data.length > 0) {
         data.forEach((c: any) => map.set(c.id, {
           id: c.id,
           name: c.name,
@@ -1569,7 +1571,7 @@ export const tpoService = {
           logo_url: c.logo_url,
           city: c.city,
           state: c.state,
-          contract_status: c.contract_status || (c.status === 'ACTIVE' ? 'ACTIVE' : 'PILOT'),
+          contract_status: c.contract_status || 'ACTIVE',
           max_licenses: c.max_licenses || 1000,
           valid_until: c.valid_until || new Date(Date.now() + 365*24*60*60*1000).toISOString(),
           created_at: c.created_at || new Date().toISOString(),
