@@ -9,6 +9,7 @@ export interface QuestionRichContentProps {
   content: string;
   className?: string;
   isOption?: boolean;
+  disableCopy?: boolean;
 }
 
 const DOMPURIFY_CONFIG = {
@@ -64,15 +65,18 @@ function CodeBlockSnippet({
   code,
   language,
   isOption,
+  disableCopy = false,
 }: {
   code: string;
   language?: string;
   isOption?: boolean;
+  disableCopy?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disableCopy) return;
     try {
       navigator.clipboard?.writeText(code);
       setCopied(true);
@@ -91,7 +95,10 @@ function CodeBlockSnippet({
   const displayLang = formatLanguageBadge(language);
 
   return (
-    <div className="my-3 rounded-xl border border-neutral-800 dark:border-[#2b2d33] overflow-hidden shadow-xs bg-[#141518] text-[#f4f4f5] text-left">
+    <div
+      className={`my-3 rounded-xl border border-neutral-800 dark:border-[#2b2d33] overflow-hidden shadow-xs bg-[#141518] text-[#f4f4f5] text-left ${disableCopy ? 'select-none' : ''}`}
+      onCopy={disableCopy ? (e) => e.preventDefault() : undefined}
+    >
       {/* Code Header Bar */}
       <div className="px-3.5 py-1.5 bg-[#1b1c20] border-b border-neutral-800 flex items-center justify-between text-xs select-none">
         <div className="flex items-center gap-2">
@@ -100,28 +107,34 @@ function CodeBlockSnippet({
             {displayLang}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="inline-flex items-center gap-1.5 text-[11px] font-sans font-medium text-neutral-400 hover:text-white transition-colors px-2 py-0.5 rounded hover:bg-neutral-800 cursor-pointer"
-          title="Copy Code"
-        >
-          {copied ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 font-semibold">Copied</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Copy</span>
-            </>
-          )}
-        </button>
+        {!disableCopy && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 text-[11px] font-sans font-medium text-neutral-400 hover:text-white transition-colors px-2 py-0.5 rounded hover:bg-neutral-800 cursor-pointer"
+            title="Copy Code"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-400 font-semibold">Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Copy</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Code Body */}
-      <pre className="p-3.5 sm:p-4 text-xs sm:text-[13px] font-mono leading-relaxed overflow-x-auto custom-scrollbar text-[#f4f4f5] bg-[#141518] whitespace-pre selection:bg-[#FD4A32]/30 selection:text-white">
+      <pre
+        className={`p-3.5 sm:p-4 text-xs sm:text-[13px] font-mono leading-relaxed overflow-x-auto custom-scrollbar text-[#f4f4f5] bg-[#141518] whitespace-pre ${
+          disableCopy ? 'select-none' : 'selection:bg-[#FD4A32]/30 selection:text-white'
+        }`}
+      >
         <code>{code}</code>
       </pre>
     </div>
@@ -151,10 +164,12 @@ function MarkdownBody({
   content,
   isOption,
   className = '',
+  disableCopy = false,
 }: {
   content: string;
   isOption: boolean;
   className?: string;
+  disableCopy?: boolean;
 }) {
   const preprocessed = useMemo(() => {
     const raw = preprocessMarkdown(content);
@@ -269,6 +284,7 @@ function MarkdownBody({
                   code={codeText}
                   language={match ? match[1] : undefined}
                   isOption={isOption}
+                  disableCopy={disableCopy}
                 />
               );
             }
@@ -291,6 +307,7 @@ function MarkdownBody({
               <img
                 src={src}
                 alt={alt || 'Question Diagram'}
+                draggable={disableCopy ? false : undefined}
                 className={
                   isOption
                     ? 'max-h-16 sm:max-h-20 w-auto max-w-full object-contain rounded border border-[#E9ECEF] dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] p-1 shadow-xs inline-block'
@@ -313,6 +330,7 @@ export default function QuestionRichContent({
   content,
   className = '',
   isOption = false,
+  disableCopy = false,
 }: QuestionRichContentProps) {
   if (!content) return null;
 
@@ -355,6 +373,7 @@ export default function QuestionRichContent({
               key={idx}
               content={part}
               isOption={isOption}
+              disableCopy={disableCopy}
               className={isOption ? 'inline-block' : 'w-full'}
             />
           );
@@ -368,6 +387,7 @@ export default function QuestionRichContent({
     <MarkdownBody
       content={content}
       isOption={isOption}
+      disableCopy={disableCopy}
       className={className}
     />
   );

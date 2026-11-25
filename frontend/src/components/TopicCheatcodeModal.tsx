@@ -54,27 +54,44 @@ export const TopicCheatcodeModal: React.FC<TopicCheatcodeModalProps> = ({
           setContent(data.content);
         } else {
           setContent('');
-          // Fallback: fetch formulas used in topic questions
-          const { data: qData } = await supabase
-            .from('topic_questions')
-            .select('structured_explanation')
-            .eq('topic_id', topicId)
-            .limit(30);
+          const collected = new Set<string>(fallbackFormulas);
+
+          // 1. Prefer safe formula-extraction RPC (works even when raw topic_questions table is locked)
+          let loadedViaRpc = false;
+          try {
+            const { data: rpcFormulas, error: rpcErr } = await supabase.rpc('get_cheatcode_formulas', {
+              p_topic_id: topicId,
+            });
+            if (!rpcErr && Array.isArray(rpcFormulas)) {
+              loadedViaRpc = true;
+              rpcFormulas.forEach((f: string) => f && collected.add(f.trim()));
+            }
+          } catch {}
+
+          // 2. Fallback: fetch formulas directly if RPC not deployed yet
+          if (!loadedViaRpc) {
+            const { data: qData } = await supabase
+              .from('topic_questions')
+              .select('structured_explanation')
+              .eq('topic_id', topicId)
+              .limit(30);
+
+            if (!isMounted) return;
+
+            if (qData && qData.length > 0) {
+              qData.forEach((q: any) => {
+                const exp = typeof q.structured_explanation === 'string'
+                  ? JSON.parse(q.structured_explanation)
+                  : q.structured_explanation;
+                const fList = exp?.formulaUsed || exp?.formulasUsed || [];
+                if (Array.isArray(fList)) {
+                  fList.forEach((f: string) => f && collected.add(f.trim()));
+                }
+              });
+            }
+          }
 
           if (!isMounted) return;
-
-          const collected = new Set<string>(fallbackFormulas);
-          if (qData && qData.length > 0) {
-            qData.forEach((q: any) => {
-              const exp = typeof q.structured_explanation === 'string'
-                ? JSON.parse(q.structured_explanation)
-                : q.structured_explanation;
-              const fList = exp?.formulaUsed || exp?.formulasUsed || [];
-              if (Array.isArray(fList)) {
-                fList.forEach((f: string) => f && collected.add(f.trim()));
-              }
-            });
-          }
           setExtractedFormulas(Array.from(collected));
         }
       } catch (err) {

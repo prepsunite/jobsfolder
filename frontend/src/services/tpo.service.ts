@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeQuestionOptions } from '@/utils/questionParser';
 import { sha256Text } from '@/utils/cryptoUtils';
+import { getServerDate, setServerNowMs, syncServerClock } from '@/utils/serverClock';
 import { mockExamSubscriptionService } from '@/services/mockExamSubscription.service';
 import { dataStore } from '@/services/dataStore';
 import { auditService } from '@/services/audit.service';
@@ -231,7 +232,7 @@ export const PASSAGE_BASED_TOPICS = new Set([
  */
 export function getExamTimingStatus(
   exam: { id?: string; is_active?: boolean; is_deleted?: boolean; start_time?: string; end_time?: string; duration_minutes?: number },
-  referenceDate = new Date()
+  referenceDate = getServerDate()
 ): 'DRAFT' | 'UPCOMING' | 'LIVE' | 'CONCLUDED' {
   if (exam.is_deleted || exam.is_active === false) {
     return 'DRAFT';
@@ -280,6 +281,7 @@ export function getExamTimingStatus(
  */
 export function canReviewSolutions(
   exam?: {
+    college_id?: string;
     is_active?: boolean;
     is_deleted?: boolean;
     start_time?: string;
@@ -287,9 +289,14 @@ export function canReviewSolutions(
     duration_minutes?: number;
     show_results_immediately?: boolean;
   } | null,
-  referenceDate = new Date()
+  referenceDate = getServerDate()
 ): boolean {
   if (!exam) return false;
+
+  const cidUpper = String(exam.college_id || '').trim().toUpperCase();
+  if (cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+    return exam.show_results_immediately !== false;
+  }
 
   const timingStatus = getExamTimingStatus(exam, referenceDate);
 
@@ -302,6 +309,471 @@ export function canReviewSolutions(
   }
 
   return exam.show_results_immediately !== false;
+}
+
+const DEFAULT_PASSAGE_TOPICS = new Set([
+  'reading-comprehension',
+  'cloze-test',
+  'table-charts',
+  'line-charts',
+  'bar-charts',
+  'pie-charts',
+  'caselet-di',
+  'missing-di',
+  'radar-web-charts',
+  'scatter-bubble-charts',
+  'floor-scheduling-puzzles',
+  'games-and-tournaments',
+  'logical-games',
+  'machine-input-output',
+  'making-judgments',
+]);
+
+const TECHNICAL_APTITUDE_TO_MCQ_MAP: Record<string, string[]> = {
+  'pseudocode-tracing': ['mcq-pseudo-code'],
+  'bitwise-operators': ['mcq-c-programming', 'mcq-cpp-programming'],
+  'recursion-functions': ['mcq-c-programming', 'mcq-data-structures'],
+  'attention-to-detail': ['mcq-pseudo-code', 'mcq-oops-concepts'],
+  'code-debugging-logic': ['mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming'],
+  'cloud-networking-basics': ['mcq-computer-networks'],
+};
+
+function fisherYatesShuffle<T>(items: T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const APTITUDE_CATEGORY_VARIANTS: Record<string, string[]> = {
+  'arithmetic-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
+  'quantitative-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
+  'quant': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
+  'data-interpretation': ['data-interpretation', 'di'],
+  'di': ['data-interpretation', 'di'],
+  'logical-reasoning': ['logical-reasoning', 'logic', 'reasoning'],
+  'logic': ['logical-reasoning', 'logic', 'reasoning'],
+  'reasoning': ['logical-reasoning', 'logic', 'reasoning'],
+  'verbal-reasoning': ['verbal-reasoning', 'vr'],
+  'vr': ['verbal-reasoning', 'vr'],
+  'verbal-ability': ['verbal-ability', 'verbal', 'english'],
+  'verbal': ['verbal-ability', 'verbal', 'english'],
+  'english': ['verbal-ability', 'verbal', 'english'],
+  'nonverbal-reasoning': ['nonverbal-reasoning', 'non-verbal-reasoning', 'nonverbal', 'non-verbal', 'nv'],
+  'non-verbal-reasoning': ['nonverbal-reasoning', 'non-verbal-reasoning', 'nonverbal', 'non-verbal', 'nv'],
+  'nonverbal': ['nonverbal-reasoning', 'non-verbal-reasoning', 'nonverbal', 'non-verbal', 'nv'],
+  'technical-aptitude': ['technical-aptitude', 'tech-aptitude'],
+  'tech-aptitude': ['technical-aptitude', 'tech-aptitude'],
+};
+
+async function resolveCategoryTopicIds(categorySlug: string): Promise<string[]> {
+  const clean = categorySlug.toLowerCase().trim();
+  const variants = APTITUDE_CATEGORY_VARIANTS[clean] || [clean];
+
+  // Query live Postgres aptitude_topics first (respecting is_hidden = false)
+  try {
+    const { data, error } = await supabase
+      .from('aptitude_topics')
+      .select('id, category_slug, is_hidden')
+      .in('category_slug', variants)
+      .or('is_hidden.is.null,is_hidden.eq.false');
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return expandTopicAliases(data.map((d: any) => d.id));
+    }
+  } catch {}
+
+  const fallback = FALLBACK_APTITUDE_TOPICS
+    .filter(t => variants.includes(t.category_slug) || variants.includes(t.category_slug.replace('non-verbal', 'nonverbal')))
+    .map(t => t.id);
+  return expandTopicAliases(fallback);
+}
+
+/**
+ * Shared question-bank pooling engine used by both createMockExam and hydrateExamSections.
+ * Guarantees Fisher-Yates unbiased shuffling, is_hidden=false filtering, multi-page category
+ * coverage (avoiding 1000-row starvation), atomic passage grouping, and technical-aptitude fallback.
+ */
+async function poolQuestionsForExamSection(
+  sec: {
+    name?: string;
+    section_type?: 'MCQ' | 'CODING' | 'TECHNICAL_MCQ';
+    category?: string;
+    coding_track?: 'PROGRAMMING_150' | 'CAMPUS_DSA';
+    difficulty?: string;
+    topic_ids?: string[];
+  },
+  neededCount: number,
+  usedQuestionIds: Set<string>,
+  serveCountForPassages: number
+): Promise<{
+  questionIds: string[];
+  isCodingSection: boolean;
+  isTechnicalMcq: boolean;
+}> {
+  const questionIds: string[] = [];
+  const topicIds = sec.topic_ids || [];
+  const nameLower = (sec.name || '').toLowerCase();
+  const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
+  const isExplicitTechMcq =
+    !isCodingSection &&
+    (sec.section_type === 'TECHNICAL_MCQ' ||
+      sec.category === 'technical-mcqs' ||
+      Boolean(sec.category?.startsWith('mcq-')) ||
+      topicIds.some(t => t.startsWith('mcq-')) ||
+      nameLower.includes('technical mcq'));
+  const isTechAptitudeOrPseudo =
+    !isCodingSection &&
+    !isExplicitTechMcq &&
+    (sec.category === 'technical-aptitude' ||
+      sec.category === 'tech-aptitude' ||
+      topicIds.some(t => t in TECHNICAL_APTITUDE_TO_MCQ_MAP || t.includes('pseudo') || t.includes('code-debug') || t.includes('bitwise')) ||
+      nameLower.includes('technical &') ||
+      nameLower.includes('technical pseudocode') ||
+      nameLower.includes('pseudocode') ||
+      nameLower.includes('pseudo-code'));
+
+  if (isCodingSection) {
+    try {
+      const CODING_TOPIC_TO_DB_CATEGORIES: Record<string, string[]> = {
+        'TWO_POINTERS': ['POINTERS_ARRAYS', 'TWO_POINTERS'],
+        'SLIDING_WINDOW': ['POINTERS_ARRAYS', 'SLIDING_WINDOW'],
+        'LINKED_LISTS': ['LINEAR_STRUCTURES', 'LINKED_LISTS'],
+        'STACKS_QUEUES': ['LINEAR_STRUCTURES', 'STACKS_QUEUES'],
+        'TREES_BINARY_TREES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
+        'SEARCH_INTERVALS': ['SEARCH_INTERVALS', 'SEARCHING', 'SEARCHING_SORTING'],
+        'EXHAUSTIVE_SEARCH_DP': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
+        'NETWORK_GRAPH_ALGORITHMS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
+        'GRAPHS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
+        'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS'],
+        'STRINGS': ['STRINGS'],
+        'SYNTAX_BASICS': ['SYNTAX_BASICS'],
+        'NUMBER_LOGIC': ['NUMBER_LOGIC'],
+        'PATTERNS': ['PATTERNS'],
+        'MATRICES': ['MATRICES', 'ARRAYS'],
+        'RECURSION': ['RECURSION'],
+        'BIT_MANIPULATION': ['BIT_MANIPULATION'],
+        'SEARCHING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
+      };
+      const CODING_TOPIC_TITLE_KEYWORDS: Record<string, string[]> = {
+        'LINKED_LISTS': ['list', 'linked list', 'node', 'cycle', 'reverse list', 'sort list', 'merge list', 'reorder list'],
+        'STACKS_QUEUES': ['stack', 'queue', 'parentheses', 'histogram', 'polish', 'greater element', 'temperatures'],
+        'TWO_POINTERS': ['pointer', 'two sum', '3sum', 'water', 'duplicate', 'palindrome', 'sorted', 'reverse'],
+        'SLIDING_WINDOW': ['window', 'subarray', 'substring', 'longest', 'k distinct', 'minimum window'],
+        'TREES_BINARY_TREES': ['tree', 'bst', 'binary tree', 'traversal', 'depth', 'diameter', 'ancestor', 'invert'],
+        'DYNAMIC_PROGRAMMING': ['dp', 'knapsack', 'subsequence', 'coin', 'jump', 'stock', 'path', 'climb', 'house robber'],
+        'SEARCHING_SORTING': ['search', 'binary search', 'sort', 'rotated', 'median', 'peak', 'find minimum'],
+      };
+
+      let codingQuery = supabase
+        .from('technical_problems')
+        .select('id, title, category, level, test_cases, sample_cases, sample_input, sample_output')
+        .or('is_deleted.is.null,is_deleted.eq.false')
+        .or('is_hidden.is.null,is_hidden.eq.false');
+
+      if (sec.difficulty && sec.difficulty !== 'ALL') {
+        const codingLevel = sec.difficulty === 'EASY' ? 'BASIC' : sec.difficulty;
+        codingQuery = codingQuery.eq('level', codingLevel);
+      }
+
+      const titleKeywords: string[] = [];
+      const targetCategories = new Set<string>();
+      if (topicIds.length > 0) {
+        const expandedCoding = expandTopicAliases(topicIds);
+        expandedCoding.forEach(t => {
+          const upper = t.toUpperCase();
+          (CODING_TOPIC_TO_DB_CATEGORIES[upper] || [t, upper, t.toLowerCase()]).forEach(c => targetCategories.add(c));
+          if (CODING_TOPIC_TITLE_KEYWORDS[upper]) titleKeywords.push(...CODING_TOPIC_TITLE_KEYWORDS[upper]);
+        });
+        const tokenList = Array.from(targetCategories).join(',');
+        codingQuery = codingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
+      } else if (sec.coding_track) {
+        codingQuery = codingQuery.eq('track', sec.coding_track);
+      }
+
+      const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 100));
+      if (codingData && codingData.length > 0) {
+        const testableCurated = codingData.filter(
+          (q: any) =>
+            (Array.isArray(q.test_cases) && q.test_cases.length > 0) ||
+            (Array.isArray(q.sample_cases) && q.sample_cases.length > 0) ||
+            CAMPUS_DSA_EXAM_PROBLEMS[q.id] ||
+            isProblemTestable(q)
+        );
+        const poolToSample = testableCurated.length > 0 ? testableCurated : codingData;
+
+        let prioritized: any[] = [];
+        const nonPrioritized: any[] = [];
+        if (titleKeywords.length > 0) {
+          poolToSample.forEach((q: any) => {
+            const titleLower = (q.title || '').toLowerCase();
+            if (titleKeywords.some(kw => titleLower.includes(kw))) prioritized.push(q);
+            else nonPrioritized.push(q);
+          });
+        } else {
+          prioritized = poolToSample;
+        }
+
+        for (const q of fisherYatesShuffle(prioritized)) {
+          if (!usedQuestionIds.has(q.id)) {
+            questionIds.push(q.id);
+            usedQuestionIds.add(q.id);
+            if (questionIds.length >= neededCount) break;
+          }
+        }
+        if (questionIds.length < neededCount && nonPrioritized.length > 0) {
+          for (const q of fisherYatesShuffle(nonPrioritized)) {
+            if (!usedQuestionIds.has(q.id)) {
+              questionIds.push(q.id);
+              usedQuestionIds.add(q.id);
+              if (questionIds.length >= neededCount) break;
+            }
+          }
+        }
+      }
+
+      if (questionIds.length < neededCount) {
+        let fbQuery = supabase
+          .from('technical_problems')
+          .select('id, title, category, level, test_cases, sample_cases, sample_input, sample_output')
+          .or('is_deleted.is.null,is_deleted.eq.false')
+          .or('is_hidden.is.null,is_hidden.eq.false');
+        if (sec.coding_track) fbQuery = fbQuery.eq('track', sec.coding_track);
+        const { data: fallbackCoding } = await fbQuery.limit(Math.max(neededCount * 10, 80));
+        if (fallbackCoding && fallbackCoding.length > 0) {
+          const testableFb = fallbackCoding.filter(
+            (q: any) => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q)
+          );
+          for (const q of fisherYatesShuffle(testableFb.length > 0 ? testableFb : fallbackCoding)) {
+            if (!usedQuestionIds.has(q.id)) {
+              questionIds.push(q.id);
+              usedQuestionIds.add(q.id);
+              if (questionIds.length >= neededCount) break;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Notice pulling coding questions:', err);
+    }
+    return { questionIds, isCodingSection: true, isTechnicalMcq: false };
+  }
+
+  // Aptitude & Technical-Aptitude primary query from topic_questions FIRST
+  const isPureTechnicalMcq = isExplicitTechMcq;
+  if (!isPureTechnicalMcq) {
+    try {
+      let allowedTopicIds: string[] = [];
+      if (topicIds.length > 0) {
+        allowedTopicIds = expandTopicAliases(topicIds);
+      } else if (sec.category && sec.category !== 'all') {
+        allowedTopicIds = await resolveCategoryTopicIds(sec.category);
+      }
+
+      const isRequestingPassageTopic = topicIds.some(t => DEFAULT_PASSAGE_TOPICS.has(t));
+      const fetchTopicRows = async (topicBatch: string[] | null, diffFilter?: string) => {
+        let q = supabase
+          .from('topic_questions')
+          .select('id, question_number, topic_id, difficulty, structured_explanation')
+          .or('is_deleted.is.null,is_deleted.eq.false')
+          .or('is_hidden.is.null,is_hidden.eq.false');
+        if (diffFilter && diffFilter !== 'ALL') {
+          q = q.eq('difficulty', diffFilter);
+        }
+        if (topicBatch && topicBatch.length > 0) {
+          q = q.in('topic_id', topicBatch);
+        }
+        const { data } = await q.limit(1000);
+        return data || [];
+      };
+
+      let fetchedRows: any[] = [];
+      const activeDiff = !isRequestingPassageTopic && sec.difficulty && sec.difficulty !== 'ALL' ? sec.difficulty : 'ALL';
+
+      if (allowedTopicIds.length > 16) {
+        // Shuffle & batch topics so huge categories (e.g. Arithmetic 1991 Qs) sample across ALL topics
+        const shuffledTopics = fisherYatesShuffle(allowedTopicIds);
+        for (let i = 0; i < shuffledTopics.length; i += 16) {
+          const chunkRows = await fetchTopicRows(shuffledTopics.slice(i, i + 16), activeDiff);
+          fetchedRows = fetchedRows.concat(chunkRows);
+          if (fetchedRows.length >= Math.max(neededCount * 20, 300)) break;
+        }
+      } else {
+        fetchedRows = await fetchTopicRows(allowedTopicIds.length > 0 ? allowedTopicIds : null, activeDiff);
+      }
+
+      if (fetchedRows.length > 0) {
+        const hasPassageTopic = isRequestingPassageTopic || fetchedRows.some(q => DEFAULT_PASSAGE_TOPICS.has(q.topic_id));
+        if (hasPassageTopic) {
+          const passageBlocks: Record<string, any[]> = {};
+          const nonPassage: any[] = [];
+          fetchedRows.forEach(q => {
+            let se = q.structured_explanation;
+            if (typeof se === 'string') {
+              try { se = JSON.parse(se); } catch {}
+            }
+            const isPassage = DEFAULT_PASSAGE_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
+            if (isPassage) {
+              const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
+              const groupKey = title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
+              if (!passageBlocks[groupKey]) passageBlocks[groupKey] = [];
+              passageBlocks[groupKey].push(q);
+            } else {
+              nonPassage.push(q);
+            }
+          });
+
+          const blockKeys = fisherYatesShuffle(Object.keys(passageBlocks));
+          const avgBlockLen = blockKeys.length > 0 && passageBlocks[blockKeys[0]]?.length > 0 ? passageBlocks[blockKeys[0]].length : 5;
+          const blocksTarget = Math.max(1, Math.round(serveCountForPassages / avgBlockLen)) * 2;
+          let addedBlocks = 0;
+          for (const key of blockKeys) {
+            const block = passageBlocks[key].sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
+            const unused = block.filter(q => !usedQuestionIds.has(q.id));
+            if (unused.length === 0) continue;
+            if (questionIds.length > 0 && questionIds.length + unused.length > neededCount) continue;
+            unused.forEach(q => {
+              questionIds.push(q.id);
+              usedQuestionIds.add(q.id);
+            });
+            addedBlocks++;
+            if (questionIds.length >= neededCount && addedBlocks >= blocksTarget) break;
+          }
+          if (questionIds.length < neededCount) {
+            for (const q of fisherYatesShuffle(nonPassage)) {
+              if (!usedQuestionIds.has(q.id)) {
+                questionIds.push(q.id);
+                usedQuestionIds.add(q.id);
+                if (questionIds.length >= neededCount) break;
+              }
+            }
+          }
+        } else {
+          const available = fetchedRows.filter(q => !usedQuestionIds.has(q.id));
+          if (!sec.difficulty || sec.difficulty === 'ALL') {
+            const easyQ = fisherYatesShuffle(available.filter(q => (q.difficulty || '').toUpperCase() === 'EASY'));
+            const hardQ = fisherYatesShuffle(available.filter(q => (q.difficulty || '').toUpperCase() === 'HARD'));
+            const medQ = fisherYatesShuffle(available.filter(q => !['EASY', 'HARD'].includes((q.difficulty || '').toUpperCase())));
+            const tEasy = Math.min(easyQ.length, Math.round(neededCount * 0.25));
+            const tHard = Math.min(hardQ.length, Math.round(neededCount * 0.25));
+            const tMed = Math.min(medQ.length, neededCount - tEasy - tHard);
+            [...easyQ.slice(0, tEasy), ...medQ.slice(0, tMed), ...hardQ.slice(0, tHard)].forEach(q => {
+              questionIds.push(q.id);
+              usedQuestionIds.add(q.id);
+            });
+          }
+          if (questionIds.length < neededCount) {
+            for (const q of fisherYatesShuffle(available)) {
+              if (!usedQuestionIds.has(q.id)) {
+                questionIds.push(q.id);
+                usedQuestionIds.add(q.id);
+                if (questionIds.length >= neededCount) break;
+              }
+            }
+          }
+        }
+      }
+
+      // Relax difficulty if still short while strictly preserving topic scoping
+      if (questionIds.length < neededCount && activeDiff !== 'ALL' && (allowedTopicIds.length > 0 || !sec.category || sec.category === 'all')) {
+        const relaxRows = await fetchTopicRows(allowedTopicIds.length > 0 ? allowedTopicIds.slice(0, 16) : null, 'ALL');
+        for (const q of fisherYatesShuffle(relaxRows)) {
+          if (!usedQuestionIds.has(q.id)) {
+            questionIds.push(q.id);
+            usedQuestionIds.add(q.id);
+            if (questionIds.length >= neededCount) break;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Notice pulling topic_questions:', e);
+    }
+  }
+
+  // Technical MCQs (explicitly requested OR technical-aptitude fallback when topic_questions has 0 rows)
+  if (isPureTechnicalMcq || (isTechAptitudeOrPseudo && questionIds.length < neededCount)) {
+    try {
+      const mappedTechMcqTopics = new Set<string>();
+      topicIds.forEach(t => {
+        if (t.startsWith('mcq-')) mappedTechMcqTopics.add(t);
+        else if (TECHNICAL_APTITUDE_TO_MCQ_MAP[t]) TECHNICAL_APTITUDE_TO_MCQ_MAP[t].forEach(m => mappedTechMcqTopics.add(m));
+      });
+      if (mappedTechMcqTopics.size === 0) {
+        if (sec.category?.startsWith('mcq-')) {
+          mappedTechMcqTopics.add(sec.category);
+        } else if (nameLower.includes('pseudocode') || nameLower.includes('pseudo-code')) {
+          ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming', 'mcq-cpp-programming'].forEach(t => mappedTechMcqTopics.add(t));
+        } else if (nameLower.includes('data structure') || nameLower.includes('dsa')) {
+          ['mcq-data-structures', 'mcq-pseudo-code', 'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-oops-concepts'].forEach(t => mappedTechMcqTopics.add(t));
+        } else {
+          [
+            'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-python-programming',
+            'mcq-oops-concepts', 'mcq-database-systems', 'mcq-operating-systems', 'mcq-computer-networks',
+            'mcq-data-structures', 'mcq-pseudo-code',
+          ].forEach(t => mappedTechMcqTopics.add(t));
+        }
+      }
+
+      const allowedTech = expandTopicAliases(Array.from(mappedTechMcqTopics));
+      let tQuery = supabase
+        .from('technical_mcqs')
+        .select('id, topic_id, difficulty')
+        .or('is_deleted.is.null,is_deleted.eq.false')
+        .or('is_hidden.is.null,is_hidden.eq.false');
+      if (allowedTech.length > 0) tQuery = tQuery.in('topic_id', allowedTech);
+      if (sec.difficulty && sec.difficulty !== 'ALL') tQuery = tQuery.eq('difficulty', sec.difficulty);
+
+      const { data: techData } = await tQuery.limit(500);
+      if (techData && techData.length > 0) {
+        for (const m of fisherYatesShuffle(techData)) {
+          if (!usedQuestionIds.has(m.id)) {
+            questionIds.push(m.id);
+            usedQuestionIds.add(m.id);
+            if (questionIds.length >= neededCount) break;
+          }
+        }
+      }
+
+      if (questionIds.length < neededCount) {
+        const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
+        const allowedSet = new Set(allowedTech);
+        const seedFiltered = allowedTech.length > 0
+          ? ALL_TECHNICAL_MCQ_SEEDS.filter(s => allowedSet.has(s.topicId || (s as any).topic_id))
+          : ALL_TECHNICAL_MCQ_SEEDS;
+        for (const s of fisherYatesShuffle(seedFiltered.length > 0 ? seedFiltered : ALL_TECHNICAL_MCQ_SEEDS)) {
+          if (!usedQuestionIds.has(s.id)) {
+            questionIds.push(s.id);
+            usedQuestionIds.add(s.id);
+            if (questionIds.length >= neededCount) break;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Notice pulling technical_mcqs:', err);
+    }
+    return { questionIds, isCodingSection: false, isTechnicalMcq: true };
+  }
+
+  // Last-resort local dataStore aptitude fallback if offline & topic_questions yielded insufficient items
+  if (questionIds.length < neededCount) {
+    try {
+      const allLocalQ = dataStore.getTopicQuestions();
+      const allowedSet = topicIds.length > 0 ? new Set(expandTopicAliases(topicIds)) : null;
+      const filtered = allowedSet
+        ? allLocalQ.filter(q => allowedSet.has(q.topicId) || allowedSet.has(resolveTopicSlug(q.topicId, q.topicId)))
+        : allLocalQ;
+      for (const lq of fisherYatesShuffle(filtered)) {
+        if (lq.id && !usedQuestionIds.has(lq.id)) {
+          questionIds.push(lq.id);
+          usedQuestionIds.add(lq.id);
+          if (questionIds.length >= neededCount) break;
+        }
+      }
+    } catch {}
+  }
+
+  return { questionIds, isCodingSection: false, isTechnicalMcq: false };
 }
 
 export const DEFAULT_EXAM_TEMPLATES: MockExamTemplate[] = [
@@ -754,32 +1226,22 @@ function saveLocalSelfExams(email: string, exams: MockExam[]) {
   } catch {}
 }
 
-function getLocalAttempts(examId?: string): StudentExamAttempt[] {
+function getLocalAttempts(examId?: string, userEmail?: string): StudentExamAttempt[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS_TPO.ATTEMPTS);
     if (raw) {
       const parsed: StudentExamAttempt[] = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        // 🛡️ ANTI-TAMPER & SELF-HEALING: Auto-heal any legacy zeroed attempts in local cache
-        parsed.forEach(a => {
-          if (a.result_summary?.sections && a.result_summary.sections.length > 0) {
-            const secSum = a.result_summary.sections.reduce((sum, s) => sum + (Number(s.score) || 0), 0);
-            const secMax = a.result_summary.sections.reduce((sum, s) => sum + (Number(s.max_score) || 0), 0);
-            if (secSum > 0 && (!a.total_score || a.total_score === 0)) {
-              a.total_score = Math.round(secSum * 100) / 100;
-              a.result_summary.total_score = a.total_score;
-            }
-            if (secMax > 0 && (!a.max_possible_score || a.max_possible_score === 0)) {
-              a.max_possible_score = secMax;
-              a.result_summary.max_score = secMax;
-            }
-            if (a.max_possible_score > 0 && (!a.percentage || a.percentage === 0)) {
-              a.percentage = Math.round(((a.total_score || 0) / a.max_possible_score) * 1000) / 10;
-              a.result_summary.percentage = a.percentage;
-            }
+        const cleanUser = (userEmail || '').trim().toLowerCase();
+        return parsed.filter(a => {
+          if (examId && a.mock_exam_id !== examId) return false;
+          if (cleanUser) {
+            const ae = (a.student_email || '').trim().toLowerCase();
+            const ai = (a.student_id || '').trim().toLowerCase();
+            if (ae && ae !== cleanUser && ai !== cleanUser) return false;
           }
+          return true;
         });
-        return examId ? parsed.filter(a => a.mock_exam_id === examId) : parsed;
       }
     }
   } catch {}
@@ -4062,21 +4524,13 @@ export const tpoService = {
           let eSections: MockExamSection[] = secMap.get(e.id) || e.sections || [];
           eSections.sort((a: MockExamSection, b: MockExamSection) => (a.section_order || 0) - (b.section_order || 0));
 
-          // Unpack audience, sectional lock, and lab passcode metadata if stored in instructions
+          // Never trust/extract plaintext passcode PIN from instructions on client
           let targetBatches = e.target_batches || [];
           let instructions = e.instructions || '';
           const isSectionalLock = Boolean(e.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
-          instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
-          let isPasscodeLock = Boolean(e.enable_passcode_lock || instructions.includes('<!--PASSCODE:'));
-          let accessPasscode = e.access_passcode || '';
-          if (instructions.includes('<!--PASSCODE:')) {
-            const match = instructions.match(/<!--PASSCODE:(.*?)-->/);
-            if (match && match[1]) {
-              accessPasscode = match[1].trim().toUpperCase();
-              isPasscodeLock = true;
-            }
-          }
-          instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
+          instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/g, '');
+          const isPasscodeLock = Boolean(e.enable_passcode_lock || e.access_passcode_hash || instructions.includes('<!--PASSCODE:'));
+          instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/g, '');
           if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
             try {
               const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
@@ -4109,7 +4563,8 @@ export const tpoService = {
             instructions,
             enable_sectional_lock: isSectionalLock,
             enable_passcode_lock: isPasscodeLock,
-            access_passcode: accessPasscode,
+            access_passcode: undefined,
+            access_passcode_hash: undefined,
             target_batches: targetBatches,
             sections: eSections,
           });
@@ -4207,16 +4662,8 @@ export const tpoService = {
           let instructions = e.instructions || '';
           const isSectionalLock = Boolean(e.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
           instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
-          let isPasscodeLock = Boolean(e.enable_passcode_lock || instructions.includes('<!--PASSCODE:'));
-          let accessPasscode = e.access_passcode || '';
-          if (instructions.includes('<!--PASSCODE:')) {
-            const match = instructions.match(/<!--PASSCODE:(.*?)-->/);
-            if (match && match[1]) {
-              accessPasscode = match[1].trim().toUpperCase();
-              isPasscodeLock = true;
-            }
-          }
-          instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
+          const isPasscodeLock = Boolean(e.enable_passcode_lock || e.access_passcode_hash || instructions.includes('<!--PASSCODE:'));
+          instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/g, '');
 
           let serveMap: Record<string, number> = {};
           if (instructions.includes('<!--SECTION_SERVE_COUNTS:')) {
@@ -4237,7 +4684,8 @@ export const tpoService = {
             instructions,
             enable_sectional_lock: isSectionalLock,
             enable_passcode_lock: isPasscodeLock,
-            access_passcode: accessPasscode,
+            access_passcode: undefined,
+            access_passcode_hash: undefined,
             sections: eSections,
           });
         });
@@ -4298,236 +4746,16 @@ export const tpoService = {
       if (currentQIds.length === 0) {
         modified = true;
         const neededCount = Math.max(1, sec.question_count || 10);
-        const pooledIds: string[] = [];
-        const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
-        const isTechnicalMcq =
-          !isCodingSection &&
-          (sec.section_type === 'TECHNICAL_MCQ' ||
-            sec.category === 'technical-mcqs' ||
-            sec.category === 'technical-aptitude' ||
-            sec.category === 'tech-aptitude' ||
-            sec.category?.startsWith('mcq-') ||
-            (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-') || t.includes('pseudo') || t.includes('code-debug') || t.includes('bitwise'))) ||
-            sec.name.toLowerCase().includes('technical mcq') ||
-            sec.name.toLowerCase().includes('technical &') ||
-            sec.name.toLowerCase().includes('technical pseudocode') ||
-            sec.name.toLowerCase().includes('pseudocode') ||
-            sec.name.toLowerCase().includes('pseudo-code') ||
-            sec.name.toLowerCase().includes('data structure'));
-
-        if (isCodingSection) {
-          try {
-            const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-            let codingQuery = supabase
-              .from('technical_problems')
-              .select('id, title, category, level')
-              .eq('is_deleted', false);
-
-            if (hasTopicIds) {
-              const expandedCoding = expandTopicAliases(sec.topic_ids);
-              const targetTokens = new Set<string>();
-              expandedCoding.forEach(t => {
-                targetTokens.add(t);
-                targetTokens.add(t.toUpperCase());
-                targetTokens.add(t.toLowerCase());
-              });
-              const tokenList = Array.from(targetTokens).join(',');
-              codingQuery = codingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
-            } else if ((sec as any).coding_track) {
-              codingQuery = codingQuery.eq('track', (sec as any).coding_track);
-            }
-
-            const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 10, 50));
-
-            if (codingData && codingData.length > 0) {
-              const testable = codingData.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
-              const pool = testable.length > 0 ? testable : codingData;
-              const shuffled = [...pool].sort(() => Math.random() - 0.5);
-              for (const q of shuffled) {
-                if (!usedQuestionIds.has(q.id)) {
-                  pooledIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                  if (pooledIds.length >= neededCount) break;
-                }
-              }
-            }
-          } catch {}
-        } else if (isTechnicalMcq) {
-          try {
-            const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-            let allowedTopics = hasTopicIds
-              ? expandTopicAliases(sec.topic_ids)
-              : (sec.category && sec.category.startsWith('mcq-'))
-              ? expandTopicAliases([sec.category])
-              : [];
-
-            // If no specific technical topics resolved, intelligently map from section name or default to core CS domains
-            if (allowedTopics.length === 0) {
-              const nameLower = (sec.name || '').toLowerCase();
-              if (nameLower.includes('pseudocode') || nameLower.includes('pseudo-code')) {
-                allowedTopics = ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming', 'mcq-cpp-programming'];
-              } else if (nameLower.includes('data structure') || nameLower.includes('dsa')) {
-                allowedTopics = ['mcq-data-structures', 'mcq-pseudo-code', 'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-oops-concepts'];
-              } else {
-                allowedTopics = [
-                  'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-python-programming',
-                  'mcq-oops-concepts', 'mcq-database-systems', 'mcq-operating-systems', 'mcq-computer-networks',
-                  'mcq-data-structures', 'mcq-pseudo-code'
-                ];
-              }
-            }
-
-            let query = supabase
-              .from('technical_mcqs')
-              .select('id, topic_id')
-              .eq('is_deleted', false)
-              .limit(Math.max(neededCount * 15, 80));
-
-            if (allowedTopics.length > 0) {
-              query = query.in('topic_id', allowedTopics);
-            }
-            const { data: techData } = await query;
-            if (techData && techData.length > 0) {
-              const shuffled = [...techData].sort(() => Math.random() - 0.5);
-              for (const m of shuffled) {
-                if (!usedQuestionIds.has(m.id)) {
-                  pooledIds.push(m.id);
-                  usedQuestionIds.add(m.id);
-                  if (pooledIds.length >= neededCount) break;
-                }
-              }
-            }
-
-            if (pooledIds.length < neededCount) {
-              const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
-              let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
-              if (allowedTopics.length > 0) {
-                const allowed = new Set(allowedTopics);
-                const filtered = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
-                if (filtered.length > 0) {
-                  seedPool = filtered;
-                }
-              }
-              const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
-              for (const s of shuffledSeeds) {
-                if (!usedQuestionIds.has(s.id)) {
-                  pooledIds.push(s.id);
-                  usedQuestionIds.add(s.id);
-                  if (pooledIds.length >= neededCount) break;
-                }
-              }
-            }
-          } catch {}
-        } else {
-          // Aptitude MCQ with Atomic Passage Grouping
-          try {
-            const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-            const allowedTopicIds = hasTopicIds ? expandTopicAliases(sec.topic_ids) : [];
-            const isRequestingPassageTopic = (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t));
-
-            let mcqQuery = supabase
-              .from('topic_questions')
-              .select('id, question_number, topic_id, difficulty, structured_explanation')
-              .eq('is_deleted', false);
-
-            if (!isRequestingPassageTopic && sec.difficulty && sec.difficulty !== 'ALL') {
-              mcqQuery = mcqQuery.eq('difficulty', sec.difficulty);
-            }
-
-            if (allowedTopicIds.length > 0) {
-              mcqQuery = mcqQuery.in('topic_id', allowedTopicIds);
-            }
-            const { data: mcqData } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
-            if (mcqData && mcqData.length > 0) {
-              const hasPassageTopic =
-                isRequestingPassageTopic ||
-                mcqData.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
-
-              if (hasPassageTopic) {
-                const passageBlocks: Record<string, any[]> = {};
-                const nonPassageQuestions: any[] = [];
-
-                mcqData.forEach(q => {
-                  let se = q.structured_explanation;
-                  if (typeof se === 'string') {
-                    try { se = JSON.parse(se); } catch {}
-                  }
-                  const isPassage =
-                    PASSAGE_BASED_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
-
-                  if (isPassage) {
-                    const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
-                    const groupKey =
-                      title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
-                    if (!passageBlocks[groupKey]) passageBlocks[groupKey] = [];
-                    passageBlocks[groupKey].push(q);
-                  } else {
-                    nonPassageQuestions.push(q);
-                  }
-                });
-
-                const shuffledBlockKeys = Object.keys(passageBlocks).sort(() => Math.random() - 0.5);
-                for (const key of shuffledBlockKeys) {
-                  const block = passageBlocks[key];
-                  block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
-                  const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
-                  if (unusedInBlock.length === 0) continue;
-                  // Skip if it would overshoot, unless we have no questions yet
-                  if (pooledIds.length > 0 && pooledIds.length + unusedInBlock.length > neededCount) continue;
-                  for (const q of unusedInBlock) {
-                    pooledIds.push(q.id);
-                    usedQuestionIds.add(q.id);
-                  }
-                  if (pooledIds.length >= neededCount) break;
-                }
-
-                if (pooledIds.length < neededCount) {
-                  const shuffledNonPassage = nonPassageQuestions.sort(() => Math.random() - 0.5);
-                  for (const q of shuffledNonPassage) {
-                    if (!usedQuestionIds.has(q.id)) {
-                      pooledIds.push(q.id);
-                      usedQuestionIds.add(q.id);
-                      if (pooledIds.length >= neededCount) break;
-                    }
-                  }
-                }
-              } else {
-                const shuffled = [...mcqData].sort(() => Math.random() - 0.5);
-                for (const q of shuffled) {
-                  if (!usedQuestionIds.has(q.id)) {
-                    pooledIds.push(q.id);
-                    usedQuestionIds.add(q.id);
-                    if (pooledIds.length >= neededCount) break;
-                  }
-                }
-              }
-            }
-          } catch {}
-
-          // Multi-tier Fallback to dataStore topic questions with alias matching
-          if (pooledIds.length < neededCount) {
-            try {
-              const allLocalQ = dataStore.getTopicQuestions();
-              const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-              const allowedSet = hasTopicIds ? new Set(expandTopicAliases(sec.topic_ids)) : null;
-              let filtered = allowedSet
-                ? allLocalQ.filter(q => allowedSet.has(q.topicId) || allowedSet.has(resolveTopicSlug(q.topicId, q.topicId)))
-                : allLocalQ;
-              if (filtered.length === 0 && !hasTopicIds) filtered = allLocalQ;
-
-              const shuffledLocal = [...filtered].sort(() => Math.random() - 0.5);
-              for (const q of shuffledLocal) {
-                if (q.id && !usedQuestionIds.has(q.id)) {
-                  pooledIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                  if (pooledIds.length >= neededCount) break;
-                }
-              }
-            } catch {}
-          }
+        const pooled = await poolQuestionsForExamSection(
+          sec,
+          neededCount,
+          usedQuestionIds,
+          sec.serve_count || sec.question_count || neededCount
+        );
+        sec.question_ids = pooled.questionIds;
+        if (!sec.section_type) {
+          sec.section_type = pooled.isCodingSection ? 'CODING' : pooled.isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ';
         }
-
-        sec.question_ids = pooledIds;
         updatedSections[i] = sec;
       }
     }
@@ -4548,9 +4776,9 @@ export const tpoService = {
         }
       }
 
-      // Background cloud persistence
+      // Background cloud persistence (schema-compatible across pre/post migration DBs)
       try {
-        const secRows = updatedSections.map(s => ({
+        const fullRows = updatedSections.map(s => ({
           id: s.id,
           mock_exam_id: exam.id,
           name: s.name,
@@ -4565,7 +4793,21 @@ export const tpoService = {
           question_ids: s.question_ids,
           topic_ids: s.topic_ids,
         }));
-        supabase.from('mock_exam_sections').upsert(secRows).then();
+        const { error: secErr } = await supabase.from('mock_exam_sections').upsert(fullRows);
+        if (secErr) {
+          const coreRows = updatedSections.map(s => ({
+            id: s.id,
+            mock_exam_id: exam.id,
+            name: s.name,
+            section_order: s.section_order,
+            duration_minutes: s.duration_minutes || null,
+            marks_per_correct: s.marks_per_correct,
+            negative_marking: s.negative_marking,
+            question_ids: s.question_ids,
+            topic_ids: s.topic_ids,
+          }));
+          await supabase.from('mock_exam_sections').upsert(coreRows);
+        }
       } catch {}
 
       return hydratedExam;
@@ -4641,16 +4883,8 @@ export const tpoService = {
         let instructions = examData.instructions || '';
         const isSectionalLock = Boolean(examData.enable_sectional_lock || instructions.includes('<!--SECTIONAL_LOCK-->'));
         instructions = instructions.replace(/<!--SECTIONAL_LOCK-->\n?/, '');
-        let isPasscodeLock = Boolean(examData.enable_passcode_lock || instructions.includes('<!--PASSCODE:'));
-        let accessPasscode = examData.access_passcode || '';
-        if (instructions.includes('<!--PASSCODE:')) {
-          const match = instructions.match(/<!--PASSCODE:(.*?)-->/);
-          if (match && match[1]) {
-            accessPasscode = match[1].trim().toUpperCase();
-            isPasscodeLock = true;
-          }
-        }
-        instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/, '');
+        const isPasscodeLock = Boolean(examData.enable_passcode_lock || examData.access_passcode_hash || instructions.includes('<!--PASSCODE:'));
+        instructions = instructions.replace(/<!--PASSCODE:.*?-->\n?/g, '');
         if ((!targetBatches || targetBatches.length === 0) && instructions.includes('<!--AUDIENCE:')) {
           try {
             const match = instructions.match(/<!--AUDIENCE:(.*?)-->/);
@@ -4684,7 +4918,8 @@ export const tpoService = {
           instructions,
           enable_sectional_lock: isSectionalLock,
           enable_passcode_lock: isPasscodeLock,
-          access_passcode: accessPasscode,
+          access_passcode: undefined,
+          access_passcode_hash: undefined,
           target_batches: targetBatches,
           sections: populatedSections,
         };
@@ -4796,27 +5031,21 @@ export const tpoService = {
 
   async sanitizeExamPasscode(exam: MockExam): Promise<MockExam> {
     if (!exam) return exam;
-    let isTpoOrAdmin = this.isTpoForCollege(exam.college_id);
-    if (!isTpoOrAdmin && typeof window !== 'undefined') {
-      try {
-        const cachedUser = JSON.parse(localStorage.getItem('prepunite_user') || '{}');
-        if (['admin', 'super_admin'].includes(cachedUser?.role) || cachedUser?.email?.includes('admin')) {
-          isTpoOrAdmin = true;
-        }
-      } catch {}
-    }
-
-    let passcodeHash = exam.access_passcode_hash;
-    if (exam.access_passcode && !passcodeHash) {
-      try {
-        passcodeHash = await sha256Text(exam.access_passcode.trim().toUpperCase());
-      } catch {}
-    }
+    const isTpoOrAdmin = this.isTpoForCollege(exam.college_id);
+    const cleanedInstructions = typeof exam.instructions === 'string'
+      ? exam.instructions.replace(/<!--PASSCODE:.*?-->\r?\n?/gi, '').trim()
+      : exam.instructions;
 
     return {
       ...exam,
+      instructions: cleanedInstructions,
+      enable_passcode_lock: Boolean(
+        exam.enable_passcode_lock ||
+        exam.access_passcode_hash ||
+        (typeof exam.instructions === 'string' && /<!--PASSCODE:/i.test(exam.instructions))
+      ),
       access_passcode: isTpoOrAdmin ? exam.access_passcode : undefined,
-      access_passcode_hash: passcodeHash || exam.access_passcode_hash,
+      access_passcode_hash: undefined,
     };
   },
 
@@ -4930,15 +5159,17 @@ export const tpoService = {
     }
   ): Promise<MockExam> {
     const cleanEmail = userEmail.trim().toLowerCase();
-    const now = new Date();
+    const now = getServerDate();
     const startTime = overrides?.start_time || now.toISOString();
     const endTime = overrides?.end_time || new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const title = overrides?.title || `${template.name} - Blueprint Practice`;
 
-    // 1. Server-side Quota Verification & Atomic Consumption [P0-03]
-    await mockExamSubscriptionService.consumeQuotaBeforeExamGeneration(cleanEmail);
+    // Pre-flight quota check (server /api/campus-exams atomically consumes 1 quota unit)
+    const quotaStatus = await mockExamSubscriptionService.getMonthlyUsage(cleanEmail);
+    if (!quotaStatus.canGenerate) {
+      throw new Error('Blueprint mock exam quota exhausted or unavailable on current tier. Please upgrade to Pro or Ultra.');
+    }
 
-    const totalQuestions = template.sections.reduce((acc, s) => acc + (Number(s.question_count) || 0), 0);
     const totalMarks = template.sections.reduce(
       (acc, s) => acc + (Number(s.question_count) || 0) * (Number(s.marks_per_correct) || 1),
       0
@@ -4950,7 +5181,7 @@ export const tpoService = {
         title,
         target_company: template.target_company,
         description: template.description || `Self-practice assessment generated from ${template.name}.`,
-        instructions: `1. Test must be taken in Fullscreen Mode.\n2. Switching tabs or minimizing browser will be flagged by proctor.\n3. Test will auto-submit when the countdown expires.\n<!--STUDENT:${cleanEmail}-->`,
+        instructions: `1. Test must be taken in Fullscreen Mode.\n2. Switching tabs or minimizing browser will be flagged by proctor.\n3. Test will auto-submit when the countdown expires.`,
         duration_minutes: template.duration_minutes,
         total_marks: totalMarks,
         passing_percentage: template.passing_percentage,
@@ -4981,24 +5212,9 @@ export const tpoService = {
       }))
     );
 
-    // Save under student-specific self-exams store
     const local = getLocalSelfExams(cleanEmail);
     local.unshift(exam);
     saveLocalSelfExams(cleanEmail, local);
-
-    // Cloud backup to contact_messages for cross-device support
-    try {
-      await supabase.from('contact_messages').insert({
-        name: `Self Exam: ${exam.title}`,
-        email: cleanEmail,
-        subject: `B2B_EXAM:SELF:${cleanEmail}:${exam.id}`,
-        message: JSON.stringify(exam),
-        status: 'ACTIVE',
-      });
-    } catch {}
-
-    // Record usage quota
-    mockExamSubscriptionService.recordExamGenerated(cleanEmail, exam.id);
 
     return exam;
   },
@@ -5086,609 +5302,15 @@ export const tpoService = {
       const serveCount = Math.max(1, sec.question_count || 10);
       // Auto 2x Question Pooling: master pool holds 2x questions for dynamic candidate sampling
       const poolTargetCount = serveCount * 2;
-      const neededCount = poolTargetCount;
-      const questionIds: string[] = [];
-      const isCodingSection = sec.section_type === 'CODING' || sec.category === 'coding';
-      const isTechnicalMcq =
-        !isCodingSection &&
-        (sec.section_type === 'TECHNICAL_MCQ' ||
-          sec.category === 'technical-mcqs' ||
-          sec.category === 'technical-aptitude' ||
-          sec.category === 'tech-aptitude' ||
-          sec.category?.startsWith('mcq-') ||
-          (sec.topic_ids && sec.topic_ids.some(t => t.startsWith('mcq-') || t.includes('pseudo') || t.includes('code-debug') || t.includes('bitwise'))) ||
-          sec.name.toLowerCase().includes('technical mcq') ||
-          sec.name.toLowerCase().includes('technical &') ||
-          sec.name.toLowerCase().includes('technical pseudocode') ||
-          sec.name.toLowerCase().includes('pseudocode') ||
-          sec.name.toLowerCase().includes('pseudo-code') ||
-          sec.name.toLowerCase().includes('data structure'));
-
-      if (isCodingSection) {
-        // Query coding problems from technical_problems with alias mapping & topic keyword prioritization
-        try {
-          const CODING_TOPIC_TO_DB_CATEGORIES: Record<string, string[]> = {
-            'LINKED_LISTS': ['LINEAR_STRUCTURES', 'LINKED_LISTS'],
-            'STACKS_QUEUES': ['LINEAR_STRUCTURES', 'STACKS_QUEUES'],
-            'TWO_POINTERS': ['POINTERS_ARRAYS', 'TWO_POINTERS'],
-            'SLIDING_WINDOW': ['POINTERS_ARRAYS', 'SLIDING_WINDOW'],
-            'TREES_BINARY_TREES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
-            'DYNAMIC_PROGRAMMING': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
-            'SEARCHING_SORTING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
-            'POINTERS_ARRAYS': ['POINTERS_ARRAYS', 'TWO_POINTERS', 'SLIDING_WINDOW'],
-            'LINEAR_STRUCTURES': ['LINEAR_STRUCTURES', 'LINKED_LISTS', 'STACKS_QUEUES'],
-            'HIERARCHICAL_STRUCTURES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
-            'SEARCH_INTERVALS': ['SEARCH_INTERVALS', 'SEARCHING', 'SEARCHING_SORTING'],
-            'EXHAUSTIVE_SEARCH_DP': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
-            'NETWORK_GRAPH_ALGORITHMS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
-            'GRAPHS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
-            'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS'],
-            'STRINGS': ['STRINGS'],
-            'SYNTAX_BASICS': ['SYNTAX_BASICS'],
-            'NUMBER_LOGIC': ['NUMBER_LOGIC'],
-            'PATTERNS': ['PATTERNS'],
-            'MATRICES': ['MATRICES', 'ARRAYS'],
-            'RECURSION': ['RECURSION'],
-            'BIT_MANIPULATION': ['BIT_MANIPULATION'],
-            'SEARCHING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
-          };
-
-          const CODING_TOPIC_TITLE_KEYWORDS: Record<string, string[]> = {
-            'LINKED_LISTS': ['list', 'linked list', 'node', 'cycle', 'reverse list', 'sort list', 'merge list', 'reorder list', 'palindrome linked list'],
-            'STACKS_QUEUES': ['stack', 'queue', 'parentheses', 'histogram', 'polish', 'greater element', 'temperatures', 'calculator', 'asteroid', 'digits'],
-            'TWO_POINTERS': ['pointer', 'two sum', '3sum', 'water', 'duplicate', 'palindrome', 'sorted', 'reverse', 'sort'],
-            'SLIDING_WINDOW': ['window', 'subarray', 'substring', 'longest', 'k distinct', 'minimum window', 'character replacement', 'anagram'],
-            'TREES_BINARY_TREES': ['tree', 'bst', 'binary tree', 'traversal', 'depth', 'diameter', 'ancestor', 'invert', 'path sum'],
-            'DYNAMIC_PROGRAMMING': ['dp', 'knapsack', 'subsequence', 'coin', 'jump', 'stock', 'path', 'climb', 'house robber', 'word break'],
-            'SEARCHING_SORTING': ['search', 'binary search', 'sort', 'rotated', 'median', 'peak', 'find minimum'],
-          };
-
-          let codingQuery = supabase
-            .from('technical_problems')
-            .select('id, title, category, level, test_cases, sample_input, sample_output')
-            .eq('is_deleted', false);
-
-          if (sec.difficulty && sec.difficulty !== 'ALL') {
-            const codingLevel = sec.difficulty === 'EASY' ? 'BASIC' : sec.difficulty;
-            codingQuery = codingQuery.eq('level', codingLevel);
-          }
-
-          const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-          let titleKeywords: string[] = [];
-          const targetCategories = new Set<string>();
-
-          if (hasTopicIds) {
-            const expandedCoding = expandTopicAliases(sec.topic_ids);
-            expandedCoding.forEach(t => {
-              const upper = t.toUpperCase();
-              const mapped = CODING_TOPIC_TO_DB_CATEGORIES[upper] || [t, upper, t.toLowerCase()];
-              mapped.forEach(c => targetCategories.add(c));
-
-              if (CODING_TOPIC_TITLE_KEYWORDS[upper]) {
-                titleKeywords.push(...CODING_TOPIC_TITLE_KEYWORDS[upper]);
-              }
-            });
-
-            const tokenList = Array.from(targetCategories).join(',');
-            codingQuery = codingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
-          } else if (sec.coding_track) {
-            const trackCats = CODING_CATEGORIES.filter(c => c.track === sec.coding_track).map(c => c.id);
-            if (trackCats.length > 0) {
-              const expandedCats = new Set<string>();
-              trackCats.forEach(cat => {
-                const mapped = CODING_TOPIC_TO_DB_CATEGORIES[cat] || [cat];
-                mapped.forEach(m => expandedCats.add(m));
-              });
-              const expandedList = Array.from(expandedCats).join(',');
-              codingQuery = codingQuery.or(`category.in.(${expandedList}),topic_id.in.(${expandedList})`);
-            }
-          }
-
-          const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 60));
-          if (codingData && codingData.length > 0) {
-            // 🛡️ Filter strictly to problems with verified executable test cases
-            const testableCurated = codingData.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
-            const poolToSample = testableCurated.length > 0 ? testableCurated : codingData;
-
-            // If topic-specific keywords are present, prioritize problems matching those keywords
-            let prioritized: typeof codingData = [];
-            let nonPrioritized: typeof codingData = [];
-
-            if (titleKeywords.length > 0) {
-              poolToSample.forEach(q => {
-                const titleLower = (q.title || '').toLowerCase();
-                const matchesKeyword = titleKeywords.some(kw => titleLower.includes(kw));
-                if (matchesKeyword) {
-                  prioritized.push(q);
-                } else {
-                  nonPrioritized.push(q);
-                }
-              });
-            } else {
-              prioritized = poolToSample;
-            }
-
-            // Shuffle prioritized first
-            const shuffledPrioritized = [...prioritized].sort(() => Math.random() - 0.5);
-            for (const q of shuffledPrioritized) {
-              if (!usedQuestionIds.has(q.id)) {
-                questionIds.push(q.id);
-                usedQuestionIds.add(q.id);
-                if (questionIds.length >= neededCount) break;
-              }
-            }
-
-            // If still needed, fill from non-prioritized in the same category
-            if (questionIds.length < neededCount && nonPrioritized.length > 0) {
-              const shuffledRemaining = [...nonPrioritized].sort(() => Math.random() - 0.5);
-              for (const q of shuffledRemaining) {
-                if (!usedQuestionIds.has(q.id)) {
-                  questionIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                  if (questionIds.length >= neededCount) break;
-                }
-              }
-            }
-          }
-
-          // Fallback if needed count is not met:
-          // If specific topics were chosen, relax difficulty constraint BUT STRICTLY KEEP category filter!
-          if (questionIds.length < neededCount) {
-            let fallbackCodingQuery = supabase
-              .from('technical_problems')
-              .select('id, title, category, level, test_cases, sample_input, sample_output')
-              .eq('is_deleted', false);
-
-            if (hasTopicIds && targetCategories.size > 0) {
-              const tokenList = Array.from(targetCategories).join(',');
-              fallbackCodingQuery = fallbackCodingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
-            } else if (sec.coding_track) {
-              const trackCats = CODING_CATEGORIES.filter(c => c.track === sec.coding_track).map(c => c.id);
-              if (trackCats.length > 0) {
-                const expandedCats = new Set<string>();
-                trackCats.forEach(cat => {
-                  const mapped = CODING_TOPIC_TO_DB_CATEGORIES[cat] || [cat];
-                  mapped.forEach(m => expandedCats.add(m));
-                });
-                const expandedList = Array.from(expandedCats).join(',');
-                fallbackCodingQuery = fallbackCodingQuery.or(`category.in.(${expandedList}),topic_id.in.(${expandedList})`);
-              }
-            }
-
-            const { data: fallbackCoding } = await fallbackCodingQuery
-              .limit(Math.max((neededCount - questionIds.length) * 10, 50));
-
-            if (fallbackCoding && fallbackCoding.length > 0) {
-              const testableFallback = fallbackCoding.filter(q => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q));
-              const finalPool = testableFallback.length > 0 ? testableFallback : fallbackCoding;
-              const shuffled = [...finalPool].sort(() => Math.random() - 0.5);
-              for (const q of shuffled) {
-                if (!usedQuestionIds.has(q.id)) {
-                  questionIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                  if (questionIds.length >= neededCount) break;
-                }
-              }
-            }
-          }
-        } catch (err) {
-          console.warn('Notice pulling coding questions from Supabase for section:', sec.name, err);
-        }
-      } else if (isTechnicalMcq) {
-        // Query Technical MCQs from technical_mcqs table
-        try {
-          const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-          let allowedTopics: string[] = [];
-
-          if (hasTopicIds) {
-            allowedTopics = expandTopicAliases(sec.topic_ids);
-          } else if (sec.category && sec.category.startsWith('mcq-')) {
-            allowedTopics = expandTopicAliases([sec.category]);
-          }
-
-          // If no specific technical topics resolved from explicit IDs, intelligently infer from section name or fall back to core CS domains
-          if (allowedTopics.length === 0) {
-            const nameLower = (sec.name || '').toLowerCase();
-            if (nameLower.includes('pseudocode') || nameLower.includes('pseudo-code')) {
-              allowedTopics = ['mcq-pseudo-code', 'mcq-data-structures', 'mcq-c-programming', 'mcq-cpp-programming'];
-            } else if (nameLower.includes('data structure') || nameLower.includes('dsa')) {
-              allowedTopics = ['mcq-data-structures', 'mcq-pseudo-code', 'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-oops-concepts'];
-            } else {
-              allowedTopics = [
-                'mcq-c-programming', 'mcq-cpp-programming', 'mcq-java-programming', 'mcq-python-programming',
-                'mcq-oops-concepts', 'mcq-database-systems', 'mcq-operating-systems', 'mcq-computer-networks',
-                'mcq-data-structures', 'mcq-pseudo-code'
-              ];
-            }
-          }
-
-          let techQuery = supabase
-            .from('technical_mcqs')
-            .select('id, topic_id, difficulty')
-            .eq('is_deleted', false);
-
-          if (sec.difficulty && sec.difficulty !== 'ALL') {
-            techQuery = techQuery.eq('difficulty', sec.difficulty);
-          }
-
-          if (allowedTopics.length > 0) {
-            techQuery = techQuery.in('topic_id', allowedTopics);
-          }
-
-          const { data: techData } = await techQuery.limit(Math.max(neededCount * 25, 200));
-          if (techData && techData.length > 0) {
-            const available = techData.filter(q => !usedQuestionIds.has(q.id));
-            const easyQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'EASY');
-            const hardQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'HARD');
-            const medQ = available.filter(q => !easyQ.includes(q) && !hardQ.includes(q));
-
-            if (easyQ.length > 0 && hardQ.length > 0 && (sec.difficulty === 'ALL' || !sec.difficulty)) {
-              const targetEasy = Math.min(easyQ.length, Math.round(neededCount * 0.25));
-              const targetHard = Math.min(hardQ.length, Math.round(neededCount * 0.25));
-              const targetMed = Math.min(medQ.length, neededCount - targetEasy - targetHard);
-
-              const shuffledEasy = [...easyQ].sort(() => Math.random() - 0.5).slice(0, targetEasy);
-              const shuffledHard = [...hardQ].sort(() => Math.random() - 0.5).slice(0, targetHard);
-              const shuffledMed = [...medQ].sort(() => Math.random() - 0.5).slice(0, targetMed);
-
-              [...shuffledEasy, ...shuffledMed, ...shuffledHard].forEach(q => {
-                questionIds.push(q.id);
-                usedQuestionIds.add(q.id);
-              });
-            }
-
-            if (questionIds.length < neededCount) {
-              const remaining = available.filter(q => !usedQuestionIds.has(q.id)).sort(() => Math.random() - 0.5);
-              for (const q of remaining) {
-                questionIds.push(q.id);
-                usedQuestionIds.add(q.id);
-                if (questionIds.length >= neededCount) break;
-              }
-            }
-          }
-
-          // Fallback to ALL_TECHNICAL_MCQ_SEEDS if not fully populated
-          if (questionIds.length < neededCount) {
-            try {
-              const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
-              let seedPool = ALL_TECHNICAL_MCQ_SEEDS;
-              if (allowedTopics.length > 0) {
-                const allowed = new Set(allowedTopics);
-                const filtered = seedPool.filter(s => allowed.has(s.topicId || (s as any).topic_id));
-                if (filtered.length > 0) {
-                  seedPool = filtered;
-                }
-              }
-              const shuffledSeeds = [...seedPool].sort(() => Math.random() - 0.5);
-              for (const s of shuffledSeeds) {
-                if (!usedQuestionIds.has(s.id)) {
-                  questionIds.push(s.id);
-                  usedQuestionIds.add(s.id);
-                  if (questionIds.length >= neededCount) break;
-                }
-              }
-            } catch {}
-          }
-        } catch (err) {
-          console.warn('Notice pulling technical MCQs from Supabase for section:', sec.name, err);
-        }
-      } else {
-        // Query Aptitude MCQs from topic_questions
-        try {
-          const PASSAGE_BASED_TOPICS = new Set([
-            'reading-comprehension',
-            'cloze-test',
-            'table-charts',
-            'line-charts',
-            'bar-charts',
-            'pie-charts',
-            'caselet-di',
-            'missing-di',
-            'radar-web-charts',
-            'scatter-bubble-charts',
-            'floor-scheduling-puzzles',
-            'games-and-tournaments',
-            'logical-games',
-            'machine-input-output',
-            'making-judgments',
-          ]);
-
-          const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
-          let allowedTopicIds: string[] = [];
-
-          if (hasTopicIds) {
-            // STRICT TOPIC ISOLATION WITH ALIAS EXPANSION:
-            // Expand selected topic IDs to cover canonical slugs and DB aliases
-            allowedTopicIds = expandTopicAliases(sec.topic_ids);
-          } else if (sec.category && sec.category !== 'all') {
-            // DOMAIN-SCOPED DEFAULT MIXING: Resolve all topic IDs for this domain category
-            const domainCategory = sec.category.toLowerCase().trim();
-            const extraCategoryVariants: Record<string, string[]> = {
-              'arithmetic-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
-              'quantitative-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
-              'quant': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
-              'data-interpretation': ['data-interpretation', 'di'],
-              'di': ['data-interpretation', 'di'],
-              'logical-reasoning': ['logical-reasoning', 'logic', 'reasoning'],
-              'logic': ['logical-reasoning', 'logic', 'reasoning'],
-              'reasoning': ['logical-reasoning', 'logic', 'reasoning'],
-              'verbal-reasoning': ['verbal-reasoning', 'vr'],
-              'vr': ['verbal-reasoning', 'vr'],
-              'verbal-ability': ['verbal-ability', 'verbal', 'english'],
-              'verbal': ['verbal-ability', 'verbal', 'english'],
-              'english': ['verbal-ability', 'verbal', 'english'],
-              'non-verbal-reasoning': ['non-verbal-reasoning', 'nonverbal', 'nv'],
-              'nonverbal': ['non-verbal-reasoning', 'nonverbal', 'nv'],
-              'technical-aptitude': ['technical-aptitude', 'tech-aptitude'],
-              'tech-aptitude': ['technical-aptitude', 'tech-aptitude'],
-            };
-
-            const matchingVariants = extraCategoryVariants[domainCategory] || [domainCategory];
-            const matchingTopics = FALLBACK_APTITUDE_TOPICS
-              .filter(t => matchingVariants.includes(t.category_slug))
-              .map(t => t.id);
-
-            allowedTopicIds = expandTopicAliases(matchingTopics);
-          }
-
-          // F11: If an aptitude category or explicit topic list was requested but no topic IDs resolved, reject rather than falling back to an unrestricted database-wide pool
-          if ((hasTopicIds || (sec.category && sec.category !== 'all')) && allowedTopicIds.length === 0) {
-            throw new Error(
-              `Section "${sec.name || 'MCQ'}" requested category "${sec.category}" or topics [${(sec.topic_ids || []).join(', ')}], but no matching topics were found in the question taxonomy.`
-            );
-          }
-
-          const isRequestingPassageTopic = (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t));
-
-          let mcqQuery = supabase
-            .from('topic_questions')
-            .select('id, question_number, topic_id, difficulty, structured_explanation')
-            .eq('is_deleted', false);
-
-          // Only filter by difficulty if not a passage-based topic, to preserve full progressive 5-question passage blocks
-          if (!isRequestingPassageTopic && sec.difficulty && sec.difficulty !== 'ALL') {
-            mcqQuery = mcqQuery.eq('difficulty', sec.difficulty);
-          }
-
-          if (allowedTopicIds.length > 0) {
-            mcqQuery = mcqQuery.in('topic_id', allowedTopicIds);
-          }
-
-          const { data } = await mcqQuery.limit(Math.max(neededCount * 25, 200));
-          if (data && data.length > 0) {
-            // Check if section contains passage-based questions
-            const hasPassageTopic =
-              isRequestingPassageTopic ||
-              data.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
-
-            if (hasPassageTopic) {
-              // Group passage questions into atomic 5-question blocks
-              const passageBlocks: Record<string, any[]> = {};
-              const nonPassageQuestions: any[] = [];
-
-              data.forEach(q => {
-                let se = q.structured_explanation;
-                if (typeof se === 'string') {
-                  try { se = JSON.parse(se); } catch {}
-                }
-                const isPassage =
-                  PASSAGE_BASED_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
-
-                if (isPassage) {
-                  const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
-                  const groupKey =
-                    title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
-                  if (!passageBlocks[groupKey]) passageBlocks[groupKey] = [];
-                  passageBlocks[groupKey].push(q);
-                } else {
-                  nonPassageQuestions.push(q);
-                }
-              });
-
-              // Dynamic Question Banking & Atomic Multi-Passage Pooling:
-              // For passage-based sections, pool at least 2x complete passage blocks as backup
-              // so candidates get different passages without stimulus fragmentation.
-              const blockKeys = Object.keys(passageBlocks);
-              const shuffledBlockKeys = [...blockKeys].sort(() => Math.random() - 0.5);
-              const usedPassageQIds = new Set<string>();
-
-              // If passage blocks exist, determine target passage blocks to pool (at least 2x passages)
-              const avgBlockLen = blockKeys.length > 0 && passageBlocks[blockKeys[0]]?.length > 0
-                ? passageBlocks[blockKeys[0]].length
-                : 5;
-              const passagesToServe = Math.max(1, Math.round(serveCount / avgBlockLen));
-              const passagesToPoolTarget = passagesToServe * 2; // 2x backup passages
-
-              let pooledPassageBlocksCount = 0;
-              for (const key of shuffledBlockKeys) {
-                const block = passageBlocks[key];
-                // Sort by question_number ascending so Q1..N are in exact stimulus order
-                block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
-                const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
-                if (unusedInBlock.length === 0) continue;
-
-                for (const q of unusedInBlock) {
-                  questionIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                  usedPassageQIds.add(q.id);
-                }
-                pooledPassageBlocksCount++;
-
-                if (pooledPassageBlocksCount >= passagesToPoolTarget && questionIds.length >= neededCount) {
-                  break;
-                }
-              }
-
-              // Fill remaining capacity with standalone (non-passage) questions only up to neededCount
-              if (questionIds.length < neededCount) {
-                const shuffledNonPassage = nonPassageQuestions.sort(() => Math.random() - 0.5);
-                for (const q of shuffledNonPassage) {
-                  if (!usedQuestionIds.has(q.id)) {
-                    questionIds.push(q.id);
-                    usedQuestionIds.add(q.id);
-                    if (questionIds.length >= neededCount) break;
-                  }
-                }
-              }
-            } else {
-              // Standard non-passage sampling with Stratified Difficulty Distribution:
-              // Guarantees balanced Easy, Medium, and Hard representation in the master pool
-              const available = data.filter(q => !usedQuestionIds.has(q.id));
-              const easyQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'EASY');
-              const hardQ = available.filter(q => (q.difficulty || '').toUpperCase() === 'HARD');
-              const medQ = available.filter(q => !easyQ.includes(q) && !hardQ.includes(q));
-
-              if (easyQ.length > 0 && hardQ.length > 0 && (sec.difficulty === 'ALL' || !sec.difficulty)) {
-                // Stratify 25% Easy, 50% Medium, 25% Hard (or proportional to available)
-                const targetEasy = Math.min(easyQ.length, Math.round(neededCount * 0.25));
-                const targetHard = Math.min(hardQ.length, Math.round(neededCount * 0.25));
-                const targetMed = Math.min(medQ.length, neededCount - targetEasy - targetHard);
-
-                const shuffledEasy = [...easyQ].sort(() => Math.random() - 0.5).slice(0, targetEasy);
-                const shuffledHard = [...hardQ].sort(() => Math.random() - 0.5).slice(0, targetHard);
-                const shuffledMed = [...medQ].sort(() => Math.random() - 0.5).slice(0, targetMed);
-
-                [...shuffledEasy, ...shuffledMed, ...shuffledHard].forEach(q => {
-                  questionIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                });
-              }
-
-              // Fill any remaining slots if neededCount not yet reached
-              if (questionIds.length < neededCount) {
-                const remaining = available.filter(q => !usedQuestionIds.has(q.id)).sort(() => Math.random() - 0.5);
-                for (const q of remaining) {
-                  questionIds.push(q.id);
-                  usedQuestionIds.add(q.id);
-                  if (questionIds.length >= neededCount) break;
-                }
-              }
-            }
-          }
-
-          // Fallback if needed count is not met:
-          // Relax difficulty constraint IF it was set, BUT STRICTLY RETAIN allowedTopicIds!
-          // NEVER query unselected foreign topics when topics/category are scoped!
-          if (questionIds.length < neededCount) {
-            const stillNeeded = neededCount - questionIds.length;
-            let fallbackMcqQuery = supabase
-              .from('topic_questions')
-              .select('id, question_number, topic_id, difficulty, structured_explanation')
-              .eq('is_deleted', false);
-
-            if (allowedTopicIds.length > 0) {
-              fallbackMcqQuery = fallbackMcqQuery.in('topic_id', allowedTopicIds);
-            } else if (sec.category && sec.category !== 'all') {
-              fallbackMcqQuery = fallbackMcqQuery.in('topic_id', ['__NONE__']);
-            }
-
-            const { data: fallbackQ } = await fallbackMcqQuery
-              .limit(Math.max(stillNeeded * 10, 100));
-
-            if (fallbackQ && fallbackQ.length > 0) {
-              const hasPassageTopic =
-                (sec.topic_ids || []).some(t => PASSAGE_BASED_TOPICS.has(t)) ||
-                fallbackQ.some(q => PASSAGE_BASED_TOPICS.has(q.topic_id));
-
-              if (hasPassageTopic) {
-                // Group passage questions into atomic 5-question blocks
-                const fallbackPassageBlocks: Record<string, any[]> = {};
-                const fallbackNonPassage: any[] = [];
-
-                fallbackQ.forEach(q => {
-                  let se = q.structured_explanation;
-                  if (typeof se === 'string') {
-                    try { se = JSON.parse(se); } catch {}
-                  }
-                  const isPassage =
-                    PASSAGE_BASED_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
-
-                  if (isPassage) {
-                    const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
-                    const groupKey =
-                      title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
-                    if (!fallbackPassageBlocks[groupKey]) fallbackPassageBlocks[groupKey] = [];
-                    fallbackPassageBlocks[groupKey].push(q);
-                  } else {
-                    fallbackNonPassage.push(q);
-                  }
-                });
-
-                // Atomic passage block insertion in fallback
-                const shuffledBlockKeys = Object.keys(fallbackPassageBlocks).sort(() => Math.random() - 0.5);
-                for (const key of shuffledBlockKeys) {
-                  const block = fallbackPassageBlocks[key];
-                  block.sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
-                  const unusedInBlock = block.filter(q => !usedQuestionIds.has(q.id));
-                  if (unusedInBlock.length === 0) continue;
-                  // Skip if adding this block would exceed remaining needed capacity (unless section is empty)
-                  if (questionIds.length > 0 && questionIds.length + unusedInBlock.length > neededCount) continue;
-                  for (const q of unusedInBlock) {
-                    questionIds.push(q.id);
-                    usedQuestionIds.add(q.id);
-                  }
-                  if (questionIds.length >= neededCount) break;
-                }
-
-                // Fill remaining capacity with standalone (non-passage) questions
-                if (questionIds.length < neededCount) {
-                  const shuffledNonPassage = fallbackNonPassage.sort(() => Math.random() - 0.5);
-                  for (const q of shuffledNonPassage) {
-                    if (!usedQuestionIds.has(q.id)) {
-                      questionIds.push(q.id);
-                      usedQuestionIds.add(q.id);
-                      if (questionIds.length >= neededCount) break;
-                    }
-                  }
-                }
-              } else {
-                const fallbackShuffled = [...fallbackQ].sort(() => Math.random() - 0.5);
-                for (const f of fallbackShuffled) {
-                  if (!usedQuestionIds.has(f.id)) {
-                    questionIds.push(f.id);
-                    usedQuestionIds.add(f.id);
-                    if (questionIds.length >= neededCount) break;
-                  }
-                }
-              }
-            }
-          }
-
-          // Multi-tier Fallback: Pull from dataStore local topic questions bank if Supabase yields fewer than needed
-          if (questionIds.length < neededCount) {
-            try {
-              const allLocalQ = dataStore.getTopicQuestions();
-              const allowedSet = allowedTopicIds.length > 0 ? new Set(allowedTopicIds) : null;
-              let matchingLocal = allowedSet
-                ? allLocalQ.filter(q => allowedSet.has(q.topicId) || allowedSet.has(resolveTopicSlug(q.topicId, q.topicId)))
-                : allLocalQ;
-
-              if (matchingLocal.length > 0) {
-                const shuffledLocal = [...matchingLocal].sort(() => Math.random() - 0.5);
-                for (const lq of shuffledLocal) {
-                  if (lq.id && !usedQuestionIds.has(lq.id)) {
-                    questionIds.push(lq.id);
-                    usedQuestionIds.add(lq.id);
-                    if (questionIds.length >= neededCount) break;
-                  }
-                }
-              }
-            } catch (localErr) {
-              console.warn('Notice pulling fallback questions from dataStore for section:', sec.name, localErr);
-            }
-          }
-        } catch (e) {
-          console.warn('Notice pulling questions from Supabase for section:', sec.name, e);
-        }
-      }
-
+      const pooled = await poolQuestionsForExamSection(sec, poolTargetCount, usedQuestionIds, serveCount);
+      const questionIds = pooled.questionIds;
       const actualServeCount = Math.min(serveCount, questionIds.length);
       sections.push({
         id: `sec-${examId}-${idx + 1}`,
         mock_exam_id: examId,
         name: sec.name,
         section_order: idx + 1,
-        section_type: isCodingSection ? 'CODING' : isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ',
+        section_type: pooled.isCodingSection ? 'CODING' : pooled.isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ',
         category: sec.category,
         coding_track: sec.coding_track,
         difficulty: (sec.difficulty as 'ALL' | 'EASY' | 'MEDIUM' | 'HARD' | undefined) || undefined,
@@ -5723,7 +5345,6 @@ export const tpoService = {
       }
     }
 
-
     // Dynamically calculate exact total marks from served questions across all sections
     // Evaluates strictly against candidate served count (e.g. 20 served marks, NOT 40 pooled marks)
     const actualTotalMarks = sections.reduce((sum, s) => {
@@ -5733,7 +5354,7 @@ export const tpoService = {
     }, 0);
     const finalTotalMarks = actualTotalMarks > 0 ? actualTotalMarks : examData.total_marks;
 
-    const newLocalExam: MockExam = {
+    const cleanLocalExam: MockExam = {
       id: examId,
       college_id: examData.college_id,
       title: examData.title,
@@ -5745,7 +5366,7 @@ export const tpoService = {
       passing_percentage: examData.passing_percentage,
       start_time: examData.start_time,
       end_time: examData.end_time,
-      is_active: examData.is_active,
+      is_active: examData.is_active ?? true,
       enable_tab_switch_detection: examData.enable_tab_switch_detection,
       max_tab_switches_allowed: examData.max_tab_switches_allowed,
       enable_fullscreen_lock: examData.enable_fullscreen_lock ?? true,
@@ -5754,7 +5375,8 @@ export const tpoService = {
       show_results_immediately: examData.show_results_immediately ?? true,
       enable_sectional_lock: Boolean(examData.enable_sectional_lock),
       enable_passcode_lock: Boolean(examData.enable_passcode_lock),
-      access_passcode: examData.access_passcode ? examData.access_passcode.trim().toUpperCase() : undefined,
+      access_passcode: undefined,
+      access_passcode_hash: undefined,
       target_departments: examData.target_departments || [],
       target_batches: examData.target_batches || [],
       target_batch_year: examData.target_batch_year || undefined,
@@ -5763,60 +5385,114 @@ export const tpoService = {
       created_at: new Date().toISOString(),
     };
 
-    // 1. Save locally immediately
-    const currentLocal = getLocalExams(examData.college_id);
-    currentLocal.unshift(newLocalExam);
-    saveLocalExams(examData.college_id, currentLocal);
+    const rawPasscodeForApi = examData.enable_passcode_lock && examData.access_passcode
+      ? examData.access_passcode.trim().toUpperCase()
+      : undefined;
 
-    // 2. Serverless API sync
+    // 1. Authoritative server exam creation & quota/authorization validation
+    let persistedViaApi = false;
+    let savedExamResult: MockExam = cleanLocalExam;
     try {
       const authHeaders = await getAuthHeaders();
-      await fetch('/api/campus-exams', {
+      const apiRes = await fetch('/api/campus-exams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...authHeaders,
         },
-        body: JSON.stringify({ exam: newLocalExam }),
+        body: JSON.stringify({
+          action: 'create-exam',
+          exam: {
+            ...cleanLocalExam,
+            ...(rawPasscodeForApi ? { access_passcode: rawPasscodeForApi } : {}),
+          },
+          sections,
+        }),
       });
-    } catch {}
-
-    // 3. Attempt Supabase mock_exams and mock_exam_sections table insert
-    // Pack target_batches, sectional lock, lab passcode, and section serve counts into instructions metadata for universal multi-device persistence
-    const sectionalLockMeta = examData.enable_sectional_lock ? `<!--SECTIONAL_LOCK-->\n` : '';
-    const passcodeMeta = examData.enable_passcode_lock && examData.access_passcode
-      ? `<!--PASSCODE:${examData.access_passcode.trim().toUpperCase()}-->\n`
-      : '';
-    const audienceMeta = examData.target_batches && examData.target_batches.length > 0
-      ? `<!--AUDIENCE:${JSON.stringify({ target_batches: examData.target_batches })}-->\n`
-      : '';
-    const serveCountMap: Record<string, number> = {};
-    sections.forEach(s => {
-      const sc = s.serve_count || s.question_count;
-      if (sc) {
-        serveCountMap[s.name] = sc;
-        if (s.id) serveCountMap[s.id] = sc;
+      const apiJson = await apiRes.json().catch(() => null);
+      if (apiRes.status >= 400 && apiRes.status < 500 && apiRes.status !== 404) {
+        throw new Error(apiJson?.error || `Exam creation rejected (${apiRes.status})`);
       }
-    });
-    const serveCountMeta = Object.keys(serveCountMap).length > 0
-      ? `<!--SECTION_SERVE_COUNTS:${JSON.stringify(serveCountMap)}-->\n`
-      : '';
-    const instructionsToSave = `${sectionalLockMeta}${passcodeMeta}${audienceMeta}${serveCountMeta}${examData.instructions || ''}`;
+      if (apiRes.ok && apiJson?.exam) {
+        persistedViaApi = true;
+        savedExamResult = {
+          ...cleanLocalExam,
+          ...apiJson.exam,
+          access_passcode: undefined,
+          access_passcode_hash: undefined,
+          sections: Array.isArray(apiJson.exam.sections) && apiJson.exam.sections.length > 0 ? apiJson.exam.sections : sections,
+        };
+      }
+    } catch (apiErr: any) {
+      if (apiErr?.message && !String(apiErr.message).includes('fetch') && !String(apiErr.message).includes('NetworkError')) {
+        throw apiErr;
+      }
+    }
 
-    let canonicalCollegeId = examData.college_id;
-    if (examData.college_id !== 'PUBLIC' && examData.college_id !== 'SELF') {
+    let canonicalCollegeId = savedExamResult.college_id || examData.college_id;
+    if (canonicalCollegeId !== 'PUBLIC' && canonicalCollegeId !== 'SELF') {
       try {
-        const col = await this.getCollegeDetails(examData.college_id);
-        if (col?.id) {
-          canonicalCollegeId = col.id;
-        }
+        const col = await this.getCollegeDetails(canonicalCollegeId);
+        if (col?.id) canonicalCollegeId = col.id;
       } catch {}
     }
 
-    try {
-      const { data: newExam, error: examErr } = await supabase
-        .from('mock_exams')
-        .upsert([{
+    if (!persistedViaApi) {
+      const sectionalLockMeta = examData.enable_sectional_lock ? `<!--SECTIONAL_LOCK-->\n` : '';
+      const audienceMeta = examData.target_batches && examData.target_batches.length > 0
+        ? `<!--AUDIENCE:${JSON.stringify({ target_batches: examData.target_batches })}-->\n`
+        : '';
+      const serveCountMap: Record<string, number> = {};
+      sections.forEach(s => {
+        const sc = s.serve_count || s.question_count;
+        if (sc) {
+          serveCountMap[s.name] = sc;
+          if (s.id) serveCountMap[s.id] = sc;
+        }
+      });
+      const serveCountMeta = Object.keys(serveCountMap).length > 0
+        ? `<!--SECTION_SERVE_COUNTS:${JSON.stringify(serveCountMap)}-->\n`
+        : '';
+      // Never embed plaintext <!--PASSCODE:...--> into instructions metadata
+      const instructionsToSave = `${sectionalLockMeta}${audienceMeta}${serveCountMeta}${examData.instructions || ''}`;
+
+      let persistedViaRpc = false;
+      if (canonicalCollegeId === 'SELF') {
+        try {
+          const { error: rpcErr } = await supabase.rpc('create_self_practice_mock_exam', {
+            p_exam: {
+              ...cleanLocalExam,
+              instructions: instructionsToSave,
+            },
+            p_sections: sections,
+          });
+          if (!rpcErr) {
+            persistedViaRpc = true;
+          } else if (
+            rpcErr.message &&
+            (rpcErr.message.includes('Quota') || rpcErr.message.includes('subscription') || rpcErr.message.includes('limit'))
+          ) {
+            throw new Error(rpcErr.message);
+          }
+        } catch (rpcErr: any) {
+          if (
+            rpcErr?.message &&
+            (rpcErr.message.includes('Quota') || rpcErr.message.includes('subscription') || rpcErr.message.includes('limit'))
+          ) {
+            throw rpcErr;
+          }
+        }
+      }
+
+      if (!persistedViaRpc) {
+        if (canonicalCollegeId === 'SELF') {
+          const { data: { user: authUser } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+          if (authUser?.email) {
+            await mockExamSubscriptionService.consumeQuotaBeforeExamGeneration(authUser.email, examId);
+          }
+        }
+
+        const baseExamRow = {
           id: examId,
           college_id: canonicalCollegeId,
           title: examData.title,
@@ -5836,27 +5512,26 @@ export const tpoService = {
           shuffle_questions: examData.shuffle_questions !== false,
           shuffle_options: examData.shuffle_options !== false,
           show_results_immediately: examData.show_results_immediately ?? true,
-          enable_passcode_lock: Boolean(examData.enable_passcode_lock),
-          access_passcode: examData.access_passcode ? examData.access_passcode.trim().toUpperCase() : null,
           target_departments: examData.target_departments || [],
           target_batch_year: examData.target_batch_year || null,
-        }])
-        .select()
-        .single();
+        };
+        const extendedExamRow = {
+          ...baseExamRow,
+          enable_passcode_lock: Boolean(examData.enable_passcode_lock),
+          ...(rawPasscodeForApi ? { access_passcode_hash: await sha256Text(rawPasscodeForApi) } : {}),
+        };
 
-      if (examErr) {
-        console.error('[createMockExam] Supabase insert error:', examErr);
-      }
+        let { error: examErr } = await supabase.from('mock_exams').upsert([extendedExamRow]).select().single();
+        if (examErr) {
+          ({ error: examErr } = await supabase.from('mock_exams').upsert([baseExamRow]).select().single());
+        }
 
-      if (!examErr && newExam) {
-        if (sections.length > 0) {
-          const secRows = sections.map(s => ({
+        if (!examErr && sections.length > 0) {
+          const extendedSecRows = sections.map(s => ({
             id: s.id,
             mock_exam_id: examId,
             name: s.name,
             section_order: s.section_order,
-            // F14 Fix: persist all routing/classification fields so cross-device reads
-            // don't lose section type, domain, track, and difficulty.
             section_type: s.section_type ?? null,
             category: s.category ?? null,
             coding_track: s.coding_track ?? null,
@@ -5867,32 +5542,34 @@ export const tpoService = {
             question_ids: s.question_ids,
             topic_ids: s.topic_ids,
           }));
-          const { error: secErr } = await supabase.from('mock_exam_sections').upsert(secRows);
+          let { error: secErr } = await supabase.from('mock_exam_sections').upsert(extendedSecRows);
           if (secErr) {
-            console.warn('[createMockExam] Section persistence warning:', secErr.message);
+            const coreSecRows = sections.map(s => ({
+              id: s.id,
+              mock_exam_id: examId,
+              name: s.name,
+              section_order: s.section_order,
+              duration_minutes: s.duration_minutes || null,
+              marks_per_correct: s.marks_per_correct,
+              negative_marking: s.negative_marking,
+              question_ids: s.question_ids,
+              topic_ids: s.topic_ids,
+            }));
+            await supabase.from('mock_exam_sections').upsert(coreSecRows);
           }
         }
       }
-
-      // Cross-device cloud sync backup to contact_messages
-      try {
-        await supabase.from('contact_messages').insert({
-          name: `Campus Exam: ${examData.title}`,
-          email: 'system-exam-backup@prepunite.internal',
-          subject: `B2B_EXAM:${canonicalCollegeId}:${examId}`,
-          message: JSON.stringify(newLocalExam),
-          status: 'ACTIVE',
-        });
-      } catch {}
-    } catch (err: any) {
-      console.warn('Notice inserting mock exam in Supabase:', err);
     }
 
+    // Cache locally without any plaintext passcode
+    const currentLocal = getLocalExams(examData.college_id);
+    currentLocal.unshift(savedExamResult);
+    saveLocalExams(examData.college_id, currentLocal);
     if (canonicalCollegeId !== examData.college_id) {
-      saveLocalExams(canonicalCollegeId, [newLocalExam, ...getLocalExams(canonicalCollegeId).filter(e => e.id !== examId)]);
+      saveLocalExams(canonicalCollegeId, [savedExamResult, ...getLocalExams(canonicalCollegeId).filter(e => e.id !== examId)]);
     }
 
-    return newLocalExam;
+    return savedExamResult;
   },
 
   async syncLocalExamToSupabase(exam: MockExam): Promise<boolean> {
@@ -5910,7 +5587,9 @@ export const tpoService = {
         title: exam.title,
         target_company: exam.target_company,
         description: exam.description,
-        instructions: exam.instructions,
+        instructions: typeof exam.instructions === 'string'
+          ? exam.instructions.replace(/<!--PASSCODE:.*?-->\r?\n?/gi, '')
+          : exam.instructions,
         duration_minutes: exam.duration_minutes,
         total_marks: exam.total_marks,
         passing_percentage: exam.passing_percentage,
@@ -5924,11 +5603,8 @@ export const tpoService = {
         shuffle_questions: exam.shuffle_questions !== false,
         shuffle_options: exam.shuffle_options !== false,
         show_results_immediately: exam.show_results_immediately ?? true,
-        enable_passcode_lock: Boolean(exam.enable_passcode_lock),
-        access_passcode: exam.access_passcode ? exam.access_passcode.trim().toUpperCase() : null,
         target_departments: exam.target_departments || [],
         target_batch_year: exam.target_batch_year || null,
-        target_batches: exam.target_batches || [],
       }]);
 
       if (examErr) {
@@ -5953,7 +5629,18 @@ export const tpoService = {
         }));
         const { error: secErr } = await supabase.from('mock_exam_sections').upsert(secRows);
         if (secErr) {
-          console.warn('[syncLocalExamToSupabase] mock_exam_sections upsert warning:', secErr.message);
+          const coreSecRows = exam.sections.map((s, idx) => ({
+            id: s.id || `sec-${exam.id}-${idx}`,
+            mock_exam_id: exam.id,
+            name: s.name,
+            section_order: s.section_order ?? idx,
+            duration_minutes: s.duration_minutes || null,
+            marks_per_correct: s.marks_per_correct || 1,
+            negative_marking: s.negative_marking || 0,
+            question_ids: s.question_ids || [],
+            topic_ids: s.topic_ids || [],
+          }));
+          await supabase.from('mock_exam_sections').upsert(coreSecRows);
         }
       }
 
@@ -6106,21 +5793,32 @@ export const tpoService = {
   },
 
   async concludeMockExam(examId: string, collegeId?: string): Promise<boolean> {
-    const nowIso = new Date().toISOString();
+    const nowIso = getServerDate().toISOString();
     if (collegeId) {
       const local = getLocalExams(collegeId);
       const updated = local.map(e => (e.id === examId ? { ...e, end_time: nowIso } : e));
       saveLocalExams(collegeId, updated);
     }
 
+    let apiUpdated = false;
     try {
-      let q = supabase.from('mock_exams').update({ end_time: nowIso }).eq('id', examId);
-      if (collegeId) {
-        q = q.eq('college_id', collegeId);
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ action: 'update-schedule', examId, endTime: nowIso }),
+      });
+      if (res.ok) apiUpdated = true;
+    } catch {}
+
+    if (!apiUpdated) {
+      try {
+        let q = supabase.from('mock_exams').update({ end_time: nowIso }).eq('id', examId);
+        if (collegeId) q = q.eq('college_id', collegeId);
+        await q;
+      } catch (err) {
+        console.warn('Notice concluding mock exam in Supabase:', err);
       }
-      await q;
-    } catch (err) {
-      console.warn('Notice concluding mock exam in Supabase:', err);
     }
 
     if (typeof window !== 'undefined') {
@@ -6136,14 +5834,25 @@ export const tpoService = {
       saveLocalExams(collegeId, updated);
     }
 
+    let apiUpdated = false;
     try {
-      let q = supabase.from('mock_exams').update({ end_time: newEndTimeIso }).eq('id', examId);
-      if (collegeId) {
-        q = q.eq('college_id', collegeId);
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ action: 'update-schedule', examId, endTime: newEndTimeIso }),
+      });
+      if (res.ok) apiUpdated = true;
+    } catch {}
+
+    if (!apiUpdated) {
+      try {
+        let q = supabase.from('mock_exams').update({ end_time: newEndTimeIso }).eq('id', examId);
+        if (collegeId) q = q.eq('college_id', collegeId);
+        await q;
+      } catch (err) {
+        console.warn('Notice extending mock exam window in Supabase:', err);
       }
-      await q;
-    } catch (err) {
-      console.warn('Notice extending mock exam window in Supabase:', err);
     }
 
     if (typeof window !== 'undefined') {
@@ -6162,50 +5871,54 @@ export const tpoService = {
     if (collegeId) {
       const local = getLocalExams(collegeId);
       const updated = local.map(e =>
-        e.id === examId
-          ? { ...e, enable_passcode_lock: enabled, access_passcode: cleanPasscode }
-          : e
+        e.id === examId ? { ...e, enable_passcode_lock: enabled } : e
       );
       saveLocalExams(collegeId, updated);
     }
 
     try {
-      await supabase
-        .from('mock_exams')
-        .update({
-          enable_passcode_lock: enabled,
-          access_passcode: cleanPasscode,
-        })
-        .eq('id', examId);
-    } catch (err) {
-      console.warn('Notice updating exam passcode in Supabase:', err);
-    }
-
-    try {
-      const { data: currentExam } = await supabase
-        .from('mock_exams')
-        .select('instructions')
-        .eq('id', examId)
-        .maybeSingle();
-
-      if (currentExam) {
-        let cleanInstructions = (currentExam.instructions || '').replace(/<!--PASSCODE:.*?-->\n?/, '');
-        if (enabled && cleanPasscode) {
-          cleanInstructions = `<!--PASSCODE:${cleanPasscode}-->\n${cleanInstructions}`;
-        }
-        await supabase
-          .from('mock_exams')
-          .update({ instructions: cleanInstructions })
-          .eq('id', examId);
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          action: 'update-passcode',
+          examId,
+          enablePasscodeLock: enabled,
+          passcode: cleanPasscode,
+        }),
+      });
+      if (res.ok) {
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('prepunite-storage-update'));
+        return true;
       }
-    } catch (metaErr) {
-      console.warn('Notice updating exam passcode metadata in instructions:', metaErr);
+    } catch (err) {
+      console.warn('Notice updating exam passcode via API:', err);
     }
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('prepunite-storage-update'));
     }
-    return true;
+    return false;
+  },
+
+  async verifyExamPasscode(examId: string, passcode: string): Promise<{ valid: boolean; locked: boolean; error?: string }> {
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ action: 'verify-passcode', examId, passcode: passcode.trim().toUpperCase() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        return { valid: Boolean(json.valid), locked: Boolean(json.locked) };
+      }
+      if (res.status === 403) {
+        return { valid: false, locked: true, error: json?.error || 'Incorrect lab access PIN.' };
+      }
+    } catch {}
+    return { valid: false, locked: true, error: 'Unable to verify passcode on server.' };
   },
 
   async syncOfflineAttempts(): Promise<number> {
@@ -6499,59 +6212,35 @@ export const tpoService = {
   // 4. STUDENT TEST-TAKING & PROCTORING ENGINE
   // ==========================================
 
-  async getQuestionsForExam(questionIds: string[]): Promise<any[]> {
+  async getQuestionsForExam(questionIds: string[], examId?: string): Promise<any[]> {
     if (!questionIds || questionIds.length === 0) return [];
 
     let rawQuestions: any[] = [];
 
-    // 1. Direct query from topic_questions
-    try {
-      const { data, error } = await supabase
-        .from('topic_questions')
-        .select('id, statement, options, difficulty, topic_id, question_number, structured_explanation')
-        .in('id', questionIds);
-
-      if (!error && data && data.length > 0) {
-        // 🛡️ Security Sanitization: Strip finalAnswer, steps, and solution formulas during active test
-        rawQuestions = data.map(q => {
-          let sanitizedExplanation: any = undefined;
-          if (q.structured_explanation) {
-            let se = q.structured_explanation;
-            if (typeof se === 'string') {
-              try { se = JSON.parse(se); } catch {}
-            }
-            // Retain passage and passageTitle so reading comprehension / DI charts render perfectly
-            if (se && (se.passage || se.passageTitle)) {
-              sanitizedExplanation = {
-                passage: se.passage,
-                passageTitle: se.passageTitle,
-              };
-            }
-          }
-          return {
-            id: q.id,
-            statement: q.statement,
-            options: q.options,
-            difficulty: q.difficulty,
-            topic_id: q.topic_id,
-            question_number: q.question_number,
-            passage: sanitizedExplanation?.passage || null,
-            passageTitle: sanitizedExplanation?.passageTitle || null,
-            structured_explanation: sanitizedExplanation,
-          };
+    // 1. Authoritative zero-leak exam question API endpoint
+    if (examId) {
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch(`/api/campus-exams?action=exam-questions&examId=${encodeURIComponent(examId)}`, {
+          headers: authHeaders,
         });
-      }
-    } catch (error) {
-      console.error('Error fetching questions from Supabase:', error);
+        if (res.ok) {
+          const json = await res.json();
+          if (typeof json.serverNowMs === 'number') setServerNowMs(json.serverNowMs);
+          if (Array.isArray(json.questions) && json.questions.length > 0) {
+            rawQuestions = json.questions;
+          }
+        }
+      } catch {}
     }
 
-    // Fallback to secure RPC if direct query yielded nothing
+    // 2. Hardened non-answer RPC (never leaks correct_answer, solutions, or hidden test cases)
     if (rawQuestions.length === 0) {
       try {
         const { data, error } = await supabase.rpc('get_safe_mock_exam_questions', {
           p_question_ids: questionIds,
         });
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data) && data.length > 0) {
           rawQuestions = data;
         }
       } catch (rpcErr) {
@@ -6559,7 +6248,48 @@ export const tpoService = {
       }
     }
 
-    // 1b. Check if any question IDs are coding problems from technical_problems
+    // 3. Direct column-safe fallback (pre-migration / admin only, never selects correct_answer/solutions)
+    if (rawQuestions.length === 0) {
+      try {
+        const { data, error } = await supabase
+          .from('topic_questions')
+          .select('id, statement, options, difficulty, topic_id, question_number, structured_explanation')
+          .in('id', questionIds);
+
+        if (!error && data && data.length > 0) {
+          rawQuestions = data.map(q => {
+            let sanitizedExplanation: any = undefined;
+            if (q.structured_explanation) {
+              let se = q.structured_explanation;
+              if (typeof se === 'string') {
+                try { se = JSON.parse(se); } catch {}
+              }
+              if (se && (se.passage || se.passageTitle)) {
+                sanitizedExplanation = {
+                  passage: se.passage,
+                  passageTitle: se.passageTitle,
+                };
+              }
+            }
+            return {
+              id: q.id,
+              statement: q.statement,
+              options: q.options,
+              difficulty: q.difficulty,
+              topic_id: q.topic_id,
+              question_number: q.question_number,
+              passage: sanitizedExplanation?.passage || null,
+              passageTitle: sanitizedExplanation?.passageTitle || null,
+              structured_explanation: sanitizedExplanation,
+            };
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching questions from Supabase:', error);
+      }
+    }
+
+    // 1b. Coding problems fallback (strips explanation/solutions & hidden test cases)
     let foundIds = new Set(rawQuestions.map(q => q.id));
     let missingIds = questionIds.filter(id => !foundIds.has(id));
 
@@ -6567,20 +6297,19 @@ export const tpoService = {
       try {
         const { data: codingData } = await supabase
           .from('technical_problems')
-          .select('id, title, description, constraints, sample_input, sample_output, explanation, test_cases, level, category')
+          .select('id, title, description, constraints, sample_input, sample_output, sample_cases, test_cases, level, category')
           .in('id', missingIds);
 
         if (codingData && codingData.length > 0) {
-          codingData.forEach(p => {
-            // Safely parse test_cases if it arrives as a stringified JSON array
-            let parsedTc = p.test_cases;
+          codingData.forEach((p: any) => {
+            let parsedTc = Array.isArray(p.sample_cases) && p.sample_cases.length > 0 ? p.sample_cases : p.test_cases;
             if (typeof parsedTc === 'string' && parsedTc.trim().startsWith('[')) {
               try { parsedTc = JSON.parse(parsedTc); } catch {}
             }
-            // 🛡️ Security Sanitization & Full Placement Exam Spec Enrichment
+            const visibleOnly = Array.isArray(parsedTc) ? parsedTc.filter((tc: any) => !tc?.is_hidden) : [];
             const enriched = enrichCodingProblemForExam({
               ...p,
-              test_cases: parsedTc,
+              test_cases: visibleOnly,
             });
             rawQuestions.push({
               id: enriched.id,
@@ -6593,8 +6322,8 @@ export const tpoService = {
               constraints: enriched.constraints,
               sample_input: enriched.sample_input,
               sample_output: enriched.sample_output,
-              test_cases: enriched.test_cases || enriched.testCases || [],
-              testCases: enriched.test_cases || enriched.testCases || [],
+              test_cases: visibleOnly,
+              testCases: visibleOnly,
               isCodingProblem: true,
             });
           });
@@ -6934,61 +6663,13 @@ export const tpoService = {
     mockExamId: string,
     studentId: string,
     collegeId: string,
-    email?: string
+    email?: string,
+    passcode?: string
   ): Promise<StudentExamAttempt> {
     const cleanStudentId = (studentId || '').trim().toLowerCase();
-    const studentEmail = email || (cleanStudentId.includes('@') ? cleanStudentId : undefined);
+    const studentEmail = (email || (cleanStudentId.includes('@') ? cleanStudentId : '')).trim().toLowerCase() || undefined;
 
-    // 1. Check local attempts first
-    const localAttempts = getLocalAttempts(mockExamId);
-    const existingLocal = localAttempts.find(
-      a => a.student_id === studentId || a.student_id?.toLowerCase() === cleanStudentId
-    );
-    if (existingLocal) {
-      return existingLocal;
-    }
-
-    // 2. Check Supabase
-    try {
-      const { data: existing } = await supabase
-        .from('student_exam_attempts')
-        .select('*')
-        .eq('mock_exam_id', mockExamId)
-        .or(`student_id.eq.${studentId},student_id.eq.${cleanStudentId}`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (existing) {
-        saveLocalAttempt(existing);
-        return existing;
-      }
-    } catch {}
-
-    // Deterministic attempt ID per student per exam prevents multi-tab race conditions
-    const candidateKey = cleanStudentId ? cleanStudentId.replace(/[^a-zA-Z0-9_-]/g, '_') : `anon_${Date.now().toString(36)}`;
-    const newAttemptId = `att-${mockExamId}-${candidateKey}`;
-    const newAttempt: StudentExamAttempt = {
-      id: newAttemptId,
-      mock_exam_id: mockExamId,
-      student_id: cleanStudentId || studentId || 'anonymous-candidate',
-      student_email: studentEmail,
-      college_id: collegeId,
-      status: 'IN_PROGRESS',
-      started_at: new Date().toISOString(),
-      time_spent_seconds: 0,
-      tab_switch_count: 0,
-      proctor_events: [],
-      responses: {},
-      total_score: 0,
-      max_possible_score: 0,
-      percentage: 0,
-      passed: false,
-    };
-
-    saveLocalAttempt(newAttempt);
-
-    // 1. Serverless API persistence guarantee (service-role upsert in Supabase)
+    // 1. Authoritative server exam initialization & resumption (enforces window, eligibility, passcode & server clock)
     try {
       const authHeaders = await getAuthHeaders();
       const res = await fetch('/api/campus-exams', {
@@ -6999,49 +6680,51 @@ export const tpoService = {
         },
         body: JSON.stringify({
           action: 'start-attempt',
-          attempt: newAttempt,
+          examId: mockExamId,
+          passcode: passcode ? passcode.trim().toUpperCase() : undefined,
         }),
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.attempt) {
-          saveLocalAttempt(json.attempt);
-          return json.attempt;
-        }
+      const json = await res.json().catch(() => ({}));
+      if (typeof json.serverNowMs === 'number') {
+        setServerNowMs(json.serverNowMs);
       }
-    } catch (apiErr) {
-      console.warn('Notice starting attempt via /api/campus-exams:', apiErr);
+      if (!res.ok) {
+        throw new Error(json?.error || `Exam launch rejected (${res.status}).`);
+      }
+      if (json.attempt) {
+        saveLocalAttempt(json.attempt);
+        return json.attempt;
+      }
+    } catch (apiErr: any) {
+      // Rethrow authorization, passcode, or schedule rejections immediately; only fall back to RPC if /api unavailable
+      const msg = String(apiErr?.message || '');
+      if (
+        msg.includes('Forbidden') ||
+        msg.includes('Passcode') ||
+        msg.includes('window') ||
+        msg.includes('concluded') ||
+        msg.includes('rejected') ||
+        msg.includes('Authentication')
+      ) {
+        throw apiErr;
+      }
     }
 
-    // 2. Client-side fallback insert in Supabase
-    try {
-      const { data } = await supabase
-        .from('student_exam_attempts')
-        .insert([{
-          id: newAttemptId,
-          mock_exam_id: mockExamId,
-          student_id: cleanStudentId || studentId,
-          student_email: studentEmail,
-          college_id: collegeId || 'unknown_college',
-          status: 'IN_PROGRESS',
-          started_at: newAttempt.started_at,
-          time_spent_seconds: 0,
-          total_score: 0,
-          tab_switch_count: 0,
-          proctor_events: [],
-          responses: {},
-        }])
-        .select()
-        .single();
-      if (data) {
-        saveLocalAttempt(data);
-        return data;
-      }
-    } catch (insertErr) {
-      console.warn('Notice creating attempt in Supabase:', insertErr);
+    // 2. Hardened Postgres RPC fallback (when /api serverless proxy is absent in local dev)
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('start_mock_exam_attempt', {
+      p_exam_id: mockExamId,
+      p_passcode: passcode ? passcode.trim().toUpperCase() : null,
+    });
+    if (rpcErr) {
+      throw new Error(rpcErr.message || 'Unable to start exam session.');
+    }
+    if (rpcData) {
+      await syncServerClock(supabase);
+      saveLocalAttempt(rpcData as StudentExamAttempt);
+      return rpcData as StudentExamAttempt;
     }
 
-    return newAttempt;
+    throw new Error('Server unreachable to start examination.');
   },
 
   async syncAttemptProgress(
@@ -7052,17 +6735,28 @@ export const tpoService = {
       tabSwitchCount: number;
       proctorEvents: ProctorEvent[];
     }
-  ): Promise<void> {
-    const local = getLocalAttempts();
+  ): Promise<{
+    serverNowMs?: number;
+    serverDeadlineMs?: number;
+    remainingSeconds?: number;
+    expired?: boolean;
+    terminated?: boolean;
+  } | void> {
+    const cleanResponses: Record<string, StudentExamResponse> = {};
+    for (const [k, v] of Object.entries(payload.responses || {})) {
+      if (!k.startsWith('__')) cleanResponses[k] = v;
+    }
+
+    const local = getLocalAttempts(undefined);
     const idx = local.findIndex(a => a.id === attemptId);
     if (idx !== -1) {
       local[idx] = {
         ...local[idx],
-        responses: payload.responses,
+        responses: cleanResponses,
         time_spent_seconds: payload.timeSpentSeconds,
         tab_switch_count: payload.tabSwitchCount,
         proctor_events: payload.proctorEvents,
-        updated_at: new Date().toISOString(),
+        updated_at: getServerDate().toISOString(),
       };
       try {
         localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(local));
@@ -7070,14 +6764,34 @@ export const tpoService = {
     }
 
     try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/campus-exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          action: 'heartbeat',
+          attemptId,
+          responses: cleanResponses,
+          tabSwitchCount: payload.tabSwitchCount,
+          proctorEvents: payload.proctorEvents,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (typeof json.serverNowMs === 'number') setServerNowMs(json.serverNowMs);
+        return json;
+      }
+    } catch {}
+
+    try {
       await supabase
         .from('student_exam_attempts')
         .update({
-          responses: payload.responses,
+          responses: cleanResponses,
           time_spent_seconds: payload.timeSpentSeconds,
           tab_switch_count: payload.tabSwitchCount,
           proctor_events: payload.proctorEvents,
-          updated_at: new Date().toISOString(),
+          updated_at: getServerDate().toISOString(),
         })
         .eq('id', attemptId)
         .eq('status', 'IN_PROGRESS');
@@ -7348,299 +7062,23 @@ export const tpoService = {
     tabSwitchCount: number,
     statusOverride?: 'SUBMITTED' | 'TERMINATED_MALPRACTICE' | 'TIMED_OUT'
   ): Promise<StudentExamAttempt> {
-    const existingAttempt = getLocalAttempts().find(a => a.id === attemptId);
-    const startedAt = existingAttempt?.started_at || new Date(Date.now() - timeSpentSeconds * 1000).toISOString();
-    const studentId = existingAttempt?.student_id || '';
-
-    // Calculate strict wall-clock elapsed time to prevent client-side timer manipulation
-    const startedAtMs = new Date(startedAt).getTime();
-    const wallClockElapsedSeconds = Number.isFinite(startedAtMs) && startedAtMs > 0
-      ? Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000))
-      : timeSpentSeconds;
-
-    // True elapsed time: cannot be forged lower than wall-clock elapsed time
-    const effectiveTimeSpent = Math.max(timeSpentSeconds, wallClockElapsedSeconds);
-
-    // Exam duration enforcement: max allowed duration + 60s grace for submission network latency
-    const allowedDurationSeconds = (exam.duration_minutes || 90) * 60;
-    const gracePeriodSeconds = 60;
-    let effectiveStatusOverride = statusOverride;
-
-    if (
-      effectiveStatusOverride !== 'TERMINATED_MALPRACTICE' &&
-      wallClockElapsedSeconds > allowedDurationSeconds + gracePeriodSeconds
-    ) {
-      console.warn(
-        `[submitAttempt] Wall-clock time (${wallClockElapsedSeconds}s) exceeded allowed duration (${allowedDurationSeconds}s). Enforcing TIMED_OUT.`
-      );
-      effectiveStatusOverride = 'TIMED_OUT';
+    // Strip untrusted client meta & raw test counts before sending to server grading endpoint
+    const sanitizedResponses: Record<string, StudentExamResponse> = {};
+    for (const [qId, resp] of Object.entries(responses || {})) {
+      if (qId.startsWith('__') || !resp) continue;
+      sanitizedResponses[qId] = {
+        selected_option: resp.selected_option ?? null,
+        selected_label: resp.selected_label,
+        selected_text: resp.selected_text,
+        code_solution: resp.code_solution,
+        code_language: resp.code_language,
+        verdictToken: resp.verdictToken,
+        time_spent_sec: Number(resp.time_spent_sec || 0),
+        marked_review: Boolean(resp.marked_review),
+      };
     }
 
-    // Fetch question solutions for grading across all types (Aptitude MCQs, Technical MCQs, Seeds)
-    const allQuestionIds = (exam.sections || []).flatMap(s => s.question_ids);
-    let solutionMap: Record<string, number> = {};
-
-    // 1. Fetch Aptitude MCQ solutions
-    // NOTE: topic_questions.correct_answer is stored as a letter ('A','B','C','D').
-    // We must convert to a 0-based numeric index before storing in solutionMap.
-    try {
-      const { data: questionsWithSolutions } = await supabase
-        .from('topic_questions')
-        .select('id, correct_answer')
-        .in('id', allQuestionIds);
-
-      (questionsWithSolutions || []).forEach(q => {
-        if (q.correct_answer !== undefined && q.correct_answer !== null) {
-          const raw = String(q.correct_answer).trim().toUpperCase();
-          if (/^[A-Z]$/.test(raw)) {
-            // Letter key (e.g. 'A' → 0, 'B' → 1, 'C' → 2, 'D' → 3)
-            solutionMap[q.id] = raw.charCodeAt(0) - 65;
-          } else if (/^\d+$/.test(raw)) {
-            solutionMap[q.id] = parseInt(raw, 10);
-          }
-        }
-      });
-    } catch {}
-
-    // 2. Fetch Technical MCQ solutions from technical_mcqs table
-    const missingForSolution = allQuestionIds.filter(id => solutionMap[id] === undefined);
-    if (missingForSolution.length > 0) {
-      try {
-        const { data: techSolutions } = await supabase
-          .from('technical_mcqs')
-          .select('id, correct_option_index')
-          .in('id', missingForSolution);
-
-        (techSolutions || []).forEach(m => {
-          if (m.correct_option_index !== undefined && m.correct_option_index !== null) {
-            solutionMap[m.id] = Number(m.correct_option_index);
-          }
-        });
-      } catch {}
-
-      // 3. Fallback check against ALL_TECHNICAL_MCQ_SEEDS
-      const stillMissing = allQuestionIds.filter(id => solutionMap[id] === undefined);
-      if (stillMissing.length > 0) {
-        try {
-          const { ALL_TECHNICAL_MCQ_SEEDS } = await import('./technicalMcqSeedData');
-          const seedMap = new Map(ALL_TECHNICAL_MCQ_SEEDS.map(s => [s.id, s]));
-          stillMissing.forEach(id => {
-            const s = seedMap.get(id);
-            if (s && s.correctOptionIndex !== undefined) {
-              solutionMap[id] = Number(s.correctOptionIndex);
-            }
-          });
-        } catch {}
-      }
-    }
-
-    // Record persistent assigned question sequence for student attempt verification
-    const existingAssigned = (responses as any)?.__assigned_question_ids;
-    const finalAssignedQuestionIds = (Array.isArray(existingAssigned) && existingAssigned.length > 0)
-      ? existingAssigned
-      : allQuestionIds;
-    responses.__assigned_question_ids = finalAssignedQuestionIds as any;
-
-    // 1. Calculate full candidate result (score, percentage, accuracy, section breakdowns)
-    const calculated = this.calculateAttemptResult(
-      exam,
-      responses,
-      solutionMap,
-      effectiveTimeSpent,
-      tabSwitchCount,
-      effectiveStatusOverride
-    );
-
-    // 2. Attempt Server-Side RPC grading (if enabled)
-    let totalScore = calculated.totalScore;
-    let maxPossibleScore = calculated.maxPossibleScore;
-    let percentage = calculated.percentage;
-    let passed = calculated.passed;
-    let finalStatus = calculated.finalStatus;
-    let gradedResponses = calculated.gradedResponses;
-    let resultSummary = calculated.resultSummary;
-
-    let serverGradedSuccessful = false;
-    try {
-      let serverGraded: any = null;
-      let rpcError: any = null;
-
-      // 1. Try Authoritative Unified submit_exam_attempt_v2 RPC
-      const { data: v2Data, error: v2Err } = await supabase.rpc('submit_exam_attempt_v2', {
-        p_attempt_id: attemptId,
-        p_responses: responses,
-        p_time_spent_seconds: effectiveTimeSpent,
-        p_proctor_events: proctorEvents,
-        p_tab_switch_count: tabSwitchCount,
-        p_status_override: effectiveStatusOverride || null,
-      });
-
-      if (!v2Err && v2Data) {
-        serverGraded = v2Data;
-      } else {
-        // Fallback to submit_and_grade_mock_attempt
-        const { data: v1Data, error: v1Err } = await supabase.rpc('submit_and_grade_mock_attempt', {
-          p_attempt_id: attemptId,
-          p_responses: responses,
-          p_time_spent_seconds: effectiveTimeSpent,
-          p_proctor_events: proctorEvents,
-          p_tab_switch_count: tabSwitchCount,
-          p_status_override: effectiveStatusOverride || null,
-        });
-        serverGraded = v1Data;
-        rpcError = v1Err;
-      }
-
-      // 🛡️ CRITICAL INTEGRITY GUARD:
-      // Only accept server grading if it actually graded the attempt
-      const serverGradedCount = Object.keys(serverGraded?.responses || {}).filter(k => k !== '__result_summary').length;
-      if (!rpcError && serverGraded && (serverGradedCount > 0 || serverGraded.result_summary) && Number(serverGraded.max_possible_score || 0) > 0) {
-        serverGradedSuccessful = true;
-        totalScore = Number(serverGraded.total_score ?? totalScore);
-        // 🛡️ DYNAMIC POOLING INTEGRITY SHIELD:
-        // When dynamic question pooling is active, candidate is only served an assigned subset.
-        // If the database RPC computed max_possible_score over all pooled questions (e.g. 40 instead of 20),
-        // we must clamp max_possible_score to calculated.maxPossibleScore (20) and recompute percentage.
-        if (calculated.maxPossibleScore > 0 && Number(serverGraded.max_possible_score) > calculated.maxPossibleScore) {
-          console.warn(`[submitAttempt] Server RPC returned un-stratified max score ${serverGraded.max_possible_score}; clamping to assigned subset max score ${calculated.maxPossibleScore}.`);
-          maxPossibleScore = calculated.maxPossibleScore;
-          percentage = calculated.maxPossibleScore > 0 ? Number(((totalScore / calculated.maxPossibleScore) * 100).toFixed(2)) : 0;
-          passed = percentage >= (exam.passing_percentage ?? 40);
-        } else {
-          maxPossibleScore = Number(serverGraded.max_possible_score ?? maxPossibleScore);
-          percentage = Number(serverGraded.percentage ?? percentage);
-          passed = Boolean(serverGraded.passed ?? passed);
-        }
-        if (serverGraded.status) finalStatus = serverGraded.status;
-        if (serverGraded.responses) {
-          gradedResponses = {
-            ...calculated.gradedResponses,
-            ...serverGraded.responses,
-          };
-        }
-        if (serverGraded.result_summary) {
-          resultSummary = {
-            ...calculated.resultSummary,
-            ...serverGraded.result_summary,
-            total_score: totalScore,
-            max_score: maxPossibleScore,
-            percentage,
-            passed,
-          };
-        } else {
-          resultSummary.total_score = totalScore;
-          resultSummary.max_score = maxPossibleScore;
-          resultSummary.percentage = percentage;
-          resultSummary.passed = passed;
-        }
-      } else {
-        console.log('[tpoService.submitAttempt] Server RPC returned 0 graded responses or failed, using accurate client calculated grade.');
-      }
-    } catch (rpcErr) {
-      console.warn('[tpoService.submitAttempt] Server RPC grading notice:', rpcErr);
-    }
-
-    // 3. Create finalized attempt with full result_summary & student profile
-    let candidateStudent = existingAttempt?.student;
-    if (!candidateStudent || !candidateStudent.roll_number || candidateStudent.roll_number === '—') {
-      const cleanSid = (studentId || '').toLowerCase();
-      const cleanEmail = (existingAttempt?.student_email || (cleanSid.includes('@') ? cleanSid : '')).toLowerCase();
-      if (exam.college_id) {
-        const localStu = getLocalStudents(exam.college_id).find(
-          s => s.email.toLowerCase() === cleanEmail || s.id.toLowerCase() === cleanSid
-        );
-        if (localStu) {
-          candidateStudent = {
-            name: localStu.name,
-            email: localStu.email,
-            roll_number: localStu.roll_number || '—',
-            department: localStu.department || 'CSE',
-          };
-        }
-      }
-
-      if ((!candidateStudent || candidateStudent.roll_number === '—') && cleanEmail) {
-        try {
-          const { data: dbStu } = await supabase
-            .from('college_students')
-            .select('name, email, roll_number, department')
-            .eq('email', cleanEmail)
-            .maybeSingle();
-          if (dbStu) {
-            candidateStudent = {
-              name: dbStu.name || cleanEmail.split('@')[0],
-              email: dbStu.email || cleanEmail,
-              roll_number: dbStu.roll_number || '—',
-              department: dbStu.department || 'CSE',
-            };
-          }
-        } catch {}
-      }
-    }
-
-    const finalizedAttempt: StudentExamAttempt = {
-      id: attemptId,
-      mock_exam_id: exam.id,
-      student_id: studentId,
-      student_email: existingAttempt?.student_email || (studentId.includes('@') ? studentId : undefined),
-      college_id: exam.college_id,
-      student: candidateStudent,
-      status: finalStatus,
-      started_at: startedAt,
-      submitted_at: new Date().toISOString(),
-      time_spent_seconds: effectiveTimeSpent,
-      tab_switch_count: tabSwitchCount,
-      proctor_events: proctorEvents,
-      responses: gradedResponses,
-      result_summary: resultSummary,
-      total_score: totalScore,
-      max_possible_score: maxPossibleScore,
-      percentage,
-      passed,
-      updated_at: new Date().toISOString(),
-    };
-
-    saveLocalAttempt(finalizedAttempt);
-
-    // 4. Upsert to student_exam_attempts table only if server RPC did not already commit
-    if (!serverGradedSuccessful) {
-      try {
-        const cleanSid = (studentId || 'anon').toLowerCase();
-        const attemptRow = {
-          id: attemptId,
-          mock_exam_id: exam.id,
-          student_id: studentId || (cleanSid.includes('@') ? cleanSid : 'candidate'),
-          student_email: cleanSid.includes('@') ? cleanSid : null,
-          college_id: exam.college_id || 'unknown_college',
-          status: finalStatus,
-          started_at: startedAt,
-          submitted_at: new Date().toISOString(),
-          time_spent_seconds: effectiveTimeSpent,
-          tab_switch_count: tabSwitchCount,
-          proctor_events: proctorEvents,
-          responses: {
-            ...gradedResponses,
-            __result_summary: resultSummary,
-          },
-          updated_at: new Date().toISOString(),
-        };
-
-        const { data: gradedAttempt } = await supabase
-          .from('student_exam_attempts')
-          .upsert(attemptRow, { onConflict: 'id' })
-          .select()
-          .single();
-
-        if (gradedAttempt) {
-          saveLocalAttempt({
-            ...gradedAttempt,
-            result_summary: resultSummary,
-          });
-        }
-      } catch {}
-    }
-
-    // 5. Serverless API persistence guarantee (/api/campus-exams with service-role upsert)
+    // 1. Primary Authoritative Server Grading (/api/campus-exams action=submit-attempt)
     try {
       const authHeaders = await getAuthHeaders();
       const res = await fetch('/api/campus-exams', {
@@ -7651,21 +7089,72 @@ export const tpoService = {
         },
         body: JSON.stringify({
           action: 'submit-attempt',
-          attempt: finalizedAttempt,
+          attempt: {
+            id: attemptId,
+            mock_exam_id: exam.id,
+            status: statusOverride || 'SUBMITTED',
+            time_spent_seconds: Math.max(0, Number(timeSpentSeconds || 0)),
+            tab_switch_count: Math.max(0, Number(tabSwitchCount || 0)),
+            proctor_events: proctorEvents || [],
+            responses: sanitizedResponses,
+          },
         }),
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.attempt) {
-          saveLocalAttempt(json.attempt);
-          return json.attempt;
-        }
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.attempt) {
+        saveLocalAttempt(json.attempt);
+        return json.attempt;
       }
-    } catch (apiErr) {
-      console.warn('Notice saving attempt via /api/campus-exams:', apiErr);
+      if (res.status >= 400 && res.status < 500 && res.status !== 404) {
+        throw new Error(json?.error || `Submission rejected (${res.status}).`);
+      }
+    } catch (apiErr: any) {
+      if (apiErr?.message && (apiErr.message.includes('rejected') || apiErr.message.includes('Forbidden'))) {
+        throw apiErr;
+      }
+      console.warn('[submitAttempt] /api/campus-exams unavailable, trying direct DB RPC:', apiErr?.message);
     }
 
-    return finalizedAttempt;
+    // 2. Authoritative Database RPC fallback (never grades or trusts client answer keys)
+    const { data: v2Data, error: v2Err } = await supabase.rpc('submit_exam_attempt_v2', {
+      p_attempt_id: attemptId,
+      p_responses: sanitizedResponses,
+      p_time_spent_seconds: Math.max(0, Number(timeSpentSeconds || 0)),
+      p_proctor_events: proctorEvents || [],
+      p_tab_switch_count: Math.max(0, Number(tabSwitchCount || 0)),
+      p_status_override: statusOverride || null,
+    });
+
+    if (v2Err || !v2Data) {
+      throw new Error(v2Err?.message || 'Unable to verify and submit assessment on server. Please retry.');
+    }
+
+    const { data: freshRow } = await supabase
+      .from('student_exam_attempts')
+      .select('*')
+      .eq('id', attemptId)
+      .maybeSingle();
+
+    const finalAttempt: StudentExamAttempt = (freshRow as StudentExamAttempt) || {
+      id: attemptId,
+      mock_exam_id: exam.id,
+      student_id: '',
+      college_id: exam.college_id,
+      status: v2Data.status || 'SUBMITTED',
+      started_at: '',
+      time_spent_seconds: v2Data.time_spent_seconds || timeSpentSeconds,
+      tab_switch_count: tabSwitchCount,
+      proctor_events: proctorEvents,
+      responses: v2Data.responses || sanitizedResponses,
+      result_summary: v2Data.result_summary,
+      total_score: Number(v2Data.total_score || 0),
+      max_possible_score: Number(v2Data.max_possible_score || 0),
+      percentage: Number(v2Data.percentage || 0),
+      passed: Boolean(v2Data.passed),
+    };
+
+    saveLocalAttempt(finalAttempt);
+    return finalAttempt;
   },
 
   async getAttemptResultWithReview(attemptId: string, bypassLiveLock = false): Promise<{
@@ -7675,6 +7164,39 @@ export const tpoService = {
     examEndTime?: string;
   } | null> {
     if (!attemptId) return null;
+
+    // 0. Server-authoritative review endpoint (enforces ownership, live window anti-leak & server clock)
+    try {
+      const authHeaders = await getAuthHeaders();
+      if (authHeaders.Authorization) {
+        const url = `/api/campus-exams?action=review-attempt&attemptId=${encodeURIComponent(attemptId)}${bypassLiveLock ? '&bypassLock=true' : ''}`;
+        const apiRes = await fetch(url, { headers: authHeaders });
+        if (apiRes.ok) {
+          const json = await apiRes.json();
+          if (json.serverNowMs) setServerNowMs(json.serverNowMs);
+          if (json.attempt) {
+            saveLocalAttempt(json.attempt);
+            if (json.isWindowLive) {
+              return {
+                attempt: json.attempt,
+                questions: [],
+                isWindowLive: true,
+                examEndTime: json.examEndTime,
+              };
+            }
+            return {
+              attempt: json.attempt,
+              questions: (json.questions || []).map((q: any) => ({
+                ...q,
+                options: normalizeQuestionOptions(q.options),
+              })),
+              isWindowLive: false,
+              examEndTime: json.examEndTime,
+            };
+          }
+        }
+      }
+    } catch {}
 
     // 1. Fetch attempt record to identify the exam & student score
     let attempt: StudentExamAttempt | null = null;
@@ -7712,7 +7234,7 @@ export const tpoService = {
     try {
       const { data: examData } = await supabase
         .from('mock_exams')
-        .select('show_results_immediately, end_time, start_time, duration_minutes, is_active, is_deleted')
+        .select('college_id, show_results_immediately, end_time, start_time, duration_minutes, is_active, is_deleted')
         .eq('id', attempt.mock_exam_id)
         .maybeSingle();
       if (examData) {
@@ -8066,6 +7588,7 @@ export const tpoService = {
       return { college: null, exams: [] };
     }
     const cleanEmail = studentEmail.trim().toLowerCase();
+    await syncServerClock(supabase).catch(() => {});
 
     // 1. Resolve college
     let resolvedCollegeId = studentCollegeId;
@@ -8132,7 +7655,7 @@ export const tpoService = {
         orClauses += `,student_id.eq.${authUserId}`;
       }
 
-      const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, result_summary, created_at, updated_at';
+      const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, responses, created_at, updated_at';
       const { data: cloudAttempts } = await supabase
         .from('student_exam_attempts')
         .select(ATTEMPT_PROJECTION)
@@ -8140,7 +7663,13 @@ export const tpoService = {
       if (cloudAttempts && cloudAttempts.length > 0) {
         const attemptMap = new Map<string, StudentExamAttempt>();
         studentAttempts.forEach(a => attemptMap.set(a.id, a));
-        cloudAttempts.forEach((a: any) => attemptMap.set(a.id, a as StudentExamAttempt));
+        cloudAttempts.forEach((a: any) => {
+          const hydrated: any = {
+            ...a,
+            result_summary: a.result_summary || a.responses?.__result_summary,
+          };
+          attemptMap.set(a.id, hydrated as StudentExamAttempt);
+        });
         studentAttempts = Array.from(attemptMap.values());
       }
     } catch {}
@@ -8217,6 +7746,94 @@ export const tpoService = {
     examEndTime?: string;
   } | null> {
     if (!attemptId) return null;
+
+    // 0. Server-authoritative review endpoint
+    try {
+      const authHeaders = await getAuthHeaders();
+      if (authHeaders.Authorization) {
+        const url = `/api/campus-exams?action=review-attempt&attemptId=${encodeURIComponent(attemptId)}${bypassLiveLock ? '&bypassLock=true' : ''}`;
+        const apiRes = await fetch(url, { headers: authHeaders });
+        if (apiRes.ok) {
+          const json = await apiRes.json();
+          if (json.serverNowMs) setServerNowMs(json.serverNowMs);
+          if (json.attempt && json.exam) {
+            saveLocalAttempt(json.attempt);
+            if (json.isWindowLive) {
+              return {
+                attempt: json.attempt,
+                exam: json.exam,
+                sections: [],
+                isWindowLive: true,
+                examEndTime: json.examEndTime,
+              };
+            }
+            const qMap = new Map<string, any>();
+            (json.questions || []).forEach((q: any) => {
+              qMap.set(q.id, {
+                ...q,
+                options: normalizeQuestionOptions(q.options),
+              });
+            });
+            const assignedList: string[] | null = Array.isArray(json.attempt.assigned_question_ids)
+              ? json.attempt.assigned_question_ids
+              : Array.isArray(json.attempt.responses?.__assigned_question_ids)
+              ? json.attempt.responses.__assigned_question_ids
+              : null;
+            const assignedSet = assignedList && assignedList.length > 0 ? new Set<string>(assignedList) : null;
+            if (assignedSet) {
+              Object.keys(json.attempt.responses || {}).forEach(k => {
+                if (!k.startsWith('__')) assignedSet.add(k);
+              });
+            }
+
+            const reconstructedSections = (json.exam.sections || []).map((sec: MockExamSection) => {
+              const secQIds = (sec.question_ids || []).filter(id => !assignedSet || assignedSet.has(id));
+              const enriched = secQIds
+                .map(id => qMap.get(id))
+                .filter(Boolean)
+                .map((q: any) => {
+                  const resp = (json.attempt.responses || {})[q.id];
+                  const isCoding = Boolean(q.isCodingProblem);
+                  let expectedNum = q.correct_answer;
+                  if (expectedNum !== undefined && expectedNum !== null) {
+                    const raw = String(expectedNum).trim().toUpperCase();
+                    if (/^[A-Z]$/.test(raw)) expectedNum = raw.charCodeAt(0) - 65;
+                    else if (/^\d+$/.test(raw)) expectedNum = parseInt(raw, 10);
+                  }
+                  const isAnswered = isCoding
+                    ? Boolean(resp?.code_solution && resp.code_solution.trim())
+                    : resp?.selected_option !== null && resp?.selected_option !== undefined;
+                  const isCorrect = isCoding
+                    ? Boolean(resp?.test_cases_passed && resp.total_test_cases && resp.test_cases_passed === resp.total_test_cases)
+                    : isAnswered && Number(resp.selected_option) === Number(expectedNum);
+                  const pos = q.marks ?? sec.marks_per_correct ?? 1;
+                  const neg = q.negative_marks ? -Math.abs(q.negative_marks) : (sec.negative_marking ? -Math.abs(sec.negative_marking) : 0);
+                  const marksObtained = typeof resp?.marks_earned === 'number'
+                    ? resp.marks_earned
+                    : isCorrect ? pos : isAnswered ? neg : 0;
+                  return {
+                    ...q,
+                    correct_answer: expectedNum,
+                    student_response: resp,
+                    is_answered: isAnswered,
+                    is_correct: isCorrect,
+                    marks_obtained: marksObtained,
+                  };
+                });
+              return { ...sec, questions: enriched };
+            });
+
+            return {
+              attempt: json.attempt,
+              exam: json.exam,
+              sections: reconstructedSections,
+              isWindowLive: false,
+              examEndTime: json.examEndTime,
+            };
+          }
+        }
+      }
+    } catch {}
 
     // 1. Fetch the attempt
     let attempt: StudentExamAttempt | null = null;

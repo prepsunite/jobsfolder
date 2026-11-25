@@ -38,7 +38,8 @@ async function testAllBlueprints() {
         let codingQuery = supabase
           .from('technical_problems')
           .select('id, title, category, topic_id, level')
-          .eq('is_deleted', false);
+          .or('is_deleted.is.null,is_deleted.eq.false')
+          .or('is_hidden.is.null,is_hidden.eq.false');
 
         if (sec.topic_ids && sec.topic_ids.length > 0) {
           const expanded = expandTopicAliases(sec.topic_ids);
@@ -70,7 +71,8 @@ async function testAllBlueprints() {
         let mcqQuery = supabase
           .from('technical_mcqs')
           .select('id, topic_id')
-          .eq('is_deleted', false);
+          .or('is_deleted.is.null,is_deleted.eq.false')
+          .or('is_hidden.is.null,is_hidden.eq.false');
         
         if (allowedTopics.length > 0) {
           mcqQuery = mcqQuery.in('topic_id', allowedTopics);
@@ -78,20 +80,31 @@ async function testAllBlueprints() {
         const { data } = await mcqQuery.limit(100);
         foundCount = data ? data.length : 0;
       } else {
-        // Aptitude MCQ in topic_questions table
+        // Aptitude MCQ in topic_questions table (plus technical-aptitude fallback to technical_mcqs)
         const hasTopicIds = sec.topic_ids && sec.topic_ids.length > 0;
         const allowedTopicIds = hasTopicIds ? expandTopicAliases(sec.topic_ids) : [];
 
         let aptQuery = supabase
           .from('topic_questions')
           .select('id, topic_id')
-          .eq('is_deleted', false);
+          .or('is_deleted.is.null,is_deleted.eq.false')
+          .or('is_hidden.is.null,is_hidden.eq.false');
         
         if (allowedTopicIds.length > 0) {
           aptQuery = aptQuery.in('topic_id', allowedTopicIds);
         }
         const { data } = await aptQuery.limit(100);
         foundCount = data ? data.length : 0;
+
+        if (foundCount < sec.question_count && sec.category === 'technical-aptitude') {
+          const { data: techData } = await supabase
+            .from('technical_mcqs')
+            .select('id')
+            .or('is_deleted.is.null,is_deleted.eq.false')
+            .or('is_hidden.is.null,is_hidden.eq.false')
+            .limit(100);
+          foundCount += techData ? techData.length : 0;
+        }
       }
 
       let status = '✅ PASS';

@@ -39,6 +39,7 @@ export interface TestCaseRunResult {
   summaryMessage: string;
   isServerOverloaded?: boolean;
   serverOverloadReason?: string;
+  verdictToken?: string | null;
 }
 
 export interface ExecutionResult {
@@ -652,6 +653,100 @@ export const codeExecutionService = {
       compileError: compileErrorEncountered,
       runtimeError: firstRuntimeError,
       summaryMessage,
+    };
+  },
+
+  /**
+   * Authoritative exam-mode test runner:
+   * Strictly calls /api/execute-code with Bearer JWT so hidden test cases never
+   * touch browser memory and Postgres returns an HMAC-signed verdictToken.
+   */
+  async runExamTestCases(params: {
+    problemId: string;
+    attemptId?: string;
+    language: string;
+    sourceCode: string;
+  }): Promise<TestCaseRunResult> {
+    const normLang = normalizeLanguageKey(params.language);
+    if (!params.sourceCode || !params.sourceCode.trim()) {
+      return {
+        cases: [],
+        passedCount: 0,
+        totalCount: 0,
+        isTemplateOrEmpty: true,
+        summaryMessage: 'Please write your solution code before running tests.',
+      };
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) {
+      throw new Error('Authentication session required to verify mock exam code.');
+    }
+
+    const response = await fetch('/api/execute-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        problemId: params.problemId,
+        attemptId: params.attemptId || undefined,
+        examMode: true,
+        isSubmit: true,
+        language: normLang,
+        sourceCode: params.sourceCode,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 429 || response.status === 503) {
+        return {
+          cases: [],
+          passedCount: 0,
+          totalCount: 0,
+          isTemplateOrEmpty: false,
+          isServerOverloaded: true,
+          serverOverloadReason: data?.error || 'Compiler servers are busy. Please retry in a few seconds.',
+          summaryMessage: data?.error || 'Compiler servers busy.',
+        };
+      }
+      throw new Error(data?.error || `Execution service error (${response.status})`);
+    }
+
+    const evaluatedCases: EvaluatedTestCase[] = Array.isArray(data?.cases)
+      ? data.cases.map((c: any, idx: number) => ({
+          input: c.isHidden ? '[Hidden Test Case]' : String(c.input ?? ''),
+          expected: c.isHidden ? '[Hidden]' : String(c.expected ?? ''),
+          actual: c.isHidden ? (c.passed ? '[Passed Hidden Suite]' : '[Failed Hidden Suite]') : String(c.actual ?? ''),
+          passed: Boolean(c.passed),
+          status: c.status || (c.passed ? 'PASSED' : 'WRONG_ANSWER'),
+          timeMs: Number(c.timeMs || 0),
+          memoryKb: c.memoryKb,
+          error: c.error,
+          is_hidden: Boolean(c.isHidden ?? idx >= 2),
+        }))
+      : [];
+
+    const passedCount = Number(data?.passedCount ?? evaluatedCases.filter(c => c.passed).length);
+    const totalCount = Number(data?.totalCount ?? evaluatedCases.length);
+
+    return {
+      cases: evaluatedCases,
+      passedCount,
+      totalCount,
+      isTemplateOrEmpty: false,
+      compileError: data?.compileError || null,
+      runtimeError: evaluatedCases.find(c => c.status === 'RUNTIME_ERROR')?.error || null,
+      summaryMessage:
+        data?.compileError
+          ? 'Compilation Failed: Inspect compiler diagnostics.'
+          : passedCount === totalCount && totalCount > 0
+            ? 'All Server Test Cases Passed!'
+            : `${passedCount}/${totalCount} Server Test Cases Passed`,
+      verdictToken: data?.verdictToken || null,
     };
   },
 

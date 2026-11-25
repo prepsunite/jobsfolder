@@ -2235,9 +2235,10 @@ export default function CreateMockExamModal({
                               <div className="flex flex-wrap gap-1">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    setSectionCategoryFilters(prev => ({ ...prev, [idx]: 'all' }))
-                                  }
+                                  onClick={() => {
+                                    setSectionCategoryFilters(prev => ({ ...prev, [idx]: 'all' }));
+                                    handleUpdateSection(idx, { category: 'all' });
+                                  }}
                                   className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
                                     currentCategoryFilter === 'all'
                                       ? 'bg-blue-600 text-white shadow-sm'
@@ -2252,9 +2253,10 @@ export default function CreateMockExamModal({
                                     <button
                                       key={cat.id}
                                       type="button"
-                                      onClick={() =>
-                                        setSectionCategoryFilters(prev => ({ ...prev, [idx]: cat.id }))
-                                      }
+                                      onClick={() => {
+                                        setSectionCategoryFilters(prev => ({ ...prev, [idx]: cat.id }));
+                                        handleUpdateSection(idx, { category: cat.id });
+                                      }}
                                       className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
                                         isSelected
                                           ? 'bg-blue-600 text-white shadow-sm'

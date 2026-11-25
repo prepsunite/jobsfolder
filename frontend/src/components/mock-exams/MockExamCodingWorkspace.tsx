@@ -77,7 +77,8 @@ interface MockExamCodingWorkspaceProps {
   marksPerCorrect: number;
   negativeMarking: number;
   savedResponse?: StudentExamResponse;
-  onUpdateCode: (code: string, language: string, testCasesPassed?: number, totalTestCases?: number) => void;
+  attemptId?: string;
+  onUpdateCode: (code: string, language: string, testCasesPassed?: number, totalTestCases?: number, verdictToken?: string | null) => void;
   onClearCode: () => void;
   onToggleReview: () => void;
   isMarkedReview: boolean;
@@ -90,6 +91,10 @@ interface MockExamCodingWorkspaceProps {
   onRunningStateChange?: (isRunning: boolean) => void;
   onSubmitExam?: () => void;
   isPaletteOpen?: boolean;
+  disableContextMenu?: boolean;
+  disableExternalPaste?: boolean;
+  disableQuestionCopy?: boolean;
+  onExternalPasteBlocked?: () => void;
 }
 
 export default function MockExamCodingWorkspace({
@@ -100,6 +105,7 @@ export default function MockExamCodingWorkspace({
   marksPerCorrect,
   negativeMarking,
   savedResponse,
+  attemptId,
   onUpdateCode,
   onClearCode,
   onToggleReview,
@@ -113,6 +119,10 @@ export default function MockExamCodingWorkspace({
   onRunningStateChange,
   onSubmitExam,
   isPaletteOpen,
+  disableContextMenu = true,
+  disableExternalPaste = true,
+  disableQuestionCopy = true,
+  onExternalPasteBlocked,
 }: MockExamCodingWorkspaceProps) {
   const initialLang = savedResponse?.code_language || 'python';
   const [selectedLanguage, setSelectedLanguage] = useState<string>(initialLang);
@@ -135,11 +145,67 @@ export default function MockExamCodingWorkspace({
 
   const editorRef = useRef<any>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  // Session-only internal clipboard record: permits copy/paste of candidate's own code
+  // while blocking externally copied AI/browser snippets during mock exams.
+  const internalCopyRef = useRef<string>('');
   // Run revision tracker to invalidate in-flight async results if candidate edits code or changes language
   const runRevisionRef = useRef(0);
   const isProgrammaticUpdateRef = useRef(false);
   const selectedLanguageRef = useRef(selectedLanguage);
   selectedLanguageRef.current = selectedLanguage;
+
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container || !disableExternalPaste) return;
+
+    const recordInternalCopy = () => {
+      try {
+        const model = editorRef.current?.getModel?.();
+        const selection = editorRef.current?.getSelection?.();
+        const monacoSelected =
+          model && selection ? model.getValueInRange(selection) : '';
+        const selected = monacoSelected || window.getSelection?.()?.toString() || '';
+        if (selected) {
+          internalCopyRef.current = selected.replace(/\r\n/g, '\n');
+        }
+      } catch {}
+    };
+
+    const handleContainerPaste = (e: ClipboardEvent) => {
+      if (!disableExternalPaste) return;
+      const pastedRaw = e.clipboardData?.getData('text/plain') || '';
+      const pasted = pastedRaw.replace(/\r\n/g, '\n');
+      if (!pasted) return;
+
+      // Allow pasting only if it matches text copied internally from this editor session
+      if (internalCopyRef.current && pasted === internalCopyRef.current) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      onExternalPasteBlocked?.();
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      if (!disableExternalPaste) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onExternalPasteBlocked?.();
+    };
+
+    container.addEventListener('copy', recordInternalCopy, true);
+    container.addEventListener('cut', recordInternalCopy, true);
+    container.addEventListener('paste', handleContainerPaste, true);
+    container.addEventListener('drop', handleDrop, true);
+
+    return () => {
+      container.removeEventListener('copy', recordInternalCopy, true);
+      container.removeEventListener('cut', recordInternalCopy, true);
+      container.removeEventListener('paste', handleContainerPaste, true);
+      container.removeEventListener('drop', handleDrop, true);
+    };
+  }, [disableExternalPaste, onExternalPasteBlocked]);
 
   // Re-layout Monaco Editor smoothly whenever question palette collapses/expands or container resizes
   useEffect(() => {
@@ -276,25 +342,6 @@ export default function MockExamCodingWorkspace({
       });
     }
 
-    // Safety Guard: If problem still has 0 test cases, synthesize baseline verification cases
-    // so candidates are never blocked with "0 Visible & Hidden Test Cases" or disabled Run Tests
-    if (sampleCases.length === 0) {
-      sampleCases.push({
-        input: '5\n1 2 3 4 5',
-        output: '1',
-        expected_output: '1',
-        explanation: 'Sample Test Case: General verification scenario.',
-        is_hidden: false,
-      });
-      sampleCases.push({
-        input: '3\n10 20 30',
-        output: '0',
-        expected_output: '0',
-        explanation: 'Hidden Test Case: Boundary validation.',
-        is_hidden: true,
-      });
-    }
-
     return sampleCases;
   }, [question]);
 
@@ -366,17 +413,12 @@ export default function MockExamCodingWorkspace({
     }
   };
 
-  // Run Real Sandboxed Tests via Judge0 Engine + Pre-Execution Empty Code Guard & Revision Validation
+  // Run Real Sandboxed Tests via Authoritative Server Execution API (/api/execute-code)
   const handleRunTests = async () => {
     if (isRunningTests) return;
 
     if (!code || code.trim().length === 0) {
       alert('Please write your solution code before running tests.');
-      return;
-    }
-
-    if (testCases.length === 0) {
-      alert('No test cases are available for this problem.');
       return;
     }
 
@@ -388,11 +430,12 @@ export default function MockExamCodingWorkspace({
     setIsRunningTests(true);
 
     try {
-      const result = await codeExecutionService.runTestCases(
-        capturedLang,
-        capturedCode,
-        testCases
-      );
+      const result = await codeExecutionService.runExamTestCases({
+        problemId: capturedQId,
+        attemptId,
+        language: capturedLang,
+        sourceCode: capturedCode,
+      });
 
       // Discard async results if code, language, or question changed while tests were running
       if (runRevisionRef.current !== currentRevision || question.id !== capturedQId) {
@@ -409,8 +452,14 @@ export default function MockExamCodingWorkspace({
       setTestResults(result);
       setActiveTestTab(0);
 
-      // Persist test pass count to student response record
-      onUpdateCode(capturedCode, capturedLang, result.passedCount, result.totalCount);
+      // Persist test pass count AND HMAC verdictToken to student response record
+      onUpdateCode(
+        capturedCode,
+        capturedLang,
+        result.passedCount,
+        result.totalCount,
+        result.verdictToken || null
+      );
     } catch (err: any) {
       console.error('Failed to run code tests:', err);
       if (isCompilerOverloaded(err)) {
@@ -533,7 +582,7 @@ export default function MockExamCodingWorkspace({
               Problem Description & Specifications
             </h4>
             <div className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed font-sans">
-              <QuestionRichContent content={question.statement} />
+              <QuestionRichContent content={question.statement} disableCopy={disableQuestionCopy} />
             </div>
           </div>
 
@@ -675,6 +724,8 @@ export default function MockExamCodingWorkspace({
                 fontLigatures: true,
                 tabSize: 4,
                 automaticLayout: true,
+                contextmenu: !disableContextMenu,
+                dragAndDrop: !disableExternalPaste,
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
                 autoClosingBrackets: 'always',

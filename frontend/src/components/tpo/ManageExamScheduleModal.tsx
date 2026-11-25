@@ -17,6 +17,7 @@ import {
 import type { MockExam } from '@/types/tpo';
 import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
 import { useToast } from '@/contexts/ToastContext';
+import { getServerNowMs } from '@/utils/serverClock';
 
 interface ManageExamScheduleModalProps {
   isOpen: boolean;
@@ -152,17 +153,18 @@ export default function ManageExamScheduleModal({
 
   // Calculate new proposed end time based on chips or custom input
   const calculateProposedEndTime = (): Date => {
+    const serverNowMs = getServerNowMs();
     if (selectedExtensionMinutes !== null) {
-      // Add minutes to current end_time (or now if end_time already passed)
-      const currentEndMs = exam.end_time ? new Date(exam.end_time).getTime() : Date.now();
-      const baseMs = Math.max(Date.now(), isNaN(currentEndMs) ? Date.now() : currentEndMs);
+      // Add minutes to current end_time (or server now if end_time already passed)
+      const currentEndMs = exam.end_time ? new Date(exam.end_time).getTime() : serverNowMs;
+      const baseMs = Math.max(serverNowMs, isNaN(currentEndMs) ? serverNowMs : currentEndMs);
       return new Date(baseMs + selectedExtensionMinutes * 60 * 1000);
     }
     const parsedCustom = new Date(customEndTime).getTime();
     if (!isNaN(parsedCustom)) {
       return new Date(parsedCustom);
     }
-    return new Date(Date.now() + 60 * 60 * 1000);
+    return new Date(serverNowMs + 60 * 60 * 1000);
   };
 
   const proposedEndTime = calculateProposedEndTime();
@@ -170,7 +172,7 @@ export default function ManageExamScheduleModal({
   // 1. Handle Window Extension
   const handleExtendWindow = async () => {
     const newEndIso = proposedEndTime.toISOString();
-    if (new Date(newEndIso).getTime() <= Date.now()) {
+    if (new Date(newEndIso).getTime() <= getServerNowMs()) {
       toast.error('The new closing time must be in the future.');
       return;
     }

@@ -105,6 +105,8 @@ export default function TechnicalHubPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProblem, setSelectedProblem] = useState<ProgrammingProblem | null>(null);
   const [expandedSolutions, setExpandedSolutions] = useState<Record<string, boolean>>({});
+  const [verifiedMcqAnswers, setVerifiedMcqAnswers] = useState<Record<string, { correctOptionIndex: number; explanation?: string }>>({});
+  const [loadedProblemSolutions, setLoadedProblemSolutions] = useState<Record<string, { explanation?: string; solutions?: Record<string, string>; timeComplexity?: string; spaceComplexity?: string }>>({});
   const [problemLanguages, setProblemLanguages] = useState<Record<string, 'java' | 'python' | 'cpp' | 'c'>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
@@ -479,8 +481,35 @@ export default function TechnicalHubPage() {
   const currentFilteredListLength = activeTrack === 'TECHNICAL_MCQS' ? filteredMcqs.length : filteredProblems.length;
   const totalPages = Math.ceil(currentFilteredListLength / QUESTIONS_PER_PAGE);
 
-  const handleSelectMcqOption = (mcq: TechnicalMcq, optIdx: number) => {
-    const isCorrect = optIdx === mcq.correctOptionIndex;
+  const handleSelectMcqOption = async (mcq: TechnicalMcq, optIdx: number) => {
+    const cached = verifiedMcqAnswers[mcq.id];
+    const knownCorrectIdx = cached ? cached.correctOptionIndex : mcq.correctOptionIndex;
+    let isCorrect = false;
+
+    if (typeof knownCorrectIdx === 'number' && knownCorrectIdx >= 0) {
+      isCorrect = optIdx === knownCorrectIdx;
+    } else {
+      if (!user?.email || user.email === GUEST_EMAIL) {
+        toast.info('Please sign in to verify MCQ answers and track progress.');
+        return;
+      }
+      const res = await technicalService.verifyTechnicalMcqAnswer(mcq.id, optIdx, false);
+      if (res.locked) {
+        toast.warning(res.message || 'Answer key is locked during an active exam window.');
+        return;
+      }
+      isCorrect = Boolean(res.is_correct);
+      if (typeof res.correct_option_index === 'number') {
+        setVerifiedMcqAnswers(prev => ({
+          ...prev,
+          [mcq.id]: {
+            correctOptionIndex: res.correct_option_index as number,
+            explanation: res.explanation || '',
+          },
+        }));
+      }
+    }
+
     const currentProg = mcqProgress[mcq.id] || { solved: false, wrongPicks: [] };
 
     if (isCorrect) {
@@ -509,10 +538,35 @@ export default function TechnicalHubPage() {
     }
   };
 
-  const toggleMcqExplanation = (mcqId: string) => {
+  const toggleMcqExplanation = async (mcqId: string) => {
+    const nextOpen = !revealedMcqExpl[mcqId];
+    if (nextOpen) {
+      const target = [...mcqs, ...activeTopicMcqs].find(m => m.id === mcqId);
+      const cached = verifiedMcqAnswers[mcqId];
+      if (target && (target.correctOptionIndex === undefined || target.correctOptionIndex < 0) && !cached) {
+        if (!user?.email || user.email === GUEST_EMAIL) {
+          toast.info('Please sign in to inspect Technical MCQ solutions.');
+          return;
+        }
+        const res = await technicalService.verifyTechnicalMcqAnswer(mcqId, null, true);
+        if (res.locked) {
+          toast.warning(res.message || 'Explanation is locked during an active exam window.');
+          return;
+        }
+        if (typeof res.correct_option_index === 'number') {
+          setVerifiedMcqAnswers(prev => ({
+            ...prev,
+            [mcqId]: {
+              correctOptionIndex: res.correct_option_index as number,
+              explanation: res.explanation || '',
+            },
+          }));
+        }
+      }
+    }
     setRevealedMcqExpl(prev => ({
       ...prev,
-      [mcqId]: !prev[mcqId],
+      [mcqId]: nextOpen,
     }));
   };
 
@@ -526,10 +580,37 @@ export default function TechnicalHubPage() {
     refetchDsa();
   };
 
-  const toggleSolution = (problemId: string) => {
+  const toggleSolution = async (problemId: string) => {
+    const nextOpen = !expandedSolutions[problemId];
+    if (nextOpen && !loadedProblemSolutions[problemId]) {
+      const prob = activeTopicProblems.find(p => p.id === problemId) || currentProblems.find(p => p.id === problemId);
+      const hasEmbeddedCode = prob?.solutions && Object.values(prob.solutions).some(v => typeof v === 'string' && v.trim().length > 12);
+      if (!hasEmbeddedCode) {
+        if (!user?.email || user.email === GUEST_EMAIL) {
+          toast.info('Please sign in to unlock verified code solutions.');
+          return;
+        }
+        const res = await technicalService.getPracticeProblemSolution(problemId);
+        if (res.locked) {
+          toast.warning(res.message || 'Solutions are locked during an active exam session.');
+          return;
+        }
+        if (res.solutions || res.explanation) {
+          setLoadedProblemSolutions(prev => ({
+            ...prev,
+            [problemId]: {
+              explanation: res.explanation,
+              solutions: res.solutions,
+              timeComplexity: res.time_complexity,
+              spaceComplexity: res.space_complexity,
+            },
+          }));
+        }
+      }
+    }
     setExpandedSolutions(prev => ({
       ...prev,
-      [problemId]: !prev[problemId],
+      [problemId]: nextOpen,
     }));
   };
 
@@ -1327,9 +1408,15 @@ export default function TechnicalHubPage() {
                         return (
                           <div className={hasLongOpt ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2.5"}>
                             {mcq.options.map((opt, optIdx) => {
-                              const isOptionCorrect = optIdx === mcq.correctOptionIndex;
+                              const resolvedCorrectOptIdx =
+                                verifiedMcqAnswers[mcq.id]?.correctOptionIndex ?? mcq.correctOptionIndex;
+                              const isOptionCorrect =
+                                typeof resolvedCorrectOptIdx === 'number' &&
+                                resolvedCorrectOptIdx >= 0 &&
+                                optIdx === resolvedCorrectOptIdx;
                               const wasPickedWrong = wrongPicks.includes(optIdx);
-                              const isPickedAndCorrect = isSolved && isOptionCorrect;
+                              const isPickedAndCorrect =
+                                isSolved && (isOptionCorrect || prog?.selectedOption === optIdx);
 
                               let btnClasses =
                                 'bg-[#F8F9FA] dark:bg-[#121316] border-[#E9ECEF] dark:border-[#26282E] text-[#121417] dark:text-[#EEEEEE] hover:border-neutral-400 dark:hover:border-neutral-600';
@@ -1411,17 +1498,25 @@ export default function TechnicalHubPage() {
                       </div>
 
                       {/* Explanation Accordion */}
-                      {isExplVisible && (
-                        <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-2.5 animate-fadeIn text-xs">
-                          <div className="flex items-center gap-2 text-xs font-display font-bold text-[#FD4A32]">
-                            <Zap className="w-3.5 h-3.5 text-[#FD4A32]" />
-                            <span>Correct Answer: Option ({String.fromCharCode(65 + mcq.correctOptionIndex)})</span>
+                      {isExplVisible && (() => {
+                        const verifiedMcq = verifiedMcqAnswers[mcq.id];
+                        const effectiveCorrectIdx =
+                          verifiedMcq?.correctOptionIndex ?? mcq.correctOptionIndex;
+                        const effectiveExpl = verifiedMcq?.explanation ?? mcq.explanation;
+                        return (
+                          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#0C0C0C] border border-[#E9ECEF] dark:border-[#242424] space-y-2.5 animate-fadeIn text-xs">
+                            {typeof effectiveCorrectIdx === 'number' && effectiveCorrectIdx >= 0 && (
+                              <div className="flex items-center gap-2 text-xs font-display font-bold text-[#FD4A32]">
+                                <Zap className="w-3.5 h-3.5 text-[#FD4A32]" />
+                                <span>Correct Answer: Option ({String.fromCharCode(65 + effectiveCorrectIdx)})</span>
+                              </div>
+                            )}
+                            <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-sans whitespace-pre-line text-xs">
+                              {effectiveExpl || 'Verified explanation loaded for authenticated learners.'}
+                            </div>
                           </div>
-                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-sans whitespace-pre-line text-xs">
-                            {mcq.explanation}
-                          </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   );
                 })
@@ -1801,7 +1896,13 @@ export default function TechnicalHubPage() {
                             {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           </button>
 
-                          {isExpanded && (
+                          {isExpanded && (() => {
+                            const fetchedSol = loadedProblemSolutions[problem.id];
+                            const effectiveSolMap = fetchedSol?.solutions || problem.solutions || {};
+                            const effectiveExpl = fetchedSol?.explanation ?? problem.explanation;
+                            const effectiveTime = fetchedSol?.timeComplexity || problem.timeComplexity;
+                            const effectiveSpace = fetchedSol?.spaceComplexity || problem.spaceComplexity;
+                            return (
                             <div className="mt-3 space-y-3 p-4 bg-[#0C0C0C] dark:bg-[#000000] text-white rounded-xl border border-[#242424] animate-fadeIn">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#242424]">
                                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -1823,14 +1924,14 @@ export default function TechnicalHubPage() {
 
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
-                                    Time: {problem.timeComplexity}
+                                    Time: {effectiveTime}
                                   </span>
                                   <span className="text-[10px] font-mono text-[#888888] bg-[#1A1A1A] px-2 py-0.5 rounded border border-[#2B2B2B]">
-                                    Space: {problem.spaceComplexity}
+                                    Space: {effectiveSpace}
                                   </span>
                                   <button
                                     type="button"
-                                    onClick={() => handleCopyCode(problem.solutions[activeLang] || '', problem.id)}
+                                    onClick={() => handleCopyCode(effectiveSolMap[activeLang] || '', problem.id)}
                                     className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1A1A1A] hover:bg-[#252525] border border-[#333333] text-[#CCCCCC] hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
                                   >
                                     {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -1840,17 +1941,17 @@ export default function TechnicalHubPage() {
                               </div>
 
                               <div className="bg-[#050505] rounded-lg p-3.5 border border-[#1E1E1E] overflow-x-auto text-xs font-mono text-emerald-400">
-                                <pre>{problem.solutions[activeLang] || '// Solution not available in this language'}</pre>
+                                <pre>{effectiveSolMap[activeLang] || '// Solution not available in this language'}</pre>
                               </div>
 
-                              {problem.explanation && (
+                              {effectiveExpl && (
                                 <div className="p-3 rounded-lg bg-[#141414] border border-[#242424] space-y-1 text-xs">
                                   <span className="font-bold flex items-center gap-1.5 text-[10px] text-[#FD4A32] uppercase tracking-wider">
                                     <Lightbulb className="w-3.5 h-3.5 text-[#FD4A32]" />
                                     Explanation &amp; Approach
                                   </span>
                                   <p className="text-gray-300 leading-relaxed font-sans text-xs">
-                                    {problem.explanation}
+                                    {effectiveExpl}
                                   </p>
                                 </div>
                               )}
@@ -1869,7 +1970,8 @@ export default function TechnicalHubPage() {
                                 </div>
                               )}
                             </div>
-                          )}
+                            );
+                          })()}
                         </div>
                       )}
                     </div>

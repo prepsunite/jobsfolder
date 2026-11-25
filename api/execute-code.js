@@ -1,4 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { signCodingVerdict } from './_examSecurity.js';
+
+const MAX_SOURCE_CODE_BYTES = 65536; // 64 KB cap
+const MAX_CUSTOM_STDIN_BYTES = 16384; // 16 KB cap
 
 // Judge0 Standard Language IDs
 const JUDGE0_LANGUAGE_IDS = {
@@ -290,6 +294,253 @@ function settledToRunRes(settled, stdinText) {
   };
 }
 
+export async function resolveServerTestCases(supabaseAdmin, problemId) {
+  if (!problemId || !supabaseAdmin) return [];
+  try {
+    const { data: problem, error: probError } = await supabaseAdmin
+      .from('technical_problems')
+      .select('id, test_cases, sample_cases, hidden_test_cases')
+      .eq('id', problemId)
+      .maybeSingle();
+
+    if (!problem || probError) return [];
+
+    const sampleList =
+      Array.isArray(problem.sample_cases) && problem.sample_cases.length > 0
+        ? problem.sample_cases
+        : Array.isArray(problem.test_cases)
+          ? problem.test_cases.filter((tc) => !tc?.is_hidden)
+          : [];
+    const hiddenList =
+      Array.isArray(problem.hidden_test_cases) && problem.hidden_test_cases.length > 0
+        ? problem.hidden_test_cases
+        : Array.isArray(problem.test_cases)
+          ? problem.test_cases.filter((tc) => Boolean(tc?.is_hidden))
+          : [];
+
+    const normalizedSamples = sampleList.map((tc) => ({ ...tc, is_hidden: false }));
+    const normalizedHidden = hiddenList.map((tc) => ({ ...tc, is_hidden: true }));
+    return [...normalizedSamples, ...normalizedHidden];
+  } catch (dbErr) {
+    console.warn('[api/execute-code] DB problem lookup error:', dbErr?.message);
+    return [];
+  }
+}
+
+export async function executeProblemAgainstDb({
+  supabaseAdmin,
+  problemId,
+  language = 'python',
+  sourceCode,
+  userEmail = null,
+  attemptId = null,
+  examMode = false,
+  isSubmit = false,
+  clientTestCases = null,
+  customStdin = null,
+}) {
+  const langKey = String(language || 'python').toLowerCase().trim();
+  const langId = JUDGE0_LANGUAGE_IDS[langKey] || 71;
+  const hosts = buildJudge0HostChain();
+
+  if (customStdin !== undefined && !problemId && (!clientTestCases || clientTestCases.length === 0)) {
+    const customRes = await executeJudge0WithFallback(String(customStdin), sourceCode, langId, hosts);
+    return {
+      isCustom: true,
+      stdout: customRes.stdout,
+      stderr: customRes.stderr || customRes.compileOutput,
+      timeMs: customRes.timeMs,
+      memoryKb: customRes.memoryKb,
+      status: customRes.statusDesc,
+    };
+  }
+
+  let testCases = [];
+  if (problemId && supabaseAdmin) {
+    // Authoritative Postgres test cases ONLY when problemId is provided (ignores clientTestCases)
+    testCases = await resolveServerTestCases(supabaseAdmin, problemId);
+  }
+  if (testCases.length === 0 && !problemId && !attemptId && !examMode && Array.isArray(clientTestCases)) {
+    testCases = clientTestCases.slice(0, 15);
+  }
+
+  if (testCases.length === 0) {
+    return {
+      status: 'NO_TEST_CASES',
+      passedCount: 0,
+      totalCount: 0,
+      isAllPassed: false,
+      compileError: null,
+      cases: [],
+      verdictToken: null,
+    };
+  }
+
+  const executeOne = (stdinText) => executeJudge0WithFallback(stdinText, sourceCode, langId, hosts);
+  const firstSettled = (await Promise.allSettled([executeOne(normalizeStdin(testCases[0]?.input || ''))]))[0];
+  const firstRunRes = settledToRunRes(firstSettled, testCases[0]?.input || '');
+  const isCompileError =
+    firstRunRes.statusId === 6 ||
+    (firstRunRes.compileOutput && firstRunRes.compileOutput.trim().length > 0);
+
+  const settledResults = [firstSettled];
+  if (!isCompileError && testCases.length > 1) {
+    const remainingCases = testCases.slice(1);
+    const CHUNK_SIZE = 3;
+    for (let i = 0; i < remainingCases.length; i += CHUNK_SIZE) {
+      const chunk = remainingCases.slice(i, i + CHUNK_SIZE);
+      const chunkSettled = await Promise.allSettled(
+        chunk.map((tc) => executeOne(normalizeStdin(tc?.input || '')))
+      );
+      settledResults.push(...chunkSettled);
+    }
+  }
+
+  const evaluatedCases = [];
+  let passedCount = 0;
+  let compileError = null;
+  let overallStatus = 'ACCEPTED';
+  let maxRuntimeMs = 0;
+  let maxMemoryKb = 0;
+  const isMockExamEval = Boolean(attemptId || examMode);
+
+  for (let i = 0; i < testCases.length; i++) {
+    const tc = testCases[i] || {};
+    const isHidden = Boolean(tc.is_hidden);
+    const expectedOut = normalizeOutput(
+      tc.expected_output || tc.output || tc.expectedOutput || tc.expected || ''
+    );
+
+    if (isCompileError && i > 0) {
+      evaluatedCases.push({
+        caseIndex: i + 1,
+        isHidden,
+        status: 'SKIPPED',
+        passed: false,
+        actual: isHidden ? undefined : 'Skipped due to compilation error.',
+        timeMs: 0,
+        memoryKb: 0,
+      });
+      continue;
+    }
+
+    const runRes = settledToRunRes(settledResults[i], tc.input || '');
+    maxRuntimeMs = Math.max(maxRuntimeMs, runRes.timeMs);
+    maxMemoryKb = Math.max(maxMemoryKb, runRes.memoryKb);
+
+    if (runRes.statusId === 6 || (runRes.compileOutput && runRes.compileOutput.trim().length > 0)) {
+      compileError = runRes.compileOutput || runRes.stderr;
+      overallStatus = 'COMPILATION_ERROR';
+      evaluatedCases.push({
+        caseIndex: i + 1,
+        isHidden,
+        status: 'COMPILATION_ERROR',
+        passed: false,
+        error: compileError,
+        timeMs: runRes.timeMs,
+      });
+      break;
+    }
+
+    if (runRes.statusId === 5) {
+      overallStatus = 'TIME_LIMIT_EXCEEDED';
+      evaluatedCases.push({
+        caseIndex: i + 1,
+        isHidden,
+        status: 'TIME_LIMIT_EXCEEDED',
+        passed: false,
+        timeMs: runRes.timeMs,
+      });
+      continue;
+    }
+
+    if (runRes.statusId >= 7 && runRes.statusId <= 12) {
+      overallStatus = 'RUNTIME_ERROR';
+      evaluatedCases.push({
+        caseIndex: i + 1,
+        isHidden,
+        status: 'RUNTIME_ERROR',
+        passed: false,
+        error: isHidden ? 'Runtime error on hidden test case.' : (runRes.stderr || 'Runtime error.'),
+        timeMs: runRes.timeMs,
+      });
+      continue;
+    }
+
+    const actualOut = normalizeOutput(runRes.stdout);
+    const isMatch = compareOutputs(actualOut, expectedOut);
+
+    if (isMatch) {
+      passedCount++;
+      evaluatedCases.push({
+        caseIndex: i + 1,
+        isHidden,
+        status: 'PASSED',
+        passed: true,
+        ...(isHidden ? {} : { input: tc.input || '', expected: expectedOut, actual: actualOut }),
+        timeMs: runRes.timeMs,
+      });
+    } else {
+      if (overallStatus === 'ACCEPTED') overallStatus = 'WRONG_ANSWER';
+      evaluatedCases.push({
+        caseIndex: i + 1,
+        isHidden,
+        status: 'WRONG_ANSWER',
+        passed: false,
+        ...(isHidden
+          ? {}
+          : { input: tc.input || '', expected: expectedOut, actual: actualOut || '[No output]' }),
+        timeMs: runRes.timeMs,
+      });
+      // Practice submits stop on first failure; exam evaluations MUST run all cases for partial credit
+      if (isSubmit && !isMockExamEval) break;
+    }
+  }
+
+  let submissionRecord = null;
+  if ((isSubmit || isMockExamEval) && problemId && userEmail && supabaseAdmin) {
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc('record_verified_coding_submission', {
+        p_user_email: userEmail,
+        p_problem_id: problemId,
+        p_language: langKey,
+        p_source_code: sourceCode,
+        p_status: overallStatus,
+        p_runtime_ms: maxRuntimeMs,
+        p_memory_kb: maxMemoryKb,
+        p_passed_cases: passedCount,
+        p_total_cases: testCases.length,
+        p_error_output: compileError,
+      });
+      if (!rpcErr) submissionRecord = rpcRes;
+    } catch {}
+  }
+
+  const verdictToken =
+    attemptId && problemId && userEmail
+      ? signCodingVerdict({
+          attemptId,
+          problemId,
+          langKey,
+          sourceCode,
+          passedCount,
+          totalCount: testCases.length,
+          userEmail,
+        })
+      : null;
+
+  return {
+    status: overallStatus,
+    passedCount,
+    totalCount: testCases.length,
+    isAllPassed: passedCount === testCases.length && testCases.length > 0,
+    compileError,
+    cases: evaluatedCases,
+    submission: submissionRecord,
+    verdictToken,
+  };
+}
+
 // ─── Main Handler ─────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -366,246 +617,61 @@ export default async function handler(req, res) {
       customStdin,
       testCases: clientTestCases,
       isSubmit = false,
+      attemptId = null,
+      examMode = false,
     } = req.body || {};
 
-    // Submitting a formal solution strictly requires authenticated user session
-    if (isSubmit && !userEmail) {
-      return res.status(401).json({ error: 'Please sign in to submit verified solutions.' });
-    }
-
-    if (!sourceCode || sourceCode.trim().length === 0) {
+    if (!sourceCode || typeof sourceCode !== 'string' || sourceCode.trim().length === 0) {
       return res.status(400).json({ error: 'Source code cannot be empty.' });
     }
+    if (Buffer.byteLength(sourceCode, 'utf8') > MAX_SOURCE_CODE_BYTES) {
+      return res.status(413).json({ error: 'Source code exceeds the 64 KB limit.' });
+    }
+    if (customStdin !== undefined && customStdin !== null) {
+      if (typeof customStdin !== 'string' || Buffer.byteLength(customStdin, 'utf8') > MAX_CUSTOM_STDIN_BYTES) {
+        return res.status(413).json({ error: 'Custom stdin exceeds the 16 KB limit.' });
+      }
+    }
 
-    const langKey = String(language).toLowerCase().trim();
-    const langId = JUDGE0_LANGUAGE_IDS[langKey] || JUDGE0_LANGUAGE_IDS.python;
+    // Submitting a formal solution or evaluating inside an active mock exam requires auth
+    if ((isSubmit || attemptId || examMode) && !userEmail) {
+      return res.status(401).json({ error: 'Please sign in to submit or verify exam solutions.' });
+    }
+    if ((attemptId || examMode) && !problemId) {
+      return res.status(400).json({ error: 'Problem identifier is required for exam execution.' });
+    }
 
-    // Build fallback host chain for this request
-    const hosts = buildJudge0HostChain();
+    const result = await executeProblemAgainstDb({
+      supabaseAdmin,
+      problemId,
+      language,
+      sourceCode,
+      userEmail,
+      attemptId,
+      examMode,
+      isSubmit,
+      clientTestCases,
+      customStdin,
+    });
 
-    // Convenience wrapper for a single test case execution with fallback
-    const executeJudge0 = (stdinText) =>
-      executeJudge0WithFallback(stdinText, sourceCode, langId, hosts);
+    if (result?.isCustom) {
+      return res.status(200).json(result);
+    }
 
-    // 2. Handle Custom Input Execution (single run, no parallelism needed)
-    if (customStdin !== undefined && !problemId && (!clientTestCases || clientTestCases.length === 0)) {
-      const customRes = await executeJudge0(customStdin);
-      return res.status(200).json({
-        isCustom: true,
-        stdout: customRes.stdout,
-        stderr: customRes.stderr || customRes.compileOutput,
-        timeMs: customRes.timeMs,
-        memoryKb: customRes.memoryKb,
-        status: customRes.statusDesc,
+    if (result?.status === 'NO_TEST_CASES') {
+      return res.status(422).json({
+        error: 'No server-verified test cases configured for this problem.',
+        status: 'NO_TEST_CASES',
+        passedCount: 0,
+        totalCount: 0,
+        isAllPassed: false,
+        cases: [],
       });
-    }
-
-    // 3. Resolve Test Cases (From DB by problemId, local dataset, or clientTestCases)
-    let testCases = [];
-
-    if (Array.isArray(clientTestCases) && clientTestCases.length > 0) {
-      testCases = clientTestCases;
-    }
-
-    if (testCases.length === 0 && problemId && supabaseAdmin) {
-      try {
-        const { data: problem, error: probError } = await supabaseAdmin
-          .from('technical_problems')
-          .select('id, test_cases, sample_cases, hidden_test_cases')
-          .eq('id', problemId)
-          .maybeSingle();
-
-        if (problem && !probError) {
-          const sampleList = Array.isArray(problem.sample_cases) && problem.sample_cases.length > 0
-            ? problem.sample_cases
-            : (Array.isArray(problem.test_cases) ? problem.test_cases.filter(tc => !tc.is_hidden) : []);
-          const hiddenList = Array.isArray(problem.hidden_test_cases) && problem.hidden_test_cases.length > 0
-            ? problem.hidden_test_cases
-            : (Array.isArray(problem.test_cases) ? problem.test_cases.filter(tc => tc.is_hidden) : []);
-
-          testCases = [...sampleList, ...hiddenList];
-        }
-      } catch (dbErr) {
-        console.warn('[api/execute-code] DB problem lookup error:', dbErr?.message);
-      }
-    }
-
-    if (testCases.length === 0) {
-      return res.status(400).json({ error: 'No test cases configured for this problem.' });
-    }
-
-    // ─── Phase 1A: Smart Fail-Fast & Chunked Execution (Scale-Optimized) ─────
-    // Step 1: Run Test Case 1 first as a compilation and syntax sanity check.
-    // If compilation fails, we skip remaining cases immediately, saving up to 7
-    // redundant compiler runs per broken code submission (huge for concurrent traffic).
-    const firstSettled = (await Promise.allSettled([
-      executeJudge0(normalizeStdin(testCases[0].input || ''))
-    ]))[0];
-
-    const firstRunRes = settledToRunRes(firstSettled, testCases[0].input || '');
-    const isCompileError = firstRunRes.statusId === 6 || (firstRunRes.compileOutput && firstRunRes.compileOutput.trim().length > 0);
-
-    const settledResults = [firstSettled];
-
-    if (!isCompileError && testCases.length > 1) {
-      // Step 2: Execute remaining test cases in controlled concurrency chunks of 3.
-      // This prevents overloading the Judge0 worker queue during peak campus drives
-      // and eliminates the 12-second abort timeout.
-      const remainingCases = testCases.slice(1);
-      const CHUNK_SIZE = 3;
-
-      for (let i = 0; i < remainingCases.length; i += CHUNK_SIZE) {
-        const chunk = remainingCases.slice(i, i + CHUNK_SIZE);
-        const chunkSettled = await Promise.allSettled(
-          chunk.map((tc) => executeJudge0(normalizeStdin(tc.input || '')))
-        );
-        settledResults.push(...chunkSettled);
-      }
-    }
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // 4. Process Results — Compile, Runtime, TLE, Pass/Fail logic preserved exactly
-    const evaluatedCases = [];
-    let passedCount = 0;
-    let compileError = null;
-    let overallStatus = 'ACCEPTED';
-    let maxRuntimeMs = 0;
-    let maxMemoryKb = 0;
-
-    for (let i = 0; i < testCases.length; i++) {
-      const tc = testCases[i];
-      const isHidden = Boolean(tc.is_hidden);
-      const expectedOut = normalizeOutput(
-        tc.expected_output ||
-        tc.output ||
-        tc.expectedOutput ||
-        tc.expected ||
-        ''
-      );
-
-      // If compilation error occurred on case 1, mark remaining as skipped without executing
-      if (isCompileError && i > 0) {
-        evaluatedCases.push({
-          caseIndex: i + 1,
-          status: 'SKIPPED',
-          passed: false,
-          actual: 'Skipped due to compilation error.',
-          timeMs: 0,
-          memoryKb: 0,
-        });
-        continue;
-      }
-
-      const runRes = settledToRunRes(settledResults[i], tc.input || '');
-
-      maxRuntimeMs = Math.max(maxRuntimeMs, runRes.timeMs);
-      maxMemoryKb = Math.max(maxMemoryKb, runRes.memoryKb);
-
-      // Check Compilation Error
-      if (runRes.statusId === 6 || runRes.compileOutput.trim().length > 0) {
-        compileError = runRes.compileOutput || runRes.stderr;
-        overallStatus = 'COMPILATION_ERROR';
-        evaluatedCases.push({
-          caseIndex: i + 1,
-          status: 'COMPILATION_ERROR',
-          passed: false,
-          error: compileError,
-          timeMs: runRes.timeMs,
-        });
-        // On compile error: record it and stop processing remaining cases
-        break;
-      }
-
-      // Check Time Limit Exceeded
-      if (runRes.statusId === 5) {
-        overallStatus = 'TIME_LIMIT_EXCEEDED';
-        evaluatedCases.push({
-          caseIndex: i + 1,
-          status: 'TIME_LIMIT_EXCEEDED',
-          passed: false,
-          timeMs: runRes.timeMs,
-        });
-        continue;
-      }
-
-      // Check Runtime Error
-      if (runRes.statusId >= 7 && runRes.statusId <= 12) {
-        overallStatus = 'RUNTIME_ERROR';
-        evaluatedCases.push({
-          caseIndex: i + 1,
-          status: 'RUNTIME_ERROR',
-          passed: false,
-          error: runRes.stderr || 'Runtime error.',
-          timeMs: runRes.timeMs,
-        });
-        continue;
-      }
-
-      const actualOut = normalizeOutput(runRes.stdout);
-      const isMatch = compareOutputs(actualOut, expectedOut);
-
-      if (isMatch) {
-        passedCount++;
-        evaluatedCases.push({
-          caseIndex: i + 1,
-          status: 'PASSED',
-          passed: true,
-          input: tc.input || '',
-          expected: expectedOut,
-          actual: actualOut,
-          timeMs: runRes.timeMs,
-        });
-      } else {
-        if (overallStatus === 'ACCEPTED') overallStatus = 'WRONG_ANSWER';
-        evaluatedCases.push({
-          caseIndex: i + 1,
-          status: 'WRONG_ANSWER',
-          passed: false,
-          input: tc.input || '',
-          expected: expectedOut,
-          actual: actualOut || '[No output]',
-          timeMs: runRes.timeMs,
-        });
-        if (isSubmit) break;
-      }
-    }
-
-    // 5. Record formal submission via Atomic RPC [P0-03, P1-02]
-    let submissionRecord = null;
-    if (isSubmit && problemId && userEmail && supabaseAdmin) {
-      try {
-        const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc('record_verified_coding_submission', {
-          p_user_email: userEmail,
-          p_problem_id: problemId,
-          p_language: langKey,
-          p_source_code: sourceCode,
-          p_status: overallStatus,
-          p_runtime_ms: maxRuntimeMs,
-          p_memory_kb: maxMemoryKb,
-          p_passed_cases: passedCount,
-          p_total_cases: testCases.length,
-          p_error_output: compileError,
-        });
-
-        if (rpcErr) {
-          console.error('[api/execute-code] RPC submission record failed:', rpcErr.message);
-        } else {
-          submissionRecord = rpcRes;
-        }
-      } catch (rpcEx) {
-        console.warn('[api/execute-code] RPC execution error:', rpcEx?.message);
-      }
     }
 
     return res.status(200).json({
       success: true,
-      status: overallStatus,
-      passedCount,
-      totalCount: testCases.length,
-      isAllPassed: passedCount === testCases.length && testCases.length > 0,
-      compileError,
-      cases: evaluatedCases,
-      submission: submissionRecord,
+      ...result,
     });
   } catch (error) {
     console.error('[api/execute-code] Execution error:', error);

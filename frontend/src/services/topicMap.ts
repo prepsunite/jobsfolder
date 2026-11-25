@@ -506,6 +506,11 @@ export const TOPIC_ALIAS_FAMILIES: Readonly<Record<string, string[]>> = Object.f
   'recursion-backtracking': ['recursion-backtracking', 'RECURSION', 'EXHAUSTIVE_SEARCH_DP', 'stage-8-backtracking'],
   'searching-sorting': ['searching-sorting', 'SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING', 'stage-5-binary-search'],
 
+  // Category slug aliases (canonical DB vs UI labels)
+  'nonverbal-reasoning': ['nonverbal-reasoning', 'non-verbal-reasoning', 'nonverbal', 'non-verbal'],
+  'non-verbal-reasoning': ['nonverbal-reasoning', 'non-verbal-reasoning', 'nonverbal', 'non-verbal'],
+  'technical-aptitude': ['technical-aptitude', 'tech-aptitude'],
+
   // Blueprint & Domain Aliases (Strict 1-to-1)
   'syllogism': ['syllogism', 'syllogisms'],
   'vr-critical-reasoning': ['vr-critical-reasoning'],

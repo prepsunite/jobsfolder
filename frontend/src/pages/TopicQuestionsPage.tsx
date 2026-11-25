@@ -145,37 +145,61 @@ export default function TopicQuestionsPage() {
   const loadQuestions = useCallback(async () => {
     try {
       const aliasVariants = expandTopicAliases([topicId]);
-      let query = supabase
-        .from('topic_questions')
-        .select('*')
-        .in('topic_id', aliasVariants)
-        .or('is_deleted.is.null,is_deleted.eq.false');
+      let data: any[] | null = null;
 
-      // For regular students, practice up to 60 questions per topic
+      // 1. Prefer safe non-answer RPC for candidates/guests (works cleanly once RLS locks raw table)
       if (!isAdmin) {
-        query = query.limit(60);
+        try {
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('get_practice_topic_questions', {
+            p_topic_ids: aliasVariants,
+            p_difficulty: 'ALL',
+            p_limit: 60,
+            p_offset: 0,
+          });
+          if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+            data = rpcData;
+          }
+        } catch {}
       }
 
-      const { data, error } = await query
-        .order('question_number', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: true });
+      // 2. Fallback to direct query for admins or pre-migration environments
+      if (!data) {
+        let query = supabase
+          .from('topic_questions')
+          .select('*')
+          .in('topic_id', aliasVariants)
+          .or('is_deleted.is.null,is_deleted.eq.false');
 
-      if (error) throw error;
+        // For regular students, practice up to 60 questions per topic
+        if (!isAdmin) {
+          query = query.limit(60);
+        }
+
+        const { data: directData, error } = await query
+          .order('question_number', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        data = directData;
+      }
 
       if (data) {
         const mapped: TopicQuestionItem[] = data.map((q: any, idx: number) => {
           const parsedStructured = typeof q.structured_explanation === 'string'
             ? (() => { try { return JSON.parse(q.structured_explanation); } catch { return undefined; } })()
-            : (q.structured_explanation || undefined);
+            : (q.structured_explanation || (q.passage ? { passage: q.passage, passageTitle: q.passageTitle } : undefined));
 
           const testCase = q.test_case || parsedStructured?.testCase || (q.sample_input || q.sample_output ? `Input:\n${q.sample_input || ''}\n\nOutput:\n${q.sample_output || ''}`.trim() : undefined);
 
           const rawCorrect = q.correct_answer;
-          const resolvedLetter = typeof rawCorrect === 'number'
-            ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
-            : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
-                ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
-                : (String(rawCorrect || 'A').toUpperCase()));
+          const resolvedLetter =
+            rawCorrect === null || rawCorrect === undefined || rawCorrect === ''
+              ? ''
+              : typeof rawCorrect === 'number'
+                ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
+                : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
+                    ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
+                    : (String(rawCorrect).toUpperCase()));
 
           const rawOpts = (() => {
             try { return typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []); }
@@ -238,8 +262,64 @@ export default function TopicQuestionsPage() {
     loadQuestions();
   }, [loadQuestions]);
 
+  const applyVerifiedDetails = (qId: string, res: any) => {
+    const rawC = res?.correct_answer;
+    if (!rawC && res?.explanation === undefined && res?.structured_explanation === undefined) return;
+    const parsedSe =
+      typeof res?.structured_explanation === 'string'
+        ? (() => { try { return JSON.parse(res.structured_explanation); } catch { return undefined; } })()
+        : res?.structured_explanation;
+
+    setQuestions(prev =>
+      prev.map(item =>
+        item.id !== qId
+          ? item
+          : {
+              ...item,
+              correctAnswer: rawC ? String(rawC).toUpperCase() : item.correctAnswer,
+              explanation: res?.explanation !== undefined && res?.explanation !== null
+                ? normalizeMathText(String(res.explanation))
+                : item.explanation,
+              structuredExplanation: parsedSe || item.structuredExplanation,
+            }
+      )
+    );
+  };
+
   const handleSelectOption = async (q: TopicQuestionItem, optionKey: string) => {
-    const isCorrect = optionKey.trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
+    let isCorrect = false;
+    let resolvedCorrect = q.correctAnswer;
+
+    if (resolvedCorrect) {
+      isCorrect = optionKey.trim().toUpperCase() === String(resolvedCorrect).trim().toUpperCase();
+    } else {
+      if (!user?.email || user.email === GUEST_EMAIL) {
+        toast.error('Please sign in to verify answers and track practice progress.');
+        return;
+      }
+      try {
+        const { data: rpcRes, error: rpcErr } = await supabase.rpc('verify_practice_question_answer', {
+          p_question_id: q.id,
+          p_selected_option: optionKey,
+          p_reveal: false,
+        });
+        if (rpcErr) throw rpcErr;
+        if (rpcRes?.locked) {
+          toast.error(rpcRes.message || 'Answer verification is locked during an active exam window.');
+          return;
+        }
+        isCorrect = Boolean(rpcRes?.is_correct);
+        if (rpcRes?.correct_answer) {
+          resolvedCorrect = String(rpcRes.correct_answer).toUpperCase();
+          applyVerifiedDetails(q.id, rpcRes);
+        } else {
+          resolvedCorrect = optionKey.trim().toUpperCase() === 'A' ? 'B' : 'A';
+        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Unable to verify answer right now.');
+        return;
+      }
+    }
 
     // Trigger audio and haptic feedback
     if (isCorrect) {
@@ -267,22 +347,43 @@ export default function TopicQuestionsPage() {
       categorySlug,
       difficulty: q.difficulty,
       selectedOption: optionKey,
-      correctOption: q.correctAnswer,
+      correctOption: resolvedCorrect,
       userEmail: user?.email,
     });
 
     setProgressRecords(prev => ({ ...prev, [q.id]: record }));
   };
 
-  const handleToggleReveal = (qId: string) => {
-    setRevealedExpl(prev => {
-      const isCurrentlyVisible = prev[qId] !== undefined ? prev[qId] : false;
-      const nextState = !isCurrentlyVisible;
-      if (nextState) {
-        progressService.markRevealed(qId, user?.email);
+  const handleToggleReveal = async (qId: string) => {
+    const isCurrentlyVisible = revealedExpl[qId] !== undefined ? revealedExpl[qId] : false;
+    const nextState = !isCurrentlyVisible;
+    if (nextState) {
+      const target = questions.find(item => item.id === qId);
+      if (target && !target.correctAnswer) {
+        if (!user?.email || user.email === GUEST_EMAIL) {
+          toast.error('Please sign in to view answers and detailed solutions.');
+          return;
+        }
+        try {
+          const { data: rpcRes, error: rpcErr } = await supabase.rpc('verify_practice_question_answer', {
+            p_question_id: qId,
+            p_selected_option: null,
+            p_reveal: true,
+          });
+          if (rpcErr) throw rpcErr;
+          if (rpcRes?.locked) {
+            toast.error(rpcRes.message || 'Solutions are locked during an active exam window.');
+            return;
+          }
+          applyVerifiedDetails(qId, rpcRes);
+        } catch (err: any) {
+          toast.error(err?.message || 'Unable to unlock solution.');
+          return;
+        }
       }
-      return { ...prev, [qId]: nextState };
-    });
+      progressService.markRevealed(qId, user?.email);
+    }
+    setRevealedExpl(prev => ({ ...prev, [qId]: nextState }));
   };
 
   const handleToggleBookmark = (qId: string) => {

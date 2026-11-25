@@ -48,7 +48,20 @@ import type {
   ProctorEvent,
 } from '@/types/tpo';
 import { useToast } from '@/contexts/ToastContext';
-import { sha256Text } from '@/utils/cryptoUtils';
+import { getServerNowMs, setServerNowMs, syncServerClock } from '@/utils/serverClock';
+import {
+  classifyForeignElement,
+  neutralizeForeignElement,
+  isWithinAuthorizedExamEditor,
+  evaluateExamKeyDown,
+  EXAM_AI_SCANNER_SELECTOR,
+  EXAM_DOM_SHIELD_CSS,
+} from '@/utils/examBrowserShield';
+
+function getExamStorageKey(prefix: string, eId: string, userKey?: string): string {
+  const safeUser = (userKey || 'anon').trim().toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
+  return `${prefix}_${eId}_${safeUser}`;
+}
 
 /**
  * 🛡️ High-Entropy Deterministic Pseudo-Random Seeded Shuffle (Mulberry32 + FNV-1a Avalanche Mixer)
@@ -97,23 +110,39 @@ export function getSampledSectionQuestionIds(
   questionsMap: Record<string, any>,
   examId: string,
   studentShuffleSeed: string,
-  shuffleQuestions: boolean = true
+  shuffleQuestions: boolean = true,
+  serverAssignedSet?: Set<string> | null
 ): string[] {
-  const rawIds: string[] = section?.question_ids || [];
-  if (rawIds.length === 0) return [];
+  const poolIds: string[] = section?.question_ids || [];
+  if (poolIds.length === 0) return [];
 
-  const targetServeCount = Math.min(
-    rawIds.length,
-    section?.serve_count || section?.question_count || rawIds.length
-  );
+  // Restrict to server-assigned question subset when present
+  const matchedAssigned =
+    serverAssignedSet && serverAssignedSet.size > 0
+      ? poolIds.filter(id => serverAssignedSet.has(id))
+      : [];
+  const rawIds = matchedAssigned.length > 0 ? matchedAssigned : poolIds;
 
-  // 🛡️ Check persistent cache first (prevents re-sampling or re-shuffling on reload/tab switch)
+  const targetServeCount =
+    matchedAssigned.length > 0
+      ? matchedAssigned.length
+      : Math.min(rawIds.length, section?.serve_count || section?.question_count || rawIds.length);
+
+  const rawSet = new Set(rawIds);
+  const seedTag = (studentShuffleSeed || 'default').replace(/[^a-zA-Z0-9_-]/g, '_').slice(-32);
+  const cacheKey = `prepunite_sec_qids_${examId}_${sectionIndex}_${seedTag}`;
+
+  // 🛡️ Check persistent user-scoped cache first (prevents re-sampling or re-shuffling on reload/tab switch)
   if (typeof window !== 'undefined' && examId) {
     try {
-      const cached = localStorage.getItem(`prepunite_sec_qids_${examId}_${sectionIndex}`);
+      const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && (parsed.length === targetServeCount || parsed.length === rawIds.length)) {
+        if (
+          Array.isArray(parsed) &&
+          (parsed.length === targetServeCount || parsed.length === rawIds.length) &&
+          parsed.every((id: string) => rawSet.has(id))
+        ) {
           return parsed.slice(0, targetServeCount);
         }
       }
@@ -281,10 +310,11 @@ export function getSampledSectionQuestionIds(
     finalOrder = finalOrder.slice(0, targetServeCount);
   }
 
-  // Freeze into localStorage so reload/re-render preserves identical sequence
+  // Freeze into user-scoped localStorage so reload/re-render preserves identical sequence
   if (typeof window !== 'undefined' && examId && hasQuestionsLoaded && finalOrder.length > 0) {
     try {
-      localStorage.setItem(`prepunite_sec_qids_${examId}_${sectionIndex}`, JSON.stringify(finalOrder));
+      const seedTag = (studentShuffleSeed || 'default').replace(/[^a-zA-Z0-9_-]/g, '_').slice(-32);
+      localStorage.setItem(`prepunite_sec_qids_${examId}_${sectionIndex}_${seedTag}`, JSON.stringify(finalOrder));
     } catch {}
   }
 
@@ -483,10 +513,15 @@ export default function MockExamTestPage() {
   );
 
   // State
+  const userStorageKey = user?.email?.trim().toLowerCase() || user?.id || 'anon';
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsMap, setQuestionsMap] = useState<Record<string, any>>({});
   const [questionsLoading, setQuestionsLoading] = useState(false);
+
+  // Authoritative server-issued shuffle seed and subset when an attempt starts/resumes
+  const [serverShuffleSeed, setServerShuffleSeed] = useState<string>('');
+  const [serverAssignedIds, setServerAssignedIds] = useState<string[] | null>(null);
 
   // Responses Map: { [questionId]: { selected_option: number | null, marked_review: boolean, time_spent_sec: number } }
   const [responses, setResponses] = useState<Record<string, StudentExamResponse>>({});
@@ -495,7 +530,7 @@ export default function MockExamTestPage() {
   const [visitedQuestionIds, setVisitedQuestionIds] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined' && examId) {
       try {
-        const saved = localStorage.getItem(`prepunite_visited_${examId}`);
+        const saved = localStorage.getItem(getExamStorageKey('prepunite_visited', examId, user?.email || user?.id || 'anon'));
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) return new Set(parsed);
@@ -514,13 +549,34 @@ export default function MockExamTestPage() {
   const tabSwitchCountRef = useRef<number>(0);
   const lastViolationTimeRef = useRef<number>(0);
   const startedAtMsRef = useRef<number>(0);
+  const serverDeadlineMsRef = useRef<number>(0);
   const perfStartMsRef = useRef<number>(0);
   const initialElapsedSecRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [warningMessage, setWarningMessage] = useState<string>('');
   const [proctorEvents, setProctorEvents] = useState<ProctorEvent[]>([]);
-  const serverTimeOffsetRef = useRef<number>(0);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const blurBurstTimestampsRef = useRef<number[]>([]);
+  const lastAiExtensionStrikeRef = useRef<number>(0);
+  const [isFullscreenActive, setIsFullscreenActive] = useState<boolean>(() =>
+    Boolean(typeof document !== 'undefined' && document.fullscreenElement)
+  );
+  const [privacyCurtainReason, setPrivacyCurtainReason] = useState<string | null>(null);
+  const [extensionViolationReason, setExtensionViolationReason] = useState<string | null>(null);
+
+  const requestExamFullscreen = useCallback(async () => {
+    try {
+      const el = document.documentElement;
+      if (el.requestFullscreen && !document.fullscreenElement) {
+        await el.requestFullscreen();
+      }
+      const active = Boolean(document.fullscreenElement);
+      setIsFullscreenActive(active);
+      return active;
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Submission Modal & Final Result
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
@@ -575,10 +631,20 @@ export default function MockExamTestPage() {
       setTestPhase('SUBMITTED');
     } else if (existingAttempt.status === 'IN_PROGRESS' && testPhase === 'INSTRUCTIONS') {
       setAttemptId(existingAttempt.id);
+      if (existingAttempt.shuffle_seed) setServerShuffleSeed(existingAttempt.shuffle_seed);
+      const restoredAssigned = existingAttempt.assigned_question_ids || (existingAttempt.responses as any)?.__assigned_question_ids;
+      if (Array.isArray(restoredAssigned) && restoredAssigned.length > 0) {
+        setServerAssignedIds(restoredAssigned);
+      }
+      if (existingAttempt.server_deadline_at) {
+        const dl = new Date(existingAttempt.server_deadline_at).getTime();
+        if (Number.isFinite(dl) && dl > 0) serverDeadlineMsRef.current = dl;
+      }
+
       let recoveredResponses = existingAttempt.responses || {};
       if (typeof window !== 'undefined' && examId) {
         try {
-          const cached = localStorage.getItem(`prepunite_active_responses_${examId}`);
+          const cached = localStorage.getItem(getExamStorageKey('prepunite_active_responses', examId, userStorageKey));
           if (cached) {
             recoveredResponses = { ...recoveredResponses, ...JSON.parse(cached) };
           }
@@ -588,7 +654,9 @@ export default function MockExamTestPage() {
       if (recoveredResponses) {
         setVisitedQuestionIds(prev => {
           const next = new Set(prev);
-          Object.keys(recoveredResponses).forEach(k => next.add(k));
+          Object.keys(recoveredResponses).forEach(k => {
+            if (!k.startsWith('__')) next.add(k);
+          });
           return next;
         });
       }
@@ -597,7 +665,7 @@ export default function MockExamTestPage() {
       let storedSession: any = null;
       if (typeof window !== 'undefined' && examId) {
         try {
-          const raw = localStorage.getItem(`prepunite_exam_session_${examId}`);
+          const raw = localStorage.getItem(getExamStorageKey('prepunite_exam_session', examId, userStorageKey));
           if (raw) storedSession = JSON.parse(raw);
         } catch {}
       }
@@ -625,29 +693,27 @@ export default function MockExamTestPage() {
       const sumSectionMinutes = exam?.sections?.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) || 0;
       const effectiveMinutes = sumSectionMinutes > 0 && (exam?.duration_minutes === 90 || !exam?.duration_minutes) ? sumSectionMinutes : (exam?.duration_minutes || 90);
       const totalSec = effectiveMinutes * 60;
+      const nowMs = getServerNowMs();
       const startedAtMs = existingAttempt.started_at
         ? new Date(existingAttempt.started_at).getTime()
-        : Date.now() - (existingAttempt.time_spent_seconds || 0) * 1000;
-      startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : Date.now();
-      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMsRef.current) / 1000));
+        : nowMs - (existingAttempt.time_spent_seconds || 0) * 1000;
+      startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : nowMs;
+      const elapsedSec = Math.max(existingAttempt.time_spent_seconds || 0, Math.floor((nowMs - startedAtMsRef.current) / 1000));
       setTimeSpentSeconds(elapsedSec);
-      setTimeRemainingSeconds(Math.max(0, totalSec - elapsedSec));
+      const remainingFromDeadline = serverDeadlineMsRef.current > 0
+        ? Math.max(0, Math.ceil((serverDeadlineMsRef.current - nowMs) / 1000))
+        : Math.max(0, totalSec - elapsedSec);
+      setTimeRemainingSeconds(remainingFromDeadline);
     }
-  }, [existingAttempt, exam, testPhase, examId]);
+  }, [existingAttempt, exam, testPhase, examId, userStorageKey]);
 
-  // 🛡️ P1-06: Synchronize with authoritative server clock to eliminate client skew
+  // 🛡️ P1-06: Synchronize monotonic clock with authoritative server clock
   useEffect(() => {
-    (async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_server_timestamp');
-        if (!error && data) {
-          const serverMs = new Date(data as string).getTime();
-          if (Number.isFinite(serverMs)) {
-            serverTimeOffsetRef.current = serverMs - Date.now();
-          }
-        }
-      } catch {}
-    })();
+    syncServerClock(supabase).catch(() => {});
+    const clockInterval = setInterval(() => {
+      syncServerClock(supabase).catch(() => {});
+    }, 60_000);
+    return () => clearInterval(clockInterval);
   }, []);
 
   // 🛡️ P1-07: Offline Auto-Submit Replay Queue on Network Reconnect
@@ -655,7 +721,8 @@ export default function MockExamTestPage() {
     const handleOnline = async () => {
       if (!exam?.id || typeof window === 'undefined') return;
       try {
-        const pendingRaw = localStorage.getItem(`prepunite_pending_submission_${exam.id}`);
+        const pendingKey = getExamStorageKey('prepunite_pending_submission', exam.id, userStorageKey);
+        const pendingRaw = localStorage.getItem(pendingKey);
         if (pendingRaw) {
           toast.info('Network connection restored. Auto-submitting queued assessment...');
           const pending = JSON.parse(pendingRaw);
@@ -668,7 +735,7 @@ export default function MockExamTestPage() {
             pending.tabSwitchCount,
             pending.statusOverride
           );
-          localStorage.removeItem(`prepunite_pending_submission_${exam.id}`);
+          localStorage.removeItem(pendingKey);
           setResponses(graded.responses || pending.responses);
           setFinalGradedAttempt(graded);
           setTestPhase('SUBMITTED');
@@ -681,7 +748,7 @@ export default function MockExamTestPage() {
 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [exam?.id]);
+  }, [exam?.id, userStorageKey]);
 
   // 🛡️ P1-02: Persist active session on section/question transitions
   useEffect(() => {
@@ -693,11 +760,11 @@ export default function MockExamTestPage() {
         sectionTimeSpent: sectionTimeSpentRef.current,
         tabSwitchCount: tabSwitchCountRef.current,
         proctorEvents: syncRef.current.events,
-        updatedAt: Date.now(),
+        updatedAt: getServerNowMs(),
       };
-      localStorage.setItem(`prepunite_exam_session_${examId}`, JSON.stringify(sessionData));
+      localStorage.setItem(getExamStorageKey('prepunite_exam_session', examId, userStorageKey), JSON.stringify(sessionData));
     } catch {}
-  }, [examId, testPhase, currentSectionIndex, currentQuestionIndex]);
+  }, [examId, testPhase, currentSectionIndex, currentQuestionIndex, userStorageKey]);
 
   // Deterministically sort sections by section_order ASC
   const sections = useMemo(() => {
@@ -747,7 +814,7 @@ export default function MockExamTestPage() {
 
     setQuestionsLoading(true);
     tpoService
-      .getQuestionsForExam(allQIds)
+      .getQuestionsForExam(allQIds, exam?.id)
       .then(questions => {
         const map: Record<string, any> = {};
         (questions || []).forEach(q => {
@@ -826,8 +893,10 @@ export default function MockExamTestPage() {
   const currentSection: MockExamSection | undefined = sections[currentSectionIndex];
 
   // 🛡️ Candidate-specific deterministic seed for question & option shuffling
-  // Ensures maximum entropy so no two candidates get identical question order, while remaining 100% reproducible per candidate
+  // Prioritizes opaque server-issued shuffle_seed so question order cannot be inferred from email
   const studentShuffleSeed = useMemo(() => {
+    if (serverShuffleSeed) return serverShuffleSeed;
+    if (existingAttempt?.shuffle_seed) return existingAttempt.shuffle_seed;
     const userIdentifier = user?.email?.trim().toLowerCase() || user?.id;
     if (userIdentifier) {
       return `${exam?.id || examId || 'exam'}_usr_${userIdentifier}`;
@@ -842,7 +911,15 @@ export default function MockExamTestPage() {
       sessionStorage.setItem(sessionKey, sessionSeed);
     }
     return `${exam?.id || examId || 'exam'}_${sessionSeed}`;
-  }, [exam?.id, examId, user?.email, user?.id, attemptId]);
+  }, [serverShuffleSeed, existingAttempt?.shuffle_seed, exam?.id, examId, user?.email, user?.id, attemptId]);
+
+  const serverAssignedSet = useMemo(() => {
+    const raw =
+      serverAssignedIds ||
+      existingAttempt?.assigned_question_ids ||
+      (existingAttempt?.responses as any)?.__assigned_question_ids;
+    return Array.isArray(raw) && raw.length > 0 ? new Set<string>(raw) : null;
+  }, [serverAssignedIds, existingAttempt?.assigned_question_ids, existingAttempt?.responses]);
 
   // 🛡️ Precompute deterministic assigned question IDs for all sections
   const sectionAssignedMap = useMemo(() => {
@@ -854,11 +931,12 @@ export default function MockExamTestPage() {
         questionsMap,
         exam?.id || examId || '',
         studentShuffleSeed,
-        exam?.shuffle_questions !== false
+        exam?.shuffle_questions !== false,
+        serverAssignedSet
       );
     });
     return map;
-  }, [sections, questionsMap, exam?.id, examId, studentShuffleSeed, exam?.shuffle_questions]);
+  }, [sections, questionsMap, exam?.id, examId, studentShuffleSeed, exam?.shuffle_questions, serverAssignedSet]);
 
   // Deterministically sampled questions within the current section
   const currentSectionQIds = useMemo(() => {
@@ -877,12 +955,12 @@ export default function MockExamTestPage() {
       next.add(currentQuestionId);
       if (typeof window !== 'undefined' && examId) {
         try {
-          localStorage.setItem(`prepunite_visited_${examId}`, JSON.stringify(Array.from(next)));
+          localStorage.setItem(getExamStorageKey('prepunite_visited', examId, userStorageKey), JSON.stringify(Array.from(next)));
         } catch {}
       }
       return next;
     });
-  }, [currentQuestionId, testPhase, examId]);
+  }, [currentQuestionId, testPhase, examId, userStorageKey]);
 
   // Helper to get passage question progress (e.g. "Question 2 of 5" for current passage)
   const passageInfo = useMemo(() => {
@@ -976,32 +1054,25 @@ export default function MockExamTestPage() {
       return;
     }
 
-    // 🛡️ Pillar 4: Verify Physical Lab Invigilator Passcode if enabled
+    // 🛡️ Pillar 4: Verify Physical Lab Invigilator Passcode on server if enabled
     const requiresPasscode = Boolean(
       exam.enable_passcode_lock &&
-      (exam.access_passcode || exam.access_passcode_hash) &&
       existingAttempt?.status !== 'IN_PROGRESS'
     );
+    const cleanEnteredPasscode = enteredPasscode.trim().toUpperCase();
 
     if (requiresPasscode && !isPasscodeUnlocked) {
-      const cleanEntered = enteredPasscode.trim().toUpperCase();
-      if (!cleanEntered) {
+      if (!cleanEnteredPasscode) {
         setPasscodeError('Please enter the lab access PIN provided by your invigilator.');
         toast.error('Passcode required. Please enter the lab access PIN to begin.');
         return;
       }
 
-      let matches = false;
-      if (exam.access_passcode_hash) {
-        const enteredHash = await sha256Text(cleanEntered);
-        matches = enteredHash === exam.access_passcode_hash;
-      } else if (exam.access_passcode) {
-        matches = cleanEntered === (exam.access_passcode || '').trim().toUpperCase();
-      }
-
-      if (!matches) {
-        setPasscodeError('Invalid passcode PIN. Please check with your lab faculty or invigilator.');
-        toast.error('Incorrect lab access PIN. Please verify with your invigilator.');
+      const verifyRes = await tpoService.verifyExamPasscode(exam.id, cleanEnteredPasscode);
+      if (!verifyRes.valid) {
+        const msg = verifyRes.error || 'Invalid passcode PIN. Please check with your lab faculty or invigilator.';
+        setPasscodeError(msg);
+        toast.error(msg);
         return;
       }
       setIsPasscodeUnlocked(true);
@@ -1014,18 +1085,22 @@ export default function MockExamTestPage() {
     }
 
     try {
-      // Enter Fullscreen if required
-      if (exam.enable_fullscreen_lock && document.documentElement.requestFullscreen) {
+      // Enter Fullscreen if required (enforced strictly for non-admin proctored candidates)
+      if (exam.enable_fullscreen_lock && !isAdminOrTpo && document.documentElement.requestFullscreen) {
         try {
           await document.documentElement.requestFullscreen();
-        } catch (e) {
-          console.warn('Fullscreen request bypassed or denied:', e);
+          setIsFullscreenActive(Boolean(document.fullscreenElement));
+        } catch {
+          toast.error('Fullscreen mode is required to start this proctored examination. Please allow fullscreen permission and retry.');
+          return;
         }
+      } else {
+        setIsFullscreenActive(Boolean(document.fullscreenElement));
       }
 
       isSubmittingRef.current = false;
 
-      // Initialize or resume attempt in Supabase & local storage
+      // Initialize or resume attempt in authoritative backend & Supabase
       const candidateIdentifier = user.email || user.id;
       const effectiveCollegeId = isPublicAdminExam
         ? (user.collegeId || 'PUBLIC')
@@ -1034,7 +1109,8 @@ export default function MockExamTestPage() {
         exam.id,
         candidateIdentifier,
         effectiveCollegeId,
-        user.email || undefined
+        user.email || undefined,
+        cleanEnteredPasscode || undefined
       );
 
       // Guard against already completed attempt returned by service
@@ -1051,14 +1127,28 @@ export default function MockExamTestPage() {
       }
 
       setAttemptId(attempt.id);
+      if (attempt.shuffle_seed) setServerShuffleSeed(attempt.shuffle_seed);
+      const assigned = attempt.assigned_question_ids || (attempt.responses as any)?.__assigned_question_ids;
+      if (Array.isArray(assigned) && assigned.length > 0) {
+        setServerAssignedIds(assigned);
+      }
+      if (attempt.server_deadline_at) {
+        const dl = new Date(attempt.server_deadline_at).getTime();
+        if (Number.isFinite(dl) && dl > 0) serverDeadlineMsRef.current = dl;
+      }
+
+      const nowMs = getServerNowMs();
       const startedAtMs = attempt.started_at
         ? new Date(attempt.started_at).getTime()
-        : Date.now() - (attempt.time_spent_seconds || 0) * 1000;
-      startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : Date.now();
+        : nowMs - (attempt.time_spent_seconds || 0) * 1000;
+      startedAtMsRef.current = Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : nowMs;
       const totalSec = effectiveExamMinutes * 60;
-      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMsRef.current) / 1000));
+      const elapsedSec = Math.max(attempt.time_spent_seconds || 0, Math.floor((nowMs - startedAtMsRef.current) / 1000));
       setTimeSpentSeconds(elapsedSec);
-      setTimeRemainingSeconds(Math.max(0, totalSec - elapsedSec));
+      const remainingFromDeadline = serverDeadlineMsRef.current > 0
+        ? Math.max(0, Math.ceil((serverDeadlineMsRef.current - nowMs) / 1000))
+        : Math.max(0, totalSec - elapsedSec);
+      setTimeRemainingSeconds(remainingFromDeadline);
       if (attempt.responses) setResponses(attempt.responses);
       setTestPhase('IN_PROGRESS');
     } catch (err: any) {
@@ -1099,49 +1189,38 @@ export default function MockExamTestPage() {
           events: currentEvents,
         } = syncRef.current;
 
-        // 🛡️ FIX Issue 1: Auto-evaluate any coding question where the student wrote code but
-        // didn't click "Run Tests" (or made a last-minute edit that reset test_cases_passed to 0).
-        // Without this, a student with a perfect solution gets 0 marks if the timer expired
-        // before they could click "Run Tests" on their latest edit.
+        // Auto-evaluate unverified coding submissions via authoritative backend (/api/execute-code)
+        // which loads server test cases directly by problemId and signs an HMAC verdictToken.
         const autoEvaluatedResponses = { ...currentResponses };
 
-        // 🛡️ DYNAMIC SAMPLING INVARIANT:
-        // Pack all deterministic assigned question IDs across all sections into the response payload
-        // so server-side scoring and student review sheet strictly evaluate the served subset
-        const allAssignedIds: string[] = (exam.sections || []).flatMap((sec, sIdx) =>
-          sectionAssignedMap[sIdx] || sec.question_ids || []
-        );
-        autoEvaluatedResponses.__assigned_question_ids = allAssignedIds as any;
         if (statusOverride !== 'TERMINATED_MALPRACTICE') {
           const codingQIds = Object.keys(autoEvaluatedResponses).filter(qId => {
+            if (qId.startsWith('__')) return false;
             const resp = autoEvaluatedResponses[qId];
             const qData = questionsMap[qId];
             if (!resp || !qData) return false;
             const hasCode = resp.code_solution && !isTemplateOrEmptyCode(resp.code_solution, resp.code_language);
-            const isUntested = !resp.total_test_cases || resp.test_cases_passed === 0;
-            return hasCode && isUntested;
+            const needsVerdict = !resp.verdictToken && (!resp.total_test_cases || resp.test_cases_passed === 0);
+            return hasCode && needsVerdict;
           });
 
           for (const qId of codingQIds) {
             const resp = autoEvaluatedResponses[qId];
-            const qData = questionsMap[qId];
-            const cases = (qData.test_cases || qData.testCases || []);
-            if (cases.length > 0) {
-              try {
-                const runResult = await codeExecutionService.runTestCases(
-                  resp.code_language || 'python',
-                  resp.code_solution!,
-                  cases
-                );
-                autoEvaluatedResponses[qId] = {
-                  ...resp,
-                  test_cases_passed: runResult.passedCount,
-                  total_test_cases: runResult.totalCount,
-                };
-              } catch (runErr) {
-                // Judge0 unavailable — keep 0/0; coding has no negative marking so student isn't penalized
-                console.warn(`[AutoEval] Judge0 call failed for ${qId}:`, runErr);
-              }
+            try {
+              const runResult = await codeExecutionService.runExamTestCases({
+                problemId: qId,
+                attemptId: aId,
+                language: resp.code_language || 'python',
+                sourceCode: resp.code_solution!,
+              });
+              autoEvaluatedResponses[qId] = {
+                ...resp,
+                test_cases_passed: runResult.passedCount,
+                total_test_cases: runResult.totalCount,
+                verdictToken: runResult.verdictToken || undefined,
+              };
+            } catch (runErr) {
+              console.warn(`[AutoEval] Server coding verdict failed for ${qId}:`, runErr);
             }
           }
         }
@@ -1164,8 +1243,9 @@ export default function MockExamTestPage() {
 
         if (typeof window !== 'undefined' && exam?.id) {
           try {
-            localStorage.removeItem(`prepunite_active_responses_${exam.id}`);
-            localStorage.removeItem(`prepunite_visited_${exam.id}`);
+            localStorage.removeItem(getExamStorageKey('prepunite_active_responses', exam.id, userStorageKey));
+            localStorage.removeItem(getExamStorageKey('prepunite_visited', exam.id, userStorageKey));
+            localStorage.removeItem(getExamStorageKey('prepunite_exam_session', exam.id, userStorageKey));
           } catch {}
         }
 
@@ -1196,9 +1276,9 @@ export default function MockExamTestPage() {
               proctorEvents: syncRef.current.events,
               tabSwitchCount: syncRef.current.tabSwitches,
               statusOverride,
-              failedAt: new Date().toISOString(),
+              failedAt: new Date(getServerNowMs()).toISOString(),
             };
-            localStorage.setItem(`prepunite_pending_submission_${exam.id}`, JSON.stringify(pendingPayload));
+            localStorage.setItem(getExamStorageKey('prepunite_pending_submission', exam.id, userStorageKey), JSON.stringify(pendingPayload));
           } catch {}
         }
         toast.error(`Network disconnected during submission. Responses are safely cached locally. Click Submit to retry.`);
@@ -1208,29 +1288,34 @@ export default function MockExamTestPage() {
         setShowSubmitConfirm(false);
       }
     },
-    [exam, questionsMap, user, isCodeExecuting]
+    [exam, questionsMap, user, userStorageKey, isCodeExecuting]
   );
 
+  const handleFinalSubmitRef = useRef(handleFinalSubmit);
+  handleFinalSubmitRef.current = handleFinalSubmit;
 
-  // 4. Timer Countdown & Auto-Sync Hook (Strict Monotonic High-Precision & Wall-Clock Anchored)
+
+  // 4. Timer Countdown & Auto-Sync Hook (Strict Monotonic Server Clock & Server Deadline Anchored)
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
 
     const durationSec = effectiveExamMinutes * 60;
-    // F16: Compute an absolute deadline = min(start + duration, exam end_time if set).
-    // This ensures the timer respects the institutional window close, not just personal duration.
-    const startedAtMs = startedAtMsRef.current || (Date.now() + serverTimeOffsetRef.current);
+    const startedAtMs = startedAtMsRef.current || getServerNowMs();
     const durationDeadlineMs = startedAtMs + durationSec * 1000;
     const parsedEndTime = exam?.end_time ? new Date(exam.end_time).getTime() : Infinity;
     const endTimeDeadlineMs = Number.isFinite(parsedEndTime) ? parsedEndTime : Infinity;
-    const deadlineMs = Math.min(durationDeadlineMs, endTimeDeadlineMs);
+    const serverDeadMs = serverDeadlineMsRef.current > 0 ? serverDeadlineMsRef.current : Infinity;
+    const deadlineMs = Math.min(serverDeadMs, durationDeadlineMs, endTimeDeadlineMs);
 
     perfStartMsRef.current = performance.now();
     initialElapsedSecRef.current = timeSpentSeconds;
 
     const interval = setInterval(() => {
-      const now = Date.now() + serverTimeOffsetRef.current;
-      const remainingSec = Math.max(0, Math.ceil((deadlineMs - now) / 1000));
+      const now = getServerNowMs();
+      const effectiveDeadMs = serverDeadlineMsRef.current > 0
+        ? Math.min(serverDeadlineMsRef.current, deadlineMs)
+        : deadlineMs;
+      const remainingSec = Math.max(0, Math.ceil((effectiveDeadMs - now) / 1000));
       // Monotonic elapsed: cannot be reduced by changing local system clock
       const monotonicElapsedSec =
         initialElapsedSecRef.current + Math.floor((performance.now() - perfStartMsRef.current) / 1000);
@@ -1250,13 +1335,13 @@ export default function MockExamTestPage() {
       // Persist section progress periodically
       if (nextSpent % 5 === 0 && typeof window !== 'undefined' && exam?.id) {
         try {
-          localStorage.setItem(`prepunite_exam_session_${exam.id}`, JSON.stringify({
+          localStorage.setItem(getExamStorageKey('prepunite_exam_session', exam.id, userStorageKey), JSON.stringify({
             currentSectionIndex: secIdx,
             currentQuestionIndex,
             sectionTimeSpent: sectionTimeSpentRef.current,
             tabSwitchCount: tabSwitchCountRef.current,
             proctorEvents: syncRef.current.events,
-            updatedAt: Date.now(),
+            updatedAt: getServerNowMs(),
           }));
         } catch {}
       }
@@ -1286,23 +1371,25 @@ export default function MockExamTestPage() {
       }
     }, 1000);
 
-    // Auto-save every 15 seconds
-    const syncInterval = setInterval(() => {
+    // Auto-save & server heartbeat every 15 seconds
+    const syncInterval = setInterval(async () => {
       const { attemptId: aId, responses: resp, timeSpent, tabSwitches, events } = syncRef.current;
       if (aId) {
-        const allAssignedIds: string[] = (sections || []).flatMap((sec, idx) =>
-          sectionAssignedMap[idx] || sec.question_ids || []
-        );
-        const respWithAssigned = {
-          ...resp,
-          ...(allAssignedIds.length > 0 ? { __assigned_question_ids: allAssignedIds as any } : {}),
-        };
-        tpoService.syncAttemptProgress(aId, {
-          responses: respWithAssigned,
+        const hb = await tpoService.syncAttemptProgress(aId, {
+          responses: resp,
           timeSpentSeconds: timeSpent,
           tabSwitchCount: tabSwitches,
           proctorEvents: events,
         });
+        if (hb?.serverNowMs) setServerNowMs(hb.serverNowMs);
+        if (hb?.serverDeadlineMs && hb.serverDeadlineMs > 0) {
+          serverDeadlineMsRef.current = hb.serverDeadlineMs;
+        }
+        if (hb?.expired) {
+          handleFinalSubmit('TIMED_OUT');
+        } else if (hb?.terminated) {
+          handleFinalSubmit('TERMINATED_MALPRACTICE');
+        }
       }
     }, 15000);
 
@@ -1310,7 +1397,7 @@ export default function MockExamTestPage() {
       clearInterval(interval);
       clearInterval(syncInterval);
     };
-  }, [testPhase, exam?.duration_minutes, exam?.end_time, handleFinalSubmit]);
+  }, [testPhase, exam?.duration_minutes, exam?.end_time, handleFinalSubmit, userStorageKey]);
 
   // 🛡️ Pillar 4: Network Drop Shield Monitor
   useEffect(() => {
@@ -1318,18 +1405,12 @@ export default function MockExamTestPage() {
       setIsOnline(true);
       setJustReconnected(true);
       toast.success('Internet connection restored! Exam progress synchronized with server.');
+      syncServerClock(supabase).catch(() => {});
 
       const { attemptId: aId, responses: resp, timeSpent, tabSwitches, events } = syncRef.current;
       if (aId) {
-        const allAssignedIds: string[] = (sections || []).flatMap((sec, idx) =>
-          sectionAssignedMap[idx] || sec.question_ids || []
-        );
-        const respWithAssigned = {
-          ...resp,
-          ...(allAssignedIds.length > 0 ? { __assigned_question_ids: allAssignedIds as any } : {}),
-        };
         tpoService.syncAttemptProgress(aId, {
-          responses: respWithAssigned,
+          responses: resp,
           timeSpentSeconds: timeSpent,
           tabSwitchCount: tabSwitches,
           proctorEvents: events,
@@ -1357,9 +1438,20 @@ export default function MockExamTestPage() {
     };
   }, []);
 
-  // 5. Anti-Cheat & Anti-Inspect Watchdog (DevTools, Right-Click, Shortcuts, Tab Switch, Fullscreen, Copy/Cut & PrintScreen)
+  // 5. Mock-Exam-Only Anti-AI Extension, Anti-Inspect, Anti-Selection & Focus Curtain Watchdog
   useEffect(() => {
     if (testPhase !== 'IN_PROGRESS') return;
+
+    // Scoped DOM shield stylesheet: applies strictly while an active mock exam is running
+    let styleEl = document.getElementById('prepunite-exam-dom-shield') as HTMLStyleElement | null;
+    if (!styleEl && !isAdminOrTpo) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'prepunite-exam-dom-shield';
+      styleEl.textContent = EXAM_DOM_SHIELD_CSS;
+      document.head?.appendChild(styleEl);
+    }
+
+    setIsFullscreenActive(Boolean(document.fullscreenElement));
 
     const handleViolation = (type: ProctorEvent['type'], customMessage?: string) => {
       const now = Date.now();
@@ -1378,6 +1470,8 @@ export default function MockExamTestPage() {
       const defaultMsg =
         type === 'DEVTOOLS_OPEN'
           ? (customMessage || 'Developer tools or inspect element attempt detected')
+          : type === 'EXTENSION_DETECTED'
+          ? (customMessage || 'Unauthorized browser extension or AI overlay detected')
           : `Violation ${nextCount} of ${maxAllowed}`;
 
       const newEvent: ProctorEvent = {
@@ -1393,6 +1487,8 @@ export default function MockExamTestPage() {
 
       if (customMessage) {
         setWarningMessage(customMessage);
+      } else if (type === 'EXTENSION_DETECTED') {
+        setWarningMessage('Unauthorized AI solver or browser extension overlay detected on screen. Disable all AI extensions before continuing.');
       } else if (type === 'DEVTOOLS_OPEN') {
         setWarningMessage('Developer Tools & Inspect Element are strictly forbidden. Tampering with timers or exam elements will terminate your test.');
       } else {
@@ -1400,33 +1496,127 @@ export default function MockExamTestPage() {
       }
 
       if (nextCount >= maxAllowed) {
-        handleFinalSubmit('TERMINATED_MALPRACTICE');
+        handleFinalSubmitRef.current('TERMINATED_MALPRACTICE');
       } else {
         setShowWarningModal(true);
       }
     };
 
+    // Clear any accidental initial selection when entering active mock exam
+    try {
+      window.getSelection?.()?.removeAllRanges();
+    } catch {}
+
+    const inspectAndQuarantineNode = (node: Element) => {
+      if (isAdminOrTpo) return;
+      const verdict = classifyForeignElement(node);
+      if (!verdict.isForeign) return;
+
+      if (verdict.isPassiveHelper) {
+        neutralizeForeignElement(node, false);
+        return;
+      }
+
+      if (verdict.isAiTool) {
+        neutralizeForeignElement(node, true);
+        setExtensionViolationReason(verdict.reason);
+        const now = Date.now();
+        if (now - lastAiExtensionStrikeRef.current >= 2500) {
+          lastAiExtensionStrikeRef.current = now;
+          handleViolation('EXTENSION_DETECTED', verdict.reason);
+        }
+      }
+    };
+
+    const scanDomForExtensions = () => {
+      if (isAdminOrTpo || typeof document === 'undefined') return;
+      try {
+        const flaggedNodes = document.querySelectorAll(EXAM_AI_SCANNER_SELECTOR);
+        flaggedNodes.forEach(node => inspectAndQuarantineNode(node));
+
+        if (document.body) {
+          Array.from(document.body.children).forEach(child => inspectAndQuarantineNode(child));
+        }
+        if (document.documentElement) {
+          Array.from(document.documentElement.children).forEach(child => {
+            if (child !== document.head && child !== document.body) {
+              inspectAndQuarantineNode(child);
+            }
+          });
+        }
+      } catch {}
+    };
+
+    scanDomForExtensions();
+
+    let mutationObserver: MutationObserver | null = null;
+    if (!isAdminOrTpo && typeof MutationObserver !== 'undefined') {
+      mutationObserver = new MutationObserver(mutations => {
+        for (const m of mutations) {
+          m.addedNodes.forEach(added => {
+            if (added instanceof Element) {
+              inspectAndQuarantineNode(added);
+              try {
+                added.querySelectorAll?.(EXAM_AI_SCANNER_SELECTOR).forEach(sub => inspectAndQuarantineNode(sub));
+              } catch {}
+            }
+          });
+        }
+      });
+
+      try {
+        mutationObserver.observe(document.documentElement, { childList: true, subtree: true });
+      } catch {}
+    }
+
     const handleVisibilityChange = () => {
-      if (exam?.enable_tab_switch_detection && document.hidden) {
+      if (document.hidden && !isAdminOrTpo) {
+        setPrivacyCurtainReason('Examination tab hidden. Content masked for security.');
+      } else if (!document.hidden && document.hasFocus?.()) {
+        setPrivacyCurtainReason(prev => (prev && prev.includes('hidden') ? null : prev));
+      }
+      if (exam?.enable_tab_switch_detection && !isAdminOrTpo && document.hidden) {
         handleViolation('TAB_SWITCH', 'Switched browser tab or minimized window');
       }
     };
 
     const handleWindowBlur = () => {
-      // 🛡️ P1-01: Dual monitor & split-screen detection with debounced sustained blur timer
+      if (isAdminOrTpo) return;
+      // Ignore native <select> dropdown focus quirk inside coding workspace
+      if (document.activeElement?.tagName === 'SELECT') return;
+      if (document.hidden) return;
+
+      // Instant privacy curtain blocks screenshot/popup extensions (e.g. Quizmate popup, Snipping Tool, side panels)
+      setPrivacyCurtainReason('Focus left the examination window. Click back inside the exam to reveal questions.');
+
       if (!exam?.enable_tab_switch_detection) return;
-      if (document.hidden) {
-        // True tab switch / window minimization — handled by visibilitychange
+
+      toast.warning('Keep the exam window focused. Clicking browser extensions or external tools will be flagged.');
+
+      const now = Date.now();
+      blurBurstTimestampsRef.current = blurBurstTimestampsRef.current.filter(ts => now - ts < 30_000);
+      blurBurstTimestampsRef.current.push(now);
+
+      // Catch repeated quick-click popup attempts (<700ms each) inside 30s
+      if (blurBurstTimestampsRef.current.length >= 3) {
+        blurBurstTimestampsRef.current = [];
+        handleViolation(
+          'WINDOW_BLUR',
+          'Repeated quick focus loss detected (suspected browser extension popup or external AI drawer)'
+        );
         return;
       }
-      toast.warning('Keep the exam window focused. Sustained off-screen focus loss will be flagged as an off-screen violation.');
+
       if (blurTimerRef.current) {
         clearTimeout(blurTimerRef.current);
       }
       blurTimerRef.current = setTimeout(() => {
-        handleViolation('TAB_SWITCH', 'Dual monitor or split-screen usage detected (sustained focus loss >2.5s)');
+        handleViolation(
+          'TAB_SWITCH',
+          'Sustained focus loss detected (>700ms — suspected extension popup, AI sidebar, or split-screen)'
+        );
         blurTimerRef.current = null;
-      }, 2500);
+      }, 700);
     };
 
     const handleWindowFocus = () => {
@@ -1434,34 +1624,67 @@ export default function MockExamTestPage() {
         clearTimeout(blurTimerRef.current);
         blurTimerRef.current = null;
       }
+      if (typeof document !== 'undefined' && !document.hidden && document.hasFocus?.()) {
+        setPrivacyCurtainReason(null);
+      }
     };
 
     const handleFullscreenChange = () => {
-      if (exam?.enable_fullscreen_lock && !document.fullscreenElement) {
+      const active = Boolean(document.fullscreenElement);
+      setIsFullscreenActive(active);
+      if (exam?.enable_fullscreen_lock && !isAdminOrTpo && !active) {
         handleViolation('FULLSCREEN_EXIT', 'Exited fullscreen examination mode');
       }
     };
 
-    // 🛡️ P2-02: Block Right-Click Context Menu without auto-terminating strike
+    // 🛡️ Block Right-Click Context Menu
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      toast.warning('Right-click context menu is disabled during the examination.');
-      const event: ProctorEvent = {
-        timestamp: new Date().toISOString(),
-        type: 'DEVTOOLS_OPEN',
-        details: 'Blocked right-click context menu attempt',
-      };
-      setProctorEvents(prev => [...prev, event]);
-      syncRef.current.events = [...syncRef.current.events, event];
+      toast.warning('Right-click context menu is disabled during mock exams.');
       return false;
     };
 
-    // 🛡️ P2-02: Block Copy, Cut & Paste Operations without auto-terminating strike
+    // 🛡️ Block Left-Click Text Selection, Multi-Click Selection, Drag-to-AI & Selection Highlighting
+    const handleSelectStart = (e: Event) => {
+      if (isWithinAuthorizedExamEditor(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const handleSelectionChange = () => {
+      const sel = window.getSelection?.();
+      if (!sel || sel.isCollapsed) return;
+      if (!isWithinAuthorizedExamEditor(sel.anchorNode) && !isWithinAuthorizedExamEditor(document.activeElement)) {
+        try {
+          sel.removeAllRanges();
+        } catch {}
+      }
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const handleAuxClick = (e: MouseEvent) => {
+      if (e.button !== 0) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.detail >= 2 && !isWithinAuthorizedExamEditor(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    // 🛡️ Block Copy, Cut & Paste Operations outside authorized in-app coding editor
     const handleClipboard = (e: ClipboardEvent) => {
-      const target = e.target instanceof Element ? e.target : null;
-      const isExempt = target?.closest('.monaco-editor') || target?.tagName === 'TEXTAREA' || target?.tagName === 'INPUT';
-      if (isExempt) return;
+      if (isWithinAuthorizedExamEditor(e.target)) return;
 
       e.preventDefault();
       e.stopPropagation();
@@ -1476,122 +1699,33 @@ export default function MockExamTestPage() {
       } catch {}
       const actionName = e.type === 'paste' ? 'Pasting external content' : 'Copying or cutting question content';
       toast.warning(`${actionName} is strictly prohibited outside the code editor.`);
-      const event: ProctorEvent = {
-        timestamp: new Date().toISOString(),
-        type: 'DEVTOOLS_OPEN',
-        details: `Blocked clipboard operation: ${actionName}`,
-      };
-      setProctorEvents(prev => [...prev, event]);
-      syncRef.current.events = [...syncRef.current.events, event];
       return false;
     };
 
-    // 🛡️ Anti-Inspect 3: Block DevTools Keyboard Shortcuts & PrintScreen / Screenshots
+    // 🛡️ Anti-Inspect Keyboard & Capture Guard
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-      const isShift = e.shiftKey;
-      const key = (e.key || '').toUpperCase();
+      const inEditor = isWithinAuthorizedExamEditor(e.target);
+      const evaluation = evaluateExamKeyDown(e, inEditor);
+      if (!evaluation.blocked) return;
 
-      // PrintScreen / Snipping Tool (PrintScreen, Windows+Shift+S, Cmd+Shift+3/4)
-      if (
-        key === 'PRINTSCREEN' ||
-        e.key === 'PrintScreen' ||
-        (isCtrlOrCmd && isShift && (key === 'S' || key === '3' || key === '4'))
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
+      if (evaluation.severity === 'STRIKE') {
         try {
           navigator.clipboard?.writeText('');
         } catch {}
-        handleViolation('DEVTOOLS_OPEN', 'Screenshot / Screen Capture attempt detected');
-        return false;
+        handleViolation('DEVTOOLS_OPEN', evaluation.reason);
+      } else if (evaluation.severity === 'WARN') {
+        toast.warning(evaluation.reason);
       }
-
-      // F12
-      if (key === 'F12') {
-        e.preventDefault();
-        e.stopPropagation();
-        handleViolation('DEVTOOLS_OPEN', 'F12 (Developer Tools) shortcut is blocked');
-        return false;
-      }
-
-      // Ctrl + Shift + I (Inspect)
-      // Ctrl + Shift + J (Console)
-      // Ctrl + Shift + C (Element picker)
-      if (isCtrlOrCmd && isShift && (key === 'I' || key === 'J' || key === 'C')) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleViolation('DEVTOOLS_OPEN', `DevTools shortcut (Ctrl+Shift+${key}) is blocked`);
-        return false;
-      }
-
-      // Ctrl + U (View Source)
-      if (isCtrlOrCmd && key === 'U') {
-        e.preventDefault();
-        e.stopPropagation();
-        handleViolation('DEVTOOLS_OPEN', 'View Page Source (Ctrl+U) is blocked');
-        return false;
-      }
-
-      // Ctrl + S (Save page)
-      if (isCtrlOrCmd && key === 'S') {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl + C (Copy) outside code editor
-      if (isCtrlOrCmd && key === 'C') {
-        const target = e.target as HTMLElement;
-        const isEditor = target?.closest('.monaco-editor') || target?.tagName === 'TEXTAREA' || target?.tagName === 'INPUT';
-        if (!isEditor) {
-          e.preventDefault();
-          e.stopPropagation();
-          try {
-            navigator.clipboard?.writeText('');
-          } catch {}
-          toast.warning('Copying question statement or options is prohibited.');
-          const event: ProctorEvent = {
-            timestamp: new Date().toISOString(),
-            type: 'DEVTOOLS_OPEN',
-            details: 'Blocked Ctrl+C copy shortcut',
-          };
-          setProctorEvents(prev => [...prev, event]);
-          syncRef.current.events = [...syncRef.current.events, event];
-          return false;
-        }
-      }
-
-      // Ctrl + V (Paste) outside code editor / inputs
-      if (isCtrlOrCmd && key === 'V') {
-        const target = e.target as HTMLElement;
-        const isEditor = target?.closest('.monaco-editor') || target?.tagName === 'TEXTAREA' || target?.tagName === 'INPUT';
-        if (!isEditor) {
-          e.preventDefault();
-          e.stopPropagation();
-          toast.warning('Pasting external content into the exam is prohibited.');
-          const event: ProctorEvent = {
-            timestamp: new Date().toISOString(),
-            type: 'DEVTOOLS_OPEN',
-            details: 'Blocked Ctrl+V paste shortcut',
-          };
-          setProctorEvents(prev => [...prev, event]);
-          syncRef.current.events = [...syncRef.current.events, event];
-          return false;
-        }
-      }
+      return false;
     };
 
-    // 🛡️ Anti-Inspect 4: DevTools Window Docking Detection (outer vs inner differential)
-    // F15: This is now TELEMETRY-ONLY — window-size differences are logged but do not
-    // auto-fire a violation. External monitors, OS taskbars, and zoomed browsers cause
-    // constant false positives that penalise legitimate students.
     const checkDevToolsOpen = () => {
       const threshold = 160;
       const widthDiff = window.outerWidth - window.innerWidth;
       const heightDiff = window.outerHeight - window.innerHeight;
       if (widthDiff > threshold || heightDiff > threshold) {
-        // Log as a proctor telemetry note without incrementing the violation counter
         console.info('[Proctor] Window-size differential detected (telemetry only):', { widthDiff, heightDiff });
       }
     };
@@ -1607,13 +1741,44 @@ export default function MockExamTestPage() {
       return e.returnValue;
     };
 
-    const devtoolsCheckInterval = setInterval(checkDevToolsOpen, 2000);
+    // Focus poll catches silent side-panel / DevTools / popup focus theft
+    const focusPollInterval = setInterval(() => {
+      if (isAdminOrTpo) return;
+      if (document.activeElement?.tagName === 'SELECT') return;
+      const hasFocus = typeof document !== 'undefined' && typeof document.hasFocus === 'function' ? document.hasFocus() : true;
+      if (!hasFocus && !document.hidden) {
+        setPrivacyCurtainReason(prev => prev || 'Focus left the examination window. Click back inside the exam to reveal questions.');
+        if (exam?.enable_tab_switch_detection && !blurTimerRef.current) {
+          blurTimerRef.current = setTimeout(() => {
+            if (typeof document !== 'undefined' && !document.hasFocus()) {
+              handleViolation(
+                'WINDOW_BLUR',
+                'Sustained off-focus state detected (browser side panel, extension popup, or external tool)'
+              );
+            }
+            blurTimerRef.current = null;
+          }, 700);
+        }
+      } else if (hasFocus && !document.hidden) {
+        setPrivacyCurtainReason(prev => (prev && prev.includes('Focus left') ? null : prev));
+      }
+    }, 500);
+
+    const devtoolsAndExtCheckInterval = setInterval(() => {
+      checkDevToolsOpen();
+      scanDomForExtensions();
+    }, 2000);
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('selectionchange', handleSelectionChange);
+    document.addEventListener('selectstart', handleSelectStart, true);
+    document.addEventListener('dragstart', handleDragStart, true);
     window.addEventListener('blur', handleWindowBlur);
     window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     window.addEventListener('contextmenu', handleContextMenu, true);
+    window.addEventListener('auxclick', handleAuxClick, true);
+    window.addEventListener('mousedown', handleMouseDown, true);
     window.addEventListener('copy', handleClipboard, true);
     window.addEventListener('cut', handleClipboard, true);
     window.addEventListener('paste', handleClipboard, true);
@@ -1622,8 +1787,14 @@ export default function MockExamTestPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      clearInterval(devtoolsCheckInterval);
+      clearInterval(focusPollInterval);
+      clearInterval(devtoolsAndExtCheckInterval);
+      mutationObserver?.disconnect();
+      document.getElementById('prepunite-exam-dom-shield')?.remove();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener('selectstart', handleSelectStart, true);
+      document.removeEventListener('dragstart', handleDragStart, true);
       window.removeEventListener('blur', handleWindowBlur);
       window.removeEventListener('focus', handleWindowFocus);
       if (blurTimerRef.current) {
@@ -1632,6 +1803,8 @@ export default function MockExamTestPage() {
       }
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       window.removeEventListener('contextmenu', handleContextMenu, true);
+      window.removeEventListener('auxclick', handleAuxClick, true);
+      window.removeEventListener('mousedown', handleMouseDown, true);
       window.removeEventListener('copy', handleClipboard, true);
       window.removeEventListener('cut', handleClipboard, true);
       window.removeEventListener('paste', handleClipboard, true);
@@ -1639,7 +1812,7 @@ export default function MockExamTestPage() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [testPhase, exam, handleFinalSubmit]);
+  }, [testPhase, exam, isAdminOrTpo]);
 
   // Helper: Format Seconds to HH:MM:SS
   const formatTime = (totalSeconds: number) => {
@@ -1670,7 +1843,7 @@ export default function MockExamTestPage() {
       };
       if (typeof window !== 'undefined' && examId) {
         try {
-          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+          localStorage.setItem(getExamStorageKey('prepunite_active_responses', examId, userStorageKey), JSON.stringify(updated));
         } catch {}
       }
       return updated;
@@ -1681,7 +1854,8 @@ export default function MockExamTestPage() {
     codeText: string,
     language?: string,
     testCasesPassed?: number,
-    totalTestCases?: number
+    totalTestCases?: number,
+    verdictToken?: string | null
   ) => {
     if (!currentQuestionId) return;
     setResponses(prev => {
@@ -1694,18 +1868,17 @@ export default function MockExamTestPage() {
           selected_option: existing?.selected_option ?? null,
           code_solution: codeText,
           code_language: language || existing?.code_language || 'python',
-          // Only preserve test results when the caller explicitly provides fresh data.
-          // If code changed without re-running tests, invalidate stale verdicts by
-          // setting both fields to 0 so grading treats untested modifications with 0 pass count.
+          // Only preserve test results & signed verdict when caller explicitly provides fresh data.
           test_cases_passed: hasNewTestResult ? testCasesPassed : 0,
           total_test_cases: hasNewTestResult ? totalTestCases : 0,
+          verdictToken: hasNewTestResult ? (verdictToken || undefined) : undefined,
           marked_review: existing?.marked_review || false,
           time_spent_sec: (existing?.time_spent_sec || 0) + 1,
         },
       };
       if (typeof window !== 'undefined' && examId) {
         try {
-          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+          localStorage.setItem(getExamStorageKey('prepunite_active_responses', examId, userStorageKey), JSON.stringify(updated));
         } catch {}
       }
       return updated;
@@ -1721,13 +1894,14 @@ export default function MockExamTestPage() {
           selected_option: null,
           code_solution: '',
           test_cases_passed: 0,
+          verdictToken: undefined,
           marked_review: prev[currentQuestionId]?.marked_review || false,
           time_spent_sec: prev[currentQuestionId]?.time_spent_sec || 0,
         },
       };
       if (typeof window !== 'undefined' && examId) {
         try {
-          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+          localStorage.setItem(getExamStorageKey('prepunite_active_responses', examId, userStorageKey), JSON.stringify(updated));
         } catch {}
       }
       return updated;
@@ -1762,7 +1936,7 @@ export default function MockExamTestPage() {
       };
       if (typeof window !== 'undefined' && examId) {
         try {
-          localStorage.setItem(`prepunite_active_responses_${examId}`, JSON.stringify(updated));
+          localStorage.setItem(getExamStorageKey('prepunite_active_responses', examId, userStorageKey), JSON.stringify(updated));
         } catch {}
       }
       return updated;
@@ -2177,7 +2351,7 @@ export default function MockExamTestPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {exam?.enable_passcode_lock && (exam?.access_passcode || exam?.access_passcode_hash) && existingAttempt?.status !== 'IN_PROGRESS' && (
+              {exam?.enable_passcode_lock && existingAttempt?.status !== 'IN_PROGRESS' && (
                 <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-left space-y-3">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
@@ -2264,13 +2438,22 @@ export default function MockExamTestPage() {
 
     const totalAnsweredCount = Object.values(responses).filter(isQuestionAnswered).length;
     const allExamQIds = sections.flatMap((sec, idx) => sectionAssignedMap[idx] || sec.question_ids || []);
+    const requiresFullscreenGate = Boolean(
+      exam?.enable_fullscreen_lock && !isAdminOrTpo && !isFullscreenActive
+    );
+    const activeCurtainReason = extensionViolationReason || privacyCurtainReason;
+    const isScreenShielded = Boolean(
+      !isAdminOrTpo && (requiresFullscreenGate || activeCurtainReason)
+    );
 
     return (
-      <div className="fixed inset-0 z-40 bg-gray-100 dark:bg-[#0f1012] text-gray-900 dark:text-white flex flex-col select-none overflow-hidden">
-        
-        {/* Anti-Cheat Tab Switch Warning Modal */}
+      <div
+        id="prepunite-exam-root"
+        className="fixed inset-0 z-40 bg-gray-100 dark:bg-[#0f1012] text-gray-900 dark:text-white flex flex-col select-none overflow-hidden"
+      >
+        {/* Anti-Cheat Violation Warning Modal */}
         {showWarningModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
             <div className="bg-white dark:bg-[#1a1b1e] border-2 border-rose-500 rounded-2xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
               <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 flex items-center justify-center mx-auto animate-bounce">
                 <AlertTriangle className="w-6 h-6" />
@@ -2286,10 +2469,93 @@ export default function MockExamTestPage() {
                 Remaining allowed warnings: {Math.max(0, (exam?.max_tab_switches_allowed ?? 3) - tabSwitchCount)}.
               </div>
               <button
-                onClick={() => setShowWarningModal(false)}
+                onClick={async () => {
+                  if (exam?.enable_fullscreen_lock && !isAdminOrTpo && !document.fullscreenElement) {
+                    const restored = await requestExamFullscreen();
+                    if (!restored) {
+                      toast.error('Please allow fullscreen permission to continue your proctored exam.');
+                    }
+                  }
+                  setExtensionViolationReason(null);
+                  setShowWarningModal(false);
+                }}
                 className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
               >
-                Return to Exam Immediately
+                {exam?.enable_fullscreen_lock && !isAdminOrTpo && !isFullscreenActive
+                  ? 'Re-Enter Fullscreen & Return to Exam'
+                  : 'Return to Exam Immediately'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mandatory Fullscreen Gate (blocks content if user exited via Esc or refreshed) */}
+        {requiresFullscreenGate && !showWarningModal && (
+          <div className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-[#0b0c0e]/95 backdrop-blur-xl animate-fadeIn">
+            <div className="bg-white dark:bg-[#1a1b1e] border-2 border-[#FD4A32] rounded-2xl p-6 sm:p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center mx-auto">
+                <Maximize2 className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                Fullscreen Mode Required
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                Exam questions are hidden until fullscreen proctoring mode is active. Browser toolbars and extension bars must remain concealed throughout the assessment.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await requestExamFullscreen();
+                  if (!ok) {
+                    toast.error('Browser blocked fullscreen request. Click the button again or allow fullscreen permissions.');
+                  }
+                }}
+                className="w-full py-3 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#FD4A32]/25 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Maximize2 className="w-4 h-4" />
+                <span>Re-Enter Fullscreen Mode</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Instant Privacy Curtain (blanks screen on popup/extension/focus theft or AI DOM injection) */}
+        {!requiresFullscreenGate && !showWarningModal && !isAdminOrTpo && activeCurtainReason && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0b0c0e]/95 backdrop-blur-xl animate-fadeIn">
+            <div className="bg-white dark:bg-[#1a1b1e] border border-amber-500/60 rounded-2xl p-6 sm:p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+                <Lock className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                Exam Screen Protected
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                {activeCurtainReason}
+              </p>
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                Questions are masked while focus is outside the exam or an unauthorized overlay is active.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (extensionViolationReason) {
+                    try {
+                      document.querySelectorAll(EXAM_AI_SCANNER_SELECTOR).forEach(node => {
+                        const verdict = classifyForeignElement(node);
+                        if (verdict.isForeign) neutralizeForeignElement(node, verdict.isAiTool);
+                      });
+                    } catch {}
+                    setExtensionViolationReason(null);
+                  }
+                  if (typeof document !== 'undefined' && document.hasFocus?.() && !document.hidden) {
+                    setPrivacyCurtainReason(null);
+                  } else {
+                    window.focus?.();
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider cursor-pointer"
+              >
+                Resume Focus &amp; Verify Screen
               </button>
             </div>
           </div>
@@ -2338,6 +2604,11 @@ export default function MockExamTestPage() {
           </div>
         )}
 
+        {/* Protected Inner Exam Content: hidden via visibility:hidden while Curtain/Fullscreen Gate is active */}
+        <div
+          id="prepunite-exam-content"
+          className={`flex-1 flex flex-col min-h-0 overflow-hidden ${isScreenShielded ? 'invisible pointer-events-none select-none' : ''}`}
+        >
         {/* 🛡️ Pillar 4: Offline Network Drop Shield Banners */}
         {!isOnline && (
           <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md shrink-0 z-30 animate-pulse">
@@ -2747,6 +3018,7 @@ export default function MockExamTestPage() {
               isCodingProblem ? (
                 <MockExamCodingWorkspace
                   question={currentQuestion}
+                  attemptId={attemptId}
                   sectionName={getSanitizedSectionName(currentSection)}
                   questionIndex={currentQuestionIndex}
                   totalQuestions={currentSectionQIds.length}
@@ -2763,7 +3035,7 @@ export default function MockExamTestPage() {
                       setCurrentQuestionIndex(prev => prev - 1);
                     } else if (!isSectionalLockActive && currentSectionIndex > 0) {
                       const prevSec = sections[currentSectionIndex - 1];
-                      const prevQCount = prevSec?.question_ids?.length || 1;
+                      const prevQCount = (sectionAssignedMap[currentSectionIndex - 1] || prevSec?.question_ids || []).length || 1;
                       setCurrentSectionIndex(prev => prev - 1);
                       setCurrentQuestionIndex(Math.max(0, prevQCount - 1));
                     }
@@ -2780,6 +3052,12 @@ export default function MockExamTestPage() {
                   }}
                   onSubmitExam={() => setShowSubmitConfirm(true)}
                   isPaletteOpen={isPaletteOpen}
+                  disableContextMenu={!isAdminOrTpo}
+                  disableExternalPaste={!isAdminOrTpo}
+                  disableQuestionCopy={!isAdminOrTpo}
+                  onExternalPasteBlocked={() =>
+                    toast.warning('External copy-paste is disabled during proctored mock exams. Write your solution directly inside the editor.')
+                  }
                   isFirstQuestion={isSectionalLockActive ? currentQuestionIndex === 0 : (currentSectionIndex === 0 && currentQuestionIndex === 0)}
                   isLastQuestion={isLastQuestionInSection}
                   isLastSection={isLastSection}
@@ -2841,14 +3119,14 @@ export default function MockExamTestPage() {
                       </div>
 
                       <div className="text-xs leading-relaxed max-h-[58vh] overflow-y-auto pr-2 custom-scrollbar text-gray-800 dark:text-gray-200 font-sans">
-                        <QuestionRichContent content={currentQuestion.passage || currentQuestion.contextData} />
+                        <QuestionRichContent content={currentQuestion.passage || currentQuestion.contextData} disableCopy={!isAdminOrTpo} />
                       </div>
                     </div>
 
                     {/* Right Pane: Sub-Question & Options */}
                     <div className="lg:col-span-6 space-y-4">
                       <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
-                        <QuestionRichContent content={currentQuestion.statement} />
+                        <QuestionRichContent content={currentQuestion.statement} disableCopy={!isAdminOrTpo} />
                       </div>
 
                       {/* Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
@@ -2878,7 +3156,7 @@ export default function MockExamTestPage() {
                                   >
                                     {displayLabel}
                                   </div>
-                                  <QuestionRichContent content={opt.text} isOption={true} className="leading-snug flex-1 font-sans" />
+                                  <QuestionRichContent content={opt.text} isOption={true} disableCopy={!isAdminOrTpo} className="leading-snug flex-1 font-sans" />
                                 </div>
                               );
                             })}
@@ -2891,7 +3169,7 @@ export default function MockExamTestPage() {
                   <>
                     {/* Statement */}
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-relaxed font-sans">
-                      <QuestionRichContent content={currentQuestion.statement} />
+                      <QuestionRichContent content={currentQuestion.statement} disableCopy={!isAdminOrTpo} />
                     </div>
 
                     {/* Options List (Adaptive Smart Grid: 2-in-a-row for concise options, 1-col for long paragraphs) */}
@@ -2921,7 +3199,7 @@ export default function MockExamTestPage() {
                                 >
                                   {String.fromCharCode(65 + oIdx)}
                                 </div>
-                                <QuestionRichContent content={opt.text} isOption={true} className="leading-snug flex-1 font-sans" />
+                                <QuestionRichContent content={opt.text} isOption={true} disableCopy={!isAdminOrTpo} className="leading-snug flex-1 font-sans" />
                               </div>
                             );
                           })}
@@ -2962,7 +3240,7 @@ export default function MockExamTestPage() {
                           setCurrentQuestionIndex(prev => prev - 1);
                         } else if (!isSectionalLockActive && currentSectionIndex > 0) {
                           const prevSec = sections[currentSectionIndex - 1];
-                          const prevQCount = prevSec?.question_ids?.length || 1;
+                          const prevQCount = (sectionAssignedMap[currentSectionIndex - 1] || prevSec?.question_ids || []).length || 1;
                           setCurrentSectionIndex(prev => prev - 1);
                           setCurrentQuestionIndex(Math.max(0, prevQCount - 1));
                         }
@@ -3085,11 +3363,12 @@ export default function MockExamTestPage() {
                 </button>
               </div>
               <div className="p-6 overflow-y-auto max-h-[75vh] leading-relaxed text-sm text-gray-800 dark:text-gray-200 font-sans">
-                <QuestionRichContent content={currentQuestion.passage || currentQuestion.contextData} />
+                <QuestionRichContent content={currentQuestion.passage || currentQuestion.contextData} disableCopy={!isAdminOrTpo} />
               </div>
             </div>
           </div>
         )}
+        </div>
 
       </div>
     );

@@ -136,7 +136,10 @@ const normalizeDbMcq = (d: RawDbMcq): TechnicalMcq => {
   const resolvedCategory = d.topic_category || d.topicCategory || 'C_PROGRAMMING';
   const resolvedTopicId = d.topic_id || d.topicId;
   const resolvedCodeSnippet = d.code_snippet || d.codeSnippet || '';
-  const resolvedCorrectOption = typeof d.correct_option_index === 'number' ? d.correct_option_index : (d.correctOptionIndex ?? 0);
+  const resolvedCorrectOption =
+    typeof d.correct_option_index === 'number'
+      ? d.correct_option_index
+      : (typeof d.correctOptionIndex === 'number' ? d.correctOptionIndex : -1);
 
   return {
     id: d.id,
@@ -868,6 +871,18 @@ export const technicalService = {
     await this.syncPendingLocalStorageToSupabase();
     const solvedSet = this.getSolvedProblemIds();
 
+    // 1. Prefer safe non-solution RPC (post-hardening)
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_practice_technical_problems', {
+        p_track: 'PROGRAMMING_150',
+        p_category: null,
+      });
+      if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+        return rpcData.map((d: any) => normalizeDbProblem(d, solvedSet));
+      }
+    } catch {}
+
+    // 2. Fallback to direct query for admins or pre-migration environments
     try {
       const { data, error } = await supabase
         .from('technical_problems')
@@ -892,18 +907,32 @@ export const technicalService = {
     const solvedSet = this.getSolvedProblemIds();
 
     const dbProblemMap = new Map<string, any>();
+    let loadedViaRpc = false;
     try {
-      const { data, error } = await supabase
-        .from('technical_problems')
-        .select(TECHNICAL_PROBLEM_COLUMNS)
-        .eq('track', 'CAMPUS_DSA')
-        .or('is_deleted.is.null,is_deleted.eq.false');
-
-      if (!error && data && data.length > 0) {
-        data.forEach(d => dbProblemMap.set(d.id, d));
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_practice_technical_problems', {
+        p_track: 'CAMPUS_DSA',
+        p_category: null,
+      });
+      if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+        rpcData.forEach((d: any) => dbProblemMap.set(d.id, d));
+        loadedViaRpc = true;
       }
-    } catch (e) {
-      console.warn('Notice querying Campus DSA problems from Supabase, using roadmap data:', e);
+    } catch {}
+
+    if (!loadedViaRpc) {
+      try {
+        const { data, error } = await supabase
+          .from('technical_problems')
+          .select(TECHNICAL_PROBLEM_COLUMNS)
+          .eq('track', 'CAMPUS_DSA')
+          .or('is_deleted.is.null,is_deleted.eq.false');
+
+        if (!error && data && data.length > 0) {
+          data.forEach(d => dbProblemMap.set(d.id, d));
+        }
+      } catch (e) {
+        console.warn('Notice querying Campus DSA problems from Supabase, using roadmap data:', e);
+      }
     }
 
     return CAMPUS_DSA_ROADMAP_STAGES.flatMap(s => s.problems).map((p, idx) => {
@@ -964,7 +993,7 @@ export const technicalService = {
         .from('technical_problems')
         .select(TECHNICAL_PROBLEM_COLUMNS)
         .or(`id.eq.${problemIdOrSlug},slug.eq.${problemIdOrSlug}`)
-        .eq('is_deleted', false)
+        .or('is_deleted.is.null,is_deleted.eq.false')
         .maybeSingle();
 
       if (data && !error) {
@@ -1345,6 +1374,16 @@ export const technicalService = {
 
   // ─── TECHNICAL MCQS CRUD (Pure Supabase, matching Aptitude) ───────────────
   async getTechnicalMcqs(topicId?: string): Promise<TechnicalMcq[]> {
+    // 1. Prefer safe non-solution RPC (never leaks correct_option_index during live exams)
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_practice_technical_mcqs', {
+        p_topic_id: topicId || null,
+      });
+      if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+        return rpcData.map(normalizeDbMcq);
+      }
+    } catch {}
+
     try {
       let query = supabase
         .from('technical_mcqs')
@@ -1377,6 +1416,38 @@ export const technicalService = {
     } catch {
       return [];
     }
+  },
+
+  async verifyTechnicalMcqAnswer(
+    mcqId: string,
+    selectedIndex: number | null,
+    reveal: boolean = false
+  ): Promise<{ locked: boolean; is_correct: boolean; correct_option_index?: number | null; explanation?: string | null; message?: string }> {
+    try {
+      const { data, error } = await supabase.rpc('verify_technical_mcq_answer', {
+        p_mcq_id: mcqId,
+        p_selected_index: selectedIndex,
+        p_reveal: reveal,
+      });
+      if (!error && data) {
+        return data as any;
+      }
+    } catch {}
+    return { locked: false, is_correct: false, correct_option_index: null, explanation: null };
+  },
+
+  async getPracticeProblemSolution(
+    problemId: string
+  ): Promise<{ locked: boolean; explanation?: string; solutions?: Record<string, string>; time_complexity?: string; space_complexity?: string; message?: string }> {
+    try {
+      const { data, error } = await supabase.rpc('get_practice_problem_solution', {
+        p_problem_id: problemId,
+      });
+      if (!error && data) {
+        return data as any;
+      }
+    } catch {}
+    return { locked: false };
   },
 
   async saveTechnicalMcq(m: Partial<TechnicalMcq>): Promise<{ success: boolean; error?: string }> {

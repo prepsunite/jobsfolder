@@ -107,7 +107,16 @@ export interface MockExamSection {
 
 export interface ProctorEvent {
   timestamp: string;
-  type: 'BLUR' | 'FOCUS' | 'FULLSCREEN_EXIT' | 'FULLSCREEN_ENTER' | 'TAB_SWITCH' | 'DEVTOOLS_OPEN' | 'WINDOW_BLUR';
+  type:
+    | 'BLUR'
+    | 'FOCUS'
+    | 'FULLSCREEN_EXIT'
+    | 'FULLSCREEN_ENTER'
+    | 'TAB_SWITCH'
+    | 'DEVTOOLS_OPEN'
+    | 'WINDOW_BLUR'
+    | 'EXTENSION_DETECTED'
+    | 'PRIVACY_CURTAIN';
   details?: string;
 }
 
@@ -117,8 +126,10 @@ export interface StudentExamResponse {
   selected_text?: string;
   code_solution?: string;
   code_language?: string;
+  verdictToken?: string;
   test_cases_passed?: number;
   total_test_cases?: number;
+  marks_earned?: number;
   is_correct?: boolean;
   time_spent_sec: number;
   marked_review: boolean;
@@ -175,6 +186,10 @@ export interface StudentExamAttempt {
   proctor_events?: ProctorEvent[];
   responses?: Record<string, StudentExamResponse>;
   result_summary?: CandidateResultSummary;
+  assigned_question_ids?: string[];
+  shuffle_seed?: string;
+  server_deadline_at?: string;
+  last_heartbeat_at?: string;
   student?: {
     name: string;
     email: string;
@@ -245,7 +260,7 @@ export interface TemplateSectionDraft {
   negative_marking: number;
   duration_minutes?: number;
   topic_ids?: string[];
-  category?: 'arithmetic-aptitude' | 'logical-reasoning' | 'verbal-reasoning' | 'data-interpretation' | 'verbal-ability' | 'non-verbal-reasoning' | 'technical-aptitude' | 'technical-mcqs' | 'coding' | 'all' | (string & {});
+  category?: 'arithmetic-aptitude' | 'logical-reasoning' | 'verbal-reasoning' | 'data-interpretation' | 'verbal-ability' | 'nonverbal-reasoning' | 'non-verbal-reasoning' | 'technical-aptitude' | 'technical-mcqs' | 'coding' | 'all' | (string & {});
   coding_track?: 'PROGRAMMING_150' | 'CAMPUS_DSA';
   difficulty?: 'ALL' | 'EASY' | 'MEDIUM' | 'HARD';
   random_sampling?: boolean;

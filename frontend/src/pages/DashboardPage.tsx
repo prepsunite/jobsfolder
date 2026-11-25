@@ -288,14 +288,30 @@ export default function DashboardPage() {
           }
         }
 
+        if (qData.length === 0 && chunks.length > 0) {
+          try {
+            const rpcResponses = await Promise.all(
+              chunks.map((chunk) => supabase.rpc('get_safe_mock_exam_questions', { p_question_ids: chunk }))
+            );
+            for (const res of rpcResponses) {
+              if (!res.error && Array.isArray(res.data)) {
+                qData = qData.concat(res.data);
+              }
+            }
+          } catch {}
+        }
+
         if (qData && qData.length > 0) {
           allTopicQuestions = qData.map((q) => {
             const rawCorrect = q.correct_answer;
-            const resolvedLetter = typeof rawCorrect === 'number'
-              ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
-              : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
-                  ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
-                  : (String(rawCorrect || 'A').toUpperCase()));
+            const resolvedLetter =
+              rawCorrect === null || rawCorrect === undefined || rawCorrect === ''
+                ? ''
+                : typeof rawCorrect === 'number'
+                  ? (['A', 'B', 'C', 'D', 'E'][rawCorrect] || 'A')
+                  : (['0', '1', '2', '3', '4'].includes(String(rawCorrect))
+                      ? (['A', 'B', 'C', 'D', 'E'][Number(rawCorrect)] || 'A')
+                      : (String(rawCorrect).toUpperCase()));
 
             const rawOpts = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []);
             const normOpts = Array.isArray(rawOpts) ? rawOpts.map((opt: any) => ({
