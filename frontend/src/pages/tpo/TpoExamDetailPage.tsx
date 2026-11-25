@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link, useOutletContext, useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
 import {
   ArrowLeft,
   Download,
@@ -215,7 +215,11 @@ export default function TpoExamDetailPage() {
     }
   };
 
-  const totalSubmitted = attempts.length;
+  const finalizedAttempts = useMemo(
+    () => attempts.filter(a => isAttemptCompleted(a)),
+    [attempts]
+  );
+  const totalSubmitted = finalizedAttempts.length;
   const uniqueCandidatesCount = useMemo(() => {
     const set = new Set<string>();
     attempts.forEach(a => {
@@ -225,11 +229,11 @@ export default function TpoExamDetailPage() {
     return set.size;
   }, [attempts]);
 
-  const passedCount = attempts.filter(a => a.passed).length;
+  const passedCount = finalizedAttempts.filter(a => a.passed).length;
   const passRate = totalSubmitted > 0 ? Math.round((passedCount / totalSubmitted) * 100) : 0;
   const avgScore =
     totalSubmitted > 0
-      ? Math.round(attempts.reduce((acc, a) => acc + (a.percentage || 0), 0) / totalSubmitted)
+      ? Math.round(finalizedAttempts.reduce((acc, a) => acc + (a.percentage || 0), 0) / totalSubmitted)
       : 0;
 
   // Export to CSV

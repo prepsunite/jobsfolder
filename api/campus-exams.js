@@ -998,7 +998,7 @@ export default async function handler(req, res) {
 
         // Note: result_summary is NOT a column in un-migrated live DB; hydrate from responses.__result_summary
         const ATTEMPT_PROJECTION = 'id, mock_exam_id, student_id, student_email, college_id, status, started_at, submitted_at, time_spent_seconds, total_score, max_possible_score, percentage, passed, tab_switch_count, proctor_events, responses, created_at, updated_at';
-        let query = supabaseAdmin
+        let query = supabaseService
           .from('student_exam_attempts')
           .select(ATTEMPT_PROJECTION)
           .order('total_score', { ascending: false });
@@ -1006,7 +1006,17 @@ export default async function handler(req, res) {
         if (examId) {
           query = query.eq('mock_exam_id', examId);
         } else if (collegeId) {
-          query = query.eq('college_id', collegeId);
+          const targetCids = await resolveTargetCollegeIds(collegeId);
+          const { data: collegeExams } = await supabaseService
+            .from('mock_exams')
+            .select('id')
+            .in('college_id', targetCids);
+          const collegeExamIds = (collegeExams || []).map((e) => e.id).filter(Boolean);
+          if (collegeExamIds.length > 0) {
+            query = query.or(`college_id.in.(${targetCids.map((c) => `"${c}"`).join(',')}),mock_exam_id.in.(${collegeExamIds.map((id) => `"${id}"`).join(',')})`);
+          } else {
+            query = query.in('college_id', targetCids);
+          }
         }
 
         const { data: attempts, error: attErr } = await query;
@@ -1016,7 +1026,6 @@ export default async function handler(req, res) {
         }
 
         const allAttempts = attempts || [];
-        const seenAttemptIds = new Set(allAttempts.map(a => a.id));
 
         // Authoritative attempts from student_exam_attempts
         if (allAttempts.length > 0) {
@@ -1025,7 +1034,7 @@ export default async function handler(req, res) {
 
           let profiles = [];
           try {
-            const { data: profs } = await supabaseAdmin
+            const { data: profs } = await supabaseService
               .from('profiles')
               .select('id, name, email, roll_number, department')
               .or(`id.in.(${studentIds.map(i => `"${i}"`).join(',')}),email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);
@@ -1034,7 +1043,7 @@ export default async function handler(req, res) {
 
           let collegeStudents = [];
           try {
-            const { data: cs } = await supabaseAdmin
+            const { data: cs } = await supabaseService
               .from('college_students')
               .select('email, user_id, roll_number, department, full_name')
               .or(`email.in.(${studentEmails.map(e => `"${e}"`).join(',')})`);

@@ -4030,10 +4030,10 @@ export const tpoService = {
       console.warn('Notice querying college student_exam_attempts:', dbErr);
     }
 
-    // 2. Query /api/campus-exams?action=attempts for known exams (service-role bypass fallback)
-    if (attemptsMap.size === 0) {
-      try {
-        const authHeaders = await getAuthHeaders();
+    // 2. Always query /api/campus-exams?action=attempts (service-role bypass + enriched profiles)
+    try {
+      const authHeaders = await getAuthHeaders();
+      if (authHeaders.Authorization) {
         const res = await fetch(`/api/campus-exams?action=attempts&collegeId=${encodeURIComponent(collegeId)}`, {
           headers: authHeaders,
         });
@@ -4041,14 +4041,15 @@ export const tpoService = {
           const json = await res.json();
           if (json.success && json.attempts && Array.isArray(json.attempts)) {
             json.attempts.forEach((a: StudentExamAttempt) => {
-              if (a && a.id && !attemptsMap.has(a.id)) {
-                attemptsMap.set(a.id, a);
+              if (a && a.id) {
+                const existing = attemptsMap.get(a.id);
+                attemptsMap.set(a.id, existing ? { ...existing, ...a, result_summary: a.result_summary || existing.result_summary } : a);
               }
             });
           }
         }
-      } catch {}
-    }
+      }
+    } catch {}
 
 
 
@@ -6225,8 +6226,16 @@ export const tpoService = {
         const json = await res.json();
         if (json.attempts && Array.isArray(json.attempts)) {
           json.attempts.forEach((a: StudentExamAttempt) => {
-            if (a && a.id && !cloudAttempts.some(c => c.id === a.id)) {
+            if (!a || !a.id) return;
+            const idx = cloudAttempts.findIndex(c => c.id === a.id);
+            if (idx === -1) {
               cloudAttempts.push(a);
+            } else {
+              cloudAttempts[idx] = {
+                ...cloudAttempts[idx],
+                ...a,
+                result_summary: a.result_summary || cloudAttempts[idx].result_summary,
+              };
             }
           });
         }

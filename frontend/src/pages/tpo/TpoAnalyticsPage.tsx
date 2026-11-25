@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useOutletContext, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { TpoOutletContext } from '@/layouts/TpoLayout';
-import { tpoService, getExamTimingStatus } from '@/services/tpo.service';
+import { tpoService, getExamTimingStatus, isAttemptCompleted } from '@/services/tpo.service';
 import type { MockExam, StudentExamAttempt, CollegeStudent, EvaluatedStudentSummary } from '@/types/tpo';
 import { sanitizeCsvCell, downloadCsv } from '@/utils/csvUtils';
 import {
@@ -121,9 +121,14 @@ export default function TpoAnalyticsPage() {
   const tier2Count = stats?.tierCounts?.tier2 ?? studentSummaries.filter(s => s.tier === 'TIER_2').length;
   const tier3Count = stats?.tierCounts?.tier3 ?? studentSummaries.filter(s => s.tier === 'TIER_3' || s.tier === 'MALPRACTICE').length;
 
-  const tier1Attempts = stats?.tierCounts?.tier1Attempts ?? allAttempts.filter(a => (a.percentage || 0) >= 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
-  const tier2Attempts = stats?.tierCounts?.tier2Attempts ?? allAttempts.filter(a => (a.percentage || 0) >= 50 && (a.percentage || 0) < 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
-  const tier3Attempts = stats?.tierCounts?.tier3Attempts ?? allAttempts.filter(a => (a.percentage || 0) < 50 || a.status === 'TERMINATED_MALPRACTICE').length;
+  const finalizedAttempts = useMemo(
+    () => allAttempts.filter(a => isAttemptCompleted(a)),
+    [allAttempts]
+  );
+
+  const tier1Attempts = stats?.tierCounts?.tier1Attempts ?? finalizedAttempts.filter(a => (a.percentage || 0) >= 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
+  const tier2Attempts = stats?.tierCounts?.tier2Attempts ?? finalizedAttempts.filter(a => (a.percentage || 0) >= 50 && (a.percentage || 0) < 70 && a.status !== 'TERMINATED_MALPRACTICE').length;
+  const tier3Attempts = stats?.tierCounts?.tier3Attempts ?? finalizedAttempts.filter(a => (a.percentage || 0) < 50 || a.status === 'TERMINATED_MALPRACTICE').length;
 
   // Available unique batches from students and student summaries
   const availableBatches = useMemo(() => {
@@ -1136,8 +1141,8 @@ export default function TpoAnalyticsPage() {
           max_score: selectedAttempt.max_possible_score || (activeExam?.total_marks || 100),
           percentage: selectedAttempt.percentage || 0,
           passed: Boolean(selectedAttempt.passed),
-          tier: (selectedAttempt.percentage || 0) >= 70 ? 'TIER_1' : (selectedAttempt.percentage || 0) >= 50 ? 'TIER_2' : 'TIER_3',
-          tier_label: (selectedAttempt.percentage || 0) >= 70 ? 'Tier 1: Day-1 Ready' : (selectedAttempt.percentage || 0) >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed',
+          tier: selectedAttempt.status === 'TERMINATED_MALPRACTICE' ? 'MALPRACTICE' : (selectedAttempt.percentage || 0) >= 70 ? 'TIER_1' : (selectedAttempt.percentage || 0) >= 50 ? 'TIER_2' : 'TIER_3',
+          tier_label: selectedAttempt.status === 'TERMINATED_MALPRACTICE' ? 'Disqualified / Malpractice' : (selectedAttempt.percentage || 0) >= 70 ? 'Tier 1: Day-1 Ready' : (selectedAttempt.percentage || 0) >= 50 ? 'Tier 2: Near Ready' : 'Tier 3: Remedial Needed',
           total_questions: activeExam?.sections?.reduce((sum, s) => sum + (s.serve_count || s.question_count || s.question_ids?.length || 0), 0) || totalAttempted,
           total_attempted: totalAttempted,
           total_correct: totalCorrect,
