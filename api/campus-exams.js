@@ -524,14 +524,14 @@ export default async function handler(req, res) {
   async function loadExamWithSections(examIdValue) {
     let foundExam = null;
     try {
-      const { data: dbExam } = await supabaseAdmin
+      const { data: dbExam } = await supabaseService
         .from('mock_exams')
         .select('*')
         .eq('id', examIdValue)
         .or('is_deleted.is.null,is_deleted.eq.false')
         .maybeSingle();
       if (dbExam) {
-        const { data: dbSections } = await supabaseAdmin
+        const { data: dbSections } = await supabaseService
           .from('mock_exam_sections')
           .select('*')
           .eq('mock_exam_id', examIdValue)
@@ -542,7 +542,7 @@ export default async function handler(req, res) {
 
     if (!foundExam) {
       try {
-        const { data: msgs } = await supabaseAdmin
+        const { data: msgs } = await supabaseService
           .from('contact_messages')
           .select('message')
           .like('subject', `B2B_EXAM:%:${examIdValue}`)
@@ -593,8 +593,8 @@ export default async function handler(req, res) {
           .from('topic_questions')
           .select(
             includeSolutions
-              ? 'id, topic_id, question_number, statement, options, difficulty, sample_input, sample_output, correct_answer, explanation, structured_explanation'
-              : 'id, topic_id, question_number, statement, options, difficulty, sample_input, sample_output, structured_explanation'
+              ? 'id, topic_id, question_number, statement, options, difficulty, correct_answer, explanation, structured_explanation'
+              : 'id, topic_id, question_number, statement, options, difficulty, structured_explanation'
           )
           .in('id', slice)
           .or('is_deleted.is.null,is_deleted.eq.false'),
@@ -1208,7 +1208,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing attemptId parameter' });
       }
 
-      const { data: attRow } = await supabaseAdmin
+      const { data: attRow } = await supabaseService
         .from('student_exam_attempts')
         .select('*')
         .eq('id', attemptId)
@@ -1235,13 +1235,21 @@ export default async function handler(req, res) {
       const examObj = await loadExamWithSections(attRow.mock_exam_id);
       const cidUpper = String(examObj?.college_id || attRow.college_id || '').trim().toUpperCase();
       const isSelfPractice = cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL';
-      const endMs = examObj?.end_time ? new Date(examObj.end_time).getTime() : null;
+      const startMs = examObj?.start_time ? new Date(examObj.start_time).getTime() : null;
+      const explicitEndMs = examObj?.end_time ? new Date(examObj.end_time).getTime() : null;
+      const durationMs = Math.max(1, Number(examObj?.duration_minutes || 90)) * 60 * 1000;
+      const effectiveEndMs =
+        explicitEndMs && Number.isFinite(explicitEndMs)
+          ? explicitEndMs
+          : startMs && Number.isFinite(startMs)
+            ? startMs + durationMs
+            : null;
       const isWindowLive =
         !isPrivileged &&
         !isSelfPractice &&
         Boolean(examObj) &&
-        (Boolean(examObj.start_time) || Boolean(examObj.end_time)) &&
-        (!endMs || Date.now() < endMs);
+        Boolean(effectiveEndMs) &&
+        Date.now() < effectiveEndMs;
 
       const cleanAttempt = sanitizeAttemptForResponse(attRow);
       const cleanExam = examObj
@@ -1252,7 +1260,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
           success: true,
           isWindowLive: true,
-          examEndTime: examObj?.end_time || null,
+          examEndTime: effectiveEndMs ? new Date(effectiveEndMs).toISOString() : null,
           serverNowMs: Date.now(),
           attempt: cleanAttempt,
           exam: cleanExam,
@@ -1260,15 +1268,22 @@ export default async function handler(req, res) {
         });
       }
 
-      const assignedIds = cleanAttempt.assigned_question_ids || null;
+      const baseAssigned = Array.isArray(cleanAttempt.assigned_question_ids)
+        ? cleanAttempt.assigned_question_ids
+        : null;
+      const answeredIds = Object.keys(cleanAttempt.responses || {}).filter((k) => !k.startsWith('__'));
+      const allowedIds = baseAssigned && baseAssigned.length > 0
+        ? Array.from(new Set([...baseAssigned, ...answeredIds]))
+        : null;
+
       const questions = examObj
-        ? await loadExamQuestionsFromDb(examObj, { includeSolutions: true, allowedIds: assignedIds })
+        ? await loadExamQuestionsFromDb(examObj, { includeSolutions: true, allowedIds })
         : [];
 
       return res.status(200).json({
         success: true,
         isWindowLive: false,
-        examEndTime: examObj?.end_time || null,
+        examEndTime: effectiveEndMs ? new Date(effectiveEndMs).toISOString() : null,
         serverNowMs: Date.now(),
         attempt: cleanAttempt,
         exam: cleanExam,

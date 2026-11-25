@@ -774,7 +774,12 @@ async function main() {
           assert(jwt, 'Could not mint non-admin JWT');
 
           // Seed a temporary SELF exam for this non-admin student
-          const { data: qRow } = await supabase.from('topic_questions').select('id').limit(1).maybeSingle();
+          const { data: qRow } = await supabase
+            .from('topic_questions')
+            .select('id')
+            .or('is_deleted.is.null,is_deleted.eq.false')
+            .limit(1)
+            .maybeSingle();
           assert(qRow?.id, 'Need at least 1 topic_question');
           const { error: exInsErr } = await supabase.from('mock_exams').insert({
             id: testExamId,
@@ -791,15 +796,16 @@ async function main() {
             max_tab_switches_allowed: 3,
           });
           assert(!exInsErr, exInsErr?.message);
-          await supabase.from('mock_exam_sections').insert({
+          const { error: secInsErr } = await supabase.from('mock_exam_sections').insert({
             id: `sec-${testExamId}`,
             mock_exam_id: testExamId,
             name: 'Quant',
             section_order: 1,
-            question_count: 1,
-            marks_per_question: 10,
+            serve_count: 1,
+            marks_per_correct: 10,
             question_ids: [qRow.id],
           });
+          assert(!secInsErr, secInsErr?.message);
 
           const invokeCampusExams =
             typeof campusExamsHandler === 'function' ? campusExamsHandler : campusExamsHandler?.default;
@@ -857,6 +863,25 @@ async function main() {
           assert.strictEqual(resReenter.statusCode, 200);
           assert.strictEqual(resReenter.body?.alreadyFinalized, true, 'Expected alreadyFinalized=true on re-entry');
           assert.strictEqual(resReenter.body?.attempt?.status, 'TERMINATED_MALPRACTICE');
+
+          // 5. Calling GET review-attempt after exam window concludes returns assigned questions + correct_answer key
+          await supabase
+            .from('mock_exams')
+            .update({ end_time: new Date(Date.now() - 5_000).toISOString() })
+            .eq('id', testExamId);
+          const resReview = createMockRes();
+          await invokeCampusExams(
+            {
+              method: 'GET',
+              headers: { authorization: `Bearer ${jwt}` },
+              query: { action: 'review-attempt', attemptId: createdAttemptId },
+            },
+            resReview
+          );
+          assert.strictEqual(resReview.statusCode, 200, `review-attempt failed: ${JSON.stringify(resReview.body)}`);
+          assert.strictEqual(resReview.body?.isWindowLive, false, 'Expected isWindowLive=false after end_time');
+          assert(Array.isArray(resReview.body?.questions) && resReview.body.questions.length === 1, `Expected 1 assigned question in review, got ${JSON.stringify(resReview.body?.questions)}`);
+          assert(resReview.body.questions[0].correct_answer !== undefined && resReview.body.questions[0].correct_answer !== null, 'Expected official correct_answer key in review');
         } finally {
           if (createdAttemptId) {
             await supabase.from('student_exam_attempts').delete().eq('id', createdAttemptId);

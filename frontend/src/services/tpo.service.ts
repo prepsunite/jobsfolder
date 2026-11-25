@@ -8065,6 +8065,10 @@ export const tpoService = {
               : Array.isArray(json.attempt.responses?.__assigned_question_ids)
               ? json.attempt.responses.__assigned_question_ids
               : null;
+            const assignedOrderMap = new Map<string, number>();
+            if (assignedList) {
+              assignedList.forEach((qid, idx) => assignedOrderMap.set(qid, idx));
+            }
             const assignedSet = assignedList && assignedList.length > 0 ? new Set<string>(assignedList) : null;
             if (assignedSet) {
               Object.keys(json.attempt.responses || {}).forEach(k => {
@@ -8072,42 +8076,93 @@ export const tpoService = {
               });
             }
 
+            const resolveQuestionWithFallback = (id: string) => {
+              const found = qMap.get(id);
+              if (found) return found;
+              const dsaLocal = getCampusDsaExamProblem(id);
+              if (dsaLocal) {
+                return {
+                  ...dsaLocal,
+                  statement: dsaLocal.description,
+                  options: [],
+                  isCodingProblem: true,
+                };
+              }
+              return null;
+            };
+
+            const enrichReviewQuestion = (q: any, sec: MockExamSection) => {
+              const resp = (json.attempt.responses || {})[q.id];
+              const isCoding = Boolean(q.isCodingProblem);
+              let expectedNum = q.correct_answer;
+              if (expectedNum !== undefined && expectedNum !== null) {
+                const raw = String(expectedNum).trim().toUpperCase();
+                if (/^[A-Z]$/.test(raw)) expectedNum = raw.charCodeAt(0) - 65;
+                else if (/^\d+$/.test(raw)) expectedNum = parseInt(raw, 10);
+              }
+              const isAnswered = isCoding
+                ? Boolean(resp?.code_solution && resp.code_solution.trim())
+                : resp?.selected_option !== null && resp?.selected_option !== undefined;
+              const isCorrect =
+                typeof resp?.is_correct === 'boolean'
+                  ? resp.is_correct
+                  : isCoding
+                  ? Boolean(resp?.test_cases_passed && resp.total_test_cases && resp.test_cases_passed === resp.total_test_cases)
+                  : isAnswered && expectedNum !== undefined && expectedNum !== null && Number(resp.selected_option) === Number(expectedNum);
+              const pos = q.marks ?? sec.marks_per_correct ?? 1;
+              const neg = q.negative_marks ? -Math.abs(q.negative_marks) : (sec.negative_marking ? -Math.abs(sec.negative_marking) : 0);
+              const marksObtained = typeof resp?.marks_earned === 'number'
+                ? resp.marks_earned
+                : isCorrect ? pos : isAnswered ? neg : 0;
+              return {
+                ...q,
+                correct_answer: expectedNum,
+                student_response: resp,
+                is_answered: isAnswered,
+                is_correct: isCorrect,
+                marks_obtained: marksObtained,
+              };
+            };
+
+            const placedIds = new Set<string>();
             const reconstructedSections = (json.exam.sections || []).map((sec: MockExamSection) => {
-              const secQIds = (sec.question_ids || []).filter(id => !assignedSet || assignedSet.has(id));
-              const enriched = secQIds
-                .map(id => qMap.get(id))
+              const rawSecIds = (sec.question_ids || []).filter(id => !assignedSet || assignedSet.has(id));
+              const orderedSecIds = assignedOrderMap.size > 0
+                ? [...rawSecIds].sort((a, b) => (assignedOrderMap.get(a) ?? 999999) - (assignedOrderMap.get(b) ?? 999999))
+                : rawSecIds;
+              const enriched = orderedSecIds
+                .map(id => {
+                  const q = resolveQuestionWithFallback(id);
+                  if (q) placedIds.add(id);
+                  return q;
+                })
                 .filter(Boolean)
-                .map((q: any) => {
-                  const resp = (json.attempt.responses || {})[q.id];
-                  const isCoding = Boolean(q.isCodingProblem);
-                  let expectedNum = q.correct_answer;
-                  if (expectedNum !== undefined && expectedNum !== null) {
-                    const raw = String(expectedNum).trim().toUpperCase();
-                    if (/^[A-Z]$/.test(raw)) expectedNum = raw.charCodeAt(0) - 65;
-                    else if (/^\d+$/.test(raw)) expectedNum = parseInt(raw, 10);
-                  }
-                  const isAnswered = isCoding
-                    ? Boolean(resp?.code_solution && resp.code_solution.trim())
-                    : resp?.selected_option !== null && resp?.selected_option !== undefined;
-                  const isCorrect = isCoding
-                    ? Boolean(resp?.test_cases_passed && resp.total_test_cases && resp.test_cases_passed === resp.total_test_cases)
-                    : isAnswered && Number(resp.selected_option) === Number(expectedNum);
-                  const pos = q.marks ?? sec.marks_per_correct ?? 1;
-                  const neg = q.negative_marks ? -Math.abs(q.negative_marks) : (sec.negative_marking ? -Math.abs(sec.negative_marking) : 0);
-                  const marksObtained = typeof resp?.marks_earned === 'number'
-                    ? resp.marks_earned
-                    : isCorrect ? pos : isAnswered ? neg : 0;
-                  return {
-                    ...q,
-                    correct_answer: expectedNum,
-                    student_response: resp,
-                    is_answered: isAnswered,
-                    is_correct: isCorrect,
-                    marks_obtained: marksObtained,
-                  };
-                });
+                .map((q: any) => enrichReviewQuestion(q, sec));
               return { ...sec, questions: enriched };
             });
+
+            // Include any assigned or answered questions that weren't matched to a section
+            const unplacedIds = Array.from(assignedSet || []).filter(id => !placedIds.has(id));
+            if (unplacedIds.length > 0) {
+              const fallbackSec: MockExamSection = {
+                id: 'sec-additional-review',
+                mock_exam_id: json.exam.id,
+                name: 'Exam Questions',
+                section_order: reconstructedSections.length + 1,
+                question_count: unplacedIds.length,
+                marks_per_correct: 1,
+                negative_marking: 0,
+                topic_ids: [],
+                question_ids: unplacedIds,
+              };
+              const extraQuestions = unplacedIds
+                .map(id => resolveQuestionWithFallback(id))
+                .filter(Boolean)
+                .map((q: any) => enrichReviewQuestion(q, fallbackSec));
+              if (extraQuestions.length > 0) {
+                reconstructedSections.push({ ...fallbackSec, questions: extraQuestions });
+              }
+            }
 
             return {
               attempt: json.attempt,
