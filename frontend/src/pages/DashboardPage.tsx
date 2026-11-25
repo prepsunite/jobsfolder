@@ -134,7 +134,8 @@ export default function DashboardPage() {
       });
     },
     enabled: !!user?.email,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const enrolledCollege = campusExamsData?.college;
@@ -148,6 +149,11 @@ export default function DashboardPage() {
     () => campusExams.filter(e => !isAttemptCompleted(e.attempt) && getExamTimingStatus(e) === 'LIVE'),
     [campusExams]
   );
+  const upcomingCampusExamsCount = useMemo(
+    () => campusExams.filter(e => !isAttemptCompleted(e.attempt) && getExamTimingStatus(e) === 'UPCOMING').length,
+    [campusExams]
+  );
+  const isCampusPassInactive = Boolean(enrolledCollege && enrolledCollege.isPassActive === false);
   const avgCampusScore = useMemo(() => {
     const scored = campusExams
       .map(e => e.attempt)
@@ -528,136 +534,148 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto">
-      {/* 🏛️ Mock Placement Drives Gateway Widget */}
+      {/* 🏛️ Campus Placement & Mock Exams Strip (Clean & Compact) */}
       {(enrolledCollege || campusExams.length > 0) && (
-        <div className="rounded-2xl p-5 sm:p-6 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/40 via-white to-orange-50/10 dark:from-[#1a1311] dark:via-[#141414] dark:to-[#121417] shadow-sm relative overflow-hidden space-y-4">
-          {/* Top Banner Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-orange-100 dark:border-[#2a2220] pb-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0">
-                <GraduationCap className="w-5 h-5" />
+        <div className="rounded-2xl p-4 sm:p-5 border border-gray-200/90 dark:border-[#24262c] bg-white dark:bg-[#141518] shadow-xs space-y-3.5">
+          {/* Row 1: Title + Pass Status + Primary CTA */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FD4A32] text-white">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FD4A32]/10 text-[#FD4A32]">
                     {enrolledCollege ? 'Campus Placement Cell' : 'Mock Exam Suite'}
                   </span>
-                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                    {enrolledCollege ? enrolledCollege.name : 'Blueprint Mock Tests'}
-                  </span>
+                  {enrolledCollege && (
+                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 truncate">
+                      {enrolledCollege.code ? `${enrolledCollege.code} · ` : ''}{enrolledCollege.name}
+                    </span>
+                  )}
                 </div>
-                <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight mt-0.5">
-                  {enrolledCollege ? 'Assigned Placement Drives & Mock Tests' : 'Your Blueprint Mock Assessments'}
-                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {activeCampusExams.length > 0 ? (
+                    <>
+                      <strong className="text-gray-900 dark:text-white">
+                        {activeCampusExams.length} active drive{activeCampusExams.length > 1 ? 's' : ''}
+                      </strong>{' '}
+                      open for your cohort.
+                    </>
+                  ) : upcomingCampusExamsCount > 0 ? (
+                    <>No live drives right now &bull; {upcomingCampusExamsCount} upcoming.</>
+                  ) : campusExams.length > 0 && completedCampusAttempts.length >= campusExams.length ? (
+                    <>All {campusExams.length} assigned drives completed and evaluated.</>
+                  ) : (
+                    <>
+                      {completedCampusAttempts.length} of {campusExams.length} drives completed &bull;{' '}
+                      {Math.max(0, campusExams.length - completedCampusAttempts.length)} window-closed.
+                    </>
+                  )}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              {isUserPro ? (
-                <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>
-                    Campus Pro Pass Active
-                    {subData?.expiresAt
-                      ? ` (${Math.max(0, Math.ceil((new Date(subData.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left)`
-                      : ''}
+            <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
+              {enrolledCollege ? (
+                isCampusPassInactive ? (
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Campus Pass Inactive</span>
                   </span>
+                ) : (
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>
+                      Campus Pass Active
+                      {enrolledCollege.valid_until
+                        ? ` (${Math.max(0, Math.ceil((new Date(enrolledCollege.valid_until).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left)`
+                        : ''}
+                    </span>
+                  </span>
+                )
+              ) : isUserPro ? (
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Pro Pass Active</span>
                 </span>
               ) : (
-                <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Campus Pass Expired (Free Tier)</span>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 dark:bg-[#1e2025] dark:text-gray-300 border border-gray-200 dark:border-[#2a2d34] flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Free Tier</span>
                 </span>
               )}
+
+              {!isCampusPassInactive &&
+                campusExams.some(e => e.attempt?.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE') && (
+                  <Link
+                    to={`/exam/${campusExams.find(e => e.attempt?.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE')?.id}`}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 transition-colors"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Resume →</span>
+                  </Link>
+                )}
+
+              <Link
+                to="/student/exams"
+                className="px-3.5 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <span>Open Exams Portal ({campusExams.length}) →</span>
+              </Link>
             </div>
           </div>
 
-          {/* Student Placement Readiness Intelligence Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-white/70 dark:bg-[#0C0D11]/80 border border-orange-100 dark:border-[#1F1715] text-center">
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                Assigned Drives
+          {/* Row 2: Slim 4-Metric Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2.5 border-t border-gray-100 dark:border-[#202228]">
+            <div className="flex items-center justify-between sm:block px-3 py-2 rounded-xl bg-gray-50/80 dark:bg-[#191a1f]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Assigned
               </span>
-              <span className="text-sm font-black text-gray-900 dark:text-white">
-                {campusExams.length} Mock Drives
+              <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                {campusExams.length} Drives
               </span>
             </div>
 
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+            <div className="flex items-center justify-between sm:block px-3 py-2 rounded-xl bg-gray-50/80 dark:bg-[#191a1f]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
                 Completed
               </span>
-              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+              <span className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400">
                 {completedCampusAttempts.length} / {campusExams.length}
               </span>
             </div>
 
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                Campus Mock Avg
+            <div className="flex items-center justify-between sm:block px-3 py-2 rounded-xl bg-gray-50/80 dark:bg-[#191a1f]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Mock Avg
               </span>
-              <span className="text-sm font-black text-blue-600 dark:text-blue-400">
-                {avgCampusScore !== null ? `${avgCampusScore}%` : 'Pending Attempt'}
+              <span className="text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
+                {avgCampusScore !== null ? `${avgCampusScore}%` : 'Pending'}
               </span>
             </div>
 
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
-                Placement Readiness
+            <div className="flex items-center justify-between sm:block px-3 py-2 rounded-xl bg-gray-50/80 dark:bg-[#191a1f]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                Readiness
               </span>
               {avgCampusScore !== null ? (
                 avgCampusScore >= 70 ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                    <Award className="w-3 h-3 text-emerald-500" /> Day-1 Ready
+                  <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                    <Award className="w-3.5 h-3.5" /> Day-1 Ready
                   </span>
                 ) : avgCampusScore >= 50 ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                    <TrendingUp className="w-3 h-3 text-blue-500" /> Near Ready
+                  <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
+                    <TrendingUp className="w-3.5 h-3.5" /> Near Ready
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                    <AlertTriangle className="w-3 h-3 text-rose-500" /> Remedial Prep
+                  <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400">
+                    <AlertTriangle className="w-3.5 h-3.5" /> Remedial
                   </span>
                 )
               ) : (
-                <span className="text-[11px] font-bold text-gray-400">Not Attempted</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-400">Not Attempted</span>
               )}
-            </div>
-          </div>
-
-          {/* Quick Action Navigation Strip */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-            <div className="text-xs text-gray-600 dark:text-gray-400">
-              {activeCampusExams.length > 0 ? (
-                <span>
-                  You have{' '}
-                  <strong className="text-gray-900 dark:text-white">
-                    {activeCampusExams.length} active placement assessment{activeCampusExams.length > 1 ? 's' : ''}
-                  </strong>{' '}
-                  ready for your branch and cohort.
-                </span>
-              ) : (
-                <span>All assigned campus placement tests have been completed and evaluated.</span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
-              {campusExams.some(e => e.attempt?.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE') && (
-                <Link
-                  to={`/exam/${campusExams.find(e => e.attempt?.status === 'IN_PROGRESS' && getExamTimingStatus(e) === 'LIVE')?.id}`}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm shrink-0"
-                >
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>Resume Exam →</span>
-                </Link>
-              )}
-              <Link
-                to="/student/exams"
-                className="px-4 py-2.5 rounded-xl bg-[#FD4A32] hover:bg-[#e03f29] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm shadow-[#FD4A32]/25 w-full sm:w-auto shrink-0"
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span>Go to Mock Exams Portal ({campusExams.length} Drives) →</span>
-              </Link>
             </div>
           </div>
         </div>

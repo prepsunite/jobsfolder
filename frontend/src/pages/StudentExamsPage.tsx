@@ -37,6 +37,8 @@ import {
   Briefcase,
   Share2,
   Globe,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import LogoLoader from '@/components/LogoLoader';
 import GenerateMockExamModal from '@/components/mock-exams/GenerateMockExamModal';
@@ -118,6 +120,22 @@ export default function StudentExamsPage() {
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isCreatePublicModalOpen, setIsCreatePublicModalOpen] = useState(false);
   const [selectedShareExam, setSelectedShareExam] = useState<MockExam | null>(null);
+  const [isInstitutionalHeaderExpanded, setIsInstitutionalHeaderExpanded] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('prepunite_exam_header_expanded') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const toggleInstitutionalHeader = () => {
+    setIsInstitutionalHeaderExpanded(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('prepunite_exam_header_expanded', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Scorecard Modal State
   const [selectedScorecardExam, setSelectedScorecardExam] = useState<
@@ -387,166 +405,173 @@ export default function StudentExamsPage() {
       {/* ── INSTITUTIONAL ENROLLMENT & KPI INTELLIGENCE CARD ── */}
       {enrolledCollege ? (
         <div className="rounded-3xl p-6 sm:p-7 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/50 via-white to-orange-50/15 dark:from-[#1a1311] dark:via-[#141517] dark:to-[#121316] shadow-sm relative overflow-hidden space-y-6">
-          {/* Ambient decorative glow */}
-          <div className="absolute top-0 right-1/4 w-80 h-40 bg-[#FD4A32]/10 dark:bg-[#FD4A32]/15 blur-3xl pointer-events-none rounded-full" />
-
-          {/* Header row with college info and candidate identity */}
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-orange-100 dark:border-[#282525] pb-5">
-            {/* College info */}
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FD4A32] to-[#FF6B4A] text-white flex items-center justify-center font-black shadow-md shadow-[#FD4A32]/20 shrink-0">
-                <Building2 className="w-7 h-7" />
+          {/* Compact Collapsible Header Row */}
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FD4A32] to-[#FF6B4A] text-white flex items-center justify-center font-bold shadow-sm shadow-[#FD4A32]/20 shrink-0">
+                <Building2 className="w-5 h-5" />
               </div>
-              <div className="space-y-1">
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FD4A32] text-white shadow-2xs">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FD4A32] text-white">
                     <ShieldCheck className="w-3 h-3" />
-                    Authorized Institutional Portal
+                    Authorized Portal
                   </span>
                   {enrolledCollege.code && (
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202226] text-gray-800 dark:text-gray-200 border border-gray-200/50 dark:border-white/10">
+                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#202226] text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-white/10">
                       {enrolledCollege.code}
                     </span>
                   )}
+                  <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight truncate">
+                    {enrolledCollege.name}
+                  </h2>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight font-display mt-0.5">
-                  {enrolledCollege.name}
-                </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Standardized Campus Placement Testing System &bull; Real-time Proctored Evaluations
-                </p>
-              </div>
-            </div>
-
-            {/* Candidate identity capsule */}
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/80 dark:bg-[#1a1b20]/90 border border-orange-100 dark:border-[#2a292d] shadow-2xs self-start lg:self-auto">
-              <div className="w-11 h-11 rounded-xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-black text-base shrink-0">
-                {(user?.name || user?.email || 'S').charAt(0).toUpperCase()}
-              </div>
-
-              <div className="min-w-0 pr-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-gray-900 dark:text-white truncate">
+                <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex-wrap">
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
                     {user?.name || user?.email?.split('@')[0]}
                   </span>
-                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
                     Enrolled
                   </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex-wrap">
                   {studentRecord?.roll_number && (
-                    <span className="font-mono font-bold text-gray-700 dark:text-gray-300 flex items-center gap-0.5">
-                      <Hash className="w-2.5 h-2.5 opacity-60" />
-                      {studentRecord.roll_number}
-                    </span>
+                    <>
+                      <span>&bull;</span>
+                      <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">{studentRecord.roll_number}</span>
+                    </>
                   )}
-                  {studentRecord?.roll_number && <span>&bull;</span>}
+                  <span>&bull;</span>
                   <span>{studentRecord?.department || 'Engineering'}</span>
                   <span>&bull;</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  <span>
                     {studentRecord?.batch_name || 'Class'} {studentRecord?.batch_year ? `'${String(studentRecord.batch_year).slice(-2)}` : ''}
                   </span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* 4 Performance KPI Cards */}
-          <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Assigned Drives
-                </span>
-                <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-[#FD4A32] flex items-center justify-center">
-                  <GraduationCap className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-gray-900 dark:text-white mt-1">
-                {campusExams.length}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Total college exams
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Active &amp; Ongoing
-                </span>
-                <div className="w-6 h-6 rounded-lg bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-[#FD4A32] mt-1 flex items-center gap-2">
-                <span>{activeExams.length}</span>
-                {inProgressExams.length > 0 && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                    {inProgressExams.length} In Progress
+            {/* Right: Inline Summary Pills (when collapsed) + Collapse Toggle */}
+            <div className="flex items-center gap-2 flex-wrap lg:shrink-0">
+              {!isInstitutionalHeaderExpanded && (
+                <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-semibold">
+                  <span className="px-2.5 py-1 rounded-lg bg-white/85 dark:bg-[#18191c] border border-orange-100 dark:border-[#2a2220] text-gray-700 dark:text-gray-200">
+                    <strong className="font-bold">{campusExams.length}</strong> Drives
                   </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Available to attempt now
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Completed Drives
-                </span>
-                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="px-2.5 py-1 rounded-lg bg-white/85 dark:bg-[#18191c] border border-orange-100 dark:border-[#2a2220] text-[#FD4A32]">
+                    <strong className="font-bold">{activeExams.length}</strong> Active
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/85 dark:bg-[#18191c] border border-orange-100 dark:border-[#2a2220] text-emerald-600 dark:text-emerald-400">
+                    <strong className="font-bold">{completedExams.length}/{campusExams.length}</strong> Done
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/85 dark:bg-[#18191c] border border-orange-100 dark:border-[#2a2220] text-blue-600 dark:text-blue-400">
+                    {avgCampusScore !== null ? (
+                      <>
+                        <strong className="font-bold">{avgCampusScore}%</strong> Avg
+                      </>
+                    ) : (
+                      'Pending'
+                    )}
+                  </span>
                 </div>
-              </div>
-              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                {completedExams.length}
-                <span className="text-sm font-semibold text-gray-400 ml-1">/ {campusExams.length}</span>
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Evaluated submissions
-              </div>
-            </div>
+              )}
 
-            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs group hover:border-[#FD4A32]/30 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Placement Readiness
-                </span>
-                <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  <Award className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="mt-1 flex items-center gap-2">
-                {avgCampusScore !== null ? (
-                  avgCampusScore >= 70 ? (
-                    <span className="inline-flex items-center gap-1.5 text-base font-black text-emerald-600 dark:text-emerald-400">
-                      <Award className="w-5 h-5 text-emerald-500" />
-                      Day-1 Ready ({avgCampusScore}%)
-                    </span>
-                  ) : avgCampusScore >= 50 ? (
-                    <span className="inline-flex items-center gap-1.5 text-base font-black text-blue-600 dark:text-blue-400">
-                      <TrendingUp className="w-5 h-5 text-blue-500" />
-                      Near Ready ({avgCampusScore}%)
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-base font-black text-rose-600 dark:text-rose-400">
-                      <AlertTriangle className="w-5 h-5 text-rose-500" />
-                      Remedial ({avgCampusScore}%)
-                    </span>
-                  )
-                ) : (
-                  <span className="text-sm font-bold text-gray-400">Pending Attempt</span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {avgCampusScore !== null ? 'Based on verified drives' : 'Take first mock test to calibrate'}
-              </div>
+              <button
+                type="button"
+                onClick={toggleInstitutionalHeader}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/90 dark:bg-[#1a1b20] hover:bg-orange-50 dark:hover:bg-[#23242b] border border-orange-200/70 dark:border-[#2e2c32] text-[11px] font-semibold text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
+                title={isInstitutionalHeaderExpanded ? 'Collapse summary' : 'Expand placement summary'}
+              >
+                <span>{isInstitutionalHeaderExpanded ? 'Hide Details' : 'Summary'}</span>
+                {isInstitutionalHeaderExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
+
+          {/* Collapsible 4 Performance KPI Cards (compact typography) */}
+          {isInstitutionalHeaderExpanded && (
+            <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-orange-100 dark:border-[#282525]">
+              <div className="p-3 rounded-xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Assigned Drives
+                  </span>
+                  <GraduationCap className="w-3.5 h-3.5 text-[#FD4A32]" />
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white mt-0.5">
+                  {campusExams.length}
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                  Total college exams
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Active &amp; Ongoing
+                  </span>
+                  <Clock className="w-3.5 h-3.5 text-[#FD4A32]" />
+                </div>
+                <div className="text-lg font-bold text-[#FD4A32] mt-0.5 flex items-center gap-2">
+                  <span>{activeExams.length}</span>
+                  {inProgressExams.length > 0 && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      {inProgressExams.length} In Progress
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                  Available to attempt now
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Completed Drives
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  {completedExams.length}
+                  <span className="text-xs font-medium text-gray-400 ml-1">/ {campusExams.length}</span>
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                  Evaluated submissions
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/85 dark:bg-[#18191c]/85 border border-orange-100/90 dark:border-[#2a2220] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Placement Readiness
+                  </span>
+                  <Award className="w-3.5 h-3.5 text-blue-500" />
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  {avgCampusScore !== null ? (
+                    avgCampusScore >= 70 ? (
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        Day-1 Ready ({avgCampusScore}%)
+                      </span>
+                    ) : avgCampusScore >= 50 ? (
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-blue-600 dark:text-blue-400">
+                        Near Ready ({avgCampusScore}%)
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-rose-600 dark:text-rose-400">
+                        Remedial ({avgCampusScore}%)
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-400">Pending Attempt</span>
+                  )}
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {avgCampusScore !== null ? 'Based on verified drives' : 'Take first mock test to calibrate'}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="rounded-2xl p-6 border border-gray-200 dark:border-[#27292e] bg-linear-to-br from-gray-50/70 via-white to-orange-50/20 dark:from-[#141517] dark:via-[#17181c] dark:to-[#1a1413] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
