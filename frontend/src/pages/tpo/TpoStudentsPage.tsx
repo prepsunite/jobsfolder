@@ -130,6 +130,9 @@ export default function TpoStudentsPage() {
       setActionSuccessMsg(`Removed ${studentName} from campus roster and freed up 1 license seat.`);
       setTimeout(() => setActionSuccessMsg(null), 5000);
       queryClient.invalidateQueries({ queryKey: ['tpo-stats', collegeId] });
+      queryClient.invalidateQueries({ queryKey: ['tpo-college-attempts', collegeId] });
+      queryClient.invalidateQueries({ queryKey: ['tpo-evaluated-students-summary', collegeId] });
+      queryClient.invalidateQueries({ queryKey: ['tpo-exam-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['admin-colleges-usage'] });
       refetch();
       toast.success(`Removed ${studentName} from roster.`);

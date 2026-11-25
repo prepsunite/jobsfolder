@@ -1437,6 +1437,59 @@ export default async function handler(req, res) {
     try {
       const { action, attempt, exam } = req.body || {};
 
+      // Action 0a-del: Purge all campus exam attempts/analytics for a student removed by TPO
+      if (action === 'delete-student-attempts') {
+        const { collegeId: delCollegeId, studentEmail: delEmail } = req.body || {};
+        const cleanDelEmail = String(delEmail || '').trim().toLowerCase();
+        if (!delCollegeId || !cleanDelEmail) {
+          return res.status(400).json({ error: 'Missing collegeId or studentEmail.' });
+        }
+        const canPurge = isSuperAdmin || (await isTpoForCollege(delCollegeId));
+        if (!canPurge) {
+          return res.status(403).json({ error: 'Forbidden: Caller is not an authorized TPO for this college.' });
+        }
+
+        const targetCids = await resolveTargetCollegeIds(delCollegeId);
+        // Resolve user_id for this student email if they had an account
+        let stuUserId = '';
+        try {
+          const { data: prof } = await supabaseService
+            .from('profiles')
+            .select('id')
+            .ilike('email', cleanDelEmail)
+            .maybeSingle();
+          if (prof?.id) stuUserId = prof.id;
+        } catch {}
+
+        // Find all exams belonging to this college
+        const { data: colExams } = await supabaseService
+          .from('mock_exams')
+          .select('id')
+          .in('college_id', targetCids);
+        const colExamIds = (colExams || []).map((e) => e.id).filter(Boolean);
+
+        const stuFilter = stuUserId
+          ? `student_email.ilike.${cleanDelEmail},student_id.ilike.${cleanDelEmail},student_id.eq.${stuUserId}`
+          : `student_email.ilike.${cleanDelEmail},student_id.ilike.${cleanDelEmail}`;
+
+        // Delete attempts matching college_id OR college's mock_exam_ids
+        await supabaseService
+          .from('student_exam_attempts')
+          .delete()
+          .in('college_id', targetCids)
+          .or(stuFilter);
+
+        if (colExamIds.length > 0) {
+          await supabaseService
+            .from('student_exam_attempts')
+            .delete()
+            .in('mock_exam_id', colExamIds)
+            .or(stuFilter);
+        }
+
+        return res.status(200).json({ success: true });
+      }
+
       // Action 0a: Super Admin save / customize exam template pattern
       if (action === 'save-template') {
         const { template } = req.body || {};

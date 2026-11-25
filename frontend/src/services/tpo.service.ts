@@ -3972,6 +3972,36 @@ export const tpoService = {
     // 5. Revoke student entitlement in user_subscriptions & cache
     await this.revokeStudentEntitlement(collegeId, cleanEmail);
 
+    // 6. Purge deleted student's exam attempts & analytics for this college (server + local cache)
+    try {
+      const authHeaders = await getAuthHeaders();
+      if (authHeaders.Authorization) {
+        await fetch('/api/campus-exams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            action: 'delete-student-attempts',
+            collegeId,
+            studentEmail: cleanEmail,
+          }),
+        });
+      }
+    } catch {}
+
+    try {
+      const targetCidSet = new Set(targetCollegeIds.map(id => id.toLowerCase()));
+      const localAttempts = getLocalAttempts();
+      const filteredAttempts = localAttempts.filter(a => {
+        const ae = (a.student_email || '').trim().toLowerCase();
+        const ai = (a.student_id || '').trim().toLowerCase();
+        const cid = (a.college_id || '').trim().toLowerCase();
+        const sameStudent = ae === cleanEmail || ai === cleanEmail;
+        const sameCollege = !cid || targetCidSet.has(cid);
+        return !(sameStudent && sameCollege);
+      });
+      localStorage.setItem(STORAGE_KEYS_TPO.ATTEMPTS, JSON.stringify(filteredAttempts));
+    } catch {}
+
     return true;
   },
 
