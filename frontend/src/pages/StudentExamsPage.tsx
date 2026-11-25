@@ -148,7 +148,8 @@ export default function StudentExamsPage() {
       });
     },
     enabled: !!user?.email,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // 🚦 STUDENT COLLEGE REMOVAL WATCHDOG:

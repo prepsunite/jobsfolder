@@ -6899,7 +6899,7 @@ export const tpoService = {
         return json.attempt;
       }
     } catch (apiErr: any) {
-      // Rethrow authorization, passcode, or schedule rejections immediately; only fall back to RPC if /api unavailable
+      // Rethrow authorization, passcode, schedule, or already-completed rejections immediately; only fall back to RPC if /api unavailable
       const msg = String(apiErr?.message || '');
       if (
         msg.includes('Forbidden') ||
@@ -6907,7 +6907,10 @@ export const tpoService = {
         msg.includes('window') ||
         msg.includes('concluded') ||
         msg.includes('rejected') ||
-        msg.includes('Authentication')
+        msg.includes('Authentication') ||
+        msg.includes('already') ||
+        msg.includes('completed') ||
+        msg.includes('submitted')
       ) {
         throw apiErr;
       }
@@ -7750,33 +7753,51 @@ export const tpoService = {
     if (!mockExamId || !studentIdOrEmail) return null;
     const cleanId = studentIdOrEmail.trim().toLowerCase();
 
-    // 1. Check local attempts first
-    const localAttempts = getLocalAttempts(mockExamId);
-    const localFound = localAttempts.find(
-      a => a.student_id === studentIdOrEmail || a.student_id?.toLowerCase() === cleanId
-    );
-    if (localFound) return localFound;
+    const pickBestAttempt = (attempts: StudentExamAttempt[]): StudentExamAttempt | null => {
+      if (!attempts || attempts.length === 0) return null;
+      return [...attempts].sort((a, b) => {
+        const aDone = isAttemptCompleted(a) ? 1 : 0;
+        const bDone = isAttemptCompleted(b) ? 1 : 0;
+        if (aDone !== bDone) return bDone - aDone;
+        const aTime = new Date(a.submitted_at || a.updated_at || a.started_at || 0).getTime();
+        const bTime = new Date(b.submitted_at || b.updated_at || b.started_at || 0).getTime();
+        return bTime - aTime;
+      })[0];
+    };
 
-    // 2. Check Supabase table
+    // 1. Always query authoritative Supabase state first so stale local IN_PROGRESS never overrides a submitted/terminated attempt
     try {
+      let authUserId = '';
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) authUserId = user.id;
+      } catch {}
+
+      let orClauses = `student_id.eq.${studentIdOrEmail},student_id.eq.${cleanId},student_email.eq.${cleanId}`;
+      if (authUserId) {
+        orClauses += `,student_id.eq.${authUserId}`;
+      }
+
       const { data, error } = await supabase
         .from('student_exam_attempts')
         .select('*')
         .eq('mock_exam_id', mockExamId)
-        .or(`student_id.eq.${studentIdOrEmail},student_id.eq.${cleanId},student_email.eq.${cleanId}`)
+        .or(orClauses)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(20);
 
-      if (!error && data) {
-        saveLocalAttempt(data);
-        return data;
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const bestCloud = pickBestAttempt(data as StudentExamAttempt[]);
+        if (bestCloud) {
+          saveLocalAttempt(bestCloud);
+          return bestCloud;
+        }
       }
     } catch {}
 
-
-
-    return null;
+    // 2. Fallback to local cache only when offline / DB returned no rows
+    const localAttempts = getLocalAttempts(mockExamId, cleanId);
+    return pickBestAttempt(localAttempts);
   },
 
   async getStudentMockExams(
@@ -7872,6 +7893,9 @@ export const tpoService = {
             result_summary: a.result_summary || a.responses?.__result_summary,
           };
           attemptMap.set(a.id, hydrated as StudentExamAttempt);
+          if (isAttemptCompleted(hydrated as StudentExamAttempt)) {
+            saveLocalAttempt(hydrated as StudentExamAttempt);
+          }
         });
         studentAttempts = Array.from(attemptMap.values());
       }

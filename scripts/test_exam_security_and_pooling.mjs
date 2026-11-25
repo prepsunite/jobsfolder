@@ -755,6 +755,118 @@ async function main() {
           process.env.SUPABASE_SERVICE_ROLE_KEY = prevSrv;
         }
       });
+
+      await checkAsync('/api/campus-exams submit-attempt persists SUBMITTED & TERMINATED_MALPRACTICE in DB and blocks re-entry', async () => {
+        const prevUrl = process.env.SUPABASE_URL;
+        const prevSrv = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        process.env.SUPABASE_URL = env.VITE_SUPABASE_URL;
+        process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+        const testExamId = `test-lock-${Date.now()}`;
+        let createdAttemptId = '';
+        try {
+          const { data: users } = await supabase.auth.admin.listUsers({ perPage: 20 });
+          const nonAdmin = users?.users?.find(u => u.email !== 'mockfolder@gmail.com' && u.email !== 'venkatmukala9@gmail.com');
+          assert(nonAdmin?.email, 'Need non-admin user');
+          const { data: linkData } = await supabase.auth.admin.generateLink({ type: 'magiclink', email: nonAdmin.email });
+          const sbAnon = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+          const { data: otpData } = await sbAnon.auth.verifyOtp({ token_hash: linkData.properties.hashed_token, type: 'magiclink' });
+          const jwt = otpData?.session?.access_token;
+          assert(jwt, 'Could not mint non-admin JWT');
+
+          // Seed a temporary SELF exam for this non-admin student
+          const { data: qRow } = await supabase.from('topic_questions').select('id').limit(1).maybeSingle();
+          assert(qRow?.id, 'Need at least 1 topic_question');
+          const { error: exInsErr } = await supabase.from('mock_exams').insert({
+            id: testExamId,
+            title: 'Test Lockout Exam',
+            college_id: 'SELF',
+            created_by: nonAdmin.id,
+            target_departments: [nonAdmin.email.toLowerCase()],
+            duration_minutes: 30,
+            total_marks: 10,
+            is_active: true,
+            start_time: new Date(Date.now() - 60_000).toISOString(),
+            end_time: new Date(Date.now() + 3_600_000).toISOString(),
+            enable_tab_switch_detection: true,
+            max_tab_switches_allowed: 3,
+          });
+          assert(!exInsErr, exInsErr?.message);
+          await supabase.from('mock_exam_sections').insert({
+            id: `sec-${testExamId}`,
+            mock_exam_id: testExamId,
+            name: 'Quant',
+            section_order: 1,
+            question_count: 1,
+            marks_per_question: 10,
+            question_ids: [qRow.id],
+          });
+
+          const invokeCampusExams =
+            typeof campusExamsHandler === 'function' ? campusExamsHandler : campusExamsHandler?.default;
+
+          // 1. Start attempt
+          const resStart = createMockRes();
+          await invokeCampusExams(
+            { method: 'POST', headers: { authorization: `Bearer ${jwt}` }, body: { action: 'start-attempt', examId: testExamId } },
+            resStart
+          );
+          assert.strictEqual(resStart.statusCode, 200, `start-attempt failed: ${JSON.stringify(resStart.body)}`);
+          createdAttemptId = resStart.body?.attempt?.id;
+          assert(createdAttemptId, 'Expected attempt id');
+          assert.strictEqual(resStart.body?.attempt?.status, 'IN_PROGRESS');
+
+          // 2. Submit attempt (simulate malpractice termination on tab switch limit)
+          const resSubmit = createMockRes();
+          await invokeCampusExams(
+            {
+              method: 'POST',
+              headers: { authorization: `Bearer ${jwt}` },
+              body: {
+                action: 'submit-attempt',
+                attempt: {
+                  id: createdAttemptId,
+                  mock_exam_id: testExamId,
+                  status: 'TERMINATED_MALPRACTICE',
+                  tab_switch_count: 3,
+                  time_spent_seconds: 12,
+                  proctor_events: [{ timestamp: new Date().toISOString(), type: 'TAB_SWITCH', details: '3/3' }],
+                  responses: {},
+                },
+              },
+            },
+            resSubmit
+          );
+          assert.strictEqual(resSubmit.statusCode, 200, `submit-attempt failed: ${JSON.stringify(resSubmit.body)}`);
+          assert.strictEqual(resSubmit.body?.attempt?.status, 'TERMINATED_MALPRACTICE');
+
+          // 3. Verify DB row is ACTUALLY TERMINATED_MALPRACTICE (not stuck IN_PROGRESS!)
+          const { data: dbRow } = await supabase
+            .from('student_exam_attempts')
+            .select('status, submitted_at')
+            .eq('id', createdAttemptId)
+            .single();
+          assert.strictEqual(dbRow?.status, 'TERMINATED_MALPRACTICE', `Expected DB status TERMINATED_MALPRACTICE, got ${dbRow?.status}`);
+          assert(dbRow?.submitted_at, 'Expected submitted_at persisted in DB');
+
+          // 4. Calling start-attempt again must return alreadyFinalized: true and NOT IN_PROGRESS
+          const resReenter = createMockRes();
+          await invokeCampusExams(
+            { method: 'POST', headers: { authorization: `Bearer ${jwt}` }, body: { action: 'start-attempt', examId: testExamId } },
+            resReenter
+          );
+          assert.strictEqual(resReenter.statusCode, 200);
+          assert.strictEqual(resReenter.body?.alreadyFinalized, true, 'Expected alreadyFinalized=true on re-entry');
+          assert.strictEqual(resReenter.body?.attempt?.status, 'TERMINATED_MALPRACTICE');
+        } finally {
+          if (createdAttemptId) {
+            await supabase.from('student_exam_attempts').delete().eq('id', createdAttemptId);
+          }
+          await supabase.from('mock_exam_sections').delete().eq('mock_exam_id', testExamId);
+          await supabase.from('mock_exams').delete().eq('id', testExamId);
+          process.env.SUPABASE_URL = prevUrl;
+          process.env.SUPABASE_SERVICE_ROLE_KEY = prevSrv;
+        }
+      });
     }
   }
 

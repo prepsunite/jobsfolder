@@ -475,6 +475,8 @@ export default function MockExamTestPage() {
         ? tpoService.getStudentAttemptForExam(examId, user?.email || user?.id || '')
         : null,
     enabled: !!examId && !!(user?.email || user?.id),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Cohort Batch & Stream Eligibility
@@ -617,11 +619,7 @@ export default function MockExamTestPage() {
   useEffect(() => {
     if (!existingAttempt) return;
 
-    if (
-      existingAttempt.status === 'SUBMITTED' ||
-      existingAttempt.status === 'TIMED_OUT' ||
-      existingAttempt.status === 'TERMINATED_MALPRACTICE'
-    ) {
+    if (isAttemptCompleted(existingAttempt)) {
       setAttemptId(existingAttempt.id);
       setFinalGradedAttempt(existingAttempt);
       setResponses(existingAttempt.responses || {});
@@ -629,6 +627,13 @@ export default function MockExamTestPage() {
       tabSwitchCountRef.current = count;
       setTabSwitchCount(count);
       setTestPhase('SUBMITTED');
+      if (typeof window !== 'undefined' && examId) {
+        try {
+          localStorage.removeItem(getExamStorageKey('prepunite_active_responses', examId, userStorageKey));
+          localStorage.removeItem(getExamStorageKey('prepunite_visited', examId, userStorageKey));
+          localStorage.removeItem(getExamStorageKey('prepunite_exam_session', examId, userStorageKey));
+        } catch {}
+      }
     } else if (existingAttempt.status === 'IN_PROGRESS' && testPhase === 'INSTRUCTIONS') {
       setAttemptId(existingAttempt.id);
       if (existingAttempt.shuffle_seed) setServerShuffleSeed(existingAttempt.shuffle_seed);
@@ -1031,13 +1036,7 @@ export default function MockExamTestPage() {
     }
 
     // 🔒 STRICT SECURITY: Completed exams can never be retaken
-    if (
-      existingAttempt &&
-      (existingAttempt.status === 'SUBMITTED' ||
-        existingAttempt.status === 'TIMED_OUT' ||
-        existingAttempt.status === 'TERMINATED_MALPRACTICE' ||
-        existingAttempt.status === 'GRADED')
-    ) {
+    if (existingAttempt && isAttemptCompleted(existingAttempt)) {
       toast.error('This assessment has already been completed and submitted. Under campus placement drive regulations, re-attempts are strictly disabled.');
       setFinalGradedAttempt(existingAttempt);
       setTestPhase('SUBMITTED');
@@ -1114,12 +1113,7 @@ export default function MockExamTestPage() {
       );
 
       // Guard against already completed attempt returned by service
-      if (
-        attempt.status === 'SUBMITTED' ||
-        attempt.status === 'TIMED_OUT' ||
-        attempt.status === 'TERMINATED_MALPRACTICE' ||
-        attempt.status === 'GRADED'
-      ) {
+      if (isAttemptCompleted(attempt)) {
         setFinalGradedAttempt(attempt);
         setAttemptId(attempt.id);
         setTestPhase('SUBMITTED');
@@ -1389,6 +1383,10 @@ export default function MockExamTestPage() {
           handleFinalSubmit('TIMED_OUT');
         } else if (hb?.terminated) {
           handleFinalSubmit('TERMINATED_MALPRACTICE');
+        } else if ((hb as any)?.finalized) {
+          queryClient.invalidateQueries({ queryKey: ['candidate-existing-attempt', exam?.id] });
+          queryClient.invalidateQueries({ queryKey: ['student-campus-mock-exams'] });
+          setTestPhase('SUBMITTED');
         }
       }
     }, 15000);

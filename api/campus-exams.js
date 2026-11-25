@@ -445,7 +445,7 @@ export default async function handler(req, res) {
 
     if (ids.length > 0) {
       try {
-        const { data: secRows } = await supabaseAdmin
+        const { data: secRows } = await supabaseService
           .from('mock_exam_secrets')
           .select('exam_id')
           .in('exam_id', ids);
@@ -456,7 +456,7 @@ export default async function handler(req, res) {
 
       try {
         const subjects = ids.map((id) => `B2B_PASSCODE:${id}`);
-        const { data: msgs } = await supabaseAdmin
+        const { data: msgs } = await supabaseService
           .from('contact_messages')
           .select('subject')
           .in('subject', subjects)
@@ -544,7 +544,7 @@ export default async function handler(req, res) {
     for (let i = 0; i < orderedIds.length; i += CHUNK) {
       const slice = orderedIds.slice(i, i + CHUNK);
       const [tqRes, tmRes, tpRes] = await Promise.all([
-        supabaseAdmin
+        supabaseService
           .from('topic_questions')
           .select(
             includeSolutions
@@ -553,7 +553,7 @@ export default async function handler(req, res) {
           )
           .in('id', slice)
           .or('is_deleted.is.null,is_deleted.eq.false'),
-        supabaseAdmin
+        supabaseService
           .from('technical_mcqs')
           .select(
             includeSolutions
@@ -562,7 +562,7 @@ export default async function handler(req, res) {
           )
           .in('id', slice)
           .or('is_deleted.is.null,is_deleted.eq.false'),
-        supabaseAdmin
+        supabaseService
           .from('technical_problems')
           .select(
             includeSolutions
@@ -1599,14 +1599,24 @@ export default async function handler(req, res) {
         }
 
         const effectiveStudentId = user.id || userEmail;
-        const { data: existingAttempt } = await supabaseAdmin
+        const { data: existingAttempts } = await supabaseService
           .from('student_exam_attempts')
           .select('*')
           .eq('mock_exam_id', targetExamId)
           .or(`student_id.eq.${effectiveStudentId},student_id.eq.${userEmail},student_email.eq.${userEmail}`)
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(20);
+
+        const FINALIZED_STATUSES = ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE'];
+        const existingAttempt = Array.isArray(existingAttempts) && existingAttempts.length > 0
+          ? [...existingAttempts].sort((a, b) => {
+              const aDone = FINALIZED_STATUSES.includes(a?.status) ? 1 : 0;
+              const bDone = FINALIZED_STATUSES.includes(b?.status) ? 1 : 0;
+              if (aDone !== bDone) return bDone - aDone;
+              return new Date(b?.submitted_at || b?.updated_at || b?.created_at || 0).getTime() -
+                new Date(a?.submitted_at || a?.updated_at || a?.created_at || 0).getTime();
+            })[0]
+          : null;
 
         if (existingAttempt) {
           const cleanExisting = sanitizeAttemptForResponse(existingAttempt);
@@ -1619,7 +1629,7 @@ export default async function handler(req, res) {
             attempt: cleanExisting,
             questions,
             serverNowMs: Date.now(),
-            alreadyFinalized: ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE'].includes(existingAttempt.status),
+            alreadyFinalized: FINALIZED_STATUSES.includes(existingAttempt.status),
           });
         }
 
@@ -1713,7 +1723,7 @@ export default async function handler(req, res) {
           last_heartbeat_at: startedIso,
         };
 
-        const { data: insFull, error: errFull } = await supabaseAdmin
+        const { data: insFull, error: errFull } = await supabaseService
           .from('student_exam_attempts')
           .insert(fullInsert)
           .select()
@@ -1722,7 +1732,7 @@ export default async function handler(req, res) {
         if (!errFull && insFull) {
           savedAttempt = insFull;
         } else {
-          const { data: insCompat, error: errCompat } = await supabaseAdmin
+          const { data: insCompat, error: errCompat } = await supabaseService
             .from('student_exam_attempts')
             .insert(baseAttemptRow)
             .select()
@@ -1754,7 +1764,7 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Missing attemptId for heartbeat' });
         }
 
-        const { data: dbAttempt } = await supabaseAdmin
+        const { data: dbAttempt } = await supabaseService
           .from('student_exam_attempts')
           .select('*')
           .eq('id', attemptId)
@@ -1778,6 +1788,7 @@ export default async function handler(req, res) {
             success: true,
             status: dbAttempt.status,
             finalized: true,
+            terminated: dbAttempt.status === 'TERMINATED_MALPRACTICE',
             serverNowMs: Date.now(),
           });
         }
@@ -1822,13 +1833,17 @@ export default async function handler(req, res) {
           updated_at: new Date(nowMs).toISOString(),
         };
 
-        const { error: upFullErr } = await supabaseAdmin
+        const { error: upFullErr } = await supabaseService
           .from('student_exam_attempts')
           .update({ ...patch, last_heartbeat_at: patch.updated_at })
           .eq('id', attemptId);
         if (upFullErr) {
-          await supabaseAdmin.from('student_exam_attempts').update(patch).eq('id', attemptId);
+          await supabaseService.from('student_exam_attempts').update(patch).eq('id', attemptId);
         }
+
+        const maxAllowedTabs = Number(targetExam?.max_tab_switches_allowed ?? 3);
+        const tabLimitExceeded =
+          targetExam?.enable_tab_switch_detection !== false && finalTabSwitches >= maxAllowedTabs;
 
         return res.status(200).json({
           success: true,
@@ -1837,6 +1852,7 @@ export default async function handler(req, res) {
           serverDeadlineMs: deadlineMs,
           remainingSeconds: Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000)),
           expired: nowMs > deadlineMs + 120_000,
+          terminated: tabLimitExceeded,
         });
       }
 
@@ -1846,7 +1862,7 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Missing valid attempt payload with id' });
         }
 
-        const { data: dbAttempt } = await supabaseAdmin
+        const { data: dbAttempt } = await supabaseService
           .from('student_exam_attempts')
           .select('*')
           .eq('id', attempt.id)
@@ -1949,9 +1965,9 @@ export default async function handler(req, res) {
         for (let i = 0; i < allQIds.length; i += 200) {
           const slice = allQIds.slice(i, i + 200);
           const [tqRes, tmRes, tpRes] = await Promise.all([
-            supabaseAdmin.from('topic_questions').select('id, correct_answer').in('id', slice),
-            supabaseAdmin.from('technical_mcqs').select('id, correct_option_index').in('id', slice),
-            supabaseAdmin.from('technical_problems').select('id').in('id', slice),
+            supabaseService.from('topic_questions').select('id, correct_answer').in('id', slice),
+            supabaseService.from('technical_mcqs').select('id, correct_option_index').in('id', slice),
+            supabaseService.from('technical_problems').select('id').in('id', slice),
           ]);
           for (const row of tqRes.data || []) tqCorrectMap.set(row.id, parseCorrectAnswerIndex(row.correct_answer));
           for (const row of tmRes.data || []) tmCorrectMap.set(row.id, parseCorrectAnswerIndex(row.correct_option_index));
@@ -2209,7 +2225,7 @@ export default async function handler(req, res) {
         };
 
         let savedAttempt = null;
-        const { data: savedFull, error: errFull } = await supabaseAdmin
+        const { data: savedFull, error: errFull } = await supabaseService
           .from('student_exam_attempts')
           .update({ ...updatePayload, result_summary: resultSummary })
           .eq('id', dbAttempt.id)
@@ -2219,14 +2235,35 @@ export default async function handler(req, res) {
         if (!errFull && savedFull) {
           savedAttempt = savedFull;
         } else {
-          const { data: savedCompat } = await supabaseAdmin
+          const { data: savedCompat, error: errCompat } = await supabaseService
             .from('student_exam_attempts')
             .update(updatePayload)
             .eq('id', dbAttempt.id)
             .select()
             .maybeSingle();
-          savedAttempt = savedCompat || { ...dbAttempt, ...updatePayload, result_summary: resultSummary };
+          if (errCompat || !savedCompat) {
+            console.error('[api/campus-exams] submit-attempt DB persistence failed:', errFull?.message, errCompat?.message);
+            return res.status(500).json({
+              error: errCompat?.message || errFull?.message || 'Failed to persist exam submission to database.',
+            });
+          }
+          savedAttempt = savedCompat;
         }
+
+        // Clean up any duplicate IN_PROGRESS rows for the same student & exam so dashboard never shows Resume
+        try {
+          await supabaseService
+            .from('student_exam_attempts')
+            .update({
+              status: finalStatus,
+              submitted_at: updatePayload.submitted_at,
+              updated_at: updatePayload.updated_at,
+            })
+            .eq('mock_exam_id', targetExamId)
+            .eq('status', 'IN_PROGRESS')
+            .neq('id', dbAttempt.id)
+            .or(`student_id.eq.${dbAttempt.student_id},student_email.eq.${userEmail}`);
+        } catch {}
 
         return res.status(200).json({
           success: true,
