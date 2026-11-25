@@ -10,6 +10,7 @@ import {
   stripPasscodeMarker,
   verifyCodingVerdict,
 } from './_examSecurity.js';
+import { poolSectionQuestionsServer } from './_examPooling.js';
 import { executeProblemAgainstDb } from './execute-code.js';
 
 export default async function handler(req, res) {
@@ -38,11 +39,18 @@ export default async function handler(req, res) {
 
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
+    // User-scoped client (carries user JWT for auth.getUser and RLS-compliant queries)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       },
+    });
+
+    // Service-role-only client for privileged reads that must bypass RLS
+    // (question pooling from technical_problems, technical_mcqs, etc.)
+    const supabaseService = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
     });
 
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
@@ -2226,6 +2234,69 @@ export default async function handler(req, res) {
         });
       }
 
+      // Action 1b: Server-Authoritative Section Question Pooling (bypasses raw-table RLS safely)
+      if (action === 'pool-sections') {
+        const { collegeId: reqCollegeId, sections: rawSections } = req.body || {};
+        if (!Array.isArray(rawSections) || rawSections.length === 0) {
+          return res.status(400).json({ error: 'Missing sections array for pooling.' });
+        }
+        const cidUpper = String(reqCollegeId || 'SELF').trim().toUpperCase();
+        if (cidUpper === 'PUBLIC' || cidUpper === 'OPEN') {
+          if (!isSuperAdmin) {
+            return res.status(403).json({ error: 'Forbidden: Only Super Admins can pool Public Open exams.' });
+          }
+        } else if (cidUpper !== 'SELF' && cidUpper !== 'INDIVIDUAL') {
+          const isAuthTpo = isSuperAdmin || (await isTpoForCollege(reqCollegeId));
+          if (!isAuthTpo) {
+            return res.status(403).json({ error: 'Forbidden: Caller is not an authorized TPO coordinator for this college.' });
+          }
+        }
+
+        const usedIds = new Set();
+        const pooledSections = [];
+        for (let idx = 0; idx < rawSections.length; idx++) {
+          const sec = rawSections[idx] || {};
+          const serveCount = Math.max(1, Number(sec.question_count) || 10);
+          const poolTargetCount = Math.max(serveCount, Number(sec.pool_size) || serveCount * 2);
+          const existingIds = Array.isArray(sec.question_ids) ? sec.question_ids.filter(Boolean) : [];
+          if (existingIds.length > 0) {
+            existingIds.forEach((id) => usedIds.add(id));
+            pooledSections.push({
+              ...sec,
+              question_ids: existingIds,
+              question_count: Math.min(serveCount, existingIds.length),
+              serve_count: Math.min(serveCount, existingIds.length),
+              pool_size: existingIds.length,
+            });
+            continue;
+          }
+
+          const resPool = await poolSectionQuestionsServer(
+            supabaseService,
+            sec,
+            poolTargetCount,
+            usedIds,
+            serveCount
+          );
+          if (!resPool.questionIds || resPool.questionIds.length === 0) {
+            return res.status(400).json({
+              error: `Section "${sec.name || `Section ${idx + 1}`}": requested ${serveCount} questions but the question bank returned 0. Please add questions to the selected topics before publishing.`,
+            });
+          }
+          const actualServeCount = Math.min(serveCount, resPool.questionIds.length);
+          pooledSections.push({
+            ...sec,
+            section_type: resPool.isCodingSection ? 'CODING' : resPool.isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ',
+            question_ids: resPool.questionIds,
+            question_count: actualServeCount,
+            serve_count: actualServeCount,
+            pool_size: resPool.questionIds.length,
+          });
+        }
+
+        return res.status(200).json({ success: true, sections: pooledSections });
+      }
+
       // Action 2: Create or update mock exam
       if (!exam || !exam.id || !exam.college_id) {
         return res.status(400).json({ error: 'Missing valid exam payload with id and college_id' });
@@ -2234,6 +2305,36 @@ export default async function handler(req, res) {
       const collegeIdUpper = String(exam.college_id).trim().toUpperCase();
       const rawPinInput = exam.access_passcode || extractPasscodeMarker(exam.instructions || '');
       const cleanExamPayload = sanitizeMockExamRecord(exam, { isPrivileged: false });
+      if ((!Array.isArray(cleanExamPayload.sections) || cleanExamPayload.sections.length === 0) && Array.isArray(req.body?.sections)) {
+        cleanExamPayload.sections = req.body.sections;
+      }
+
+      // Server auto-pool safety net for any section with empty question_ids
+      if (Array.isArray(cleanExamPayload.sections) && cleanExamPayload.sections.length > 0) {
+        const usedIds = new Set();
+        cleanExamPayload.sections.forEach((s) => (s.question_ids || []).forEach((id) => usedIds.add(id)));
+        for (let idx = 0; idx < cleanExamPayload.sections.length; idx++) {
+          const s = cleanExamPayload.sections[idx];
+          if (!Array.isArray(s.question_ids) || s.question_ids.length === 0) {
+            const serveCount = Math.max(1, Number(s.serve_count || s.question_count) || 10);
+            const resPool = await poolSectionQuestionsServer(supabaseService, s, serveCount * 2, usedIds, serveCount);
+            if (!resPool.questionIds || resPool.questionIds.length === 0) {
+              return res.status(400).json({
+                error: `Section "${s.name || `Section ${idx + 1}`}": requested ${serveCount} questions but the question bank returned 0. Please add questions to the selected topics before publishing.`,
+              });
+            }
+            const actualServeCount = Math.min(serveCount, resPool.questionIds.length);
+            cleanExamPayload.sections[idx] = {
+              ...s,
+              section_type: resPool.isCodingSection ? 'CODING' : resPool.isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ',
+              question_ids: resPool.questionIds,
+              question_count: actualServeCount,
+              serve_count: actualServeCount,
+              pool_size: resPool.questionIds.length,
+            };
+          }
+        }
+      }
 
       if (collegeIdUpper === 'PUBLIC' || collegeIdUpper === 'OPEN') {
         if (!isSuperAdmin) {

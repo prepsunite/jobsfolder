@@ -27,6 +27,8 @@ import {
   sanitizeExamQuestionRow,
 } from '../api/_examSecurity.js';
 import executeCodeHandler, { resolveServerTestCases } from '../api/execute-code.js';
+import campusExamsHandler from '../api/campus-exams.js';
+import { poolSectionQuestionsServer } from '../api/_examPooling.js';
 import {
   getServerNowMs,
   getServerDate,
@@ -574,6 +576,186 @@ async function main() {
         }
       }
     });
+
+    await checkAsync('Coding section pooling returns all 5 requested problems (10 pooled) across mixed domains & EASY difficulty', async () => {
+      const res1 = await poolSectionQuestionsServer(
+        supabase,
+        {
+          name: 'Section 3: Hands-on Coding Assessment',
+          section_type: 'CODING',
+          category: 'coding',
+          coding_track: 'CAMPUS_DSA',
+          difficulty: 'ALL',
+          topic_ids: [],
+        },
+        10,
+        new Set(),
+        5
+      );
+      assert.strictEqual(res1.isCodingSection, true);
+      assert.strictEqual(res1.questionIds.length, 10, `Expected 10 pooled CAMPUS_DSA problems, got ${res1.questionIds.length}`);
+
+      const resEasy = await poolSectionQuestionsServer(
+        supabase,
+        {
+          name: 'Section 3: Hands-on Coding Assessment',
+          section_type: 'CODING',
+          category: 'coding',
+          coding_track: 'PROGRAMMING_150',
+          difficulty: 'EASY',
+          topic_ids: [],
+        },
+        10,
+        new Set(),
+        5
+      );
+      assert.strictEqual(resEasy.questionIds.length, 10, `Expected 10 EASY problems, got ${resEasy.questionIds.length}`);
+
+      const resMixedCoding = await poolSectionQuestionsServer(
+        supabase,
+        {
+          name: 'Mixed Coding',
+          section_type: 'CODING',
+          category: 'coding',
+          coding_track: 'CAMPUS_DSA',
+          difficulty: 'ALL',
+          topic_ids: ['ARRAYS', 'STRINGS', 'DYNAMIC_PROGRAMMING', 'TREES_BINARY_TREES', 'MATRICES'],
+        },
+        10,
+        new Set(),
+        5
+      );
+      assert.strictEqual(resMixedCoding.questionIds.length, 10);
+      const { data: pulledRows } = await supabase
+        .from('technical_problems')
+        .select('id, category')
+        .in('id', resMixedCoding.questionIds);
+      const distinctCats = new Set((pulledRows || []).map(r => r.category));
+      assert(distinctCats.size >= 4, `Expected >=4 distinct coding categories in mixed pool, got ${Array.from(distinctCats).join(', ')}`);
+    });
+
+    await checkAsync('Mixed Aptitude (Passage + Standalone) preserves ALL selected topics evenly', async () => {
+      const resMix = await poolSectionQuestionsServer(
+        supabase,
+        {
+          name: 'Mixed Aptitude & Verbal',
+          section_type: 'MCQ',
+          category: 'all',
+          difficulty: 'ALL',
+          topic_ids: ['reading-comprehension', 'numbers', 'percentage', 'seating-arrangement'],
+        },
+        40,
+        new Set(),
+        20
+      );
+      assert.strictEqual(resMix.questionIds.length, 40, `Expected 40 pooled questions, got ${resMix.questionIds.length}`);
+      const { data: rows } = await supabase
+        .from('topic_questions')
+        .select('id, topic_id')
+        .in('id', resMix.questionIds);
+      const topicsFound = new Set((rows || []).map(r => r.topic_id));
+      for (const reqT of ['reading-comprehension', 'numbers', 'percentage', 'seating-arrangement']) {
+        assert(topicsFound.has(reqT), `Missing selected mixed topic "${reqT}"! Found: ${Array.from(topicsFound).join(', ')}`);
+      }
+    });
+
+    await checkAsync('Mixed Aptitude "All Domains" spreads across >=4 categories (not 100% Arithmetic)', async () => {
+      const resAll = await poolSectionQuestionsServer(
+        supabase,
+        {
+          name: 'All Domains Mixed',
+          section_type: 'MCQ',
+          category: 'all',
+          difficulty: 'ALL',
+          topic_ids: [],
+        },
+        40,
+        new Set(),
+        20
+      );
+      assert(resAll.questionIds.length >= 30, `Expected >=30 pooled questions, got ${resAll.questionIds.length}`);
+      const { data: qRows } = await supabase.from('topic_questions').select('topic_id').in('id', resAll.questionIds);
+      const tIds = Array.from(new Set((qRows || []).map(r => r.topic_id)));
+      const { data: catRows } = await supabase.from('aptitude_topics').select('id, category_slug').in('id', tIds);
+      const cats = new Set((catRows || []).map(c => c.category_slug));
+      assert(cats.size >= 4, `Expected >=4 distinct aptitude categories in All Domains mix, got ${Array.from(cats).join(', ')}`);
+    });
+
+    await checkAsync('Mixed Technical MCQs balances across all selected CS subjects', async () => {
+      const subjects = ['mcq-c-programming', 'mcq-database-systems', 'mcq-operating-systems', 'mcq-data-structures'];
+      const resTech = await poolSectionQuestionsServer(
+        supabase,
+        {
+          name: 'Core CS Mixed',
+          section_type: 'TECHNICAL_MCQ',
+          category: 'technical-mcqs',
+          difficulty: 'ALL',
+          topic_ids: subjects,
+        },
+        24,
+        new Set(),
+        12
+      );
+      assert.strictEqual(resTech.questionIds.length, 24);
+      const { data: tmRows } = await supabase.from('technical_mcqs').select('topic_id').in('id', resTech.questionIds);
+      const counts = {};
+      (tmRows || []).forEach(r => { counts[r.topic_id] = (counts[r.topic_id] || 0) + 1; });
+      for (const s of subjects) {
+        assert((counts[s] || 0) >= 4, `Expected >=4 questions for ${s}, got ${counts[s] || 0}`);
+      }
+    });
+
+    if (env.SUPABASE_SERVICE_ROLE_KEY) {
+      await checkAsync('/api/campus-exams action=pool-sections allows authenticated user to pool 5 Coding problems despite RLS', async () => {
+        const prevUrl = process.env.SUPABASE_URL;
+        const prevSrv = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        process.env.SUPABASE_URL = env.VITE_SUPABASE_URL;
+        process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+        try {
+          const { data: users } = await supabase.auth.admin.listUsers({ perPage: 20 });
+          const nonAdmin = users?.users?.find(u => u.email !== 'mockfolder@gmail.com' && u.email !== 'venkatmukala9@gmail.com');
+          assert(nonAdmin?.email, 'Need non-admin user to verify RLS bypass via server');
+          const { data: linkData } = await supabase.auth.admin.generateLink({ type: 'magiclink', email: nonAdmin.email });
+          const sbAnon = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+          const { data: otpData } = await sbAnon.auth.verifyOtp({ token_hash: linkData.properties.hashed_token, type: 'magiclink' });
+          const jwt = otpData?.session?.access_token;
+          assert(jwt, 'Could not mint non-admin JWT');
+
+          const res = createMockRes();
+          const invokeCampusExams =
+            typeof campusExamsHandler === 'function' ? campusExamsHandler : campusExamsHandler?.default;
+          assert(typeof invokeCampusExams === 'function', 'campusExamsHandler export invalid');
+          await invokeCampusExams(
+            {
+              method: 'POST',
+              headers: { authorization: `Bearer ${jwt}` },
+              body: {
+                action: 'pool-sections',
+                collegeId: 'SELF',
+                sections: [
+                  {
+                    name: 'Section 3: Hands-on Coding Assessment',
+                    section_type: 'CODING',
+                    category: 'coding',
+                    coding_track: 'CAMPUS_DSA',
+                    question_count: 5,
+                    topic_ids: [],
+                  },
+                ],
+              },
+            },
+            res
+          );
+          assert.strictEqual(res.statusCode, 200, `Expected 200, got ${res.statusCode}: ${JSON.stringify(res.body)}`);
+          assert.strictEqual(res.body?.success, true);
+          assert.strictEqual(res.body?.sections?.[0]?.question_ids?.length, 10);
+          assert.strictEqual(res.body?.sections?.[0]?.serve_count, 5);
+        } finally {
+          process.env.SUPABASE_URL = prevUrl;
+          process.env.SUPABASE_SERVICE_ROLE_KEY = prevSrv;
+        }
+      });
+    }
   }
 
   console.log('\n==================================================================');

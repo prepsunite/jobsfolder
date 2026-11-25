@@ -347,6 +347,93 @@ function fisherYatesShuffle<T>(items: T[]): T[] {
   return arr;
 }
 
+function roundRobinSampleFromBuckets(
+  bucketsMap: Map<string, any[]>,
+  neededCount: number,
+  usedIds: Set<string>
+): string[] {
+  const picked: string[] = [];
+  const entries = Array.from(bucketsMap.entries()).map(([k, list]) => ({
+    key: k,
+    queue: (list || []).filter(row => row?.id && !usedIds.has(row.id)),
+    idx: 0,
+  }));
+  const active = fisherYatesShuffle(entries);
+
+  let progressed = true;
+  while (picked.length < neededCount && progressed) {
+    progressed = false;
+    for (const bucket of active) {
+      while (bucket.idx < bucket.queue.length && usedIds.has(bucket.queue[bucket.idx].id)) {
+        bucket.idx += 1;
+      }
+      if (bucket.idx < bucket.queue.length) {
+        const item = bucket.queue[bucket.idx++];
+        usedIds.add(item.id);
+        picked.push(item.id);
+        progressed = true;
+        if (picked.length >= neededCount) break;
+      }
+    }
+  }
+  return picked;
+}
+
+function stratifyDifficultyRows(rows: any[]): any[] {
+  const easy = fisherYatesShuffle(rows.filter(r => ['EASY', 'BASIC'].includes(String(r.difficulty || r.level || '').toUpperCase())));
+  const hard = fisherYatesShuffle(rows.filter(r => String(r.difficulty || r.level || '').toUpperCase() === 'HARD'));
+  const med = fisherYatesShuffle(rows.filter(r => !['EASY', 'BASIC', 'HARD'].includes(String(r.difficulty || r.level || '').toUpperCase())));
+
+  const merged: any[] = [];
+  const total = rows.length || 1;
+  let ei = 0;
+  let mi = 0;
+  let hi = 0;
+  while (merged.length < total && (ei < easy.length || mi < med.length || hi < hard.length)) {
+    if (mi < med.length) merged.push(med[mi++]);
+    if (ei < easy.length) merged.push(easy[ei++]);
+    if (mi < med.length) merged.push(med[mi++]);
+    if (hi < hard.length) merged.push(hard[hi++]);
+  }
+  return merged;
+}
+
+async function poolSectionsViaServer(
+  collegeId: string,
+  sectionConfigs: any[]
+): Promise<any[] | null> {
+  if (typeof window === 'undefined' || !sectionConfigs || sectionConfigs.length === 0) return null;
+  try {
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders.Authorization) return null;
+    const res = await fetch('/api/campus-exams', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+      body: JSON.stringify({
+        action: 'pool-sections',
+        collegeId: collegeId || 'SELF',
+        sections: sectionConfigs,
+      }),
+    });
+    const json = await res.json().catch(() => null);
+    if (res.status === 400 && json?.error) {
+      throw new Error(json.error);
+    }
+    if (res.ok && json?.success && Array.isArray(json.sections)) {
+      return json.sections;
+    }
+  } catch (err: any) {
+    if (err?.message && err.message.includes('question bank returned 0')) {
+      throw err;
+    }
+    console.warn('[poolSectionsViaServer] Server pooling unavailable, using local fallback:', err?.message || err);
+  }
+  return null;
+}
+
 const APTITUDE_CATEGORY_VARIANTS: Record<string, string[]> = {
   'arithmetic-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
   'quantitative-aptitude': ['arithmetic-aptitude', 'quantitative-aptitude', 'quant', 'numbers'],
@@ -439,11 +526,16 @@ async function poolQuestionsForExamSection(
       const CODING_TOPIC_TO_DB_CATEGORIES: Record<string, string[]> = {
         'TWO_POINTERS': ['POINTERS_ARRAYS', 'TWO_POINTERS'],
         'SLIDING_WINDOW': ['POINTERS_ARRAYS', 'SLIDING_WINDOW'],
+        'POINTERS_ARRAYS': ['POINTERS_ARRAYS', 'TWO_POINTERS', 'SLIDING_WINDOW'],
         'LINKED_LISTS': ['LINEAR_STRUCTURES', 'LINKED_LISTS'],
         'STACKS_QUEUES': ['LINEAR_STRUCTURES', 'STACKS_QUEUES'],
+        'LINEAR_STRUCTURES': ['LINEAR_STRUCTURES', 'LINKED_LISTS', 'STACKS_QUEUES'],
         'TREES_BINARY_TREES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
+        'HIERARCHICAL_STRUCTURES': ['HIERARCHICAL_STRUCTURES', 'TREES_BINARY_TREES'],
         'SEARCH_INTERVALS': ['SEARCH_INTERVALS', 'SEARCHING', 'SEARCHING_SORTING'],
+        'SEARCHING_SORTING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
         'EXHAUSTIVE_SEARCH_DP': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
+        'DYNAMIC_PROGRAMMING': ['EXHAUSTIVE_SEARCH_DP', 'DYNAMIC_PROGRAMMING'],
         'NETWORK_GRAPH_ALGORITHMS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
         'GRAPHS': ['NETWORK_GRAPH_ALGORITHMS', 'GRAPHS'],
         'ARRAYS': ['ARRAYS', 'POINTERS_ARRAYS'],
@@ -452,7 +544,7 @@ async function poolQuestionsForExamSection(
         'NUMBER_LOGIC': ['NUMBER_LOGIC'],
         'PATTERNS': ['PATTERNS'],
         'MATRICES': ['MATRICES', 'ARRAYS'],
-        'RECURSION': ['RECURSION'],
+        'RECURSION': ['RECURSION', 'EXHAUSTIVE_SEARCH_DP'],
         'BIT_MANIPULATION': ['BIT_MANIPULATION'],
         'SEARCHING': ['SEARCHING', 'SEARCH_INTERVALS', 'SEARCHING_SORTING'],
       };
@@ -466,86 +558,114 @@ async function poolQuestionsForExamSection(
         'SEARCHING_SORTING': ['search', 'binary search', 'sort', 'rotated', 'median', 'peak', 'find minimum'],
       };
 
-      let codingQuery = supabase
+      const { data: dbCodingRows } = await supabase
         .from('technical_problems')
-        .select('id, title, category, level, test_cases, sample_cases, sample_input, sample_output')
+        .select('id, title, category, topic_id, track, level, test_cases, sample_cases, sample_input, sample_output')
         .or('is_deleted.is.null,is_deleted.eq.false')
-        .or('is_hidden.is.null,is_hidden.eq.false');
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .limit(500);
 
-      if (sec.difficulty && sec.difficulty !== 'ALL') {
-        const codingLevel = sec.difficulty === 'EASY' ? 'BASIC' : sec.difficulty;
-        codingQuery = codingQuery.eq('level', codingLevel);
+      let allProblems: any[] = Array.isArray(dbCodingRows) && dbCodingRows.length > 0 ? dbCodingRows : [];
+
+      // If direct table SELECT is blocked by RLS for non-admins (TPO/Student) when /api is unavailable, try practice RPC + curated local dataset
+      if (allProblems.length === 0) {
+        try {
+          const { data: rpcProbs } = await supabase.rpc('get_practice_technical_problems', {
+            p_track: null,
+            p_category: null,
+          });
+          if (Array.isArray(rpcProbs) && rpcProbs.length > 0) {
+            allProblems = rpcProbs;
+          }
+        } catch {}
+      }
+      if (allProblems.length === 0) {
+        allProblems = Object.values(CAMPUS_DSA_EXAM_PROBLEMS).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          category: p.category || 'POINTERS_ARRAYS',
+          topic_id: p.topicId || p.category,
+          track: p.track || 'CAMPUS_DSA',
+          level: p.level || p.difficulty || 'MEDIUM',
+          test_cases: p.testCases || [],
+          sample_cases: p.testCases || [],
+          sample_input: p.sampleInput || '',
+          sample_output: p.sampleOutput || '',
+        }));
       }
 
-      const titleKeywords: string[] = [];
-      const targetCategories = new Set<string>();
-      if (topicIds.length > 0) {
-        const expandedCoding = expandTopicAliases(topicIds);
-        expandedCoding.forEach(t => {
-          const upper = t.toUpperCase();
-          (CODING_TOPIC_TO_DB_CATEGORIES[upper] || [t, upper, t.toLowerCase()]).forEach(c => targetCategories.add(c));
-          if (CODING_TOPIC_TITLE_KEYWORDS[upper]) titleKeywords.push(...CODING_TOPIC_TITLE_KEYWORDS[upper]);
-        });
-        const tokenList = Array.from(targetCategories).join(',');
-        codingQuery = codingQuery.or(`category.in.(${tokenList}),topic_id.in.(${tokenList})`);
-      } else if (sec.coding_track) {
-        codingQuery = codingQuery.eq('track', sec.coding_track);
-      }
-
-      const { data: codingData } = await codingQuery.limit(Math.max(neededCount * 15, 100));
-      if (codingData && codingData.length > 0) {
-        const testableCurated = codingData.filter(
+      if (allProblems.length > 0) {
+        const testableAll = allProblems.filter(
           (q: any) =>
             (Array.isArray(q.test_cases) && q.test_cases.length > 0) ||
             (Array.isArray(q.sample_cases) && q.sample_cases.length > 0) ||
             CAMPUS_DSA_EXAM_PROBLEMS[q.id] ||
             isProblemTestable(q)
         );
-        const poolToSample = testableCurated.length > 0 ? testableCurated : codingData;
+        const workingPool = testableAll.length > 0 ? testableAll : allProblems;
 
-        let prioritized: any[] = [];
-        const nonPrioritized: any[] = [];
-        if (titleKeywords.length > 0) {
-          poolToSample.forEach((q: any) => {
-            const titleLower = (q.title || '').toLowerCase();
-            if (titleKeywords.some(kw => titleLower.includes(kw))) prioritized.push(q);
-            else nonPrioritized.push(q);
+        const targetDiff = (sec.difficulty || 'ALL').toUpperCase();
+        const matchesDiff = (lvl: string) => {
+          if (targetDiff === 'ALL') return true;
+          const u = String(lvl || '').toUpperCase();
+          return targetDiff === 'EASY' ? (u === 'EASY' || u === 'BASIC') : u === targetDiff;
+        };
+        const diffFiltered = targetDiff !== 'ALL' ? workingPool.filter((p: any) => matchesDiff(p.level)) : workingPool;
+        const primaryPool = diffFiltered.length > 0 ? diffFiltered : workingPool;
+
+        if (topicIds.length > 0) {
+          const buckets = new Map<string, any[]>();
+          topicIds.forEach(reqTopic => {
+            const upper = reqTopic.toUpperCase();
+            const expanded = new Set(
+              (CODING_TOPIC_TO_DB_CATEGORIES[upper] || [reqTopic, upper, reqTopic.toLowerCase()]).map(s =>
+                String(s).toUpperCase()
+              )
+            );
+            const keywords = CODING_TOPIC_TITLE_KEYWORDS[upper] || [];
+            const domainMatches = primaryPool.filter((p: any) => {
+              const catU = String(p.category || '').toUpperCase();
+              const topU = String(p.topic_id || '').toUpperCase();
+              return expanded.has(catU) || expanded.has(topU);
+            });
+            const trackMatched = sec.coding_track
+              ? domainMatches.filter((p: any) => String(p.track || '').toUpperCase() === String(sec.coding_track).toUpperCase())
+              : domainMatches;
+            const chosen = trackMatched.length > 0 ? trackMatched : domainMatches;
+
+            const prioritized: any[] = [];
+            const rest: any[] = [];
+            fisherYatesShuffle(chosen).forEach((p: any) => {
+              const tl = String(p.title || '').toLowerCase();
+              if (keywords.length > 0 && keywords.some(kw => tl.includes(kw))) prioritized.push(p);
+              else rest.push(p);
+            });
+            buckets.set(reqTopic, [...prioritized, ...rest]);
           });
+          questionIds.push(...roundRobinSampleFromBuckets(buckets, neededCount, usedQuestionIds));
         } else {
-          prioritized = poolToSample;
+          const trackPool = sec.coding_track
+            ? primaryPool.filter((p: any) => String(p.track || '').toUpperCase() === String(sec.coding_track).toUpperCase())
+            : primaryPool;
+          const effectivePool = trackPool.length > 0 ? trackPool : primaryPool;
+          const byCat = new Map<string, any[]>();
+          effectivePool.forEach((p: any) => {
+            const k = `${p.track || 'ALL'}::${p.category || 'GENERAL'}`;
+            if (!byCat.has(k)) byCat.set(k, []);
+            byCat.get(k)!.push(p);
+          });
+          byCat.forEach((list, k) => byCat.set(k, stratifyDifficultyRows(list)));
+          questionIds.push(...roundRobinSampleFromBuckets(byCat, neededCount, usedQuestionIds));
         }
 
-        for (const q of fisherYatesShuffle(prioritized)) {
-          if (!usedQuestionIds.has(q.id)) {
-            questionIds.push(q.id);
-            usedQuestionIds.add(q.id);
-            if (questionIds.length >= neededCount) break;
-          }
-        }
-        if (questionIds.length < neededCount && nonPrioritized.length > 0) {
-          for (const q of fisherYatesShuffle(nonPrioritized)) {
-            if (!usedQuestionIds.has(q.id)) {
-              questionIds.push(q.id);
-              usedQuestionIds.add(q.id);
-              if (questionIds.length >= neededCount) break;
-            }
-          }
-        }
-      }
-
-      if (questionIds.length < neededCount) {
-        let fbQuery = supabase
-          .from('technical_problems')
-          .select('id, title, category, level, test_cases, sample_cases, sample_input, sample_output')
-          .or('is_deleted.is.null,is_deleted.eq.false')
-          .or('is_hidden.is.null,is_hidden.eq.false');
-        if (sec.coding_track) fbQuery = fbQuery.eq('track', sec.coding_track);
-        const { data: fallbackCoding } = await fbQuery.limit(Math.max(neededCount * 10, 80));
-        if (fallbackCoding && fallbackCoding.length > 0) {
-          const testableFb = fallbackCoding.filter(
-            (q: any) => CAMPUS_DSA_EXAM_PROBLEMS[q.id] || isProblemTestable(q)
-          );
-          for (const q of fisherYatesShuffle(testableFb.length > 0 ? testableFb : fallbackCoding)) {
+        if (questionIds.length < neededCount) {
+          const fbOrder = [
+            ...(sec.coding_track
+              ? workingPool.filter((p: any) => String(p.track || '').toUpperCase() === String(sec.coding_track).toUpperCase())
+              : []),
+            ...workingPool,
+          ];
+          for (const q of fisherYatesShuffle(fbOrder)) {
             if (!usedQuestionIds.has(q.id)) {
               questionIds.push(q.id);
               usedQuestionIds.add(q.id);
@@ -564,125 +684,143 @@ async function poolQuestionsForExamSection(
   const isPureTechnicalMcq = isExplicitTechMcq;
   if (!isPureTechnicalMcq) {
     try {
-      let allowedTopicIds: string[] = [];
+      let topicGroups: Array<{ key: string; variants: string[] }> = [];
       if (topicIds.length > 0) {
-        allowedTopicIds = expandTopicAliases(topicIds);
+        topicGroups = topicIds.map(t => ({ key: t, variants: expandTopicAliases([t]) }));
       } else if (sec.category && sec.category !== 'all') {
-        allowedTopicIds = await resolveCategoryTopicIds(sec.category);
-      }
-
-      const isRequestingPassageTopic = topicIds.some(t => DEFAULT_PASSAGE_TOPICS.has(t));
-      const fetchTopicRows = async (topicBatch: string[] | null, diffFilter?: string) => {
-        let q = supabase
-          .from('topic_questions')
-          .select('id, question_number, topic_id, difficulty, structured_explanation')
-          .or('is_deleted.is.null,is_deleted.eq.false')
-          .or('is_hidden.is.null,is_hidden.eq.false');
-        if (diffFilter && diffFilter !== 'ALL') {
-          q = q.eq('difficulty', diffFilter);
-        }
-        if (topicBatch && topicBatch.length > 0) {
-          q = q.in('topic_id', topicBatch);
-        }
-        const { data } = await q.limit(1000);
-        return data || [];
-      };
-
-      let fetchedRows: any[] = [];
-      const activeDiff = !isRequestingPassageTopic && sec.difficulty && sec.difficulty !== 'ALL' ? sec.difficulty : 'ALL';
-
-      if (allowedTopicIds.length > 16) {
-        // Shuffle & batch topics so huge categories (e.g. Arithmetic 1991 Qs) sample across ALL topics
-        const shuffledTopics = fisherYatesShuffle(allowedTopicIds);
-        for (let i = 0; i < shuffledTopics.length; i += 16) {
-          const chunkRows = await fetchTopicRows(shuffledTopics.slice(i, i + 16), activeDiff);
-          fetchedRows = fetchedRows.concat(chunkRows);
-          if (fetchedRows.length >= Math.max(neededCount * 20, 300)) break;
-        }
+        const ids = await resolveCategoryTopicIds(sec.category);
+        // Deduplicate back toward canonical topics while respecting returned DB topic ids
+        const uniq = Array.from(new Set(ids)).filter(id => id && !id.includes(' ') && !id.includes('_'));
+        const chosenIds = uniq.length > 0 ? uniq : ids;
+        topicGroups = fisherYatesShuffle(chosenIds).map(t => ({ key: t, variants: expandTopicAliases([t]) }));
       } else {
-        fetchedRows = await fetchTopicRows(allowedTopicIds.length > 0 ? allowedTopicIds : null, activeDiff);
+        // "All Domains" / Auto-Pool All: sample across ALL categories evenly instead of unfiltered limit(1000)
+        const { data: allTopics } = await supabase
+          .from('aptitude_topics')
+          .select('id, category_slug')
+          .or('is_hidden.is.null,is_hidden.eq.false');
+        const sourceList = (allTopics && allTopics.length > 0) ? allTopics : FALLBACK_APTITUDE_TOPICS;
+        const catBuckets = new Map<string, any[]>();
+        sourceList.forEach((t: any) => {
+          const c = t.category_slug || 'other';
+          if (!catBuckets.has(c)) catBuckets.set(c, []);
+          catBuckets.get(c)!.push({ id: t.id });
+        });
+        catBuckets.forEach((list, k) => catBuckets.set(k, fisherYatesShuffle(list)));
+        const mixedIds = roundRobinSampleFromBuckets(catBuckets, Math.min(sourceList.length, Math.max(neededCount, 24)), new Set());
+        topicGroups = mixedIds.map(t => ({ key: t, variants: expandTopicAliases([t]) }));
       }
 
-      if (fetchedRows.length > 0) {
-        const hasPassageTopic = isRequestingPassageTopic || fetchedRows.some(q => DEFAULT_PASSAGE_TOPICS.has(q.topic_id));
-        if (hasPassageTopic) {
-          const passageBlocks: Record<string, any[]> = {};
-          const nonPassage: any[] = [];
-          fetchedRows.forEach(q => {
-            let se = q.structured_explanation;
-            if (typeof se === 'string') {
-              try { se = JSON.parse(se); } catch {}
-            }
-            const isPassage = DEFAULT_PASSAGE_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
-            if (isPassage) {
-              const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
-              const groupKey = title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
-              if (!passageBlocks[groupKey]) passageBlocks[groupKey] = [];
-              passageBlocks[groupKey].push(q);
-            } else {
-              nonPassage.push(q);
-            }
+      if (topicGroups.length > 0) {
+        const activeGroups = topicGroups.length > 36 ? fisherYatesShuffle(topicGroups).slice(0, 36) : topicGroups;
+        const targetDiff = (sec.difficulty || 'ALL').toUpperCase();
+        const perGroupLimit = Math.max(60, Math.min(250, Math.ceil((neededCount * 4) / activeGroups.length)));
+        const rowsByGroup = new Map<string, any[]>();
+
+        for (let i = 0; i < activeGroups.length; i += 6) {
+          const batch = activeGroups.slice(i, i + 6);
+          const batchRes = await Promise.all(
+            batch.map(async grp => {
+              const isPassageTopic = DEFAULT_PASSAGE_TOPICS.has(grp.key);
+              let q = supabase
+                .from('topic_questions')
+                .select('id, question_number, topic_id, difficulty, structured_explanation')
+                .in('topic_id', grp.variants)
+                .or('is_deleted.is.null,is_deleted.eq.false')
+                .or('is_hidden.is.null,is_hidden.eq.false');
+              if (!isPassageTopic && targetDiff !== 'ALL') {
+                q = q.eq('difficulty', targetDiff);
+              }
+              const { data } = await q.limit(perGroupLimit);
+              let rows = data || [];
+              if (rows.length === 0 && !isPassageTopic && targetDiff !== 'ALL') {
+                const { data: relaxed } = await supabase
+                  .from('topic_questions')
+                  .select('id, question_number, topic_id, difficulty, structured_explanation')
+                  .in('topic_id', grp.variants)
+                  .or('is_deleted.is.null,is_deleted.eq.false')
+                  .or('is_hidden.is.null,is_hidden.eq.false')
+                  .limit(perGroupLimit);
+                rows = relaxed || [];
+              }
+              return { key: grp.key, rows };
+            })
+          );
+          batchRes.forEach(r => {
+            if (r.rows.length > 0) rowsByGroup.set(r.key, r.rows);
           });
-
-          const blockKeys = fisherYatesShuffle(Object.keys(passageBlocks));
-          const avgBlockLen = blockKeys.length > 0 && passageBlocks[blockKeys[0]]?.length > 0 ? passageBlocks[blockKeys[0]].length : 5;
-          const blocksTarget = Math.max(1, Math.round(serveCountForPassages / avgBlockLen)) * 2;
-          let addedBlocks = 0;
-          for (const key of blockKeys) {
-            const block = passageBlocks[key].sort((a, b) => (a.question_number || 0) - (b.question_number || 0));
-            const unused = block.filter(q => !usedQuestionIds.has(q.id));
-            if (unused.length === 0) continue;
-            if (questionIds.length > 0 && questionIds.length + unused.length > neededCount) continue;
-            unused.forEach(q => {
-              questionIds.push(q.id);
-              usedQuestionIds.add(q.id);
-            });
-            addedBlocks++;
-            if (questionIds.length >= neededCount && addedBlocks >= blocksTarget) break;
-          }
-          if (questionIds.length < neededCount) {
-            for (const q of fisherYatesShuffle(nonPassage)) {
-              if (!usedQuestionIds.has(q.id)) {
-                questionIds.push(q.id);
-                usedQuestionIds.add(q.id);
-                if (questionIds.length >= neededCount) break;
-              }
-            }
-          }
-        } else {
-          const available = fetchedRows.filter(q => !usedQuestionIds.has(q.id));
-          if (!sec.difficulty || sec.difficulty === 'ALL') {
-            const easyQ = fisherYatesShuffle(available.filter(q => (q.difficulty || '').toUpperCase() === 'EASY'));
-            const hardQ = fisherYatesShuffle(available.filter(q => (q.difficulty || '').toUpperCase() === 'HARD'));
-            const medQ = fisherYatesShuffle(available.filter(q => !['EASY', 'HARD'].includes((q.difficulty || '').toUpperCase())));
-            const tEasy = Math.min(easyQ.length, Math.round(neededCount * 0.25));
-            const tHard = Math.min(hardQ.length, Math.round(neededCount * 0.25));
-            const tMed = Math.min(medQ.length, neededCount - tEasy - tHard);
-            [...easyQ.slice(0, tEasy), ...medQ.slice(0, tMed), ...hardQ.slice(0, tHard)].forEach(q => {
-              questionIds.push(q.id);
-              usedQuestionIds.add(q.id);
-            });
-          }
-          if (questionIds.length < neededCount) {
-            for (const q of fisherYatesShuffle(available)) {
-              if (!usedQuestionIds.has(q.id)) {
-                questionIds.push(q.id);
-                usedQuestionIds.add(q.id);
-                if (questionIds.length >= neededCount) break;
-              }
-            }
-          }
         }
-      }
 
-      // Relax difficulty if still short while strictly preserving topic scoping
-      if (questionIds.length < neededCount && activeDiff !== 'ALL' && (allowedTopicIds.length > 0 || !sec.category || sec.category === 'all')) {
-        const relaxRows = await fetchTopicRows(allowedTopicIds.length > 0 ? allowedTopicIds.slice(0, 16) : null, 'ALL');
-        for (const q of fisherYatesShuffle(relaxRows)) {
-          if (!usedQuestionIds.has(q.id)) {
-            questionIds.push(q.id);
-            usedQuestionIds.add(q.id);
-            if (questionIds.length >= neededCount) break;
+        const nonEmptyGroups = Array.from(rowsByGroup.entries());
+        if (nonEmptyGroups.length > 0) {
+          const perGroupTarget = Math.max(1, Math.floor(neededCount / nonEmptyGroups.length));
+          const soloBuckets = new Map<string, any[]>();
+          const extraPassages: any[][] = [];
+
+          for (const [grpKey, rows] of fisherYatesShuffle(nonEmptyGroups)) {
+            const passageBlocks: Record<string, any[]> = {};
+            const soloRows: any[] = [];
+            rows.forEach(q => {
+              let se = q.structured_explanation;
+              if (typeof se === 'string') {
+                try { se = JSON.parse(se); } catch {}
+              }
+              const isPassage = DEFAULT_PASSAGE_TOPICS.has(q.topic_id) || Boolean(se?.passage || se?.passageTitle);
+              if (isPassage) {
+                const title = se?.passageTitle && se.passageTitle !== 'none' ? se.passageTitle : null;
+                const blockKey = title || `${q.topic_id}-block-${Math.floor(((q.question_number || 1) - 1) / 5)}`;
+                if (!passageBlocks[blockKey]) passageBlocks[blockKey] = [];
+                passageBlocks[blockKey].push(q);
+              } else {
+                soloRows.push(q);
+              }
+            });
+
+            const blockKeys = fisherYatesShuffle(Object.keys(passageBlocks));
+            if (blockKeys.length > 0) {
+              let addedForGroup = 0;
+              const maxForGroup = Math.max(perGroupTarget, Math.min(neededCount, Math.max(serveCountForPassages > 5 ? 10 : 5, perGroupTarget)));
+              for (const bk of blockKeys) {
+                const sortedBlock = passageBlocks[bk]
+                  .sort((a, b) => (a.question_number || 0) - (b.question_number || 0))
+                  .filter(q => !usedQuestionIds.has(q.id));
+                if (sortedBlock.length === 0) continue;
+                if (addedForGroup === 0 || (addedForGroup + sortedBlock.length <= maxForGroup && questionIds.length + sortedBlock.length <= neededCount)) {
+                  if (questionIds.length === 0 || questionIds.length + sortedBlock.length <= neededCount) {
+                    sortedBlock.forEach(q => {
+                      usedQuestionIds.add(q.id);
+                      questionIds.push(q.id);
+                    });
+                    addedForGroup += sortedBlock.length;
+                  } else {
+                    extraPassages.push(sortedBlock);
+                  }
+                } else {
+                  extraPassages.push(sortedBlock);
+                }
+                if (addedForGroup >= perGroupTarget) break;
+              }
+            }
+
+            if (soloRows.length > 0) {
+              soloBuckets.set(grpKey, targetDiff === 'ALL' ? stratifyDifficultyRows(soloRows) : fisherYatesShuffle(soloRows));
+            }
+          }
+
+          if (questionIds.length < neededCount && soloBuckets.size > 0) {
+            questionIds.push(...roundRobinSampleFromBuckets(soloBuckets, neededCount - questionIds.length, usedQuestionIds));
+          }
+          if (questionIds.length < neededCount && extraPassages.length > 0) {
+            for (const blk of extraPassages) {
+              const unused = blk.filter(q => !usedQuestionIds.has(q.id));
+              if (unused.length > 0 && questionIds.length + unused.length <= neededCount) {
+                unused.forEach(q => {
+                  usedQuestionIds.add(q.id);
+                  questionIds.push(q.id);
+                });
+              }
+              if (questionIds.length >= neededCount) break;
+            }
           }
         }
       }
@@ -716,23 +854,37 @@ async function poolQuestionsForExamSection(
       }
 
       const allowedTech = expandTopicAliases(Array.from(mappedTechMcqTopics));
+      const targetDiff = (sec.difficulty || 'ALL').toUpperCase();
       let tQuery = supabase
         .from('technical_mcqs')
         .select('id, topic_id, difficulty')
         .or('is_deleted.is.null,is_deleted.eq.false')
         .or('is_hidden.is.null,is_hidden.eq.false');
       if (allowedTech.length > 0) tQuery = tQuery.in('topic_id', allowedTech);
-      if (sec.difficulty && sec.difficulty !== 'ALL') tQuery = tQuery.eq('difficulty', sec.difficulty);
 
-      const { data: techData } = await tQuery.limit(500);
-      if (techData && techData.length > 0) {
-        for (const m of fisherYatesShuffle(techData)) {
-          if (!usedQuestionIds.has(m.id)) {
-            questionIds.push(m.id);
-            usedQuestionIds.add(m.id);
-            if (questionIds.length >= neededCount) break;
+      const { data: techData } = await tQuery.limit(1000);
+      let rows: any[] = Array.isArray(techData) ? techData : [];
+      if (rows.length === 0) {
+        try {
+          const { data: rpcMcqs } = await supabase.rpc('get_practice_technical_mcqs', { p_topic_id: null });
+          if (Array.isArray(rpcMcqs) && rpcMcqs.length > 0) {
+            const allowedSet = new Set(allowedTech);
+            rows = allowedTech.length > 0 ? rpcMcqs.filter((r: any) => allowedSet.has(r.topic_id)) : rpcMcqs;
           }
-        }
+        } catch {}
+      }
+
+      if (rows.length > 0) {
+        const diffFiltered = targetDiff !== 'ALL' ? rows.filter(r => String(r.difficulty || 'MEDIUM').toUpperCase() === targetDiff) : rows;
+        const activeRows = diffFiltered.length > 0 ? diffFiltered : rows;
+        const bySubject = new Map<string, any[]>();
+        activeRows.forEach(r => {
+          const k = r.topic_id || 'mcq-general';
+          if (!bySubject.has(k)) bySubject.set(k, []);
+          bySubject.get(k)!.push(r);
+        });
+        bySubject.forEach((list, k) => bySubject.set(k, targetDiff === 'ALL' ? stratifyDifficultyRows(list) : fisherYatesShuffle(list)));
+        questionIds.push(...roundRobinSampleFromBuckets(bySubject, Math.max(0, neededCount - questionIds.length), usedQuestionIds));
       }
 
       if (questionIds.length < neededCount) {
@@ -741,13 +893,15 @@ async function poolQuestionsForExamSection(
         const seedFiltered = allowedTech.length > 0
           ? ALL_TECHNICAL_MCQ_SEEDS.filter(s => allowedSet.has(s.topicId || (s as any).topic_id))
           : ALL_TECHNICAL_MCQ_SEEDS;
-        for (const s of fisherYatesShuffle(seedFiltered.length > 0 ? seedFiltered : ALL_TECHNICAL_MCQ_SEEDS)) {
-          if (!usedQuestionIds.has(s.id)) {
-            questionIds.push(s.id);
-            usedQuestionIds.add(s.id);
-            if (questionIds.length >= neededCount) break;
-          }
-        }
+        const seedSource = seedFiltered.length > 0 ? seedFiltered : ALL_TECHNICAL_MCQ_SEEDS;
+        const bySubSeed = new Map<string, any[]>();
+        seedSource.forEach(s => {
+          const k = s.topicId || (s as any).topic_id || 'mcq-general';
+          if (!bySubSeed.has(k)) bySubSeed.set(k, []);
+          bySubSeed.get(k)!.push(s);
+        });
+        bySubSeed.forEach((list, k) => bySubSeed.set(k, fisherYatesShuffle(list)));
+        questionIds.push(...roundRobinSampleFromBuckets(bySubSeed, neededCount - questionIds.length, usedQuestionIds));
       }
     } catch (err) {
       console.warn('Notice pulling technical_mcqs:', err);
@@ -763,13 +917,14 @@ async function poolQuestionsForExamSection(
       const filtered = allowedSet
         ? allLocalQ.filter(q => allowedSet.has(q.topicId) || allowedSet.has(resolveTopicSlug(q.topicId, q.topicId)))
         : allLocalQ;
-      for (const lq of fisherYatesShuffle(filtered)) {
-        if (lq.id && !usedQuestionIds.has(lq.id)) {
-          questionIds.push(lq.id);
-          usedQuestionIds.add(lq.id);
-          if (questionIds.length >= neededCount) break;
-        }
-      }
+      const byTopicLocal = new Map<string, any[]>();
+      filtered.forEach(lq => {
+        const k = resolveTopicSlug(lq.topicId, lq.topicId) || 'general';
+        if (!byTopicLocal.has(k)) byTopicLocal.set(k, []);
+        byTopicLocal.get(k)!.push(lq);
+      });
+      byTopicLocal.forEach((list, k) => byTopicLocal.set(k, fisherYatesShuffle(list)));
+      questionIds.push(...roundRobinSampleFromBuckets(byTopicLocal, neededCount - questionIds.length, usedQuestionIds));
     } catch {}
   }
 
@@ -4739,24 +4894,42 @@ export const tpoService = {
       }
     });
 
-    for (let i = 0; i < updatedSections.length; i++) {
-      const sec = { ...updatedSections[i] };
-      const currentQIds = Array.isArray(sec.question_ids) ? sec.question_ids : [];
+    const missingIndices = updatedSections
+      .map((s, idx) => ((Array.isArray(s.question_ids) ? s.question_ids.length : 0) === 0 ? idx : -1))
+      .filter(idx => idx >= 0);
 
-      if (currentQIds.length === 0) {
+    if (missingIndices.length > 0) {
+      const serverPooled = await poolSectionsViaServer(
+        exam.college_id || 'SELF',
+        missingIndices.map(idx => updatedSections[idx])
+      );
+      if (serverPooled && serverPooled.length === missingIndices.length) {
         modified = true;
-        const neededCount = Math.max(1, sec.question_count || 10);
-        const pooled = await poolQuestionsForExamSection(
-          sec,
-          neededCount,
-          usedQuestionIds,
-          sec.serve_count || sec.question_count || neededCount
-        );
-        sec.question_ids = pooled.questionIds;
-        if (!sec.section_type) {
-          sec.section_type = pooled.isCodingSection ? 'CODING' : pooled.isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ';
+        missingIndices.forEach((secIdx, pIdx) => {
+          const pooled = serverPooled[pIdx];
+          updatedSections[secIdx] = {
+            ...updatedSections[secIdx],
+            question_ids: pooled.question_ids || [],
+            section_type: updatedSections[secIdx].section_type || pooled.section_type,
+          };
+        });
+      } else {
+        for (const i of missingIndices) {
+          const sec = { ...updatedSections[i] };
+          modified = true;
+          const neededCount = Math.max(1, sec.question_count || 10);
+          const pooled = await poolQuestionsForExamSection(
+            sec,
+            neededCount,
+            usedQuestionIds,
+            sec.serve_count || sec.question_count || neededCount
+          );
+          sec.question_ids = pooled.questionIds;
+          if (!sec.section_type) {
+            sec.section_type = pooled.isCodingSection ? 'CODING' : pooled.isTechnicalMcq ? 'TECHNICAL_MCQ' : 'MCQ';
+          }
+          updatedSections[i] = sec;
         }
-        updatedSections[i] = sec;
       }
     }
 
@@ -5297,10 +5470,40 @@ export const tpoService = {
     const usedQuestionIds = new Set<string>();
     const sections: MockExamSection[] = [];
 
+    // 1. Prefer server-authoritative pooling (/api/campus-exams action='pool-sections')
+    //    so TPOs & Students can pool protected banks (coding, technical_mcqs, aptitude) without RLS blocks.
+    const serverPooled = await poolSectionsViaServer(examData.college_id, sectionConfigs);
+
     for (let idx = 0; idx < sectionConfigs.length; idx++) {
       const sec = sectionConfigs[idx];
       const serveCount = Math.max(1, sec.question_count || 10);
-      // Auto 2x Question Pooling: master pool holds 2x questions for dynamic candidate sampling
+      const sp = serverPooled?.[idx];
+      if (sp && Array.isArray(sp.question_ids) && sp.question_ids.length > 0) {
+        const actualServeCount = Math.min(serveCount, sp.question_ids.length);
+        sp.question_ids.forEach((id: string) => usedQuestionIds.add(id));
+        sections.push({
+          id: `sec-${examId}-${idx + 1}`,
+          mock_exam_id: examId,
+          name: sec.name,
+          section_order: idx + 1,
+          section_type: sp.section_type || sec.section_type || 'MCQ',
+          category: sec.category,
+          coding_track: sec.coding_track,
+          difficulty: (sec.difficulty as 'ALL' | 'EASY' | 'MEDIUM' | 'HARD' | undefined) || undefined,
+          duration_minutes: sec.duration_minutes || undefined,
+          marks_per_correct: sec.marks_per_correct,
+          negative_marking: sec.negative_marking,
+          question_ids: sp.question_ids,
+          question_count: actualServeCount,
+          serve_count: actualServeCount,
+          pool_size: sp.question_ids.length,
+          topic_ids: sec.topic_ids,
+          created_at: new Date().toISOString(),
+        });
+        continue;
+      }
+
+      // 2. Fallback to local balanced pooling (offline / Vite local dev without /api server)
       const poolTargetCount = serveCount * 2;
       const pooled = await poolQuestionsForExamSection(sec, poolTargetCount, usedQuestionIds, serveCount);
       const questionIds = pooled.questionIds;
